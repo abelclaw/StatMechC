@@ -280,10 +280,12 @@ $$\frac{1}{\xi^2}\frac{d}{d\xi}\left(\xi^2\frac{d\theta}{d\xi}\right) = -\theta^
 
 <p>This is called the <span class="tooltip-trigger">Lane-Emden equation<span class="tooltip-content">A dimensionless second-order ODE for the density profile of a polytropic star. It can be solved numerically for any polytropic index $n$.</span></span> and is the basis of much stellar modeling.</p>
 
-<figure>
-<img src="images/15-Stars_p10_img0.png" alt="Lane-Emden solutions for various n">
-<figcaption>Figure 4. Density profile of a star, $\rho = \theta(\xi)^n$ with $\xi = r/r_0$, for polytropes of various $n$.</figcaption>
-</figure>
+<!-- INTERACTIVE: Lane-Emden Solutions -->
+<div class="interactive-container">
+  <h3>Interactive: Lane-Emden Solutions</h3>
+  <canvas id="vis-lane-emden" width="600" height="380"></canvas>
+  <p class="vis-caption">Density profile $\theta(\xi)$ for polytropic index $n = 0, 1, 1.5, 3, 5$. The zero crossing determines the star's radius.</p>
+</div>
 
 <p>We see that the profiles are actually qualitatively similar. For $n < 5$ the curves all cross $\rho = 0$, which tells us the size of the star. That is, we define $\xi_{\max}$ as the scale where $\theta(\xi_{\max}) = 0$, then the radius of the star is $R = r_0\xi_{\max}$. In the Eddington model, $n = 3$, the zero crossing occurs at $\xi_{\max} = 6.9$.</p>
 
@@ -509,10 +511,12 @@ $$x_F = \frac{\hbar}{m_e c R}\left(\frac{9\pi M}{8m_p}\right)^{1/3} = 0.97\left(
 
 <p>where $M_\odot = 1.98 \times 10^{30}\;\text{kg}$ is the mass of the sun and $R_E = 6370\;\text{km}$ is the radius of the earth. Using $D = D_3 = 0.68$ we can solve Eq. (80) numerically to get the mass-radius relation:</p>
 
-<figure>
-<img src="images/15-Stars_p18_img0.png" alt="White dwarf mass-radius relation">
-<figcaption>Figure 6. The relationship between mass and size of a white dwarf determined by equating the degeneracy pressure to the gravitational pressure. Axes are normalized to the sun's mass and the earth's radius.</figcaption>
-</figure>
+<!-- INTERACTIVE: White Dwarf Mass-Radius Relation -->
+<div class="interactive-container">
+  <h3>Interactive: White Dwarf Mass-Radius Relation</h3>
+  <canvas id="vis-wd-mr" width="600" height="380"></canvas>
+  <p class="vis-caption">Mass-radius relation from degeneracy pressure vs gravity. Chandrasekhar limit at $M \approx 1.4\,M_\odot$. Hover for values.</p>
+</div>
 
 <p>We see from the plot that for $M \gtrsim 1.4\,M_\odot$ there are no solutions. Having included full relativistic corrections, we can also check our assumptions. Note that the bound comes from small $R$. As $R \to 0$ the gas gets denser and denser, so the electrons become faster and faster. We can see from $x_F \sim 1/R$ that as $R \to 0$, $x_F$ gets large. Expanding at large $x_F$ is exactly the ultrarelativistic limit. Therefore the bound is</p>
 

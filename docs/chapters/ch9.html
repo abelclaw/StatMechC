@@ -75,10 +75,17 @@ $$\Delta G = (\mu_2 - \mu_1)\Delta N$$
 
 <p>It is only when $\mu_1(T, P) = \mu_2(T, P)$ that two phases can be present at once. Setting them equal generates a curve in the $T/P$ plane. This curve is the <span class="tooltip-trigger">phase boundary<span class="tooltip-content">A curve in the $T$-$P$ plane where two phases have equal chemical potential and can coexist</span></span>.</p>
 
-<figure>
-<img src="images/9-Phases_p4_img0.png" alt="Phase diagrams for CO2, Ar, and H2O">
-<figcaption>Figure 4. Phase diagrams for CO$_2$, Ar, and H$_2$O. The point STP in these plots refers to $T = 20^\circ\text{C} = 293\;\text{K}$ and $P = 1\;\text{atm}$.</figcaption>
-</figure>
+<!-- INTERACTIVE: P-T Phase Diagram -->
+<div class="interactive-container">
+  <h3>Interactive: P-T Phase Diagram</h3>
+  <div class="vis-controls">
+    <button id="pt-sub-co2" class="active">CO₂</button>
+    <button id="pt-sub-ar">Ar</button>
+    <button id="pt-sub-h2o">H₂O</button>
+  </div>
+  <canvas id="vis-pt-phase" width="600" height="400"></canvas>
+  <p class="vis-caption">Hover to read (T, P) coordinates. STP marked in yellow. Click substance buttons to switch.</p>
+</div>
 
 <p>The thick lines in the phase diagram are the phase boundaries, determined by $\mu_1 = \mu_2$. We define:</p>
 <ul>
@@ -303,10 +310,15 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
 
 <p>The final topic concerns the dot at the end of the liquid/gas phase boundary: the critical point. Critical points are super-interesting places with a lot of unusual properties.</p>
 
-<figure>
-<img src="images/9-Phases_p14_img0.png" alt="P-V phase diagram for CO2">
-<figcaption>Figure 10. P-V phase diagram for CO$_2$. The x-axis is the specific volume $v = V/N$. The green region has liquid and gas.</figcaption>
-</figure>
+<!-- INTERACTIVE: PV Diagram with Van der Waals Isotherms -->
+<div class="interactive-container">
+  <h3>Interactive: P-V Diagram (Van der Waals Isotherms)</h3>
+  <div class="vis-controls">
+    <label>$T / T_c$: <input type="range" id="pv-temp" min="0.7" max="1.4" step="0.01" value="1.0"> <span class="slider-value" id="pv-temp-val">1.00</span></label>
+  </div>
+  <canvas id="vis-pv-diagram" width="600" height="400"></canvas>
+  <p class="vis-caption">Below $T_c$: flat coexistence region (Maxwell construction). At $T_c$: inflection point = critical point. Above $T_c$: supercritical fluid.</p>
+</div>
 
 <p>The lines in this plot are isotherms. During a phase transition, pressure and temperature are fixed, so we move horizontally ($\partial P/\partial v = 0$). As temperature increases, the difference in specific volume between liquid and gas at constant temperature gets smaller. Eventually the latent heat vanishes: it takes no energy to convert a liquid to a gas. This happens at the <strong>critical temperature</strong> $T_c$, at the <strong>critical pressure</strong> $P_c$ and <strong>critical specific volume</strong> $v_c$.</p>
 

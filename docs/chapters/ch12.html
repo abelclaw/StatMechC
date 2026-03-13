@@ -58,7 +58,15 @@
 
 <p>Let us look at Eqs. (7) and (10) numerically for $N = 100$:</p>
 
-<figure><img src="images/12-BEC_p2_img0.png" alt="Ground state fraction in a two-state system"><figcaption>Figure 1. The fractional population of the ground state in a two-state system with $N = 100$.</figcaption></figure>
+<!-- INTERACTIVE: Two-State BEC Comparison -->
+<div class="interactive-container">
+  <h3>Interactive: Two-State BEC (BE vs MB)</h3>
+  <div class="vis-controls">
+    <label>$N$: <input type="range" id="bec2-N" min="10" max="1000" step="10" value="100"> <span class="slider-value" id="bec2-N-val">100</span></label>
+  </div>
+  <canvas id="vis-bec-twostate" width="600" height="380"></canvas>
+  <p class="vis-caption">BE condensation occurs at $k_BT \sim N\epsilon$, far above the MB crossover at $k_BT \sim \epsilon$.</p>
+</div>
 
 <p>This plot demonstrates Bose-Einstein condensation. With Maxwell-Boltzmann statistics, the temperature has to be very low to get the lowest state to have an appreciable filling fraction. At temperature $k_BT \gtrsim \epsilon$ both the ground state and the first excited state are around equally populated so $\langle N_\text{ground}\rangle = \frac{N}{2}$. In contrast, with Bose-Einstein statistics, a significant fraction of the particles are in the ground state even well above the temperature $k_BT = \epsilon$. For example, at $k_BT = 10\epsilon$ we find 90% of the atoms are in the ground state for Bose-Einstein statistics, but only 52% for Maxwell-Boltzmann statistics. This demonstrates Bose-Einstein condensation.</p>
 
@@ -204,11 +212,14 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 
 <div class="equation key-result">$$\frac{\langle N_\text{ground}\rangle}{N} = \frac{N - \langle N_\text{excited}\rangle}{N} = 1 - \left(\frac{T}{T_c}\right)^{3/2}$$<span class="eq-number">(35)</span></div>
 
-<figure><img src="images/12-BEC_p8_img0.png" alt="BEC condensate fraction vs temperature"><figcaption>Figure 6 (left). The condensate fraction $\langle N_\text{ground}\rangle/N = 1 - (T/T_c)^{3/2}$.</figcaption></figure>
+<!-- INTERACTIVE: Condensate Fraction -->
+<div class="interactive-container">
+  <h3>Interactive: Condensate Fraction</h3>
+  <canvas id="vis-bec-fraction" width="600" height="380"></canvas>
+  <p class="vis-caption">Red: analytic $1 - (T/T_c)^{3/2}$. Dashed: finite-$N$ numerical results showing rounding near $T_c$.</p>
+</div>
 
-<p>Comparing to our exact numerical results from Section 3.1 we find good agreement:</p>
-
-<figure><img src="images/12-BEC_p8_img1.png" alt="Comparison of analytic and numerical BEC results"><figcaption>Figure 6 (right). Comparison of the analytic result $1 - (T/T_c)^{3/2}$ with the exact numerical results for $N = 10^2, 10^3, 10^4$.</figcaption></figure>
+<p>Comparing to our exact numerical results from Section 3.1 we find good agreement.</p>
 
 <!-- INTERACTIVE: BEC -->
 <div class="visualization">

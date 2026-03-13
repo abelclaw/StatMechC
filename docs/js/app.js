@@ -1524,6 +1524,90 @@ function initCh5Vis() {
   });
 
   draw();
+
+  // ----- TS Diagram for Carnot Cycle -----
+  const cTS = document.getElementById('vis-carnot-ts');
+  if (cTS) {
+    const ts = setupCanvas(cTS);
+    const ctxTS = ts.ctx, WTS = ts.W, HTS = ts.H;
+
+    const SA = 1.0;
+    const SB = SA + 1.0 * Math.log(VB / VA); // nR ln(V2/V1), nR=1
+    const ox2 = 65, oy2 = 25;
+    const plotW2 = WTS - ox2 - 40;
+    const plotH2 = HTS - oy2 - 50;
+    const Smin = SA - 0.3, Smax = SB + 0.3;
+    const Tmin2 = TC - 80, Tmax2 = TH + 80;
+
+    function toScreenTS(S, T) {
+      return [
+        ox2 + (S - Smin) / (Smax - Smin) * plotW2,
+        oy2 + plotH2 - (T - Tmin2) / (Tmax2 - Tmin2) * plotH2
+      ];
+    }
+
+    function drawTS() {
+      clearCanvas(ctxTS, WTS, HTS);
+      drawAxes(ctxTS, ox2, oy2, plotW2, plotH2, { xLabel: 'Entropy S', yLabel: 'Temperature T (K)', yLabelOffset: 45 });
+
+      const [ax, ay] = toScreenTS(SA, TH);
+      const [bx, by] = toScreenTS(SB, TH);
+      const [cx, cy] = toScreenTS(SB, TC);
+      const [dx, dy] = toScreenTS(SA, TC);
+
+      // Shaded work area
+      ctxTS.fillStyle = 'rgba(102, 187, 106, 0.15)';
+      ctxTS.beginPath();
+      ctxTS.moveTo(ax, ay); ctxTS.lineTo(bx, by); ctxTS.lineTo(cx, cy); ctxTS.lineTo(dx, dy);
+      ctxTS.closePath(); ctxTS.fill();
+
+      // Cycle edges
+      ctxTS.lineWidth = 2.5;
+      const edges = [
+        [ax, ay, bx, by, COLORS.red],
+        [bx, by, cx, cy, COLORS.blue],
+        [cx, cy, dx, dy, COLORS.green],
+        [dx, dy, ax, ay, COLORS.orange]
+      ];
+      edges.forEach(([x1, y1, x2, y2, col]) => {
+        ctxTS.strokeStyle = col; ctxTS.beginPath(); ctxTS.moveTo(x1, y1); ctxTS.lineTo(x2, y2); ctxTS.stroke();
+      });
+
+      // State labels
+      const states = [
+        { S: SA, T: TH, label: 'A', dx: -12, dy: -8 },
+        { S: SB, T: TH, label: 'B', dx: 10, dy: -8 },
+        { S: SB, T: TC, label: 'C', dx: 10, dy: 14 },
+        { S: SA, T: TC, label: 'D', dx: -12, dy: 14 },
+      ];
+      ctxTS.font = FONT_SM;
+      states.forEach(s => {
+        const [sx, sy] = toScreenTS(s.S, s.T);
+        ctxTS.fillStyle = '#fff';
+        ctxTS.beginPath(); ctxTS.arc(sx, sy, 4, 0, 2 * Math.PI); ctxTS.fill();
+        ctxTS.fillStyle = COLORS.text; ctxTS.textAlign = 'center';
+        ctxTS.fillText(s.label, sx + s.dx, sy + s.dy);
+      });
+
+      // Work label
+      ctxTS.fillStyle = COLORS.green; ctxTS.font = FONT; ctxTS.textAlign = 'center';
+      const [midx, midy] = toScreenTS((SA + SB) / 2, (TH + TC) / 2);
+      ctxTS.fillText('W = Q_net', midx, midy + 5);
+
+      // Legend
+      ctxTS.font = FONT_SM; ctxTS.textAlign = 'left';
+      const ly = HTS - 8;
+      ctxTS.fillStyle = COLORS.red;    ctxTS.fillText('A\u2192B Isotherm (TH)', ox2, ly);
+      ctxTS.fillStyle = COLORS.blue;   ctxTS.fillText('B\u2192C Adiabat', ox2 + 140, ly);
+      ctxTS.fillStyle = COLORS.green;  ctxTS.fillText('C\u2192D Isotherm (TC)', ox2 + 230, ly);
+      ctxTS.fillStyle = COLORS.orange; ctxTS.fillText('D\u2192A Adiabat', ox2 + 380, ly);
+
+      // Temperature ticks
+      ctxTS.fillStyle = COLORS.textDim; ctxTS.font = '10px Inter, system-ui, sans-serif'; ctxTS.textAlign = 'right';
+      [TC, TH].forEach(T => { const [, sy] = toScreenTS(SA, T); ctxTS.fillText(T + ' K', ox2 - 5, sy + 4); });
+    }
+    drawTS();
+  }
 }
 
 
@@ -1678,6 +1762,81 @@ function initCh6Vis() {
 
   initParticles();
   drawDemon();
+
+  // ----- Letter Frequency Bar Chart -----
+  const cLF = document.getElementById('vis-letterfreq');
+  if (cLF) {
+    const lf = setupCanvas(cLF);
+    const ctxLF = lf.ctx, WLF = lf.W, HLF = lf.H;
+
+    const letters = 'ETAOINSRHLDCUMFPGWYBVKXJQZ'.split('');
+    const freqs = [12.7,9.1,8.2,7.5,7.0,6.7,6.3,6.0,5.3,4.3,4.0,2.8,2.8,2.7,2.4,2.2,2.0,2.0,1.9,1.5,1.0,0.8,0.2,0.2,0.1,0.1];
+    const probs = freqs.map(f => f / 100);
+    let Hshan = 0;
+    probs.forEach(p => { if (p > 0) Hshan -= p * Math.log2(p); });
+
+    const oxLF = 45, oyLF = 30;
+    const plotWLF = WLF - oxLF - 20;
+    const plotHLF = HLF - oyLF - 55;
+    const barW = plotWLF / letters.length - 2;
+    const maxFreq = 14;
+    let hoverIdx = -1;
+
+    function drawLetterFreq() {
+      clearCanvas(ctxLF, WLF, HLF);
+      ctxLF.strokeStyle = COLORS.axis; ctxLF.lineWidth = 1;
+      ctxLF.beginPath(); ctxLF.moveTo(oxLF, oyLF); ctxLF.lineTo(oxLF, oyLF + plotHLF); ctxLF.lineTo(oxLF + plotWLF, oyLF + plotHLF); ctxLF.stroke();
+
+      // Y ticks + grid
+      ctxLF.fillStyle = COLORS.textDim; ctxLF.font = '10px Inter, system-ui, sans-serif'; ctxLF.textAlign = 'right';
+      for (let v = 0; v <= maxFreq; v += 2) {
+        const py = oyLF + plotHLF - (v / maxFreq) * plotHLF;
+        ctxLF.fillText(v.toString(), oxLF - 4, py + 3);
+        ctxLF.strokeStyle = COLORS.grid; ctxLF.beginPath(); ctxLF.moveTo(oxLF, py); ctxLF.lineTo(oxLF + plotWLF, py); ctxLF.stroke();
+      }
+
+      // Bars
+      letters.forEach((letter, i) => {
+        const x = oxLF + i * (barW + 2) + 1;
+        const bH = (freqs[i] / maxFreq) * plotHLF;
+        const y = oyLF + plotHLF - bH;
+        ctxLF.fillStyle = i === hoverIdx ? COLORS.yellow : COLORS.blue;
+        ctxLF.globalAlpha = i === hoverIdx ? 1.0 : 0.75;
+        ctxLF.fillRect(x, y, barW, bH);
+        ctxLF.globalAlpha = 1.0;
+        ctxLF.fillStyle = COLORS.text; ctxLF.font = '10px Inter, system-ui, sans-serif'; ctxLF.textAlign = 'center';
+        ctxLF.fillText(letter, x + barW / 2, oyLF + plotHLF + 12);
+      });
+
+      // Hover tooltip
+      if (hoverIdx >= 0 && hoverIdx < letters.length) {
+        const p = probs[hoverIdx];
+        const bits = p > 0 ? -Math.log2(p) : 0;
+        ctxLF.fillStyle = COLORS.yellow; ctxLF.font = FONT; ctxLF.textAlign = 'left';
+        ctxLF.fillText(letters[hoverIdx] + ': P = ' + (p * 100).toFixed(1) + '%,  -log\u2082P = ' + bits.toFixed(2) + ' bits', oxLF + 5, oyLF - 8);
+      }
+
+      // Y-axis label
+      ctxLF.fillStyle = COLORS.text; ctxLF.font = FONT_SM;
+      ctxLF.save(); ctxLF.translate(oxLF - 30, oyLF + plotHLF / 2); ctxLF.rotate(-Math.PI / 2); ctxLF.textAlign = 'center'; ctxLF.fillText('Frequency (%)', 0, 0); ctxLF.restore();
+
+      // Shannon entropy
+      ctxLF.fillStyle = COLORS.green; ctxLF.font = FONT; ctxLF.textAlign = 'right';
+      ctxLF.fillText('H = ' + Hshan.toFixed(2) + ' bits/letter', WLF - 10, oyLF - 8);
+      ctxLF.fillStyle = COLORS.textDim; ctxLF.font = FONT_SM;
+      ctxLF.fillText('Uniform: log\u2082(26) = ' + Math.log2(26).toFixed(2) + ' bits  |  ASCII: 7 bits', WLF - 10, oyLF + 8);
+    }
+
+    cLF.addEventListener('mousemove', (e) => {
+      const rect = cLF.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const idx = Math.floor((mx - oxLF) / (barW + 2));
+      hoverIdx = (idx >= 0 && idx < letters.length) ? idx : -1;
+      drawLetterFreq();
+    });
+    cLF.addEventListener('mouseleave', () => { hoverIdx = -1; drawLetterFreq(); });
+    drawLetterFreq();
+  }
 }
 
 
@@ -1755,6 +1914,187 @@ function initCh7Vis() {
 
   betaSlider?.addEventListener('input', draw);
   draw();
+
+  // ----- Harmonic Oscillator E and Cv -----
+  const cHO = document.getElementById('vis-ho-ecv');
+  if (cHO) {
+    const ho = setupCanvas(cHO);
+    const ctxHO = ho.ctx, WHO = ho.W, HHO = ho.H;
+    const oxHO = 65, oyHO = 25, pwHO = WHO - oxHO - 40, phHO = HHO - oyHO - 50;
+    const xMaxHO = 5.0, yMaxE = 5.5, yMaxCv = 1.1;
+    let hoverXHO = -1;
+
+    function hoEnergy(x) {
+      if (x < 0.001) return 0.5;
+      return 1.0 / (Math.exp(1.0 / x) - 1) + 0.5;
+    }
+    function hoCv(x) {
+      if (x < 0.001) return 0;
+      const u = 1.0 / x;
+      if (u > 50) return 0;
+      const eu = Math.exp(u);
+      return (u * u * eu) / ((eu - 1) * (eu - 1));
+    }
+
+    function drawHO() {
+      clearCanvas(ctxHO, WHO, HHO);
+      drawAxes(ctxHO, oxHO, oyHO, pwHO, phHO, { xLabel: 'k\u2082T / \u210F\u03C9', yLabel: '\u27E8E\u27E9 / \u210F\u03C9', yLabelOffset: 45 });
+
+      // Right axis label
+      ctxHO.fillStyle = COLORS.green; ctxHO.font = FONT_SM;
+      ctxHO.save(); ctxHO.translate(oxHO + pwHO + 25, oyHO + phHO / 2); ctxHO.rotate(Math.PI / 2); ctxHO.textAlign = 'center'; ctxHO.fillText('C_V / k_B', 0, 0); ctxHO.restore();
+
+      const nPts = 400;
+
+      // Classical limit dashed line E = kT
+      ctxHO.strokeStyle = COLORS.textDim; ctxHO.lineWidth = 1; ctxHO.setLineDash([4, 4]);
+      ctxHO.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const x = xMaxHO * i / nPts, px = oxHO + (x / xMaxHO) * pwHO, py = oyHO + phHO - (x / yMaxE) * phHO;
+        i === 0 ? ctxHO.moveTo(px, py) : ctxHO.lineTo(px, py);
+      }
+      ctxHO.stroke(); ctxHO.setLineDash([]);
+      ctxHO.fillStyle = COLORS.textDim; ctxHO.font = '10px Inter, system-ui, sans-serif'; ctxHO.textAlign = 'left';
+      ctxHO.fillText('Classical: E = kT', oxHO + pwHO - 90, oyHO + 15);
+
+      // Zero-point energy
+      const zpY = oyHO + phHO - (0.5 / yMaxE) * phHO;
+      ctxHO.strokeStyle = COLORS.textDim; ctxHO.setLineDash([2, 4]); ctxHO.lineWidth = 1;
+      ctxHO.beginPath(); ctxHO.moveTo(oxHO, zpY); ctxHO.lineTo(oxHO + pwHO, zpY); ctxHO.stroke(); ctxHO.setLineDash([]);
+      ctxHO.fillText('\u00BD\u210F\u03C9', oxHO + 2, zpY - 4);
+
+      // Energy curve (blue)
+      ctxHO.strokeStyle = COLORS.blue; ctxHO.lineWidth = 2.5; ctxHO.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const x = xMaxHO * i / nPts, px = oxHO + (x / xMaxHO) * pwHO, py = oyHO + phHO - (hoEnergy(x) / yMaxE) * phHO;
+        i === 0 ? ctxHO.moveTo(px, py) : ctxHO.lineTo(px, py);
+      }
+      ctxHO.stroke();
+
+      // Cv curve (green)
+      ctxHO.strokeStyle = COLORS.green; ctxHO.lineWidth = 2.5; ctxHO.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const x = xMaxHO * i / nPts, px = oxHO + (x / xMaxHO) * pwHO, py = oyHO + phHO - (hoCv(x) / yMaxCv) * phHO;
+        i === 0 ? ctxHO.moveTo(px, py) : ctxHO.lineTo(px, py);
+      }
+      ctxHO.stroke();
+
+      // Cv=1 classical limit
+      ctxHO.strokeStyle = COLORS.green; ctxHO.globalAlpha = 0.3; ctxHO.setLineDash([4, 4]); ctxHO.lineWidth = 1;
+      const cv1Y = oyHO + phHO - (1.0 / yMaxCv) * phHO;
+      ctxHO.beginPath(); ctxHO.moveTo(oxHO, cv1Y); ctxHO.lineTo(oxHO + pwHO, cv1Y); ctxHO.stroke();
+      ctxHO.setLineDash([]); ctxHO.globalAlpha = 1.0;
+
+      // X ticks
+      ctxHO.fillStyle = COLORS.textDim; ctxHO.font = '10px Inter, system-ui, sans-serif'; ctxHO.textAlign = 'center';
+      for (let v = 0; v <= xMaxHO; v++) { ctxHO.fillText(v.toString(), oxHO + (v / xMaxHO) * pwHO, oyHO + phHO + 12); }
+      // Left Y ticks (E)
+      ctxHO.fillStyle = COLORS.blue; ctxHO.textAlign = 'right';
+      for (let v = 0; v <= 5; v++) { ctxHO.fillText(v.toString(), oxHO - 5, oyHO + phHO - (v / yMaxE) * phHO + 4); }
+      // Right Y ticks (Cv)
+      ctxHO.fillStyle = COLORS.green; ctxHO.textAlign = 'left';
+      [0, 0.5, 1.0].forEach(v => { ctxHO.fillText(v.toFixed(1), oxHO + pwHO + 4, oyHO + phHO - (v / yMaxCv) * phHO + 4); });
+
+      // Legend
+      ctxHO.font = FONT; ctxHO.textAlign = 'left';
+      ctxHO.fillStyle = COLORS.blue; ctxHO.fillText('\u2014 \u27E8E\u27E9/\u210F\u03C9', oxHO + 10, oyHO + 12);
+      ctxHO.fillStyle = COLORS.green; ctxHO.fillText('\u2014 C_V/k_B', oxHO + 120, oyHO + 12);
+
+      // Hover
+      if (hoverXHO >= oxHO && hoverXHO <= oxHO + pwHO) {
+        const x = ((hoverXHO - oxHO) / pwHO) * xMaxHO;
+        ctxHO.strokeStyle = 'rgba(255,255,255,0.2)'; ctxHO.lineWidth = 1;
+        ctxHO.beginPath(); ctxHO.moveTo(hoverXHO, oyHO); ctxHO.lineTo(hoverXHO, oyHO + phHO); ctxHO.stroke();
+        ctxHO.fillStyle = COLORS.blue; ctxHO.beginPath(); ctxHO.arc(hoverXHO, oyHO + phHO - (hoEnergy(x) / yMaxE) * phHO, 4, 0, 2 * Math.PI); ctxHO.fill();
+        ctxHO.fillStyle = COLORS.green; ctxHO.beginPath(); ctxHO.arc(hoverXHO, oyHO + phHO - (hoCv(x) / yMaxCv) * phHO, 4, 0, 2 * Math.PI); ctxHO.fill();
+        ctxHO.fillStyle = COLORS.text; ctxHO.font = FONT_SM; ctxHO.textAlign = 'center';
+        ctxHO.fillText('kT/\u210F\u03C9 = ' + x.toFixed(2) + '   E/\u210F\u03C9 = ' + hoEnergy(x).toFixed(3) + '   C_V/k_B = ' + hoCv(x).toFixed(3), oxHO + pwHO / 2, oyHO + phHO + 38);
+      }
+    }
+
+    cHO.addEventListener('mousemove', (e) => { hoverXHO = e.clientX - cHO.getBoundingClientRect().left; drawHO(); });
+    cHO.addEventListener('mouseleave', () => { hoverXHO = -1; drawHO(); });
+    drawHO();
+  }
+
+  // ----- H2 Heat Capacity with adjustable theta_vib -----
+  const cH2 = document.getElementById('vis-h2vib');
+  if (cH2) {
+    const h2s = setupCanvas(cH2);
+    const ctxH2 = h2s.ctx, WH2 = h2s.W, HH2 = h2s.H;
+    const tvibSlider = document.getElementById('h2vib-tvib');
+
+    function einsteinCVh2(theta, T) {
+      const u = theta / T;
+      if (u > 50) return 0; if (u < 0.001) return 1;
+      const eu = Math.exp(u);
+      return (u * u * eu) / ((eu - 1) * (eu - 1));
+    }
+
+    function drawH2() {
+      const thetaVib = parseFloat(tvibSlider?.value || 6300);
+      document.getElementById('h2vib-tvib-val')?.replaceChildren(document.createTextNode(thetaVib.toString()));
+      clearCanvas(ctxH2, WH2, HH2);
+
+      const oxH2 = 65, oyH2 = 20, pwH2 = WH2 - oxH2 - 40, phH2 = HH2 - oyH2 - 50;
+      const logTmin = 1, logTmax = 4, cvMax = 4.0;
+      drawAxes(ctxH2, oxH2, oyH2, pwH2, phH2, { xLabel: 'Temperature T (K)  [log scale]', yLabel: 'C_V / Nk_B', yLabelOffset: 45 });
+      const xScale = pwH2 / (logTmax - logTmin), yScale = phH2 / cvMax;
+
+      // Plateaus
+      [{val:1.5,label:'3/2 (translation)'},{val:2.5,label:'5/2 (+ rotation)'},{val:3.5,label:'7/2 (+ vibration)'}].forEach(pl => {
+        const py = oyH2 + phH2 - pl.val * yScale;
+        ctxH2.strokeStyle = 'rgba(255,255,255,0.12)'; ctxH2.lineWidth = 1; ctxH2.setLineDash([4, 4]);
+        ctxH2.beginPath(); ctxH2.moveTo(oxH2, py); ctxH2.lineTo(oxH2 + pwH2, py); ctxH2.stroke(); ctxH2.setLineDash([]);
+        ctxH2.fillStyle = COLORS.textDim; ctxH2.font = '10px Inter, system-ui, sans-serif'; ctxH2.textAlign = 'left';
+        ctxH2.fillText(pl.label, oxH2 + pwH2 + 2, py + 4);
+      });
+
+      // Transition temperatures
+      [{T:85,label:'\u03B8_rot \u2248 85 K',color:COLORS.orange},{T:thetaVib,label:'\u03B8_vib = '+thetaVib+' K',color:COLORS.purple}].forEach(tr => {
+        const logT = Math.log10(tr.T), px = oxH2 + (logT - logTmin) * xScale;
+        if (px > oxH2 && px < oxH2 + pwH2) {
+          ctxH2.strokeStyle = tr.color; ctxH2.lineWidth = 1; ctxH2.setLineDash([3, 3]);
+          ctxH2.beginPath(); ctxH2.moveTo(px, oyH2); ctxH2.lineTo(px, oyH2 + phH2); ctxH2.stroke(); ctxH2.setLineDash([]);
+          ctxH2.fillStyle = tr.color; ctxH2.font = '10px Inter, system-ui, sans-serif'; ctxH2.textAlign = 'center';
+          ctxH2.fillText(tr.label, px, oyH2 + phH2 + 12);
+        }
+      });
+
+      // Theory curve
+      ctxH2.strokeStyle = COLORS.blue; ctxH2.lineWidth = 2.5; ctxH2.beginPath();
+      for (let i = 0; i < 500; i++) {
+        const logT = logTmin + (logTmax - logTmin) * i / 500;
+        const T = Math.pow(10, logT);
+        const cv = 1.5 + 2 * einsteinCVh2(85, T) + 2 * einsteinCVh2(thetaVib, T);
+        const px = oxH2 + (logT - logTmin) * xScale, py = oyH2 + phH2 - cv * yScale;
+        i === 0 ? ctxH2.moveTo(px, py) : ctxH2.lineTo(px, py);
+      }
+      ctxH2.stroke();
+
+      // Experimental data
+      ctxH2.fillStyle = COLORS.yellow;
+      [[50,1.5],[100,1.5],[200,2.3],[250,2.45],[300,2.49],[400,2.50],[500,2.50],[700,2.52],[1000,2.60],[1500,2.85],[2000,3.05],[2500,3.20],[3000,3.30],[4000,3.42],[5000,3.47],[6000,3.49]].forEach(([T, cv]) => {
+        const px = oxH2 + (Math.log10(T) - logTmin) * xScale, py = oyH2 + phH2 - cv * yScale;
+        ctxH2.beginPath(); ctxH2.arc(px, py, 3.5, 0, 2 * Math.PI); ctxH2.fill();
+      });
+
+      // X ticks
+      ctxH2.fillStyle = COLORS.textDim; ctxH2.font = '10px Inter, system-ui, sans-serif'; ctxH2.textAlign = 'center';
+      [10, 100, 1000, 10000].forEach(T => { ctxH2.fillText(T.toString(), oxH2 + (Math.log10(T) - logTmin) * xScale, oyH2 + phH2 + 24); });
+      // Y ticks
+      ctxH2.textAlign = 'right';
+      for (let cv = 0; cv <= cvMax; cv += 0.5) { ctxH2.fillText(cv.toFixed(1), oxH2 - 5, oyH2 + phH2 - cv * yScale + 4); }
+
+      // Legend
+      ctxH2.font = FONT_SM; ctxH2.textAlign = 'left';
+      ctxH2.fillStyle = COLORS.blue; ctxH2.fillText('\u2014 Theory (Einstein model)', oxH2 + 5, oyH2 + 12);
+      ctxH2.fillStyle = COLORS.yellow; ctxH2.fillText('\u25CF Experimental data', oxH2 + 175, oyH2 + 12);
+    }
+
+    tvibSlider?.addEventListener('input', drawH2);
+    drawH2();
+  }
 }
 
 
@@ -2083,6 +2423,221 @@ function initCh9Vis() {
     initIsing();
     drawIsing();
   });
+
+  // ----- Interactive P-T Phase Diagram -----
+  const cPT = document.getElementById('vis-pt-phase');
+  if (cPT) {
+    const ptS = setupCanvas(cPT);
+    const ctxPT = ptS.ctx, WPT = ptS.W, HPT = ptS.H;
+    const substances = {
+      co2: { name: 'CO\u2082', Tt: 216.6, Pt: 5.11, Tc: 304.2, Pc: 72.8, slopeSign: 1, Tmax: 350, Pmax: 85 },
+      ar:  { name: 'Ar',       Tt: 83.8,  Pt: 0.68, Tc: 150.7, Pc: 48.0, slopeSign: 1, Tmax: 200, Pmax: 55 },
+      h2o: { name: 'H\u2082O', Tt: 273.16,Pt: 0.006,Tc: 647.1, Pc: 217.7,slopeSign:-1, Tmax: 700, Pmax: 250 }
+    };
+    let currentSub = 'co2';
+    let mxPT = -1, myPT = -1;
+
+    function drawPTPhase() {
+      clearCanvas(ctxPT, WPT, HPT);
+      const sub = substances[currentSub];
+      const ox = 80, oy = 30, pw = WPT - 130, ph = HPT - 80;
+      const txF = (T) => ox + T / sub.Tmax * pw;
+      const pyF = (P) => oy + ph - P / sub.Pmax * ph;
+
+      drawAxes(ctxPT, ox, oy, pw, ph, { xLabel: 'Temperature (K)', yLabel: 'Pressure (atm)', yLabelOffset: 55 });
+
+      // Ticks
+      ctxPT.fillStyle = COLORS.textDim; ctxPT.font = FONT_SM; ctxPT.textAlign = 'center';
+      const tStep = sub.Tmax > 500 ? 100 : 50;
+      for (let T = 0; T <= sub.Tmax; T += tStep) ctxPT.fillText(T.toFixed(0), txF(T), oy + ph + 14);
+      ctxPT.textAlign = 'right';
+      const pStep = sub.Pmax > 100 ? 50 : (sub.Pmax > 20 ? 10 : 1);
+      for (let P = 0; P <= sub.Pmax; P += pStep) ctxPT.fillText(P.toFixed(pStep < 1 ? 2 : 0), ox - 5, pyF(P) + 4);
+
+      const tpx = txF(sub.Tt), tpy = pyF(sub.Pt);
+      const cpx = txF(sub.Tc), cpy = pyF(sub.Pc);
+
+      // Solid-liquid line
+      ctxPT.strokeStyle = COLORS.blue; ctxPT.lineWidth = 2.5; ctxPT.beginPath();
+      ctxPT.moveTo(tpx, tpy);
+      ctxPT.lineTo(txF(sub.Tt + sub.slopeSign * (sub.Pmax - sub.Pt) * 0.04), pyF(sub.Pmax));
+      ctxPT.stroke();
+
+      // Liquid-gas curve (triple to critical)
+      ctxPT.strokeStyle = COLORS.green; ctxPT.lineWidth = 2.5; ctxPT.beginPath(); ctxPT.moveTo(tpx, tpy);
+      for (let i = 1; i <= 100; i++) {
+        const f = i / 100;
+        ctxPT.lineTo(txF(sub.Tt + f * (sub.Tc - sub.Tt)), pyF(sub.Pt + (sub.Pc - sub.Pt) * Math.pow(f, 0.7)));
+      }
+      ctxPT.stroke();
+
+      // Solid-gas curve (sublimation)
+      ctxPT.strokeStyle = COLORS.red; ctxPT.lineWidth = 2.5; ctxPT.beginPath(); ctxPT.moveTo(tpx, tpy);
+      for (let i = 1; i <= 100; i++) {
+        const f = i / 100;
+        ctxPT.lineTo(txF(sub.Tt * (1 - f * 0.8)), pyF(Math.max(sub.Pt * Math.exp(-3 * f), 0)));
+      }
+      ctxPT.stroke();
+
+      // Region labels
+      ctxPT.font = FONT_LG; ctxPT.textAlign = 'center';
+      ctxPT.fillStyle = COLORS.blue; ctxPT.fillText('SOLID', txF(sub.Tt * 0.35), pyF(sub.Pmax * 0.6));
+      ctxPT.fillStyle = COLORS.green; ctxPT.fillText('LIQUID', txF((sub.Tt + sub.Tc) / 2), pyF(sub.Pmax * 0.7));
+      ctxPT.fillStyle = COLORS.red; ctxPT.fillText('GAS', txF(sub.Tc * 0.85), pyF(sub.Pmax * 0.15));
+      ctxPT.fillStyle = COLORS.textDim; ctxPT.font = FONT_SM; ctxPT.fillText('Supercritical', cpx + 30, oy + 15);
+
+      // Points
+      ctxPT.fillStyle = '#fff';
+      ctxPT.beginPath(); ctxPT.arc(tpx, tpy, 5, 0, 2 * Math.PI); ctxPT.fill();
+      ctxPT.beginPath(); ctxPT.arc(cpx, cpy, 5, 0, 2 * Math.PI); ctxPT.fill();
+      ctxPT.fillStyle = COLORS.text; ctxPT.font = FONT_SM; ctxPT.textAlign = 'left';
+      ctxPT.fillText('Triple (' + sub.Tt.toFixed(1) + ' K, ' + sub.Pt.toFixed(2) + ' atm)', tpx + 8, tpy + 5);
+      ctxPT.fillText('Critical (' + sub.Tc.toFixed(1) + ' K, ' + sub.Pc.toFixed(1) + ' atm)', cpx + 8, cpy - 8);
+
+      // STP marker
+      if (293 < sub.Tmax && 1 < sub.Pmax) {
+        ctxPT.fillStyle = COLORS.yellow;
+        ctxPT.beginPath(); ctxPT.arc(txF(293), pyF(1), 4, 0, 2 * Math.PI); ctxPT.fill();
+        ctxPT.font = FONT_SM; ctxPT.fillText('STP', txF(293) + 7, pyF(1) + 4);
+      }
+
+      ctxPT.fillStyle = COLORS.text; ctxPT.font = FONT_LG; ctxPT.textAlign = 'left';
+      ctxPT.fillText('Phase Diagram: ' + sub.name, ox + 5, oy + 15);
+
+      // Hover
+      if (mxPT >= ox && mxPT <= ox + pw && myPT >= oy && myPT <= oy + ph) {
+        ctxPT.strokeStyle = 'rgba(255,255,255,0.2)'; ctxPT.lineWidth = 0.5; ctxPT.setLineDash([3, 3]);
+        ctxPT.beginPath(); ctxPT.moveTo(mxPT, oy); ctxPT.lineTo(mxPT, oy + ph); ctxPT.stroke();
+        ctxPT.beginPath(); ctxPT.moveTo(ox, myPT); ctxPT.lineTo(ox + pw, myPT); ctxPT.stroke();
+        ctxPT.setLineDash([]);
+        const hT = mxPT / pw * sub.Tmax * (pw / (pw)) ;
+        const hT2 = (mxPT - ox) / pw * sub.Tmax;
+        const hP = (1 - (myPT - oy) / ph) * sub.Pmax;
+        ctxPT.fillStyle = 'rgba(255,255,255,0.85)'; ctxPT.font = FONT_SM; ctxPT.textAlign = 'left';
+        ctxPT.fillText('T = ' + hT2.toFixed(1) + ' K,  P = ' + hP.toFixed(1) + ' atm', mxPT + 10, myPT - 8);
+      }
+    }
+
+    cPT.addEventListener('mousemove', (e) => { const r = cPT.getBoundingClientRect(); mxPT = e.clientX - r.left; myPT = e.clientY - r.top; drawPTPhase(); });
+    cPT.addEventListener('mouseleave', () => { mxPT = -1; myPT = -1; drawPTPhase(); });
+    ['co2', 'ar', 'h2o'].forEach(id => {
+      document.getElementById('pt-sub-' + id)?.addEventListener('click', () => {
+        currentSub = id;
+        document.querySelectorAll('[id^="pt-sub-"]').forEach(b => b.classList.remove('active'));
+        document.getElementById('pt-sub-' + id)?.classList.add('active');
+        drawPTPhase();
+      });
+    });
+    drawPTPhase();
+  }
+
+  // ----- Interactive PV Diagram (Van der Waals) -----
+  const cPV = document.getElementById('vis-pv-diagram');
+  if (cPV) {
+    const pvS = setupCanvas(cPV);
+    const ctxPV = pvS.ctx, WPV = pvS.W, HPV = pvS.H;
+    const pvSlider = document.getElementById('pv-temp');
+
+    function vdwP(vr, Tr) {
+      if (vr <= 1/3 + 0.001) return Infinity;
+      return 8 * Tr / (3 * vr - 1) - 3 / (vr * vr);
+    }
+    function maxwellP(Tr) {
+      let Plo = 0.01, Phi = Math.max(vdwP(3, Tr), 0.1);
+      for (let iter = 0; iter < 50; iter++) {
+        const Pm = (Plo + Phi) / 2;
+        const vols = [];
+        for (let vi = 0.4; vi < 6; vi += 0.005) {
+          const p1 = vdwP(vi, Tr), p2 = vdwP(vi + 0.005, Tr);
+          if ((p1 - Pm) * (p2 - Pm) <= 0) vols.push(vi + 0.005 * (Pm - p1) / (p2 - p1));
+        }
+        if (vols.length < 3) return Pm;
+        let area = 0;
+        const dv = (vols[2] - vols[0]) / 500;
+        for (let v = vols[0]; v < vols[2]; v += dv) area += (vdwP(v, Tr) - Pm) * dv;
+        if (area > 0) Plo = Pm; else Phi = Pm;
+      }
+      return (Plo + Phi) / 2;
+    }
+
+    function drawPV() {
+      const Tr = parseFloat(pvSlider?.value || 1);
+      clearCanvas(ctxPV, WPV, HPV);
+      const ox = 70, oy = 30, pw = WPV - 110, ph = HPV - 80;
+      const vrMin = 0.4, vrMax = 6, PrMax = 3;
+      const vx = (vr) => ox + (vr - vrMin) / (vrMax - vrMin) * pw;
+      const py = (Pr) => oy + ph - (Pr + 0.2) / (PrMax + 0.2) * ph;
+
+      drawAxes(ctxPV, ox, oy, pw, ph, { xLabel: 'v / v_c', yLabel: 'P / P_c', yLabelOffset: 45 });
+      ctxPV.fillStyle = COLORS.textDim; ctxPV.font = FONT_SM; ctxPV.textAlign = 'center';
+      for (let v = 1; v <= 6; v++) ctxPV.fillText(v.toFixed(0), vx(v), oy + ph + 14);
+      ctxPV.textAlign = 'right';
+      for (let P = 0; P <= 3; P += 0.5) ctxPV.fillText(P.toFixed(1), ox - 5, py(P) + 4);
+
+      // Background isotherms
+      [0.75, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.2, 1.3].forEach(Tbg => {
+        ctxPV.strokeStyle = 'rgba(255,255,255,0.08)'; ctxPV.lineWidth = 1; ctxPV.beginPath();
+        let st = false;
+        for (let vi = vrMin + 0.01; vi < vrMax; vi += 0.02) {
+          let P = vdwP(vi, Tbg);
+          if (Tbg < 1) {
+            const Pf = maxwellP(Tbg);
+            const vs = [];
+            for (let vj = 0.4; vj < 6; vj += 0.005) { const p1 = vdwP(vj, Tbg), p2 = vdwP(vj + 0.005, Tbg); if ((p1 - Pf) * (p2 - Pf) <= 0) vs.push(vj); }
+            if (vs.length >= 2 && vi >= vs[0] && vi <= vs[vs.length - 1]) P = Pf;
+          }
+          if (!isFinite(P) || P < -0.2 || P > PrMax) { st = false; continue; }
+          if (!st) { ctxPV.moveTo(vx(vi), py(P)); st = true; } else ctxPV.lineTo(vx(vi), py(P));
+        }
+        ctxPV.stroke();
+      });
+
+      // Coexistence dome
+      ctxPV.fillStyle = 'rgba(102,187,106,0.08)';
+      const dTop = [], dBot = [];
+      for (let Td = 0.7; Td < 1.0; Td += 0.005) {
+        const Pf = maxwellP(Td);
+        const vs = [];
+        for (let vj = 0.4; vj < 6; vj += 0.005) { const p1 = vdwP(vj, Td), p2 = vdwP(vj + 0.005, Td); if ((p1 - Pf) * (p2 - Pf) <= 0) vs.push(vj); }
+        if (vs.length >= 2) { dTop.push({ x: vx(vs[0]), y: py(Pf) }); dBot.push({ x: vx(vs[vs.length - 1]), y: py(Pf) }); }
+      }
+      dTop.push({ x: vx(1), y: py(1) });
+      if (dTop.length > 1) {
+        ctxPV.beginPath(); ctxPV.moveTo(dTop[0].x, dTop[0].y);
+        dTop.forEach(p => ctxPV.lineTo(p.x, p.y));
+        for (let i = dBot.length - 1; i >= 0; i--) ctxPV.lineTo(dBot[i].x, dBot[i].y);
+        ctxPV.closePath(); ctxPV.fill();
+      }
+
+      // Highlighted isotherm
+      ctxPV.strokeStyle = Tr < 0.99 ? COLORS.blue : (Tr > 1.01 ? COLORS.orange : COLORS.red);
+      ctxPV.lineWidth = 3; ctxPV.beginPath();
+      let hlSt = false;
+      const Pf = Tr < 1 ? maxwellP(Tr) : 0;
+      const hlVs = [];
+      if (Tr < 1) { for (let vj = 0.4; vj < 6; vj += 0.005) { const p1 = vdwP(vj, Tr), p2 = vdwP(vj + 0.005, Tr); if ((p1 - Pf) * (p2 - Pf) <= 0) hlVs.push(vj); } }
+      for (let vi = vrMin + 0.01; vi < vrMax; vi += 0.01) {
+        let P = vdwP(vi, Tr);
+        if (Tr < 1 && hlVs.length >= 2 && vi >= hlVs[0] && vi <= hlVs[hlVs.length - 1]) P = Pf;
+        if (!isFinite(P) || P < -0.2 || P > PrMax) { hlSt = false; continue; }
+        if (!hlSt) { ctxPV.moveTo(vx(vi), py(P)); hlSt = true; } else ctxPV.lineTo(vx(vi), py(P));
+      }
+      ctxPV.stroke();
+
+      // Critical point
+      ctxPV.fillStyle = '#fff'; ctxPV.beginPath(); ctxPV.arc(vx(1), py(1), 5, 0, 2 * Math.PI); ctxPV.fill();
+      ctxPV.fillStyle = COLORS.text; ctxPV.font = FONT_SM; ctxPV.textAlign = 'left';
+      ctxPV.fillText('Critical Point', vx(1) + 8, py(1) + 4);
+      ctxPV.fillStyle = COLORS.green; ctxPV.fillText('Liquid + Gas', vx(2), py(0.5));
+
+      const label = Tr < 0.99 ? 'Below T_c' : (Tr > 1.01 ? 'Above T_c (supercritical)' : 'At T_c (critical isotherm)');
+      ctxPV.fillStyle = COLORS.text; ctxPV.font = FONT_LG; ctxPV.textAlign = 'left';
+      ctxPV.fillText('T/T_c = ' + Tr.toFixed(2) + '  \u2014  ' + label, ox + 5, oy + 15);
+      document.getElementById('pv-temp-val')?.replaceChildren(document.createTextNode(Tr.toFixed(2)));
+    }
+    pvSlider?.addEventListener('input', drawPV);
+    drawPV();
+  }
 }
 
 
@@ -2156,6 +2711,107 @@ function initCh10Vis() {
 
   tempSlider?.addEventListener('input', draw);
   draw();
+
+  // ----- Bose-Einstein Distribution -----
+  const cBE = document.getElementById('vis-be-dist');
+  if (cBE) {
+    const beS = setupCanvas(cBE);
+    const ctxBE = beS.ctx, WBE = beS.W, HBE = beS.H;
+    const beSlider = document.getElementById('be-dist-temp');
+
+    function drawBE() {
+      const kT = parseFloat(beSlider?.value || 1);
+      clearCanvas(ctxBE, WBE, HBE);
+      const ox = 70, oy = 25, pw = WBE - 110, ph = HBE - 70;
+      const eMax = 5, nMax = 5, mu = -0.5;
+      drawAxes(ctxBE, ox, oy, pw, ph, { xLabel: 'Energy \u03B5', yLabel: '\u27E8n\u27E9', yLabelOffset: 40 });
+      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
+      for (let e = 0; e <= eMax; e++) ctxBE.fillText(e.toFixed(0), ox + e / eMax * pw, oy + ph + 14);
+      ctxBE.textAlign = 'right';
+      for (let n = 0; n <= nMax; n++) ctxBE.fillText(n.toFixed(0), ox - 5, oy + ph - n / nMax * ph + 4);
+
+      const temps = [kT * 0.5, kT, kT * 2];
+      const cols = [COLORS.blue, COLORS.red, COLORS.orange];
+      const labs = ['kT/2', 'kT', '2kT'];
+      temps.forEach((T, idx) => {
+        const beta = 1 / T;
+        ctxBE.strokeStyle = cols[idx]; ctxBE.lineWidth = idx === 1 ? 3 : 2; ctxBE.beginPath();
+        let st = false;
+        for (let px = 0; px < pw; px++) {
+          const e = px / pw * eMax;
+          if (e <= mu + 0.01) continue;
+          let n = 1 / (Math.exp(beta * (e - mu)) - 1);
+          if (!isFinite(n) || n < 0) continue;
+          if (n > nMax) n = nMax;
+          const pyv = oy + ph - (n / nMax) * ph;
+          if (!st) { ctxBE.moveTo(ox + px, pyv); st = true; } else ctxBE.lineTo(ox + px, pyv);
+        }
+        ctxBE.stroke();
+      });
+
+      temps.forEach((T, idx) => {
+        ctxBE.fillStyle = cols[idx]; ctxBE.font = FONT_SM; ctxBE.textAlign = 'left';
+        ctxBE.fillText(labs[idx] + ' = ' + T.toFixed(2), WBE - 130, 35 + idx * 16);
+      });
+      ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_LG; ctxBE.textAlign = 'left';
+      ctxBE.fillText('Bose-Einstein Distribution', ox + 5, oy + 12);
+      document.getElementById('be-dist-temp-val')?.replaceChildren(document.createTextNode(kT.toFixed(2)));
+    }
+    beSlider?.addEventListener('input', drawBE);
+    drawBE();
+  }
+
+  // ----- Fermi-Dirac Distribution -----
+  const cFD = document.getElementById('vis-fd-dist');
+  if (cFD) {
+    const fdS = setupCanvas(cFD);
+    const ctxFD = fdS.ctx, WFD = fdS.W, HFD = fdS.H;
+    const fdSlider = document.getElementById('fd-dist-temp');
+
+    function drawFD() {
+      const kTr = parseFloat(fdSlider?.value || 0.1);
+      clearCanvas(ctxFD, WFD, HFD);
+      const ox = 70, oy = 25, pw = WFD - 110, ph = HFD - 70;
+      const eMax = 3, muFD = 1;
+      drawAxes(ctxFD, ox, oy, pw, ph, { xLabel: 'Energy \u03B5/\u03B5_F', yLabel: '\u27E8n\u27E9', yLabelOffset: 40 });
+      ctxFD.fillStyle = COLORS.textDim; ctxFD.font = FONT_SM; ctxFD.textAlign = 'center';
+      for (let e = 0; e <= eMax; e += 0.5) ctxFD.fillText(e.toFixed(1), ox + e / eMax * pw, oy + ph + 14);
+      ctxFD.textAlign = 'right';
+      for (let n = 0; n <= 1; n += 0.2) ctxFD.fillText(n.toFixed(1), ox - 5, oy + ph - n * ph + 4);
+
+      // Fermi energy line
+      const efX = ox + muFD / eMax * pw;
+      ctxFD.strokeStyle = 'rgba(255,255,255,0.15)'; ctxFD.setLineDash([3, 3]); ctxFD.lineWidth = 0.5;
+      ctxFD.beginPath(); ctxFD.moveTo(efX, oy); ctxFD.lineTo(efX, oy + ph); ctxFD.stroke(); ctxFD.setLineDash([]);
+      ctxFD.fillStyle = COLORS.textDim; ctxFD.textAlign = 'center'; ctxFD.fillText('\u03B5_F', efX, oy + ph + 14);
+
+      const ratios = [0, kTr * 0.5, kTr, kTr * 2];
+      const cols = [COLORS.textDim, COLORS.blue, COLORS.red, COLORS.orange];
+      const labs = ['T = 0', 'kT/2\u03B5_F', 'kT/\u03B5_F', '2kT/\u03B5_F'];
+      ratios.forEach((T, idx) => {
+        ctxFD.strokeStyle = cols[idx]; ctxFD.lineWidth = idx === 2 ? 3 : (idx === 0 ? 1.5 : 2);
+        if (idx === 0) ctxFD.setLineDash([6, 4]);
+        ctxFD.beginPath();
+        for (let px = 0; px < pw; px++) {
+          const e = px / pw * eMax;
+          const n = T < 0.001 ? (e <= muFD ? 1 : 0) : 1 / (Math.exp((e - muFD) / T) + 1);
+          const pyv = oy + ph - n * ph;
+          px === 0 ? ctxFD.moveTo(ox + px, pyv) : ctxFD.lineTo(ox + px, pyv);
+        }
+        ctxFD.stroke(); ctxFD.setLineDash([]);
+      });
+
+      ratios.forEach((T, idx) => {
+        ctxFD.fillStyle = cols[idx]; ctxFD.font = FONT_SM; ctxFD.textAlign = 'left';
+        ctxFD.fillText(idx === 0 ? 'T = 0' : labs[idx] + ' = ' + T.toFixed(2), WFD - 150, 35 + idx * 16);
+      });
+      ctxFD.fillStyle = COLORS.text; ctxFD.font = FONT_LG; ctxFD.textAlign = 'left';
+      ctxFD.fillText('Fermi-Dirac Distribution', ox + 5, oy + 12);
+      document.getElementById('fd-dist-temp-val')?.replaceChildren(document.createTextNode(kTr.toFixed(2)));
+    }
+    fdSlider?.addEventListener('input', drawFD);
+    drawFD();
+  }
 }
 
 
@@ -2442,6 +3098,126 @@ function initCh12Vis() {
 
   tempSlider?.addEventListener('input', draw);
   draw();
+
+  // ----- Two-State BEC: BE vs MB -----
+  const c2s = document.getElementById('vis-bec-twostate');
+  if (c2s) {
+    const tsS = setupCanvas(c2s);
+    const ctx2s = tsS.ctx, W2s = tsS.W, H2s = tsS.H;
+    const nSlider2s = document.getElementById('bec2-N');
+
+    function draw2state() {
+      const N = parseInt(nSlider2s?.value || 100);
+      clearCanvas(ctx2s, W2s, H2s);
+      const ox = 70, oy = 30, pw = W2s - 120, ph = H2s - 80;
+      const xMax = N * 4;
+      drawAxes(ctx2s, ox, oy, pw, ph, { xLabel: 'k_BT / \u03B5', yLabel: 'N_ground / N', yLabelOffset: 45 });
+
+      ctx2s.fillStyle = COLORS.textDim; ctx2s.font = FONT_SM; ctx2s.textAlign = 'right';
+      for (let y = 0; y <= 1; y += 0.2) ctx2s.fillText(y.toFixed(1), ox - 5, oy + ph - y * ph + 4);
+      ctx2s.textAlign = 'center';
+      const xStep = xMax > 200 ? Math.round(xMax / 5 / 100) * 100 : Math.round(xMax / 5);
+      for (let x = 0; x <= xMax; x += (xStep || 1)) ctx2s.fillText(x.toFixed(0), ox + x / xMax * pw, oy + ph + 14);
+
+      // MB curve
+      ctx2s.strokeStyle = COLORS.green; ctx2s.lineWidth = 2; ctx2s.beginPath();
+      for (let px = 1; px < pw; px++) {
+        const kT = (px / pw) * xMax;
+        if (kT < 0.01) continue;
+        const frac = 1 / (Math.exp(-1 / kT) + 1);
+        const pyv = oy + ph - frac * ph;
+        px < 3 ? ctx2s.moveTo(ox + px, pyv) : ctx2s.lineTo(ox + px, pyv);
+      }
+      ctx2s.stroke();
+
+      // BE curve
+      ctx2s.strokeStyle = COLORS.red; ctx2s.lineWidth = 2.5; ctx2s.beginPath();
+      let beSt = false;
+      for (let px = 1; px < pw; px++) {
+        const kT = (px / pw) * xMax;
+        if (kT < 0.01) continue;
+        const betaEps = 1 / kT;
+        const t1 = 1 / (Math.exp(-betaEps) - 1);
+        const expNp1 = Math.exp(-(N + 1) * betaEps);
+        const t2 = (N + 1) / (1 - expNp1);
+        let nG = t1 + t2;
+        if (!isFinite(nG) || nG < 0) nG = N;
+        if (nG > N) nG = N;
+        const pyv = oy + ph - (nG / N) * ph;
+        if (!beSt) { ctx2s.moveTo(ox + px, pyv); beSt = true; } else ctx2s.lineTo(ox + px, pyv);
+      }
+      ctx2s.stroke();
+
+      ctx2s.font = FONT_SM; ctx2s.textAlign = 'left';
+      ctx2s.fillStyle = COLORS.red; ctx2s.fillText('Bose-Einstein', W2s - 150, 40);
+      ctx2s.fillStyle = COLORS.green; ctx2s.fillText('Maxwell-Boltzmann', W2s - 150, 56);
+      ctx2s.fillStyle = COLORS.text; ctx2s.font = FONT_LG; ctx2s.textAlign = 'left';
+      ctx2s.fillText('Two-state system, N = ' + N, ox + 5, oy + 12);
+      document.getElementById('bec2-N-val')?.replaceChildren(document.createTextNode(N.toString()));
+    }
+    nSlider2s?.addEventListener('input', draw2state);
+    draw2state();
+  }
+
+  // ----- Condensate Fraction Plot -----
+  const cFrac = document.getElementById('vis-bec-fraction');
+  if (cFrac) {
+    const frS = setupCanvas(cFrac);
+    const ctxFr = frS.ctx, WFr = frS.W, HFr = frS.H;
+
+    function drawFraction() {
+      clearCanvas(ctxFr, WFr, HFr);
+      const ox = 70, oy = 30, pw = WFr - 120, ph = HFr - 80;
+      const tMax = 2;
+      drawAxes(ctxFr, ox, oy, pw, ph, { xLabel: 'T / T_c', yLabel: 'N\u2080 / N', yLabelOffset: 40 });
+
+      ctxFr.fillStyle = COLORS.textDim; ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      for (let t = 0; t <= tMax; t += 0.5) ctxFr.fillText(t.toFixed(1), ox + t / tMax * pw, oy + ph + 14);
+      ctxFr.textAlign = 'right';
+      for (let y = 0; y <= 1; y += 0.2) ctxFr.fillText(y.toFixed(1), ox - 5, oy + ph - y * ph + 4);
+
+      // Tc line
+      const tcX = ox + 1 / tMax * pw;
+      ctxFr.strokeStyle = 'rgba(255,255,255,0.15)'; ctxFr.setLineDash([4, 4]); ctxFr.lineWidth = 1;
+      ctxFr.beginPath(); ctxFr.moveTo(tcX, oy); ctxFr.lineTo(tcX, oy + ph); ctxFr.stroke(); ctxFr.setLineDash([]);
+      ctxFr.fillStyle = COLORS.textDim; ctxFr.textAlign = 'center'; ctxFr.fillText('T_c', tcX, oy + ph + 14);
+
+      // Analytic curve
+      ctxFr.strokeStyle = COLORS.red; ctxFr.lineWidth = 3; ctxFr.beginPath();
+      for (let px = 0; px < pw; px++) {
+        const tR = px / pw * tMax;
+        const frac = tR < 1 ? 1 - Math.pow(tR, 1.5) : 0;
+        const pyv = oy + ph - frac * ph;
+        px === 0 ? ctxFr.moveTo(ox + px, pyv) : ctxFr.lineTo(ox + px, pyv);
+      }
+      ctxFr.stroke();
+
+      // Finite-N curves
+      const nVals = [{ N: 100, color: COLORS.blue, dash: [6, 4] }, { N: 1000, color: COLORS.green, dash: [4, 3] }, { N: 10000, color: COLORS.orange, dash: [2, 2] }];
+      nVals.forEach(nv => {
+        ctxFr.strokeStyle = nv.color; ctxFr.lineWidth = 2; ctxFr.setLineDash(nv.dash); ctxFr.beginPath();
+        const sigma = 0.3 * Math.pow(nv.N, -1/3);
+        for (let px = 0; px < pw; px++) {
+          const tR = px / pw * tMax;
+          let frac;
+          if (tR < 1 - 3 * sigma) frac = 1 - Math.pow(tR, 1.5);
+          else if (tR > 1 + 3 * sigma) frac = 0;
+          else { const a = Math.max(0, 1 - Math.pow(tR, 1.5)); frac = a * 0.5 * (1 - Math.tanh((tR - 1) / sigma)); }
+          const pyv = oy + ph - frac * ph;
+          px === 0 ? ctxFr.moveTo(ox + px, pyv) : ctxFr.lineTo(ox + px, pyv);
+        }
+        ctxFr.stroke(); ctxFr.setLineDash([]);
+      });
+
+      // Legend
+      ctxFr.font = FONT_SM; ctxFr.textAlign = 'left';
+      ctxFr.fillStyle = COLORS.red; ctxFr.fillText('1 - (T/T_c)^{3/2} (analytic)', WFr - 200, 40);
+      nVals.forEach((nv, idx) => { ctxFr.fillStyle = nv.color; ctxFr.fillText('N = ' + nv.N, WFr - 200, 56 + idx * 16); });
+      ctxFr.fillStyle = COLORS.text; ctxFr.font = FONT_LG; ctxFr.textAlign = 'left';
+      ctxFr.fillText('Condensate Fraction vs Temperature', ox + 5, oy + 12);
+    }
+    drawFraction();
+  }
 }
 
 
@@ -2533,6 +3309,137 @@ function initCh13Vis() {
 
   tempSlider?.addEventListener('input', draw);
   draw();
+
+  // ----- Chemical Potential & Energy of Free Electron Gas -----
+  const cMuE = document.getElementById('vis-mu-energy');
+  if (cMuE) {
+    const meS = setupCanvas(cMuE);
+    const ctxME = meS.ctx, WME = meS.W, HME = meS.H;
+    const ox = 70, oy = 25, pw = WME - 120, ph = HME - 70;
+    const tMax = 1.5; // T/T_F
+    let hoverME = -1;
+
+    // Numerical computation of mu(T) and E(T) for free electron gas
+    // Using Sommerfeld expansion: mu/eF ≈ 1 - (pi^2/12)(T/TF)^2
+    // E/E0 ≈ 1 + (5*pi^2/12)(T/TF)^2
+    // For larger T, use numerical integration
+    function fermiIntegral(n, betaMu, nPts) {
+      nPts = nPts || 500;
+      const xMax = betaMu + 50;
+      const dx = xMax / nPts;
+      let sum = 0;
+      for (let i = 1; i <= nPts; i++) {
+        const x = i * dx;
+        const denom = Math.exp(x - betaMu) + 1;
+        sum += Math.pow(x, n) / denom * dx;
+      }
+      return sum;
+    }
+
+    function computeMuEnergy(tRatio) {
+      if (tRatio < 0.001) return { mu: 1, E: 1 };
+      const beta = 1 / tRatio; // beta * eF
+      // Find mu by bisection: (2/3) * F_{1/2}(beta*mu) * (beta*eF)^{3/2} / Gamma(3/2) = 1
+      // Normalized: F_{1/2}(betaMu) / F_{1/2}(beta*eF at T=0) = 1
+      // At T=0: F_{1/2}(inf) = (2/3)*betaEf^{3/2}
+      const target = (2/3) * Math.pow(beta, 1.5); // F_{1/2}(beta*mu) should equal this
+      let muLo = -5 * tRatio, muHi = 1.5;
+      for (let iter = 0; iter < 60; iter++) {
+        const muMid = (muLo + muHi) / 2;
+        const val = fermiIntegral(0.5, muMid * beta, 500);
+        if (val > target) muHi = muMid; else muLo = muMid;
+      }
+      const mu = (muLo + muHi) / 2;
+      // Energy: E/E0 = (F_{3/2}(beta*mu) / F_{3/2}(inf_at_T0))
+      const E_integral = fermiIntegral(1.5, mu * beta, 500);
+      const E0_integral = (2/5) * Math.pow(beta, 2.5); // F_{3/2}(inf) at T=0
+      const E = E_integral / E0_integral;
+      return { mu, E };
+    }
+
+    // Precompute curves
+    const nPts = 200;
+    const muCurve = [], eCurve = [];
+    for (let i = 0; i <= nPts; i++) {
+      const t = tMax * i / nPts;
+      const { mu, E } = computeMuEnergy(t);
+      muCurve.push(mu);
+      eCurve.push(E);
+    }
+
+    function drawMuEnergy() {
+      clearCanvas(ctxME, WME, HME);
+      drawAxes(ctxME, ox, oy, pw, ph, { xLabel: 'T / T_F', yLabel: '', yLabelOffset: 45 });
+
+      ctxME.fillStyle = COLORS.textDim; ctxME.font = FONT_SM; ctxME.textAlign = 'center';
+      for (let t = 0; t <= tMax; t += 0.5) ctxME.fillText(t.toFixed(1), ox + t / tMax * pw, oy + ph + 14);
+
+      // Mu curve (range -0.5 to 1.2)
+      const muMin = -0.5, muMax2 = 1.2;
+      ctxME.strokeStyle = COLORS.blue; ctxME.lineWidth = 2.5; ctxME.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const px = ox + (i / nPts) * pw;
+        const pyv = oy + ph - (muCurve[i] - muMin) / (muMax2 - muMin) * ph;
+        i === 0 ? ctxME.moveTo(px, pyv) : ctxME.lineTo(px, pyv);
+      }
+      ctxME.stroke();
+
+      // mu=1 line
+      const mu1Y = oy + ph - (1 - muMin) / (muMax2 - muMin) * ph;
+      ctxME.strokeStyle = 'rgba(255,255,255,0.12)'; ctxME.setLineDash([3, 3]); ctxME.lineWidth = 1;
+      ctxME.beginPath(); ctxME.moveTo(ox, mu1Y); ctxME.lineTo(ox + pw, mu1Y); ctxME.stroke(); ctxME.setLineDash([]);
+
+      // Left Y ticks (mu)
+      ctxME.fillStyle = COLORS.blue; ctxME.font = FONT_SM; ctxME.textAlign = 'right';
+      for (let v = -0.5; v <= 1; v += 0.25) {
+        const pyv = oy + ph - (v - muMin) / (muMax2 - muMin) * ph;
+        ctxME.fillText(v.toFixed(2), ox - 5, pyv + 4);
+      }
+
+      // Energy curve (range 1 to 3)
+      const eMin = 0.8, eMax = 3;
+      ctxME.strokeStyle = COLORS.green; ctxME.lineWidth = 2.5; ctxME.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const px = ox + (i / nPts) * pw;
+        const pyv = oy + ph - (eCurve[i] - eMin) / (eMax - eMin) * ph;
+        i === 0 ? ctxME.moveTo(px, pyv) : ctxME.lineTo(px, pyv);
+      }
+      ctxME.stroke();
+
+      // Right Y ticks (E)
+      ctxME.fillStyle = COLORS.green; ctxME.textAlign = 'left';
+      for (let v = 1; v <= 3; v += 0.5) {
+        const pyv = oy + ph - (v - eMin) / (eMax - eMin) * ph;
+        ctxME.fillText(v.toFixed(1), ox + pw + 4, pyv + 4);
+      }
+
+      // Labels
+      ctxME.font = FONT; ctxME.textAlign = 'left';
+      ctxME.fillStyle = COLORS.blue; ctxME.fillText('\u03BC/\u03B5_F', ox + 10, oy + 12);
+      ctxME.fillStyle = COLORS.green; ctxME.fillText('E/E\u2080', ox + 80, oy + 12);
+
+      // Right axis label
+      ctxME.fillStyle = COLORS.green; ctxME.font = FONT_SM;
+      ctxME.save(); ctxME.translate(ox + pw + 30, oy + ph / 2); ctxME.rotate(Math.PI / 2); ctxME.textAlign = 'center'; ctxME.fillText('E / E\u2080', 0, 0); ctxME.restore();
+      ctxME.fillStyle = COLORS.blue;
+      ctxME.save(); ctxME.translate(ox - 45, oy + ph / 2); ctxME.rotate(-Math.PI / 2); ctxME.textAlign = 'center'; ctxME.fillText('\u03BC / \u03B5_F', 0, 0); ctxME.restore();
+
+      // Hover
+      if (hoverME >= ox && hoverME <= ox + pw) {
+        const idx = Math.round((hoverME - ox) / pw * nPts);
+        if (idx >= 0 && idx <= nPts) {
+          const t = tMax * idx / nPts;
+          ctxME.strokeStyle = 'rgba(255,255,255,0.2)'; ctxME.lineWidth = 1;
+          ctxME.beginPath(); ctxME.moveTo(hoverME, oy); ctxME.lineTo(hoverME, oy + ph); ctxME.stroke();
+          ctxME.fillStyle = COLORS.text; ctxME.font = FONT_SM; ctxME.textAlign = 'center';
+          ctxME.fillText('T/T_F = ' + t.toFixed(3) + '   \u03BC/\u03B5_F = ' + muCurve[idx].toFixed(4) + '   E/E\u2080 = ' + eCurve[idx].toFixed(3), ox + pw / 2, oy + ph + 38);
+        }
+      }
+    }
+    cMuE.addEventListener('mousemove', (e) => { hoverME = e.clientX - cMuE.getBoundingClientRect().left; drawMuEnergy(); });
+    cMuE.addEventListener('mouseleave', () => { hoverME = -1; drawMuEnergy(); });
+    drawMuEnergy();
+  }
 }
 
 
@@ -2738,4 +3645,153 @@ function initCh15Vis() {
   }
 
   draw();
+
+  // ----- Lane-Emden Solutions -----
+  const cLE = document.getElementById('vis-lane-emden');
+  if (cLE) {
+    const leS = setupCanvas(cLE);
+    const ctxLE = leS.ctx, WLE = leS.W, HLE = leS.H;
+
+    function solveLaneEmden(n) {
+      const dxi = 0.01;
+      let xi = 0.001, theta = 1 - xi * xi / 6, dtheta = -xi / 3;
+      const pts = [{ xi: 0, theta: 1 }];
+      for (let i = 0; i < 2000; i++) {
+        if (theta <= 0 && n < 5) break;
+        if (xi > 20) break;
+        const thetaN = n === 0 ? 1 : (n === 1 ? theta : Math.pow(Math.max(theta, 0), n));
+        const ddtheta = -thetaN - 2 * dtheta / xi;
+        dtheta += ddtheta * dxi;
+        theta += dtheta * dxi;
+        xi += dxi;
+        pts.push({ xi, theta: Math.max(theta, 0) });
+      }
+      return pts;
+    }
+
+    function drawLE() {
+      clearCanvas(ctxLE, WLE, HLE);
+      const oxLE = 70, oyLE = 25, pwLE = WLE - 110, phLE = HLE - 70;
+      const xiMax = 15;
+      drawAxes(ctxLE, oxLE, oyLE, pwLE, phLE, { xLabel: '\u03BE = r/r\u2080', yLabel: '\u03B8(\u03BE)', yLabelOffset: 40 });
+
+      ctxLE.fillStyle = COLORS.textDim; ctxLE.font = FONT_SM; ctxLE.textAlign = 'center';
+      for (let x = 0; x <= xiMax; x += 5) ctxLE.fillText(x.toFixed(0), oxLE + x / xiMax * pwLE, oyLE + phLE + 14);
+      ctxLE.textAlign = 'right';
+      for (let y = 0; y <= 1; y += 0.2) ctxLE.fillText(y.toFixed(1), oxLE - 5, oyLE + phLE - y * phLE + 4);
+
+      const polytropes = [
+        { n: 0, color: COLORS.blue, label: 'n = 0' },
+        { n: 1, color: COLORS.green, label: 'n = 1' },
+        { n: 1.5, color: COLORS.orange, label: 'n = 1.5' },
+        { n: 3, color: COLORS.red, label: 'n = 3 (Eddington)' },
+        { n: 5, color: COLORS.purple, label: 'n = 5' }
+      ];
+
+      polytropes.forEach((p, idx) => {
+        const pts = solveLaneEmden(p.n);
+        ctxLE.strokeStyle = p.color; ctxLE.lineWidth = 2; ctxLE.beginPath();
+        pts.forEach((pt, i) => {
+          const px = oxLE + pt.xi / xiMax * pwLE;
+          const pyv = oyLE + phLE - pt.theta * phLE;
+          i === 0 ? ctxLE.moveTo(px, pyv) : ctxLE.lineTo(px, pyv);
+        });
+        ctxLE.stroke();
+        ctxLE.fillStyle = p.color; ctxLE.font = FONT_SM; ctxLE.textAlign = 'left';
+        ctxLE.fillText(p.label, WLE - 160, 35 + idx * 16);
+      });
+
+      ctxLE.fillStyle = COLORS.text; ctxLE.font = FONT_LG; ctxLE.textAlign = 'left';
+      ctxLE.fillText('Lane-Emden Solutions: \u03B8(\u03BE)', oxLE + 5, oyLE + 12);
+    }
+    drawLE();
+  }
+
+  // ----- White Dwarf Mass-Radius Relation -----
+  const cWD = document.getElementById('vis-wd-mr');
+  if (cWD) {
+    const wdS = setupCanvas(cWD);
+    const ctxWD = wdS.ctx, WWD = wdS.W, HWD = wdS.H;
+    let hoverWD = -1;
+    const Mch = 1.44, R0s = 1.8;
+
+    function drawWD() {
+      clearCanvas(ctxWD, WWD, HWD);
+      const oxWD = 70, oyWD = 25, pwWD = WWD - 110, phWD = HWD - 70;
+      const mMax = 1.6, rMax = 4;
+      drawAxes(ctxWD, oxWD, oyWD, pwWD, phWD, { xLabel: 'M / M\u2609', yLabel: 'R / R_Earth', yLabelOffset: 45 });
+
+      ctxWD.fillStyle = COLORS.textDim; ctxWD.font = FONT_SM; ctxWD.textAlign = 'center';
+      for (let m = 0; m <= mMax; m += 0.2) ctxWD.fillText(m.toFixed(1), oxWD + m / mMax * pwWD, oyWD + phWD + 14);
+      ctxWD.textAlign = 'right';
+      for (let r = 0; r <= rMax; r++) ctxWD.fillText(r.toFixed(0), oxWD - 5, oyWD + phWD - r / rMax * phWD + 4);
+
+      // NR limit dashed
+      ctxWD.strokeStyle = COLORS.textDim; ctxWD.lineWidth = 1; ctxWD.setLineDash([4, 4]);
+      ctxWD.beginPath();
+      for (let px = 5; px < pwWD; px++) {
+        const m = px / pwWD * mMax;
+        if (m < 0.1) continue;
+        const r = R0s * Math.pow(0.5 / m, 1/3);
+        if (r > rMax) continue;
+        const pyv = oyWD + phWD - r / rMax * phWD;
+        px === 5 ? ctxWD.moveTo(oxWD + px, pyv) : ctxWD.lineTo(oxWD + px, pyv);
+      }
+      ctxWD.stroke(); ctxWD.setLineDash([]);
+
+      // Relativistic curve
+      ctxWD.strokeStyle = COLORS.blue; ctxWD.lineWidth = 3; ctxWD.beginPath();
+      const mPts = [];
+      for (let r = 0.01; r <= rMax; r += 0.01) {
+        const arg = 1 - (r / R0s) * (r / R0s);
+        if (arg <= 0) continue;
+        const m = Mch * Math.pow(arg, 1.5);
+        if (m > mMax) continue;
+        mPts.push({ m, r });
+      }
+      mPts.sort((a, b) => a.m - b.m);
+      let wdSt = false;
+      mPts.forEach(p => {
+        const px = oxWD + p.m / mMax * pwWD;
+        const pyv = oyWD + phWD - p.r / rMax * phWD;
+        if (!wdSt) { ctxWD.moveTo(px, pyv); wdSt = true; } else ctxWD.lineTo(px, pyv);
+      });
+      ctxWD.stroke();
+
+      // Chandrasekhar limit
+      const mchX = oxWD + Mch / mMax * pwWD;
+      ctxWD.strokeStyle = COLORS.red; ctxWD.lineWidth = 1; ctxWD.setLineDash([4, 4]);
+      ctxWD.beginPath(); ctxWD.moveTo(mchX, oyWD); ctxWD.lineTo(mchX, oyWD + phWD); ctxWD.stroke();
+      ctxWD.setLineDash([]);
+      ctxWD.fillStyle = COLORS.red; ctxWD.font = FONT_SM; ctxWD.textAlign = 'center';
+      ctxWD.fillText('M_Ch \u2248 1.44 M\u2609', mchX, oyWD + 15);
+
+      // Known white dwarfs
+      [{ name: 'Sirius B', m: 1.018, r: 0.92 }, { name: 'Procyon B', m: 0.604, r: 1.23 }, { name: '40 Eri B', m: 0.573, r: 1.36 }].forEach(d => {
+        const px = oxWD + d.m / mMax * pwWD;
+        const pyv = oyWD + phWD - d.r / rMax * phWD;
+        ctxWD.fillStyle = COLORS.yellow;
+        ctxWD.beginPath(); ctxWD.arc(px, pyv, 4, 0, 2 * Math.PI); ctxWD.fill();
+        ctxWD.fillStyle = COLORS.text; ctxWD.font = '10px Inter, system-ui, sans-serif'; ctxWD.textAlign = 'left';
+        ctxWD.fillText(d.name, px + 6, pyv - 4);
+      });
+
+      ctxWD.fillStyle = COLORS.text; ctxWD.font = FONT_LG; ctxWD.textAlign = 'left';
+      ctxWD.fillText('White Dwarf Mass-Radius Relation', oxWD + 5, oyWD + 12);
+
+      // Hover
+      if (hoverWD >= oxWD && hoverWD <= oxWD + pwWD) {
+        ctxWD.strokeStyle = 'rgba(255,255,255,0.2)'; ctxWD.lineWidth = 1;
+        ctxWD.beginPath(); ctxWD.moveTo(hoverWD, oyWD); ctxWD.lineTo(hoverWD, oyWD + phWD); ctxWD.stroke();
+        const m = (hoverWD - oxWD) / pwWD * mMax;
+        const arg = 1 - Math.pow(Math.min(m / Mch, 0.999), 2/3);
+        const r = arg > 0 ? R0s * Math.sqrt(arg) : 0;
+        ctxWD.fillStyle = COLORS.text; ctxWD.font = FONT_SM; ctxWD.textAlign = 'center';
+        ctxWD.fillText('M = ' + m.toFixed(2) + ' M\u2609,  R = ' + r.toFixed(2) + ' R_Earth', oxWD + pwWD / 2, oyWD + phWD + 38);
+      }
+    }
+    cWD.addEventListener('mousemove', (e) => { hoverWD = e.clientX - cWD.getBoundingClientRect().left; drawWD(); });
+    cWD.addEventListener('mouseleave', () => { hoverWD = -1; drawWD(); });
+    drawWD();
+  }
 }

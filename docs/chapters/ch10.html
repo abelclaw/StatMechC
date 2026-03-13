@@ -179,7 +179,15 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 
 <p>This is known as the <span class="tooltip-trigger">Bose-Einstein distribution<span class="tooltip-content">The average number of bosons occupying a state with energy $\epsilon_i$ at temperature $T$ and chemical potential $\mu$. It diverges as $\epsilon_i \to \mu$, which is key to understanding Bose-Einstein condensation.</span></span>.</p>
 
-<figure><img src="images/10-QuantumStatMech_p6_img0.png" alt="Bose-Einstein distribution function"><figcaption>The Bose-Einstein distribution function $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ as a function of energy.</figcaption></figure>
+<!-- INTERACTIVE: Bose-Einstein Distribution -->
+<div class="interactive-container">
+  <h3>Interactive: Bose-Einstein Distribution</h3>
+  <div class="vis-controls">
+    <label>$k_BT$: <input type="range" id="be-dist-temp" min="0.2" max="5" step="0.05" value="1"> <span class="slider-value" id="be-dist-temp-val">1.00</span></label>
+  </div>
+  <canvas id="vis-be-dist" width="600" height="350"></canvas>
+  <p class="vis-caption">$\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ at multiple temperatures. Note divergence as $\epsilon \to \mu$.</p>
+</div>
 
 <p>Note that if $\epsilon_i < \mu$ then $\langle n_i \rangle$ is negative, which is impossible. This means that $\mu < \epsilon_i$ for all $\epsilon_i$, i.e. the chemical potential for any Bose system will be less than all of the energies. Often we set the ground state energy to zero in which case</p>
 
@@ -208,7 +216,15 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 
 <p>This is known as the <span class="tooltip-trigger">Fermi-Dirac distribution<span class="tooltip-content">The average occupation of a state with energy $\epsilon$ for fermions. At $T = 0$, it's a step function: states below $\mu$ are completely filled, states above are empty. At finite $T$, the step is smeared over a width $\sim k_BT$.</span></span> or <strong>Fermi function</strong>, $f(\epsilon)$. We see that at low temperature, states with energy greater than $\mu$ are essentially unoccupied: $f(\epsilon > \mu) \approx 0$ and states with energies less than $\mu$ are completely filled.</p>
 
-<figure><img src="images/10-QuantumStatMech_p7_img0.png" alt="Fermi-Dirac distribution function"><figcaption>The Fermi-Dirac distribution function $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$ as a function of energy.</figcaption></figure>
+<!-- INTERACTIVE: Fermi-Dirac Distribution -->
+<div class="interactive-container">
+  <h3>Interactive: Fermi-Dirac Distribution</h3>
+  <div class="vis-controls">
+    <label>$k_BT / \epsilon_F$: <input type="range" id="fd-dist-temp" min="0.01" max="2" step="0.01" value="0.1"> <span class="slider-value" id="fd-dist-temp-val">0.10</span></label>
+  </div>
+  <canvas id="vis-fd-dist" width="600" height="350"></canvas>
+  <p class="vis-caption">At $T = 0$: sharp step at $\epsilon_F$. At finite $T$: smeared over width $\sim k_BT$.</p>
+</div>
 
 <p>The chemical potential at $T = 0$ is called the <span class="tooltip-trigger">Fermi energy<span class="tooltip-content">$\epsilon_F = \mu(T=0)$: the energy of the highest occupied state at zero temperature. All states below $\epsilon_F$ are filled; all above are empty. The Fermi energy sets the scale for quantum effects in metals.</span></span>, $\epsilon_F = \mu(T = 0)$. At $T = 0$, all states below the Fermi energy are filled and the ones above the Fermi energy are empty. Thus the chemical potential for Fermi systems is positive at low temperature and corresponds to the highest occupied energy level of the system. We'll use the Fermi energy extensively to discuss fermionic systems in the quantum regime, in Lectures 13, 14 and 15.</p>
 
@@ -264,7 +280,7 @@ $$\mathcal{Z} = \sum_N \frac{1}{N!}Z_1^N e^{\beta N\mu} = \exp\!\left[Z_1 e^{\be
 
 <p>This is known as the <span class="tooltip-trigger">Maxwell-Boltzmann distribution function<span class="tooltip-content">The classical distribution: occupation decays exponentially with energy. Valid when states are rarely multiply occupied ($\langle n_i \rangle \ll 1$).</span></span>. It looks a lot like the Bose-Einstein distribution function.</p>
 
-<figure><img src="images/10-QuantumStatMech_p9_img0.png" alt="Comparison of three distribution functions"><figcaption>Comparison of the Bose-Einstein, Fermi-Dirac, and Maxwell-Boltzmann distribution functions.</figcaption></figure>
+<!-- The existing vis-quantum widget below serves as the interactive comparison of all three distributions -->
 
 <p>Unlike the Bose-Einstein case, taking $\mu > \epsilon_i$ does not give negative occupation numbers. It can however, give occupation numbers greater than 1. When states are multiply occupied then using classical statistics is no longer justified and we must use Bose or Fermi statistics. Thus for Maxwell-Boltzmann statistics, we should have $\mu < \epsilon_i$ for all $\epsilon_i$. Or, setting the ground state energy $\epsilon_0 = 0$ we should have $\mu < 0$. Note that this is consistent with our understanding of $\mu$ from classical statistical thermodynamics. For example, in Lecture 7 we saw that for a monatomic ideal gas with $\epsilon_0 = 0$ then $\mu = k_BT\ln(n\lambda^3)$ with $\lambda = \sqrt{\frac{h^2}{2\pi mk_BT}}$ the thermal wavelength. As long as we are at low density $n < \lambda^{-3}$, then $\mu < 0$. When $n \approx \lambda^{-3}$ then quantum effects become important and the sign of $\mu$ will depend on whether the gas is bosonic or fermionic.</p>
 

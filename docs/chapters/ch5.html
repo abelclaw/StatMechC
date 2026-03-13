@@ -209,9 +209,12 @@
 
 <p>This is the <span class="tooltip-trigger">Carnot efficiency<span class="tooltip-content">The maximum possible efficiency for any heat engine operating between $T_H$ and $T_C$. No real engine can exceed this.</span></span>.</p>
 
-<figure><img src="images/5-Thermodynamics_p13_img0.png" alt="PV diagram for Carnot cycle"><figcaption>PV diagram for Carnot cycle.</figcaption></figure>
-
-<figure><img src="images/5-Thermodynamics_p13_img1.png" alt="ST diagram for Carnot cycle"><figcaption>ST diagram for Carnot cycle. The enclosed area equals the net work done.</figcaption></figure>
+<!-- INTERACTIVE: TS Diagram for Carnot Cycle -->
+<div class="interactive-container">
+  <h3>Interactive: Carnot Cycle TS Diagram</h3>
+  <canvas id="vis-carnot-ts" width="600" height="350"></canvas>
+  <p class="vis-caption">The enclosed area equals the net work done: W = (T<sub>H</sub> - T<sub>C</sub>)(S<sub>B</sub> - S<sub>A</sub>).</p>
+</div>
 
 <p>The area under a curve in the PV diagram is $\int P\,dV$, which is the work done. The area under a reversible curve in a TS diagram is the heat, $Q = \int T\,dS$. The area in a closed region equals the net heat transferred, which equals the net work by energy conservation.</p>
 

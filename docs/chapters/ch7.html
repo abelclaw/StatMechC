@@ -318,10 +318,12 @@ $$C_V = \frac{\partial E}{\partial T} = k_B \left(\frac{\hbar\omega}{k_BT}\right
 
 <p>Note that heat capacity is very small until the first energy state can be excited, then it grows linearly.</p>
 
-<figure>
-<img src="images/7-Ensembles_p7_img0.png" alt="Energy and heat capacity of harmonic oscillator">
-<figcaption>Energy and heat capacity of a quantum harmonic oscillator as a function of temperature.</figcaption>
-</figure>
+<!-- INTERACTIVE: Harmonic Oscillator E and Cv -->
+<div class="interactive-container">
+  <h3>Quantum Harmonic Oscillator: Energy &amp; Heat Capacity</h3>
+  <canvas id="vis-ho-ecv" width="600" height="350"></canvas>
+  <p class="vis-caption">Hover to read values along the curves. Blue: energy. Green: heat capacity.</p>
+</div>
 
 <p>For H$_2$, the vibrational mode has $\tilde{\nu}_{\text{vib}} = 4342\;\text{cm}^{-1}$ corresponding to $T_{\text{vib}} = \frac{ch\tilde{\nu}}{k_B} = \frac{\hbar\omega}{k_B} = 6300\;\text{K}$. So at low energies, the vibrational mode cannot be excited which is why the heat capacity for hydrogen is $C_V = \frac{5}{2}Nk_BT$ rather than $\frac{7}{2}Nk_BT$. We discussed this in Lecture 4, but now we have explained it and can make more precise quantitative predictions of how the heat capacity changes with temperature. Including the kinetic contribution, and a factor of $N$ for the $N$ molecules that can be excited in the vibration mode we see</p>
 
@@ -330,10 +332,15 @@ $$C_V = \frac{5}{2}Nk_B + Nk_B\left(\frac{T_{\text{vib}}}{T}\right)^2 \frac{e^{-
 <span class="eq-number">(38)</span>
 </div>
 
-<figure>
-<img src="images/7-Ensembles_p8_img0.png" alt="Heat capacity of H2 including vibrational modes">
-<figcaption>Heat capacity of H$_2$ as a function of temperature, showing the onset of vibrational excitation. Dots are data.</figcaption>
-</figure>
+<!-- INTERACTIVE: H2 Heat Capacity with Vibrational Mode -->
+<div class="interactive-container">
+  <h3>H&#8322; Heat Capacity: Vibrational Freezeout</h3>
+  <div class="vis-controls">
+    <label>&theta;<sub>vib</sub> (K): <input type="range" id="h2vib-tvib" min="1000" max="12000" value="6300" step="100"> <span class="slider-value" id="h2vib-tvib-val">6300</span></label>
+  </div>
+  <canvas id="vis-h2vib" width="600" height="350"></canvas>
+  <p class="vis-caption">Adjust &theta;<sub>vib</sub> to see how vibrational freezeout temperature affects C<sub>V</sub>. Yellow dots: experimental data.</p>
+</div>
 
 <p>This shows how the heat capacity goes up as the vibrational mode starts to be excitable. Note that although the temperature for the vibrational mode is 6300 K, the vibrational mode starts to be excited well below that temperature. The dots are data. We see good agreement!</p>
 

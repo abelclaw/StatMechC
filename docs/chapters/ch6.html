@@ -199,7 +199,12 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <p>For text, different letters appear with different frequencies. The standard ASCII code uses 7 bits per character. Since "e" is much more common than "&amp;", a good compression algorithm would use fewer bits for "e" and more bits for "&amp;".</p>
 
-<figure><img src="images/6-Entropy_p11_img0.png" alt="Letter frequencies in English"><figcaption>Probabilities of finding different letters in English text. "e" appears 12.7% of the time, "q" only 0.1%.</figcaption></figure>
+<!-- INTERACTIVE: Letter Frequency Bar Chart -->
+<div class="interactive-container">
+  <h3>Interactive: Letter Frequencies in English</h3>
+  <canvas id="vis-letterfreq" width="600" height="300"></canvas>
+  <p class="vis-caption">Hover over bars to see individual letter probabilities and information content in bits. Shannon entropy H = 4.17 bits/letter.</p>
+</div>
 
 <p>What is the minimal number of bits you need to encode a given type of data? Shannon's answer was:</p>
 

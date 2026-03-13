@@ -32,10 +32,8 @@ $$\langle n_i \rangle = -\frac{\partial \Phi_i}{\partial \mu} = \frac{1}{e^{\bet
 
 <p>This is known as the <span class="tooltip-trigger">Fermi-Dirac distribution<span class="tooltip-content">The quantum statistical distribution function for fermions, giving the average occupation number of a state with energy $\epsilon$ at temperature $T$ and chemical potential $\mu$.</span></span> or Fermi function, $f(\epsilon)$. As $T \to 0$ the function approaches a step function where all the states below $\mu$ are occupied and the states above $\mu$ are unoccupied. The value of $\mu$ at $T = 0$ is called the <span class="tooltip-trigger">Fermi energy<span class="tooltip-content">The energy of the highest occupied state at absolute zero temperature, denoted $\epsilon_F$. It equals the chemical potential at $T=0$.</span></span> and denoted by $\epsilon_F$. Sometimes the Fermi energy is also called the Fermi level.</p>
 
-<figure>
-<img src="images/13-Metals_p1_img0.png" alt="Fermi-Dirac distribution at various temperatures">
-<figcaption>The Fermi-Dirac distribution $f(\epsilon)$ at various temperatures. As $T \to 0$ it approaches a step function.</figcaption>
-</figure>
+<!-- Already have an interactive FD distribution in ch10; the existing vis-fermi widget below covers this -->
+<!-- The static figure showed the FD distribution at several temperatures, which is covered by the ch10 widget -->
 
 <p>At any temperature $T > 0$, some fermions will have energies higher than $\epsilon_F$, and therefore some states with energy less than $\epsilon_F$ will not be occupied. We call the unoccupied states <span class="tooltip-trigger">holes<span class="tooltip-content">An unoccupied state below the Fermi level. Holes behave as positive-energy excitations and carry positive charge in semiconductors.</span></span>. You can picture a finite-temperature Fermi gas as having fermions constantly bouncing out of lower-energy states into higher energy states, leaving holes, then other fermions falling out of excited states into those holes. The electron/hole picture gives a useful way to think about finite temperature metals and gives a powerful way to understand the physics of semiconductors, as we will see in this and the next lecture.</p>
 
@@ -195,10 +193,12 @@ $$-\frac{4}{3\sqrt{\pi}}(\beta\epsilon_F)^{3/2} = \text{Li}_{3/2}(-e^{\beta\mu})
 
 <p>Unfortunately, the polylogarithm of an exponential is really hard to work with. So let us start by examining it numerically. Solving this transcendental equation numerically we find a perfectly smooth function $\mu(\epsilon_F; T)$:</p>
 
-<figure>
-<img src="images/13-Metals_p5_img0.png" alt="Chemical potential as a function of temperature">
-<figcaption>The chemical potential $\mu$ as a function of $T/T_F$, computed numerically from Eq. (20).</figcaption>
-</figure>
+<!-- INTERACTIVE: Chemical Potential and Energy vs Temperature -->
+<div class="interactive-container">
+  <h3>Interactive: Chemical Potential &amp; Energy of Free Electron Gas</h3>
+  <canvas id="vis-mu-energy" width="600" height="350"></canvas>
+  <p class="vis-caption">Blue: $\mu/\epsilon_F$ vs $T/T_F$. Green: $E/E_0$ vs $T/T_F$ where $E_0 = \frac{3}{5}N\epsilon_F$. Hover for values.</p>
+</div>
 
 <p>Plugging in some numbers: at room temperature for copper $T/T_F = 298/82000 = 0.0036$ and Eq. (20) gives $\mu = 0.9999\epsilon_F$. At the melting temperature of copper, $T_{\text{melt}} = 1358\;\text{K}$, Eq. (20) gives $\mu = 0.9996\epsilon_F$. Thus in the entire range for which copper is a solid, $T = 0$ to $T = T_{\text{melt}}$, $\mu$ only varies from $1.0\epsilon_F$ to $0.9997\epsilon_F$. This justifies the common practice of using the chemical potential and Fermi energy interchangeably when studying metals.</p>
 
@@ -209,10 +209,7 @@ $$E = \frac{3N}{2\epsilon_F^{3/2}}\int_0^\infty \frac{\epsilon\sqrt{\epsilon}}{e
 <span class="eq-number">(22)</span>
 </div>
 
-<figure>
-<img src="images/13-Metals_p5_img1.png" alt="Energy of free electron gas as a function of temperature">
-<figcaption>The total energy $E/E_0$ as a function of $T/T_F$, computed numerically.</figcaption>
-</figure>
+<!-- Energy plot is combined with chemical potential widget above -->
 
 <p>where $E_0 = \frac{3}{5}N\epsilon_F$ as in Eq. (13). Thus the total energy, like the chemical potential, is a smooth function of $T$ despite the nasty polylogarithm in the analytic formula.</p>
 
