@@ -252,10 +252,15 @@ $$1 = \frac{1}{\epsilon_F^{3/2}}\int_0^\infty [-f'(\epsilon)]\,\epsilon^{3/2}\,d
 <p>The derivative of the Fermi distribution is a sharply peaked Gaussian-like function centered on $\mu$ with width $\sqrt{k_B T}$:</p>
 $$-f'(\epsilon) = \frac{\beta}{2}\frac{1}{1 + \cosh(\beta(\epsilon - \mu))}$$
 
-<figure>
-<img src="images/13-Metals_p7_img0.png" alt="Derivative of Fermi distribution">
-<figcaption>$-f'(\epsilon)$ is sharply peaked around $\epsilon = \mu$.</figcaption>
-</figure>
+<div class="interactive-container">
+<canvas id="vis-fermi-deriv" width="600" height="350"></canvas>
+<div class="slider-container">
+<label for="fermi-deriv-temp">Highlighted $T/T_F$:</label>
+<input type="range" id="fermi-deriv-temp" min="0.01" max="0.3" step="0.01" value="0.1">
+<span class="slider-value" id="fermi-deriv-temp-val">0.10</span>
+</div>
+<p class="vis-caption">$-f'(\epsilon)$ is sharply peaked around $\epsilon = \mu$. At $T = 0$ it becomes a delta function; at finite $T$ the peak broadens with width $\sim k_BT$.</p>
+</div>
 
 <p>The second trick is to observe that when $T \ll T_F$, the support of $f'(\epsilon)$ is for energies $|\epsilon - \mu| \lesssim k_B T$. In this region we can Taylor expand the function multiplying $f'(\epsilon)$ around $\epsilon = \mu$:</p>
 $$1 = \frac{1}{\epsilon_F^{3/2}}\int_0^\infty [-f'(\epsilon)]\left[\mu^{3/2} + \frac{3}{2}\sqrt{\mu}(\epsilon - \mu) + \frac{3}{8\sqrt{\mu}}(\epsilon - \mu)^2 + \cdots\right]d\epsilon$$
@@ -404,10 +409,10 @@ $$\frac{C_V}{T} = \frac{\pi^2}{2}Nk_B\frac{1}{T_F} + \frac{12\pi^4}{5}Nk_B\frac{
 
 <p>The $y$-intercept of such a plot gives the electronic contribution and the slope gives the phonon contribution.</p>
 
-<figure>
-<img src="images/13-Metals_p10_img0.png" alt="Heat capacity of copper at low temperatures">
-<figcaption>Figure 1. Heat capacity of copper at low temperatures compared to the prediction from the Sommerfeld free electron gas model.</figcaption>
-</figure>
+<div class="interactive-container">
+<canvas id="vis-cv-copper" width="600" height="350"></canvas>
+<p class="vis-caption">Figure 1. Heat capacity of copper: $C_V/T$ vs $T^2$ (Debye plot). The $y$-intercept gives the electronic contribution $\gamma$ and the slope gives the phonon contribution.</p>
+</div>
 
 <p>Measurements like this demonstrate an electronic contribution in good agreement with the prediction from the Sommerfeld free electron model.</p>
 

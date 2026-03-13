@@ -258,7 +258,15 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <p>This is known as the <span class="tooltip-trigger">Rayleigh-Jeans Law<span class="tooltip-content">The classical prediction for blackbody radiation: $I(\omega) \propto \omega^2 k_BT$. It works at low frequencies but diverges at high frequencies, predicting infinite total energy &mdash; the ultraviolet catastrophe.</span></span>. Instead, the observed energy spectrum dies off at high frequencies:</p>
 
-<figure><img src="images/11-PhononsPhotons_p8_img0.png" alt="Ultraviolet catastrophe: classical vs observed spectrum"><figcaption>Figure 3. The classical prediction for the intensity of radiation coming from a blackbody disagrees with experimental observation at frequencies $\omega \gtrsim k_BT/\hbar$.</figcaption></figure>
+<div class="interactive-container">
+<canvas id="vis-uv-catastrophe" width="600" height="400"></canvas>
+<div class="slider-container">
+<label for="uv-temp">Temperature $T$ (K):</label>
+<input type="range" id="uv-temp" min="1000" max="10000" step="100" value="5000">
+<span class="slider-value" id="uv-temp-val">5000</span>
+</div>
+<p class="vis-caption">Figure 3. The classical Rayleigh-Jeans prediction (red, dashed) diverges at high frequencies — the ultraviolet catastrophe. Planck's quantum formula (blue, solid) correctly predicts the observed spectrum.</p>
+</div>
 
 <p>This is known as the <strong>ultraviolet catastrophe</strong>. This catastrophe of 19th century classical physics was resolved in 1900 by Max Planck who first quantized the energy in the different modes.</p>
 

@@ -336,18 +336,25 @@ $$T_c = (1-\beta)\frac{\mu}{k_B}\pi G\frac{M_\odot m_p}{\xi_{\max}^2 C_3 R_\odot
 </div></div>
 </div>
 
-<figure>
-<img src="images/15-Stars_p11_img0.png" alt="Beta vs mass for stars">
-<figcaption>The ratio $\beta = P_{\text{rad}}/P_{\text{tot}}$ as a function of stellar mass. Radiation pressure is more important for heavier stars.</figcaption>
-</figure>
+<div class="interactive-container">
+<canvas id="vis-beta-mass" width="600" height="400"></canvas>
+<p class="vis-caption">The ratio $\beta = P_{\text{gas}}/P_{\text{tot}}$ as a function of stellar mass. Radiation pressure becomes dominant for heavier stars ($\beta \to 0$).</p>
+</div>
 
 <p>The density and temperature profiles predicted by the Eddington model compare well with more accurate numerical models:</p>
 
-<figure>
-<img src="images/15-Stars_p12_img0.png" alt="Density profile comparison">
-<img src="images/15-Stars_p12_img1.png" alt="Temperature profile comparison">
-<figcaption>Density (left) and temperature (right) profiles from the Eddington model compared to the Standard Solar Model.</figcaption>
-</figure>
+<div class="interactive-container">
+<canvas id="vis-stellar-profiles" width="600" height="400"></canvas>
+<div class="slider-container">
+<label for="stellar-profile-toggle">Show:</label>
+<select id="stellar-profile-toggle">
+<option value="both">Both</option>
+<option value="density">Density only</option>
+<option value="temperature">Temperature only</option>
+</select>
+</div>
+<p class="vis-caption">Density and temperature profiles from polytropic stellar models for different indices $n$. Solid lines: $\rho/\rho_c = \theta^n$; dashed: $T/T_c = \theta$.</p>
+</div>
 
 <p>Whether or not the Eddington Model is correct, we can draw some general lessons. Since some equation of state exists for the star, there is some unique solution to the stellar structure equations and therefore some precise relation between the radiation pressure and the thermal gas pressure. This leads to a set of one-parameter families of solutions: given a single dimensionful parameter, such as the mass, then the temperature, size, luminosity, pressure and density are all determined. This is the origin of the Vogt-Russell theorem. Each type of star, with its appropriate nuclear physics and equations of state, leads to a 1D curve in the HR diagram.</p>
 

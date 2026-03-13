@@ -2999,6 +2999,159 @@ function initCh11Vis() {
 
   debyeSlider?.addEventListener('input', drawDebye);
   drawDebye();
+
+  // ----- UV Catastrophe -----
+  const cUV = document.getElementById('vis-uv-catastrophe');
+  if (cUV) {
+    const uvS = setupCanvas(cUV);
+    const ctxUV = uvS.ctx, WUV = uvS.W, HUV = uvS.H;
+    const uvTempSlider = document.getElementById('uv-temp');
+
+    function drawUV() {
+      const T = parseFloat(uvTempSlider?.value || 5000);
+      clearCanvas(ctxUV, WUV, HUV);
+
+      const ox = 65, oy = 30;
+      const pw = WUV - ox - 40, ph = HUV - oy - 55;
+      const xAxis = oy + ph;
+
+      drawAxes(ctxUV, ox, oy, pw, ph, {
+        xLabel: 'Frequency \u03BD (arb. units,  h\u03BD/kT)',
+        yLabel: 'Spectral energy density',
+        yLabelOffset: 42
+      });
+
+      // Dimensionless variable x = h*nu/kT; range 0..xMax
+      const xMax = 15;
+      const nPts = 600;
+
+      // Planck peak for normalisation
+      let planckMax = 0;
+      for (let i = 1; i <= nPts; i++) {
+        const x = xMax * i / nPts;
+        const val = x * x * x / (Math.exp(x) - 1);
+        if (val > planckMax) planckMax = val;
+      }
+
+      // Match RJ to Planck at x=1 (Rayleigh-Jeans limit): Planck ~ x^2 for small x
+      const planckAt1 = 1 / (Math.exp(1) - 1);
+      const rjNorm = planckAt1;  // RJ ~ rjNorm * x^2
+
+      // UV catastrophe shading
+      const uvStartX = 6;
+      const uvStartPx = ox + (uvStartX / xMax) * pw;
+      ctxUV.fillStyle = 'rgba(239,83,80,0.08)';
+      ctxUV.fillRect(uvStartPx, oy, ox + pw - uvStartPx, ph);
+      ctxUV.strokeStyle = 'rgba(239,83,80,0.35)';
+      ctxUV.lineWidth = 1;
+      ctxUV.setLineDash([4, 4]);
+      ctxUV.beginPath();
+      ctxUV.moveTo(uvStartPx, oy);
+      ctxUV.lineTo(uvStartPx, xAxis);
+      ctxUV.stroke();
+      ctxUV.setLineDash([]);
+
+      // Rayleigh-Jeans (classical) – dashed red, clamp & show upward arrow
+      ctxUV.strokeStyle = COLORS.red;
+      ctxUV.lineWidth = 2.5;
+      ctxUV.setLineDash([8, 5]);
+      ctxUV.beginPath();
+      let rjStarted = false;
+      let rjArrowPx = -1;
+      for (let i = 1; i <= nPts; i++) {
+        const x = xMax * i / nPts;
+        const rjVal = rjNorm * x * x;
+        const normVal = rjVal / planckMax;
+        const screenY = xAxis - normVal * ph * 0.82;
+        const canvX = ox + (x / xMax) * pw;
+        if (screenY < oy + 4) {
+          rjArrowPx = canvX;
+          if (rjStarted) ctxUV.lineTo(canvX, oy + 4);
+          break;
+        }
+        if (!rjStarted) { ctxUV.moveTo(canvX, screenY); rjStarted = true; }
+        else ctxUV.lineTo(canvX, screenY);
+      }
+      ctxUV.stroke();
+      ctxUV.setLineDash([]);
+      if (rjArrowPx > 0) {
+        ctxUV.strokeStyle = COLORS.red;
+        ctxUV.lineWidth = 2;
+        drawArrow(ctxUV, rjArrowPx, oy + 22, rjArrowPx, oy + 2, 7);
+      }
+
+      // Planck curve – solid blue
+      ctxUV.strokeStyle = COLORS.blue;
+      ctxUV.lineWidth = 2.5;
+      ctxUV.beginPath();
+      for (let i = 1; i <= nPts; i++) {
+        const x = xMax * i / nPts;
+        const planckVal = x * x * x / (Math.exp(x) - 1);
+        const normVal = planckVal / planckMax;
+        const screenY = xAxis - normVal * ph * 0.82;
+        const canvX = ox + (x / xMax) * pw;
+        i === 1 ? ctxUV.moveTo(canvX, screenY) : ctxUV.lineTo(canvX, screenY);
+      }
+      ctxUV.stroke();
+
+      // Wien peak marker
+      const xPeak = 2.821;
+      const peakPx = ox + (xPeak / xMax) * pw;
+      ctxUV.strokeStyle = COLORS.cyan;
+      ctxUV.lineWidth = 1;
+      ctxUV.setLineDash([3, 4]);
+      ctxUV.beginPath();
+      ctxUV.moveTo(peakPx, xAxis);
+      ctxUV.lineTo(peakPx, xAxis - ph * 0.82);
+      ctxUV.stroke();
+      ctxUV.setLineDash([]);
+      ctxUV.fillStyle = COLORS.cyan;
+      ctxUV.font = FONT_SM;
+      ctxUV.textAlign = 'center';
+      ctxUV.fillText('Wien\u2019s peak', peakPx, xAxis - ph * 0.82 - 6);
+
+      // Legend
+      ctxUV.font = FONT_SM;
+      ctxUV.textAlign = 'left';
+      ctxUV.strokeStyle = COLORS.blue; ctxUV.lineWidth = 2.5; ctxUV.setLineDash([]);
+      ctxUV.beginPath(); ctxUV.moveTo(WUV - 198, 38); ctxUV.lineTo(WUV - 173, 38); ctxUV.stroke();
+      ctxUV.fillStyle = COLORS.blue;
+      ctxUV.fillText('Planck (quantum)', WUV - 169, 42);
+      ctxUV.strokeStyle = COLORS.red; ctxUV.lineWidth = 2.5; ctxUV.setLineDash([8, 5]);
+      ctxUV.beginPath(); ctxUV.moveTo(WUV - 198, 58); ctxUV.lineTo(WUV - 173, 58); ctxUV.stroke();
+      ctxUV.setLineDash([]);
+      ctxUV.fillStyle = COLORS.red;
+      ctxUV.fillText('Rayleigh-Jeans (classical)', WUV - 169, 62);
+
+      // UV catastrophe annotation
+      ctxUV.fillStyle = 'rgba(239,83,80,0.80)';
+      ctxUV.font = FONT_SM;
+      ctxUV.textAlign = 'center';
+      ctxUV.fillText('\u2018UV catastrophe\u2019', ox + pw - 56, oy + 18);
+      ctxUV.fillStyle = COLORS.textDim;
+      ctxUV.fillText('classical \u2192 \u221E', ox + pw - 56, oy + 32);
+
+      // Temperature label
+      ctxUV.fillStyle = COLORS.text;
+      ctxUV.font = FONT_LG;
+      ctxUV.textAlign = 'left';
+      ctxUV.fillText('T = ' + T.toFixed(0) + ' K', ox + 5, oy + 14);
+
+      // X-axis tick labels
+      ctxUV.fillStyle = COLORS.textDim;
+      ctxUV.font = '10px Inter, system-ui, sans-serif';
+      ctxUV.textAlign = 'center';
+      for (let xt = 0; xt <= xMax; xt += 3) {
+        const canvX = ox + (xt / xMax) * pw;
+        ctxUV.fillText(xt.toString(), canvX, xAxis + 13);
+      }
+
+      document.getElementById('uv-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(0)));
+    }
+
+    uvTempSlider?.addEventListener('input', drawUV);
+    drawUV();
+  }
 }
 
 
@@ -3217,6 +3370,118 @@ function initCh12Vis() {
       ctxFr.fillText('Condensate Fraction vs Temperature', ox + 5, oy + 12);
     }
     drawFraction();
+  }
+
+  // ----- BEC Ground State Occupation for Different N -----
+  const cNg = document.getElementById('vis-bec-nground');
+  if (cNg) {
+    const ngS = setupCanvas(cNg);
+    const ctxNg = ngS.ctx, WNg = ngS.W, HNg = ngS.H;
+
+    function drawNGround() {
+      clearCanvas(ctxNg, WNg, HNg);
+      const ox = 70, oy = 30, pw = WNg - 110, ph = HNg - 80;
+      const tMax = 1.5;
+
+      drawAxes(ctxNg, ox, oy, pw, ph, { xLabel: 'T / T\u2099', yLabel: 'N\u2080 / N', yLabelOffset: 40 });
+
+      // X-axis tick labels
+      ctxNg.fillStyle = COLORS.textDim; ctxNg.font = FONT_SM; ctxNg.textAlign = 'center';
+      for (let t = 0; t <= tMax + 0.01; t += 0.5) {
+        ctxNg.fillText(t.toFixed(1), ox + t / tMax * pw, oy + ph + 14);
+      }
+      // Y-axis tick labels
+      ctxNg.textAlign = 'right';
+      for (let y = 0; y <= 1.01; y += 0.2) {
+        ctxNg.fillText(y.toFixed(1), ox - 5, oy + ph - y * ph + 4);
+      }
+
+      // Vertical dashed line at T/Tc = 1
+      const tcX = ox + (1 / tMax) * pw;
+      ctxNg.strokeStyle = 'rgba(255,255,255,0.15)'; ctxNg.setLineDash([4, 4]); ctxNg.lineWidth = 1;
+      ctxNg.beginPath(); ctxNg.moveTo(tcX, oy); ctxNg.lineTo(tcX, oy + ph); ctxNg.stroke();
+      ctxNg.setLineDash([]);
+      ctxNg.fillStyle = COLORS.textDim; ctxNg.textAlign = 'center'; ctxNg.font = FONT_SM;
+      ctxNg.fillText('T\u2099', tcX, oy + ph + 14);
+
+      // Thermodynamic limit: sharp step at Tc, thick line
+      ctxNg.strokeStyle = COLORS.text; ctxNg.lineWidth = 3; ctxNg.setLineDash([]); ctxNg.beginPath();
+      let firstTd = true;
+      for (let px = 0; px <= pw; px++) {
+        const tR = px / pw * tMax;
+        const frac = tR < 1 ? 1 - Math.pow(tR, 1.5) : 0;
+        const pyv = oy + ph - Math.max(0, frac) * ph;
+        if (firstTd) { ctxNg.moveTo(ox + px, pyv); firstTd = false; } else { ctxNg.lineTo(ox + px, pyv); }
+      }
+      ctxNg.stroke();
+
+      // Finite-N curves: smoothed transition, finite-size correction
+      const nSeries = [
+        { N: 10,    color: COLORS.orange },
+        { N: 100,   color: COLORS.green  },
+        { N: 1000,  color: COLORS.blue   },
+        { N: 10000, color: COLORS.cyan   },
+      ];
+
+      nSeries.forEach(nv => {
+        // Smoothing width scales as N^(-1/3); correction shifts effective Tc slightly upward for small N
+        const sigma = 0.25 * Math.pow(nv.N, -1 / 3);
+        // Finite-size correction: small systems have a slightly elevated condensate near Tc
+        const correction = 1.4 * Math.pow(nv.N, -1 / 3);
+
+        ctxNg.strokeStyle = nv.color; ctxNg.lineWidth = 2; ctxNg.setLineDash([]); ctxNg.beginPath();
+        let firstPx = true;
+        for (let px = 0; px <= pw; px++) {
+          const tR = px / pw * tMax;
+          // Raw thermodynamic limit value
+          const rawFrac = Math.max(0, 1 - Math.pow(Math.max(0, tR), 1.5));
+          // Smoothed fraction using tanh crossover centred at Tc
+          let frac;
+          if (tR < 1 - 4 * sigma) {
+            // Deep below Tc: thermodynamic limit plus finite-size correction
+            frac = rawFrac + correction * Math.pow(tR / 1, 0.5);
+          } else if (tR > 1 + 4 * sigma) {
+            // Above Tc: small residual occupation decays exponentially for finite systems
+            const excess = tR - 1;
+            frac = correction * Math.exp(-excess / (2 * sigma));
+          } else {
+            // Crossover region: blend using tanh
+            const tdVal = rawFrac;
+            const highVal = correction * Math.exp(-(tR - 1) / (2 * sigma));
+            const weight = 0.5 * (1 - Math.tanh((tR - 1) / sigma));
+            frac = tdVal * weight + highVal * (1 - weight) + correction * weight * (1 - weight);
+          }
+          frac = Math.min(1, Math.max(0, frac));
+          const pyv = oy + ph - frac * ph;
+          if (firstPx) { ctxNg.moveTo(ox + px, pyv); firstPx = false; } else { ctxNg.lineTo(ox + px, pyv); }
+        }
+        ctxNg.stroke();
+      });
+
+      // Legend
+      const legX = ox + pw - 10, legYStart = oy + 12, legLineH = 18;
+      ctxNg.font = FONT_SM; ctxNg.textAlign = 'right';
+
+      // Thermodynamic limit entry
+      ctxNg.strokeStyle = COLORS.text; ctxNg.lineWidth = 3; ctxNg.setLineDash([]);
+      ctxNg.beginPath(); ctxNg.moveTo(legX - 88, legYStart - 4); ctxNg.lineTo(legX - 66, legYStart - 4); ctxNg.stroke();
+      ctxNg.fillStyle = COLORS.text; ctxNg.fillText('N \u2192 \u221e', legX, legYStart);
+
+      // Finite-N entries
+      nSeries.forEach((nv, idx) => {
+        const ly = legYStart + (idx + 1) * legLineH;
+        ctxNg.strokeStyle = nv.color; ctxNg.lineWidth = 2; ctxNg.setLineDash([]);
+        ctxNg.beginPath(); ctxNg.moveTo(legX - 88, ly - 4); ctxNg.lineTo(legX - 66, ly - 4); ctxNg.stroke();
+        ctxNg.fillStyle = nv.color;
+        ctxNg.fillText('N = ' + nv.N.toLocaleString(), legX, ly);
+      });
+
+      // Title
+      ctxNg.fillStyle = COLORS.text; ctxNg.font = FONT_LG; ctxNg.textAlign = 'left';
+      ctxNg.fillText('BEC Ground State Occupation vs Temperature', ox + 5, oy + 14);
+    }
+
+    drawNGround();
   }
 }
 
@@ -3440,6 +3705,201 @@ function initCh13Vis() {
     cMuE.addEventListener('mouseleave', () => { hoverME = -1; drawMuEnergy(); });
     drawMuEnergy();
   }
+
+  // ===========================================================================
+  // vis-fermi-deriv: Derivative of Fermi-Dirac distribution -df/dε
+  // ===========================================================================
+  const cFD = document.getElementById('vis-fermi-deriv');
+  if (cFD) {
+    const fdS = setupCanvas(cFD);
+    const ctxFD = fdS.ctx, WFD = fdS.W, HFD = fdS.H;
+    const oxFD = 70, oyFD = 25, pwFD = WFD - 110, phFD = HFD - 70;
+
+    const fdTempSlider = document.getElementById('fermi-deriv-temp');
+
+    // Fixed temperature series always shown (muted)
+    const fdBgTemps = [
+      { tRatio: 0.01, color: COLORS.cyan,   label: 'T/T_F = 0.01' },
+      { tRatio: 0.05, color: COLORS.green,  label: 'T/T_F = 0.05' },
+      { tRatio: 0.20, color: COLORS.purple, label: 'T/T_F = 0.20' },
+    ];
+
+    // -df/dε (positive): β·eˣ/(eˣ+1)²  with x = β(ε−μ), μ = ε_F = 1
+    function fdDeriv(eps, tRatio) {
+      if (tRatio < 1e-5) return (Math.abs(eps - 1.0) < 0.015 ? 1 : 0);
+      const beta = 1 / tRatio;
+      const x = beta * (eps - 1.0);
+      if (x > 40 || x < -40) return 0;
+      const ex = Math.exp(x);
+      return beta * ex / ((ex + 1) * (ex + 1));
+    }
+
+    // Normalise so T/TF = 0.01 peak = 1  (peak = β/4 = 25)
+    const fdNorm = (1 / 0.01) / 4;
+
+    function drawFD() {
+      const tHl = parseFloat(fdTempSlider?.value || 0.10);
+      document.getElementById('fermi-deriv-temp-val')?.replaceChildren(document.createTextNode(tHl.toFixed(2)));
+
+      clearCanvas(ctxFD, WFD, HFD);
+      drawAxes(ctxFD, oxFD, oyFD, pwFD, phFD, {
+        xLabel: '\u03B5 / \u03B5_F',
+        yLabel: '\u2212df/d\u03B5 (norm.)',
+        yLabelOffset: 48
+      });
+
+      // X ticks 0–2
+      ctxFD.fillStyle = COLORS.textDim; ctxFD.font = FONT_SM; ctxFD.textAlign = 'center';
+      for (let v = 0; v <= 2.01; v += 0.5) {
+        ctxFD.fillText(v.toFixed(1), oxFD + (v / 2) * pwFD, oyFD + phFD + 14);
+      }
+      // Y ticks
+      ctxFD.textAlign = 'right';
+      ctxFD.fillText('0', oxFD - 5, oyFD + phFD + 4);
+      ctxFD.fillText('1', oxFD - 5, oyFD + 4);
+
+      const eMax = 2.0, N = 500;
+
+      // Background curves (muted opacity)
+      fdBgTemps.forEach(({ tRatio, color, label }, idx) => {
+        ctxFD.strokeStyle = color; ctxFD.lineWidth = 1.5; ctxFD.globalAlpha = 0.50;
+        ctxFD.beginPath();
+        for (let i = 0; i <= N; i++) {
+          const eps = i / N * eMax;
+          const val = Math.min(fdDeriv(eps, tRatio) / fdNorm, 1.05);
+          const px = oxFD + (eps / eMax) * pwFD;
+          const pyv = oyFD + phFD - val * phFD;
+          i === 0 ? ctxFD.moveTo(px, pyv) : ctxFD.lineTo(px, pyv);
+        }
+        ctxFD.stroke(); ctxFD.globalAlpha = 1;
+        ctxFD.fillStyle = color; ctxFD.font = FONT_SM; ctxFD.textAlign = 'left';
+        ctxFD.fillText(label, WFD - 152, oyFD + 14 + idx * 16);
+      });
+
+      // Highlighted (slider) curve – thick orange
+      ctxFD.strokeStyle = COLORS.orange; ctxFD.lineWidth = 2.5; ctxFD.globalAlpha = 1;
+      ctxFD.beginPath();
+      for (let i = 0; i <= N; i++) {
+        const eps = i / N * eMax;
+        const val = Math.min(fdDeriv(eps, tHl) / fdNorm, 1.05);
+        const px = oxFD + (eps / eMax) * pwFD;
+        const pyv = oyFD + phFD - val * phFD;
+        i === 0 ? ctxFD.moveTo(px, pyv) : ctxFD.lineTo(px, pyv);
+      }
+      ctxFD.stroke();
+      ctxFD.fillStyle = COLORS.orange; ctxFD.font = FONT_SM; ctxFD.textAlign = 'left';
+      ctxFD.fillText('T/T_F = ' + tHl.toFixed(2) + ' \u25C4 slider', WFD - 152, oyFD + 14 + fdBgTemps.length * 16);
+
+      // ε_F dashed vertical marker
+      const efPxFD = oxFD + 0.5 * pwFD;
+      ctxFD.strokeStyle = COLORS.red; ctxFD.lineWidth = 1; ctxFD.setLineDash([4, 4]);
+      ctxFD.beginPath(); ctxFD.moveTo(efPxFD, oyFD); ctxFD.lineTo(efPxFD, oyFD + phFD); ctxFD.stroke();
+      ctxFD.setLineDash([]);
+      ctxFD.fillStyle = COLORS.red; ctxFD.font = FONT_SM; ctxFD.textAlign = 'center';
+      ctxFD.fillText('\u03B5_F', efPxFD, oyFD + phFD + 14);
+
+      ctxFD.fillStyle = COLORS.text; ctxFD.font = FONT_LG; ctxFD.textAlign = 'left';
+      ctxFD.fillText('\u2212df/d\u03B5: Peak of width \u223CkT centred on \u03B5_F', oxFD + 5, oyFD + 12);
+    }
+
+    fdTempSlider?.addEventListener('input', drawFD);
+    drawFD();
+  }
+
+  // ===========================================================================
+  // vis-cv-copper: Heat capacity of copper – Debye plot C/T vs T²
+  // ===========================================================================
+  const cCv = document.getElementById('vis-cv-copper');
+  if (cCv) {
+    const cvS = setupCanvas(cCv);
+    const ctxCV = cvS.ctx, WCV = cvS.W, HCV = cvS.H;
+
+    // Copper parameters
+    const gammaCu  = 0.695;    // mJ mol⁻¹ K⁻²  electronic Sommerfeld coefficient
+    const ThetaDCu = 343;      // K  Debye temperature
+    const R_mJ     = 8314.46;  // mJ mol⁻¹ K⁻¹
+    // β_D = (12π⁴/5) R / Θ_D³  in mJ mol⁻¹ K⁻⁴
+    const betaDCu = (12 / 5) * Math.pow(Math.PI, 4) * R_mJ / Math.pow(ThetaDCu, 3);
+
+    // Simulated data with deterministic scatter (LCG), T = 1–5 K in 0.5 K steps
+    const cvData = [];
+    let lcgSeed = 7919;
+    const lcgNext = () => {
+      lcgSeed = (Math.imul(lcgSeed, 1664525) + 1013904223) | 0;
+      return (lcgSeed >>> 0) / 4294967295;
+    };
+    for (let T = 1.0; T <= 5.01; T += 0.5) {
+      const cvTrue = gammaCu * T + betaDCu * T * T * T;
+      cvData.push({ T2: T * T, CvT: cvTrue / T + (lcgNext() - 0.5) * 0.025 * gammaCu });
+    }
+
+    function drawCvCopper() {
+      clearCanvas(ctxCV, WCV, HCV);
+      const oxCV = 80, oyCV = 25, pwCV = WCV - 120, phCV = HCV - 70;
+      const T2max = 26, CvTmax = 2.6;
+
+      drawAxes(ctxCV, oxCV, oyCV, pwCV, phCV, {
+        xLabel: 'T\u00B2  (K\u00B2)',
+        yLabel: 'C/T  (mJ mol\u207B\u00B9 K\u207B\u00B2)',
+        yLabelOffset: 54
+      });
+
+      // X ticks 0–25
+      ctxCV.fillStyle = COLORS.textDim; ctxCV.font = FONT_SM; ctxCV.textAlign = 'center';
+      for (let v = 0; v <= T2max; v += 5) {
+        ctxCV.fillText(v.toFixed(0), oxCV + v / T2max * pwCV, oyCV + phCV + 14);
+      }
+      // Y ticks 0–2.5
+      ctxCV.textAlign = 'right';
+      for (let v = 0; v <= CvTmax - 0.01; v += 0.5) {
+        ctxCV.fillText(v.toFixed(1), oxCV - 5, oyCV + phCV - v / CvTmax * phCV + 4);
+      }
+
+      // Linear fit: C/T = γ + β_D T²
+      ctxCV.strokeStyle = COLORS.blue; ctxCV.lineWidth = 2;
+      ctxCV.beginPath();
+      for (let i = 0; i <= 300; i++) {
+        const T2 = i / 300 * T2max;
+        const CvT = gammaCu + betaDCu * T2;
+        const px = oxCV + T2 / T2max * pwCV;
+        const pyv = oyCV + phCV - CvT / CvTmax * phCV;
+        i === 0 ? ctxCV.moveTo(px, pyv) : ctxCV.lineTo(px, pyv);
+      }
+      ctxCV.stroke();
+
+      // γ intercept horizontal guide
+      const gammaY = oyCV + phCV - gammaCu / CvTmax * phCV;
+      ctxCV.strokeStyle = COLORS.orange; ctxCV.lineWidth = 1; ctxCV.setLineDash([4, 4]);
+      ctxCV.beginPath(); ctxCV.moveTo(oxCV, gammaY); ctxCV.lineTo(oxCV + pwCV, gammaY); ctxCV.stroke();
+      ctxCV.setLineDash([]);
+      ctxCV.fillStyle = COLORS.orange; ctxCV.font = FONT_SM; ctxCV.textAlign = 'left';
+      ctxCV.fillText('\u03B3 = ' + gammaCu.toFixed(3) + ' mJ mol\u207B\u00B9 K\u207B\u00B2  (T\u00B2\u2192 0 intercept)', oxCV + 6, gammaY - 5);
+
+      // Simulated data points
+      cvData.forEach(({ T2, CvT }) => {
+        const px = oxCV + T2 / T2max * pwCV;
+        const pyv = oyCV + phCV - CvT / CvTmax * phCV;
+        ctxCV.fillStyle = COLORS.yellow;
+        ctxCV.beginPath(); ctxCV.arc(px, pyv, 4, 0, 2 * Math.PI); ctxCV.fill();
+        ctxCV.strokeStyle = COLORS.textDim; ctxCV.lineWidth = 0.8;
+        ctxCV.beginPath(); ctxCV.arc(px, pyv, 4, 0, 2 * Math.PI); ctxCV.stroke();
+      });
+
+      // Legend
+      const annX = oxCV + pwCV * 0.40, annY = oyCV + phCV * 0.48;
+      ctxCV.fillStyle = COLORS.blue; ctxCV.font = FONT_SM; ctxCV.textAlign = 'left';
+      ctxCV.fillText('C/T = \u03B3 + \u03B2_D T\u00B2  (Debye fit)', annX, annY);
+      ctxCV.fillStyle = COLORS.textDim;
+      ctxCV.fillText('\u03B2_D = ' + (betaDCu * 1000).toFixed(3) + ' \u03BCJ mol\u207B\u00B9 K\u207B\u2074  (\u0398_D = ' + ThetaDCu + ' K)', annX, annY + 16);
+      ctxCV.fillStyle = COLORS.yellow;
+      ctxCV.fillText('Simulated data points', annX, annY + 32);
+
+      ctxCV.fillStyle = COLORS.text; ctxCV.font = FONT_LG; ctxCV.textAlign = 'left';
+      ctxCV.fillText('Copper: Debye Plot  C/T vs T\u00B2', oxCV + 5, oyCV + 12);
+    }
+
+    drawCvCopper();
+  }
 }
 
 
@@ -3535,6 +3995,349 @@ function initCh14Vis() {
   tempSlider?.addEventListener('input', draw);
   gapSlider?.addEventListener('input', draw);
   draw();
+
+  // ----- Diode I-V Characteristic -----
+  const cIV = document.getElementById('vis-iv-curve');
+  if (cIV) {
+    const ivS = setupCanvas(cIV);
+    const ctxIV = ivS.ctx, WIV = ivS.W, HIV = ivS.H;
+    const ivTempSlider = document.getElementById('iv-temp');
+
+    function drawIV() {
+      const T = parseFloat(ivTempSlider?.value || 300);
+      clearCanvas(ctxIV, WIV, HIV);
+
+      // Physical constants
+      const kB = 1.380649e-23;
+      const e = 1.60218e-19;
+      const Is = 1e-9;  // 1 nA saturation current
+
+      const Vmin = -1.0, Vmax = 1.0;
+      const VT = kB * T / e;  // thermal voltage (~26 mV at 300 K)
+
+      // Current scale: cap forward current display at ~20 mA
+      const Imax_display = 20e-3;
+      const Imin_display = -2e-3;  // small reverse saturation region
+      const Irange = Imax_display - Imin_display;
+
+      const ox = 70, oy = 25;
+      const pw = WIV - ox - 30, ph = HIV - oy - 55;
+
+      // Map V -> pixel x
+      const vToPx = (v) => ox + ((v - Vmin) / (Vmax - Vmin)) * pw;
+      // Map I -> pixel y (I in Amps)
+      const iToPy = (i) => {
+        const iClamp = Math.max(Imin_display, Math.min(Imax_display, i));
+        return oy + ph - ((iClamp - Imin_display) / Irange) * ph;
+      };
+
+      // Zero-current axis y position
+      const zeroIPy = iToPy(0);
+      // Zero-voltage axis x position
+      const zeroVPx = vToPx(0);
+
+      // Axes – draw manually so origin is at (V=0, I=0) visible inside plot
+      ctxIV.strokeStyle = COLORS.axis;
+      ctxIV.lineWidth = 1;
+      // x-axis at I=0
+      ctxIV.beginPath(); ctxIV.moveTo(ox, zeroIPy); ctxIV.lineTo(ox + pw, zeroIPy); ctxIV.stroke();
+      // y-axis at V=0
+      ctxIV.beginPath(); ctxIV.moveTo(zeroVPx, oy); ctxIV.lineTo(zeroVPx, oy + ph); ctxIV.stroke();
+
+      // Axis labels
+      ctxIV.fillStyle = COLORS.text;
+      ctxIV.font = FONT_SM;
+      ctxIV.textAlign = 'center';
+      ctxIV.fillText('Voltage V (V)', ox + pw / 2, oy + ph + 28);
+      ctxIV.save();
+      ctxIV.translate(ox - 42, oy + ph / 2);
+      ctxIV.rotate(-Math.PI / 2);
+      ctxIV.fillText('Current I (mA)', 0, 0);
+      ctxIV.restore();
+
+      // V-axis tick labels
+      ctxIV.fillStyle = COLORS.textDim;
+      ctxIV.font = '10px Inter, system-ui, sans-serif';
+      ctxIV.textAlign = 'center';
+      for (let vt = Vmin; vt <= Vmax + 0.01; vt += 0.5) {
+        const px = vToPx(vt);
+        ctxIV.fillText(vt.toFixed(1), px, zeroIPy + 14);
+      }
+
+      // I-axis tick labels (mA)
+      ctxIV.textAlign = 'right';
+      const iTicks = [0, 5, 10, 15, 20];
+      iTicks.forEach(imA => {
+        const py = iToPy(imA * 1e-3);
+        ctxIV.fillText(imA.toString(), ox - 4, py + 4);
+      });
+
+      // Reverse bias shading
+      ctxIV.fillStyle = 'rgba(239,83,80,0.06)';
+      ctxIV.fillRect(ox, oy, zeroVPx - ox, ph);
+
+      // Breakdown label
+      ctxIV.fillStyle = 'rgba(239,83,80,0.45)';
+      ctxIV.font = FONT_SM;
+      ctxIV.textAlign = 'center';
+      ctxIV.fillText('Reverse bias', ox + (zeroVPx - ox) / 2, oy + 14);
+
+      // Forward bias shading
+      ctxIV.fillStyle = 'rgba(79,195,247,0.05)';
+      ctxIV.fillRect(zeroVPx, oy, ox + pw - zeroVPx, ph);
+
+      // I-V curve
+      ctxIV.strokeStyle = COLORS.blue;
+      ctxIV.lineWidth = 2.5;
+      ctxIV.beginPath();
+      const nPtsIV = 500;
+      for (let i = 0; i <= nPtsIV; i++) {
+        const V = Vmin + (Vmax - Vmin) * i / nPtsIV;
+        const I = Is * (Math.exp(V / VT) - 1);
+        const px = vToPx(V);
+        const py = iToPy(I);
+        i === 0 ? ctxIV.moveTo(px, py) : ctxIV.lineTo(px, py);
+      }
+      ctxIV.stroke();
+
+      // Saturation current line (reverse bias region)
+      ctxIV.strokeStyle = COLORS.orange;
+      ctxIV.lineWidth = 1.2;
+      ctxIV.setLineDash([4, 4]);
+      const IsatPy = iToPy(-Is);
+      ctxIV.beginPath();
+      ctxIV.moveTo(ox, IsatPy);
+      ctxIV.lineTo(zeroVPx - 5, IsatPy);
+      ctxIV.stroke();
+      ctxIV.setLineDash([]);
+      ctxIV.fillStyle = COLORS.orange;
+      ctxIV.font = '10px Inter, system-ui, sans-serif';
+      ctxIV.textAlign = 'left';
+      ctxIV.fillText('I\u209B = 1 nA', ox + 4, IsatPy - 4);
+
+      // Turn-on voltage marker (~0.6 V)
+      const Vturn = 0.6;
+      const VturnPx = vToPx(Vturn);
+      const IturnA = Is * (Math.exp(Vturn / VT) - 1);
+      const IturnPy = iToPy(IturnA);
+      ctxIV.strokeStyle = COLORS.green;
+      ctxIV.lineWidth = 1;
+      ctxIV.setLineDash([3, 3]);
+      ctxIV.beginPath();
+      ctxIV.moveTo(VturnPx, zeroIPy);
+      ctxIV.lineTo(VturnPx, Math.max(oy, IturnPy));
+      ctxIV.stroke();
+      ctxIV.setLineDash([]);
+      ctxIV.fillStyle = COLORS.green;
+      ctxIV.font = FONT_SM;
+      ctxIV.textAlign = 'center';
+      ctxIV.fillText('V\u209C\u1D52 \u2248 0.6 V', VturnPx + 24, zeroIPy + 16);
+
+      // Info labels
+      ctxIV.fillStyle = COLORS.text;
+      ctxIV.font = FONT_LG;
+      ctxIV.textAlign = 'left';
+      ctxIV.fillText('p-n Junction Diode I-V', ox + 5, oy + 14);
+      ctxIV.font = FONT_SM;
+      ctxIV.fillStyle = COLORS.textDim;
+      ctxIV.fillText('I = I\u209B(e^{eV/kT} \u2212 1)', ox + 5, oy + 28);
+      ctxIV.fillStyle = COLORS.cyan;
+      ctxIV.fillText('T = ' + T.toFixed(0) + ' K,  V_T = ' + (VT * 1000).toFixed(1) + ' mV', ox + 5, oy + 44);
+
+      document.getElementById('iv-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(0)));
+    }
+
+    ivTempSlider?.addEventListener('input', drawIV);
+    drawIV();
+  }
+
+  // ----- Energy Level Splitting into Bands -----
+  const cBS = document.getElementById('vis-band-splitting');
+  if (cBS) {
+    const bsS = setupCanvas(cBS);
+    const ctxBS = bsS.ctx, WBS = bsS.W, HBS = bsS.H;
+    const bsNSlider = document.getElementById('band-n-atoms');
+
+    // Three base energy levels (normalised 0..1 where 0=bottom, 1=top of plot area)
+    const baseLevels = [0.22, 0.52, 0.82];
+    const levelColors = [COLORS.blue, COLORS.green, COLORS.orange];
+    const levelNames = ['E\u2081 (1s)', 'E\u2082 (2s)', 'E\u2083 (2p)'];
+
+    // Spread factor per level (fraction of total plot height) as N grows
+    const spreads = [0.06, 0.10, 0.14];
+
+    function drawBandSplitting() {
+      const N = parseInt(bsNSlider?.value || 5);
+      clearCanvas(ctxBS, WBS, HBS);
+
+      const ox = 20, oy = 20;
+      const pw = WBS - ox - 20, ph = HBS - oy - 40;
+
+      // Vertical axis label
+      ctxBS.fillStyle = COLORS.textDim;
+      ctxBS.font = FONT_SM;
+      ctxBS.textAlign = 'center';
+      ctxBS.save();
+      ctxBS.translate(12, oy + ph / 2);
+      ctxBS.rotate(-Math.PI / 2);
+      ctxBS.fillText('Energy E', 0, 0);
+      ctxBS.restore();
+
+      // Title
+      ctxBS.fillStyle = COLORS.text;
+      ctxBS.font = FONT_LG;
+      ctxBS.textAlign = 'center';
+      ctxBS.fillText('N = ' + N + ' atom' + (N > 1 ? 's' : ''), WBS / 2, oy + 14);
+
+      // Left label: isolated atom
+      ctxBS.fillStyle = COLORS.textDim;
+      ctxBS.font = FONT_SM;
+      ctxBS.textAlign = 'center';
+      ctxBS.fillText('Isolated atom', ox + pw * 0.12, oy + ph + 22);
+      ctxBS.fillText(N + ' atoms together', ox + pw * 0.78, oy + ph + 22);
+
+      // Divider
+      const divX = ox + pw * 0.42;
+      ctxBS.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctxBS.lineWidth = 1;
+      ctxBS.setLineDash([4, 5]);
+      ctxBS.beginPath();
+      ctxBS.moveTo(divX, oy + 24);
+      ctxBS.lineTo(divX, oy + ph);
+      ctxBS.stroke();
+      ctxBS.setLineDash([]);
+
+      // Left section x-range
+      const lxMid = ox + pw * 0.12;
+      const lxHalf = pw * 0.10;
+
+      // Right section x-range
+      const rxLeft = ox + pw * 0.50;
+      const rxRight = ox + pw * 0.95;
+      const rxWidth = rxRight - rxLeft;
+
+      // Band opacity increases with N so lines merge
+      const lineAlpha = N <= 1 ? 1.0 : Math.max(0.18, 1.0 - (N - 1) * 0.04);
+
+      baseLevels.forEach((lvl, li) => {
+        const color = levelColors[li];
+        const spread = spreads[li];
+
+        // Y coordinate of base energy
+        const baseY = oy + ph - lvl * ph;
+
+        // Left: single level line
+        ctxBS.strokeStyle = color;
+        ctxBS.lineWidth = 2;
+        ctxBS.beginPath();
+        ctxBS.moveTo(lxMid - lxHalf, baseY);
+        ctxBS.lineTo(lxMid + lxHalf, baseY);
+        ctxBS.stroke();
+
+        // Level label
+        ctxBS.fillStyle = color;
+        ctxBS.font = FONT_SM;
+        ctxBS.textAlign = 'left';
+        ctxBS.fillText(levelNames[li], lxMid + lxHalf + 4, baseY + 4);
+
+        // Right: N split levels
+        if (N === 1) {
+          // Single atom on right too
+          ctxBS.strokeStyle = color;
+          ctxBS.lineWidth = 2;
+          ctxBS.beginPath();
+          ctxBS.moveTo(rxLeft, baseY);
+          ctxBS.lineTo(rxRight, baseY);
+          ctxBS.stroke();
+        } else {
+          const halfSpread = spread * ph / 2;
+          const lineSpacing = N > 1 ? (2 * halfSpread) / (N - 1) : 0;
+          // Band fill when many lines
+          if (N >= 8) {
+            const bandColor = color.startsWith('#') ? color : color;
+            ctxBS.fillStyle = color.replace(')', ', 0.12)').replace('rgb', 'rgba');
+            // simple rect for band
+            ctxBS.globalAlpha = 0.15;
+            ctxBS.fillStyle = color;
+            ctxBS.fillRect(rxLeft, baseY - halfSpread, rxWidth, halfSpread * 2);
+            ctxBS.globalAlpha = 1.0;
+          }
+
+          for (let n = 0; n < N; n++) {
+            const offsetY = N === 1 ? 0 : -halfSpread + n * lineSpacing;
+            const lineY = baseY + offsetY;
+            const alpha = N <= 4 ? 1.0 : lineAlpha;
+            const lw = N <= 4 ? 1.8 : Math.max(0.6, 1.8 - N * 0.05);
+
+            ctxBS.globalAlpha = alpha;
+            ctxBS.strokeStyle = color;
+            ctxBS.lineWidth = lw;
+            ctxBS.beginPath();
+            ctxBS.moveTo(rxLeft, lineY);
+            ctxBS.lineTo(rxRight, lineY);
+            ctxBS.stroke();
+          }
+          ctxBS.globalAlpha = 1.0;
+
+          // Band boundary lines
+          if (N >= 2) {
+            ctxBS.strokeStyle = color;
+            ctxBS.lineWidth = 1.2;
+            ctxBS.setLineDash([3, 3]);
+            ctxBS.beginPath();
+            ctxBS.moveTo(rxLeft - 5, baseY - halfSpread);
+            ctxBS.lineTo(rxRight, baseY - halfSpread);
+            ctxBS.moveTo(rxLeft - 5, baseY + halfSpread);
+            ctxBS.lineTo(rxRight, baseY + halfSpread);
+            ctxBS.stroke();
+            ctxBS.setLineDash([]);
+          }
+
+          // Band label on right
+          if (N >= 3) {
+            ctxBS.fillStyle = color;
+            ctxBS.globalAlpha = 0.8;
+            ctxBS.font = '10px Inter, system-ui, sans-serif';
+            ctxBS.textAlign = 'right';
+            ctxBS.fillText(N + ' levels', rxRight - 2, baseY - halfSpread - 3);
+            ctxBS.globalAlpha = 1.0;
+          }
+        }
+
+        // Connecting dashed lines from isolated level to band edges
+        if (N >= 2) {
+          const halfSpread = spread * ph / 2;
+          ctxBS.strokeStyle = 'rgba(255,255,255,0.12)';
+          ctxBS.lineWidth = 0.8;
+          ctxBS.setLineDash([3, 6]);
+          ctxBS.beginPath();
+          ctxBS.moveTo(lxMid + lxHalf, baseY);
+          ctxBS.lineTo(rxLeft, baseY - halfSpread);
+          ctxBS.moveTo(lxMid + lxHalf, baseY);
+          ctxBS.lineTo(rxLeft, baseY + halfSpread);
+          ctxBS.stroke();
+          ctxBS.setLineDash([]);
+        }
+      });
+
+      // Caption
+      ctxBS.fillStyle = COLORS.textDim;
+      ctxBS.font = FONT_SM;
+      ctxBS.textAlign = 'center';
+      if (N === 1) {
+        ctxBS.fillText('Single atom: discrete levels', WBS / 2, HIV - 8);
+      } else if (N < 6) {
+        ctxBS.fillText('Each level splits into ' + N + ' closely-spaced levels', WBS / 2, HIV - 8);
+      } else {
+        ctxBS.fillText('Levels merge into quasi-continuous bands (N = ' + N + ')', WBS / 2, HIV - 8);
+      }
+
+      document.getElementById('band-n-atoms-val')?.replaceChildren(document.createTextNode(N.toString()));
+    }
+
+    bsNSlider?.addEventListener('input', drawBandSplitting);
+    drawBandSplitting();
+  }
 }
 
 
@@ -3793,5 +4596,248 @@ function initCh15Vis() {
     cWD.addEventListener('mousemove', (e) => { hoverWD = e.clientX - cWD.getBoundingClientRect().left; drawWD(); });
     cWD.addEventListener('mouseleave', () => { hoverWD = -1; drawWD(); });
     drawWD();
+  }
+
+  // ===========================================================================
+  // vis-beta-mass: Radiation pressure fraction β vs stellar mass
+  // ===========================================================================
+  const cBM = document.getElementById('vis-beta-mass');
+  if (cBM) {
+    const bmS = setupCanvas(cBM);
+    const ctxBM = bmS.ctx, WBM = bmS.W, HBM = bmS.H;
+    const oxBM = 70, oyBM = 25, pwBM = WBM - 110, phBM = HBM - 70;
+
+    // Solve β from: M/M☉ = (18.1/μ²) * sqrt((1-β)/β⁴)
+    // where μ = 0.6 (mean molecular weight)
+    // → M/M☉ = (18.1 / 0.36) * sqrt((1-β)/β⁴)
+    // For a given M, find β by bisection.
+    const mu_BM = 0.6;
+    const K_BM  = 18.1 / (mu_BM * mu_BM); // ≈ 50.28
+
+    function betaFromMass(Msun) {
+      // M = K_BM * sqrt((1-β)/β⁴)  →  search β in (0,1)
+      let lo = 1e-6, hi = 1 - 1e-9;
+      for (let iter = 0; iter < 80; iter++) {
+        const mid = (lo + hi) / 2;
+        const val = K_BM * Math.sqrt((1 - mid) / Math.pow(mid, 4));
+        if (val > Msun) lo = mid; else hi = mid;
+      }
+      return (lo + hi) / 2;
+    }
+
+    function drawBetaMass() {
+      clearCanvas(ctxBM, WBM, HBM);
+
+      // Log x-axis: M from 1 to 100 M☉
+      const logMmin = 0, logMmax = 2;  // log10(1)=0, log10(100)=2
+
+      drawAxes(ctxBM, oxBM, oyBM, pwBM, phBM, {
+        xLabel: 'Stellar mass  M / M\u2609  (log scale)',
+        yLabel: '\u03B2 = P_gas / P_total',
+        yLabelOffset: 48
+      });
+
+      // X ticks at 1, 2, 5, 10, 20, 50, 100 M☉
+      const mTicks = [1, 2, 5, 10, 20, 50, 100];
+      ctxBM.fillStyle = COLORS.textDim; ctxBM.font = FONT_SM; ctxBM.textAlign = 'center';
+      mTicks.forEach(m => {
+        const px = oxBM + (Math.log10(m) - logMmin) / (logMmax - logMmin) * pwBM;
+        ctxBM.fillText(m.toString(), px, oyBM + phBM + 14);
+        ctxBM.strokeStyle = COLORS.grid; ctxBM.lineWidth = 0.5;
+        ctxBM.beginPath(); ctxBM.moveTo(px, oyBM); ctxBM.lineTo(px, oyBM + phBM); ctxBM.stroke();
+      });
+
+      // Y ticks 0–1
+      ctxBM.textAlign = 'right';
+      for (let v = 0; v <= 1.01; v += 0.2) {
+        const pyv = oyBM + phBM - v * phBM;
+        ctxBM.fillStyle = COLORS.textDim;
+        ctxBM.fillText(v.toFixed(1), oxBM - 5, pyv + 4);
+        ctxBM.strokeStyle = COLORS.grid; ctxBM.lineWidth = 0.5;
+        ctxBM.beginPath(); ctxBM.moveTo(oxBM, pyv); ctxBM.lineTo(oxBM + pwBM, pyv); ctxBM.stroke();
+      }
+
+      // β vs M curve
+      ctxBM.strokeStyle = COLORS.blue; ctxBM.lineWidth = 2.5;
+      ctxBM.beginPath();
+      let bmFirst = true;
+      const N_BM = 400;
+      for (let i = 0; i <= N_BM; i++) {
+        const logM = logMmin + i / N_BM * (logMmax - logMmin);
+        const Msun = Math.pow(10, logM);
+        const beta = betaFromMass(Msun);
+        const px = oxBM + (logM - logMmin) / (logMmax - logMmin) * pwBM;
+        const pyv = oyBM + phBM - beta * phBM;
+        if (bmFirst) { ctxBM.moveTo(px, pyv); bmFirst = false; } else ctxBM.lineTo(px, pyv);
+      }
+      ctxBM.stroke();
+
+      // Shaded region: gas-pressure dominated (β > 0.5) vs radiation-dominated
+      const halfY = oyBM + phBM - 0.5 * phBM;
+      ctxBM.fillStyle = 'rgba(79,195,247,0.08)';
+      ctxBM.fillRect(oxBM, halfY, pwBM, oyBM + phBM - halfY);
+      ctxBM.fillStyle = 'rgba(239,83,80,0.08)';
+      ctxBM.fillRect(oxBM, oyBM, pwBM, halfY - oyBM);
+
+      // β = 0.5 dashed guide
+      ctxBM.strokeStyle = COLORS.textDim; ctxBM.lineWidth = 1; ctxBM.setLineDash([4, 4]);
+      ctxBM.beginPath(); ctxBM.moveTo(oxBM, halfY); ctxBM.lineTo(oxBM + pwBM, halfY); ctxBM.stroke();
+      ctxBM.setLineDash([]);
+
+      // Region labels
+      ctxBM.font = FONT_SM; ctxBM.textAlign = 'left';
+      ctxBM.fillStyle = COLORS.blue;
+      ctxBM.fillText('Gas-pressure dominated  (\u03B2 \u2248 1)', oxBM + 8, oyBM + phBM - 12);
+      ctxBM.fillStyle = COLORS.red;
+      ctxBM.fillText('Radiation-pressure dominated  (\u03B2 \u2192 0)', oxBM + 8, oyBM + 14);
+
+      // Annotation: Sun and Eddington mass
+      const sunBeta = betaFromMass(1);
+      const sunPx = oxBM;
+      const sunPy = oyBM + phBM - sunBeta * phBM;
+      ctxBM.fillStyle = COLORS.yellow;
+      ctxBM.beginPath(); ctxBM.arc(sunPx, sunPy, 5, 0, 2 * Math.PI); ctxBM.fill();
+      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT_SM; ctxBM.textAlign = 'left';
+      ctxBM.fillText('M\u2609  \u03B2\u22480.9996', sunPx + 7, sunPy - 4);
+
+      const m100Beta = betaFromMass(100);
+      const m100Px = oxBM + pwBM;
+      const m100Py = oyBM + phBM - m100Beta * phBM;
+      ctxBM.fillStyle = COLORS.orange;
+      ctxBM.beginPath(); ctxBM.arc(m100Px, m100Py, 5, 0, 2 * Math.PI); ctxBM.fill();
+      ctxBM.fillStyle = COLORS.text; ctxBM.textAlign = 'right';
+      ctxBM.fillText('100 M\u2609  \u03B2\u2248' + m100Beta.toFixed(2), m100Px - 8, m100Py - 6);
+
+      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT_LG; ctxBM.textAlign = 'left';
+      ctxBM.fillText('Radiation Pressure Fraction vs Stellar Mass', oxBM + 5, oyBM + 12);
+    }
+
+    drawBetaMass();
+  }
+
+  // ===========================================================================
+  // vis-stellar-profiles: Polytropic density and temperature profiles
+  // ===========================================================================
+  const cSP = document.getElementById('vis-stellar-profiles');
+  if (cSP) {
+    const spS = setupCanvas(cSP);
+    const ctxSP = spS.ctx, WSP = spS.W, HSP = spS.H;
+    const oxSP = 70, oySP = 35, pwSP = WSP - 110, phSP = HSP - 75;
+
+    const spToggle = document.getElementById('stellar-profile-toggle');
+
+    // Integrate Lane-Emden:  θ'' + (2/ξ)θ' + θⁿ = 0,  θ(0)=1, θ'(0)=0
+    // Returns array of {xi, theta} from 0 to surface (θ=0) or ξ=20.
+    function solveLaneEmdenProfile(n) {
+      const dxi = 0.005;
+      // Near-origin series: θ ≈ 1 - ξ²/6
+      let xi = 0.001, theta = 1 - xi * xi / 6, dtheta = -xi / 3;
+      const pts = [{ xi: 0, theta: 1 }];
+      while (xi < 20) {
+        const thetaN = Math.pow(Math.max(theta, 0), n);
+        const ddtheta = -thetaN - 2 * dtheta / xi;
+        dtheta += ddtheta * dxi;
+        theta  += dtheta  * dxi;
+        xi     += dxi;
+        if (theta <= 0) { pts.push({ xi, theta: 0 }); break; }
+        pts.push({ xi, theta });
+      }
+      return pts;
+    }
+
+    // Precompute solutions
+    const spPolytropes = [
+      { n: 1.5, color: COLORS.blue,   label: 'n = 1.5 (convective)' },
+      { n: 3.0, color: COLORS.orange, label: 'n = 3 (Eddington)' },
+      { n: 4.0, color: COLORS.purple, label: 'n = 4' },
+    ];
+
+    spPolytropes.forEach(p => {
+      const raw = solveLaneEmdenProfile(p.n);
+      // Normalise xi by xi_1 (surface) to get r/R
+      const xi1 = raw[raw.length - 1].xi;
+      p.profile = raw.map(pt => ({
+        rR: pt.xi / xi1,
+        T_ratio: pt.theta,                          // T/T_c = θ
+        rho_ratio: Math.pow(pt.theta, p.n),         // ρ/ρ_c = θⁿ
+      }));
+    });
+
+    function drawStellarProfiles() {
+      const showMode = spToggle?.value || 'both';  // 'density', 'temperature', or 'both'
+
+      clearCanvas(ctxSP, WSP, HSP);
+      drawAxes(ctxSP, oxSP, oySP, pwSP, phSP, {
+        xLabel: 'r / R',
+        yLabel: 'Normalised value',
+        yLabelOffset: 48
+      });
+
+      // X ticks 0–1
+      ctxSP.fillStyle = COLORS.textDim; ctxSP.font = FONT_SM; ctxSP.textAlign = 'center';
+      for (let v = 0; v <= 1.01; v += 0.2) {
+        ctxSP.fillText(v.toFixed(1), oxSP + v * pwSP, oySP + phSP + 14);
+      }
+      // Y ticks 0–1
+      ctxSP.textAlign = 'right';
+      for (let v = 0; v <= 1.01; v += 0.2) {
+        ctxSP.fillText(v.toFixed(1), oxSP - 5, oySP + phSP - v * phSP + 4);
+      }
+
+      spPolytropes.forEach(({ n, color, label, profile }) => {
+        // Temperature profile (dashed)
+        if (showMode === 'temperature' || showMode === 'both') {
+          ctxSP.strokeStyle = color; ctxSP.lineWidth = 1.5; ctxSP.setLineDash([5, 4]);
+          ctxSP.beginPath();
+          profile.forEach((pt, i) => {
+            const px = oxSP + pt.rR * pwSP;
+            const pyv = oySP + phSP - pt.T_ratio * phSP;
+            i === 0 ? ctxSP.moveTo(px, pyv) : ctxSP.lineTo(px, pyv);
+          });
+          ctxSP.stroke(); ctxSP.setLineDash([]);
+        }
+
+        // Density profile (solid)
+        if (showMode === 'density' || showMode === 'both') {
+          ctxSP.strokeStyle = color; ctxSP.lineWidth = 2.5;
+          ctxSP.beginPath();
+          profile.forEach((pt, i) => {
+            const px = oxSP + pt.rR * pwSP;
+            const pyv = oySP + phSP - pt.rho_ratio * phSP;
+            i === 0 ? ctxSP.moveTo(px, pyv) : ctxSP.lineTo(px, pyv);
+          });
+          ctxSP.stroke();
+        }
+      });
+
+      // Legend
+      const legX = WSP - 195, legY = oySP + 12;
+      spPolytropes.forEach(({ color, label }, idx) => {
+        ctxSP.fillStyle = color; ctxSP.font = FONT_SM; ctxSP.textAlign = 'left';
+        ctxSP.fillText(label, legX, legY + idx * 16);
+      });
+
+      // Line-style legend
+      const legStyleY = legY + spPolytropes.length * 16 + 6;
+      if (showMode === 'both' || showMode === 'density') {
+        ctxSP.strokeStyle = COLORS.textDim; ctxSP.lineWidth = 2.5;
+        ctxSP.beginPath(); ctxSP.moveTo(legX, legStyleY + 5); ctxSP.lineTo(legX + 22, legStyleY + 5); ctxSP.stroke();
+        ctxSP.fillStyle = COLORS.textDim; ctxSP.font = FONT_SM; ctxSP.textAlign = 'left';
+        ctxSP.fillText('\u03C1/\u03C1_c  (solid)', legX + 26, legStyleY + 9);
+      }
+      if (showMode === 'both' || showMode === 'temperature') {
+        ctxSP.strokeStyle = COLORS.textDim; ctxSP.lineWidth = 1.5; ctxSP.setLineDash([5, 4]);
+        ctxSP.beginPath(); ctxSP.moveTo(legX, legStyleY + 21); ctxSP.lineTo(legX + 22, legStyleY + 21); ctxSP.stroke();
+        ctxSP.setLineDash([]);
+        ctxSP.fillStyle = COLORS.textDim; ctxSP.font = FONT_SM;
+        ctxSP.fillText('T/T_c  (dashed)', legX + 26, legStyleY + 25);
+      }
+
+      ctxSP.fillStyle = COLORS.text; ctxSP.font = FONT_LG; ctxSP.textAlign = 'left';
+      ctxSP.fillText('Polytropic Stellar Profiles (Lane-Emden)', oxSP + 5, oySP - 6);
+    }
+
+    spToggle?.addEventListener('change', drawStellarProfiles);
+    drawStellarProfiles();
   }
 }

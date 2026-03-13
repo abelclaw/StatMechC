@@ -156,9 +156,10 @@ $$\langle N_1 \rangle = \frac{1}{e^{\beta(\epsilon_1 - \mu)} - 1} = \frac{1}{e^{
 
 <p>For different $N$ the curve shifts, but looks qualitatively the same. After a little fiddling (inspired by the analytic result below), we see that if we plot the ground state occupancy as a function of $\frac{k_BT}{N^{2/3}\epsilon_1}$ the result is essentially independent of $N$ for the Bose-Einstein case:</p>
 
-<figure><img src="images/12-BEC_p6_img0.png" alt="Ground state occupancy for different N as function of T"><figcaption>Figure 4 (left). Ground state occupancy in a Bose system for different $N$ as a function of $T$.</figcaption></figure>
-
-<figure><img src="images/12-BEC_p6_img1.png" alt="Ground state occupancy for different N as function of T/N^(2/3)"><figcaption>Figure 4 (right). Ground state occupancy for different $N$ as a function of $T/N^{2/3}$. Pulling out a factor of $N^{2/3}$ makes the curve essentially independent of $N$.</figcaption></figure>
+<div class="interactive-container">
+<canvas id="vis-bec-nground" width="600" height="400"></canvas>
+<p class="vis-caption">Figure 4. Ground state occupancy $N_0/N$ vs $T/T_c$ for different system sizes. As $N \to \infty$, the transition sharpens into the thermodynamic limit $N_0/N = 1 - (T/T_c)^{3/2}$.</p>
+</div>
 
 <p>The kink in the graph, at around $T_c \approx 0.8\frac{N^{2/3}\epsilon_1}{k_B}$ indicates the phase transition. Above this temperature, the ground state is basically empty, having only its fair share of particles. Below this temperature, $\langle N_\text{ground}\rangle$ starts growing linearly with $T$. The rescaling of our numerical result from the left to the right plot indicates that the critical temperature $T_c$ scales like $N^{2/3}$, a result that we will next confirm analytically.</p>
 

@@ -168,10 +168,15 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>The analog quantum mechanics problem is a series of $N$ particles-in-a-box or potential wells. When two wells with energies $\epsilon_0$ are brought together, we get one eigenstate with lower energy and one with higher energy $\epsilon_\pm = \epsilon_0 \pm \Delta$. When three wells are brought together, the lowest energy lowers more, the highest energy raises more, the energies are roughly $\epsilon_0 - 1.5\Delta$, $\epsilon_0$, $\epsilon_0 + 1.5\Delta$ and so on.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p9_img0.png" alt="Energy levels splitting into bands">
-<figcaption>Figure 9. As orbitals mix, energy bands form.</figcaption>
-</figure>
+<div class="interactive-container">
+<canvas id="vis-band-splitting" width="600" height="350"></canvas>
+<div class="slider-container">
+<label for="band-n-atoms">Number of atoms $N$:</label>
+<input type="range" id="band-n-atoms" min="1" max="20" step="1" value="1">
+<span class="slider-value" id="band-n-atoms-val">1</span>
+</div>
+<p class="vis-caption">Figure 9. As atoms come together, discrete energy levels split into bands of $N$ closely-spaced levels.</p>
+</div>
 
 <p>The discrete energy levels turn into bands. Half of each band comprises bonding orbitals with energies below the energy $\epsilon_0$ of the isolated atom. The other half of each band comprises the antibonding orbitals with energies greater than $\epsilon_0$. Every energy level is 2-fold degenerate because of the two electron spins. So if there are $N$ atoms, there are $2N$ energy levels in each band. The number of bands is set by the number of original orbitals.</p>
 
@@ -344,11 +349,15 @@ $$\epsilon_{\text{junc}} = k_B T\ln\frac{n_h^{\text{p-type}}\,n_e^{\text{n-type}
 
 <p>If the applied voltage is in the other direction, however, so that the negative terminal connects to the p side (<span class="tooltip-trigger">reverse bias<span class="tooltip-content">Connecting the negative terminal of a battery to the p-side of a p-n junction, which increases the junction potential and blocks current flow.</span></span>), it will draw holes from the n side and send electrons into the p side. The electrons on the p side make the junction potential larger and no current passes through. If enough reverse-bias voltage is applied, above the breakdown voltage (typically 30V--50V), then the electrons are forced across the junction and a current flows (in the opposite direction).</p>
 
-<figure>
-<img src="images/14-Semiconductors_p15_img0.png" alt="Forward and reverse bias of p-n junction">
-<img src="images/14-Semiconductors_p15_img1.png" alt="I-V curve of diode">
-<figcaption>Figure 14. Current only flows through a p-n junction when a negative voltage is applied to the n side (forward bias). Flipping the battery (reverse bias) does not induce current. Right shows the current induced for an applied voltage.</figcaption>
-</figure>
+<div class="interactive-container">
+<canvas id="vis-iv-curve" width="600" height="400"></canvas>
+<div class="slider-container">
+<label for="iv-temp">Temperature $T$ (K):</label>
+<input type="range" id="iv-temp" min="200" max="500" step="10" value="300">
+<span class="slider-value" id="iv-temp-val">300</span>
+</div>
+<p class="vis-caption">Figure 14. I-V characteristic of a p-n junction diode: $I = I_s(e^{eV/k_BT} - 1)$. Current flows exponentially in forward bias but is blocked in reverse bias.</p>
+</div>
 
 <p>Thus this p-n junction acts as a <span class="tooltip-trigger">rectifier or diode<span class="tooltip-content">A device that allows current to flow in only one direction. A p-n junction conducts in forward bias (above ~0.6V) but blocks current in reverse bias.</span></span>: it allows current to flow in only one direction: $V \gtrsim 0.6\;\text{V}$ is required in forward bias to conduct but $V \gtrsim 50\;\text{V}$ is required for reverse bias to conduct.</p>
 
