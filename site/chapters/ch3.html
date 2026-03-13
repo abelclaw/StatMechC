@@ -81,14 +81,14 @@ $$\Delta\theta_N = 10^{-22}\left(\frac{\ell}{R}\right)^N = 10^{-22}(10^3)^N$$
 <p>In addition, even if we pretend a system is completely isolated &mdash; turn off gravity and fleas, etc &mdash; the system is still chaotic due to (classical) uncertainty. With an even exponentially small uncertainty on the initial condition, the final state after long enough time will be completely unknown. In quantum mechanics, the relevant uncertainty on the initial state is not the Heisenberg uncertainty (on knowing position given momentum), but on how well we can actually know the initial state wavefunction. Again, there is no hope of solving the time-evolution exactly.</p>
 
 <!-- Interactive Chaos Double Pendulum -->
-<div class="interactive-container" id="vis-chaos">
+<div class="interactive-container">
   <h3>Interactive: Chaos &mdash; Double Pendulum</h3>
   <div class="vis-controls">
-    <label>Initial offset: <input type="range" id="chaos-offset" min="0.001" max="0.5" step="0.001" value="0.01"><span class="slider-value">0.01</span></label>
+    <label>Initial offset: <input type="range" id="chaos-offset" min="0.001" max="0.5" step="0.001" value="0.01"><span class="slider-value" id="chaos-offset-val">0.01</span></label>
     <button id="chaos-start">Start</button>
     <button id="chaos-reset">Reset</button>
   </div>
-  <canvas class="vis-canvas" width="600" height="400"></canvas>
+  <canvas id="vis-chaos" width="600" height="400"></canvas>
 </div>
 
 <!-- ============================================================ -->
@@ -465,10 +465,14 @@ $$\frac{dP(v)}{dv} = 4\pi v^2 \left(\frac{m}{2\pi k_B T}\right)^{3/2}e^{-mv^2/(2
 <span class="eq-number">(52)</span>
 </div>
 
-<figure>
-<img src="images/3-Equilibrium_p13_img0.png" alt="Maxwell-Boltzmann velocity distributions for different gases">
-<figcaption>Figure 6. Maxwell-Boltzmann velocity distributions for some gases with the same value of the average energy $\bar{\epsilon} = \frac{E}{N} = \frac{3}{2}k_BT$.</figcaption>
-</figure>
+<div class="interactive-container">
+  <h3>Interactive: Maxwell-Boltzmann Speed Distribution</h3>
+  <p class="vis-caption">Adjust the temperature to see how the speed distribution $f(v) = 4\pi v^2(m/2\pi k_BT)^{3/2}e^{-mv^2/2k_BT}$ shifts. Higher temperatures spread the distribution to higher speeds. Markers show $v_\text{peak}$, $\langle v \rangle$, and $v_\text{rms}$.</p>
+  <div class="vis-controls">
+    <label>Temperature: <input type="range" id="mb-temp" min="100" max="2000" step="50" value="300"> <span class="slider-value" id="mb-temp-val">300</span> K</label>
+  </div>
+  <canvas id="vis-maxwell" width="600" height="300"></canvas>
+</div>
 
 <!-- ============================================================ -->
 <h2 id="s3-8">8 &mdash; Summary</h2>

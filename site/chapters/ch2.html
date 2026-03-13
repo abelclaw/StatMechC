@@ -161,13 +161,13 @@ $$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \
 <p>and the RMS distance moved is $\sqrt{N}\,\ell$, just like in the 1D case.</p>
 
 <!-- Interactive Random Walk -->
-<div class="interactive-container" id="vis-randomwalk">
+<div class="interactive-container">
   <h3>Interactive: 2D Random Walk</h3>
   <div class="vis-controls">
     <button id="rw-start">Start Walk</button>
     <button id="rw-reset">Reset</button>
   </div>
-  <canvas class="vis-canvas" width="600" height="400"></canvas>
+  <canvas id="vis-randomwalk" width="600" height="400"></canvas>
 </div>
 
 <!-- ============================================================ -->
@@ -293,12 +293,12 @@ $$n(\vec{x}, t) = \int d^3y\left(\frac{1}{2\pi\ell\bar{v}t}\right)^{3/2}\exp\!\l
 <p>Eq.&nbsp;(31) has a simple physical interpretation: the number of molecules at a point $\vec{x}$ are those that have walked there randomly from any other point $\vec{y}$ over the time $t$.</p>
 
 <!-- Interactive Diffusion Simulation -->
-<div class="interactive-container" id="vis-diffusion">
+<div class="interactive-container">
   <h3>Interactive: Diffusion Simulation</h3>
   <div class="vis-controls">
-    <label>Diffusion constant ($D$): <input type="range" id="diff-D" min="0.1" max="5" step="0.1" value="1"><span class="slider-value">1</span></label>
+    <label>Diffusion constant ($D$): <input type="range" id="diff-D" min="0.1" max="5" step="0.1" value="1"><span class="slider-value" id="diff-D-val">1</span></label>
   </div>
-  <canvas class="vis-canvas" width="600" height="300"></canvas>
+  <canvas id="vis-diffusion" width="600" height="300"></canvas>
 </div>
 
 <!-- ============================================================ -->

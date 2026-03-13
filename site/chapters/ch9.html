@@ -372,7 +372,18 @@ $$\hat{n}_g(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) - \frac{7}{4}(1 - \hat{T})^{
 </ul>
 </div>
 
-<!-- Interactive Visualization -->
+<!-- Interactive: Ising Model -->
+<div class="interactive-container">
+  <h3>Interactive: 2D Ising Model</h3>
+  <p class="vis-caption">A lattice of spins with nearest-neighbor interactions. Below $T_c \approx 2.27\,J/k_B$, spontaneous magnetization appears (spontaneous symmetry breaking). Above $T_c$, the system is disordered. Watch domains form and dissolve as you adjust temperature.</p>
+  <div class="vis-controls">
+    <label>$T / (J/k_B)$: <input type="range" id="ising-temp" min="0.5" max="5" step="0.05" value="2.27"> <span class="slider-value" id="ising-temp-val">2.27</span></label>
+    <button id="ising-reset">Reset</button>
+  </div>
+  <canvas id="vis-ising" width="600" height="400"></canvas>
+</div>
+
+<!-- Interactive: Phase Diagram -->
 <h3>Interactive: Phase Diagram</h3>
 <div class="interactive-container">
 <canvas id="vis-phase" width="600" height="400"></canvas>
