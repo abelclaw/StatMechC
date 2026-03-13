@@ -1,0 +1,466 @@
+<div class="chapter-number">Chapter 6</div>
+<h1 class="chapter-title">Entropy</h1>
+<p class="chapter-intro">Entropy has many faces: Clausius entropy from heat flow, Boltzmann entropy from counting microstates, Gibbs entropy from probabilities, and Shannon entropy from information theory. The modern unifying viewpoint is that entropy measures ignorance &mdash; the amount of information you would need to completely specify a microstate given macroscopic parameters.</p>
+
+<h2>1. Introduction</h2>
+
+<p>In this lecture, we discuss many ways to think about entropy. The most important and most famous property of entropy is that it never decreases:</p>
+
+<div class="equation key-result">$$\Delta S_{\text{tot}} \geq 0$$<span class="eq-number">(1)</span></div>
+
+<p>Here, $\Delta S_{\text{tot}}$ means the change in entropy of a system plus the change in entropy of the surroundings. This is the <span class="tooltip-trigger">second law of thermodynamics<span class="tooltip-content">The total entropy of a system plus its surroundings never decreases. This is perhaps the most fundamental law in all of physics.</span></span> that we met in the previous lecture.</p>
+
+<p>There's a great quote from Sir Arthur Eddington from 1927 summarizing the importance of the second law:</p>
+
+<blockquote>If someone points out to you that your pet theory of the universe is in disagreement with Maxwell's equations &mdash; then so much the worse for Maxwell's equations. If it is found to be contradicted by observation &mdash; well these experimentalists do bungle things sometimes. But if your theory is found to be against the second law of thermodynamics I can give you no hope; there is nothing for it but to collapse in deepest humiliation.</blockquote>
+
+<p>Another possibly relevant quote, from the introduction to the statistical mechanics book by David Goodstein refers to a curious fact about some physicists who struggled with entropy:</p>
+
+<blockquote>Ludwig Boltzmann who spent much of his life studying statistical mechanics, died in 1906, by his own hand. Paul Ehrenfest, carrying on the work, died similarly in 1933. Now it is our turn to study statistical mechanics.</blockquote>
+
+<p>There are many ways to define entropy. All of them are equivalent, although it can be hard to see. The original definition, due to Clausius, was thermodynamic. As we saw in the last lecture, Clausius noted that entropy is a function of state, and the entropy difference between two states connected by a reversible path is determined simply by the heat absorbed:</p>
+
+<div class="equation key-result">$$\Delta S_{\text{system}} = \int_{\text{rev.}} \frac{dQ_{\text{in}}}{T} \qquad \text{(Clausius entropy)}$$<span class="eq-number">(2)</span></div>
+
+<p>In statistical mechanics, we can define the entropy as</p>
+
+<div class="equation key-result">$$S = k_B \ln \Omega \qquad \text{(Boltzmann entropy)}$$<span class="eq-number">(3)</span></div>
+
+<p>where $\Omega$ is the number of microstates compatible with some macroscopic parameters $(E, V, N)$. This form is usually attributed to Boltzmann, although it was Planck who wrote it down in this form for the first time. Note that there is no arbitrariness in deciding which states to count in $\Omega$ or how to weight them &mdash; we count all states compatible with the macroscopic parameters equally. From $S$, we extract the temperature as $\frac{1}{T} = \frac{\partial S}{\partial E}$ and then integrating over $dE = dQ$ we recover Eq. (2). Thus the Boltzmann entropy definition implies Clausius's formula.</p>
+
+<p>Defining $S$ in terms of microstates is useful in that it lets us compute $S$ from a microscopic description. For example, for a monatomic ideal gas, the Boltzmann entropy is:</p>
+
+<div class="equation">$$S = Nk_B\left[\ln V + \frac{3}{2}\ln\left(\frac{mE}{N}\right) + c\right]$$<span class="eq-number">(4)</span></div>
+
+<p>for some constant $c$. This is an example showing that entropy is a <span class="tooltip-trigger">state variable<span class="tooltip-content">A quantity that depends only on the current state of a system, not on how it got there. Energy, entropy, temperature, and pressure are state variables. Heat and work are not.</span></span>: it depends only on the current state of a system, not how it got there.</p>
+
+<p>Another way to compute entropy came from considering the number of ways $N$ particles could be split into $m$ groups of sizes $n_i$. This number is $\Omega = \frac{N!}{n_1!\cdots n_m!}$. Expanding for large $n_i$ gives</p>
+
+<div class="equation">$$S = -k_B N \sum_{i=1}^{m} f_i \ln f_i$$<span class="eq-number">(5)</span></div>
+
+<p>where $f_i = \frac{n_i}{N}$. Since $\sum n_i = N$ then $\sum f_i = 1$ and so $f_i$ has the interpretation of a probability.</p>
+
+<p>The entropy written in terms of probabilities, but without the factor of $N$, is called the <span class="tooltip-trigger">Gibbs entropy<span class="tooltip-content">$S = -k_B\sum P_i \ln P_i$. A generalization of Boltzmann entropy that applies whether or not probabilities are all equal.</span></span>:</p>
+
+<div class="equation key-result">$$S = -k_B \sum_{i=1}^{m} P_i \ln P_i \qquad \text{(Gibbs entropy)}$$<span class="eq-number">(6)</span></div>
+
+<p>Taking $P_i = \frac{1}{\Omega} = \text{const}$, the Gibbs entropy reduces to the Boltzmann entropy. So the Gibbs entropy formula is a generalization: it applies when probabilities are all equal and also when they are not.</p>
+
+<p>All of these ways of thinking about entropy are useful. They are all ways of understanding entropy as <strong>disorder</strong>: the more microstates there are, the less organized are the particles. A solid has lower entropy than a gas because the molecules are more ordered.</p>
+
+<p>In the second half of the 20th century, it was realized that a more general and useful way of thinking about entropy than entropy as disorder is <strong>entropy as uncertainty</strong>. That is, we associate entropy with our ignorance of the system, or our lack of information about what microstate it's in. A solid has lower entropy than a gas because we have more information about the location of the atoms.</p>
+
+<div class="info-box concept">
+<div class="box-title">Entropy as Information</div>
+<p>A single definition of entropy that unifies all the others:</p>
+<p><strong>Entropy measures the amount of information you would need to completely specify a microstate for given macroscopic properties.</strong></p>
+</div>
+
+<h2>2. Free Expansion</h2>
+
+<p>An example that helps elucidate the different definitions of entropy is the free expansion of a gas from a volume $V_1$ to a volume $V_2$.</p>
+
+<p>First, consider the <strong>Boltzmann entropy</strong>, $S = k_B\ln\Omega$. Using Eq. (4), in going from $V_1$ to $V_2$, the gas gains entropy $\Delta S = Nk_B\ln\frac{V_2}{V_1}$. That the Boltzmann entropy increases makes sense because there are more accessible microstates in the larger volume, $\Omega_2 > \Omega_1$.</p>
+
+<p>What about the <strong>Gibbs entropy</strong>? If $P_i$ is the probability of finding the system in microstate $i$, then $P_i = \frac{1}{\Omega_1}$ when the gas is at volume $V_1$. When it expands to $V_2$, each microstate of the gas in $V_1$ corresponds to exactly one microstate in $V_2$, so we should have $P_i = \frac{1}{\Omega_1}$ also at volume $V_2$, and therefore the Gibbs entropy appears to be unchanged! Although there are more possible microstates in $V_2$, we know that, since the gas came from $V_1$, that only a small fraction of these could possibly be populated.</p>
+
+<p>So in the free expansion of a gas, Boltzmann entropy increases but Gibbs entropy does not appear to. How do we reconcile these two concepts?</p>
+
+<p>The origin of this inconsistency is that Boltzmann entropy is defined in terms of the number of states $\Omega$ consistent with macroscopic parameters $V$, $E$, $N$, etc. In contrast, "the set of states that when time-reversed go back to $V_1$" used for Gibbs entropy depends on more than just these parameters. If we define the probabilities $P_i$ for the Gibbs entropy the same way as we define $\Omega$ for the Boltzmann entropy &mdash; as the probability for finding a state with given values of $V$, $E$, $N$ &mdash; the two definitions will agree. The number of new states is $\frac{\Omega_2}{\Omega_1} = \exp\left(\frac{\Delta S}{k_B}\right) = \left(\frac{V_2}{V_1}\right)^N$.</p>
+
+<p>Now, you may be wondering why we choose to define entropy using $V$, $E$, $N$ and not using the information about where the particles originated from. While we could define entropy with complete knowledge of the phase space point, $S = 0$ for all time. While valid, it would clearly not be a useful concept. Entropy, and statistical mechanics more broadly, is useful only if we <span class="tooltip-trigger">coarse grain<span class="tooltip-content">Averaging over details we cannot or choose not to track. Coarse graining is part of the definition of entropy and is what makes statistical mechanics useful.</span></span>. Entropy is defined in terms of the number of states or probabilities compatible with macroscopic parameters. Coarse graining is part of the definition.</p>
+
+<p>It may be helpful to see that if we use the Gibbs entropy definition, entropy does in fact increase during diffusion. For a diffusing gas in 1D with number density $n(x,t)$, the Gibbs entropy is $S(t) = -c\int dx\, n(x,t)\ln n(x,t)$. Using the diffusion equation $\frac{\partial n}{\partial t} = D\frac{\partial^2 n}{\partial x^2}$:</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">▶</span> Derivation: Entropy Increases During Diffusion</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Step 1</div>Start from $\frac{dS}{dt} = -c\int dx\,\frac{\partial}{\partial t}[n\ln n] = -c\int dx\,[1+\ln n]\frac{dn}{dt}$.</div>
+<div class="step"><div class="step-label">Step 2</div>Using the diffusion equation: $\frac{dS}{dt} = -cD\int dx\,[1+\ln n]\frac{\partial^2 n}{\partial x^2}$.</div>
+<div class="step"><div class="step-label">Step 3</div>Integrating by parts (boundary terms vanish since density goes to zero at spatial infinity):
+$$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\right)^2 > 0$$</div>
+</div></div>
+</div>
+
+<p>We conclude that during diffusion the entropy strictly grows with time. It stops growing when $\frac{\partial n}{\partial x} = 0$, i.e. when the density is constant, which is the state of maximum entropy.</p>
+
+<h2>3. Entropy of Mixing</h2>
+
+<p>Although entropy is a theoretical construction &mdash; it cannot be directly measured &mdash; it is nevertheless extremely useful. In fact, entropy can be used to do work. One way to do so is through the <span class="tooltip-trigger">entropy of mixing<span class="tooltip-content">The entropy increase when two different gases are allowed to mix. It equals $2Nk_B\ln 2$ for equal volumes of two different gases.</span></span>.</p>
+
+<p>Say we have a volume $V$ of helium with $N$ molecules and another volume $V$ of xenon also with $N$ molecules (both monatomic gases) at the same temperature. If we let the gases mix, then each expands from $V$ to $2V$. The entropy change of each is:</p>
+
+<div class="equation">$$\Delta S = Nk_B\ln\frac{2V}{V} = Nk_B\ln 2$$<span class="eq-number">(9)</span></div>
+
+<p>So the total entropy change is:</p>
+
+<div class="equation key-result">$$\Delta S = 2Nk_B\ln 2$$<span class="eq-number">(10)</span></div>
+
+<p>This increase is called the entropy of mixing.</p>
+
+<p>The entropy of mixing is a real thing, and can be used to do work. For example, say we had a vessel with xenon on one side and helium on the other, separated by a semi-permeable membrane that lets helium pass through and not xenon. As the helium diffuses through the membrane, it creates a pressure difference. This pressure can be used to do work.</p>
+
+<p>The pressure when there is a mixed solution (e.g. salt water) in which the solute (e.g. salt) cannot penetrate a semi-permeable barrier (e.g. skin) is called <span class="tooltip-trigger">osmotic pressure<span class="tooltip-content">The pressure created when a solvent passes through a semi-permeable membrane from a region of low solute concentration to high concentration. Drives many biological processes.</span></span>. For example, when you eat a lot of salt, your veins increase salt concentration and pull more water in from your body to compensate, giving you high blood pressure.</p>
+
+<p>In chemistry and biology, <strong>concentration gradients</strong> are very important. A concentration gradient means the concentration of some ion, like $\text{Na}^+$ or $\text{K}^+$, is not constant in space. When there is a concentration gradient, the system is not completely homogeneous, so entropy can be increased by mixing. Concentration gradients are critical for life. Neurons fire when the concentration of certain chemicals or ions passes a threshold. Cells use energy to produce concentration gradients &mdash; there are proteins in the cell wall that pump sodium and potassium from areas of low concentration to areas of high concentration.</p>
+
+<figure><img src="images/6-Entropy_p5_img0.png" alt="Cellular pump"><figcaption>A cellular pump, present in practically every cell of every living thing. It uses energy in the form of ATP to establish concentration gradients.</figcaption></figure>
+
+<p>Another familiar effect due to entropy of mixing is how salt is able to melt ice. The salt draws water out of the ice (i.e. melts it) because saltwater has higher entropy than salt and ice separately.</p>
+
+<h3>3.1 Gibbs Paradox</h3>
+
+<p>So entropy of mixing is a real thing. But it is still a little puzzling. Say instead of two different ideal gases, we just have helium. Again we start with two volumes $V$, $N$ and $E$ each, and remove a partition between them to let them mix. The calculation is identical and we still find $\Delta S = 2Nk_B\ln 2$.</p>
+
+<p>What happens if we put the partition back in? We start with helium gas with volume $2V$, number $2N$ and energy $2E$. Its initial entropy, by Eq. (4) is</p>
+
+<div class="equation">$$S_{\text{init}} = 2Nk_B\left[\ln 2V + \frac{3}{2}\ln\left(\frac{mE}{N}\right) + c\right]$$<span class="eq-number">(11)</span></div>
+
+<p>Now put a partition right down the middle, splitting it into two equal halves, each with $V$, $N$ and $E$:</p>
+
+<div class="equation">$$S_{\text{final}} = 2\left\{Nk_B\left[\ln V + \frac{3}{2}\ln\left(\frac{mE}{N}\right) + c\right]\right\} = S_{\text{init}} - 2Nk_B\ln 2$$<span class="eq-number">(12)</span></div>
+
+<p>Thus the entropy has gone down, by exactly the entropy of mixing. That entropy could go down by simply sticking a partition in a gas seems very strange, and apparently violates the second law of thermodynamics. This is called the <span class="tooltip-trigger">Gibbs paradox<span class="tooltip-content">The apparent paradox that inserting a partition in an identical gas seems to decrease entropy. Resolved by accounting for the indistinguishability of identical particles (the $N!$ factor).</span></span>.</p>
+
+<h3>3.2 Distinguishable microstates</h3>
+
+<p>To resolve the Gibbs paradox, let's think about why the entropy is changing. When xenon and helium mix, the new microstates we add don't look like the old ones. When helium mixes with helium, the new microstates are indistinguishable from the old ones, so we are overcounting.</p>
+
+<figure><img src="images/6-Entropy_p6_img0.png" alt="Mixing of different vs. identical gases"><figcaption>When xenon and helium mix, the new microstates are genuinely new. When helium mixes with helium, the new microstates are indistinguishable from the old ones.</figcaption></figure>
+
+<p>In a large volume with every particle in a different position, we can simply divide by $N!$ for permuting those positions. This leads to:</p>
+
+<div class="equation">$$\Omega(\vec{q},\vec{p}) = 2e^{\frac{3}{2}N}\frac{1}{N!}\left(\frac{V}{(\Delta q\,\Delta p)^3}\right)^N\left(\frac{4\pi mE}{3N}\right)^{\frac{3N}{2}}$$<span class="eq-number">(13)</span></div>
+
+<p>After using Stirling's approximation the entropy $S = k_B\ln\Omega$ is</p>
+
+<div class="equation key-result">$$S = Nk_B\left[\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{4\pi mE}{3Nh^2}\right) + \frac{5}{2}\right]$$<span class="eq-number">(14)</span></div>
+
+<p>We have used $\Delta q\,\Delta p = h$. This is the <span class="tooltip-trigger">Sackur-Tetrode equation<span class="tooltip-content">The exact entropy of an ideal gas, including the $1/N!$ factor for indistinguishable particles. It correctly predicts that entropy does not change when partitioning a uniform gas.</span></span>.</p>
+
+<p>Does the extra $N!$ solve Gibbs paradox? For the gas with $2V$, $2N$ and $2E$:</p>
+
+<div class="equation">$$S_{\text{init}} = 2Nk_B\left[\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{mE}{N}\right) + c\right]$$<span class="eq-number">(15)</span></div>
+
+<p>After splitting into two halves:</p>
+
+<div class="equation">$$S_{\text{final}} = 2\left\{Nk_B\left[\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{mE}{N}\right) + c\right]\right\} = S_{\text{init}}$$<span class="eq-number">(16)</span></div>
+
+<p>So the entropy is unchanged by adding or removing the partition. For the xenon/helium mixture, there is still entropy of mixing $\Delta S = 2Nk_B\ln 2$ since each gas separately goes from $V$ to $2V$. Inserting a partition never changes the entropy.</p>
+
+<h3>3.3 Mixing example details</h3>
+
+<p>Since distinguishability is an important and confusing topic, let's do an example of mixing and unmixing in full detail, with three different assumptions:</p>
+
+<div class="info-box example">
+<div class="box-title">Three Cases of Mixing</div>
+<p><strong>1. Colored balls (all distinguishable):</strong> Entropy goes up by $\Delta S = 2N\ln 2$ when mixed. When split, there are $\binom{2N}{N} \approx 2^{2N}$ ways to split them, so including this factor gives $\Delta S = 0$ for the split.</p>
+<p><strong>2. Helium + helium (indistinguishable):</strong> Adding $\frac{1}{N!}$ factors, $\Omega' = \Omega_1\Omega_2$ in the thermodynamic limit. $\Delta S = 0$ for both merging and splitting.</p>
+<p><strong>3. Helium + xenon (each separately indistinguishable):</strong> Entropy of mixing is $\Delta S = 2N\ln 2$. After splitting, each half has $N/2$ of each species, and $\Delta S = 0$ for the split.</p>
+</div>
+
+<figure><img src="images/6-Entropy_p8_img0.png" alt="Distinguishable balls mixing"><figcaption>Mixing and splitting of distinguishable colored balls.</figcaption></figure>
+
+<figure><img src="images/6-Entropy_p8_img1.png" alt="Indistinguishable helium mixing"><figcaption>Mixing and splitting of indistinguishable helium molecules.</figcaption></figure>
+
+<figure><img src="images/6-Entropy_p9_img0.png" alt="Helium-xenon mixing"><figcaption>Mixing and splitting of helium and xenon (each set indistinguishable within itself).</figcaption></figure>
+
+<p>In no situation does entropy go down when we split the volume back into two halves.</p>
+
+<h3>3.4 Entropy is extensive</h3>
+
+<p>Note that with the extra factor $N!$ in Eq. (13) entropy has become an <span class="tooltip-trigger">extensive quantity<span class="tooltip-content">A quantity that doubles when you have twice as much of the same thing. Energy, volume, particle number, and entropy are extensive. Temperature and pressure are intensive (independent of amount).</span></span>. Extensive quantities double when you have twice as much of the same thing. For example, energy $E$ is extensive, as are $N$ and $V$. The ratio of two extensive quantities is an <strong>intensive</strong> property: temperature and pressure are intensive.</p>
+
+<p>From the Sackur-Tetrode formula, doubling $V$, $N$ and $E$ makes $S$ double. From the original definition, if you have two isolated systems with $\Omega_1$ and $\Omega_2$ microstates, the total is $\Omega = \Omega_1\Omega_2$, so:</p>
+
+<div class="equation">$$S_{12} = S_1 + S_2$$<span class="eq-number">(21)</span></div>
+
+<p>We can also see this from the Gibbs entropy. For two systems $A$ and $B$ with probabilities $P_i^A$ and $P_j^B$:</p>
+
+<div class="equation">$$S_{AB} = -k_B\sum_{i,j}P_i^A P_j^B \ln(P_i^A P_j^B) = S_A + S_B$$<span class="eq-number">(22-24)</span></div>
+
+<p>The extensivity simplifies properties of entropy. For $N$ indistinguishable particles each in one of $m$ states with probability $P_i$:</p>
+
+<div class="equation">$$S = -k_BN\sum_{i=1}^{m} P_i\ln P_i$$<span class="eq-number">(25)</span></div>
+
+<p>This is identical to the Boltzmann entropy formula Eq. (5). The factor of $N$ difference between Eq. (5) and Eq. (6) is due to Boltzmann's formula applying for indistinguishable particles and Gibbs' formula for distinguishable ones.</p>
+
+<p>To be clear, indistinguishability just means we are not interested in trying to tell them apart. You are never going to be able to pick out each of the $10^{24}$ individual He atoms in a gas, so the $N!$ should be included. In a metal, on the other hand, you can tell where each atom is, so the atoms in a solid should be treated as distinguishable.</p>
+
+<h2>4. Information Entropy</h2>
+
+<p>Next, we introduce the concept of <span class="tooltip-trigger">information entropy<span class="tooltip-content">Introduced by Claude Shannon in 1948. Measures the minimal number of bits needed to encode data, on average. Directly proportional to thermodynamic (Gibbs) entropy.</span></span>, as proposed by Claude Shannon in 1948.</p>
+
+<p>Consider the problem of data compression: we have certain data and want to compress it into as small a file as possible. If you want lossless compression, so that the data can always be restored exactly from the compressed file, then it is impossible for any algorithm to compress all data. This follows from the "pigeonhole principle": you cannot put $m$ pigeons in $n$ holes if $n < m$ without some hole having more than one pigeon.</p>
+
+<p>But most data files have some structure. For example, images often have similar colors next to each other, leading to run-length encoding. Or images have smooth features separated by sharp edges, making Fourier-transform-based compression (JPEG) efficient.</p>
+
+<h3>4.1 Text</h3>
+
+<p>For text, different letters appear with different frequencies. The standard ASCII code uses 7 bits per character. Since "e" is much more common than "&amp;", a good compression algorithm would use fewer bits for "e" and more bits for "&amp;".</p>
+
+<figure><img src="images/6-Entropy_p11_img0.png" alt="Letter frequencies in English"><figcaption>Probabilities of finding different letters in English text. "e" appears 12.7% of the time, "q" only 0.1%.</figcaption></figure>
+
+<p>What is the minimal number of bits you need to encode a given type of data? Shannon's answer was:</p>
+
+<div class="equation key-result">$$H = \text{minimal \#bits} = -\sum_i P_i \log_2 P_i$$<span class="eq-number">(26)</span></div>
+
+<p>This quantity $H$ is called the <span class="tooltip-trigger">Shannon entropy<span class="tooltip-content">$H = -\sum P_i \log_2 P_i$. The fundamental measure of information content. Shannon proved you can never encode data with fewer than $H$ bits on average (source coding theorem).</span></span> or information entropy. Shannon proved that you can't ever encode data with fewer than $H$ bits, on average. This is known as the <strong>source coding theorem</strong>.</p>
+
+<p>For example, a fair coin with $P_{\text{head}} = P_{\text{tail}} = \frac{1}{2}$:</p>
+
+<div class="equation">$$H = -\left(\frac{1}{2}\log_2\frac{1}{2} + \frac{1}{2}\log_2\frac{1}{2}\right) = 1$$<span class="eq-number">(27)</span></div>
+
+<p>So a coin has 1 bit. With the letter frequencies above:</p>
+
+<div class="equation">$$H = -[0.127\log_2 0.127 + 0.091\log_2 0.091 + \cdots + 0.001\log_2 0.001] = 4.17$$<span class="eq-number">(28)</span></div>
+
+<p>This means the best we can possibly do is to represent each letter with 4.17 bits, on average. This is better than the 7 bits in ASCII and even better than a naive encoding using $\log_2 26 = 4.7$ bits (which is the Shannon entropy if all letters were equally probable).</p>
+
+<p>Shannon also noted that in text, letters aren't randomly distributed but form words. Using words rather than letters, he estimated $H \approx 2.62$ bits/letter for the entropy of English text.</p>
+
+<h3>4.2 Algorithms</h3>
+
+<p>The source coding theorem doesn't tell you <em>how</em> to compress, just the maximal rate. Let's think about what an optimal compression algorithm might look like.</p>
+
+<p>If all probabilities are equal with $P_i = \frac{1}{N}$ then:</p>
+
+<div class="equation">$$H = -\sum_i \frac{1}{N}\log_2\frac{1}{N} = \log_2 N$$<span class="eq-number">(30)</span></div>
+
+<p>If one probability is zero, it doesn't affect $H$ (since $\lim_{P\to 0}P\ln P = 0$). If data is completely uniform ($P = 1$ for some character), then $H = 0$: zero bits needed.</p>
+
+<p>For a weighted coin with 90% heads and 10% tails:</p>
+
+<div class="equation">$$H = -(0.9\log_2 0.9 + 0.1\log_2 0.1) = 0.468$$<span class="eq-number">(32)</span></div>
+
+<p>It is inefficient to encode each flip with just 0 or 1. We can do better by encoding pairs of flips:</p>
+
+<div class="info-box example">
+<div class="box-title">Compression Example: Weighted Coin</div>
+<table style="width:100%;text-align:center">
+<tr><th>Sequence</th><th>HH</th><th>HT</th><th>TH</th><th>TT</th></tr>
+<tr><td>Probability</td><td>81%</td><td>9%</td><td>9%</td><td>1%</td></tr>
+<tr><td>Code</td><td>0</td><td>1011</td><td>1110</td><td>1111</td></tr>
+<tr><td>#bits</td><td>1</td><td>4</td><td>4</td><td>4</td></tr>
+</table>
+<p>Expected bits per 2 flips: $1\times 0.81 + 4\times 0.09 + 4\times 0.09 + 4\times 0.01 = 1.57$, giving $0.785$ bits/flip. Better than 1, but not yet optimal (0.468).</p>
+</div>
+
+<h3>4.3 Uniqueness</h3>
+
+<p>Shannon's formula for information entropy is the <strong>unique</strong> function of the probabilities satisfying three criteria:</p>
+<ol>
+<li>It does not change if something with $P_i = 0$ is added.</li>
+<li>It is maximized when $P_i$ are all the same.</li>
+<li>It is additive on uncorrelated probabilities.</li>
+</ol>
+
+<p>For the third criterion: if $P_i$ and $Q_j$ are uncorrelated, $H_{PQ} = -\sum_{i,j}P_iQ_j\log_2(P_iQ_j) = H_P + H_Q$. In other words, entropy is extensive. This is the same criterion Gibbs insisted on.</p>
+
+<p>There are other measures of information entropy, such as the <span class="tooltip-trigger">Renyi entropy<span class="tooltip-content">$H_\alpha^{\text{Renyi}} = \frac{1}{1-\alpha}\log_2\left(\sum P_i^\alpha\right)$. The Shannon entropy is the limit $\alpha \to 1$. Different values of $\alpha$ have different applications.</span></span>:</p>
+
+<div class="equation">$$H_\alpha^{\text{Renyi}} = \frac{1}{1-\alpha}\log_2\left(\sum P_i^\alpha\right)$$<span class="eq-number">(38)</span></div>
+
+<p>The Shannon entropy is the limit as $\alpha \to 1$.</p>
+
+<h2>5. Information Entropy to Thermodynamic Entropy</h2>
+
+<p>One way to connect information entropy to thermodynamics is to say that entropy measures <strong>uncertainty</strong>. If you knew all positions and velocities, there would be only one microstate and entropy would be zero. But the entropy of the gas is not zero because we don't know the positions and velocities. So entropy is not a property of the gas itself but of our <em>knowledge</em> of the gas.</p>
+
+<h3>5.1 Gibbs = Shannon entropy</h3>
+
+<p>The easiest connection: interpret microstates and their probabilities as the data. Then:</p>
+
+<div class="equation">$$k_B(\ln 2)H = -k_B\ln 2\sum_i P_i\log_2 P_i = -k_B\sum_i P_i\ln P_i = S$$<span class="eq-number">(39)</span></div>
+
+<p>This is the Gibbs entropy. With $P_i = \frac{1}{\Omega}$ (maximum entropy, data is totally random), $S = k_B\ln\Omega$ &mdash; the Boltzmann formula.</p>
+
+<p>For the free expansion from $V$ to $2V$: $\Delta S = k_BN\ln 2$, equivalently $\Delta H = N$ bits. Each bit says which of the two volumes each particle is in, so we need $N$ more bits to specify the system.</p>
+
+<h3>5.2 Irreversibility of information storage</h3>
+
+<p>A key observation was made by Rolf Landauer in 1961. Landauer considered a model of a bit with a classical double well: ball on the left is 0, ball on the right is 1.</p>
+
+<figure><img src="images/6-Entropy_p15_img0.png" alt="Double well bit model"><figcaption>A model of information storage where a ball on the left is 0 and a ball on the right is 1.</figcaption></figure>
+
+<p>Can we change the bit from 0 to 1 without using any energy? Yes &mdash; with a pulley and counterweight, an infinitesimal nudge suffices. The action is adiabatic and reversible.</p>
+
+<figure><img src="images/6-Entropy_p15_img1.png" alt="Reversible bit flip using pulley"><figcaption>Hooking a pulley to the bit, we can move it from 1 to 0 without doing any work.</figcaption></figure>
+
+<p>But what if we don't know what state the bit is in? Can we build an automated "SetToZero" mechanism? The answer is <strong>no</strong> for any reversible (frictionless) mechanism. Since Newton's laws are time-reversible, the function $F$ acting on phase space must be invertible. We want $F(\vec{q}_0,\vec{p}_0) = (\vec{q}_0,\vec{p}_0)$ and $F(\vec{q}_1,\vec{p}_1) = (\vec{q}_0,\vec{p}_0)$. But this is impossible if $F$ is invertible. This argument holds even in quantum mechanics since the Schrodinger equation can also be run backwards.</p>
+
+<p>If we allow dissipation, SetToZero is easy: "swing a mallet on the 1 side with enough energy to knock the ball over the hill." Without friction the ball would come back. So heat must be generated.</p>
+
+<div class="info-box concept">
+<div class="box-title">Landauer's Principle</div>
+<p><strong>Erasing information requires energy be dissipated as heat.</strong></p>
+<p>It is not the storing of information but the <em>erasing</em>, the throwing out of information, that dissipates heat. That was Landauer's critical insight.</p>
+</div>
+
+<h3>5.3 Energy from information</h3>
+
+<p>The connection was pushed further by Charles Bennett in the 1980s. Bennett considered a digital tape where information is stored in the position of gas molecules: molecule in the bottom half is 0, top half is 1.</p>
+
+<figure><img src="images/6-Entropy_p16_img0.png" alt="Information stored in molecular positions"><figcaption>Information is stored in the position of gas molecules.</figcaption></figure>
+
+<p>For an individual cell, if we know whether it's 0 or 1, we can use that information to do work. Bennett proposed putting pistons on both the top and bottom. If the molecule is on the bottom, lower the top piston to isolate it, then remove the dividing membrane and let the thermal motion push the piston up, drawing heat from the bath and doing useful work. This is known as <span class="tooltip-trigger">Szilard's engine<span class="tooltip-content">A thought experiment showing that one bit of information about a molecule's position can be converted into $k_BT\ln 2$ of work.</span></span>.</p>
+
+<figure><img src="images/6-Entropy_p16_img1.png" alt="Szilard's engine extracting work"><figcaption>Extracting work from information: knowing which half the molecule is in allows isothermal expansion to do work.</figcaption></figure>
+
+<p>For an ideal gas molecule at temperature $T$:</p>
+
+<div class="equation">$$W = \int P\,dV = k_BT\int\frac{dV}{V} = k_BT\ln\frac{V_2}{V_1} = k_BT\ln 2$$<span class="eq-number">(41)</span></div>
+
+<p>The heat absorbed from the bath is $Q_{\text{in}} = k_BT\ln 2$. This is the maximum amount of work you can get from a bit of information. Running in reverse (SetToZero on an unknown bit) requires at least this much work.</p>
+
+<div class="info-box concept">
+<div class="box-title">Work and Information</div>
+<ul>
+<li>Setting a bit erases information and dissipates at least $Q = k_BT\ln 2$ in heat.</li>
+<li>The minimum amount of work it takes to set a bit is $W = k_BT\ln 2$.</li>
+</ul>
+</div>
+
+<p>The entropy cost of losing the information is $\Delta S_{\text{sys}} = k_B\ln 2$, or equivalently $\Delta H = 1$ bit. In the isothermal quasistatic expansion, $\Delta S_{\text{bath}} = -k_B\ln 2$, so $\Delta S_{\text{tot}} = 0$ since we extracted the information reversibly.</p>
+
+<h2>6. Maxwell's Demon</h2>
+
+<p>We're now ready to tackle the most famous paradox about entropy, invented by Maxwell in 1867. Suppose we have a gas of helium and xenon, all mixed together in a box. Now say a little demon is sitting by a little shutter between the two sides of the box. When he sees a helium molecule come in from the right, he opens a little door and lets it go left. But when it's a xenon molecule, he doesn't open the door.</p>
+
+<figure><img src="images/6-Entropy_p18_img0.png" alt="Maxwell's demon"><figcaption>Maxwell's demon lets helium through, but not xenon.</figcaption></figure>
+
+<p>After a while, enough helium will be on the left to increase the pressure, which can be used to do work. The demon has made the system more ordered and the entropy has gone down.</p>
+
+<p>The paradox holds for pure helium too. If the demon lets molecules go left and not right, the entropy would go down. Moving the door up and down doesn't take any work, yet the concentrated gas can do work. So the demon is converting heat directly into work at constant temperature, violating the second law.</p>
+
+<p>The demon doesn't have to be alive &mdash; a robot could do the job. Consciousness has nothing to do with it.</p>
+
+<p>In the 1920s, Szilard and Brillouin argued that the robot must use some energy to identify the molecules. While true, it is possible to make a measurement using an arbitrarily small amount of energy.</p>
+
+<p>The <strong>correct resolution</strong> is that somewhere in the process, the robot has to ask: "is the molecule on the left?" He must store the answer somewhere in his program &mdash; he must set a bit using SetToZero. This operation takes work, at least as much work as we get from moving the molecule. In terms of information, we gain one bit by identifying the particle, but erase one bit by using SetToZero, sending heat into the surroundings. Net effect: $\Delta S = 0$.</p>
+
+<p>You might suppose that we knew the bit on our tape was 0 to begin with. Then recording doesn't require heat dissipation. But as we write the (random) locations of the molecules to our tape, our tape randomizes. So we are just moving the disorder from our gas into the disorder of the tape: $\Delta S_{\text{gas}} = -\Delta S_{\text{tape}}$.</p>
+
+<p>Maxwell's demon was resolved by Bennett in 1982, after 115 years of confusion. As Feynman says:</p>
+
+<blockquote>This realization that it is the erasure of information, and not measurement, that is the source of entropy generation in the computational process, was a major breakthrough in the study of reversible computation.</blockquote>
+
+<p>Maxwell's demon clarifies why information entropy really is entropy. A tape of 0's has "fuel value" that can be used to do work. So we must include the specification of this tape as part of the definition of the system. Once we do so, entropy never decreases &mdash; it just moves from the disorder of the molecules to the disorder of the tape. Thus the entropy for which $\Delta S \geq 0$ is strictly true should include both thermodynamic and information-theoretic entropy.</p>
+
+<!-- INTERACTIVE: Maxwell's Demon -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">😈</span> Interactive: Maxwell's Demon</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-demon" class="sim"></canvas></div>
+  <div class="vis-controls">
+    <button id="demon-start">Start</button>
+    <button id="demon-toggle">Enable Demon</button>
+    <button id="demon-reset">Reset</button>
+    <span style="color:var(--text-muted)">Watch the demon sort fast (red) and slow (blue) particles</span>
+  </div>
+</div>
+
+<p>Finally, from the information entropy point of view, Gibbs paradox is also resolved. When we separate distinguishable particles, we had to look at each ball's color &mdash; each measurement must SetToZero some bit. The entropy consumed by measurement exactly equals the entropy lost by the system.</p>
+
+<h3>6.1 Proof of the second law of thermodynamics</h3>
+
+<p>The information theory definition of entropy allows us to finally prove the second law. We start with some system with initial entropy $S = k_B\ln 2^H$. For entropy to go down, we need to acquire more information about the system (make a measurement). Since the laws of physics are deterministic, for each possible state, the measurement will have a different outcome. Thus the unknown elements of the system translate directly into unknown elements of our measuring device. The device becomes just as unknown as the original system &mdash; we've just transported uncertainty from one place to another.</p>
+
+<h2>7. Quantum Mechanical Entropy (optional)</h2>
+
+<p>In quantum mechanics, the states of the system are linear combinations of elements $|\psi\rangle$ of a Hilbert space. The density matrix is defined as:</p>
+
+<div class="equation">$$\rho = \sum P_j |\psi_j\rangle\langle\psi_j|$$<span class="eq-number">(44)</span></div>
+
+<p>The <span class="tooltip-trigger">von Neumann entropy<span class="tooltip-content">$S = -k_B\text{Tr}[\rho\ln\rho]$. The quantum generalization of Gibbs entropy. It is basis-independent and zero for pure states.</span></span> is defined as:</p>
+
+<div class="equation key-result">$$S = -k_B\text{Tr}[\rho\ln\rho]$$<span class="eq-number">(45)</span></div>
+
+<p>Because $S$ is defined from a trace, it is basis independent. In the eigenbasis where $\rho = \sum P_i|\psi_i\rangle\langle\psi_i|$:</p>
+
+<div class="equation">$$S = -k_B\sum_j P_j\ln P_j$$<span class="eq-number">(46)</span></div>
+
+<p>In agreement with the Gibbs entropy. In a pure state ($P_j = 1$ for some $j$), $S = 0$: no ignorance.</p>
+
+<p>For example, start with a pure state $|\psi\rangle = |\rightarrow\rangle = \frac{1}{\sqrt{2}}(|\uparrow\rangle + |\downarrow\rangle)$, which has $S = 0$. If we measure the spin along $z$ but don't record the result, the system is in $|\uparrow\rangle$ with probability $\frac{1}{2}$ or $|\downarrow\rangle$ with probability $\frac{1}{2}$. The density matrix becomes diagonal and $S = k_B\ln 2$. The entropy has gone up since the measurement collapsed the wavefunction from a pure state to a mixed state.</p>
+
+<p>The von Neumann entropy also quantifies correlations through <span class="tooltip-trigger">entanglement entropy<span class="tooltip-content">The von Neumann entropy of the reduced density matrix obtained by tracing over part of a system. Nonzero entanglement entropy indicates quantum correlations.</span></span>. If our Hilbert space has subspaces $A$ and $B$, the reduced density matrix $\rho_A = \text{Tr}_B[\rho]$ has entropy $S_A = -k_B\text{Tr}[\rho_A\ln\rho_A]$.</p>
+
+<p>For a product (unentangled) state $|\psi\rangle = \frac{1}{2}(|\uparrow\rangle_A + |\downarrow\rangle_A) \otimes (|\uparrow\rangle_B + |\downarrow\rangle_B)$: $S_A = 0$, no entanglement entropy.</p>
+
+<p>For an entangled state $|\psi\rangle = \frac{1}{\sqrt{2}}(|\uparrow\downarrow\rangle + |\downarrow\uparrow\rangle)$: $\rho_A = \frac{1}{2}(|\uparrow\rangle\langle\uparrow| + |\downarrow\rangle\langle\downarrow|)$, so $S_A = k_B\ln 2$. Tracing over $B$ amounts to throwing out information about entanglement, increasing entropy.</p>
+
+<p>We can think of the whole universe as a pure state with entropy zero. Everything is entangled with everything else. As it becomes practically impossible to exploit that entanglement, we coarse grain (trace over unmeasurable components). This increases entropy and turns a pure state into a mixed state. In this way, classical probabilities emerge from a completely deterministic quantum system.</p>
+
+<p>The <strong>no-cloning theorem</strong> also connects to entropy: cloning $|\phi\rangle|\psi\rangle \to |\phi\rangle|\phi\rangle$ necessarily erases the information stored in $|\psi\rangle$, so entropy must increase. This provides a fundamental limit on quantum error correction.</p>
+
+<h2>8. Black Hole Entropy (optional)</h2>
+
+<p>Using general relativity, described by Einstein's equations:</p>
+
+<div class="equation">$$R_{\mu\nu} - \frac{1}{2}Rg_{\mu\nu} = T_{\mu\nu}$$<span class="eq-number">(56)</span></div>
+
+<p>The spherically-symmetric static solution is the <span class="tooltip-trigger">Schwarzschild solution<span class="tooltip-content">The unique spherically-symmetric vacuum solution to Einstein's equations. Describes a black hole characterized by a single parameter, its mass.</span></span>, which describes a black hole. This solution is unique up to a single parameter $r_s$, the Schwarzschild radius:</p>
+
+<div class="equation">$$r_s = \frac{2MG}{c^2}$$<span class="eq-number">(58)</span></div>
+
+<p>The spherical surface at $r = r_s$ is the event horizon, with area:</p>
+
+<div class="equation">$$A = 4\pi r_s^2 = \frac{16\pi M^2 G^2}{c^4}$$<span class="eq-number">(59)</span></div>
+
+<p>Stephen Hawking showed that black holes radiate like a hot gas at the <span class="tooltip-trigger">Hawking temperature<span class="tooltip-content">$T = \frac{\hbar c^3}{8\pi G M k_B}$. Inversely proportional to mass: small black holes are very hot, large ones very cold.</span></span>:</p>
+
+<div class="equation key-result">$$T = \frac{\hbar c^3}{8\pi G M k_B}$$<span class="eq-number">(60)</span></div>
+
+<p>This temperature is inversely proportional to mass: very small black holes are very hot, very large black holes are cold. This unusual behavior is associated with a <strong>negative heat capacity</strong>:</p>
+
+<div class="equation">$$c_S = \frac{1}{M}\frac{\partial M}{\partial T} = -\frac{1}{T} = -\frac{8\pi Gk_B}{\hbar c^3}M < 0$$<span class="eq-number">(61)</span></div>
+
+<p>A solar mass black hole has $T = 10^{-8}\;\text{K}$. A supermassive black hole like Sagittarius A* has $T = 10^{-14}\;\text{K}$.</p>
+
+<p>If nothing falls in, a black hole completely evaporates in finite time:</p>
+
+<div class="equation">$$t_{\text{evap}} = \frac{5120\pi G^2 M^3}{\hbar c^4}$$<span class="eq-number">(62)</span></div>
+
+<p>A solar-mass black hole would take $10^{74}$ years to evaporate.</p>
+
+<p>The CMB is at 3 K. A black hole at this temperature has mass $M_{3K} = 10^{22}\;\text{kg}$ (around the mass of the moon). Lighter black holes evaporate; heavier ones absorb CMB radiation and grow. The equilibrium at $M_{3K}$ is unstable &mdash; typical for systems with negative heat capacity.</p>
+
+<p>Black holes also have entropy. Since $\frac{\partial S}{\partial E} = \frac{1}{T}$ and $E = Mc^2$:</p>
+
+<div class="equation key-result">$$S = \int\frac{dE}{T} = \frac{4\pi G}{\hbar c}M^2 = \frac{c^3}{4\hbar G}A$$<span class="eq-number">(63)</span></div>
+
+<p>Black holes have entropy proportional to their surface area. String theory provides a way of counting microstates for certain supersymmetric black holes that agrees with this formula.</p>
+
+<p>So black holes have entropy, but no hair, and they evaporate into uncorrelated heat. If data falls into a black hole, it is lost forever. This is the <span class="tooltip-trigger">black hole information paradox<span class="tooltip-content">The conflict between the reversibility of quantum mechanics and the apparent destruction of information by black holes. One of the deepest unsolved problems in theoretical physics.</span></span>: black holes destroy information in a way that cannot be stored in correlations (since nothing can get out). This conflicts with the unitarity of quantum mechanics and gravity.</p>
+
+<h2>9. Summary</h2>
+
+<p>We have seen many different ways of thinking about entropy. The <strong>Gibbs entropy</strong> is:</p>
+
+<div class="equation">$$S = -k_B\sum P_i\ln P_i$$<span class="eq-number">(64)</span></div>
+
+<p>In equilibrium this equals $S = k_B\ln\Omega$, but it can be used in any situation where probabilities are well-defined.</p>
+
+<p>The <strong>Shannon information entropy</strong> is:</p>
+
+<div class="equation">$$H = -\sum P_i\log_2 P_i$$<span class="eq-number">(65)</span></div>
+
+<p>$H$ gives the minimal number of bits needed to encode data, on average.</p>
+
+<p><strong>Landauer's principle</strong>: erasing information dissipates heat. When 1 bit of information is erased, the thermodynamic entropy increases by $k_B\ln 2$.</p>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Clausius entropy:</strong> $\Delta S = \int_{\text{rev.}}\frac{dQ}{T}$. Entropy change from heat flow along reversible paths.</li>
+<li><strong>Boltzmann entropy:</strong> $S = k_B\ln\Omega$. Counts microstates compatible with macroscopic parameters.</li>
+<li><strong>Gibbs entropy:</strong> $S = -k_B\sum P_i\ln P_i$. Generalization valid for unequal probabilities.</li>
+<li><strong>Free expansion:</strong> Both Boltzmann and Gibbs entropy increase if we consistently define the set of microstates. Coarse graining is essential.</li>
+<li><strong>Entropy of mixing:</strong> $\Delta S = 2Nk_B\ln 2$ when two different gases mix. Zero when identical gases "mix" (with $N!$ correction).</li>
+<li><strong>Gibbs paradox:</strong> Resolved by including the $\frac{1}{N!}$ factor for indistinguishable particles, giving the Sackur-Tetrode equation.</li>
+<li><strong>Shannon/information entropy:</strong> $H = -\sum P_i\log_2 P_i$ measures the minimal bits needed to encode data. Proportional to Gibbs entropy.</li>
+<li><strong>Landauer's principle:</strong> Erasing information requires at least $k_BT\ln 2$ of heat dissipation per bit.</li>
+<li><strong>Maxwell's demon:</strong> Resolved by Bennett (1982). The demon must erase information to function, and this erasure dissipates exactly enough heat to prevent the second law from being violated.</li>
+<li><strong>Entropy = ignorance:</strong> The unifying modern viewpoint. All forms of entropy measure our lack of information about the microstate.</li>
+</ul>
+</div>

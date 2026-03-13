@@ -1,0 +1,532 @@
+<div class="chapter-number">Chapter 13</div>
+<h1 class="chapter-title">Metals</h1>
+<p class="chapter-intro">
+Fermions satisfy the Pauli exclusion principle: no two fermions can occupy the same state. This makes fermionic systems act very differently from bosonic systems. In this lecture we apply the Fermi gas to understand the thermal and mechanical properties of metals, and then go beyond the free-electron model to understand band structure and conductivity.
+</p>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2 id="ch13-sec1">13.1 Introduction</h2>
+
+<p>Fermions satisfy the <span class="tooltip-trigger">Pauli exclusion principle<span class="tooltip-content">No two identical fermions can occupy the same quantum state simultaneously.</span></span>: no two fermions can occupy the same state. This makes fermionic systems act very differently from bosonic systems.</p>
+
+<p>We introduced the non-interacting Fermi gas in Lecture 10, and will continue to discuss it here. We assume the fermions do not interact with each other. This means that the single-particle states of a system are not affected by which states are occupied. So we will fix the states, then fill them from the bottom up, then see what happens when we heat it up. You can think of the possible states as a bunch of little shelves and we stack the fermions onto them one-by-one. The exclusion principle implies that once a state is occupied, it cannot be occupied again: the occupancy number of each state is either 0 or 1. This leads to the single-particle grand partition function of state $i$:</p>
+
+<div class="equation">
+$$\mathcal{Z}_i = \sum_{n=0,1} e^{-\beta(\epsilon_i - \mu)n} = 1 + e^{-\beta(\epsilon_i - \mu)}$$
+<span class="eq-number">(1)</span>
+</div>
+
+<p>and grand free energy for state $i$:</p>
+
+<div class="equation">
+$$\Phi_i = -\frac{1}{\beta}\ln \mathcal{Z}_i = -\frac{1}{\beta}\ln\left[1 + e^{-\beta(\epsilon_i - \mu)}\right]$$
+<span class="eq-number">(2)</span>
+</div>
+
+<p>The occupation number for state $i$ we then found to be given by</p>
+
+<div class="equation key-result">
+$$\langle n_i \rangle = -\frac{\partial \Phi_i}{\partial \mu} = \frac{1}{e^{\beta(\epsilon_i - \mu)} + 1} \equiv f(\epsilon_i)$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">Fermi-Dirac distribution<span class="tooltip-content">The quantum statistical distribution function for fermions, giving the average occupation number of a state with energy $\epsilon$ at temperature $T$ and chemical potential $\mu$.</span></span> or Fermi function, $f(\epsilon)$. As $T \to 0$ the function approaches a step function where all the states below $\mu$ are occupied and the states above $\mu$ are unoccupied. The value of $\mu$ at $T = 0$ is called the <span class="tooltip-trigger">Fermi energy<span class="tooltip-content">The energy of the highest occupied state at absolute zero temperature, denoted $\epsilon_F$. It equals the chemical potential at $T=0$.</span></span> and denoted by $\epsilon_F$. Sometimes the Fermi energy is also called the Fermi level.</p>
+
+<figure>
+<img src="images/13-Metals_p1_img0.png" alt="Fermi-Dirac distribution at various temperatures">
+<figcaption>The Fermi-Dirac distribution $f(\epsilon)$ at various temperatures. As $T \to 0$ it approaches a step function.</figcaption>
+</figure>
+
+<p>At any temperature $T > 0$, some fermions will have energies higher than $\epsilon_F$, and therefore some states with energy less than $\epsilon_F$ will not be occupied. We call the unoccupied states <span class="tooltip-trigger">holes<span class="tooltip-content">An unoccupied state below the Fermi level. Holes behave as positive-energy excitations and carry positive charge in semiconductors.</span></span>. You can picture a finite-temperature Fermi gas as having fermions constantly bouncing out of lower-energy states into higher energy states, leaving holes, then other fermions falling out of excited states into those holes. The electron/hole picture gives a useful way to think about finite temperature metals and gives a powerful way to understand the physics of semiconductors, as we will see in this and the next lecture.</p>
+
+<p>We call the temperature corresponding to the Fermi energy the <span class="tooltip-trigger">Fermi temperature<span class="tooltip-content">$T_F = \epsilon_F / k_B$, the characteristic temperature scale above which quantum degeneracy effects become unimportant.</span></span>:</p>
+
+<div class="equation key-result">
+$$T_F \equiv \frac{\epsilon_F}{k_B}$$
+<span class="eq-number">(4)</span>
+</div>
+
+<p>This is like how the Debye temperature was related to the Debye energy by $T_D = \epsilon_D / k_B$ in Lecture 11. Similarly, we can say roughly that for $T < T_F$ quantum effects are important. When the temperature of a system is well below the Fermi temperature, $T \ll T_F$, then $\mu \approx \epsilon_F$ and the Fermi distribution looks very much like a step function $f(\epsilon) \approx \theta(\epsilon_F - \epsilon)$. In such situations, the lowest states are almost all occupied and we say the system is <span class="tooltip-trigger">degenerate<span class="tooltip-content">A Fermi gas is degenerate when $T \ll T_F$, so that nearly all states below $\epsilon_F$ are occupied and quantum effects dominate.</span></span>. So, in a degenerate system, quantum effects are important. Electrons in metals have $T_F > 10{,}000\,\text{K}$, so they are degenerate systems at room temperature and quantum statistical mechanics is necessary to understand their properties.</p>
+
+<p>Generally, Fermi temperatures in metals are very high (for example, $T_F$ for electrons in copper is around $80{,}000\,\text{K}$, as we will see below). So high in fact, that it is generally impossible to heat a system above the Fermi temperature without changing the nature of the system (i.e. melting the metal). Thus, quantum statistics are always important for electrons in metals.</p>
+
+<p>The typical picture of a highly degenerate fermionic system is having a relatively small set of energy levels that are relevant, namely those near $\epsilon_F$. Energy levels with $\epsilon \ll \epsilon_F$ require a lot of energy, of order $\epsilon_F$, to be excited into an empty state, since the first available state is above $\epsilon_F$. This is nearly impossible when $T \ll T_F$. The set of low-energy states that do not participate in the thermal activity are called the <span class="tooltip-trigger">Fermi sea<span class="tooltip-content">The collection of all occupied states deep below the Fermi level that are essentially inert at low temperatures.</span></span>. The Fermi sea can be very deep (a lot of states), but its depth is largely irrelevant to the thermal properties of the material. Similarly, the levels with energies much higher than $\epsilon_F$ are impossible to excite when $T \ll T_F$. So only those levels near $\epsilon_F$ matter. Thus degenerate gases have something very close to a symmetry between states above and below $\epsilon_F$: a symmetry between electrons and holes. We'll use this picture to understand some properties of metals.</p>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2 id="ch13-sec2">13.2 Free electron gas</h2>
+
+<p>The possible single-particle states of the electrons in a free electron gas are the same as for a boson in a box. The allowed wavenumbers are</p>
+
+<div class="equation">
+$$\vec{k} = \frac{\pi}{L}\vec{n}\,;\qquad \vec{n} = \text{triplet of whole numbers}$$
+<span class="eq-number">(5)</span>
+</div>
+
+<p>In the non-relativistic limit energies are determined by the usual relation in quantum mechanics</p>
+
+<div class="equation">
+$$\epsilon_n = \frac{\hbar^2 \vec{k}^2}{2m_e} = \frac{\pi^2 \hbar^2}{2m_e L^2}n^2$$
+<span class="eq-number">(6)</span>
+</div>
+
+<p>with $n = |\vec{n}|$. So</p>
+
+<div class="equation">
+$$n = \frac{L}{\pi}\sqrt{\frac{2m_e}{\hbar^2}}\sqrt{\epsilon}\,;\qquad dn = \frac{L}{2\pi}\sqrt{\frac{2m_e}{\hbar^2}}\frac{d\epsilon}{\sqrt{\epsilon}}$$
+<span class="eq-number">(7)</span>
+</div>
+
+<p>For electrons, there are two spins. So we compute the density of states via</p>
+
+<div class="equation">
+$$2\sum_n \to 2 \times \frac{1}{8}\int 4\pi n^2\,dn = \frac{V}{2\pi^2}\left(\frac{2m_e}{\hbar^2}\right)^{3/2}\int \sqrt{\epsilon}\,d\epsilon$$
+<span class="eq-number">(8)</span>
+</div>
+
+<p>As before, the $\frac{1}{8}$ accounts for the modes only counting the first octant (i.e. the $\vec{n}$ are whole numbers) while the integral over the sphere includes all 8 octants. We'll also study the relativistic and ultrarelativistic limits when we discuss white dwarf stars in Lecture 15, but in metals the electrons are generally non-relativistic, as we will check shortly. Thus $g(\epsilon) = \frac{V}{2\pi^2}\left(\frac{2m_e}{\hbar^2}\right)^{3/2}\sqrt{\epsilon}$. This scaling $g(\epsilon) \sim \sqrt{\epsilon}$ is the same as for the Bose gas from last lecture, only the constant in $g(\epsilon)$ is different.</p>
+
+<p>Recall that as $T \to 0$, the Fermi function becomes a step function: $\langle n_\epsilon \rangle \to \begin{cases} 1, & \epsilon < \epsilon_F \\ 0, & \epsilon > \epsilon_F \end{cases}$. The Fermi energy $\epsilon_F$ is the chemical potential at $T = 0$ or equivalently the energy below which all the states are occupied at $T = 0$. So in particular, the number of states at $T = 0$ is</p>
+
+<div class="equation">
+$$N = \int_0^\infty \langle n_\epsilon \rangle g(\epsilon)\,d\epsilon \xrightarrow{T=0} \frac{V}{2\pi^2}\left(\frac{2m_e}{\hbar^2}\right)^{3/2}\int_0^{\epsilon_F}\sqrt{\epsilon}\,d\epsilon = \frac{V}{2\pi^2}\left(\frac{2m_e}{\hbar^2}\right)^{3/2}\frac{2}{3}\epsilon_F^{3/2}$$
+<span class="eq-number">(9)</span>
+</div>
+
+<p>Therefore</p>
+
+<div class="equation key-result">
+$$\epsilon_F = \frac{\hbar^2}{2m_e}\left(\frac{3\pi^2 N}{V}\right)^{2/3}$$
+<span class="eq-number">(10)</span>
+</div>
+
+<p>Using this, it's convenient to write the density of states as</p>
+
+<div class="equation">
+$$g(\epsilon) = \frac{V}{2\pi^2}\left(\frac{2m_e}{\hbar^2}\right)^{3/2}\sqrt{\epsilon} = \frac{3N}{2\epsilon_F^{3/2}}\sqrt{\epsilon}$$
+<span class="eq-number">(11)</span>
+</div>
+
+<p>The Fermi temperature is then</p>
+
+<div class="equation">
+$$T_F = \frac{\epsilon_F}{k_B}$$
+<span class="eq-number">(12)</span>
+</div>
+
+<p>This temperature is the characteristic temperature above which electrons can be readily excited into unoccupied states. Typically $T \ll T_F$ and so the probability of an electron getting excited into an unoccupied state (i.e. $\epsilon \gtrsim \epsilon_F$) is very small: $P \sim e^{-\epsilon/(k_B T)} \approx e^{-T_F/T} \ll 1$.</p>
+
+<p>The energy of the Fermi gas at zero temperature is</p>
+
+<div class="equation key-result">
+$$E_0 = E(T=0) = \frac{3N}{2\epsilon_F^{3/2}}\int_0^{\epsilon_F}\epsilon\sqrt{\epsilon}\,d\epsilon = \frac{3}{5}N\epsilon_F$$
+<span class="eq-number">(13)</span>
+</div>
+
+<p>So the average energy of each electron at zero temperature is $\langle \epsilon \rangle = E_0/N = \frac{3}{5}\epsilon_F$.</p>
+
+<div class="info-box physical">
+<div class="box-title">Degeneracy Pressure</div>
+<p>An important concept in electron gases, or Fermi gases in general, is that of <strong>degeneracy pressure</strong>. Pressure is defined as $P = -\partial E / \partial V$. Normally we associate pressure with the kinetic motion of molecules bombarding the walls of a container. This exerts a force on the walls, so that if the volume increases, the energy would go down. Because the force is due to thermal motion, this ordinary pressure is absent at $T = 0$. Degeneracy pressure, on the other hand, is a contribution to $-\partial E / \partial V$ in Fermi gases that persists even at $T = 0$.</p>
+<p>The way to understand degeneracy pressure is by thinking about how the energy levels change as the volume is shrunk, for example under isothermal compression. For a classical gas, isothermal compression does not change the energy of the gas (i.e. $E = C_V k_B T$ is volume independent). What it does is increase the density of molecules, so the number of collisions on the wall of a container goes up, and hence the pressure increases ($P = \frac{N}{V}k_B T$). For a Bose gas, as the volume shrinks, all the energy levels go up, but the occupancies of different levels adjust so that the total energy is the same. Thus, Bose gases behave essentially like classical gases when compressed. For a degenerate Fermi gas, when the volume goes down, the occupancies of states cannot adjust. Instead, the energy levels go up and the total energy simply increases. This contribution to $-\partial E / \partial V$ is called degeneracy pressure.</p>
+</div>
+
+<p>To see that this pressure really is different from kinetic motion on container walls, consider the $T = 0$ limit. As we saw before, $T = 0$ is often a good approximation when $T \ll T_F$. Since we have been working at $T = 0$ already, all we have to do is differentiate Eq. (13):</p>
+
+<div class="equation key-result">
+$$P = -\frac{\partial E}{\partial V} = -\frac{\partial}{\partial V}\left[\frac{3}{5}N\epsilon_F\right] = -\frac{3}{5}N\frac{\partial}{\partial V}\left[\frac{\hbar^2}{2m_e}\left(\frac{3\pi^2 N}{V}\right)^{2/3}\right] = \frac{2}{3}\frac{E_0}{V}$$
+<span class="eq-number">(14)</span>
+</div>
+
+<p>In this limit, the classical pressure goes to zero but the degeneracy pressure persists. Degeneracy pressure is essential to understand white dwarfs and neutron stars, as we'll see in Lecture 15.</p>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2 id="ch13-sec3">13.3 Sommerfeld free electron model for metals</h2>
+
+<p>Sommerfeld proposed that the electrons in a metal can be described by a free electron gas. The basic idea is that each atom in a metal has some number of loosely bound electrons that it contributes to the gas. The alkali metals (first column of periodic table, e.g. potassium) are monovalent, contributing one electron each. Some metals contribute more than one electron per atom (we'll see why in Lecture 15). The weakly bound electrons, called the <span class="tooltip-trigger">valence electrons<span class="tooltip-content">The outermost electrons of an atom that participate in bonding and are contributed to the free electron gas in metals.</span></span>, are assumed to be free at leading order, so they just bounce around like particles in a box, with the size of the box determined by the size of the metal. This is called the <strong>free electron model</strong>.</p>
+
+<p>Before getting into the predictions of the free electron model, it's worth a few comments about why on earth this model should be at all reasonable. At first thought, it seems crazy that we could both ignore the attractive interactions of the electrons to the positively charged nuclei and ignore the repulsive Coulomb interactions among the electrons themselves. On second thought, however, we realize that because of the exclusion principle, electrons like to stay away from each other, so the electron-electron forces may indeed be small. As for the nuclei, we can't forget that metals have not only fairly high nuclear charge ($Z = 29$ for copper), but also a whole lot of other electrons more tightly bound to the nucleus than the electron being contributed to the electron gas. Thus the valence electrons are forced to be far away from the nuclei (by the exclusion principle) and moreover, the other electrons screen the nuclear charge. With these considerations, the free electron model at least does not seem horribly wrong, and we can start to study it.</p>
+
+<div class="info-box example">
+<div class="box-title">Fermi Energy and Temperature of Copper</div>
+<p>Consider copper, which has a density $\rho = 9.0\;\text{g/cm}^3$ and an atomic weight of $63.6\;\text{g/mol}$, so the number density of atoms is $n = 9.0\;\text{g/cm}^3 / 63.6\;\text{g/mol} = 0.14\;\text{mol/cm}^3$. Treating copper as monovalent (Cu is [Ar]$3d^{10}4s^1$ as we explain next lecture), this is also the number density of valence electrons. So $n_e = 0.14\;\text{mol/cm}^3 = 8.4 \times 10^{28}\;\text{electrons/m}^3$. The Fermi energy is then</p>
+$$\epsilon_F = \frac{\hbar^2}{2m_e}(3\pi^2 n)^{2/3} = 7\;\text{eV}$$
+<p>Note that this is much less than the electron rest mass $m_e c^2 = 511\;\text{keV}$, so the non-relativistic limit is justified. The Fermi energy is also much higher than $k_B T = 25\;\text{meV}$ at room temperature. The corresponding Fermi temperature is</p>
+$$T_F = \frac{\epsilon_F}{k_B} = 82{,}000\;\text{K}$$
+<p>Compared to room temperature $T_0 = 298\;\text{K}$. We see that $T_F/T_0 \approx 270$. Since the Fermi temperature is much higher than room temperature, copper at room temperature is highly degenerate and quantum effects dominate.</p>
+</div>
+
+<p>Let's next look at the degeneracy pressure in a metal. From Eq. (14) we can write</p>
+
+<div class="equation">
+$$P = \frac{2}{3}\frac{E_0}{V} = \frac{2}{5}\frac{N}{V}\epsilon_F = \frac{2}{5}\frac{N}{V}k_B T_F$$
+<span class="eq-number">(17)</span>
+</div>
+
+<p>Now the Fermi temperature in metals is always well above room temperature, as in Eq. (16), $T_F/T_0 \approx 270$. The density of metals is also typically much higher than in gases, by a factor of 1000 or so. Thus the degeneracy pressure is of order $1000 \times 270 \times 1\;\text{atm} = 10^5\;\text{atm}$ -- enormous! The electrons really really want to get out of the metal; in a larger volume, their energy levels would go down and the degeneracy pressure would be relieved. Fortunately, the electrons cannot leave since the outward force is compensated by strong attractive forces holding the metal together. Thus we are not going to be able to measure degeneracy pressure directly in a metal without understanding those (rather complicated) attractive forces.</p>
+
+<p>Instead of pressure, a more reasonable quantity to look at is the <span class="tooltip-trigger">bulk modulus<span class="tooltip-content">$B = -V\left(\frac{dP}{dV}\right)_T$, a measure of a material's resistance to uniform compression. It determines the speed of sound in solids.</span></span>, $B = -V\left(\frac{dP}{dV}\right)_T$. The bulk modulus measures how much a solid will compress when a pressure is applied. It tells how springy a material is. Indeed, as mentioned in Lecture 11, the bulk modulus determines the speed of sound in solids, as $c_s = \sqrt{\frac{dP}{d\rho}} = \sqrt{\frac{B}{\rho}}$ with $\rho$ the density. Thus $B$ plays the role of the spring constant $k$ in Hooke's law. In solids, this constant should be determined by the restoring force when atoms are moved, which is due to the electrons. Thus we expect that $B$ can be computable from a good model of electrons in solids.</p>
+
+<p>For a free electron gas at $T = 0$,</p>
+
+<div class="equation key-result">
+$$B = -V\frac{dP}{dV} = V\frac{d^2}{dV^2}\left[\frac{3}{5}N\frac{\hbar^2}{2m_e}\left(\frac{3\pi^2 N}{V}\right)^{2/3}\right] = \frac{2}{3}\frac{N}{V}\epsilon_F = \frac{10}{9}\frac{E_0}{V} = \frac{5}{3}P$$
+<span class="eq-number">(18)</span>
+</div>
+
+<div class="info-box example">
+<div class="box-title">Bulk Modulus and Speed of Sound of Potassium</div>
+<p>Let's compute this for potassium. Solid potassium has a valence electron number density of $n = 1.4 \times 10^{28}\;\text{m}^{-3}$. This gives a Fermi energy of $\epsilon_F = 3.4 \times 10^{-19}\;\text{J}$ and a bulk modulus of $B = 3.2 \times 10^9\;\text{N/m}^2$. The experimental value is $B = 3.1 \times 10^9\;\text{N/m}^2$. Thus our prediction from the free electron gas is in excellent agreement with the measured value. Equivalently using the density of potassium $\rho = 856\;\text{kg/m}^3$ we predict a speed of sound $c_s = \sqrt{B/\rho} = 1933\;\text{m/s}$; the measured value is $c_s = 2000\;\text{m/s}$.</p>
+<p>Apparently, the elasticity of metals is determined by the degeneracy pressure of the electrons within it. This is rather a profound conclusion: when I squeeze a penny in my hand, the penny is fighting back not with the classical Coulomb force, but with the quantum Pauli exclusion principle.</p>
+</div>
+
+<p>Next, we want to compute the temperature dependence of the energy and heat capacity. To do that, we need to first eliminate the chemical potential. As with bosons, we can trade $\mu$ for $N$ by integrating over the density of states. For fermions, using Eq. (11), we find</p>
+
+<div class="equation">
+$$N = \int_0^\infty \frac{g(\epsilon)}{e^{\beta(\epsilon - \mu)} + 1}\,d\epsilon = \frac{3N}{2\epsilon_F^{3/2}}\left(-\frac{\sqrt{\pi}}{2\beta^{3/2}}\right)\text{Li}_{3/2}(-e^{\beta\mu})$$
+<span class="eq-number">(19)</span>
+</div>
+
+<p>where $\text{Li}_{3/2}$ is a polylogarithm function. Thus, we get an equation relating $\mu$ to $\epsilon_F$ at a given $T$:</p>
+
+<div class="equation">
+$$-\frac{4}{3\sqrt{\pi}}(\beta\epsilon_F)^{3/2} = \text{Li}_{3/2}(-e^{\beta\mu})$$
+<span class="eq-number">(20)</span>
+</div>
+
+<p>Unfortunately, the polylogarithm of an exponential is really hard to work with. So let us start by examining it numerically. Solving this transcendental equation numerically we find a perfectly smooth function $\mu(\epsilon_F; T)$:</p>
+
+<figure>
+<img src="images/13-Metals_p5_img0.png" alt="Chemical potential as a function of temperature">
+<figcaption>The chemical potential $\mu$ as a function of $T/T_F$, computed numerically from Eq. (20).</figcaption>
+</figure>
+
+<p>Plugging in some numbers: at room temperature for copper $T/T_F = 298/82000 = 0.0036$ and Eq. (20) gives $\mu = 0.9999\epsilon_F$. At the melting temperature of copper, $T_{\text{melt}} = 1358\;\text{K}$, Eq. (20) gives $\mu = 0.9996\epsilon_F$. Thus in the entire range for which copper is a solid, $T = 0$ to $T = T_{\text{melt}}$, $\mu$ only varies from $1.0\epsilon_F$ to $0.9997\epsilon_F$. This justifies the common practice of using the chemical potential and Fermi energy interchangeably when studying metals.</p>
+
+<p>We can also compute the energy of the free electron gas:</p>
+
+<div class="equation">
+$$E = \frac{3N}{2\epsilon_F^{3/2}}\int_0^\infty \frac{\epsilon\sqrt{\epsilon}}{e^{\beta(\epsilon - \mu)} + 1}\,d\epsilon = -\frac{15\sqrt{\pi}\,E_0}{8(\beta\epsilon_F)^{5/2}}\text{Li}_{5/2}(-e^{\beta\mu})$$
+<span class="eq-number">(22)</span>
+</div>
+
+<figure>
+<img src="images/13-Metals_p5_img1.png" alt="Energy of free electron gas as a function of temperature">
+<figcaption>The total energy $E/E_0$ as a function of $T/T_F$, computed numerically.</figcaption>
+</figure>
+
+<p>where $E_0 = \frac{3}{5}N\epsilon_F$ as in Eq. (13). Thus the total energy, like the chemical potential, is a smooth function of $T$ despite the nasty polylogarithm in the analytic formula.</p>
+
+<p>Before doing a careful small $T$ expansion, let's think a little about what we expect. The key to small $T$ behavior of the energy is understanding how many states can be excited. Because $N$ is so large, the energy levels near the Fermi surface are essentially continuous: there are generally a lot of electrons and a lot of states. Most of the electrons are in the Fermi sea, and it takes a lot of energy to excite an electron out of deep in the sea. Since $k_B T \ll T_F$ for any metal, only the highest energy electrons have any hope of being excited. All of the thermal activity comes from a small number of electrons close to the Fermi surface moving to states slightly above it. The electrons deep in the sea would require energies of order $\epsilon_F \gg k_B T$ to move into a free state, for which there are exponentially small probabilities, $P \sim e^{-T/T_F}$. In other words, the states that are involved in the thermal activity are essentially only those with energies $\epsilon_F - k_B T \lesssim \epsilon \lesssim \epsilon_F + k_B T$.</p>
+
+<p>At a temperature $T$ some states will be excitable and gain energy $\sim k_B T$. So the total energy should be $E \approx E_0 + N_{\text{excitable}} k_B T$. This scaling is the essential content of the equipartition theorem. As a check on this logic, for a bosonic gas, we found the density of states to scale like $g(\epsilon) \sim \epsilon^2$ so the total number of excitable states are those with $\epsilon < k_B T$ which is $N_{\text{excitable}} \sim \int_0^{k_B T} g(\epsilon)\,d\epsilon \sim T^3$. Thus $E \sim T^4$ for bosons, as we found through explicit calculation in the Debye model. For a fermionic gas, only those states with energies $\epsilon$ between $\epsilon_F - k_B T$ and $\epsilon_F + k_B T$ can be excited, so $N_{\text{excitable}} \sim k_B T$ and therefore $E \approx E_0 + k_B^2 T^2$. Plugging in $E_0$ from Eq. (13) we get</p>
+
+<div class="equation">
+$$E = \frac{3}{5}N\epsilon_F + a\frac{Nk_B^2 T^2}{\epsilon_F} + \cdots$$
+<span class="eq-number">(23)</span>
+</div>
+
+<p>for some $a$. The factor of $\epsilon_F$ in the denominator of the $T^2$ term was included by dimensional analysis -- it is the only scale that could possibly appear. Eq. (23) is in qualitative agreement with Eq. (22). This heuristic argument is helpful to understand the quadratic dependence on $T$, however, it cannot give us the coefficient $a$. We now turn to computing this coefficient $a$.</p>
+
+<h3 id="ch13-sec3-1">13.3.1 Small $T$ expansion</h3>
+
+<p>In this section, we will discuss how to expand the chemical potential and total energy at small $T$. These quantities are determined by Eqs. (19) and (22):</p>
+
+<div class="equation">
+$$N = \int_0^\infty g(\epsilon)f(\epsilon)\,d\epsilon\,;\qquad E = \int_0^\infty \epsilon\, g(\epsilon)f(\epsilon)\,d\epsilon$$
+<span class="eq-number">(24)</span>
+</div>
+
+<p>with $g(\epsilon) = \frac{3N}{2\epsilon_F^{3/2}}\sqrt{\epsilon}$ and $f(\epsilon) = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$ the Fermi distribution. Although we can do the integrals analytically, the resulting polylogarithms are not easy to expand around $T = 0$. Of course, you can just look up the polylogarithm limits, but we will learn more about the system by finessing the small $T$ expansion using some tricks developed by Sommerfeld.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Sommerfeld expansion for $\mu$ and $E$</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step">
+<div class="step-label">Step 1: Integration by parts</div>
+<p>The first trick is to integrate by parts:</p>
+$$N = \frac{3N}{2\epsilon_F^{3/2}}\int_0^\infty f(\epsilon)\sqrt{\epsilon}\,d\epsilon = \frac{N}{\epsilon_F^{3/2}}\left[\epsilon^{3/2}f(\epsilon)\right]_0^\infty - \frac{3N}{2\epsilon_F^{3/2}}\int_0^\infty [f'(\epsilon)]\left[\frac{2}{3}\epsilon^{3/2}\right]d\epsilon$$
+<p>The first term on the right vanishes at both boundaries, so it is zero. Then we have</p>
+$$1 = \frac{1}{\epsilon_F^{3/2}}\int_0^\infty [-f'(\epsilon)]\,\epsilon^{3/2}\,d\epsilon$$
+</div>
+
+<div class="step">
+<div class="step-label">Step 2: Observe the peaked derivative</div>
+<p>The derivative of the Fermi distribution is a sharply peaked Gaussian-like function centered on $\mu$ with width $\sqrt{k_B T}$:</p>
+$$-f'(\epsilon) = \frac{\beta}{2}\frac{1}{1 + \cosh(\beta(\epsilon - \mu))}$$
+
+<figure>
+<img src="images/13-Metals_p7_img0.png" alt="Derivative of Fermi distribution">
+<figcaption>$-f'(\epsilon)$ is sharply peaked around $\epsilon = \mu$.</figcaption>
+</figure>
+
+<p>The second trick is to observe that when $T \ll T_F$, the support of $f'(\epsilon)$ is for energies $|\epsilon - \mu| \lesssim k_B T$. In this region we can Taylor expand the function multiplying $f'(\epsilon)$ around $\epsilon = \mu$:</p>
+$$1 = \frac{1}{\epsilon_F^{3/2}}\int_0^\infty [-f'(\epsilon)]\left[\mu^{3/2} + \frac{3}{2}\sqrt{\mu}(\epsilon - \mu) + \frac{3}{8\sqrt{\mu}}(\epsilon - \mu)^2 + \cdots\right]d\epsilon$$
+</div>
+
+<div class="step">
+<div class="step-label">Step 3: Extend limits and evaluate</div>
+<p>The third trick is to note that since $f'(\epsilon)$ is exponentially suppressed at small $\epsilon$ we can extend the lower limit of integration to $-\infty$. Once the integral is from $-\infty$ to $\infty$ the integral is much easier to do. Changing variables to $x = \beta(\epsilon - \mu)$ makes the integrals doable:</p>
+$$1 = \left(\frac{\mu}{\epsilon_F}\right)^{3/2}\int_{-\infty}^\infty \frac{dx}{2 + 2\cosh(x)}\left[1 + \frac{3}{2\beta\mu}x + \frac{3}{8\beta^2\mu^2}x^2 + \cdots\right] = \left(\frac{\mu}{\epsilon_F}\right)^{3/2}\left[1 + \frac{\pi^2}{8\beta^2\mu^2} + \cdots\right]$$
+</div>
+
+<div class="step">
+<div class="step-label">Step 4: Solve for $\mu$</div>
+<p>Now we can solve perturbatively for $\mu$. Substituting $\mu = \epsilon_F + aT^2 + \cdots$ and expanding to order $T^2$ leads us directly to</p>
+$$\mu = \epsilon_F\left[1 - \frac{\pi^2}{12}\frac{k_B^2}{\epsilon_F^2}T^2 + \cdots\right]$$
+<p>As a check, plugging in $T = 1358\;\text{K}$ (the melting point of copper), this gives $\mu = 0.9997\epsilon_F$ in excellent agreement with our exact numerical calculation.</p>
+</div>
+
+<div class="step">
+<div class="step-label">Step 5: Expand the energy</div>
+<p>We can do a similar expansion for the energy. After integrating by parts, expanding, and substituting the form of $\mu$, we find to second order in $T$:</p>
+$$E = \frac{3}{5}N\epsilon_F + \frac{N\pi^2 k_B^2 T^2}{4\epsilon_F} + \cdots$$
+<p>Thus the unknown coefficient $a$ in Eq. (23) is now known: $a = \pi^2/4$.</p>
+</div>
+
+</div></div>
+</div>
+
+<h3 id="ch13-sec3-2">13.3.2 Electrons and holes</h3>
+
+<p>The electron and hole picture gives a quick way to understand the leading temperature dependence of the energy. Since $T \ll T_F$ for any metal, or equivalently, $k_B T \ll \epsilon_F$, it is very hard to excite electrons deep in the Fermi sea. Only states within $k_B T$ of $\epsilon_F \sim \mu$ can contribute to the energy shift $E - E_0$ and to the heat capacity. Thus overall, both excited states (above $\mu$) and states below $\mu$ that do not have electrons in them (holes) are rare.</p>
+
+<p>The idea of the electron/hole picture is to replace the original Fermi gas, with its inert Fermi sea, by a symmetric thermal system of electron excitations and the holes. Of course, in reality the electrons and holes are related, since each electron excitation comes from a hole. However, with a large $N$ of electrons, we can treat the electrons and holes as their own statistical mechanical system and ignore the (very small) correlations among them.</p>
+
+<p>To construct the gas, we first define the zero-point of energy in the new system to be at the Fermi level. Now, each excited electron in the original system in a state with energy $\epsilon > \mu$ contributes positive energy $\Delta = \epsilon - \mu > 0$ to this new gas. Each hole, from a state of energy $\epsilon < \mu$ in the original system, represents the absence of a state with negative energy $-\Delta = \epsilon - \mu < 0$. Thus each hole contributes positive energy $\Delta = \mu - \epsilon$ to the new gas.</p>
+
+<p>The probability of finding an electron with excitation energy $\Delta_e = \epsilon - \mu$ is</p>
+
+<div class="equation">
+$$f_e(\Delta_e) = f(\epsilon) = f(\mu + \Delta_e)$$
+<span class="eq-number">(35)</span>
+</div>
+
+<p>The probability of finding a hole with energy $\Delta_h$ is $1 - f(\mu - \Delta_h)$. Now a useful property of the Fermi distribution is that it is symmetric around its midpoint at $\epsilon = \mu$:</p>
+
+<div class="equation">
+$$f(\mu + \Delta) = 1 - f(\mu - \Delta)$$
+<span class="eq-number">(37)</span>
+</div>
+
+<p>And therefore</p>
+
+<div class="equation key-result">
+$$\underbrace{f_h(\Delta)}_{\text{prob. of hole with energy }\Delta > 0} = 1 - f(\mu - \Delta) = f(\mu + \Delta) = \underbrace{f_e(\Delta)}_{\text{prob. of electron with energy }\Delta > 0}$$
+<span class="eq-number">(38)</span>
+</div>
+
+<p>Thus holes and electrons have identical probability distributions!</p>
+
+<p>This gives us an easy way to calculate the total energy: we just calculate the energy of the electron excitations and double. The electron excitation contributions are like the original electron contributions but shifted to $\mu = 0$. In this region, the density of states is approximately constant:</p>
+
+<div class="equation">
+$$g(\mu + \Delta) \approx g(\mu - \Delta) \approx g(\epsilon_F) = \frac{3N}{2\epsilon_F}$$
+<span class="eq-number">(39)</span>
+</div>
+
+<p>So, the contribution to the total energy from the electron excitations about $\mu$ is</p>
+
+<div class="equation">
+$$E_e = \int_\mu^\infty (\epsilon - \mu)g(\epsilon)f(\epsilon)\,d\epsilon \approx g(\epsilon_F)\int_0^\infty \frac{\Delta}{e^{\beta\Delta} + 1}\,d\Delta = \left(\frac{3N}{2\epsilon_F}\right)\frac{\pi^2}{12\beta^2} = \frac{\pi^2 N}{8\epsilon_F}k_B^2 T^2$$
+<span class="eq-number">(40)</span>
+</div>
+
+<p>The hole contribution is identical:</p>
+
+<div class="equation">
+$$E_h = \frac{\pi^2 N}{8\epsilon_F}k_B^2 T^2$$
+<span class="eq-number">(41)</span>
+</div>
+
+<p>Thus the total energy is</p>
+
+<div class="equation key-result">
+$$E = E_0 + E_e + E_h = E_0 + \frac{\pi^2 N}{4\epsilon_F}k_B^2 T^2$$
+<span class="eq-number">(42)</span>
+</div>
+
+<p>This is in perfect agreement with Eq. (34). This calculation was certainly simpler than Sommerfeld's from Section 3.1. The electron/hole picture is nice not only because it is simpler but because it gives us a powerful language for discussing fermionic systems. This language is particularly useful for solid-state physics, as we'll see in the next lecture.</p>
+
+<h3 id="ch13-sec3-3">13.3.3 Heat capacity</h3>
+
+<p>Having computed the temperature dependence of the energy of a free electron gas, it is now trivial to find the heat capacity:</p>
+
+<div class="equation key-result">
+$$C_V^{\text{electrons}} = \frac{\partial E}{\partial T} = \frac{\pi^2}{2}Nk_B\frac{T}{T_F} + \cdots$$
+<span class="eq-number">(43)</span>
+</div>
+
+<p>We computed this as the leading term in the $T/T_F$ expansion, but since $T_F \gtrsim 50{,}000\;\text{K}$ for metals, this expansion can work for any temperature a metal can have -- up to the melting point.</p>
+
+<p>We can compare this to the heat capacity due to phonons (oscillations of the atoms), for example through the law of Dulong and Petit: $C_V^{\text{phonons}} \approx 3Nk_B$. Recall that we derived this behavior in Lecture 11 as the high-temperature limit of the Debye model. Typical Debye temperatures for metals are around 100 K, so $T \gg T_D \sim 100\;\text{K}$ is reasonable at room temperature. Note that high temperature for phonons ($T \gg T_D$) is consistent with low temperature for electrons ($T \ll T_F$), and so we can use both limits to see</p>
+
+<div class="equation">
+$$\frac{C_V^{\text{electrons}}}{C_V^{\text{phonons}}} = \frac{\pi^2}{6}\frac{T}{T_F} \ll 1$$
+<span class="eq-number">(44)</span>
+</div>
+
+<p>This explains why the electrons do not contribute appreciably to the total heat capacity $C_V = C_V^{\text{phonons}} + C_V^{\text{electrons}} \approx C_V^{\text{phonons}}$. Historically, there was a puzzle for some time about why the law of Dulong and Petit should be correct, since the equipartition theorem says that electrons should contribute to the heat capacity just like the atoms. We now understand that because of Fermi-Dirac statistics the valence electrons have very high energy compared to room temperature, so only a small fraction of the electrons can be thermally excited (those near the Fermi level). Thus, at room temperature the electronic contribution is very small and this historical puzzle is thereby resolved by quantum statistics.</p>
+
+<p>At very low temperatures $T \ll T_D$, the law of Dulong and Petit no longer applies. In the Debye model we found that for $T \ll T_D$:</p>
+
+<div class="equation">
+$$C_V^{\text{Debye}} = \frac{12\pi^4}{5}Nk_B\left(\frac{T}{T_D}\right)^3$$
+<span class="eq-number">(45)</span>
+</div>
+
+<p>where the formula for the Debye temperature is</p>
+
+<div class="equation">
+$$T_D = \frac{\hbar\omega_D}{k_B} = \frac{\hbar}{k_B}c_s\left(\frac{6\pi^2 N}{V}\right)^{1/3}$$
+<span class="eq-number">(46)</span>
+</div>
+
+<p>with $c_s$ the speed of sound. Thus the full heat capacity at low temperature is the sum of the electronic and phononic parts:</p>
+
+<div class="equation key-result">
+$$C_V = C_V^{\text{electrons}} + C_V^{\text{phonons}} = \frac{\pi^2}{2}Nk_B\frac{T}{T_F} + \frac{12\pi^4}{5}Nk_B\left(\frac{T}{T_D}\right)^3 + \cdots$$
+<span class="eq-number">(47)</span>
+</div>
+
+<p>For copper $T_D = 315\;\text{K}$ and $T_F = 80{,}000\;\text{K}$. Thus we have to go to very low temperatures to see the electronic contribution. The two contributions are comparable when</p>
+
+<div class="equation">
+$$\frac{T}{T_F} \sim \left(\frac{T}{T_D}\right)^3 \quad\Rightarrow\quad T \sim \sqrt{\frac{T_D^3}{T_F}}$$
+<span class="eq-number">(48)</span>
+</div>
+
+<p>For copper this is $T \sim 19\;\text{K}$.</p>
+
+<p>We can see the electronic contribution by measuring the heat capacity at small $T$ and plotting $C_V/T$ as a function of $T^2$:</p>
+
+<div class="equation">
+$$\frac{C_V}{T} = \frac{\pi^2}{2}Nk_B\frac{1}{T_F} + \frac{12\pi^4}{5}Nk_B\frac{1}{T_D^3}(T^2)$$
+<span class="eq-number">(49)</span>
+</div>
+
+<p>The $y$-intercept of such a plot gives the electronic contribution and the slope gives the phonon contribution.</p>
+
+<figure>
+<img src="images/13-Metals_p10_img0.png" alt="Heat capacity of copper at low temperatures">
+<figcaption>Figure 1. Heat capacity of copper at low temperatures compared to the prediction from the Sommerfeld free electron gas model.</figcaption>
+</figure>
+
+<p>Measurements like this demonstrate an electronic contribution in good agreement with the prediction from the Sommerfeld free electron model.</p>
+
+<p>An obvious limitation of the free electron model is that it is the same model for any metal. Thus it cannot tell us what is a conductor, what is an insulator, or account for any of the interesting structure of the elements in the periodic table. To do that we need to make some improvements.</p>
+
+<!-- Interactive visualization -->
+<div class="interactive-container">
+<h3>Interactive: Fermi-Dirac Distribution</h3>
+<p>Adjust the temperature to see how the Fermi-Dirac distribution changes. At low $T$, the distribution is nearly a step function; as $T$ increases, more states near $\epsilon_F$ become thermally accessible.</p>
+<canvas id="vis-fermi" width="600" height="400"></canvas>
+<div class="slider-container">
+<label for="fermi-temp">Temperature $T/T_F$:</label>
+<input type="range" id="fermi-temp" min="0.01" max="0.5" step="0.01" value="0.05">
+<span class="slider-value" id="fermi-temp-val">0.05</span>
+</div>
+</div>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2 id="ch13-sec4">13.4 Nearly free electron gas</h2>
+
+<p>To improve on the free electron model, we can consider how electrons become free. If the atoms are far apart, then the electrons would have been in orbitals around their atom. There is thus some kind of attractive potential $V(r)$ trying to keep each electron bound to one atom. As atoms move closer together, their potentials start to overlap. In the limit that the potentials overlap a lot, the sum of the potentials can be very weakly position dependent:</p>
+
+<figure>
+<img src="images/13-Metals_p11_img0.png" alt="Isolated atomic potentials">
+<img src="images/13-Metals_p11_img1.png" alt="Overlapping atomic potentials">
+<figcaption>Figure 2. When atoms are far apart (left), the atomic potentials do not overlap. When atoms become close (right), potentials overlap with the net result of a nearly free potential: the sum of the potentials is nearly flat.</figcaption>
+</figure>
+
+<p>Most metals have a very regular lattice structure. More precisely, these potentials are periodic, meaning that there exists a vector $\vec{a}$ such that $V(\vec{x} + \vec{a}) = V(\vec{x})$. It is interesting therefore to consider a weak periodic potential as a model of the atomic system. This is known as the <span class="tooltip-trigger">nearly free electron model<span class="tooltip-content">A model where electrons move in a weak periodic potential. It predicts the emergence of energy bands and band gaps.</span></span>. It is hard to calculate properties of periodic potentials in three dimensions exactly, but in one dimension we can actually find some exact solutions that are qualitatively similar to 3D systems and to real metals.</p>
+
+<p>In one dimension, we are interested in finding the energies of a system with a periodic potential. By periodic potential, we mean that the full potential is the sum over potentials $V_1(x)$ representing atoms, shifted by the lattice spacing $a$. That is, the potential has the form</p>
+
+<div class="equation">
+$$V(x) = \sum_{n=-\infty}^{\infty} V_1(x - na)$$
+<span class="eq-number">(50)</span>
+</div>
+
+<figure>
+<img src="images/13-Metals_p11_img2.png" alt="Periodic potential">
+<figcaption>A periodic potential formed by the sum of individual atomic potentials.</figcaption>
+</figure>
+
+<p>Infinite periodic potentials have been studied in great detail and a lot of general results are known about them. A general result known as <span class="tooltip-trigger">Bloch's theorem<span class="tooltip-content">Energy eigenstates in a periodic potential can be written as a plane wave times a function with the periodicity of the lattice: $\psi_k(x) = e^{ika}u_k(x)$.</span></span> is that energy eigenstates can be written as</p>
+
+<div class="equation">
+$$\psi_k(x) = e^{ika}u_k(x)$$
+<span class="eq-number">(51)</span>
+</div>
+
+<p>where $a$ is the lattice spacing, $k$ is the wavenumber and $u_k(x)$ is a function with the periodicity of the lattice, i.e. $u_k(x + a) = u_k(x)$ in this case. These solutions are known as <span class="tooltip-trigger">Bloch waves<span class="tooltip-content">Energy eigenstates in a periodic potential. They are plane waves modulated by a periodic function with the lattice periodicity.</span></span>. Bloch waves are like smooth plane waves $e^{ikx}$ at scales $x \gg a$ but have a bumpier structure, given by the Fourier transform of $u_k(x)$ at length scales less than $a$. Bloch's theorem holds in any number of dimensions.</p>
+
+<p>Plugging Eq. (51) into the Schrodinger equation ($\frac{\hbar^2}{2m}\nabla^2 + V(x) = \epsilon$), you can show that for a given wavenumber $k$ (the phase in Eq. (51)), the energies $\epsilon$ satisfy</p>
+
+<div class="equation">
+$$\frac{\cos\!\left(\sqrt{\frac{2m_e\epsilon}{\hbar^2}}\,a + \delta_k\right)}{|t_k|} = \cos(ka)$$
+<span class="eq-number">(52)</span>
+</div>
+
+<p>This is an implicit formula for the dispersion relation $\epsilon(k)$ of the system. The quantities $|t_k|$ and $\delta_k$ are the magnitude and phase of the transmission coefficient $t_k = |t_k|e^{i\delta_k}$, which can also be calculated from $V(x)$.</p>
+
+<p>To be concrete, consider a special case where the potentials are square wells. This case is known as the <span class="tooltip-trigger">Kronig-Penney model<span class="tooltip-content">An exactly solvable model of electrons in a periodic potential of delta functions, which demonstrates the emergence of energy bands and gaps.</span></span> and an exact solution is known. The solution is particularly simple in the limit where the width of the wells goes to zero and the strength to infinity so that each potential is a $\delta$-function, i.e. $V_1(x) = \lambda\delta(x)$. In this case, the magnitude and phase of the transmission coefficient are given by</p>
+
+<div class="equation">
+$$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}$$
+<span class="eq-number">(53)</span>
+</div>
+
+<p>Let's look at the energies of the Kronig-Penney model as a function of $k$. We do this by finding solutions to Eq. (52) using the expressions in Eq. (53) for $|t_k|$ and $\delta_k$:</p>
+
+<figure>
+<img src="images/13-Metals_p12_img0.png" alt="Band structure in the Kronig-Penney model">
+<figcaption>Figure 3. Allowed and forbidden regions in the Kronig-Penney model. Only half the bands, for $k > 0$, are shown. There are mirror image bands for $k < 0$.</figcaption>
+</figure>
+
+<p>In this figure, you can see that the energies break up into a series of <span class="tooltip-trigger">bands<span class="tooltip-content">Groups of allowed energy levels in a periodic potential, separated by forbidden energy ranges called band gaps.</span></span>. The energy difference between the top of one band and bottom of the next is known as the bandwidth. As $k$ is increased, there are certain energies that never appear. These are energies in the <span class="tooltip-trigger">band gap<span class="tooltip-content">A range of energies for which no allowed quantum states exist in a periodic potential. The band gap determines whether a material is a conductor, semiconductor, or insulator.</span></span>. The Kronig-Penney model is the simplest exactly solvable model where the band structure appears. Bands are critical to understanding properties of metals and semiconductors.</p>
+
+<p>We can see fairly easily from the general result in Eq. (52) why there are bands, i.e. why there are not solutions for every $\epsilon$. Because $t$ is a transmission coefficient, $|t| < 1$ and thus the cosine on the left is bigger than the one on the right. So when the left cosine is bigger than $|t|$ then there can be no solution. This happens around the regions where $k = \frac{\pi}{a}, \frac{2\pi}{a}, \frac{3\pi}{a}, \cdots$. The band gaps are centered around these regions. The wavenumbers $k = \frac{\pi}{a}$ correspond to periodic eigenfunctions.</p>
+
+<p>As the potential is removed, $V \to 0$, we should recover the free-particle solutions. You can actually see this from the figure: as the gaps are removed, the bands merge into a parabola. The parabola is none other than the dispersion relation for the free electron gas, Eq. (6): $\epsilon = \frac{\hbar^2 k^2}{2m_e}$.</p>
+
+<p>Although this model was only one-dimensional, periodic potentials predict bands also in three dimensions, and bands are observed experimentally in metals. What is critically important in determining properties of the solid is whether the Fermi level is in the middle of a band or in the band gap. For example, suppose each potential corresponds to one atom and each atom donates one electron to the nearly-free electron gas. In this case, there are $N$ electrons and the maximum $k$ allowed (in 1D) is $k = N\frac{\pi}{L}$ with $L$ the size of the system. Using $L = Na$ we see $k \leq \frac{\pi}{a}$, which, matching onto Figure 3 would be the highest occupied electron level right at the edge of the band. Remember though that electrons have two spin states, so each level is actually two-fold degenerate. This means that if each atom donates one electron, the lowest band will actually be only half filled. With a half-filled band the electrons can easily be excited, gaining energy and momentum. If you put an electric field on such a system, the electrons can adjust, picking up momentum in one direction:</p>
+
+<figure>
+<img src="images/13-Metals_p13_img0.png" alt="Half-filled band - conductor">
+<img src="images/13-Metals_p13_img1.png" alt="Full band - insulator">
+<figcaption>Figure 4. The thin curve shows the band: how the energy levels $E$ depend on wavenumber $k$. The thick curve shows the occupied levels. For metals in which atoms donate one electron each, half the band is filled. With a half-filled band, an applied electric field can easily make the energy levels adjust, showing that such materials are conductors. Insulators have a completely filled band and cannot easily adjust to an applied field.</figcaption>
+</figure>
+
+<p>Thus mono-valent (one electron donated per atom) materials (most metals) are <strong>conductors</strong>. That metals conduct is closely related to their shininess: the conduction electrons move freely, so they easily absorb and re-emit radiation.</p>
+
+<p>If each atom donates two electrons into the band, the band would be completely filled. In that case, a tiny amount of energy cannot excite the electron and the material does not conduct electricity well. Such materials are known as <span class="tooltip-trigger">insulators<span class="tooltip-content">Materials where the Fermi level lies in a large band gap, so that thermal excitation of electrons into the conduction band is negligible.</span></span> or more precisely band insulators.</p>
+
+<p>In three dimensions, the relationship $\epsilon(\vec{k}) = \epsilon_F$ defines a surface instead of two points. This surface is called the <span class="tooltip-trigger">Fermi surface<span class="tooltip-content">The surface in momentum space defined by $\epsilon(\vec{k}) = \epsilon_F$, which separates occupied from unoccupied states at $T = 0$.</span></span>. The Fermi surface is an abstract surface in momentum space, not the real surface of a metal in position space. It describes the boundary between occupied and unoccupied energy levels at $T = 0$. For the free-electron gas where $\epsilon = \frac{\hbar^2 \vec{k}^2}{2m_e}$ this is the surface of constant $|\vec{k}|$, namely a sphere. In metals such as sodium which have very weakly bound valence electrons, so the free-electron gas model is an excellent approximation, the Fermi surface is indeed spherical. For other metals, the Fermi surface can have a different shape. Here are the Fermi surfaces for sodium, copper and graphene:</p>
+
+<figure>
+<img src="images/13-Metals_p13_img3.png" alt="Fermi surfaces for sodium, copper and graphene">
+<figcaption>Figure 5. Fermi surfaces for sodium (left), copper (middle) and graphene (right).</figcaption>
+</figure>
+
+<p>In copper the things that look like holes in the Fermi surface are not really holes but rather the regions where $d\epsilon/dk$ blows up. This is the 3D analog of the 1D bandgap region in the Kronig-Penney model: when you go from one band to the next, $\epsilon$ jumps as $k$ changes by a little bit, so $d\epsilon/dk$ is large.</p>
+
+<p>Graphene is a 2D sheet of carbon. So the values of $\vec{k}$ with $\epsilon(\vec{k}) = \epsilon_F$ are not a set of points, as in 1D, or a surface, as in 3D, but a curve. The curve is given by an intersection of a plane (the energy plane) with the surface. In the figure, the Fermi energy is indicated by the red plane. We see that as $\epsilon \to \epsilon_F$ the allowed $k$ go to points along the surface of a cone. These cones are called <span class="tooltip-trigger">Dirac cones<span class="tooltip-content">Cone-shaped features in the band structure of graphene where the dispersion relation is linear, making electrons behave like ultrarelativistic particles.</span></span>. In an ultrarelativistic electron gas, the dispersion relation is $\epsilon(\vec{k}) = c|\vec{k}|$. Because of the absolute value, the ultrarelativistic dispersion relation has the same cuspy behavior and Dirac cone structure we can see in the graphene Fermi surface. Thus electrons in graphene near the cusp act like ultrarelativistic particles, even though their energies can be $\epsilon \lesssim \epsilon_F \ll m_e c^2$. These effectively massless Fermion excitations give graphene some of its most interesting properties: it is the world's most conductive material. Normal metals have to move massive electrons around, but graphene can move around effectively massless ones. Graphene is also 200 times stronger than steel. By the way, graphene was discovered in 2004 by Geim and Novoselov by peeling scotch tape off a block of graphite (you make graphene every time you write with a pencil). Geim and Novoselov won the Nobel Prize for their discovery in 2010.</p>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2 id="ch13-sec5">13.5 Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li>A <strong>free electron gas</strong> of non-interacting fermions quantized as non-relativistic particles-in-a-box has density of states $g(\epsilon) = \frac{V}{2\pi^2}\left(\frac{2m_e}{\hbar^2}\right)^{3/2}\sqrt{\epsilon}$ and Fermi energy $\epsilon_F = \frac{\hbar^2}{2m_e}\left(\frac{3\pi^2 N}{V}\right)^{2/3}$.</li>
+<li>The <strong>Fermi temperature</strong> $T_F = \epsilon_F/k_B$ is the characteristic temperature separating quantum from classical behavior. For metals, $T_F \sim 50{,}000$--$80{,}000\;\text{K}$, so electrons in metals are always highly degenerate.</li>
+<li><strong>Degeneracy pressure</strong> $P = \frac{2}{3}\frac{E_0}{V}$ persists even at $T=0$ and is responsible for the mechanical properties of metals. The free-electron gas predicts the bulk modulus and speed of sound of metals in agreement with data.</li>
+<li>The <strong>heat capacity</strong> of the electron gas is $C_V^{\text{el}} = \frac{\pi^2}{2}Nk_B\frac{T}{T_F}$, linear in $T$ at low temperature. This is in contrast to the phonon heat capacity which scales like $T^3$. We computed this two ways: Sommerfeld expansion and the electron/hole picture.</li>
+<li>The <strong>electron/hole picture</strong> exploits the symmetry $f(\mu + \Delta) = 1 - f(\mu - \Delta)$ of the Fermi function to treat excitations above and below $\epsilon_F$ symmetrically. Holes are the absence of electrons below $\epsilon_F$ and contribute positive energy.</li>
+<li>The <strong>nearly free electron gas</strong> introduces a weak periodic potential, leading to <strong>band structure</strong>: groups of energy levels separated by <strong>band gaps</strong>.</li>
+<li>Band structure explains <strong>conductors</strong> (Fermi level within a band, partially filled) and <strong>insulators</strong> (Fermi level in a gap, completely filled band).</li>
+<li>The <strong>Fermi surface</strong> $\epsilon(\vec{k}) = \epsilon_F$ describes the boundary between occupied and unoccupied states in momentum space. Its shape depends on the band structure of the material.</li>
+</ul>
+</div>

@@ -1,0 +1,599 @@
+<div class="chapter-number">Chapter 15</div>
+<h1 class="chapter-title">Stars</h1>
+<p class="chapter-intro">
+Stars are among the most beautiful and important objects in the universe, and remarkably, much of their physics can be understood using statistical mechanics. In this lecture we discuss stellar evolution, derive the equations of stellar structure, and apply quantum statistical mechanics to understand white dwarfs, the Chandrasekhar limit, and neutron stars.
+</p>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2 id="ch15-sec1">15.1 Introduction</h2>
+
+<p>There are at least 100 billion stars in the Milky Way. Not everything in the night sky is a star -- there are also planets and moons as well as nebulae ("cloudy" objects including distant galaxies, clusters of stars, and regions of gas) -- but it's mostly stars. These stars are almost all just points with no apparent angular size even when zoomed in with our best telescopes. An exception is Betelgeuse (Orion's shoulder). Betelgeuse is a red supergiant 1000 times wider than the sun. Even it only has an angular size of 50 milliarcseconds: the size of an ant on the Prudential Building as seen from Harvard Square. So stars are basically points and everything we know about them experimentally comes from measuring light coming in from those points.</p>
+
+<p>Since stars are pointlike, there is not too much we can determine about them from direct measurement. Stars are hot and emit light consistent with a blackbody spectrum from which we can extract their surface temperature $T_s$. We can also measure how bright the star is, as viewed from earth. For many stars (but not all), we can also figure out how far away they are by a variety of means, such as parallax measurements. Correcting the brightness as viewed from earth by the distance gives the <span class="tooltip-trigger">intrinsic luminosity<span class="tooltip-content">The total power emitted by a star in photons, denoted $L$. It is related to the surface temperature by the Stefan-Boltzmann law: $L = 4\pi R^2 \sigma T_s^4$.</span></span>, $L$, which is the same as the power emitted in photons by the star. We cannot easily measure the mass of a star in isolation. However, stars often come close enough to another star that they orbit each other. For such stars, we can measure their mass using Kepler's laws. Finally, by looking at details of the stellar spectra we can find evidence of metals. To an astronomer, <span class="tooltip-trigger">metallicity<span class="tooltip-content">The amount of any element heavier than helium in a star. Stars with higher metallicity formed from the remnants of previous stellar generations.</span></span> is the amount of any element heavier than helium in a star.</p>
+
+<p>With temperature and luminosity data, we can make a scatter plot of stars in the galaxy to see if there are any patterns. This was done by Hertzsprung and Russell first around 1910:</p>
+
+<figure>
+<img src="images/15-Stars_p1_img0.png" alt="HR diagram (early)">
+<img src="images/15-Stars_p1_img1.png" alt="HR diagram (Gaia)">
+<figcaption>Figure 1. Hertzsprung-Russell diagram of luminosity and surface temperature. Left is an early estimate. Right is more recent from the Gaia experiment.</figcaption>
+</figure>
+
+<p>We see from the <span class="tooltip-trigger">Hertzsprung-Russell (HR) diagram<span class="tooltip-content">A scatter plot of stars' luminosity vs. surface temperature. Stars cluster along specific sequences (main sequence, giant branch, white dwarfs) depending on their evolutionary stage.</span></span> that most stars fall in two swaths: a diagonal swath, known as the <span class="tooltip-trigger">main sequence<span class="tooltip-content">The band in the HR diagram containing about 90% of all stars, including our sun. Main sequence stars are burning hydrogen in their cores.</span></span> (90% of stars), which includes stars like our sun, and a horizontal swath with luminosities around 100 times brighter than our sun called the horizontal branch (labeled "Red giants" or "giant branch" in the figure). A first question from this data is "why do stars fall along swaths rather than being distributed throughout the $L/T$ plane?" The basic answer is the <span class="tooltip-trigger">Vogt-Russell theorem<span class="tooltip-content">All stars with the same chemical composition and mass are the same. This means that mass alone indexes a one-parameter family of stars, explaining why they fall on curves in the HR diagram.</span></span>: all stars with the same chemical composition and mass are the same. In particular, if the chemical composition is the same, then the mass indexes a one-parameter family of points in any plot, including a HR diagram. The main sequence swath describes stars with hydrogen-burning cores, like our sun. The red giants composing the horizontal branch are burning helium. There is another region heading upwards from the horizontal branch known as the <strong>asymptotic giant branch</strong>. It contains supergiants which burn heavy elements. Finally, the stars in the lower left are called <strong>white dwarfs</strong>.</p>
+
+<!-- Interactive visualization -->
+<div class="interactive-container">
+<h3>Interactive: Hertzsprung-Russell Diagram</h3>
+<p>Explore the HR diagram. Stars are colored by their surface temperature. Diagonal lines show constant radius.</p>
+<canvas id="vis-hr" width="600" height="500"></canvas>
+</div>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2 id="ch15-sec2">15.2 Overview of stellar evolution</h2>
+
+<p>In this section we discuss the standard narrative for star formation. Much of stellar physics is calibrated relative to the sun. The sun is denoted with the symbol $\odot$. The mass of the sun is $M_\odot = 2 \times 10^{30}\;\text{kg}$ and the radius of the sun is $R_\odot = 7 \times 10^5\;\text{km}$.</p>
+
+<p>After the big bang, the universe cooled into around 75% hydrogen and 25% helium, with trace amounts of lithium. Some patches of the universe started out denser and hotter than others (we think this is due to primordial quantum density fluctuations during inflation), and the denser patches became more dense over time due to gravitational attraction. When a region of gas becomes dense enough, the density increase accelerates rapidly, a process called a <span class="tooltip-trigger">Jeans instability<span class="tooltip-content">A gravitational instability that occurs when a region of gas is dense enough that self-gravity overwhelms thermal pressure, causing runaway collapse.</span></span>. After the instability is reached the gas continues to compress until stars form, and if the temperature gets high enough, hydrogen fusion begins.</p>
+
+<p>Hydrogen fusion in stars refers to a collection of processes whose net effect is to turn hydrogen H into ${}^4\text{He}$. This fusion generates thermal pressure, keeping the stars from collapsing further under their own gravity. Thus for most of its lifetime, a star is in <span class="tooltip-trigger">hydrostatic equilibrium<span class="tooltip-content">The balance between the inward gravitational force and the outward pressure (thermal, radiation, or degeneracy) in a star.</span></span> and equilibrium statistical mechanics can be used.</p>
+
+<p>High temperatures and densities are required for fusion. If the amount of matter that coalesced to form a star is not greater than around $0.08\,M_\odot$, the star will not burn and instead is just a ball of hydrogen, like Jupiter. These failed stars are called <span class="tooltip-trigger">brown dwarfs<span class="tooltip-content">Failed stars with mass below $\sim 0.08 M_\odot$, not massive enough to sustain hydrogen fusion.</span></span>. The main difference between a brown dwarf and a planet is how they formed: planets form from supernova remnants while brown dwarfs form from collapse of interstellar gas.</p>
+
+<p>The region of the star where temperatures are high enough for hydrogen to fuse into helium is called the core. The core of the sun is a ball with radius around $0.25 R_\odot$. For stars that are lighter than around $0.4 M_\odot$ convection currents move the helium out of the core and allow hydrogen to fall in. The relatively low mass of these stars, right above the threshold for hydrogen fusion, make them small and cool. They are called <span class="tooltip-trigger">red dwarfs<span class="tooltip-content">Small, cool main-sequence stars with mass $0.08$--$0.4\,M_\odot$. They burn hydrogen very slowly and constitute 73% of stars in the Milky Way.</span></span>. 73% of the stars in the Milky Way are red dwarfs. These stars burn hydrogen slowly, in principle until it is all used up. However, it takes hundreds of billions of years for a red dwarf to burn all its fuel and since the universe is only 15 billion years old, none of the red dwarfs have yet run out of hydrogen.</p>
+
+<p>In stars with masses above $0.4 M_\odot$, like our sun (about 20% of stars), the density in their cores gets high enough to prevent much convection. Thus the helium produced there basically stays put. After the hydrogen in the core is all burned up (so only helium is left), the thermal pressure from fusion stops and the star starts to contract again. The subsequent increase in density and temperature allows fusion to commence in the shell slightly outside of the core. Helium produced from this shell falls into the core, increasing the temperature further. As heat flows out from the core, it pushes the outer layers farther away. The net effect is that 1) the core contracts to around 1/3 its original size and its temperature goes up from $15 \times 10^6\;\text{K}$ to $100 \times 10^6\;\text{K}$ and 2) the outer layers are pushed out (to $\sim 100 R_\odot$) and cool. The increased core temperature can allow helium to fuse into carbon, nitrogen and oxygen. Thus after core hydrogen is used up, the equilibrium configuration of the star is qualitatively different: it has a core of helium and metals and is larger with a cooler surface temperature. By the Vogt-Russell theorem, these stars form a different line in the HR diagram. The star has left the main sequence to become a <span class="tooltip-trigger">red giant<span class="tooltip-content">A star that has exhausted hydrogen in its core and expanded greatly. The core fuses helium while hydrogen burns in a surrounding shell.</span></span>.</p>
+
+<p>In the red giant phase the star continues to burn the remaining hydrogen, expanding and cooling, and fuses helium in the core. This stage is relatively fast, and less than 0.5% of stars are red giants. Eventually all the helium in the core is used up and core nuclear fusion stops. Then, once again, the thermal pressure stops and the star's core can contract under its own weight and heat up, allowing helium fusion to continue in shells around it. It has entered the asymptotic giant branch. There is a lot of convection in this phase, causing the heavy elements to be dredged up from the core in a series of bursts. The result is the formation of a set of shells of matter called a <span class="tooltip-trigger">planetary nebula<span class="tooltip-content">Shells of gas expelled from an aging star. Despite the name, they have nothing to do with planets -- the name is a historical misnomer.</span></span>:</p>
+
+<figure>
+<img src="images/15-Stars_p3_img0.png" alt="Ring nebula">
+<img src="images/15-Stars_p3_img1.png" alt="Cat's Eye nebula">
+<figcaption>Figure 2. The Ring Nebula (left) and Cat's Eye Nebula (right) are planetary nebulae. The dot in the middle of each is a white dwarf. Planetary nebulae have nothing to do with planets.</figcaption>
+</figure>
+
+<p>Planetary nebulae are colorful because UV radiation from the core ionizes the atoms in the gas. This makes them some of the most beautiful objects in the sky. They have nothing to do with planets ("planetary" is a historical misnomer -- at low resolution, they look a bit like round, green or blue planets).</p>
+
+<p>Two things can now happen to the core of an asymptotic giant branch star, depending on its mass. If the star's mass is not large enough for its weight to overcome the electron degeneracy pressure in the core, the core cannot contract enough for fusion to continue. In this case, the core becomes a star called a <span class="tooltip-trigger">white dwarf<span class="tooltip-content">A stellar remnant held up by electron degeneracy pressure. Typically has the mass of the sun and the size of the earth. No nuclear fusion occurs.</span></span> held together by gravity and stabilized by electron degeneracy pressure. About 4% of stars are white dwarfs. The white dwarf is a kind of star that cannot be understood without quantum statistical mechanics.</p>
+
+<p>The degeneracy pressure limits the mass of a white dwarf. The limit is called the <span class="tooltip-trigger">Chandrasekhar limit<span class="tooltip-content">The maximum mass of a white dwarf, $M_{\text{WD}} \lesssim 1.4\,M_\odot$. Above this mass, electron degeneracy pressure cannot support the star against gravitational collapse.</span></span>, $M_{\text{WD}} \lesssim 1.4\,M_\odot$. The corresponding bound on the original star's mass is $M \lesssim 8\,M_\odot$. If $M \gtrsim 8\,M_\odot$ then the electron degeneracy pressure in the core cannot prevent further contraction. These high-mass stars continue to collapse leading to additional stages of nuclear fusion: carbon fusion (producing Ne, Na, Mg), neon fusion (producing O, Mg), oxygen fusion, then silicon fusion. Eventually iron is produced. Iron is the endpoint of nuclear fusion since elements above iron have endothermic fusion reactions and exothermic fission reactions. Stars where these processes are happening are called supergiants.</p>
+
+<figure>
+<img src="images/15-Stars_p4_img0.png" alt="Onion-shell structure of supergiant">
+<figcaption>Each stage of evolution of a supergiant generates a new shell of core material, like the shells of an onion.</figcaption>
+</figure>
+
+<p>All this nuclear activity makes supergiant stars very bright. Some of the brightest stars in the sky are supergiants, including Betelgeuse, Rigel, and Antares.</p>
+
+<p>Once iron is formed and fusion stops, the core is only around the size of the earth and the supergiant is the size of our solar system. The thermal pressure stops abruptly and the gravitational pressure then commences to collapse the star. This happens very rapidly, raising the temperature to 5 billion K in about a tenth of a second. After around 0.25s the core can have a density of $4 \times 10^{17}\;\text{kg/m}^3$. That's like packing the entire mass of the earth into Jefferson Hall. The high temperature unleashes high energy photons which break apart the nuclei into protons and neutrons. The high density of electrons and protons allows them to fuse:</p>
+
+<div class="equation">
+$$p^+ + e^- \to n + \nu$$
+<span class="eq-number">(2)</span>
+</div>
+
+<p>As the neutrinos produced by this fusion leave the star, the pressure drops further allowing additional contraction. The star begins collapsing catastrophically, at as much as 1/4 the speed of light. Eventually, the core of neutrons cannot collapse further due to the strong interactions and the neutron degeneracy pressure. The incoming waves of matter then bang into the neutron core and bounce outward. This leads to an enormous explosion called a <span class="tooltip-trigger">core-collapse supernova<span class="tooltip-content">The explosive death of a massive star when its iron core collapses and rebounds off the neutron-degenerate core, producing enormous energy and heavy elements.</span></span>. After the explosion, the core may be obliterated. Or there may be a remnant neutron star (made of neutrons stabilized by degeneracy pressure) or, if the core mass is too large, a black hole.</p>
+
+<figure>
+<img src="images/15-Stars_p4_img1.png" alt="Fate of a star depends on its mass">
+<figcaption>Figure 3. The fate of a star depends on its mass.</figcaption>
+</figure>
+
+<p>During a supernova, elements heavier than iron can be produced. Although the production of these elements by fusion is not energetically favorable, there is so much energy around in a supernova that it can still happen -- like thermal motion pushing a ball up a hill. It is not clear if enough heavy elements can be produced this way to explain their abundances. In particular, it seems hard to get enough gold. Interestingly, the discovery of neutron star mergers through gravitational waves suggests that neutron star mergers may be another important source of gold, potentially resolving this deficit (see Section 6).</p>
+
+<p>After the supernova the explosion remnants are expelled off into the galaxy. Eventually they coalesce along with more primordial hydrogen to form a new generation of stars. These new stars, called <span class="tooltip-trigger">population I stars<span class="tooltip-content">Stars formed from the remnants of previous stellar generations plus primordial hydrogen. They have higher metallicity. Our sun is a population I (third generation) star.</span></span>, include our sun. Our sun is believed to be a third generation star. About 2% of stars are population I. Population I stars have higher metallicities than first generation (population II) stars (yes, the notation is backwards) and are often surrounded by other objects with high metallicity, such as planets. Thus astronomers searching for exosolar planets focus on population I stars. Even population II stars have some heavy elements. Astronomers believe there should exist stars with only hydrogen and helium. They call these population III (generation zero?).</p>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2 id="ch15-sec3">15.3 Stellar thermodynamics</h2>
+
+<h3 id="ch15-sec3-1">15.3.1 Luminosity</h3>
+
+<p>Let's begin with luminosity and temperature, as shown in the HR diagram. Knowing the intrinsic luminosity and surface temperature, we can find the radius $R$ with the Stefan-Boltzmann law for the flux $\mathcal{F} = \sigma T_s^4$:</p>
+
+<div class="equation key-result">
+$$L = \text{surface area} \times \text{flux} = 4\pi R^2 \sigma T_s^4$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p>with $\sigma = 5.6 \times 10^{-8}\;\frac{\text{W}}{\text{m}^2\text{K}^4}$ is Stefan's constant. So stars with the same $R$ should fall along diagonal lines in the log-log HR diagram.</p>
+
+<figure>
+<img src="images/15-Stars_p5_img0.png" alt="HR diagram with constant-radius lines">
+<figcaption>HR diagram with lines of constant radius overlaid. Most main sequence stars have radii within two orders of magnitude of the sun.</figcaption>
+</figure>
+
+<p>We see that most of the main sequence stars have radii $R$ within two orders of magnitude of the sun: $0.1 R_\odot < R < 10 R_\odot$. Red giants are bigger, and the white dwarfs are smaller, hence their names.</p>
+
+<h3 id="ch15-sec3-2">15.3.2 Core temperature</h3>
+
+<p>Although the surface temperature is what we readily see, it is the core temperature that is critical to allow nuclear fusion to occur. Consider a model that treats the star as two parts, a core, where fusion is occurring, and an outer shell where fusion is not occurring. The core has some pressure $P$ that keeps the shell from collapsing in. The pressure of the shell is due to its weight as set by the gravitational pull of the core. Since $P = F/A$ we get</p>
+
+<div class="equation">
+$$P_{\text{grav}} = \frac{F_{\text{grav}}}{4\pi r_{\text{core}}^2} = \frac{G M_{\text{shell}} M_{\text{core}}}{4\pi r_{\text{core}}^4}$$
+<span class="eq-number">(5)</span>
+</div>
+
+<p>The pressure in the core is a thermal pressure. If the core is made up of a gas of hydrogen the ideal gas law gives</p>
+
+<div class="equation">
+$$P_{\text{therm}} = \frac{N_{\text{core}} k_B T_{\text{core}}}{V_{\text{core}}} = \frac{M_{\text{core}}}{m_p}\frac{1}{\frac{4}{3}\pi r_{\text{core}}^3}k_B T_{\text{core}}$$
+<span class="eq-number">(6)</span>
+</div>
+
+<p>where $m_p$ is the mass of a proton. Setting $P_{\text{grav}} = P_{\text{therm}}$ gives</p>
+
+<div class="equation">
+$$k_B T_{\text{core}} = \frac{1}{3}\frac{G M_{\text{shell}} m_p}{r_{\text{core}}}$$
+<span class="eq-number">(7)</span>
+</div>
+
+<p>Using dimensional analysis, we can estimate that $M_{\text{shell}}/r_{\text{core}} \approx M_\odot/R_\odot$. We then find</p>
+
+<div class="equation key-result">
+$$T_{\text{core}} = \frac{G M_\odot m_p}{3k_B R_\odot} = 7.7 \times 10^6\;\text{K}$$
+<span class="eq-number">(8)</span>
+</div>
+
+<p>Current best theoretical models put $T_{\text{core}}$ around $15 \times 10^6\;\text{K}$, so this back-of-the-envelope calculation is off by about a factor of 2.</p>
+
+<p>How hot does the core have to be for hydrogen fusion to occur? The first stage in hydrogen fusion is</p>
+
+<div class="equation">
+$$p^+ + p^+ \to D^+ + e^+ + \nu$$
+<span class="eq-number">(9)</span>
+</div>
+
+<p>where $D^+$ is the deuteron (${}^2\text{H}$ nucleus). For hydrogen fusion to occur, the protons have to be able to approach closely enough to fuse. Classically, they can only approach each other until their kinetic energy is used up fighting the potential energy barrier:</p>
+
+<div class="equation">
+$$\frac{e^2}{4\pi\epsilon_0 r_{\min}} = \frac{1}{2}m_p v^2$$
+<span class="eq-number">(10)</span>
+</div>
+
+<p>Taking the velocity to be that of a thermal ideal gas, $\frac{1}{2}m_p v^2 = \frac{3}{2}k_B T$, and asking for the protons to get within a proton radius of each other, $r_{\min} = r_p \approx 10^{-15}\;\text{m}$, gives</p>
+
+<div class="equation">
+$$T_{\min}^{\text{classical}} = \frac{1}{3k_B}\frac{e^2}{4\pi\epsilon_0 r_p} = 4.2 \times 10^9\;\text{K}$$
+<span class="eq-number">(11)</span>
+</div>
+
+<p>This temperature is 300 times higher than we estimated for the sun's core temperature, suggesting that fusion should not occur. The probability of having enough energy is given by the Boltzmann factor $P \sim e^{-300}$, which amounts to zero collisions in the Sun. According to this classical estimate, protons in the sun simply do not collide.</p>
+
+<div class="info-box physical">
+<div class="box-title">Quantum Tunneling Enables Stellar Fusion</div>
+<p>Fortunately, it is not necessary for protons to actually pass over the Coulomb barrier. Instead, they can <strong>tunnel</strong> through it quantum mechanically. To estimate the temperature where tunnelling can occur, we use that a particle moving with velocity $v$ has a wavefunction that extends to the size of its de Broglie wavelength $\lambda = h/(m_p v)$. Replacing $r_{\min}$ in Eq. (10) by $\lambda$ and taking $v = v_{\text{rms}} = \sqrt{3k_BT/m_p}$ leads to</p>
+$$T_{\min} = \left(\frac{e^2}{4\pi\epsilon_0}\right)^2\frac{m_p}{3\pi^2\hbar^2 k_B} = 19.7 \times 10^6\;\text{K}$$
+<p>This is now within a factor of 2--3 of our estimate for the sun's core temperature. Thus, the chance of protons overlapping enough to possibly allow fusion is order 1.</p>
+</div>
+
+<p>One prediction of hydrogen fusion in the sun, from Eq. (9), is that a boatload of neutrinos should be produced. We first measured these solar neutrinos in the 1960s, and only around 1/3 of the predicted flux was observed. This was called the <span class="tooltip-trigger">solar neutrino problem<span class="tooltip-content">The observed deficit of solar electron neutrinos compared to predictions. Resolved by the discovery of neutrino oscillations, proving neutrinos have mass.</span></span>. The missing neutrinos were due to quantum mechanical oscillations among electron, muon and tauon neutrinos, possible if and only if neutrinos have mass. When muon neutrinos were observed around the year 2000 with exactly the right solar flux, the solar neutrino problem was solved and neutrino mass was unambiguously established!</p>
+
+<p>Careful calculations indicate the following table of ignition threshold temperatures for various nuclear reactions:</p>
+
+<div class="info-box concept">
+<div class="box-title">Nuclear Fusion Ignition Temperatures</div>
+<table>
+<tr><th>Process</th><th>Reactions</th><th>Minimum $T$</th></tr>
+<tr><td>Hydrogen fusion</td><td>H $\to$ He</td><td>$10 \times 10^6\;\text{K}$</td></tr>
+<tr><td>Helium fusion</td><td>He $\to$ C, O</td><td>$100 \times 10^6\;\text{K}$</td></tr>
+<tr><td>Carbon fusion</td><td>C $\to$ O, Ne, Mg, Na</td><td>$500 \times 10^6\;\text{K}$</td></tr>
+<tr><td>Neon fusion</td><td>Ne $\to$ O, Mg</td><td>$1200 \times 10^6\;\text{K}$</td></tr>
+</table>
+</div>
+
+<h3 id="ch15-sec3-3">15.3.3 Stellar structure equations</h3>
+
+<p>We want to do a little better than the rough estimates above. Stars are equilibrium objects and governed by a set of relatively simple equations called the <strong>equations of stellar structure</strong>.</p>
+
+<p>The mass $m(r)$ within the sphere at distance $r$ is determined by integrating the density:</p>
+
+<div class="equation">
+$$m(r) = \int_0^r dr'\,4\pi r'^2 \rho(r')$$
+<span class="eq-number">(14)</span>
+</div>
+
+<p>Taking $\frac{d}{dr}$ of both sides leads to the 1st stellar structure equation called the conservation-of-mass equation:</p>
+
+<div class="equation key-result">
+$$\frac{dm(r)}{dr} = 4\pi r^2 \rho(r) \qquad\text{(mass conservation)}$$
+<span class="eq-number">(15)</span>
+</div>
+
+<p>Next, we know that the gravitational force keeping a star together must balance the internal pressure pushing it apart. The force acting on the spherical shell at distance $r$ that has mass $dm = 4\pi r^2 \rho\,dr$ is determined by the mass $m(r)$ within that shell:</p>
+
+<div class="equation">
+$$F_g = -\frac{G\,m(r) \times 4\pi r^2 \rho(r)\,dr}{r^2}$$
+<span class="eq-number">(16)</span>
+</div>
+
+<p>The net force on the shell from pressure is $F_p = 4\pi r^2 \frac{dP}{dr}\,dr$. Setting $F_p = F_g$ gives the 2nd stellar structure equation called the equation of <strong>hydrostatic equilibrium</strong>:</p>
+
+<div class="equation key-result">
+$$\frac{dP(r)}{dr} = -\frac{Gm(r)\rho(r)}{r^2} \qquad\text{(hydrostatic equilibrium)}$$
+<span class="eq-number">(18)</span>
+</div>
+
+<p>Multiplying both sides by $\frac{r^2}{\rho(r)}$ and differentiating we get</p>
+
+<div class="equation">
+$$\frac{d}{dr}\left(\frac{r^2}{\rho(r)}\frac{dP(r)}{dr}\right) = -G\frac{dm}{dr} = -4\pi G r^2 \rho(r)$$
+<span class="eq-number">(19)</span>
+</div>
+
+<p>This single equation couples the pressure and density.</p>
+
+<p>To solve Eq. (19) we need to know something about the pressure or density. For the gas pressure, we treat the star as an ideal gas: $P_{\text{gas}} = \frac{N}{V}k_B T$. We need to relate $N/V$ to the mass density $\rho$. If the gas is 75% hydrogen and 25% ${}^4\text{He}$ by mass (the cosmological abundance), then for every ${}^4\text{He}^{2+}$ nucleus there are 12 H$^+$ nuclei and $2 + 12 = 14$ free electrons. In general, we write $N/V = \rho/(\mu m_p)$ so that</p>
+
+<div class="equation">
+$$P_{\text{gas}} = \frac{\rho}{\mu m_p}k_B T$$
+<span class="eq-number">(22)</span>
+</div>
+
+<p>With ionized hydrogen and helium we found $\mu = 0.59$. Including the metal content of the sun, this goes up slightly, to $\mu = 0.62$.</p>
+
+<p>Radiation pressure is determined by blackbody radiation:</p>
+
+<div class="equation">
+$$P_{\text{rad}} = \frac{4\sigma}{3c}T^4$$
+<span class="eq-number">(23)</span>
+</div>
+
+<h3 id="ch15-sec3-4">15.3.4 Polytropic Stellar Models</h3>
+
+<p>To determine how much gas and radiation pressure are present, we need the other stellar structure equations related to energy production and transport. It turns out that for hydrogen burning stars, these equations imply that the ratio $P_{\text{rad}}/P_{\text{gas}}$ is roughly independent of $r$ throughout the star. This observation was made by Eddington in 1926. If $P_{\text{rad}}/P_{\text{gas}}$ is constant in a star, then both are proportional to the total pressure $P_{\text{tot}} = P_{\text{rad}} + P_{\text{gas}}$. Writing $P_{\text{rad}} = \beta P_{\text{tot}}$ then $P_{\text{gas}} = (1 - \beta)P_{\text{tot}}$. We can then solve for the temperature in terms of density:</p>
+
+<div class="equation">
+$$T = \left(\frac{3ck_B}{4\mu m_p\sigma}\frac{\beta}{1 - \beta}\right)^{1/3}\rho^{1/3}$$
+<span class="eq-number">(25)</span>
+</div>
+
+<p>Then</p>
+
+<div class="equation">
+$$P = \left(\frac{3ck_B^4}{4\pi^4\mu^4 m_p^4\sigma(1 - \beta)^4}\right)^{1/3}\rho^{4/3}$$
+<span class="eq-number">(26)</span>
+</div>
+
+<p>This is called the <span class="tooltip-trigger">Eddington Solar Model<span class="tooltip-content">A polytropic stellar model with $n=3$ ($P \propto \rho^{4/3}$) based on the assumption that the ratio of radiation to gas pressure is constant throughout the star. It gives excellent predictions for main-sequence stars.</span></span>.</p>
+
+<p>The scaling $P \sim \rho^{4/3}$ is similar to the adiabatic convection model $P \sim \rho^{5/3}$. Other models also give power laws. So in many cases, the equation of state amounts to</p>
+
+<div class="equation key-result">
+$$P = K\rho^{1 + 1/n}$$
+<span class="eq-number">(27)</span>
+</div>
+
+<p>for some $n$ and some $K$. Such models are called <span class="tooltip-trigger">polytropic models<span class="tooltip-content">Stellar models where the equation of state is a power law $P = K\rho^{1+1/n}$. The index $n$ determines the density profile through the Lane-Emden equation.</span></span>. For the adiabatic convection model, $n = 3/2$; for the Eddington model, $n = 3$.</p>
+
+<p>It's helpful to make $\rho$ and $r$ dimensionless. Writing $\rho_c$ for the density at $r = 0$, we introduce a dimensionless radius $\xi$ and a dimensionless function $\theta(\xi)$ with the transformations</p>
+
+<div class="equation">
+$$\rho(r) = \rho_c[\theta(\xi)]^n\,;\qquad \xi = \frac{r}{r_0}\,;\qquad r_0 = \sqrt{\frac{(n+1)K}{4\pi G}\rho_c^{1/n - 1}}$$
+<span class="eq-number">(29)</span>
+</div>
+
+<p>Plugging these into Eq. (19) with the polytropic form gives a non-dimensional equation:</p>
+
+<div class="equation key-result">
+$$\frac{1}{\xi^2}\frac{d}{d\xi}\left(\xi^2\frac{d\theta}{d\xi}\right) = -\theta^n$$
+<span class="eq-number">(30)</span>
+</div>
+
+<p>This is called the <span class="tooltip-trigger">Lane-Emden equation<span class="tooltip-content">A dimensionless second-order ODE for the density profile of a polytropic star. It can be solved numerically for any polytropic index $n$.</span></span> and is the basis of much stellar modeling.</p>
+
+<figure>
+<img src="images/15-Stars_p10_img0.png" alt="Lane-Emden solutions for various n">
+<figcaption>Figure 4. Density profile of a star, $\rho = \theta(\xi)^n$ with $\xi = r/r_0$, for polytropes of various $n$.</figcaption>
+</figure>
+
+<p>We see that the profiles are actually qualitatively similar. For $n < 5$ the curves all cross $\rho = 0$, which tells us the size of the star. That is, we define $\xi_{\max}$ as the scale where $\theta(\xi_{\max}) = 0$, then the radius of the star is $R = r_0\xi_{\max}$. In the Eddington model, $n = 3$, the zero crossing occurs at $\xi_{\max} = 6.9$.</p>
+
+<p>The density determines the total mass:</p>
+
+<div class="equation">
+$$M = 4\pi\int_0^R \rho(r)r^2\,dr = C_n R^3 \rho_c$$
+<span class="eq-number">(31)</span>
+</div>
+
+<p>where $C_n = \frac{4\pi}{\xi_{\max}^3}\int_0^{\xi_{\max}}[\theta(\xi)]^n\xi^2\,d\xi$ is a dimensionless number we can evaluate numerically. For $n = 3$ we get $C_3 = 0.077$.</p>
+
+<div class="info-box concept">
+<div class="box-title">Lane-Emden Parameters</div>
+<table>
+<tr><th>$n$</th><th>1</th><th>3/2</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+<tr><td>$\xi_{\max}$</td><td>$\pi$</td><td>3.7</td><td>4.4</td><td>6.9</td><td>15.0</td><td>$\infty$</td></tr>
+<tr><td>$C_n$</td><td>12.6</td><td>9.3</td><td>7.0</td><td>0.077</td><td>1.5</td><td>$\infty$</td></tr>
+</table>
+</div>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Mass and radius from the Eddington model</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step">
+<div class="step-label">Step 1: Radius in terms of core density</div>
+<p>For $n = 3$, using $R = r_0\xi_{\max}$ and Eq. (28):</p>
+$$R = \xi_{\max}\left(\frac{3ck_B^4}{4\pi^4\mu^4 G^3 m_p^4\sigma(1-\beta)^4}\right)^{1/6}\frac{1}{\rho_c^{1/3}}$$
+<p>Since $R \sim \rho_c^{-1/3}$ and $M \sim R^3\rho_c$ by Eq. (31), for $n = 3$ the mass is independent of core density $\rho_c$.</p>
+</div>
+
+<div class="step">
+<div class="step-label">Step 2: Mass prediction</div>
+$$M = C_3\xi_{\max}^3\left(\frac{K}{\pi G}\right)^{3/2} = 17.9\,M_\odot\frac{\sqrt{\beta}}{(1-\beta)^2\mu^2}$$
+<p>Using $\mu = 0.62$ and setting $M = M_\odot$, we solve for $\beta = 4.6 \times 10^{-4}$, indicating very little radiation pressure in the sun.</p>
+</div>
+
+<div class="step">
+<div class="step-label">Step 3: Core density and temperature</div>
+<p>Plugging in $R = R_\odot$ and $M = M_\odot$:</p>
+$$\rho_c = \frac{M_\odot}{C_3 R_\odot^3} = 76.2 \times 10^3\;\frac{\text{kg}}{\text{m}^3}$$
+<p>Our result is about half as dense as a more accurate model predicts ($\rho_c = 156 \times 10^3\;\text{kg/m}^3$).</p>
+$$T_c = (1-\beta)\frac{\mu}{k_B}\pi G\frac{M_\odot m_p}{\xi_{\max}^2 C_3 R_\odot} = 12.2 \times 10^6\;\text{K}$$
+<p>which is quite close to the more accurate value of $T_c = 15.8 \times 10^6\;\text{K}$.</p>
+</div>
+
+</div></div>
+</div>
+
+<figure>
+<img src="images/15-Stars_p11_img0.png" alt="Beta vs mass for stars">
+<figcaption>The ratio $\beta = P_{\text{rad}}/P_{\text{tot}}$ as a function of stellar mass. Radiation pressure is more important for heavier stars.</figcaption>
+</figure>
+
+<p>The density and temperature profiles predicted by the Eddington model compare well with more accurate numerical models:</p>
+
+<figure>
+<img src="images/15-Stars_p12_img0.png" alt="Density profile comparison">
+<img src="images/15-Stars_p12_img1.png" alt="Temperature profile comparison">
+<figcaption>Density (left) and temperature (right) profiles from the Eddington model compared to the Standard Solar Model.</figcaption>
+</figure>
+
+<p>Whether or not the Eddington Model is correct, we can draw some general lessons. Since some equation of state exists for the star, there is some unique solution to the stellar structure equations and therefore some precise relation between the radiation pressure and the thermal gas pressure. This leads to a set of one-parameter families of solutions: given a single dimensionful parameter, such as the mass, then the temperature, size, luminosity, pressure and density are all determined. This is the origin of the Vogt-Russell theorem. Each type of star, with its appropriate nuclear physics and equations of state, leads to a 1D curve in the HR diagram.</p>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2 id="ch15-sec4">15.4 White dwarfs</h2>
+
+<p>We have discussed thermal pressure in a star and radiation pressure. Both are important in main sequence and giant stars. A third type of pressure, <span class="tooltip-trigger">degeneracy pressure<span class="tooltip-content">Pressure arising from the Pauli exclusion principle in a degenerate Fermi gas. It persists even at $T=0$ and is responsible for supporting white dwarfs and neutron stars against gravitational collapse.</span></span>, is critical to determining the endpoint of stellar evolution. In particular, white dwarf stars, which have no nuclear reactions going on, are prevented from collapse due to electron degeneracy pressure alone.</p>
+
+<p>Despite their lack of nuclear fusion, white dwarfs are very hot. Remember, they are remnants of the cores of giant stars that have collapsed so far that only degeneracy pressure keeps them from imploding all the way down to a black hole. The surface temperature of a white dwarf is comparable to the core temperature of a main sequence star $\sim 10^7\;\text{K}$. This is much much hotter than the surface temperature of the sun $\sim 5800\;\text{K}$. White dwarfs do not have active nuclear fusion, but the thermal motion of the charged particles causes them to radiate electromagnetically. They are so hot that the blackbody spectrum in the visible region is essentially flat, which is why they are white. Without fusion, gravity makes the white dwarf contract until it becomes extremely dense: a typical white dwarf has a density of $\rho \approx 10^{10}\;\text{kg/m}^3$. This is more than 1 million times denser than the sun $\rho_\odot \approx 1400\;\text{kg/m}^3$. A typical white dwarf has the mass of the sun and the size of the earth.</p>
+
+<p>The chemical composition of white dwarfs can vary, depending on what collapsed to form them. Most white dwarfs are mostly carbon and oxygen, from red giants or supergiants that have fused helium but could not compress enough to fuse carbon. At a temperature of $T = 10^7\;\text{K}$ the typical thermal energy is $k_B T = 850\;\text{eV}$. This is well above the typical ionization energies of atoms ($\sim 10\;\text{eV}$), so white dwarfs should be thought of as fully ionized. Thus for each proton there is one free electron. The elements that can compose a white dwarf (He, C, O) all have roughly equal numbers of neutrons and protons, so there is around 1 electron for every $2m_p$ of stellar mass. With a density of $\rho = 10^{10}\;\text{kg/m}^3$ the number density of electrons is then</p>
+
+<div class="equation">
+$$n_e = \frac{\rho}{2m_p} = 2 \times 10^{36}\;\frac{1}{\text{m}^3}$$
+<span class="eq-number">(44)</span>
+</div>
+
+<p>The Fermi energy evaluates to $\epsilon_F = 450\;\text{keV}$ corresponding to a Fermi temperature of $T_F = \epsilon_F/k_B = 5 \times 10^9\;\text{K}$. This is much much higher than typical white dwarf temperature of $10^7\;\text{K}$, so we can assume the white dwarf is completely degenerate. Note also that $\epsilon_F$ is the same order as the electron rest mass $m_e c^2 = 511\;\text{keV}$. Thus the electron gas in a white dwarf can be relativistic.</p>
+
+<p>We begin by considering the limit where the electrons are ultrarelativistic ($\epsilon \gg m_e c^2$). For an electron gas, the allowed momenta are the usual $\vec{p} = \hbar\frac{\pi}{L}\vec{n}$ with $\vec{n}$ a triplet of whole numbers. If the gas is ultrarelativistic the dispersion relation is $\epsilon = c|\vec{p}| = c\hbar\frac{\pi}{L}n$. The density of states is</p>
+
+<div class="equation">
+$$g(\epsilon) = \frac{V}{c^3\pi^2\hbar^3}\epsilon^2$$
+<span class="eq-number">(48)</span>
+</div>
+
+<p>Then the Fermi energy is</p>
+
+<div class="equation">
+$$\epsilon_F = c\hbar\left(\frac{3\pi^2 N}{V}\right)^{1/3}$$
+<span class="eq-number">(50)</span>
+</div>
+
+<p>The total energy at $T = 0$ is</p>
+
+<div class="equation">
+$$E = \int_0^{\epsilon_F}\epsilon\,g(\epsilon)\,d\epsilon = \frac{V}{4c^3\pi^2\hbar^3}\epsilon_F^4$$
+<span class="eq-number">(51)</span>
+</div>
+
+<p>With the total energy, we can compute the degeneracy pressure:</p>
+
+<div class="equation key-result">
+$$P_{\text{degen}} = -\frac{\partial E}{\partial V} = \frac{c\hbar}{12\pi^2}\left(\frac{3\pi^2 N}{V}\right)^{4/3}$$
+<span class="eq-number">(52)</span>
+</div>
+
+<p>Scaling out the mass (recalling that there are 2 electrons for each $m_p$ of mass, so $\rho = 2m_p n_e$), we can write</p>
+
+<div class="equation">
+$$P_{\text{degen}} = \frac{c\hbar}{12\pi^2}\left(\frac{3\pi^2}{2m_p}\right)^{4/3}\rho^{4/3}$$
+<span class="eq-number">(53)</span>
+</div>
+
+<p>This gas is therefore a polytrope with index $n = 3$, just like the Eddington model, with $K = \frac{c\hbar}{12\pi^2}\left(\frac{3\pi^2}{2m_p}\right)^{4/3}$.</p>
+
+<p>Conveniently, we have already studied this polytropic form. Using the Lane-Emden solution and Eq. (34), we get the <strong>Chandrasekhar mass</strong>:</p>
+
+<div class="equation key-result">
+$$M \leq C_3\xi_{\max}^3\left(\frac{K}{\pi G}\right)^{3/2} = 0.77\sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 1.41\,M_\odot$$
+<span class="eq-number">(56)</span>
+</div>
+
+<p>This is known as the <strong>Chandrasekhar limit</strong>. If a white dwarf has a mass heavier than this limit, its gravitational attraction will overwhelm its degeneracy pressure and it will collapse.</p>
+
+<div class="info-box physical">
+<div class="box-title">The Chandrasekhar Limit</div>
+<p>Most white dwarfs in our galaxy whose masses can be measured (those in binary systems) have masses around $0.5\,M_\odot$. One of the most massive white dwarfs known is <strong>Sirius B</strong>. It is the companion of Sirius A, the "dog star", a main sequence star that is the brightest in the sky. To find the Sirius binary system, follow Orion's belt. Because Sirius B is in a binary system, we can measure its mass to be $1.02\,M_\odot$. This is, of course, within the Chandrasekhar bound.</p>
+</div>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2 id="ch15-sec5">15.5 Complete Chandrasekhar limit calculation</h2>
+
+<p>The calculation from Section 4 assumed the electrons were ultrarelativistic. This let us reuse results from the $n = 3$ polytrope. In this section, we perform a more complete calculation, not assuming an ultrarelativistic dispersion relation. This will allow us to justify the ultrarelativistic limit and also determine the radius and density of a white dwarf.</p>
+
+<h3 id="ch15-sec5-1">15.5.1 Relativistic case</h3>
+
+<p>For a relativistic but not necessarily ultrarelativistic electron, the dispersion relation is</p>
+
+<div class="equation">
+$$\epsilon(p) = \sqrt{m_e^2 c^4 + c^2 p^2}$$
+<span class="eq-number">(57)</span>
+</div>
+
+<p>The density of momentum states is $g(p) = \frac{V}{\pi^2\hbar^3}p^2$. The Fermi momentum is defined by</p>
+
+<div class="equation">
+$$N = \int_0^{p_F}g(p)\,dp = \frac{V}{3\pi^2\hbar^3}p_F^3 \qquad\Rightarrow\qquad p_F = \hbar\left(\frac{3\pi^2 N}{V}\right)^{1/3}$$
+<span class="eq-number">(61)</span>
+</div>
+
+<p>The total energy at $T = 0$ is</p>
+
+<div class="equation">
+$$E = \frac{Vc}{\pi^2\hbar^3}\int_0^{p_F}\sqrt{m_e^2 c^2 + p^2}\;p^2\,dp = \frac{Vm_e^4 c^5}{8\pi^2\hbar^3}f(x_F)$$
+<span class="eq-number">(64)</span>
+</div>
+
+<p>where $x_F = p_F/(m_e c)$ and</p>
+
+<div class="equation">
+$$f(x) = 8\int_0^{x}\sqrt{1+t^2}\;t^2\,dt = \sqrt{1+x^2}(x + 2x^3) - \ln\!\left(x + \sqrt{1+x^2}\right)$$
+<span class="eq-number">(66)</span>
+</div>
+
+<p>The degeneracy pressure is</p>
+
+<div class="equation">
+$$P_{\text{degen}} = \frac{m_e^4 c^5}{8\pi^2\hbar^3}\left[\frac{1}{3}x_F^3\sqrt{1+x_F^2}(2x_F^3 - 3) + \ln\!\left(x_F + \sqrt{1+x_F^2}\right)\right]$$
+<span class="eq-number">(68)</span>
+</div>
+
+<p>As a check, expanding in the ultrarelativistic limit $x_F \gg 1$ gives $P_{\text{degen}}^{\text{ultra-rel}} = \frac{c\hbar}{12\pi^2}\left(\frac{3\pi^2 N}{V}\right)^{4/3}$ in agreement with Eq. (52). The non-relativistic limit gives</p>
+
+<div class="equation">
+$$P_{\text{degen}}^{\text{non-rel}} = \frac{\hbar^2}{5m_e}(3\pi^2)^{2/3}\left(\frac{N}{V}\right)^{5/3}$$
+<span class="eq-number">(70)</span>
+</div>
+
+<p>which is a polytrope with index $n = 3/2$, like an adiabatic ideal gas.</p>
+
+<h3 id="ch15-sec5-2">15.5.2 Equilibrium</h3>
+
+<p>For the white dwarf to be in equilibrium, the outward degeneracy pressure must be compensated by the inward gravitational pressure. The gravitational energy for the $n = 3$ polytropic density profile is</p>
+
+<div class="equation">
+$$E_{\text{grav}} = -D_n\frac{GM^2}{R}$$
+<span class="eq-number">(74)</span>
+</div>
+
+<p>where $D_n$ is a dimensionless constant computed from the Lane-Emden solution. For $n = 3$ we find $D_3 = 0.68$.</p>
+
+<figure>
+<img src="images/15-Stars_p16_img0.png" alt="Density profiles: constant vs polytrope">
+<img src="images/15-Stars_p16_img1.png" alt="4 pi r^2 rho profiles">
+<figcaption>Figure 5. Density profiles for the constant-density assumption and an ultrarelativistic degenerate electron gas assumption (the $n = 3$ polytrope). Right shows $4\pi r^2\rho(r)$ normalized to integrate to 1.</figcaption>
+</figure>
+
+<p>The gravitational pressure is</p>
+
+<div class="equation">
+$$P_{\text{grav}} = -\frac{\partial E_{\text{grav}}}{\partial V} = -\frac{DGM^2}{4\pi R^4}$$
+<span class="eq-number">(75)</span>
+</div>
+
+<p>Thus degeneracy pressure can hold off the collapse if</p>
+
+<div class="equation">
+$$P_{\text{degen}} > D\frac{GM^2}{4\pi R^4}$$
+<span class="eq-number">(76)</span>
+</div>
+
+<h3 id="ch15-sec5-3">15.5.3 Mass-radius relation</h3>
+
+<p>We can write $x_F$ in terms of the mass and radius:</p>
+
+<div class="equation">
+$$x_F = \frac{\hbar}{m_e c R}\left(\frac{9\pi M}{8m_p}\right)^{1/3} = 0.97\left(\frac{R_E}{R}\right)\left(\frac{M}{M_\odot}\right)^{1/3}$$
+<span class="eq-number">(81)</span>
+</div>
+
+<p>where $M_\odot = 1.98 \times 10^{30}\;\text{kg}$ is the mass of the sun and $R_E = 6370\;\text{km}$ is the radius of the earth. Using $D = D_3 = 0.68$ we can solve Eq. (80) numerically to get the mass-radius relation:</p>
+
+<figure>
+<img src="images/15-Stars_p18_img0.png" alt="White dwarf mass-radius relation">
+<figcaption>Figure 6. The relationship between mass and size of a white dwarf determined by equating the degeneracy pressure to the gravitational pressure. Axes are normalized to the sun's mass and the earth's radius.</figcaption>
+</figure>
+
+<p>We see from the plot that for $M \gtrsim 1.4\,M_\odot$ there are no solutions. Having included full relativistic corrections, we can also check our assumptions. Note that the bound comes from small $R$. As $R \to 0$ the gas gets denser and denser, so the electrons become faster and faster. We can see from $x_F \sim 1/R$ that as $R \to 0$, $x_F$ gets large. Expanding at large $x_F$ is exactly the ultrarelativistic limit. Therefore the bound is</p>
+
+<div class="equation key-result">
+$$M \leq \frac{9\sqrt{3\pi}}{64 D_3^{3/2}}\sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 1.41\,M_\odot$$
+<span class="eq-number">(84)</span>
+</div>
+
+<p>This is the <strong>Chandrasekhar limit</strong>. For masses greater than this, there is no solution to equating the degeneracy pressure with the gravitational pressure. The gravitational pressure is just too great, and the white dwarf will collapse (ultimately to a neutron star or a black hole).</p>
+
+<div class="info-box physical">
+<div class="box-title">Characteristic Scales</div>
+<p>It is a remarkable fact that combinations of fundamental constants happen to match astrophysical scales:</p>
+$$\sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 1.8\,M_\odot\,;\qquad \sqrt{\frac{\hbar^3}{cG^3 m_e^2 m_p^2}} = 0.78\,R_E$$
+<p>For example, Sirius B has mass $1.02\,M_\odot$. Solving for its radius gives $R = 0.54\,R_E$, confirming our density estimates. Most white dwarfs are around $0.5\,M_\odot$; for these, $R \approx R_E$.</p>
+</div>
+
+<!-- ==================== SECTION 6 ==================== -->
+<h2 id="ch15-sec6">15.6 Neutron stars</h2>
+
+<p>When a star's total mass is above around $8\,M_\odot$, the mass around the core will be larger than the Chandrasekhar limit. In this case, after helium fusion ends and the core temperature is not hot enough for carbon fusion to occur, the gravitational pressure will overwhelm the electron degeneracy pressure and the core will collapse past the white dwarf stage. The further compression heats up the core, allowing the remaining stages of fusion to occur, making elements up to iron. After these stages finish, the star collapses again, reaching such high densities that the protons smash into the electrons producing neutrons and neutrinos. This $p^+ + e^- \to n + \nu$ reaction is energetically favorable because the neutrinos stream out of the star relieving some of the pressure. Ultimately, only neutrons are left.</p>
+
+<p>Neutrons are fermions, and the core of neutrons in a neutron star is a Fermi gas, like a white dwarf. We can determine the characteristic size and mass of a neutron star by substituting in the appropriate scale, namely, replacing $m_e$ by $m_n = m_p$. For a white dwarf, recall the characteristic mass and radius:</p>
+
+<div class="equation">
+$$M_{\text{WD}} \approx \sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 3.6 \times 10^{30}\;\text{kg} = 1.8\,M_\odot\,;\qquad R_{\text{WD}} \approx \sqrt{\frac{\hbar^3}{cG^3 m_e^2 m_p^2}} = 4970\;\text{km} = 0.78\,R_E$$
+<span class="eq-number">(85)</span>
+</div>
+
+<p>The mass scale does not depend on $m_e$, so it is unaffected by $m_e \to m_p$. More precisely, in a neutron star we have $n = \rho/m_p$ (instead of $\rho/(2m_p)$ for a white dwarf), which amounts to replacing $m_p \to m_p/2$ and $m_e \to m_p$. Thus $M_{\text{NS}} \approx 4 M_{\text{WD}}$ and so</p>
+
+<div class="equation key-result">
+$$M_{\text{NS}} \lesssim 4 \times 1.4\,M_\odot = 5.6\,M_\odot$$
+<span class="eq-number">(86)</span>
+</div>
+
+<p>This is our estimate for the Chandrasekhar bound for neutron stars. The actual bound should be a bit lower since the binding energy of the neutrons, effects from general relativity, and rotational energy cannot be neglected. One estimate, called the <span class="tooltip-trigger">Tolman-Oppenheimer-Volkoff limit<span class="tooltip-content">The maximum mass of a neutron star, estimated to be around $3\,M_\odot$. The exact value is still an open theoretical question.</span></span>, is $M_{\text{NS}} \lesssim 3\,M_\odot$, but this estimate is controversial. The largest observed neutron stars to date are around $2.7\,M_\odot$.</p>
+
+<p>The characteristic size of a neutron star is</p>
+
+<div class="equation">
+$$R_{\text{NS}} \approx \sqrt{\frac{4\hbar^3}{cG^3 m_p^4}} = 5\;\text{km}$$
+<span class="eq-number">(87)</span>
+</div>
+
+<p>Thus, although neutron stars have similar masses to white dwarfs, they are much much denser. The whole mass of the sun is being squeezed into 5 km = 3 miles -- roughly the size of Cambridge. The density of such a star is</p>
+
+<div class="equation">
+$$\rho_{\text{NS}} \approx \frac{M_\odot}{\frac{4}{3}\pi R_{\text{NS}}^3} = 3 \times 10^{18}\;\frac{\text{kg}}{\text{m}^3}$$
+<span class="eq-number">(88)</span>
+</div>
+
+<p>Compare this to the density of water $\rho_{\text{water}} = 10^3\;\text{kg/m}^3$, to the core of the sun $\rho_c = 10^5\;\text{kg/m}^3$, or to the density of a white dwarf, $\rho_{\text{WD}} \approx 10^9\;\text{kg/m}^3$. None of these are even close. In fact, the density of a neutron star is larger than the density of a proton: $\rho_{\text{proton}} \approx \frac{m_p}{\frac{4}{3}\pi(10^{-15}\;\text{m})^3} = 10^{17}\;\text{kg/m}^3$! That is, while a white dwarf is like a gigantic metal, a neutron star is like a gigantic nucleus, with atomic number $10^{57}$.</p>
+
+<div class="info-box physical">
+<div class="box-title">Properties of Neutron Stars</div>
+<p>Such a giant nucleus has a lot of strange properties. By angular momentum conservation, a slowly rotating star will collapse to an extremely rapidly rotating neutron star: like an ice skater bringing her arms in by a factor of a million. Neutron stars can be spinning as fast as 1000 times per second. The spinning also concentrates the magnetic field of the star, to as much as $10^{15}$ Gauss. Compare this to the earth's magnetic field (0.5 G) or the fields in magnets at the Large Hadron Collider ($5 \times 10^4$ G). Such large magnetic fields can act as a dynamo generating large electric fields near the star's surface. These enormous electric fields then create electron/positron pairs which are thrown out of the star, radiating electromagnetically. The result is a beam of light, spinning around as the neutron star spins, like an out-of-control lighthouse beacon. If the beam is aligned to hit us, we see this as a periodic signal. Such neutron stars are known as <strong>pulsars</strong>.</p>
+</div>
+
+<p>In July, 1054 AD, a Chinese astronomer observed a new "guest star", brighter than any other star in the sky. It lasted for about a month and then faded. Arab astronomers observed the same object, and perhaps Native American astronomers as well. We now know that this was a core-collapse supernova. 1000 years later, the supernova remnants are visible as the <span class="tooltip-trigger">Crab Nebula<span class="tooltip-content">A supernova remnant in the constellation Taurus, about 10 light-years across. It was created by a supernova observed by Chinese astronomers in 1054 AD. It contains a pulsar in its center.</span></span>, in the constellation Taurus. There is a neutron star in the middle of the Crab Nebula called the Crab Pulsar. The pulsar has a mass of $1.4\,M_\odot$ and period of 0.3s.</p>
+
+<figure>
+<img src="images/15-Stars_p20_img0.png" alt="Crab Nebula">
+<figcaption>Figure 7. The Crab Nebula is around 10 light years across. In its center is a neutron star pulsar. The neutron star cannot be seen in the optical spectrum, but is clearly visible in the radio and x-ray bands.</figcaption>
+</figure>
+
+<p>In 2017, a binary neutron star system was discovered through its gravitational wave signal as the neutron stars merged. The neutron stars had masses around $1.5\,M_\odot$. One interesting mystery that such mergers might explain is where all the gold in the universe came from. It turns out it is very difficult to explain how gold might have come from supernovae. However, the nuclear physics of neutron star mergers seems like it gives a better explanation. This science is all very recent, and while early results seem promising, more data and more careful calculations and simulations are needed to draw any definite conclusions.</p>
+
+<!-- ==================== SECTION 7 ==================== -->
+<h2 id="ch15-sec7">15.7 Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li>Stars are classified by <strong>luminosity</strong> and <strong>surface temperature</strong> in the <strong>Hertzsprung-Russell diagram</strong>. Stars cluster along curves because the <strong>Vogt-Russell theorem</strong> says stars of the same composition form a one-parameter family indexed by mass.</li>
+<li><strong>Stellar evolution</strong>: hydrogen collapses gravitationally until fusion begins. Successive fusion stages (H $\to$ He $\to$ C $\to$ ... $\to$ Fe) occur at increasingly high temperatures. When fusion stops, the star contracts and may explode as a supernova.</li>
+<li>The <strong>equations of stellar structure</strong> (mass conservation and hydrostatic equilibrium) combined with an equation of state determine the star's density and temperature profiles.</li>
+<li><strong>Polytropic models</strong> ($P = K\rho^{1+1/n}$) reduce the stellar structure equations to the <strong>Lane-Emden equation</strong>. The <strong>Eddington solar model</strong> ($n = 3$) predicts the sun's core temperature ($12 \times 10^6\;\text{K}$) and core density within a factor of 2 of actual values.</li>
+<li><strong>White dwarfs</strong> are supported by electron degeneracy pressure. They are an $n = 3$ polytrope with $P_{\text{degen}} \sim \rho^{4/3}$. The <strong>Chandrasekhar limit</strong> $M \lesssim 1.41\,M_\odot$ is the maximum mass supportable by degeneracy pressure.</li>
+<li>The <strong>mass-radius relation</strong> for white dwarfs shows that heavier white dwarfs are smaller. Typical white dwarfs have $M \sim M_\odot$ and $R \sim R_E$.</li>
+<li><strong>Neutron stars</strong> are like giant nuclei, supported by neutron degeneracy pressure. They have $M \sim M_\odot$ but $R \sim 5\;\text{km}$, giving densities exceeding that of nuclear matter. Spinning neutron stars are observed as <strong>pulsars</strong>.</li>
+<li>The <strong>Tolman-Oppenheimer-Volkoff limit</strong> for neutron stars is estimated at $\sim 3\,M_\odot$. Above this mass, not even neutron degeneracy pressure can prevent collapse to a <strong>black hole</strong>.</li>
+</ul>
+</div>

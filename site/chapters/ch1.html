@@ -1,0 +1,662 @@
+<div class="chapter-number">Chapter 1</div>
+<h1 class="chapter-title">Probability</h1>
+<p class="chapter-intro">We begin statistical mechanics with statistics. When dealing with systems of enormous degrees of freedom, governed by Avogadro's number $N_A = 6.02 \times 10^{23}$, we must abandon tracking individual particles and instead ask about probabilities.</p>
+
+<!-- ============================================================ -->
+<h2 id="s1-1">1 &mdash; Basic probability</h2>
+
+<p>We are going to be dealing with systems with enormous degrees of freedom, typically governed by Avogadro's number $N_A = 6.02 \times 10^{23}$. This is the number of hydrogen atoms in a gram, or more intuitively, the number of molecules of water in a tablespoon. Even a tiny cell, with a diameter of only 100 microns ($10^{-4}$ m), contains a trillion molecules. In most areas of physics, we work with small numbers (the fine structure constant $\alpha = \frac{1}{137}$ for example), and calculate things as a Taylor series in the coupling $f(\alpha) = \sum c_n \alpha^n$, often keeping only the leading term $f(\alpha) \approx c_1 \alpha$. In statistical mechanics, we work with a large number $N$ and calculate things as a Taylor expansion in $\frac{1}{N}$, often keeping only the leading term ($N = \infty$). The key to doing this is not to ask what each particle is doing, which would be both impossible and impractical, but rather to ask what the probability is that a particle is doing something. It is imperative therefore to begin statistical mechanics with statistics.</p>
+
+<p>In general, we will be interested in probabilities of states of a system which we write as $P_a$ or $P(a)$. The parameter $a$ represents the <span class="tooltip-trigger">microstate<span class="tooltip-content">A complete specification of the system at the microscopic level &mdash; e.g. positions and momenta of all particles.</span></span> &mdash; e.g. the positions $\{\vec{q}_i\}$ and momenta $\{\vec{p}_i\}$ of all the particles in a gas, or the square of the wavefunction $|\psi(\vec{q})|^2$ in quantum mechanics. We will sometimes think of $a$ as a discrete index (e.g. if we flip a coin, it can land heads up with $P_H = \frac{1}{2}$ or tails up with $P_T = \frac{1}{2}$) and sometimes continuous. In the continuous case, we call $P(x)$ the <span class="tooltip-trigger">probability density<span class="tooltip-content">A function whose integral over a range gives the probability of finding the variable in that range. It only becomes a probability when integrated.</span></span>, so that $\int_{x_1}^{x_2} P(x)\,dx$ is the probability of finding $x$ values between $x_1$ and $x_2$. Probability densities only become probabilities when integrated.</p>
+
+<p>We will get to know a number of different probability distributions:</p>
+
+<div class="info-box concept">
+<div class="box-title">Key Probability Distributions</div>
+
+<p><strong>Gaussian:</strong></p>
+<div class="equation key-result">
+$$P(x) = \frac{1}{\sqrt{2\pi}\,\sigma} \exp\!\left(-\frac{(x - x_0)^2}{2\sigma^2}\right)$$
+<span class="eq-number">(1)</span>
+</div>
+
+<p><strong>Poisson:</strong></p>
+<div class="equation key-result">
+$$P_m(t) = \frac{(\lambda t)^m}{m!} e^{-\lambda t}$$
+<span class="eq-number">(2)</span>
+</div>
+
+<p><strong>Binomial:</strong></p>
+<div class="equation key-result">
+$$B_N(m) = a^m b^{N-m} \frac{N!}{m!(N-m)!}$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p><strong>Lorentzian:</strong></p>
+<div class="equation">
+$$P(x) = \frac{\Gamma}{2\pi} \frac{1}{(x - x_0)^2 + \left(\frac{\Gamma}{2}\right)^2}$$
+<span class="eq-number">(4)</span>
+</div>
+
+<p><strong>Flat:</strong></p>
+<div class="equation">
+$$P(x) = \text{constant}$$
+<span class="eq-number">(5)</span>
+</div>
+</div>
+
+<p>Probability distributions are always normalized so that they integrate/sum to 1:</p>
+<div class="equation key-result">
+$$\int dx\, P(x) = 1; \qquad \sum_a P_a = 1$$
+<span class="eq-number">(6)</span>
+</div>
+
+<p>Given a probability distribution, we can calculate the expected value of any observable by integrating/summing against the probability. For example, the expected value of $x$ (the <span class="tooltip-trigger">mean<span class="tooltip-content">The average value of a random variable, weighted by its probability distribution.</span></span>) is</p>
+<div class="equation key-result">
+$$\bar{x} \equiv \langle x \rangle = \int dx\, x\, P(x)$$
+<span class="eq-number">(7)</span>
+</div>
+
+<p>or the mean-square is</p>
+<div class="equation">
+$$\langle x^2 \rangle = \int dx\, x^2\, P(x)$$
+<span class="eq-number">(8)</span>
+</div>
+
+<p>The <span class="tooltip-trigger">variance<span class="tooltip-content">A measure of how spread out a distribution is. It equals the mean of the square minus the square of the mean.</span></span> of a distribution is the difference between the mean of the square and the square of the mean:</p>
+<div class="equation key-result">
+$$\text{Var} \equiv \langle x^2 \rangle - \langle x \rangle^2$$
+<span class="eq-number">(9)</span>
+</div>
+
+<p>The square root of the variance is called the <span class="tooltip-trigger">standard deviation<span class="tooltip-content">The square root of the variance, representing the typical width or spread of a distribution around its mean.</span></span>.</p>
+<div class="equation key-result">
+$$\sigma \equiv \sqrt{\langle x^2 \rangle - \langle x \rangle^2}$$
+<span class="eq-number">(10)</span>
+</div>
+
+<p>While the mean has the intuitive interpretation as the expected outcome, variance is more subtle. Indeed, developing intuition for variance is a key to mastering statistics.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Gaussian mean and standard deviation</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Step 1</div>
+<p>For a Gaussian with parameters $x_0$ and $\sigma_0$, the mean is:</p>
+$$\langle x \rangle = \int_{-\infty}^{\infty} dx\, x\, \frac{1}{\sqrt{2\pi}\,\sigma_0} \exp\!\left(-\frac{(x - x_0)^2}{2\sigma_0^2}\right) = x_0$$
+</div>
+<div class="step"><div class="step-label">Step 2</div>
+<p>The mean of $x^2$ is:</p>
+$$\langle x^2 \rangle = \sigma_0^2 + x_0^2$$
+<span class="eq-number">(12)</span>
+</div>
+<div class="step"><div class="step-label">Step 3</div>
+<p>So the standard deviation is $\sigma = \sqrt{\langle x^2 \rangle - \langle x \rangle^2} = \sigma_0$. This is why we usually write a Gaussian in this way (with $e^{-x^2/2\sigma^2}$ rather than, say, $e^{-\lambda x^2}$).</p>
+</div>
+</div></div>
+</div>
+
+<p>The standard deviation has an interpretation as the width of a distribution &mdash; how far you can go from the mean before the probability has decreased substantially. For example, in a Gaussian, the probability of finding $x$ between $x_0 - \sigma$ and $x_0 + \sigma$ is</p>
+<div class="equation">
+$$(\Delta x)_{1\sigma} = \int_{x_0 - \sigma}^{x_0 + \sigma} dx\, P(x) = 0.68$$
+<span class="eq-number">(13)</span>
+</div>
+
+<p>So, for a Gaussian, there is a 68% chance that the values of $x$ fall within 1 standard deviation of the mean. That's not true for all distributions. For example, with a constant probability distribution, there is a 58% chance of finding $x$ within $1\sigma$ of the mean.</p>
+
+<p>We will often be interested in situations where the mean is zero. Then the standard deviation is equivalent to the <span class="tooltip-trigger">root-mean-square<span class="tooltip-content">The square root of the average of the square of a quantity. When the mean is zero, it equals the standard deviation.</span></span></p>
+<div class="equation">
+$$x_{\text{RMS}} = \sqrt{\langle x^2 \rangle}$$
+<span class="eq-number">(14)</span>
+</div>
+
+<p>For example, in a gas the velocities point in random directions, so $\langle \vec{v} \rangle = 0$. Thus the characteristic speed of a gas is characterized not by the mean but by the RMS velocity $v_{\text{RMS}} = \sqrt{\langle \vec{v}^2 \rangle}$.</p>
+
+<p>Another important concept is how probability distributions behave when they are combined. For example, say $P_A(x)$ and $P_B(y)$ are the probabilities of winning $x$ dollars when betting on horse A and $y$ dollars when betting on horse B. The probability of getting $z$ total dollars is then</p>
+<div class="equation key-result">
+$$P_{AB}(z) = \int_{-\infty}^{\infty} dx\, P_A(x)\, P_B(z - x)$$
+<span class="eq-number">(15)</span>
+</div>
+
+<p>This is the definition of the mathematical operation of <span class="tooltip-trigger">convolution<span class="tooltip-content">A mathematical operation that combines two functions by integrating the product of one with a shifted version of the other. It describes the distribution of the sum of two independent random variables.</span></span> between two functions. We say $P_{AB}$ is the convolution of $P_A$ and $P_B$ and write it as</p>
+<div class="equation">
+$$P_{AB} = P_A * P_B$$
+<span class="eq-number">(16)</span>
+</div>
+
+<p>Convolutions are extremely important in statistical mechanics, since we often measure only the sum of a great many independent processes. For example, the pressure on the wall of a container is due to the sum of the forces of all the little molecules hitting it, each with its own probability.</p>
+
+<!-- ============================================================ -->
+<h3 id="s1-1-1">1.1 &mdash; Examples</h3>
+
+<p>Consider the system of a gas molecule bouncing around in a 1D box of size $L$ centered on $x = 0$. If there are no external forces and no position-dependent interactions, the molecule is equally likely to be anywhere in the box. So</p>
+<div class="equation">
+$$P(x) = \frac{1}{L}$$
+<span class="eq-number">(17)</span>
+</div>
+
+<p>The mean value of the position of the molecule is</p>
+<div class="equation">
+$$\langle x \rangle = \frac{1}{L} \int_{-L/2}^{L/2} dx\, x = 0$$
+<span class="eq-number">(18)</span>
+</div>
+
+<p>Similarly, the mean value of $x^2$ is</p>
+<div class="equation">
+$$\langle x^2 \rangle = \frac{1}{L} \int_{-L/2}^{L/2} dx\, x^2 = \frac{L^2}{12}$$
+<span class="eq-number">(19)</span>
+</div>
+
+<p>So that the standard deviation is</p>
+<div class="equation">
+$$\sigma = \sqrt{\langle x^2 \rangle - \langle x \rangle^2} = \frac{1}{\sqrt{12}}\, L \approx 0.29 L$$
+<span class="eq-number">(20)</span>
+</div>
+
+<p>Note that the probability of finding $x$ within $\langle x \rangle \pm \sigma$ is $\frac{2\sigma}{L} = 58\%$. It is not 68% because the probability distribution is not Gaussian. This illustrates that the interpretation of $\sigma$ as a 68% confidence interval is not always accurate.</p>
+
+<p>Suppose instead that there is some electric field so that the particles in the box are more likely to be on one side than the other. We might find some crazy function $P(x) = \frac{0.74}{L}\ln(1 + e^{2x/L})$ for these probabilities. Then, by numerical integration we find</p>
+<div class="equation">
+$$\langle x \rangle = 0.59L; \qquad \langle x^2 \rangle = 0.42L^2; \qquad \sigma = 0.28L$$
+<span class="eq-number">(21)</span>
+</div>
+
+<p>Also, $\int_{\langle x \rangle - \sigma}^{\langle x \rangle + \sigma} P(x)\,dx = 0.6$ so 60% within $\langle x \rangle \pm \sigma$. This is just a contrived example. You should be able to compute $\langle x \rangle$ and $\sigma$ with any function $P(x)$, at least numerically, and you will generally find that not exactly 68% are within $\langle x \rangle \pm \sigma$, but often you get something close.</p>
+
+<!-- Interactive Gaussian Explorer -->
+<div class="interactive-container" id="vis-gaussian">
+  <h3>Interactive: Gaussian Explorer</h3>
+  <div class="vis-controls">
+    <label>Mean ($\mu$): <input type="range" id="gauss-mean" min="-3" max="3" step="0.1" value="0"><span class="slider-value">0</span></label>
+    <label>Std Dev ($\sigma$): <input type="range" id="gauss-sigma" min="0.2" max="3" step="0.1" value="1"><span class="slider-value">1</span></label>
+  </div>
+  <canvas class="vis-canvas" width="600" height="300"></canvas>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1-2">2 &mdash; Law of large numbers</h2>
+
+<p>An extremely important result from probability is that even if $P(x)$ is very complicated, when you average over many measurements, the result dramatically simplifies. More precisely, the <span class="tooltip-trigger">law of large numbers<span class="tooltip-content">A fundamental theorem stating that as the number of independent trials increases, the sample average converges to the expected value, with fluctuations shrinking as $1/\sqrt{N}$.</span></span> states that</p>
+
+<div class="info-box concept">
+<div class="box-title">Law of Large Numbers</div>
+<p>The average of the results from a set of independent trials varies less and less the more trials are performed.</p>
+<p>More mathematically: if $P(x)$ has standard deviation $\sigma$, then the probability $P_N(x)$ of finding that the average over $N$ draws from $P(x)$ is $x$ will have standard deviation $\frac{\sigma}{\sqrt{N}}$.</p>
+<p>Thus as $N \to \infty$, the standard deviation of the average $\frac{\sigma}{\sqrt{N}} \to 0$.</p>
+</div>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Law of Large Numbers</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: Setup</div>
+<p>Say there are $N$ molecules in a box and the probability function of finding each is $P(x)$. We assume that the probabilities for each molecule are independent. We write $\langle x \rangle_N$, $\langle x^2 \rangle_N$ and $\sigma_N$ for quantities involving the $N$-body system and drop the subscript for the $N = 1$ case: $\langle x \rangle_1 = \langle x \rangle$ and $\sigma_1 = \sigma$.</p>
+</div>
+
+<div class="step"><div class="step-label">Step 2: $N = 2$</div>
+<p>For $N = 2$, the center of mass is $\bar{x} = \frac{x_1 + x_2}{2}$, so the mean value of the center of mass is</p>
+$$\langle x \rangle_2 = \int_{-L/2}^{L/2} dx_1 \int_{-L/2}^{L/2} dx_2\, P(x_1)P(x_2)\frac{x_1 + x_2}{2} = \langle x \rangle$$
+<p>The expectation of $x^2$ with 2 molecules is</p>
+$$\langle x^2 \rangle_2 = \frac{1}{2}\langle x^2 \rangle + \frac{1}{2}\langle x \rangle^2$$
+<p>So the standard deviation for 2 particles is:</p>
+$$\sigma_2 = \sqrt{\langle x^2 \rangle_2 - (\langle x \rangle_2)^2} = \frac{1}{\sqrt{2}}\sqrt{\langle x^2 \rangle - \langle x \rangle^2} = \frac{\sigma}{\sqrt{2}}$$
+<span class="eq-number">(26)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 3: General $N$</div>
+<p>For $N$ particles, the mean is</p>
+$$\langle x \rangle_N = \langle x \rangle$$
+<span class="eq-number">(27)</span>
+<p>independent of $N$. For $\langle x^2 \rangle_N$, when we expand $(x_1 + \cdots + x_N)^2$ there are $N$ terms that give $\langle x^2 \rangle$ and the remaining $(N^2 - N)$ terms give $\langle x \rangle^2$. So,</p>
+$$\langle x^2 \rangle_N = \frac{1}{N}\langle x^2 \rangle + \left(1 - \frac{1}{N}\right)\langle x \rangle^2$$
+<span class="eq-number">(30)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 4: Result</div>
+$$\sigma_N = \sqrt{\langle x^2 \rangle_N - \langle x \rangle^2} = \frac{1}{\sqrt{N}}\sqrt{\langle x^2 \rangle - \langle x \rangle^2} = \frac{\sigma}{\sqrt{N}}$$
+<span class="eq-number">(31)</span>
+</div>
+
+</div></div>
+</div>
+
+<p>The appearance of $\sqrt{N}$ is called the law of large numbers. Note that Eq.&nbsp;(31), describing how the standard deviation scales as we average over many molecules, holds for <em>any</em> function $P(x)$. Different $P(x)$ will give different values of $\sigma$, but the relation between $\sigma_N$ with $N$ molecules and $\sigma$ with one molecule is universal.</p>
+
+<p>For the gas in the box with a flat $P(x) = \frac{1}{L}$, the expected value of the center of mass is $\langle x \rangle_N = 0$, just like for any individual gas molecule, and the standard deviation is $\sigma_N = \frac{\sigma}{\sqrt{N}} \approx 10^{-11} \frac{L}{\sqrt{12}}$. Thus, even though we don't know very well where any of the molecules are, we know the center of mass to extraordinary precision.</p>
+
+<div class="info-box physical">
+<div class="box-title">Why Statistical Mechanics Works</div>
+<p>The law of large numbers is the reason that statistical mechanics is possible: we can compute macroscopic properties of systems (like the center of mass, or pressure, or all kinds of other things) with great confidence even if we don't know exactly what is going on at the microscopic level.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1-3">3 &mdash; Central Limit Theorem</h2>
+
+<p>We saw how when we average over a large number $N$ of draws from a probability distribution $P(x)$ the mean stays fixed and the standard deviation shrinks by $\sigma \to \frac{\sigma}{\sqrt{N}}$. What can we say about the <em>shape</em> of the probability distribution $P_N(x)$? It turns out we can say a lot. In fact, in the limit $N \to \infty$ we know $P_N(x)$ exactly: it is a Gaussian!</p>
+
+<div class="info-box concept">
+<div class="box-title">Central Limit Theorem</div>
+<p>When any probability distribution is sampled $N$ times, the average of the samples approaches a <strong>Gaussian distribution</strong> as $N \to \infty$ with width scaling like $\sigma \sim \frac{1}{\sqrt{N}}$.</p>
+</div>
+
+<p>There are a lot of ways to prove it. We find the "moment" approach the most accessible, as discussed next. Another proof using convolutions and Fourier transforms is in Appendix C.</p>
+
+<h3 id="s1-3-1">3.1 &mdash; CLT proof using moments</h3>
+
+<p>One way to prove the central limit theorem is by computing <span class="tooltip-trigger">moments<span class="tooltip-content">The $n$-th moment of a distribution measures the expected value of $(x - \bar{x})^n$ normalized by $\sigma^n$. The complete set of moments fully determines the shape of a distribution.</span></span>. If you specify the complete set of moments of a function, you know its shape completely. These moments are</p>
+
+<div class="equation">
+$$\text{mean:}\quad \bar{x} = \langle x \rangle$$
+<span class="eq-number">(32)</span>
+</div>
+<div class="equation">
+$$\text{variance:}\quad \sigma^2 = \langle(x - \bar{x})^2\rangle = \langle x^2 \rangle - \bar{x}^2$$
+<span class="eq-number">(33)</span>
+</div>
+<div class="equation">
+$$\text{skewness:}\quad S = \frac{\langle(x - \bar{x})^3\rangle}{\sigma^3} = \frac{1}{\sigma^3}\left[\langle x^3 \rangle - 3\bar{x}\langle x^2 \rangle + 2\bar{x}^3\right]$$
+<span class="eq-number">(34)</span>
+</div>
+<div class="equation">
+$$\text{kurtosis:}\quad K = \frac{\langle(x - \bar{x})^4\rangle}{\sigma^4}$$
+<span class="eq-number">(35)</span>
+</div>
+<div class="equation">
+$$n\text{-th moment:}\quad M_n = \frac{\langle(x - \bar{x})^n\rangle}{\sigma^n}$$
+<span class="eq-number">(36)</span>
+</div>
+
+<p><span class="tooltip-trigger">Skewness<span class="tooltip-content">A measure of the asymmetry of a probability distribution around its mean. Zero skewness means the distribution is symmetric.</span></span> measures how asymmetric a distribution is around its mean. <span class="tooltip-trigger">Kurtosis<span class="tooltip-content">A measure of the "tailedness" of a distribution. Higher kurtosis means more outliers. A Gaussian has kurtosis 3.</span></span> measures the 4th derivative, which is a measure of curvature. More intuitively, higher kurtosis means a probability distribution has a longer tail, i.e. more outliers from the mean. The higher moments do not have simple interpretations.</p>
+
+<p>Notice that all the higher-order moments are normalized by dividing by powers of $\sigma$ so that they are dimensionless. To understand this normalization imagine plotting $P_N(x)$, but shift it to center around $x = 0$ and rescale the $x$ axis by $\sigma$ so that the width is always 1. Then the curve will not get any smaller as $N \to \infty$ because its width is fixed to be 1, but its shape may change. The shape is determined by the numbers $M_n$ with $n > 2$.</p>
+
+<p>For the Gaussian probability distribution in Eq.&nbsp;(1) the moments are easy to calculate:</p>
+<div class="equation">
+$$\bar{x} = 0;\; \sigma = \sigma;\; S = 0;\; K = 3;\; M_5 = 0;\; M_6 = 15;\; M_7 = 0;\; M_8 = 105;\; \cdots \quad\text{(Gaussian)}$$
+<span class="eq-number">(37)</span>
+</div>
+
+<p>Note that skewness is zero for a Gaussian because it is symmetric. For a Gaussian, in fact all the odd moments ($M_n$ with $n$ odd) vanish. The even moments, normalized to powers of $\sigma$, are dimensionless numbers given by the formula</p>
+<div class="equation key-result">
+$$M_n = \begin{cases} 0, & n\text{ odd} \\ \dfrac{2^{-n/2}\, n!}{\left(\frac{n}{2}\right)!}, & n\text{ even} \end{cases}$$
+<span class="eq-number">(38)</span>
+</div>
+
+<p>These $M_n$ completely determine the shape of a Gaussian. If a function has all of these moments, it is a Gaussian.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Moments approach Gaussian values as $N \to \infty$</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: Skewness</div>
+<p>For a general $P(x)$ with $\langle x \rangle = 0$, the 3rd moment of $P_N(x)$ is</p>
+$$\langle x^3 \rangle_N = \frac{1}{N^2}\langle x^3 \rangle$$
+<p>since only terms of the form $x_j^3$ contribute when $\langle x \rangle = 0$. The skewness is therefore</p>
+$$S_N = \frac{\langle(x - \bar{x})^3\rangle_N}{\sigma_N^3} = \frac{\langle(x - \bar{x})^3\rangle / N^2}{(\sigma/\sqrt{N})^3} = \frac{S_1}{\sqrt{N}}$$
+<span class="eq-number">(41)</span>
+<p>In particular, the skewness goes to zero as $N \to \infty$.</p>
+</div>
+
+<div class="step"><div class="step-label">Step 2: Kurtosis</div>
+<p>For the 4th moment, with $\langle x \rangle = 0$, the non-vanishing terms are $x_j^4$ ($N$ terms) and $x_j^2 x_i^2$ with $i \neq j$ ($3N(N-1)$ terms). So,</p>
+$$\langle x^4 \rangle_N = \frac{1}{N^3}\langle x^4 \rangle + \frac{3(N-1)}{N^3}\langle x^2 \rangle\langle x^2 \rangle$$
+<span class="eq-number">(43)</span>
+<p>The kurtosis becomes</p>
+$$K_N = \frac{K_1}{N} + 3\left(1 - \frac{1}{N}\right)$$
+<span class="eq-number">(44)</span>
+<p>As $N \to \infty$ the kurtosis $K_N \to 3$ independent of the kurtosis of the one-particle distribution!</p>
+</div>
+
+<div class="step"><div class="step-label">Step 3: All higher moments</div>
+<p>For any $P(x)$ we find that as $N \to \infty$:</p>
+$$S_N \to 0;\quad K_N \to 3;\quad (M_5)_N \to 0;\quad (M_6)_N \to 15;\quad (M_7)_N \to 0;\quad (M_8)_N \to 105;\quad \cdots$$
+<span class="eq-number">(45)</span>
+<p>The general formula is</p>
+$$(M_r)_N \to \begin{cases} 0, & n\text{ odd} \\ \dfrac{2^{-r/2}\, r!}{\left(\frac{r}{2}\right)!}, & n\text{ even} \end{cases}$$
+<span class="eq-number">(46)</span>
+<p>In exact agreement with the moments of a Gaussian. Thus we always get a Gaussian and the central limit theorem is proven.</p>
+</div>
+
+</div></div>
+</div>
+
+<h3 id="s1-3-2">3.2 &mdash; Combining flat distributions</h3>
+
+<p>Because the central limit theorem is so important, let's try to understand why it is true more physically. Again, say we have some probability distribution $P(x)$ for molecules in a box, with $-\frac{L}{2} < x < \frac{L}{2}$. We want to pick $N$ molecules and compute their mean position (center of mass position) $\bar{x} = \frac{1}{N}\sum_j x_j$. What is the probability distribution $P_N(x)$ that the mean value is $x$?</p>
+
+<p>To be concrete, let's take the flat distribution $P(x) = \frac{1}{L}$. For $N = 1$, we pick only one molecule with position $x_1$. Then $\bar{x} = x_1$ and so $P(x) = \frac{1}{L}$: any value for the center-of-mass position is equally likely.</p>
+
+<p>Now say $N = 2$, so we pick two molecules with positions $x_1$ and $x_2$. What is the probability that they will have mean $\bar{x}$? For a given $\bar{x}$ we need $\frac{x_1 + x_2}{2} = \bar{x}$. For example if $\bar{x} = 0$, then for any $x_1$ there is an $x_2$ that works, namely $x_2 = -x_1$. However, if the mean is all the way on the edge, $\bar{x} = \frac{L}{2}$, then not all $x_1$ work; in fact, we need both $x_1$ and $x_2$ to be exactly $\frac{L}{2}$. Thus there are fewer possibilities when $\bar{x}$ is close to the boundaries of the box than if $\bar{x}$ is central.</p>
+
+<figure>
+<img src="images/1-Probability_p7_img0.png" alt="Diagonal lines in x1/x2 plane showing mean value constraint">
+<figcaption>Figure 1. The regions in the $x_1$/$x_2$ plane with mean value $\bar{x}$ are diagonal lines for $L = 2$. The length of the line is the probability $P_2(\bar{x})$. For $\bar{x} = 0$, the line is longest and probability greatest. For $\bar{x} = 1$, the line reduces to a point and the probability to zero.</figcaption>
+</figure>
+
+<p>To be quantitative, the easiest way to calculate the probability is with the <span class="tooltip-trigger">Dirac $\delta$ function<span class="tooltip-content">A mathematical distribution that is zero everywhere except at the origin, with total integral equal to 1. It "picks out" the value of a function at a specific point when used inside an integral.</span></span> (see Appendix A for a refresher). Using the $\delta$-function, we can write the probability for getting a mean value $\bar{x} = \frac{x_1 + x_2}{2}$ as</p>
+<div class="equation">
+$$P_2(\bar{x}) = \int_{-L/2}^{L/2} dx_1\, P(x_1)\int_{-L/2}^{L/2} dx_2\, P(x_2)\,\delta\!\left(\frac{x_1 + x_2}{2} - \bar{x}\right)$$
+<span class="eq-number">(47)</span>
+</div>
+
+<p>This is another way of writing a convolution, as in Eq.&nbsp;(15): $P_2 = P * P$.</p>
+
+<p>Evaluating for the flat distribution $P(x) = \frac{1}{L}$ (using the property $\delta(ax) = \frac{1}{a}\delta(x)$), we get</p>
+<div class="equation">
+$$L^2 P_2(x) = \begin{cases} 2L + 4x, & x < 0 \\ 2L - 4x, & x > 0 \end{cases}$$
+<span class="eq-number">(51)</span>
+</div>
+
+<p>For $N = 3$ we compute a similar integral with three molecules:</p>
+<div class="equation">
+$$P_3(x) = \int_{-L/2}^{L/2} dx_1\, P(x_1)\int_{-L/2}^{L/2} dx_2\, P(x_2)\int_{-L/2}^{L/2} dx_3\, P(x_3)\,\delta\!\left(\frac{x_1 + x_2 + x_3}{3} - x\right)$$
+<span class="eq-number">(52)</span>
+</div>
+
+<p>and so on. These successive approximations look like</p>
+
+<figure>
+<img src="images/1-Probability_p8_img0.png" alt="Successive probability distributions approaching Gaussian shape for N=1,2,3,4">
+<figcaption>Figure 2. The average position of $N = 1, 2, 3, 4$ particles, each of which separately has a flat probability distribution.</figcaption>
+</figure>
+
+<p>We see that already at $N = 4$ the flat probability distribution is becoming a Gaussian. Note also that the widths of the distributions are getting narrower.</p>
+
+<p>The central limit theorem says that the distribution of the mean of $N$ draws from a probability distribution approaches a Gaussian of width $\frac{\sigma}{\sqrt{N}}$ as $N \to \infty$ independent of the original probability distribution. That is,</p>
+<div class="equation key-result">
+$$P_N(x) \to \sqrt{\frac{N}{2\pi\sigma^2}} \exp\!\left(-\frac{N(x - \bar{x})^2}{2\sigma^2}\right)$$
+<span class="eq-number">(53)</span>
+</div>
+
+<p>Sometimes we sum the values of the draws from a distribution instead of averaging them. In this case, the mean grows as $\bar{x} \to N\bar{x}$ and the standard deviation grows like $\sigma \to \sqrt{N}\,\sigma$. Thus an equivalent phrasing of the central limit theorem is</p>
+
+<div class="info-box concept">
+<div class="box-title">Central Limit Theorem (Summation Form)</div>
+<p>A function with mean $\bar{x}$ and standard deviation $\sigma$ convolved with itself $N$ times approaches a Gaussian with mean $N\bar{x}$ and standard deviation $\sqrt{N}\,\sigma$ as $N \to \infty$.</p>
+</div>
+
+<p>For summing the values, the central limit theorem has the form</p>
+<div class="equation key-result">
+$$P_{\text{sum}}^N(x) = \underbrace{P * P * \cdots * P}_{N} \to \frac{1}{\sqrt{2\pi\sigma^2 N}} \exp\!\left(-\frac{(x - N\bar{x})^2}{2\sigma^2 N}\right)$$
+<span class="eq-number">(54)</span>
+</div>
+
+<p>The relation between the sum and average forms is simply</p>
+<div class="equation">
+$$P_{\text{sum}}^N(x) = \frac{1}{N} P_N\!\left(\frac{x}{N}\right)$$
+<span class="eq-number">(55)</span>
+</div>
+
+<p>Note when we average $\bar{x} \to \bar{x}$ and $\sigma \to \frac{\sigma}{\sqrt{N}}$ and when we sum $\bar{x} \to N\bar{x}$ and $\sigma \to \sqrt{N}\,\sigma$, so either way</p>
+<div class="equation">
+$$\frac{\sigma}{\bar{x}} \to \frac{1}{\sqrt{N}}\frac{\sigma}{\bar{x}}$$
+<span class="eq-number">(56)</span>
+</div>
+
+<p>Thus a foolproof way to think of the scaling is that the dimensionless ratio $\frac{\sigma}{\bar{x}}$ should decrease as $\frac{1}{\sqrt{N}}$.</p>
+
+<!-- Interactive CLT Visualizer -->
+<div class="interactive-container" id="vis-clt">
+  <h3>Interactive: Central Limit Theorem Visualizer</h3>
+  <div class="vis-controls">
+    <label>Number of samples ($N$): <input type="range" id="clt-n" min="1" max="30" step="1" value="1"><span class="slider-value">1</span></label>
+  </div>
+  <canvas class="vis-canvas" width="600" height="300"></canvas>
+</div>
+
+<h3 id="s1-3-3">3.3 &mdash; Why we take logarithms in statistical mechanics</h3>
+
+<p>In statistical mechanics, we will make great use of the central limit theorem. Generally we have systems composed of enormously large numbers of particles $N \sim \text{Avogadro's number} \sim 10^{24}$. The things we measure are macroscopic: the pressure a gas puts on a wall is the average pressure. Microscopically, the gas has a bunch of little molecules hitting and bouncing off the wall and the force these molecules impart is constantly varying. We don't care about these tiny fluctuations, just the average. So any time we try to measure something, like the pressure in a gas, or the concentration of a chemical, we will necessarily be averaging over an enormous number of fluctuations. Because of the central limit theorem, the distribution of any macroscopic quantity will be close to a Gaussian around its mean. The central limit theorem itself doesn't tell us what the mean is, or how various macroscopic quantities are related &mdash; we need physics for that. But it tells us that we don't need to worry about the precise details of the microscopic description.</p>
+
+<p>Normally when a function $f(x)$ is rapidly falling away from $x \approx \bar{x}$ we Taylor expand $x = \bar{x}$ and keep the first few terms. We can do this for $P_N(x)$ too. However, the Taylor expansion of a Gaussian has an infinite number of terms</p>
+<div class="equation">
+$$e^{-x^2/(2\sigma^2)} = \sum_{m=0}^{\infty} \frac{1}{m!}\left(-\frac{x^2}{2\sigma^2}\right)^m = 1 - \frac{x^2}{2\sigma^2} + \frac{1}{2}\left(\frac{x^2}{2\sigma^2}\right)^2 - \frac{1}{6}\left(\frac{x^2}{2\sigma^2}\right)^3 + \cdots$$
+<span class="eq-number">(57)</span>
+</div>
+
+<p>You need all the terms to reconstruct the original Gaussian. However, if we take the logarithm first, then Taylor expand, we find</p>
+<div class="equation key-result">
+$$\ln e^{-x^2/(2\sigma^2)} = -\frac{x^2}{2\sigma^2}$$
+<span class="eq-number">(58)</span>
+</div>
+
+<p>with only one term. So it will be extremely convenient to start taking the logarithms of our probabilities. By the central limit theorem, when we average the values,</p>
+<div class="equation">
+$$\ln P_N(x) \to -\frac{N(x - \bar{x})^2}{2\sigma^2} + \ln\sqrt{\frac{N}{2\pi\sigma^2}}$$
+<span class="eq-number">(59)</span>
+</div>
+
+<p>As $N \to \infty$ there are no higher order terms.</p>
+
+<p>In other words, a Gaussian is an unusual function. It is flat near the peak, but then quickly drops off and has a long tail. Since the function is smooth near the peak, it's hard to know what's going on at the tail from expanding near the peak. In particular, you have to work very hard to get information about points with $x \gg \sigma$ from information at the peak. Taking the logarithm puts the peak and the tail on the same footing. Of course, we can't get something for nothing: taking logarithms alone won't solve any problems. But taking logarithms often makes it easier to solve problems. We will see many examples of this as the course progresses.</p>
+
+<!-- ============================================================ -->
+<h2 id="s1-4">4 &mdash; Poisson distribution</h2>
+
+<p>In many physical situations, there is a large number $N$ of possible events each occurring with very small probability $\lambda$ for a given time interval. For example, if you put a glass out in the rain, there are lots of possible drops of water that could fall into the glass, but each has a small probability. Or you have lots of friends on Instagram, each one has a small probability of posting something interesting. Or we have a gas of molecules and each one has a small chance of being in some tiny volume. Probabilities in situations like this, where each event is uncorrelated with the previous event, are described by the <span class="tooltip-trigger">Poisson distribution<span class="tooltip-content">A discrete probability distribution describing the number of events occurring in a fixed time interval when events happen independently at a constant average rate.</span></span>.</p>
+
+<p>Let's take a concrete example, radioactive decay. A block of ${}^{235}\text{U}$ has $N \sim 10^{24}$ atoms each of which can decay with a tiny probability</p>
+<div class="equation">
+$$dP = \lambda\, dt$$
+<span class="eq-number">(60)</span>
+</div>
+
+<p>$\lambda$ is called the <span class="tooltip-trigger">decay rate<span class="tooltip-content">The probability of decay per unit time. Its inverse $1/\lambda$ gives the characteristic lifetime of the system.</span></span>. It has units of $\frac{1}{\text{time}}$. For a single atom of ${}^{235}\text{U}$, this decay rate is $\lambda = 3 \times 10^{-17}\,\text{s}^{-1}$. In a mole of Uranium ($10^{24}$ atoms), $10^7$ Uranium atoms decay, on average, each second. What is the chance of seeing $m$ decays in a time $t$?</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: The Poisson Distribution</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: No decays ($m = 0$)</div>
+<p>If the rate to decay is $dP = \lambda\,dt$ then the probability of not decaying in a small time $\Delta t$ is</p>
+$$P_{\text{no decay}}(\Delta t) = 1 - \lambda \Delta t$$
+<p>For no decays in time $2\Delta t$:</p>
+$$P_{\text{no decay}}(2\Delta t) = (1 - \lambda \Delta t)^2$$
+<p>Now sew together small times $\Delta t = \frac{t}{N}$ and take $N \to \infty$:</p>
+$$P_{\text{no decay}}(t) = \lim_{N\to\infty}\left(1 - \frac{\lambda t}{N}\right)^N = e^{-\lambda t}$$
+<span class="eq-number">(63)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 2: Half-life</div>
+<p>How long until the probability of some decay is $\frac{1}{2}$? Solve $\frac{1}{2} = e^{-\lambda t_{1/2}}$:</p>
+$$t_{1/2} = \frac{1}{\lambda}\ln 2 = \frac{0.7}{\lambda}$$
+<span class="eq-number">(64)</span>
+<p>We often say $\frac{1}{\lambda}$ is the <span class="tooltip-trigger">lifetime<span class="tooltip-content">The average time before a decay event occurs. Related to the half-life by a factor of $\ln 2$.</span></span> and $t_{1/2}$ is the <span class="tooltip-trigger">half-life<span class="tooltip-content">The time after which there is a 50% probability of at least one decay. Equal to $\frac{\ln 2}{\lambda}$.</span></span>.</p>
+</div>
+
+<div class="step"><div class="step-label">Step 3: One decay ($m = 1$)</div>
+<p>We need exactly one decay in one of the $N$ intervals. Using a derivative trick:</p>
+$$P_{1\text{ decay}}(t) = \lim_{N\to\infty} N\left(1 - \frac{\lambda t}{N}\right)^{N-1}\left(\frac{\lambda t}{N}\right) = -t\,\partial_t\, P_{\text{no decay}}(t) = \lambda t\, e^{-\lambda t}$$
+<span class="eq-number">(66)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 4: General $m$</div>
+<p>For $m$ decays there are $\binom{N}{m}$ ways to choose which intervals have decays. The result is</p>
+$$P_m(t) = \frac{(\lambda t)^m}{m!} e^{-\lambda t}$$
+<span class="eq-number">(68)</span>
+<p>This is the Poisson distribution.</p>
+</div>
+
+</div></div>
+</div>
+
+<p>The Poisson distribution gives the probability for exactly $m$ events in time $t$ when each event has a probability per unit time of $\lambda$ and the events are uncorrelated.</p>
+
+<p>In any time $t$ there must have been some number of decays between 0 and $\infty$. Indeed,</p>
+<div class="equation">
+$$\sum_m P_m(t) = \sum \frac{(\lambda t)^m}{m!} e^{-\lambda t} = 1$$
+<span class="eq-number">(69)</span>
+</div>
+
+<p>So that's consistent (as is the $t$-independence of this sum).</p>
+
+<p>For a given fixed $t$, how many particles do we expect to have decayed? The mean value for $m$ is</p>
+<div class="equation key-result">
+$$\langle m \rangle = \sum_m m\, P_m(t) = \sum_m m\frac{(\lambda t)^m}{m!} e^{-\lambda t} = \lambda t$$
+<span class="eq-number">(70)</span>
+</div>
+
+<p>The result implies that the expected number of decays in a time $t$ is $\lambda t$. It makes sense that if you double the time, twice as many particles decay.</p>
+
+<p>The standard deviation of the Poisson distribution is</p>
+<div class="equation key-result">
+$$\sigma = \sqrt{\langle m^2 \rangle - \langle m \rangle^2} = \sqrt{\lambda t}$$
+<span class="eq-number">(71)</span>
+</div>
+
+<p>So the Poisson distribution as a function of $m$ at fixed $t$ has mean $\lambda t$ and width $\sqrt{\lambda t}$. Thus the width compared to the mean is</p>
+<div class="equation">
+$$\frac{\sigma}{\langle m \rangle} = \frac{1}{\sqrt{\lambda t}}$$
+<span class="eq-number">(72)</span>
+</div>
+
+<p>This goes to 0 as $t \to \infty$. In other words, the Poisson distribution is narrower and narrower as $t$ gets larger. What does this mean physically? It means if we wait one lifetime ($t = \frac{1}{\lambda}$) we should expect $1 \pm 1$ particle to decay. If we wait 2 lifetimes, we expect $2 \pm \sqrt{2}$ to decay. If we wait 100 lifetimes, we expect $100 \pm 10$ to decay. So the longer we wait, not only are there more decays, but we know more precisely how many decays there will be. This is, of course, a consequence of the central limit theorem.</p>
+
+<figure>
+<img src="images/1-Probability_p11_img0.png" alt="Poisson distribution as a function of m for various times">
+<figcaption>Figure 3 (left). The Poisson distribution as a function of the discrete index $m$ for various times.</figcaption>
+</figure>
+
+<figure>
+<img src="images/1-Probability_p11_img1.png" alt="Poisson distribution as a function of time for various m">
+<figcaption>Figure 3 (right). The Poisson distribution as a function of time, for various values of $m$.</figcaption>
+</figure>
+
+<p>We clearly see the Gaussian shape emerging at large $t$ (left) and at large $m$ (right).</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Poisson approaches Gaussian at large $m$</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: Take the log</div>
+<p>The log of the Poisson distribution is</p>
+$$\ln P_m(t) = m\ln(\lambda t) - \lambda t - \ln m!$$
+<span class="eq-number">(75)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 2: Apply Stirling's approximation</div>
+<p>Using $\ln m! \approx m\ln m - m$:</p>
+$$\ln P_m(t) \xrightarrow{m \gg 1} m\ln\frac{\lambda t}{m} + (m - \lambda t) + \cdots$$
+<span class="eq-number">(76)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 3: Taylor expand around $m = \lambda t$</div>
+<p>The leading and first-order terms vanish. The second-order term gives:</p>
+$$\frac{\partial^2}{\partial m^2}\ln P_m(t)\bigg|_{m = \lambda t} = -\frac{1}{\lambda t}$$
+<span class="eq-number">(78)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 4: Result</div>
+$$P_m(t) \xrightarrow{m \gg 1} \frac{1}{\sqrt{2\pi\lambda t}}\, e^{-(m - \lambda t)^2/(2\lambda t)}$$
+<span class="eq-number">(80)</span>
+<p>This is a Gaussian with mean $\langle m \rangle = \lambda t$ and width $\sigma = \sqrt{\lambda t}$ exactly as expected by the central limit theorem.</p>
+</div>
+
+</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1-5">5 &mdash; Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Normalized probability distributions</strong> $P(x)$ with $\int dx\, P(x) = 1$.</li>
+<li><strong>Mean:</strong> $\bar{x} = \langle x \rangle = \int dx\, x\, P(x)$.</li>
+<li><strong>Variance:</strong> $\text{var} = \int dx\, (x - \bar{x})^2 P(x)$.</li>
+<li><strong>Standard deviation</strong> or width: $\sigma = \sqrt{\text{var}}$.</li>
+<li><strong>Gaussian distribution:</strong> $P(x) = \frac{1}{\sqrt{2\pi}\,\sigma}\exp\!\left(-\frac{(x-\bar{x})^2}{2\sigma^2}\right)$ has mean $\bar{x}$ and width $\sigma$.</li>
+<li>If you draw $x$ from a Gaussian it is <strong>68% likely</strong> to be between $\bar{x} - \sigma$ and $\bar{x} + \sigma$.</li>
+<li>The <strong>convolution</strong> of two distributions is $(P_A * P_B)(z) = \int_{-\infty}^{\infty} dx\, P_A(z - x)\, P_B(x)$. It describes the probability of getting $z$ as the sum of a number drawn from $P_A$ and another from $P_B$.</li>
+<li>Given a probability distribution $P(x)$ with mean $\bar{x}$ and width $\sigma$, you can construct a new distribution $P_N(x)$ by averaging over $N$ draws from $P(x)$. The <strong>central limit theorem</strong> (CLT) says that as $N \to \infty$ this new distribution will approach a Gaussian with the same mean ($\bar{x}_N = \bar{x}$) and a smaller standard deviation $\sigma_N \approx \frac{\sigma}{\sqrt{N}}$. All other properties of $P(x)$ are lost after this averaging at large $N$.</li>
+<li>The CLT also implies that if we <strong>sum</strong> (rather than average) the values from draws, the mean grows like $\bar{x}_N \approx N\bar{x}$ and the standard deviation like $\sigma_N \approx \sqrt{N}\,\sigma$.</li>
+<li>Because of the CLT, Gaussians are very common. Their exponential decay encourages us to study <strong>logarithms</strong> of distributions, which turns fast-varying exponentials into slow-varying polynomials: $\ln e^{-x^2/(2\sigma^2)} = -\frac{x^2}{2\sigma^2}$.</li>
+<li>When we have a rate $dP = \lambda\,dt$ for an event that is independent of time, then the probability of having $m$ events after a time $t$ is described by the <strong>Poisson distribution</strong> $P_m(t) = \frac{(\lambda t)^m}{m!}e^{-\lambda t}$.</li>
+<li><strong>Stirling's approximation:</strong> $N! \approx \sqrt{2\pi N}\, N^N e^{-N}$ at large $N$. This works very well, even at $N = 1$.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1-A">Appendix A &mdash; Dirac $\delta$-function</h2>
+
+<p>The Dirac $\delta$-function is very useful in physics, from quantum mechanics to statistical mechanics. The $\delta$-function is not really a function but rather a distribution. $\delta(x)$ is zero everywhere except at $x = 0$. When you integrate a function against $\delta(x)$ you pick up the value of that function at 0. That is</p>
+<div class="equation key-result">
+$$\int dx\, \delta(x)\, f(x) = f(0)$$
+<span class="eq-number">(81)</span>
+</div>
+
+<p>This is the defining property of $\delta(x)$. The integration region has to include $x = 0$ but is otherwise arbitrary since $\delta(x) = 0$ if $x \neq 0$.</p>
+
+<p>Another useful property of $\delta$-functions is that if we rescale the argument of $\delta(x)$ by a number $a$ then the $\delta$-function rescales by $\frac{1}{a}$. That is,</p>
+<div class="equation">
+$$\delta(ax) = \frac{1}{a}\delta(x)$$
+<span class="eq-number">(82)</span>
+</div>
+
+<p>It's sometimes helpful to think of the $\delta$ function as the limit of a regular function. For example, Gaussians:</p>
+<div class="equation">
+$$\delta(x) = \lim_{\sigma \to 0} \frac{1}{\sqrt{2\pi}\,\sigma}\, e^{-x^2/(2\sigma^2)}$$
+<span class="eq-number">(84)</span>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1-B">Appendix B &mdash; Stirling's approximation</h2>
+
+<p>There are many ways to derive <span class="tooltip-trigger">Stirling's approximation<span class="tooltip-content">An asymptotic formula for the factorial: $N! \approx \sqrt{2\pi N}\, N^N e^{-N}$. Extremely useful when dealing with large factorials in statistical mechanics.</span></span>. Here's a relatively easy one. We start by taking the logarithm</p>
+<div class="equation">
+$$\ln N! = \ln N + \ln(N-1) + \ln(N-2) + \cdots + \ln 1 = \sum_{j=1}^{N} \ln j$$
+<span class="eq-number">(85)</span>
+</div>
+
+<p>For large $N$ we then write the sum as an integral</p>
+<div class="equation">
+$$\ln N! = \sum_{j=1}^{N} \ln j \approx \int_1^N dj\, \ln j = N\ln N - N - 1 \approx N\ln N - N$$
+<span class="eq-number">(86)</span>
+</div>
+
+<p>One can include more terms in the expansion. For example, the next term gives</p>
+<div class="equation key-result">
+$$N! \approx \sqrt{2\pi N}\, N^N e^{-N}$$
+<span class="eq-number">(87)</span>
+</div>
+
+<p>The next order correction to this is down by $\frac{1}{12N}$, which gets small fast. You can check that Stirling's approximation is off by less than 8% already at $N = 1$ and by less than 2% by $N = 3$. For Avogadro's number $N = 6 \times 10^{23}$ it is off by one part in $10^{25}$.</p>
+
+<!-- ============================================================ -->
+<h2 id="s1-C">Appendix C &mdash; Central limit theorem from convolutions</h2>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: CLT via Fourier transforms</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: Setup</div>
+<p>Start with the definition</p>
+$$P_N(x) = \int dx_1 \cdots dx_n\, P(x_1)\cdots P(x_n)\, \delta\!\left(\frac{x_1 + \cdots + x_n}{N} - x\right)$$
+<span class="eq-number">(88)</span>
+<p>Write the $\delta$ function in Fourier space:</p>
+$$\delta(x_1 + \cdots + x_n - x) = \int \frac{dk}{2\pi}\, e^{ik(x_1 + \cdots + x_n - x)}$$
+</div>
+
+<div class="step"><div class="step-label">Step 2: Factor into Fourier transforms</div>
+<p>Defining $\tilde{P}(k) = \int dx\, e^{ikx} P(x)$, we get</p>
+$$P_N(x) = \int \frac{dk}{2\pi} \left[\tilde{P}\!\left(\frac{k}{N}\right)\right]^N e^{ikx}$$
+<span class="eq-number">(92)</span>
+<p>This is just the statement that Fourier transforms turn convolutions into products.</p>
+</div>
+
+<div class="step"><div class="step-label">Step 3: Expand for large $N$</div>
+<p>Setting $\langle x \rangle = 0$ and expanding:</p>
+$$\tilde{P}\!\left(\frac{k}{N}\right) = 1 - \frac{k^2}{2}\frac{\sigma^2}{N^2} - \frac{ik^3\langle x^3\rangle}{6N^3} + \cdots$$
+<p>The dominant contribution at large $N$ is:</p>
+$$\left[\tilde{P}\!\left(\frac{k}{N}\right)\right]^N = \left[1 - \frac{1}{N}\left(\frac{k^2}{2}\frac{\sigma^2}{N}\right)\right]^N \xrightarrow{N \gg 1} e^{-\frac{k^2}{2}\frac{\sigma^2}{N}}$$
+<span class="eq-number">(97)</span>
+<p>where $e^x = \lim_{N\to\infty}(1 + x/N)^N$ was used.</p>
+</div>
+
+<div class="step"><div class="step-label">Step 4: Inverse Fourier transform</div>
+$$P_N(x) = \int_{-\infty}^{\infty} \frac{dk}{2\pi}\, e^{-\frac{k^2}{2}\frac{\sigma^2}{N}}\, e^{ikx} = \sqrt{\frac{N}{2\pi\sigma^2}}\, e^{-Nx^2/(2\sigma^2)}$$
+<span class="eq-number">(98)</span>
+<p>which is the desired result, the central limit theorem.</p>
+</div>
+
+</div></div>
+</div>

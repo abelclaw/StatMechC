@@ -1,0 +1,5 @@
+.DS_Store
+extracted/
+lecturenotes/
+*.pyc
+__pycache__/

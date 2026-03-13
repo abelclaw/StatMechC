@@ -1,0 +1,469 @@
+<div class="chapter-number">Chapter 11</div>
+<h1 class="chapter-title">Phonons and Photons</h1>
+<p class="chapter-intro">Two of the most important applications of Bose-Einstein statistics: vibrations in solids (phonons) and electromagnetic radiation (photons). Both are bosonic systems with $\mu = 0$ and no conserved particle number. Both explain why classical physics fails at low temperatures.</p>
+
+<h2>1. Introduction</h2>
+
+<p>In this lecture, we will discuss some applications of quantum statistical mechanics to Bose systems. To review, we found in the last lecture that the grand partition function for Bose-Einstein particles can be written as</p>
+
+<div class="equation">$$\mathcal{Z} = \prod_{\text{single particle states } i} \mathcal{Z}_{\epsilon_i}$$<span class="eq-number">(1)</span></div>
+
+<p>where the product is over possible states $i$ for a single particle and</p>
+
+<div class="equation">$$\mathcal{Z}_\epsilon = \frac{1}{1 - e^{-\beta(\epsilon - \mu)}}$$<span class="eq-number">(2)</span></div>
+
+<p>is the grand-canonical partition function for a single state with energy $\epsilon$ (computed by summing over all the possible numbers $n$ of bosons that could simultaneously be in that state). Using the grand canonical ensemble, we found that the expected number of particles in a given mode is determined by the <span class="tooltip-trigger">Bose-Einstein distribution function<span class="tooltip-content">$\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} - 1}$: the average occupation number for bosons. Diverges as $\epsilon_i \to \mu$.</span></span></p>
+
+<div class="equation">$$\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} - 1}$$<span class="eq-number">(3)</span></div>
+
+<p>Here $\mu$ is the chemical potential, which (for bosons) has to be lower than all the energy levels $\epsilon_i$ in the system.</p>
+
+<p>In this lecture, we will study two important cases of Bose systems where quantum effects are important: the <strong>Debye theory of solids</strong>, where the bosons are the excitations of vibrational modes known as <span class="tooltip-trigger">phonons<span class="tooltip-content">Quantized sound waves in a solid. Just as photons are quanta of light, phonons are quanta of vibrational energy. Each phonon carries energy $\hbar\omega$.</span></span>, and the theory of <strong>blackbody radiation</strong>, where the bosons are quanta of light known as <span class="tooltip-trigger">photons<span class="tooltip-content">Quanta of the electromagnetic field. Photons are massless bosons with spin 1 and travel at the speed of light $c$. Their energy is $E = \hbar\omega = h\nu$.</span></span>. Both types of bosons have $\mu = 0$, since there is no conserved particle number. In the next lecture we will study Bose-Einstein condensation, where the bosons are atoms and $\mu \neq 0$.</p>
+
+<p>In order to study any of these systems, we want to perform the product over states $i$ in Eq. (1). Generally, we do this by first taking the logarithm (to get the grand free energy $\Phi$), so that the product becomes a sum, then performing the sum as an integral over energy</p>
+
+<div class="equation key-result">$$\Phi = -\frac{1}{\beta}\ln\mathcal{Z} = -\frac{1}{\beta}\sum_i \ln \mathcal{Z}_{\epsilon_i} = -\frac{1}{\beta}\int d\epsilon\, g(\epsilon)\ln \mathcal{Z}_\epsilon$$<span class="eq-number">(4)</span></div>
+
+<p>where $g(\epsilon)$ is the measure on the integral over energies $\epsilon$, known as the <span class="tooltip-trigger">density of states<span class="tooltip-content">$g(\epsilon)$ gives the number of single-particle states with energies between $\epsilon$ and $\epsilon + d\epsilon$. It encodes the geometry and boundary conditions of the system and is the key input for computing thermodynamic quantities.</span></span>. Thus, the first step to studying any of these systems is working out the density of states, for which we need the distribution of energy levels of the system. Many quantities can be derived from $\Phi$ recalling that</p>
+
+<div class="equation">$$d\Phi = -SdT + PdV + Nd\mu$$<span class="eq-number">(5)</span></div>
+
+<p>and that $\Phi = -PV$ (we showed this at the end of Lecture 8).</p>
+
+<h2>2. Debye Model of Solids</h2>
+
+<p>Our first example is the theory of phonons, or vibrations of a lattice of atoms in a solid. This will let us compute the heat capacity of a solid and other useful thermodynamic quantities.</p>
+
+<h3>2.1 Classical Model of Solids</h3>
+
+<p>The model of a solid we will use is called a <span class="tooltip-trigger">harmonic solid<span class="tooltip-content">A model where atoms in a crystal lattice are connected by springs (harmonic potentials). The normal modes of this system are independent oscillators whose quanta are phonons.</span></span>. It is envisioned as a lattice of nuclei connected by covalent bonds which act as springs.</p>
+
+<figure><img src="images/11-PhononsPhotons_p2_img0.png" alt="Harmonic solid model with atoms connected by springs"><figcaption>Figure 1. A harmonic solid treats atoms as connected by springs.</figcaption></figure>
+
+<p>If you knock one side of the solid, a sound wave will propagate through by vibrating each successive molecule. The quanta of sound-wave excitations in solids are called phonons.</p>
+
+<p>The solid is made up of $N$ atoms, each of which can move in 3 directions, so there are $3N$ springs (up to boundary conditions, which will not matter for $N$ large). There will therefore be $3N$ normal modes of vibration. If $\vec{A}(\vec{x}, t)$ describes the displacement from equilibrium of the atom at position $\vec{x}$ at time $t$ it will satisfy the wave equation</p>
+
+<div class="equation">$$\left[\partial_t^2 - c_s^2 \vec{\nabla}^2\right]\vec{A}(\vec{x}, t) = 0$$<span class="eq-number">(6)</span></div>
+
+<p>where $c_s$ is the speed of sound in the solid. (Recall from 15c that this comes from the force on atom at position $n$ coming from the difference of forces from the two sides $m\ddot{x}_n = k(x_{n+1} - x_n) - k(x_n - x_{n-1}) \sim k\partial_n^2 x_n \sim a^2 k\nabla^2 x_n$ with $a$ the lattice spacing.)</p>
+
+<p>In general, the speed of sound is $c_s = \sqrt{\frac{dP}{d\rho}}$ (you should have derived this result in 15c). For solids, the density is $\rho = \frac{mN}{V}$, so $\frac{dP}{d\rho}$ is determined by the relation between pressure and volume. We represent this with the bulk modulus $B = -V\!\left(\frac{\partial P}{\partial V}\right)_{T,N}$, so that $c_s = \sqrt{\frac{dP}{d\rho}} = \sqrt{\frac{B}{\rho}}$. The bulk modulus is the restoring force, like $k$ for a spring: $c_s = \sqrt{\frac{B}{\rho}} \sim \sqrt{\frac{k}{m}}$. This restoring force is determined not by the things vibrating to transmit the wave (the atoms) but by the things generating the force (the electrons). To compute $c_s$ we need to compute $B$ which necessarily involves the electrons. We will compute $B$ for solids in Lecture 13. To study the vibrations of a solid we can simply treat $c_s$ as a constant.</p>
+
+<p>Given the wave equation and $c_s$, normal mode oscillations of the system have the form</p>
+
+<div class="equation">$$\vec{A}(\vec{x}, t) = \vec{A}_i \cos(\vec{k}_i \cdot \vec{x})\cos(\omega_i t)$$<span class="eq-number">(7)</span></div>
+
+<p>for constant wavevectors $\vec{k}_i$ and angular frequencies $\omega_i$. Plugging $\vec{A}(\vec{x}, t)$ in to the wave equation implies $\vec{k}_i$ and $\omega_i$ are related by</p>
+
+<div class="equation">$$\omega_i = c_s |\vec{k}_i|$$<span class="eq-number">(8)</span></div>
+
+<p>Each of the normal modes is a standing plane wave whose displacement depends only on $\vec{k}_i \cdot \vec{x}$, i.e. it is constant in the plane normal to $\vec{k}_i$. Displacement can be in any of 3 directions, so $\vec{A}$ is a vector. The prefactor $\vec{A}_i$ in Eq. (7) is the polarization vector of the sound wave. For example, sound waves can be longitudinal (with $\vec{A}_i \propto \vec{k}_i$), like sound waves in air. They can also be transverse (with $\vec{A}_i \cdot \vec{k}_i = 0$), like water waves or excitations of a string, in either of the 2 transverse directions. To visualize the three polarizations think of moving a square grid, like a window screen, in any of 3 dimensions.</p>
+
+<p>The allowed wavevectors are classically quantized. The atoms on the edges have forces only on one side, so they must have open-string boundary conditions $\partial_x A(x, t) = 0$. In one dimension, we would impose that $\partial_x A(0, t) = \partial_x A(L, 0) = 0$ which gives $k = \frac{\pi n}{L}$ for $n = 0, 1, 2, 3, \cdots$. In 3 dimensions the condition is</p>
+
+<div class="equation">$$\vec{k}_n = \frac{\pi}{L}\vec{n}$$<span class="eq-number">(9)</span></div>
+
+<p>with $\vec{n}$ a vector of whole numbers (e.g. $\vec{n} = (3, 0, 2)$). Then the frequencies are</p>
+
+<div class="equation">$$\omega_n = \frac{\pi}{L}c_s n, \qquad n \equiv |\vec{n}|$$<span class="eq-number">(10)</span></div>
+
+<p>If the solid has some other crystal structure, the normal modes will be different, but we focus on this regular cubic lattice for simplicity. By the way, the boundary conditions aren't actually important for the bulk properties.</p>
+
+<p>So far, this has all been classical &mdash; 15c material. Springs and balls propagate waves just like we have described, with the wavenumbers in Eq. (9). The amplitude $|\vec{A}_i|$ can take any real value &mdash; sound waves can have arbitrarily small amplitudes.</p>
+
+<h3>2.2 Phonons</h3>
+
+<p>To transition to quantum mechanics, we associate energy to each wave proportional to its frequency. A natural way to do this is to treat each mode as an independent simple harmonic oscillator. This is called the <span class="tooltip-trigger">Debye model<span class="tooltip-content">Peter Debye's 1912 model treats a solid as a collection of harmonic oscillators with a linear dispersion relation $\omega = c_s k$ up to a maximum frequency $\omega_D$. It correctly predicts $C_V \propto T^3$ at low temperature.</span></span>. Each oscillator indexed by $\vec{n}$ can be excited $m$ times, so the energy of that oscillator is</p>
+
+<div class="equation">$$\epsilon_{\vec{n}}(m) = \hbar\omega_n\!\left(m + \frac{1}{2}\right)$$<span class="eq-number">(11)</span></div>
+
+<p>Again, $\vec{n}$ tells us which mode and $m$ tells us which excitation of that mode. There are 3 possible excitations for any $\vec{n}$, corresponding to the 3 polarizations of the sound waves (as with the classical theory, $\vec{n}$ specifies a plane of atoms that vibrates and the 3 polarizations tell us which direction it is vibrating in).</p>
+
+<p>Having no excitations at all corresponds to $m = 0$ for all $\vec{n}$ and the energy is $E_0 = \sum_{\vec{n}}\frac{1}{2}\hbar\omega_n$. Since this ground state energy can never change, thermodynamic properties of the system will not depend on it (only on energy differences), so we will set $E_0 = 0$ for convenience.</p>
+
+<p>The labels $\vec{n}$ for the normal modes are the states labeled $i$ in our general discussion of Bose systems. The excitations $m$ correspond to $m$ phonons. The classical amplitude $\vec{A}_i$ in Eq. (7) is proportional to the number of phonons in that mode, with $\vec{n}$ determining the wavevector $\vec{k}$ according to Eq. (9).</p>
+
+<p>What is the chemical potential for phonons? When you heat a solid for example by putting it in air, lots of phonons are produced from simply banging air molecules into the solid. That is, processes like $\text{air} \to \text{air} + \text{phonon}$ can happen. Since the sum of the chemical potentials on both sides of any reaction are the same in equilibrium, this implies that $\mu = 0$ for phonons. There is no conservation of phonon number.</p>
+
+<div class="info-box physical">
+<div class="box-title">Why $\mu = 0$ for Phonons and Photons</div>
+<p>Since phonons (and photons) can be freely created and destroyed, there is no conserved particle number. The equilibrium condition for a reaction like $\text{air} \to \text{air} + \text{phonon}$ requires the chemical potentials to balance, which forces $\mu_\text{phonon} = 0$.</p>
+</div>
+
+<p>Using $\vec{n}$ for $i$ in Eq. (2) we want to compute the grand free energy, proportional to</p>
+
+<div class="equation">$$\sum_i \ln \mathcal{Z}_i = 3\sum_{\vec{n}} \ln \frac{1}{1 - e^{-\beta\epsilon_{\vec{n}}}}$$<span class="eq-number">(12)</span></div>
+
+<p>The factor of 3 comes from the 3 polarizations.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Density of States for Phonons</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Step 1</div>
+<p>Now for a large number $N$ of atoms, the modes will be closely spaced and effectively continuous. If the integers $\vec{n}$ are very large, we can perform the sum as an integral. Denoting the highest possible $\vec{n}$ of the 3D normal modes by $\vec{n}_\text{max}$ we have</p>
+$$3\sum_{\vec{n}} F(n) = 3\int_{\vec{n}>0}^{\vec{n}_\text{max}} d^3\vec{n}\,F(n) = \frac{3}{8}\int_{-\vec{n}_\text{max}}^{\vec{n}_\text{max}} d^3\vec{n}\,F(n) = \frac{3}{8}\int_0^{n_D} 4\pi n^2\,dn\,F(n)$$
+<p>The factor of $\frac{1}{8}$ comes from the restriction that the components of $\vec{n}$ are all whole numbers, so the vector lies in one octant of 3D space; since the integrand will only depend on $n = |\vec{n}|$ it is convenient to integrate over the whole sphere in spherical coordinates with a factor of $\frac{1}{8}$.</p>
+</div>
+<div class="step"><div class="step-label">Step 2</div>
+<p>From Eq. (10) the frequency is related to $n$ as $\omega_n = \frac{\pi}{L}c_s n$ so we can change variables from $n$ to $\omega$:</p>
+$$3\sum_{\vec{n}} F(n) = \frac{3}{8}\frac{V}{c_s^3\pi^3}4\pi\int_0^{\omega_D} \omega^2\,d\omega\,F\!\left(\frac{L\omega}{\pi c_s}\right) = \int_0^{\omega_D} g(\omega)\,d\omega\,F\!\left(\frac{L\omega}{\pi c_s}\right)$$
+<p>where the density of states is:</p>
+$$g(\omega) = \frac{3V}{2\pi^2 c_s^3}\omega^2$$
+</div>
+<div class="step"><div class="step-label">Step 3</div>
+<p>The upper limit $\omega_D$ on the frequency integral is the <strong>Debye frequency</strong>. It is finite since there are a finite number of atoms hence a finite number of normal modes. To find $\omega_D$, set $F(n) = 1$ to count states:</p>
+$$3N = \frac{V}{2\pi^2 c_s^3}\omega_D^3$$
+<p>Solving for $\omega_D$:</p>
+$$\omega_D = c_s\!\left(\frac{6\pi^2 N}{V}\right)^{1/3}$$
+</div>
+</div></div>
+</div>
+
+<p>The density of states gives the integration measure for integrating over energies: the number of states between $\omega$ and $\omega + d\omega$ is $g(\omega)\,d\omega$.</p>
+
+<div class="equation key-result">$$g(\omega) = \frac{3V}{2\pi^2 c_s^3}\omega^2 = \frac{9N}{\omega_D^3}\omega^2$$<span class="eq-number">(18)</span></div>
+
+<p>where the <span class="tooltip-trigger">Debye frequency<span class="tooltip-content">The maximum frequency of phonon modes in the Debye model: $\omega_D = c_s\left(\frac{6\pi^2 N}{V}\right)^{1/3}$. It sets the energy scale for vibrations in the solid.</span></span> is</p>
+
+<div class="equation">$$\omega_D = c_s\!\left(\frac{6\pi^2 N}{V}\right)^{1/3}$$<span class="eq-number">(17)</span></div>
+
+<p>Then the grand-canonical partition function becomes</p>
+
+<div class="equation">$$\ln\mathcal{Z} = \int g(\epsilon)\,d\epsilon\,\ln\mathcal{Z}_\epsilon = -\frac{9N}{\omega_D^3}\int_0^{\omega_D} \omega^2\,d\omega\,\ln\!\left(1 - e^{-\beta\hbar\omega}\right)$$<span class="eq-number">(19)</span></div>
+
+<p>Mathematica can do this integral in terms of polylogarithms, but the final form is not illuminating, so we'll leave it as an integral.</p>
+
+<p>The energy in the Debye model is computed as</p>
+
+<div class="equation key-result">$$E = -\frac{\partial}{\partial\beta}\ln\mathcal{Z} = \frac{9N\hbar}{\omega_D^3}\int_0^{\omega_D}\frac{\omega^3}{e^{\beta\hbar\omega} - 1}\,d\omega$$<span class="eq-number">(20)</span></div>
+
+<p>Again, this integral can be evaluated in an ugly closed form. We get nicer expressions by expanding, which we can do before evaluating the integral. For large $T$ (small $\beta$),</p>
+
+<div class="equation">$$E\!\left(T \gg \frac{\hbar\omega_D}{k_B}\right) \approx \frac{9N\hbar}{\omega_D^3}\int_0^{\omega_D}\frac{\omega^3}{\beta\hbar\omega}\,d\omega = 3Nk_BT + \cdots$$<span class="eq-number">(21)</span></div>
+
+<p>The leading behavior is consistent with the classical <span class="tooltip-trigger">equipartition theorem<span class="tooltip-content">Each quadratic degree of freedom gets $\frac{1}{2}k_BT$ of average energy. For a harmonic oscillator, there's $\frac{1}{2}k_BT$ kinetic and $\frac{1}{2}k_BT$ potential, giving $k_BT$ per mode total.</span></span>: each of the $3N$ modes gets $\frac{1}{2}k_BT$ of potential energy and $\frac{1}{2}k_BT$ of kinetic energy. For small $T$, we find</p>
+
+<div class="equation">$$E\!\left(T \ll \frac{\hbar\omega_D}{k_B}\right) \approx \frac{9N\hbar}{\omega_D^3}\int_0^{\infty}\frac{\omega^3}{e^{\beta\hbar\omega}}\,d\omega = \frac{3\pi^4}{5}N\hbar\omega_D\!\left(\frac{T}{T_D}\right)^4 + \cdots$$<span class="eq-number">(22)</span></div>
+
+<p>where</p>
+
+<div class="equation key-result">$$T_D = \frac{\hbar\omega_D}{k_B} = \frac{\hbar}{k_B}c_s\!\left(\frac{6\pi^2 N}{V}\right)^{1/3}$$<span class="eq-number">(23)</span></div>
+
+<p>is the <span class="tooltip-trigger">Debye temperature<span class="tooltip-content">The temperature corresponding to the highest energy phonon mode: $T_D = \hbar\omega_D/k_B$. When $T \gg T_D$, all phonon modes are excited (classical regime). When $T \ll T_D$, only low-energy modes contribute (quantum regime). Typical values: Al (396 K), Cu (315 K), Fe (460 K).</span></span>. The Debye temperature is the temperature corresponding to the highest energy phonon mode. When $T = T_D$, the Boltzmann factor $e^{-\hbar\omega_D/(k_BT)} \approx 1$, and none of the phonon modes are exponentially suppressed. Thus $T_D$ can be thought of as the temperature above which all of the phonon modes are excited. Typical Debye temperatures for metals are in the $T_D \sim 100\,\text{K} - 500\,\text{K}$ range.</p>
+
+<p>The heat capacity for low temperature is</p>
+
+<div class="equation key-result">$$C_V(T \ll T_D) = \frac{\partial E}{\partial T} = \frac{12\pi^4}{5}Nk_B\!\left(\frac{T}{T_D}\right)^3$$<span class="eq-number">(24)</span></div>
+
+<p>The scaling of the heat capacity as $T^3$ is a testable prediction of the Debye model. At high temperature</p>
+
+<div class="equation">$$C_V(T \gg T_D) = \frac{\partial E}{\partial T} = 3Nk_B$$<span class="eq-number">(25)</span></div>
+
+<p>consistent with the <span class="tooltip-trigger">law of Dulong and Petit<span class="tooltip-content">The classical result that the molar heat capacity of a solid is $C_V = 3Nk_B = 3R$ per mole, independent of the material. Works well at high temperature but fails at low $T$.</span></span>. Roughly speaking, the Debye temperature is the temperature above which the solid can be treated classically, using the equipartition theorem, and below which quantum statistical mechanics is important.</p>
+
+<p>Here is a comparison of the heat capacity of various metals to the prediction from the Debye model:</p>
+
+<figure><img src="images/11-PhononsPhotons_p5_img0.png" alt="Comparison of heat capacity of metals to Debye model"><figcaption>Figure 2. Comparison of the specific heat of various metals to the prediction of the Debye model (solid curve) and the law of Dulong and Petit (horizontal line at $C_V/(3R) = 1$).</figcaption></figure>
+
+<p>We see that the experimental data fits very well to the Debye model: the $T^3$ behavior and constant high $T$ behavior are evident. The Debye temperature in the figure comes from fits to the curve and tends to be lower than that predicted by Eq. (23). For example, in aluminum, $c_s = 5100\,\text{m/s}$ and Eq. (23) gives $T_D = 591\,\text{K}$ while the fit gives $396\,\text{K}$. The reason for the discrepancy is that the Debye model is only a model &mdash; it ignores dispersion in the sound waves (really $\omega(k) \sim \sin^2\!\left(\frac{kL}{N}\right)$ for a regular lattice) and it treats all the bond strengths as the same, which isn't really true. Nevertheless, the Debye model gives an excellent prediction for the shape of the heat capacity, with only one free parameter $T_D$. It works so well because the shape is essentially determined by the boson distribution function, which is correct even when more details of the solid are incorporated.</p>
+
+<div class="info-box physical">
+<div class="box-title">Heat Capacity and the Third Law</div>
+<p>Note that the heat capacity in the Debye model goes to zero as $T \to 0$. This is a requirement of the 3rd law of thermodynamics ($S \to \text{finite}$ as $T \to 0$). To see that, consider a system with entropy $S_1$ at a temperature $T_1$ and cool it to $T = 0$ at constant volume. By Clausius' formula:</p>
+$$S_1 = \int \frac{dQ}{T} = \int_0^{T_1}\frac{1}{T}\frac{dQ}{dT}\,dT = \int_0^{T_1}\frac{C_V\,dT}{T}$$
+<p>For this integral to be finite as $T_1 \to 0$ we must have that $C_V \to 0$ as $T \to 0$. Thus the small $T$ behavior of $C_V$ that we found in the Debye model is consistent with the 3rd law ($C_V = \text{constant}$, the classical prediction, would not be).</p>
+</div>
+
+<h2>3. Blackbody Radiation</h2>
+
+<p>A <span class="tooltip-trigger">blackbody<span class="tooltip-content">An idealized object that absorbs and emits electromagnetic radiation of all frequencies in thermal equilibrium. Real objects approximate blackbodies &mdash; the sun, for example, emits a nearly perfect blackbody spectrum.</span></span> is an object that can absorb and emit electromagnetic waves of any frequency. Recall that radiation is produced from accelerating charges. A charge oscillating at a frequency $\omega$ will emit electromagnetic radiation; conversely light of frequency $\omega$ can induce oscillation of charged particles. So to make a blackbody, all we need is some free charge carriers. That's pretty common. Any material when heated will have molecules moving, banging into each other, and vibrating with various energies up to $k_BT$. Naturally, these vibrating molecules will produce and absorb electromagnetic waves. When studying blackbody radiation, we don't care so much about the mechanism by which radiation can thermalize with a material body. We are instead interested in the properties of the equilibrium system.</p>
+
+<p>We will begin with the thermodynamics of classical electromagnetic radiation, where we will encounter the <span class="tooltip-trigger">ultraviolet catastrophe<span class="tooltip-content">The classical prediction (Rayleigh-Jeans law) that the energy density of radiation grows as $\omega^2$ without bound at high frequency, giving infinite total energy. This dramatic failure of classical physics led Planck to quantize radiation in 1900.</span></span>. Quantum statistical mechanics averts this catastrophe and makes quantitative and easily verifiable predictions about blackbody radiation.</p>
+
+<h3>3.1 Classical Blackbodies</h3>
+
+<p>Let's start with classical electromagnetism. The energy density in an electromagnetic field is</p>
+
+<div class="equation">$$\frac{E}{V} = \frac{1}{2}\epsilon_0 \vec{E}^{\,2} + \frac{1}{2}\frac{1}{\mu_0}\vec{B}^{\,2}$$<span class="eq-number">(27)</span></div>
+
+<p>Electromagnetic waves also exert radiation pressure</p>
+
+<div class="equation">$$\vec{P} = \frac{1}{c}\vec{S} = \epsilon_0\,\vec{E} \times \vec{B}$$<span class="eq-number">(28)</span></div>
+
+<p>where $\vec{S}$ is the Poynting vector that gives the energy flux (power/area). Radiation pressure is a vector. It gives the momentum per unit area of the classical radiation. Unlike pressure due to thermal motion of a gas, radiation pressure need not be uniform in all directions (the radiation pressure from the sun comes only in the direction away from the sun). If we confine radiation to a box with reflecting walls, then when the radiation bounces off a wall, its momentum/area changes by $-2\vec{P}$. If we allow for uniform radiation going towards or away from the wall in the $x$, $y$ or $z$ direction, it has a $\frac{1}{6}$ chance of going towards the wall, so the pressure from electromagnetic radiation is $P = \frac{1}{3}|\vec{P}| = \frac{1}{3c}|\vec{S}|$.</p>
+
+<p>In the absence of charged particles, light is described by electromagnetic fields $\vec{E}$ and $\vec{B}$ satisfying Maxwell's equations with no sources:</p>
+
+<div class="equation">$$\vec{\nabla}\cdot\vec{E} = 0, \quad \vec{\nabla}\times\vec{E} = -\frac{\partial}{\partial t}\vec{B}, \quad \vec{\nabla}\cdot\vec{B} = 0, \quad \vec{\nabla}\times\vec{B} = \mu_0\epsilon_0\frac{\partial}{\partial t}\vec{E}$$<span class="eq-number">(29)</span></div>
+
+<p>These combine to produce wave equations for $\vec{E}$ and $\vec{B}$:</p>
+
+<div class="equation">$$\left[\frac{\partial^2}{\partial t^2} - c^2\vec{\nabla}^2\right]\vec{E}(\vec{x}, t) = 0, \qquad \left[\frac{\partial^2}{\partial t^2} - c^2\vec{\nabla}^2\right]\vec{B}(\vec{x}, t) = 0$$<span class="eq-number">(30)</span></div>
+
+<p>with $c = \frac{1}{\sqrt{\mu_0\epsilon_0}}$ the speed of light. Solutions to these equations are electromagnetic waves. A useful basis of electromagnetic waves are linearly-polarized standing waves</p>
+
+<div class="equation">$$\vec{E}(\vec{x}, t) = \vec{E}_0\cos(\vec{k}\cdot\vec{x})\cos(\omega t)$$<span class="eq-number">(31)</span></div>
+
+<p>Plugging into Maxwell's equations (or the wave equations), we find a number of constraints</p>
+
+<div class="equation">$$\omega = c|\vec{k}|, \qquad \vec{k}\cdot\vec{E}_0 = 0, \qquad \vec{k}\cdot\vec{B}_0 = 0, \qquad \omega\vec{B}_0 = \vec{k}\times\vec{E}_0$$<span class="eq-number">(33)</span></div>
+
+<p>For any vector $\vec{k}$ there are two independent vectors orthogonal to it, thus from the second constraint, $\vec{k}\cdot\vec{E}_0 = 0$, there are <strong>two</strong> choices for $\vec{E}_0$ for a given $\vec{k}$ (the two polarizations). The third, longitudinal, polarization that was present in sound waves (phonons) is absent for light (the only solution with $\vec{E}_0 \propto \vec{k}$ is $\vec{E}_0 = 0$). The 4th constraint implies that $\vec{B}_0$ is completely fixed by $\vec{k}$ and $\vec{E}_0$. In particular, $|\vec{E}| = |\vec{E}_0| = c|\vec{B}_0| = c|\vec{B}|$, so the energy density for a plane wave is</p>
+
+<div class="equation">$$\frac{E}{V} = \epsilon_0 |\vec{E}|^2$$<span class="eq-number">(35)</span></div>
+
+<p>and the radiation pressure is $\vec{P} = \epsilon_0 |\vec{E}|^2\hat{k}$.</p>
+
+<p>Now say we have a box of light which is an incoherent sum of plane waves of all different directions and magnitudes. Since the pressure is $P = \frac{1}{3}|\vec{P}| = \frac{\epsilon_0}{3}|\vec{E}|^2$ we then have</p>
+
+<div class="equation key-result">$$E = 3PV$$<span class="eq-number">(37)</span></div>
+
+<p>This is the <strong>equation of state for electromagnetic radiation</strong>. Our derivation was purely classical, and does not depend on thinking of electromagnetic waves as having quantized energies or being made of particles called photons.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Stefan's Law from Thermodynamics</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Step 1</div>
+<p>Start with the free energy, which satisfies the general Maxwell relation $\left(\frac{\partial F}{\partial V}\right)_T = -P$. For classical electromagnetic radiation there is no concept of $N$, so $P = P(V, T)$. For the pressure to be intensive it cannot depend on $V$, therefore $P$ only depends on $T$. We can then trivially integrate to get $F = -PV$.</p>
+</div>
+<div class="step"><div class="step-label">Step 2</div>
+<p>The equation of state $E = 3PV$ then implies $F = -PV = -\frac{E}{3}$. Since $F = E - TS$ and $S = -\left(\frac{\partial F}{\partial T}\right)_V$:</p>
+$$F = -3F + T\!\left(\frac{\partial F}{\partial T}\right)_V$$
+</div>
+<div class="step"><div class="step-label">Step 3</div>
+<p>This is a differential equation whose solution is $F \propto T^4$. Then $E \propto T^4$ as well, and since $E$ is extensive ($E = 3PV$ with $P$ independent of $V$), we know $E = \text{const} \times VT^4$.</p>
+$$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
+<p>for some constant $4\sigma$. That the energy density is proportional to $T^4$ is known as <strong>Stefan's law</strong>. Thermodynamics alone does not let us compute the proportionality constant $\sigma$.</p>
+</div>
+</div></div>
+</div>
+
+<p>The Gibbs free energy is</p>
+
+<div class="equation">$$G = F + PV = (-PV) + PV = 0$$<span class="eq-number">(42)</span></div>
+
+<p>Since $G = \mu N$ this says that the chemical potential for light is zero: $\mu = 0$. We can also understand this as we did for phonons: since radiation can be produced by vibrating atoms, $\text{atom} \to \text{atom} + \text{radiation}$ is allowed, and, since the sum of chemical potentials on the two sides of a reaction are equal, we conclude that the chemical potential for electromagnetic radiation must vanish.</p>
+
+<p>What about the frequency dependence of the light? Our classical model of light in a box just had a bunch of different frequency plane waves bouncing around incoherently. We did not attempt to apportion energy into the different wavenumbers. How could we do so? The only classical handle we have is the equipartition theorem &mdash; we allocate $\frac{1}{2}k_BT$ of energy for each $\vec{k}$ and each polarization. Since $\omega = c|\vec{k}|$ and the volume of wavevectors goes like $d^3k \sim k^2 dk \sim \omega^2 d\omega$ we expect more and more energy at higher and higher frequencies. That is</p>
+
+<div class="equation">$$I(\omega) \approx \omega^2 k_BT$$<span class="eq-number">(44)</span></div>
+
+<p>This is known as the <span class="tooltip-trigger">Rayleigh-Jeans Law<span class="tooltip-content">The classical prediction for blackbody radiation: $I(\omega) \propto \omega^2 k_BT$. It works at low frequencies but diverges at high frequencies, predicting infinite total energy &mdash; the ultraviolet catastrophe.</span></span>. Instead, the observed energy spectrum dies off at high frequencies:</p>
+
+<figure><img src="images/11-PhononsPhotons_p8_img0.png" alt="Ultraviolet catastrophe: classical vs observed spectrum"><figcaption>Figure 3. The classical prediction for the intensity of radiation coming from a blackbody disagrees with experimental observation at frequencies $\omega \gtrsim k_BT/\hbar$.</figcaption></figure>
+
+<p>This is known as the <strong>ultraviolet catastrophe</strong>. This catastrophe of 19th century classical physics was resolved in 1900 by Max Planck who first quantized the energy in the different modes.</p>
+
+<h3>3.2 Quantum Theory</h3>
+
+<p>To compute the thermodynamic properties of blackbody radiation using quantum statistical mechanics, we first need to work out the energy spectrum and the density of states. The quanta of light are called photons. The amplitude of an electromagnetic wave with wavevector $\vec{k}$ is proportional to the number of photons with that wavenumber (analogously to phonons). Since we can have varying amplitudes at each $\vec{k}$, states can be multiply occupied so photons must be bosons. This also follows from quantum electrodynamics (QED), where photons are seen to have spin 1 and therefore are bosons by the spin-statistics theorem.</p>
+
+<p>To model a blackbody, let's treat it as a cavity with walls of size $L$. It doesn't really matter if the blackbody is a cube or round or what the boundary conditions are. To see this, note that the boundary conditions only affect the longest-wavelength fluctuations &mdash; the ones that can reach the sides. The higher frequency/smaller wavelength modes that we care most about (e.g. for the ultraviolet catastrophe) are determined by the dynamics of the interior of the body.</p>
+
+<p>For concreteness, let's take Neumann boundary conditions on the edge of a 3D box. Then the independent modes of the electric field have the form</p>
+
+<div class="equation">$$\vec{E}(x, y, z) = \vec{E}_0\cos\!\left(\frac{\pi n_1}{L}x\right)\cos\!\left(\frac{\pi n_2}{L}y\right)\cos\!\left(\frac{\pi n_3}{L}z\right)$$<span class="eq-number">(45)</span></div>
+
+<p>with $n_1, n_2$ and $n_3$ taking whole number values. Thus the normal modes in the box are described by wavevectors</p>
+
+<div class="equation">$$\vec{k} = \left(\frac{\pi n_1}{L}, \frac{\pi n_2}{L}, \frac{\pi n_3}{L}\right) = \frac{\pi}{L}\vec{n}$$<span class="eq-number">(46)</span></div>
+
+<p>with $\vec{n} = (n_1, n_2, n_3)$ a vector of whole numbers. The frequency is $\omega_k = c|\vec{k}|$ and so the energy is</p>
+
+<div class="equation">$$\epsilon_{\vec{n}} = \hbar\omega_k = \hbar c|\vec{k}| = \frac{\pi}{L}\hbar c\,n$$<span class="eq-number">(47)</span></div>
+
+<p>with $n = |\vec{n}|$. The mode with $\vec{n} = (0, 0, 0)$ is zero, so it cannot store energy. All the physical modes have at least one component of $\vec{n}$ nonzero.</p>
+
+<p>Note that the allowed frequencies in a 1D box are quantized classically, $\omega = \frac{\pi}{L}cn$; $n = 0, 1, 2, 3, \cdots$, just like in a solid. In a solid there are $3N$ normal modes and an upper limit on $\omega$ ($\omega \leq \omega_D$) but in a blackbody, there is no upper bound. Quantum mechanics doesn't quantize the system, it just lets us convert the frequencies into energies $\epsilon = \hbar\omega$ by introducing Planck's constant.</p>
+
+<h3>3.3 Equation of State</h3>
+
+<p>Using Eq. (47), $\epsilon_{\vec{n}} = \frac{\pi}{L}\hbar c|\vec{n}|$, the grand-canonical partition function for the photon gas is</p>
+
+<div class="equation">$$\ln\mathcal{Z} = 2\sum_{\vec{n}}\ln\mathcal{Z}_n = 2\sum_{\vec{n}}\ln\frac{1}{1 - e^{-\beta\epsilon_n}}$$<span class="eq-number">(48)</span></div>
+
+<p>The average energy is computed from the grand partition function</p>
+
+<div class="equation">$$\langle E \rangle = -\frac{\partial\ln\mathcal{Z}}{\partial\beta} = \sum_{\vec{n}}\frac{2\epsilon_n}{e^{\beta\epsilon_n} - 1}$$<span class="eq-number">(49)</span></div>
+
+<p>This matches the general formula $\langle E \rangle = 2\sum_i \epsilon_i \langle n_i \rangle$, with $\langle n_i \rangle = \frac{1}{e^{\beta\epsilon_n} - 1}$ the Bose-Einstein distribution, with an extra factor of 2 for two polarizations.</p>
+
+<p>We can compute the pressure as $P = -\left(\frac{\partial\Phi}{\partial V}\right)_T$ where the grand free energy is $\Phi = -\frac{1}{\beta}\ln\mathcal{Z}$. All the volume dependence comes from $\epsilon_n = \frac{\pi}{L}\hbar cn$ with $L = V^{1/3}$. So</p>
+
+<div class="equation">$$P = \frac{2}{\beta}\sum_n \frac{\partial\ln\mathcal{Z}_n}{\partial V} = \frac{2}{\beta}\sum_n \frac{\partial\ln\mathcal{Z}_n}{\partial\epsilon_n}\frac{\partial\epsilon_n}{\partial L}\frac{\partial L}{\partial V} = \frac{2}{\beta}\sum_{\vec{n}}\frac{-\beta}{e^{\beta\epsilon_{\vec{n}}} - 1}\left(\frac{-\epsilon_n}{L}\right)\frac{L}{3V} = \frac{1}{3V}\langle E \rangle$$<span class="eq-number">(50)</span></div>
+
+<p>That is,</p>
+
+<div class="equation">$$\langle E \rangle = 3PV$$<span class="eq-number">(51)</span></div>
+
+<p>This equation of state is identical to what we derived classically, as it should be since that derivation used only thermodynamics.</p>
+
+<h3>3.4 Planck Distribution</h3>
+
+<p>To proceed further, we need to sum over $\vec{n}$. As usual, we do this by going to the continuum limit and integrating over energy. As in the phonon case, we compute the density of states:</p>
+
+<div class="equation">$$2\sum_{\vec{n}} 1 = 2 \times \frac{1}{8}\int_0^{\infty} d^3\vec{n} = 2 \times \frac{\pi}{2}\frac{V}{c^3\pi^3}\int_0^{\infty}\omega^2\,d\omega = \int_0^{\infty} g(\omega)\,d\omega$$<span class="eq-number">(52)</span></div>
+
+<p>where the density of states is</p>
+
+<div class="equation key-result">$$g(\omega) = \frac{V}{c^3\pi^2}\omega^2$$<span class="eq-number">(53)</span></div>
+
+<p>This differs from the Debye model by a factor of $\frac{2}{3}$ for the number of polarizations and the replacement $c_s \to c$ for the speed of light. There is also no upper limit to $\omega$ for photons. Otherwise the density of states is the same since photons and phonons are both massless particles-in-a-box.</p>
+
+<p>Then we have</p>
+
+<div class="equation">$$\langle E \rangle = 2\sum_{\vec{n}}\frac{\epsilon_{\vec{n}}}{e^{\beta\epsilon_{\vec{n}}} - 1} = \int_0^{\infty}\frac{\hbar\omega}{e^{\beta\hbar\omega} - 1}g(\omega)\,d\omega = \frac{V\hbar}{c^3\pi^2}\int_0^{\infty}\frac{\omega^3}{e^{\beta\hbar\omega} - 1}\,d\omega$$<span class="eq-number">(54)</span></div>
+
+<p>It is helpful to write</p>
+
+<div class="equation">$$\frac{\langle E \rangle}{V} = \int_0^{\infty} d\omega\, u(\omega, T)$$<span class="eq-number">(55)</span></div>
+
+<p>where $u(\omega, T)\,d\omega$ is the energy density as a function of frequency:</p>
+
+<div class="equation key-result">$$u(\omega, T)\,d\omega = \frac{\hbar\omega}{e^{\beta\hbar\omega} - 1}g(\omega)\,d\omega = \frac{\hbar}{\pi^2 c^3}\frac{\omega^3}{e^{\hbar\omega/(k_BT)} - 1}\,d\omega$$<span class="eq-number">(56)</span></div>
+
+<p>That is, $u\,d\omega$ is the amount of energy density in photons with frequencies between $\omega$ and $\omega + d\omega$.</p>
+
+<p>To compute the total energy density in the blackbody, we just perform the integral:</p>
+
+<div class="equation">$$\frac{\langle E \rangle}{V} = \int_0^{\infty}d\omega\,u(\omega, T) = \frac{\pi^2 k_B^4}{15\hbar^3 c^3}T^4 = 7.5 \times 10^{-16}\,\frac{\text{J}}{\text{m}^3\text{K}^4}$$<span class="eq-number">(57)</span></div>
+
+<p>Now we can write this as</p>
+
+<div class="equation">$$\frac{\langle E \rangle}{V} = \frac{4\sigma}{c}\,T^4$$<span class="eq-number">(58)</span></div>
+
+<p>where</p>
+
+<div class="equation key-result">$$\sigma = \frac{\pi^2 k_B^4}{60\hbar^3 c^2} = 5.67 \times 10^{-8}\,\frac{\text{W}}{\text{m}^2\,\text{K}^4}$$<span class="eq-number">(59)</span></div>
+
+<p>is known as <span class="tooltip-trigger">Stefan's constant<span class="tooltip-content">$\sigma = 5.67 \times 10^{-8}\,\text{W}\,\text{m}^{-2}\,\text{K}^{-4}$. It determines the total radiated power from a blackbody: $\Phi = \sigma T^4$. Quantum statistical mechanics predicts its exact value from fundamental constants.</span></span>. Thus quantum statistical mechanics has computed the proportionality factor that thermodynamics alone was unable to provide.</p>
+
+<p>Rather than the total or differential energy, we are often interested in the power: how much energy leaves the blackbody per unit time. A related quantity is the flux of radiation, which is the power per unit area. The flux is given by the energy density times the velocity. For example, the flux in an electromagnetic wave is $\Phi = c\frac{E}{V}$, since electromagnetic waves travel at the speed of light.</p>
+
+<figure><img src="images/11-PhononsPhotons_p10_img0.png" alt="Geometry of radiation flux from a surface"><figcaption>The outward flux from a surface includes a geometric projection factor $\cos\theta$ (Lambert's cosine law).</figcaption></figure>
+
+<p>Think of the flux of photons passing through a spherical shell far away from the blackbody at some time. At any point on the shell, it is only the perpendicular component of the flux from the surface that hits the point. So we need to multiply by a projection factor of $\cos\theta$ when doing the angular integral over the outgoing directions. (The factor of $\cos\theta$ actually has a name, <span class="tooltip-trigger">Lambert's cosine law<span class="tooltip-content">The radiation intensity from a surface element is proportional to $\cos\theta$, where $\theta$ is the angle from the surface normal. This geometric factor reduces the effective solid angle from $4\pi$ to $\pi$.</span></span>). Thus, instead of $4\pi$ of the sphere, the effective solid angle reached from the surface of the black body is</p>
+
+<div class="equation">$$\Omega_\text{eff} = \int_0^{2\pi}d\phi\int_0^{\pi/2}\sin\theta\,d\theta\,\cos\theta = \pi$$<span class="eq-number">(61)</span></div>
+
+<p>The $0$ to $\frac{\pi}{2}$ limits on the $\theta$ integral (upper hemisphere only) enforce the first point, that the radiation is outgoing. Thus we need to rescale our flux by $\frac{\Omega_\text{eff}}{\Omega_\text{total}} = \frac{\Omega_\text{eff}}{4\pi}$. So the total flux is</p>
+
+<div class="equation key-result">$$\Phi = \frac{\Omega_\text{eff}}{4\pi}\,c\,\frac{E}{V} = \sigma T^4$$<span class="eq-number">(62)</span></div>
+
+<p>This relation between flux and temperature is known as the <span class="tooltip-trigger">Stefan-Boltzmann law<span class="tooltip-content">The total power radiated per unit area from a blackbody: $\Phi = \sigma T^4$. Doubling the temperature increases radiation by a factor of 16!</span></span>.</p>
+
+<p>Similarly, we can compute the intensity, meaning the differential flux per unit angular frequency, by using the differential energy density $u(\omega, T)$ instead of the energy density. We then get</p>
+
+<div class="equation key-result">$$I(\omega, T)\,d\omega \equiv \frac{\Omega_\text{eff}}{4\pi}\,c\,u(\omega, T)\,d\omega = \frac{\hbar}{4\pi^2 c^2}\frac{\omega^3}{e^{\hbar\omega/(k_BT)} - 1}\,d\omega$$<span class="eq-number">(63)</span></div>
+
+<p>This is the intensity of blackbody radiation as a function of frequency. It has units of power per area per frequency. This function is known as the <span class="tooltip-trigger">Planck distribution<span class="tooltip-content">The spectral distribution of blackbody radiation, derived by Max Planck in 1900. It was the first application of energy quantization and launched quantum mechanics.</span></span> or <strong>Planck radiation formula</strong>.</p>
+
+<p>To convert the intensity from angular frequency $\omega$ to wavelength $\lambda = \frac{2\pi}{\omega}c$ we need a Jacobian factor of $\left|\frac{d\omega}{d\lambda}\right| = \frac{2\pi}{\lambda^2}c$. This gives the intensity as a function of wavelength:</p>
+
+<div class="equation key-result">$$I(\lambda, T)\,d\lambda = I(\omega, T)\left|\frac{d\omega}{d\lambda}\right|d\lambda = \frac{2c^2 h\pi}{\lambda^5}\frac{1}{e^{hc/(\lambda k_BT)} - 1}\,d\lambda$$<span class="eq-number">(64)</span></div>
+
+<p>This intensity has units of power per area per wavelength. It describes the wavelength-dependence of the emitted power from a blackbody, known as the <strong>blackbody spectrum</strong>:</p>
+
+<figure><img src="images/11-PhononsPhotons_p11_img0.png" alt="Blackbody spectrum from the Planck distribution"><figcaption>Figure 4. Blackbody spectrum from the Planck distribution. Blue dots are the maxima: $\lambda_\text{max} = 0.201\,\frac{hc}{k_BT}$.</figcaption></figure>
+
+<!-- INTERACTIVE: Blackbody spectrum -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">&#9728;&#65039;</span> Interactive: Blackbody Radiation Spectrum</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-blackbody" class="sim"></canvas></div>
+  <div class="vis-controls">
+    <label>Temperature: <input type="range" id="bb-temp" min="1000" max="12000" step="100" value="5000"> <span class="value-display" id="bb-temp-val">5000</span> K</label>
+  </div>
+</div>
+
+<p>A useful shortcut to figuring out what color a blackbody spectrum is to use the location of the peak. We can compute this by solving $\frac{dI}{d\lambda} = 0$. Pulling out the dimensionful factors, $\frac{dI}{d\lambda} = 0$ gives a transcendental equation that can be solved numerically. The result is</p>
+
+<div class="equation key-result">$$\lambda_\text{peak} = 0.201\,\frac{hc}{k_BT} = \frac{2.89\,\text{mm}\cdot\text{K}}{T}$$<span class="eq-number">(65)</span></div>
+
+<p>The relationship between the peak wavelength and temperature is known as <span class="tooltip-trigger">Wien's displacement law<span class="tooltip-content">$T \cdot \lambda_\text{peak} = 2.89\,\text{mm}\cdot\text{K} = \text{constant}$. Hotter objects peak at shorter wavelengths: the sun peaks in visible light, while the cosmic microwave background peaks at millimeter wavelengths.</span></span>: $T \cdot \lambda_\text{peak} = 2.89\,\text{mm}\cdot\text{K} = \text{constant}$.</p>
+
+<p>For an example, the surface of the sun is 5800 K, so the peak of its blackbody spectrum is $\lambda_\text{max} = \frac{2.89\,\text{mm}\cdot\text{K}}{5780\,\text{K}} = 499\,\text{nm}$, which is right in the middle of the visible spectrum. What luck! Stars that are cooler peak at larger wavelength (lower frequency, lower energy). For example, Antares (a red giant) peaks in red wavelengths.</p>
+
+<figure><img src="images/11-PhononsPhotons_p12_img1.png" alt="Stars of different temperatures showing different colors"><figcaption>Figure 5. A cold star like Antares (left) might have a surface temperature of 3000 K. It looks red. The sun (middle) has a surface temperature around 5800 K, making it yellower. Sirius (right) has a surface temperature around 9,900 K, making it look blue to white.</figcaption></figure>
+
+<div class="info-box example">
+<div class="box-title">Solar Radiation</div>
+<p>We can compute other features of solar radiation from our formulas. The total radiation flux is:</p>
+$$\Phi_\odot = \sigma \times (5780\,\text{K})^4 = 6.32 \times 10^7\,\frac{\text{W}}{\text{m}^2}$$
+<p>The sun's radius is $R_\odot = 7 \times 10^8\,\text{m}$ thus, the total power radiated is:</p>
+$$P = 4\pi R_\odot^2 \Phi_\odot = 3.84 \times 10^{26}\,\text{W}$$
+<p>The earth is $R_{\odot\to\oplus} = 1.5 \times 10^{11}\,\text{m}$ from the sun. At this distance, we receive:</p>
+$$\Phi_{\odot\to\oplus} = \frac{1}{4\pi R_{\odot\to\oplus}^2}P = 1358\,\frac{\text{W}}{\text{m}^2}$$
+<p>This solar flux $1.35\,\text{kW/m}^2$ is critical for nearly every aspect of life on earth. About $1\,\text{kW/m}^2$ of this flux penetrates the atmosphere and makes it to the earth's surface on a clear day.</p>
+</div>
+
+<h3>3.5 Entropy and Photon Number</h3>
+
+<p>The grand-canonical partition function for a blackbody is, from Eq. (48)</p>
+
+<div class="equation">$$\ln\mathcal{Z} = -2\sum_{\vec{n}}\ln\!\left(1 - e^{-\beta\frac{\pi\hbar c}{L}|\vec{n}|}\right) = -\int_0^{\infty}\ln\!\left(1 - e^{-\beta\hbar\omega}\right)g(\omega)\,d\omega$$<span class="eq-number">(68)</span></div>
+
+<p>Plugging in the density of states in Eq. (53) gives</p>
+
+<div class="equation">$$\ln\mathcal{Z} = -\frac{V}{c^3\pi^2}\int_0^{\infty}\omega^2\,d\omega\,\ln\!\left(1 - e^{-\beta\hbar\omega}\right) = \frac{\pi^2}{45c^3\hbar^3\beta^3}V$$<span class="eq-number">(69)</span></div>
+
+<p>We can double check the energy density using Eq. (49)</p>
+
+<div class="equation">$$\langle E \rangle = -\frac{\partial\ln\mathcal{Z}}{\partial\beta} = \frac{\pi^2 V}{15c^3\hbar^3\beta^4} = \frac{4\sigma}{c}T^4 V$$<span class="eq-number">(70)</span></div>
+
+<p>The heat capacity is</p>
+
+<div class="equation">$$C_V = \frac{\partial\langle E \rangle}{\partial T}\bigg|_V = \frac{16\sigma T^3 V}{c}$$<span class="eq-number">(71)</span></div>
+
+<p>This goes to zero at $T \to 0$ in agreement with the 3rd law of thermodynamics.</p>
+
+<p>The entropy is</p>
+
+<div class="equation">$$S = \int_0^T dT'\,\frac{C_V(T')}{T'} = \frac{16}{3}\frac{\sigma}{c}T^3 V = \frac{32\pi^5}{45}\!\left(\frac{k_BT}{hc}\right)^3 k_B V$$<span class="eq-number">(72)</span></div>
+
+<p>The expected number of photons in the volume $V$ is</p>
+
+<div class="equation">$$\langle N \rangle = \int d\omega\,g(\omega)\frac{1}{e^{\beta\hbar\omega} - 1} = \frac{V}{c^3\pi^2}\int_0^{\infty}d\omega\frac{\omega^2}{e^{\beta\hbar\omega} - 1} = \frac{2V}{c^3\pi^2\hbar^3\beta^3}\zeta_3 = 16\pi V\!\left(\frac{k_BT}{hc}\right)^3\zeta_3$$<span class="eq-number">(73)</span></div>
+
+<p>where $\zeta_3 = \zeta(3) = \sum_1^{\infty}\frac{1}{x^3} = 1.202$. Note that $S$ and $N$ are proportional to each other:</p>
+
+<div class="equation">$$S = \frac{2\pi^4}{45\zeta_3}k_B N = 3.61\,k_B N$$<span class="eq-number">(74)</span></div>
+
+<p>Thus each photon has $3.61\,k_B$ of entropy (on average). The information carried by each thermal photon is $H = \frac{S}{Nk_B\ln 2} = 5.2\,\text{bits}$. Note that this entropy per photon is independent of temperature.</p>
+
+<div class="info-box example">
+<div class="box-title">The Cosmic Microwave Background</div>
+<p>The cosmic microwave background (CMB) is a photon gas (blackbody) at 2.73 K. The photon spectrum therefore has a peak at $\lambda_\text{max} = 1.05\,\text{mm}$ (microwave). The energy density of the CMB is $\frac{\langle E \rangle}{V} = 0.26\,\frac{\text{MeV}}{\text{m}^3}$. This is much smaller than the energy density of matter, which is around $0.2\,\text{proton/m}^3$ giving $\frac{\langle E \rangle}{V} \approx 200\,\frac{\text{MeV}}{\text{m}^3}$. In fact, both of these are much smaller than the total energy density of the universe, which we can deduce from the rate of expansion $\frac{E}{V} = \frac{3c^2 H_0^2}{8\pi G} = 5200\,\frac{\text{MeV}}{\text{m}^3}$. Thus matter is only 4% of the energy density of the universe and photons are a measly 0.005%. The missing 96% is called "dark", since we don't see it. It consists of dark energy and dark matter.</p>
+<p>The entropy density of the CMB is $\frac{S}{V} = (3 \times 10^9)\,\frac{k_B}{\text{m}^3}$. This is much greater than the entropy density of matter: 1 proton/m$^3$ gives around $k_B/\text{m}^3$ of entropy. So the entropy density of photons is a billion times greater than the entropy density for matter. The observable universe is around $10^{27}$ meters across, giving a total entropy of the universe of $S = 10^{90}\,k_B$ almost entirely contained in the photons of the CMB.</p>
+<p>The number density of CMB photons is $n = \frac{N}{V} = (8 \times 10^8)\,\frac{1}{\text{m}^3}$. The baryon-to-photon ratio is:</p>
+$$\eta = \frac{n_B}{n_\gamma} = 6 \times 10^{-10}$$
+<p>One important unsolved mystery is why this is not much smaller (the baryogenesis problem). Since both $n$ and $n_B$ scale like $T^3$, the baryon-to-photon ratio has remained essentially constant since the CMB photons were produced, 3 minutes after the big bang.</p>
+</div>
+
+<h2>4. Summary</h2>
+
+<p>This lecture introduced and studied two important bosonic systems using quantum statistical mechanics: phonons, which account for properties of solids, and photons, which explain blackbody radiation.</p>
+
+<p>For either case, the first step was to work out the <strong>density of states</strong>. The density of states $g(\epsilon)$ gives the number of states with energies between $\epsilon$ and $\epsilon + d\epsilon$. From it we can integrate $\int_0^{\epsilon_\text{max}} g(\epsilon)\,d\epsilon = N_\text{states}$ to get the total number of states. We also use the density of states to compute the grand-canonical partition function as $\ln\mathcal{Z} = \int g(\epsilon)\,d\epsilon\,\ln\mathcal{Z}_\epsilon$ where $\mathcal{Z}_\epsilon = (1 - e^{-\beta(\epsilon - \mu)})^{-1}$ is the partition function for a single state of energy $\epsilon$. Much of the difficult work in statistical mechanics is in computing the density of states $g(\epsilon)$. From $\mathcal{Z}$ we deduce the heat capacity and other thermodynamic quantities.</p>
+
+<p>In the <strong>Debye model</strong>, the possible states are the normal modes of excitation of a solid. These are each treated as simple harmonic oscillators. The excitation number of each oscillator is the number of phonons in that mode. The density of states is then $g(\omega) = \frac{3V}{2\pi^2 c_s^3}\omega^2$ with the factor of 3 accounting for the 3 polarizations of sound waves in the solids. Since there are a finite number of normal modes, there is a maximum energy. Using $\int_0^{\epsilon_D} g(\epsilon)\,d\epsilon = N_\text{states} = 3N_\text{atoms}$, one can trade $\epsilon_D$ for $N_\text{atoms}$. We then computed the heat capacity at high temperature, $C_V \approx 3Nk_B$, consistent with the Law of Dulong and Petit, and at low temperature, $C_V \approx \frac{12\pi^4}{5}Nk_B\!\left(\frac{T}{T_D}\right)^3$, where $T_D = \frac{\hbar\omega_D}{k_B}$ is the Debye temperature. The heat capacity in both regimes is in good agreement with data for a variety of solids.</p>
+
+<p><strong>Blackbody radiation</strong> refers to the equilibrium of electromagnetic radiation in a cavity at temperature $T$. In quantum statistical mechanics, blackbody radiation is computed using a grand canonical ensemble of photons. The density of states for photons is $g(\omega) = \frac{V}{c^3\pi^2}\omega^2$. This is similar to the density of states in the Debye model, up to the fact that there are two polarizations of photons but 3 polarizations of phonons, and the different speeds. An important result is Stefan's law for the energy density: $\frac{E}{V} = \frac{4\sigma}{c}T^4$. The scaling with $T$ can be deduced classically, but the numerical constant in front $\sigma = \frac{\pi^2 k_B^4}{60\hbar^3 c^2}$ can only be determined using quantum statistical mechanics.</p>
+
+<p>The most important result from the theory of blackbody radiation is the intensity spectrum</p>
+
+<div class="equation key-result">$$I(\lambda, T)\,d\lambda = \frac{2c^2 h\pi}{\lambda^5}\frac{1}{e^{hc/(\lambda k_BT)} - 1}\,d\lambda$$<span class="eq-number">(76)</span></div>
+
+<p>Intensity is the power radiated per unit area per unit wavelength. Integrating it over $\lambda$ gives the total radiated power per unit area, aka the total flux, $\Phi = \sigma T^4$. For example, from this we can compute the total power radiated from the sun given its surface temperature: $\Phi_\odot = \sigma \times (5780\,\text{K})^4 = 6.32 \times 10^7\,\frac{\text{W}}{\text{m}^2}$.</p>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Density of states</strong> $g(\epsilon)$ is the key input for any quantum statistical mechanics calculation: $\ln\mathcal{Z} = \int g(\epsilon)\,d\epsilon\,\ln\mathcal{Z}_\epsilon$.</li>
+<li><strong>Phonons</strong> (Debye model): density of states $g(\omega) = \frac{9N}{\omega_D^3}\omega^2$; heat capacity goes from $3Nk_B$ (Dulong-Petit) at high $T$ to $\frac{12\pi^4}{5}Nk_B(T/T_D)^3$ at low $T$.</li>
+<li><strong>Photons</strong>: density of states $g(\omega) = \frac{V}{\pi^2 c^3}\omega^2$; energy density $u(\omega) = \frac{\hbar}{\pi^2 c^3}\frac{\omega^3}{e^{\hbar\omega/k_BT} - 1}$ resolves the ultraviolet catastrophe.</li>
+<li><strong>Stefan-Boltzmann law</strong>: total radiated flux $\Phi = \sigma T^4$ with $\sigma = 5.67 \times 10^{-8}\,\text{W}\,\text{m}^{-2}\,\text{K}^{-4}$.</li>
+<li><strong>Wien's displacement law</strong>: $\lambda_\text{peak} T = 2.89\,\text{mm}\cdot\text{K}$ &mdash; hotter objects peak at shorter wavelengths.</li>
+<li>Both phonons and photons have $\mu = 0$ because particle number is not conserved.</li>
+</ul>
+</div>

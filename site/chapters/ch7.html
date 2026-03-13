@@ -1,0 +1,642 @@
+<div class="chapter-number">Chapter 7</div>
+<h1 class="chapter-title">Ensembles</h1>
+<p class="chapter-intro">
+In statistical mechanics, we study the possible microstates of a system. We never know exactly which microstate the system is in. Nor do we care. We are interested only in the behavior of a system based on the possible microstates it could be, that share some macroscopic property (like volume $V$, energy $E$, or number of particles $N$). The possible microstates a system could be in are known as the <span class="tooltip-trigger">ensemble<span class="tooltip-content">An imaginary collection of systems with different microscopic arrangements but the same fixed macroscopic properties</span></span> of states for a system. There are different kinds of ensembles.
+</p>
+
+<!-- Section 1: Introduction -->
+<h2>7.1 Introduction</h2>
+
+<p>So far, we have been counting microstates with a fixed number of particles $N$ and a fixed total energy $E$. We defined $\Omega$ as the total number of microstates for a system. That is</p>
+
+<div class="equation">
+$$\Omega(E, V, N) = \sum_{\substack{\text{microstates } k \\ \text{with same } N,V,E}} 1$$
+<span class="eq-number">(1)</span>
+</div>
+
+<p>Then $S = k_B \ln \Omega$ is the entropy, and all other thermodynamic quantities follow from $S$. For an isolated system with $N$ fixed and $E$ fixed the ensemble is known as the <span class="tooltip-trigger">microcanonical ensemble<span class="tooltip-content">An ensemble where the total energy $E$, volume $V$, and particle number $N$ are all fixed</span></span>. In the microcanonical ensemble, the temperature is a derived quantity, with $\frac{1}{T} = \frac{\partial S}{\partial E}$. So far, we have only been using the microcanonical ensemble.</p>
+
+<p>For example, a gas of identical monatomic particles has $\Omega(E, V, N) \sim \frac{1}{N!} V^N E^{\frac{3}{2}N}$. From this we computed the entropy $S = k_B \ln \Omega$ which at large $N$ reduces to the Sackur-Tetrode formula. The temperature is $\frac{1}{T} = \frac{\partial S}{\partial E} = \frac{3}{2} \frac{N k_B}{E}$ so that $E = \frac{3}{2} N k_B T$. Also in the microcanonical ensemble we observed that the number of states for which the energy of one degree of freedom is fixed to $\epsilon_i$ is $\Omega(E - \epsilon_i)$. Thus the probability of such a state is $P_i = \frac{\Omega(E - \epsilon_i)}{\Omega(E)} \sim e^{-\epsilon_i / k_B T}$. This is the Boltzmann distribution.</p>
+
+<p>Within the context of the microcanonical ensemble, we also derived the Boltzmann distribution using the principle of maximum entropy. This approach is very general. It uses nothing about the system other than that the total number of degrees of freedom $N$ is large and the total energy is $E$. To use the maximum entropy principle we counted the number of ways that $N$ particles could be allocated into groups of size $n_i$ with energies $\epsilon_i$, so that $\sum n_i = N$ and $\sum n_i \epsilon_i = E$. We found that in the most probable allocation of particles to groups, the probability of finding a particle with energy $\epsilon_i$ was</p>
+
+<div class="equation key-result">
+$$P_i = \frac{1}{Z} e^{-\beta \epsilon_i}$$
+<span class="eq-number">(2)</span>
+</div>
+
+<p>where $Z = \sum_i e^{-\beta \epsilon_i}$ and $\beta = \frac{1}{k_B T}$.</p>
+
+<p>Sometimes we don't know the total energy, but we know the temperature. This situation is in fact much more common than knowing the energy. For example, in the room you are in, what is the total energy of the air molecules? I bet you don't have a clue. But I bet you have a good idea of what the temperature is.</p>
+
+<p>When we fix temperature instead of energy, we have to allow the energy to fluctuate. For example, think of two systems in thermal contact. The thermal contact allows energy to flow in and out of each system, so energy of each system is not fixed. We call a set of microstates with $N$, $V$ and $T$ fixed but variable $E$ the <span class="tooltip-trigger">canonical ensemble<span class="tooltip-content">An ensemble where temperature $T$, volume $V$, and particle number $N$ are fixed, but energy can fluctuate</span></span>. In the canonical ensemble, the primary object is not the number of states $\Omega$ or the entropy $S$ but rather the <span class="tooltip-trigger">partition function<span class="tooltip-content">$Z(\beta) = \sum_k e^{-\beta E_k}$, the central object of the canonical ensemble from which all thermodynamic quantities can be derived</span></span></p>
+
+<div class="equation key-result">
+$$Z(\beta) = \sum_{\substack{\text{microstates } k \\ \text{with same } N,V}} e^{-\beta E_k}$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p>In the partition function, energies of the microstates summed over can vary. Thus the left-hand side, $Z(\beta)$, cannot depend on energy. Instead, it depends on temperature. Once $Z$ is known, it is straightforward to compute the average energy $\langle E \rangle$ and other thermodynamic quantities, as we will see.</p>
+
+<p>In both the microcanonical and canonical ensembles, we fix the volume. We could instead let the volume vary and sum over possible volumes. Allowing the volume to vary gives the <span class="tooltip-trigger">Gibbs ensemble<span class="tooltip-content">An ensemble where pressure rather than volume is fixed, allowing volume to fluctuate</span></span>. In the Gibbs ensemble, the partition function depends on pressure rather than volume, just as the canonical ensemble depended on temperature rather than energy.</p>
+
+<p>In the microcanonical, canonical, and Gibbs ensembles, the number of particles $N$ in the system is fixed. In some situations, we want the number of particles to vary. For example, chemical reactions change the number of each molecule type. So in chemistry we can't fix $N$. Instead we fix something called the <span class="tooltip-trigger">chemical potential<span class="tooltip-content">$\mu$: a "pressure" for particle number. Two systems in equilibrium that can exchange particles have the same chemical potential.</span></span>, $\mu$. Chemical potential is like a pressure for particle number. Chemical potential is a very important concept, but very difficult to grasp, so we will spend a lot of time understanding it in this lecture and beyond.</p>
+
+<p>When $N$ can vary we use the <span class="tooltip-trigger">grand canonical ensemble<span class="tooltip-content">An ensemble where $V$, $T$, and chemical potential $\mu$ are fixed, but both energy and particle number can fluctuate</span></span>. The main object of interest in the grand canonical ensemble is the grand partition function</p>
+
+<div class="equation key-result">
+$$\mathcal{Z} = \sum_{\substack{\text{microstates } k \\ \text{with same } V}} e^{-\beta E_k + \beta \mu N_k}$$
+<span class="eq-number">(4)</span>
+</div>
+
+<p>The grand canonical ensemble is used in chemistry, quantum statistical mechanics, and much of condensed matter physics.</p>
+
+<!-- Section 2: Canonical Ensemble -->
+<h2>7.2 Canonical Ensemble</h2>
+
+<p>In the microcanonical ensemble, we calculated properties of its system by counting the number of microstates at fixed energy. Then, for example, temperature is a derived quantity, $\frac{1}{k_B T} = \frac{\partial \ln \Omega}{\partial E}$. In the canonical ensemble, we fix the temperature $T$, and the (average) energy becomes the derived quantity.</p>
+
+<p>In order to fix the temperature, it is a useful conceptual trick to imagine our system of interest in thermal contact with a heat reservoir. This means the system and heat reservoir can exchange energy through heat, but no work can be done by the system on the reservoir or vice versa. The point of the reservoir is to make concrete the idea of fixing the temperature and letting the energy fluctuate.</p>
+
+<figure>
+<img src="images/7-Ensembles_p2_img0.png" alt="System in thermal contact with a heat reservoir">
+<figcaption>Figure 1. When a system is in thermal contact with a heat reservoir, its temperature is fixed. Its energy fluctuates around its average value.</figcaption>
+</figure>
+
+<p>We do not allow particles to go from the system to the reservoir, only energy. The number of particles in the system can be small -- we can have a single atom even -- it won't matter. This is important because the canonical ensemble will allow us to discuss systems with a limited number of quantum states, in contrast to the microcanonical ensemble where we really did need to expand at large $N$ to make progress. Although the system can be small, the reservoir must be large, so that it has much much more energy than the system. But this is not a constraint, just a conceptual trick, since the reservoir does not actually need to exist. As we will see, the actual computation of the partition function for the canonical ensemble does not involve the reservoir at all.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Boltzmann Distribution from the Canonical Ensemble</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1</div>
+We would like to know the probability of finding the system in a fixed microstate $k$ with energy $E_k$. Since the system + reservoir is a closed system, the total energy is fixed at $E_{\text{tot}}$. The probability of finding the system in microstate $k$ is proportional to the number of ways of configuring the reservoir with energy $E_{\text{res}} = E_{\text{tot}} - E_k$:
+$$P_k = P_{\text{res}}(E_{\text{res}}) = C \times \Omega_{\text{res}}(E_{\text{tot}} - E_k)$$
+</div>
+
+<div class="step"><div class="step-label">Step 2</div>
+Using that $E_k \ll E_{\text{res}} \approx E_{\text{tot}}$, we expand the logarithm:
+$$\ln \Omega_{\text{res}}(E_{\text{tot}} - E_k) = \ln \Omega_{\text{res}}(E_{\text{tot}}) - E_k \frac{\partial \ln \Omega_{\text{res}}(E)}{\partial E}\bigg|_{E=E_{\text{tot}}} + \cdots$$
+</div>
+
+<div class="step"><div class="step-label">Step 3</div>
+Using that $\frac{\partial \ln \Omega_{\text{res}}(E)}{\partial E} = \beta = \frac{1}{k_B T}$ in equilibrium:
+$$\ln \Omega_{\text{res}}(E_{\text{tot}} - E_k) = \ln \Omega_{\text{res}}(E_{\text{tot}}) - \beta E_k$$
+</div>
+
+<div class="step"><div class="step-label">Step 4</div>
+Exponentiating both sides gives $\Omega_{\text{res}}(E_{\text{tot}} - E_k) = \Omega_{\text{res}}(E_{\text{tot}}) e^{-\beta E_k}$. Therefore:
+$$P_k = \frac{1}{Z} e^{-\beta E_k}$$
+</div>
+
+</div></div>
+</div>
+
+<p>The formula for $P_k$ we found is the <span class="tooltip-trigger">Boltzmann distribution<span class="tooltip-content">The probability distribution $P_k = \frac{1}{Z}e^{-\beta E_k}$ for finding a system in microstate $k$ at temperature $T$</span></span>. Note how much quicker the derivation of the Boltzmann distribution is in the canonical ensemble than in the microcanonical ensemble.</p>
+
+<p>The constant $Z$ is called the <strong>partition function</strong>. Using $\sum P_k = 1$, we find</p>
+
+<div class="equation key-result">
+$$Z = \sum_{\text{microstates } k} e^{-\beta E_k}$$
+<span class="eq-number">(10)</span>
+</div>
+
+<p>where we sum over all microstates $k$. Often many microstates have the same energy. We denote the number of states with energy $E$ by $g_E$, called the <span class="tooltip-trigger">degeneracy<span class="tooltip-content">The number of distinct microstates sharing the same energy $E$</span></span>. Then</p>
+
+<div class="equation">
+$$Z = \sum_{\text{energies } E} g_E \, e^{-\beta E}$$
+<span class="eq-number">(11)</span>
+</div>
+
+<p>If the energies are continuous then the degeneracy becomes a function and we can write</p>
+
+<div class="equation">
+$$Z = \int g(E) \, dE \, e^{-\beta E}$$
+<span class="eq-number">(12)</span>
+</div>
+
+<p>where $g(E)$ is called the <span class="tooltip-trigger">density of states<span class="tooltip-content">$g(E)dE$ gives the number of states with energies between $E$ and $E + dE$. The set of energies along with the density of states is called the spectrum of a theory.</span></span>: $g(E)dE$ gives the number of states with energies between $E$ and $E + dE$. The set of energies of a system along with the density of states is called the spectrum of a theory.</p>
+
+<h3>Thermodynamic quantities from $Z$</h3>
+
+<p>The partition function is an amazingly powerful object. If we know it exactly, we can calculate any thermodynamic property of the system. For example,</p>
+
+<div class="equation key-result">
+$$\langle E \rangle = \sum_k E_k P_k = \frac{1}{Z} \sum_k E_k e^{-\beta E_k} = -\frac{1}{Z}\frac{\partial Z}{\partial \beta} = -\frac{\partial \ln Z}{\partial \beta}$$
+<span class="eq-number">(14)</span>
+</div>
+
+<p>Thus, knowing the partition function, we can get the expected value for the energy of the system by simply differentiating.</p>
+
+<p>How do we extract the entropy from the partition function? Using the Gibbs formula for entropy, we find</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Entropy from the Partition Function</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1</div>
+$$S = -k_B \sum_k P_k \ln P_k = -k_B \sum_k \frac{e^{-\beta E_k}}{Z} \ln \frac{e^{-\beta E_k}}{Z}$$
+</div>
+
+<div class="step"><div class="step-label">Step 2</div>
+$$= k_B \sum_k \frac{e^{-\beta E_k}}{Z} (\beta E_k + \ln Z)$$
+</div>
+
+<div class="step"><div class="step-label">Step 3</div>
+The first term gives $\beta \langle E \rangle$ and the second gives $\ln Z$, using that $k_B \beta = \frac{1}{T}$:
+</div>
+
+</div></div>
+</div>
+
+<div class="equation key-result">
+$$S = \frac{\langle E \rangle}{T} + k_B \ln Z$$
+<span class="eq-number">(16)</span>
+</div>
+
+<p>We also write this as</p>
+
+<div class="equation key-result">
+$$F \equiv -k_B T \ln Z = \langle E \rangle - TS$$
+<span class="eq-number">(17)</span>
+</div>
+
+<p>where $F$ is the <span class="tooltip-trigger">free energy<span class="tooltip-content">The Helmholtz free energy $F = E - TS = -k_B T \ln Z$. It represents the energy available to do useful work at constant temperature.</span></span>. Calling the (log of the) partition function the free energy suggests that it has a physical interpretation, which it does. However, we can't do everything all at once. We'll study free energy in Lecture 8.</p>
+
+<p>An important point about the canonical ensemble is that we use it to derive results about the system only, independent of how it is kept at finite temperature. The partition function is a sum over microstates of the system. $P_k$ is the probability of finding the system in microstate $k$ when it is in equilibrium at a temperature $T$ no matter what it is in contact with. We need it to be in contact with something to exchange energy and keep it at finite temperature, but the details of those surroundings are totally irrelevant (except for the temperature). You can see this directly since the surroundings do not appear in the definition of $Z$.</p>
+
+<p>One reason the canonical ensemble is very important is because it is usually easier to compute than the microcanonical ensemble. While the microcanonical ensemble requires a constrained sum (constrained to only include microstates $k$ with $E_k = E$), the sum in the canonical ensemble is unconstrained. As we saw in Section 6 of Lecture 4 a constrained system can be viewed as an unconstrained system with a Lagrange multiplier. We replace $\ln \Omega(E)$ which is constrained at energy $E$, with $\ln Z(\beta) = \ln \Omega - \beta \langle E \rangle$ (i.e. Eq. (16)), with $\beta$ the Lagrange multiplier.</p>
+
+<p>Note that we write $\langle E \rangle$ for the expected value of energy, rather than $E$ since $\langle E \rangle$ is calculated rather than fixed from the beginning. The thing $\langle E \rangle$ which we compute is a function of $\beta$, so $\langle E \rangle$ is a derived quantity rather than one fixed from the start. In a real system connected to a heat bath, the temperature would be fixed, but the energy could fluctuate in time around $\langle E \rangle$ as little bits of energy flow in and out of the heat bath. The canonical ensemble of states is a much bigger set than the microcanonical ensemble -- any possible state with any possible energy is included. If the actual system is isolated so its energy does not fluctuate, then we can simply impose the constraint $\langle E \rangle = E$. This takes us from an unconstrained canonical-ensemble system to a constrained microcanonical-ensemble system. In fact, this is mostly how we will use the canonical ensemble, to compute equilibrium properties of an isolated system.</p>
+
+<!-- Section 3: Example 1 monatomic ideal gas -->
+<h2>7.3 Example 1: Monatomic Ideal Gas</h2>
+
+<p>For an ideal monatomic gas with positions $\mathbf{q}$ and momenta $\mathbf{p}$, the energy depends only on momenta $E = \sum_j \frac{\vec{p}_j^2}{2m}$. So</p>
+
+<div class="equation">
+$$Z = \frac{1}{N!} \int \frac{d^{3N}q \, d^{3N}p}{h^{3N}} \exp\left(-\beta \sum_j \frac{\vec{p}_j^2}{2m}\right)$$
+<span class="eq-number">(19)</span>
+</div>
+
+<p>The $q$ integrals trivially give a factor of $V^N$. The $p$ integrals are the product of $3N$ Gaussian integrals. Each one gives</p>
+
+<div class="equation">
+$$\int_{-\infty}^{\infty} dp \, e^{-\beta p^2 / 2m} = \sqrt{\frac{2\pi m}{\beta}}$$
+<span class="eq-number">(20)</span>
+</div>
+
+<p>So that</p>
+
+<div class="equation">
+$$Z = \frac{1}{N!} \left(\frac{V}{h^3}\right)^N \left(\frac{2\pi m}{\beta}\right)^{\frac{3}{2}N}$$
+<span class="eq-number">(21)</span>
+</div>
+
+<p>Mostly we are interested in this at large $N$, where $N! \to e^{-N} N^N$ gives</p>
+
+<div class="equation key-result">
+$$Z_{\text{monatomic gas}} = e^N \left(\frac{V}{Nh^3}\right)^N \left(\frac{2\pi m}{\beta}\right)^{\frac{3}{2}N}$$
+<span class="eq-number">(22)</span>
+</div>
+
+<p>Once we have $Z$ it is easy to compute the (average) energy:</p>
+
+<div class="equation">
+$$\langle E \rangle = -\frac{\partial \ln Z}{\partial \beta} = -\frac{3}{2}N \frac{\partial}{\partial \beta} \ln\left(\frac{2\pi m}{\beta}\right) = \frac{3}{2}Nk_BT$$
+<span class="eq-number">(23)</span>
+</div>
+
+<p>For an isolated system, we then set $\langle E \rangle = E$. This is then in agreement with the result from the equipartition theorem (the 3 kinetic degrees of freedom each get $\frac{1}{2}k_BT$ of energy per molecule on average).</p>
+
+<p>Note that this analysis of the ideal gas in the canonical ensemble was a much easier way to compute the average energy than in the microcanonical ensemble, where we had to look at the surface area of a $3N$-dimensional sphere.</p>
+
+<h3>7.3.1 Heat Capacity and Entropy</h3>
+
+<p>Recall that the heat capacity $C_V$ is the amount of heat required to change the temperature at constant volume: $C_V = \left(\frac{\partial Q}{\partial T}\right)_V = \left(\frac{\partial E}{\partial T}\right)_V$. Recalling that $\beta = \frac{1}{k_B T}$ we have</p>
+
+<div class="equation key-result">
+$$C_V = \frac{\partial \langle E \rangle}{\partial T} = \frac{1}{k_B T^2} \frac{\partial^2 \ln Z}{\partial \beta^2}$$
+<span class="eq-number">(24)</span>
+</div>
+
+<p>This equation lets us compute the heat capacity directly from the partition function.</p>
+
+<p>Let's check for the monatomic ideal gas. Using Eq. (22) we find that</p>
+
+<div class="equation">
+$$C_V = \frac{1}{k_B T^2} \frac{\partial^2}{\partial \beta^2} \ln\left(\beta^{-\frac{3}{2}N}\right) = \frac{3}{2}N \frac{1}{\beta^2 k_B T^2} = \frac{3}{2}Nk_B$$
+<span class="eq-number">(25)</span>
+</div>
+
+<p>in agreement with our previous results.</p>
+
+<div class="info-box concept">
+<div class="box-title">Fluctuation-Dissipation Theorem</div>
+<p>It's interesting to write the heat capacity calculation another way. One can show that:</p>
+$$C_V = \frac{\langle E^2 \rangle - \langle E \rangle^2}{k_B T^2}$$
+<p>In other words, the heat capacity is given by the RMS energy fluctuations. This tells us that how a system changes when heated can be determined from properties of the system in equilibrium (the RMS energy fluctuations). In other words, to measure the heat capacity, we do not ever have to actually heat up the system. Instead, we can let the system heat up itself through thermal fluctuations away from the mean. This is a special case of a very general and powerful result in statistical physics known as the <strong>fluctuation-dissipation theorem</strong>.</p>
+</div>
+
+<p>Plugging the partition function for the monatomic ideal gas, Eq. (22) into Eq. (16) for the entropy, we get</p>
+
+<div class="equation">
+$$S = Nk_B\left(\ln \frac{V}{Nh^3} + \frac{3}{2}\ln[2\pi m k_B T] + \frac{5}{2}\right)$$
+<span class="eq-number">(29)</span>
+</div>
+
+<p>Substituting $T = \frac{2}{3Nk_B}E$ this gives back the Sackur-Tetrode equation that we computed with the microcanonical ensemble.</p>
+
+<!-- Section 4: Example 2 vibrational modes -->
+<h2>7.4 Example 2: Vibrational Modes</h2>
+
+<p>Let's work out the canonical ensemble for another system, the vibrational modes of a diatomic molecule. For a diatomic molecule, motion along the axis of the molecule is governed by a potential $V(x)$. The equilibrium position $x_0$ is where the force vanishes: $F = -V'(x_0) = 0$. Expanding the potential near its minimum, $V(x) = V(x_0) + \frac{1}{2}(x-x_0)^2 V''(x_0) + \cdots$ we see that for small deviations from equilibrium, the potential is quadratic. Thus for small displacements it is well modeled by a simple harmonic oscillator with spring constant $k = V''(x_0)$. The oscillation frequency is $\omega = \sqrt{k/m}$.</p>
+
+<p>I assume you studied the quantum mechanics of a simple harmonic oscillator in your QM course. The oscillator has Hamiltonian</p>
+
+<div class="equation">
+$$H = \frac{p^2}{2m} + \frac{1}{2}m\omega^2 x^2$$
+<span class="eq-number">(30)</span>
+</div>
+
+<p>The energy eigenstates have energies</p>
+
+<div class="equation key-result">
+$$E_n = \hbar\omega\left(n + \frac{1}{2}\right), \qquad n = 0, 1, 2, \ldots$$
+<span class="eq-number">(33)</span>
+</div>
+
+<p>So a harmonic oscillator at rest has energy $E_0 = \frac{1}{2}\hbar\omega$. Each successive mode has $\hbar\omega$ more energy than the previous mode.</p>
+
+<p>Note that for the simple harmonic oscillator, there is only one degree of freedom, so $N = 1$. If we fix the energy $E$, then we know the exact state of the system, $\Omega = 1$. Thus the microcanonical ensemble is not much use: it doesn't let us answer any questions we would like to ask.</p>
+
+<p>So let us work in the canonical ensemble and compute the partition function for the system.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Partition Function for a Harmonic Oscillator</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1</div>
+$$Z_{\text{vib}} = \sum_n e^{-\beta E_n} = e^{-\frac{\beta}{2}\hbar\omega} \sum_{n=0}^{\infty} e^{-n\beta\hbar\omega}$$
+</div>
+
+<div class="step"><div class="step-label">Step 2</div>
+Using $\sum_{n=0}^{\infty} x^n = \frac{1}{1-x}$ with $x = e^{-\beta\hbar\omega}$:
+$$Z_{\text{vib}} = \frac{e^{-\frac{\beta}{2}\hbar\omega}}{1 - e^{-\beta\hbar\omega}} = \frac{1}{2\sinh\left(\frac{\beta}{2}\hbar\omega\right)}$$
+</div>
+
+</div></div>
+</div>
+
+<div class="equation key-result">
+$$Z_{\text{vib}} = \frac{1}{2\sinh\left(\frac{\beta}{2}\hbar\omega\right)}$$
+<span class="eq-number">(34)</span>
+</div>
+
+<p>With the exact partition function known, we can start computing things. The energy is</p>
+
+<div class="equation key-result">
+$$\langle E \rangle = -\frac{\partial \ln Z}{\partial \beta} = \hbar\omega\left(\frac{1}{e^{\beta\hbar\omega} - 1} + \frac{1}{2}\right)$$
+<span class="eq-number">(35)</span>
+</div>
+
+<p>Comparing to Eq. (33) we see that the average excitation number is</p>
+
+<div class="equation key-result">
+$$\langle n \rangle = \frac{1}{e^{\hbar\omega/k_BT} - 1}$$
+<span class="eq-number">(36)</span>
+</div>
+
+<p>For $k_BT \lesssim \hbar\omega$, $\langle n \rangle \approx 0$ and only the ground state is occupied; from (35), the energy flatlines at its zero point: $E_0 = \frac{1}{2}\hbar\omega$. At higher temperatures, $\langle E \rangle$ and $\langle n \rangle$ grow linearly with temperature.</p>
+
+<p>The heat capacity is</p>
+
+<div class="equation">
+$$C_V = \frac{\partial E}{\partial T} = k_B \left(\frac{\hbar\omega}{k_BT}\right)^2 \frac{e^{-\hbar\omega/k_BT}}{\left(1 - e^{-\hbar\omega/k_BT}\right)^2}$$
+<span class="eq-number">(37)</span>
+</div>
+
+<p>Note that heat capacity is very small until the first energy state can be excited, then it grows linearly.</p>
+
+<figure>
+<img src="images/7-Ensembles_p7_img0.png" alt="Energy and heat capacity of harmonic oscillator">
+<figcaption>Energy and heat capacity of a quantum harmonic oscillator as a function of temperature.</figcaption>
+</figure>
+
+<p>For H$_2$, the vibrational mode has $\tilde{\nu}_{\text{vib}} = 4342\;\text{cm}^{-1}$ corresponding to $T_{\text{vib}} = \frac{ch\tilde{\nu}}{k_B} = \frac{\hbar\omega}{k_B} = 6300\;\text{K}$. So at low energies, the vibrational mode cannot be excited which is why the heat capacity for hydrogen is $C_V = \frac{5}{2}Nk_BT$ rather than $\frac{7}{2}Nk_BT$. We discussed this in Lecture 4, but now we have explained it and can make more precise quantitative predictions of how the heat capacity changes with temperature. Including the kinetic contribution, and a factor of $N$ for the $N$ molecules that can be excited in the vibration mode we see</p>
+
+<div class="equation">
+$$C_V = \frac{5}{2}Nk_B + Nk_B\left(\frac{T_{\text{vib}}}{T}\right)^2 \frac{e^{-T_{\text{vib}}/T}}{\left(1 - e^{-T_{\text{vib}}/T}\right)^2}$$
+<span class="eq-number">(38)</span>
+</div>
+
+<figure>
+<img src="images/7-Ensembles_p8_img0.png" alt="Heat capacity of H2 including vibrational modes">
+<figcaption>Heat capacity of H$_2$ as a function of temperature, showing the onset of vibrational excitation. Dots are data.</figcaption>
+</figure>
+
+<p>This shows how the heat capacity goes up as the vibrational mode starts to be excitable. Note that although the temperature for the vibrational mode is 6300 K, the vibrational mode starts to be excited well below that temperature. The dots are data. We see good agreement!</p>
+
+<p>We can also compute the partition function for a gas including both kinetic and vibrational motion. Since each momentum and each vibrational excitation is independent for the $N$ particles, we have</p>
+
+<div class="equation key-result">
+$$Z = \frac{1}{N!}\left[\int \frac{d^3q \, d^3p}{h^3} \sum_n e^{-\beta\left(\frac{\vec{p}^2}{2m} + E_n\right)}\right]^N = Z_{\text{monatomic gas}} \times (Z_{\text{vib}})^N$$
+<span class="eq-number">(39)</span>
+</div>
+
+<p>This is a very general result: the partition function of a system with multiple independent modes of excitation is the product of the partition functions for the separate excitations. This follows simply from the fact that the total energy is the sum of each excitation energy and the exponential of a sum is the product of the exponentials.</p>
+
+<!-- Section 5: Gibbs ensemble -->
+<h2>7.5 Gibbs Ensemble</h2>
+
+<p>In the microcanonical ensemble, we computed the number of states at a given energy $\Omega(V, N, E)$ and used it to derive the entropy $S(V, N, E) = k_B \ln \Omega(V, N, E)$. In the canonical ensemble, we computed the partition function by summing over Boltzmann factors, $Z(N, V, \beta) = \sum_k e^{-\beta E_k}$. In both cases we have been holding $V$ and $N$ fixed. Now we want to try varying $V$.</p>
+
+<p>First, let's quickly recall why the temperature is the same in any two systems in thermal equilibrium. The quickest way is to recall that entropy is extensive, so a system with energy $E_1 = E$ and another with energy $E_2 = E_{\text{tot}} - E$ has total entropy</p>
+
+<div class="equation">
+$$S_{12}(E_{\text{tot}}, E) = S_1(E) + S_2(E_{\text{tot}} - E)$$
+<span class="eq-number">(40)</span>
+</div>
+
+<p>Then the state with maximum entropy is the one where</p>
+
+<div class="equation">
+$$0 = \frac{\partial S_1(E)}{\partial E} + \frac{\partial S_2(E_{\text{tot}} - E)}{\partial E} = \frac{1}{T_1} - \frac{1}{T_2}$$
+<span class="eq-number">(41)</span>
+</div>
+
+<figure>
+<img src="images/7-Ensembles_p9_img0.png" alt="Two systems exchanging volume">
+<figcaption>Figure 2. An ensemble where volume is allowed to vary.</figcaption>
+</figure>
+
+<p>Now let's consider an ensemble that lets $V$ vary. In the Gibbs ensemble you have two systems in equilibrium that can exchange energy and volume. The total volume is conserved. The entropy is the sum of the entropy of the two sides, and the total volume is fixed: $V_1 + V_2 = V_{\text{tot}}$. Maximizing entropy gives that the temperature $\frac{1}{T} = \frac{\partial S}{\partial E}$ is the same on both sides, and that</p>
+
+<div class="equation">
+$$0 = \frac{\partial S_{12}}{\partial V} = \frac{\partial S_1}{\partial V_1}\bigg|_{V_1=V} - \frac{\partial S_2}{\partial V_2}\bigg|_{V_2=V_{\text{tot}}-V} = \frac{P_1}{T_1} - \frac{P_2}{T_2}$$
+<span class="eq-number">(43)</span>
+</div>
+
+<p>In the last step we have defined $P$ by $\left(\frac{\partial S}{\partial V}\right)_E = \frac{P}{T}$. What Eq. (43) shows is that this quantity $P$ is the same for any two systems in equilibrium.</p>
+
+<p>To show that $P$ is the same as what we ordinarily call pressure, all we have to do is compute $\frac{\partial S}{\partial V}$ in some sample system, such as a monatomic ideal gas. Using the entropy from Eq. (29):</p>
+
+<div class="equation">
+$$\left(\frac{\partial S}{\partial V}\right)_E = \frac{Nk_B}{V} = \frac{P}{T}$$
+<span class="eq-number">(44)</span>
+</div>
+
+<p>To summarize, we have established the definition of pressure:</p>
+
+<div class="equation key-result">
+$$P \equiv T\left(\frac{\partial S}{\partial V}\right)_E$$
+<span class="eq-number">(45)</span>
+</div>
+
+<p>Now let us consider the total derivative of $S(E, V)$:</p>
+
+<div class="equation">
+$$dS = \left(\frac{\partial S}{\partial E}\right)dE + \left(\frac{\partial S}{\partial V}\right)dV = \frac{1}{T}dE + \frac{P}{T}dV$$
+<span class="eq-number">(46)</span>
+</div>
+
+<p>or</p>
+
+<div class="equation key-result">
+$$dE = TdS - PdV$$
+<span class="eq-number">(47)</span>
+</div>
+
+<p>This equation is none other than $\Delta E = Q - W$. The change in energy is the heat $Q = TdS$ absorbed minus the work done by changing volume.</p>
+
+<p>The Gibbs ensemble is usually just considered a variation on the canonical ensemble. The point of the Gibbs ensemble is that thinking of volume varying between systems gives a nice general way to think about pressure, as conjugate to volume and analogous to temperature. This leads to the relation $P = T\left(\frac{\partial S}{\partial V}\right)_E$. This is a generalization of the conventional definition $P = F/A$. This relation is exact. One of the important applications is the degeneracy pressure of a system of identical fermions. Degeneracy pressure is present even at $T = 0$ and is responsible for keeping solids and neutron stars from collapsing.</p>
+
+<!-- Section 6: Grand canonical ensemble -->
+<h2>7.6 Grand Canonical Ensemble</h2>
+
+<p>Now let's consider systems where the number of particles is not fixed. A basic example is from chemistry: in a chemical reaction, the number of each molecule species is not conserved. For example, when iron rusts the reaction is</p>
+
+$$3\;\text{Fe} + 4\;\text{H}_2\text{O} \rightarrow \text{Fe}_3\text{O}_4 + 4\;\text{H}_2$$
+
+<p>Although the number of each type of atom is conserved, the number of each type of molecule is not. An ensemble where the total number $N$ of things can change, but there are one or more conserved quantities among systems, is called the grand canonical ensemble.</p>
+
+<p>Just like how maximizing entropy in the Gibbs ensemble implied equal pressures, the result of maximizing entropy in the grand canonical ensemble implies</p>
+
+<div class="equation">
+$$\frac{\partial S_1(E, V, N)}{\partial N} = \frac{\partial S_2(E, V, N)}{\partial N}$$
+<span class="eq-number">(50)</span>
+</div>
+
+<p>for any two systems in equilibrium that can share constituents of $N$. As with pressure, we rescale by some convention (multiply by $-T$ in this case) and give the derivative a name</p>
+
+<div class="equation key-result">
+$$\mu \equiv -T\left(\frac{\partial S}{\partial N}\right)_{E,V}$$
+<span class="eq-number">(51)</span>
+</div>
+
+<p>This quantity is called the <span class="tooltip-trigger">chemical potential<span class="tooltip-content">The change in energy when a particle is added at constant $S$ and $V$: $\mu = \left(\frac{\partial E}{\partial N}\right)_{S,V}$. In equilibrium, chemical potentials of exchangeable species are equal.</span></span>. In equilibrium, the chemical potential of any two systems that can exchange particles is the same ($\mu_1 = \mu_2$). The minus sign is a convention. It makes the chemical potential negative in most circumstances.</p>
+
+<p>A useful way to think about chemical potential is as a pressure for number density. While there is only one kind of temperature there are lots of chemical potentials: one for every thing we count in our ensemble.</p>
+
+<p>As in Eq. (47) we can now consider the total derivative of energy, letting $E$, $V$ and $N$ all vary:</p>
+
+<div class="equation key-result">
+$$dE = TdS - PdV + \mu dN$$
+<span class="eq-number">(56)</span>
+</div>
+
+<p>This implies that $\left(\frac{\partial E}{\partial N}\right)_{S,V} = \mu$. So the chemical potential represents the change in energy when a particle is added at constant $V$ and $S$.</p>
+
+<h3>7.6.1 Grand Partition Function</h3>
+
+<p>As in Section 2 let us now hook a small system up to a reservoir to derive the Boltzmann factor. This time the reservoir should have large energy and large particle number, and both energy and particle number can flow between the system and reservoir. The expansion gives</p>
+
+<div class="equation">
+$$\ln \Omega_{\text{res}}(E_{\text{tot}} - E_k, N_{\text{tot}} - N_k) = \ln \Omega_{\text{res}}(E_{\text{tot}}, N_{\text{tot}}) - \beta E_k + \beta\mu N_k$$
+<span class="eq-number">(58)</span>
+</div>
+
+<p>This leads to a Boltzmann factor</p>
+
+<div class="equation">
+$$P_k = \frac{1}{\mathcal{Z}} e^{-\beta E_k + \beta\mu N_k}$$
+<span class="eq-number">(59)</span>
+</div>
+
+<p>where</p>
+
+<div class="equation key-result">
+$$\mathcal{Z}(V, \beta, \mu) = \sum_k e^{-\beta E_k + \beta\mu N_k}$$
+<span class="eq-number">(60)</span>
+</div>
+
+<p>is called the <strong>grand partition function</strong>.</p>
+
+<p>The grand partition function lets us calculate the expected number of particles</p>
+
+<div class="equation">
+$$\langle N \rangle = \frac{1}{\beta}\frac{\partial \ln \mathcal{Z}}{\partial \mu}$$
+<span class="eq-number">(61)</span>
+</div>
+
+<p>and the average energy</p>
+
+<div class="equation">
+$$\langle E \rangle = -\frac{\partial \ln \mathcal{Z}}{\partial \beta} + \frac{\mu}{\beta}\frac{\partial \ln \mathcal{Z}}{\partial \mu}$$
+<span class="eq-number">(63)</span>
+</div>
+
+<p>The entropy in the grand canonical ensemble is</p>
+
+<div class="equation key-result">
+$$-k_BT \ln \mathcal{Z} = \langle E \rangle - TS - \mu\langle N \rangle$$
+<span class="eq-number">(66)</span>
+</div>
+
+<p>This will be a useful relation.</p>
+
+<!-- Section 7: Chemical potential -->
+<h2>7.7 Chemical Potential</h2>
+
+<p>One of the most important uses of chemical potential is for phase transitions. Different phases of matter are characterized by different chemical potentials so that phase boundaries are where the chemical potentials are equal. Unfortunately, we don't have analytical forms for the chemical potential in most real systems, like liquids. So in order to understand phase transitions and other sophisticated uses of chemical potential, we first need to build up some intuition from simple solvable examples.</p>
+
+<h3>7.7.1 Ideal Gas</h3>
+
+<p>For a monatomic gas, using the Sackur-Tetrode equation, we find</p>
+
+<div class="equation">
+$$\mu = -T\left(\frac{\partial S}{\partial N}\right)_{E,V} = -k_BT\left(\ln \frac{V}{N} + \frac{3}{2}\ln\left(\frac{4\pi mE}{3Nh^2}\right)\right)$$
+<span class="eq-number">(68)</span>
+</div>
+
+<p>Using $E = \frac{3}{2}Nk_BT$ for this gas, we can write this relation in an abbreviated form</p>
+
+<div class="equation key-result">
+$$\mu = k_BT \ln(n\lambda^3)$$
+<span class="eq-number">(69)</span>
+</div>
+
+<p>where $n = N/V$ is the number density and</p>
+
+<div class="equation key-result">
+$$\lambda = \frac{h}{\sqrt{2\pi m k_BT}}$$
+<span class="eq-number">(70)</span>
+</div>
+
+<p>is called the <span class="tooltip-trigger">thermal de Broglie wavelength<span class="tooltip-content">$\lambda = h/\sqrt{2\pi m k_B T}$, the wavelength of a typical particle in a thermal system. When $n\lambda^3 > 1$, quantum effects become important.</span></span> or just thermal wavelength.</p>
+
+<p>Recall that the de Broglie wavelength is $\lambda = h/p$, with $p$ the momentum. The thermal wavelength is the wavelength of a typical particle in a thermal system. The de Broglie wavelength is a measure of the length scale at which quantum effects become important. If a gas at temperature $T$ is more dense than 1 particle per thermal de Broglie wavelength-cubed, $n > 1/\lambda^3$, then quantum statistical mechanics must be used.</p>
+
+<p>To get a feel for typical numbers, consider air at room temperature. The molar mass of air is $29.0\;\text{g/mol}$ and density is $\rho = 1.27\;\text{kg/m}^3$. So $\lambda = 1.87 \times 10^{-11}\;\text{m}$ while $n = (3.35 \times 10^{-9}\;\text{m})^{-3}$. In other words, the typical distance between atoms in air is $d = 3.3\;\text{nm}$ and the thermal wavelength is much smaller, $\lambda = 0.02\;\text{nm}$. So in air $n\lambda^3 = 1.7 \times 10^{-7} \ll 1$. This means that $\mu = k_BT\ln n\lambda^3 = -0.39\;\text{eV}$. Note that the chemical potential of air is negative.</p>
+
+<p>Solving Eq. (69) for $n$ gives</p>
+
+<div class="equation">
+$$n = \frac{1}{\lambda^3} \exp\left(\frac{\mu}{k_BT}\right)$$
+<span class="eq-number">(71)</span>
+</div>
+
+<p>This says that the number density is related exponentially to the chemical potential. As the system gets denser and denser, the chemical potential rises towards 0. When the chemical potential is negative, the gas is not too crowded and can be considered dilute.</p>
+
+<figure>
+<img src="images/7-Ensembles_p14_img0.png" alt="Chemical potential gradient">
+<figcaption>Figure 3. Chemical potential is higher in more dense regions. It is like potential energy for particle number. Particles move from high to low $\mu$, until the $\mu$'s are all equal.</figcaption>
+</figure>
+
+<h3>7.7.2 Ground-State Energy</h3>
+
+<p>There is not a unique way to define the ground state energy; it depends on what we include. For example, we could include chemical bond energy, the rest mass $mc^2$, or the gravitational potential energy. However, once we define the ground-state energy for one thing, we can talk without ambiguity about the ground-state energy of everything.</p>
+
+<p>So let's say we have established a convention and the ground state energy for a molecule is $\epsilon$. Then there is a contribution $N\epsilon$ to the total energy. The entropy $S(E_{\text{kin}})$ is the same with or without the offset. Since we want to write entropy as a function of the total energy, we substitute $E_{\text{kin}} = E - N\epsilon$.</p>
+
+<p>From the entropy, we can compute the chemical potential</p>
+
+<div class="equation key-result">
+$$\mu = k_BT \ln n\lambda^3 + \epsilon$$
+<span class="eq-number">(74)</span>
+</div>
+
+<p>with $\lambda$ from Eq. (70), so that for an ideal gas with ground-state energy $\epsilon$</p>
+
+<div class="equation">
+$$n = \frac{1}{\lambda^3}\exp\left(\frac{\mu - \epsilon}{k_BT}\right)$$
+<span class="eq-number">(75)</span>
+</div>
+
+<p>Thus if we were to change the zero-point energy offset $\epsilon \to \epsilon + \Delta\epsilon$, we could compensate for this by shifting $\mu \to \mu + \Delta\epsilon$. In other words, the chemical potential is measured relative to the ground state: only the difference $\mu - \epsilon$ appears. This is just like how only potential energy differences are physical, and why we call the chemical potential a potential.</p>
+
+<h3>7.7.3 Chemical Reactions</h3>
+
+<p>Chemical potentials are useful in situations where particles turn into other types of particles. As a concrete example, consider the Haber process for the production of ammonia</p>
+
+$$3\;\text{H}_2 + \text{N}_2 \rightleftharpoons 2\;\text{NH}_3$$
+
+<p>The reaction implies that if $[\text{N}_2]$ goes down by one molecule, $[\text{H}_2]$ must go down by 3 molecules and $[\text{NH}_3]$ must go up by 2 molecules. Using that $dS = 0$ in equilibrium and the definition of chemical potentials, we find</p>
+
+<div class="equation">
+$$3\mu_{\text{H}_2} + \mu_{\text{N}_2} = 2\mu_{\text{NH}_3}$$
+<span class="eq-number">(84)</span>
+</div>
+
+<p>From Eq. (75), taking the ratio of concentrations to appropriate powers, the $\mu$'s drop out, giving</p>
+
+<div class="equation key-result">
+$$\frac{[\text{NH}_3]^2}{[\text{H}_2]^3[\text{N}_2]} \approx \frac{\lambda_{\text{H}_2}^9 \lambda_{\text{N}_2}^3}{\lambda_{\text{NH}_3}^6} \times \exp\left(\frac{-\Delta\epsilon}{k_BT}\right) \qquad \text{(assuming monatomic gases)}$$
+<span class="eq-number">(87)</span>
+</div>
+
+<p>This is a special case (for monatomic ideal gases) of the <span class="tooltip-trigger">law of mass action<span class="tooltip-content">The relative concentrations of reacting molecules in equilibrium are determined by the Boltzmann factor dependent on the change in energy associated with the reaction.</span></span>. It says that the relative concentrations of reacting molecules in equilibrium are determined by the Boltzmann factor dependent on the change in energy associated with the reaction.</p>
+
+<h3>7.7.4 Example: Matter-Antimatter Asymmetry (optional)</h3>
+
+<p>For another example, consider proton-antiproton annihilation. Protons and anti-protons can annihilate into photons:</p>
+
+$$p^+ + p^- \rightleftharpoons \gamma + \gamma$$
+
+<p>Since photon number is not conserved, $\mu_\gamma = 0$, and therefore $\mu_{p^+} + \mu_{p^-} = 0$. Assuming equal concentrations of protons and antiprotons (and hence $\mu_{p^+} = \mu_{p^-} = 0$), using $T = 3\;\text{K}$ (the temperature of outer space), we find</p>
+
+<div class="equation">
+$$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h}\right)^{3/2} e^{-m_pc^2/k_BT} = 4\times 10^{-843112945335}\;\frac{1}{\text{m}^3} \approx 0$$
+<span class="eq-number">(94)</span>
+</div>
+
+<p>So this first pass calculation says there shouldn't be any protons or antiprotons around at all!</p>
+
+<p>To refine our calculation, it's important to note that we used equilibrium physics, but since the universe is expanding, equilibrium is not always a good approximation. At some point the protons and antiprotons become so dilute that they cannot find each other to annihilate. This is called "freeze-out". The freeze-out temperature is $T_f = 2.4 \times 10^{11}\;\text{K}$.</p>
+
+<p>At this temperature, the proton concentration is not so small: $[p^+] = [p^-] \approx 10^{23}\;\text{m}^{-3}$. However, as the universe continues to expand from $T_f$ down to $3\;\text{K}$, this dilutes to $[p^+] = [p^-] \approx 1.68 \times 10^{-10}\;\text{m}^{-3}$.</p>
+
+<div class="info-box physical">
+<div class="box-title">The Mystery of Baryogenesis</div>
+<p>Unfortunately, the prediction $[p^+] = 10^{-10}\;\text{m}^{-3}$ is in stark disagreement with data: the average number density of protons in the universe is actually $[p^+] = 0.26\;\text{m}^{-3}$. This is one of the great unsolved problems in fundamental physics, called the mystery of <strong>baryogenesis</strong> or the matter-antimatter asymmetry. Nobody knows why there is so much more matter than antimatter in the universe.</p>
+</div>
+
+<!-- Section 8: Summary -->
+<h2>7.8 Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li>An <strong>ensemble</strong> is an imaginary collection of systems with different microscopic arrangements and the same fixed macroscopic properties. The properties come in conjugate pairs $(E, T)$, $(N, \mu)$ and $(V, P)$.</li>
+<li>The <strong>microcanonical ensemble</strong>: $N$, $V$ and $E$ are fixed. The natural object is $\Omega(N, V, E)$ or $S = k_B\ln\Omega$.</li>
+<li>The <strong>canonical ensemble</strong>: $N$, $V$ and $T$ are fixed. The natural object is the partition function $Z = \sum_k e^{-\beta E_k}$. Average energy: $\langle E \rangle = -\frac{\partial \ln Z}{\partial \beta}$.</li>
+<li>The <strong>grand canonical ensemble</strong>: $V$, $T$ and $\mu$ are fixed. The natural object is the grand partition function $\mathcal{Z} = \sum_k e^{-\beta E_k + \beta\mu N_k}$.</li>
+<li>The <strong>Gibbs ensemble</strong>: $N$, $P$ and $T$ are fixed.</li>
+<li>The fundamental thermodynamic relation is $dE = TdS - PdV + \mu dN$.</li>
+<li>The chemical potential is $\mu = -T\left(\frac{\partial S}{\partial N}\right)_{E,V}$. For an ideal gas, $\mu = k_BT\ln(n\lambda^3)$ where $\lambda = h/\sqrt{2\pi mk_BT}$ is the thermal wavelength.</li>
+<li>The partition function of independent modes factorizes: $Z_{\text{total}} = Z_1 \times Z_2 \times \ldots$</li>
+<li>Entropy and temperature are ensemble properties, not properties of individual microstates.</li>
+</ul>
+</div>
+
+<!-- Interactive Visualization -->
+<h3>Interactive: Boltzmann Distribution</h3>
+<div class="interactive-container">
+<canvas id="vis-boltzmann" width="600" height="400"></canvas>
+<div class="slider-container">
+<label for="boltz-beta">Inverse Temperature $\beta$:</label>
+<input type="range" id="boltz-beta" min="0.1" max="5" step="0.1" value="1">
+<span class="slider-value" id="boltz-beta-value">1.0</span>
+</div>
+<p class="vis-caption">Adjust $\beta = 1/k_BT$ to see how the Boltzmann distribution changes. At high temperature (low $\beta$), many energy levels are populated. At low temperature (high $\beta$), only the lowest energy states are occupied.</p>
+</div>

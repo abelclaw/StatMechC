@@ -1,0 +1,489 @@
+<div class="chapter-number">Chapter 3</div>
+<h1 class="chapter-title">Equilibrium</h1>
+<p class="chapter-intro">The key observation that allows statistical mechanics to be useful is that systems equilibrate: at some point the macroscopic properties stop changing. In this lecture, we show that probabilities eventually stop changing, derive the postulate of equal a priori probabilities, and compute the Maxwell-Boltzmann distribution.</p>
+
+<!-- ============================================================ -->
+<h2 id="s3-1">1 &mdash; Introduction</h2>
+
+<p>Now we have a little bit of sense of how things simplify when large numbers of events are sampled from a probability distribution. The next thing to do is apply this simplification to general physical systems. The key observation, which allows statistical mechanics to be useful at all, is that systems <span class="tooltip-trigger">equilibrate<span class="tooltip-content">The process by which a system's macroscopic properties stop changing over time, even though microscopic dynamics continue.</span></span>. This means that at some point the macroscopic properties of the system stop changing. Note that equilibrium does not mean the system is static: a gas at fixed temperature still has moving molecules, but its macroscopic properties, pressure, temperature, etc. are not changing. From a microscopic perspective, the probability distribution of the states does not change. In this lecture, we will show that probabilities eventually stop changing.</p>
+
+<p>It is not hard to build intuition for equilibration of probabilities. For example, take a deck of cards and pick two consecutive cards from somewhere in the middle. What is the probability that the cards have the same suit after the deck has been shuffled $t$ times? When you first open a new deck, it is all in order, so the chance that the two cards have the same suit is pretty high, $P(0) \approx 1$. Then you shuffle it. After shuffling once, the probability of two suited cards in a row is lower than before, $P(t = 1) \lesssim 1$ but probably still pretty high since one shuffle doesn't mix them much. Eventually, after shuffling a bunch of times, the probability of finding two consecutive suited cards is going to stop changing ($\lim_{t\to\infty} P(t) = \frac{12}{52}$). Note that in equilibrium the cards change with each shuffle, but the probabilities don't: after each shuffle the identity of the top card is not constant, but the probability that the top card is the ace of spades is constant, $P = \frac{1}{52}$.</p>
+
+<p>One of the most important properties of equilibrium is that in equilibrium, all possible states are equally likely. This is known as the <span class="tooltip-trigger">postulate of equal a priori probabilities<span class="tooltip-content">The fundamental postulate that in equilibrium, all accessible microstates of a system are equally likely. This is justified by the Boltzmann H-theorem.</span></span>. For example, with a shuffled deck, the chance of the top card being any of the 52 cards is the same $P = \frac{1}{52}$.</p>
+
+<p>In this lecture we introduce a number of important concepts related to equilibration:</p>
+<ul>
+<li><strong>Chaos:</strong> the state of a system is uncontrollably sensitive to small perturbations.</li>
+<li><strong>Molecular chaos:</strong> correlations among states are lost over time.</li>
+<li><strong>Coarse-graining:</strong> averaging over nearby position/momenta.</li>
+<li><strong>Ergodicity:</strong> the time average of a system is the same as the average over possible states.</li>
+</ul>
+
+<p>The example we focus on most in this lecture, and for much of the course, is that of an <span class="tooltip-trigger">ideal gas<span class="tooltip-content">A gas in which all interactions are short-ranged and collisions are elastic. In the simplest case, molecules have no internal structure and the state is specified by positions and momenta of all particles.</span></span>. An ideal gas is one for which all the interactions are short-ranged and collisions are elastic. In the simplest ideal gas, the gas molecules have no internal structure. The state of the ideal gas is specified classically by giving the positions $\vec{q}_i(t)$ and velocities $\vec{v}_i(t)$ (or momenta $\vec{p}_i(t) = m\vec{v}_i(t)$) of the particles $i = 1\ldots N$ at any time $t$. The set of allowed $\vec{q}_i$ and $\vec{p}_i$ for the $N$ particles is called the <span class="tooltip-trigger">phase space<span class="tooltip-content">The $6N$-dimensional space of all possible positions and momenta for $N$ particles in 3D. Each point specifies the complete state of the system at a given time.</span></span> of the gas. The full phase space is $6N$ dimensional. The coordinates of a point in $6N$ dimensions tells you the state of the system at any fixed time. The equations of motion then determine the trajectory through phase space.</p>
+
+<!-- ============================================================ -->
+<h2 id="s3-2">2 &mdash; Chaos</h2>
+
+<p>A key to understanding equilibration (and statistical mechanics!) is to appreciate why we go from knowing exactly what is going on in a system to accepting that we can only discuss the probability of what is going on. This is the transition from mechanics (classical, where you know positions and velocities, or quantum where you know the wavefunction) to statistical mechanics.</p>
+
+<p>The easiest way to see why we must go to a probabilistic treatment is that it is literally impossible to keep track of every particle in the system. In fact, systems with large numbers of degrees of freedom are always <span class="tooltip-trigger">chaotic<span class="tooltip-content">A system where small changes in initial conditions lead to exponentially diverging outcomes. This makes long-term prediction impossible even with nearly perfect knowledge.</span></span>: they are uncontrollably sensitive to infinitesimal inaccuracies of the specification of the system. Chaos is sometimes called the "butterfly effect", since a butterfly flapping its wings in Australia can affect the weather in Boston. We can understand the basic observation about chaos with a simple example.</p>
+
+<p>Let's treat the molecules in a gas as hard sphere particles of radius $R$. If you follow one sphere, it will bounce off another sphere after travelling, on average, a distance $\ell$ (the mean free path). The angle $\theta$ it deflects will depend on the <span class="tooltip-trigger">impact parameter<span class="tooltip-content">The perpendicular distance between the centers of two colliding particles, measured relative to the direction of motion. It determines the scattering angle.</span></span> $b$, defined as the distance between the sphere's centers perpendicular to the direction of motion.</p>
+
+<figure>
+<img src="images/3-Equilibrium_p2_img0.png" alt="Geometry of hard sphere collision showing impact parameter b, radius R, and scattering angle theta">
+<figcaption>The geometry of a hard-sphere collision. The impact parameter $b$, sphere radius $R$, and scattering angle $\theta$ are related by $b/2 = R\sin(\theta/2)$.</figcaption>
+</figure>
+
+<p>By working out the geometry, we see that $b$, $R$ and $\theta$ are related by:</p>
+<div class="equation">
+$$\frac{b}{2} = R\sin\frac{\theta}{2}$$
+<span class="eq-number">(2)</span>
+</div>
+
+<figure>
+<img src="images/3-Equilibrium_p2_img1.png" alt="Three-ball collision showing how small change in impact parameter propagates">
+<figcaption>Figure 1. The green ball hits the red ball at an impact parameter $b_1$, scatters at an angle $\theta_1$, then hits the blue ball at impact parameter $b_2$. A small change $\Delta b_1$ in $b_1$ leads to a change $\Delta\theta_1$ in $\theta_1$ and a change $\Delta b_2$ in $b_2$.</figcaption>
+</figure>
+
+<p>Let us follow one ball. It first collides with an impact parameter $b_1$ deflecting at an angle $\theta_1$, then hits another ball, with impact parameter $b_2$ at angle $\theta_2$ and so on. We are interested in how the trajectory of this molecule changes upon a really weak force. If the force changes the impact parameter of the first collision by some small $\Delta b_1$, then after the first collision, the scattering angle will change by $\Delta\theta_1$ where, by Taylor expanding around $\theta_1$ we get</p>
+<div class="equation">
+$$\frac{b + \Delta b_1}{2} = R\sin\!\left(\frac{\theta_1 + \Delta\theta_1}{2}\right) \approx R\sin\frac{\theta_1}{2} + R\frac{\Delta\theta_1}{2}\cos\frac{\theta_1}{2} + \cdots$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p>Assuming $\frac{\Delta b_1}{R} \ll 1$ we can then solve for $\Delta\theta_1 \approx \frac{2\Delta b_1}{R\cos\theta_1}$. Let us not assume anything special about $\theta_1$, so that $\cos\theta_1$ is not unusually big or small, and therefore $\Delta\theta_1 \approx \frac{\Delta b_1}{R}$ up to some number of order 1. This makes sense: if $\Delta b_1$ is small, then $\Delta\theta_1$ is small too.</p>
+
+<p>However, after the first collision, the sphere moves a distance $\ell$ to the next collision. Then the impact parameter for the second collision changes by $\Delta b_2 = \ell\,\Delta\theta_1$. This implies $\Delta\theta_2 \approx \frac{\Delta b_2}{R} = \frac{\ell}{R}\Delta\theta_1$. In this way, the angle change has grown by a factor of $\frac{\ell}{R}$. After $N$ collisions,</p>
+<div class="equation key-result">
+$$\Delta\theta_N \approx \left(\frac{\ell}{R}\right)^N \Delta\theta_1$$
+<span class="eq-number">(4)</span>
+</div>
+
+<p>Even if $\Delta\theta_1$ is very very small this factor of $\left(\frac{\ell}{R}\right)^N$ quickly becomes very large. For a gas at room temperature, $\ell \approx 10^{-7}\,\text{m}$ and $R \approx 10^{-10}\,\text{m}$. Then $\frac{\ell}{R} \approx 10^3$. Thus after just a few collisions, this $\left(\frac{\ell}{R}\right)^N$ factor can make small effects very very big.</p>
+
+<div class="info-box example">
+<div class="box-title">Example: Effect of Waving Your Arm</div>
+<p>Displacing your arm by distance $\Delta r$ at $r = 10\,\text{km}$ away changes the gravitational force on an atom by</p>
+$$\Delta F = \frac{d}{dr}\left(\frac{G\, m_{\text{atom}}\, m_{\text{arm}}}{r^2}\right)\Delta r \approx 10^{-50}\,\text{N}$$
+<p>This causes an acceleration $a = \frac{\Delta F}{m_{\text{atom}}} = 10^{-23}\,\text{m/s}^2$ on the atom. Over one collision time $\tau \sim 10^{-9}\,\text{s}$, the atom is displaced by $\Delta b_1 = a\tau^2 \approx 10^{-32}\,\text{m}$, giving $\Delta\theta_1 \sim 10^{-22}$. However, after $N$ collisions:</p>
+$$\Delta\theta_N = 10^{-22}\left(\frac{\ell}{R}\right)^N = 10^{-22}(10^3)^N$$
+<p>After only <strong>8 collisions</strong> over $10^{-8}\,\text{s}$, the change in angle is of order 1! This is chaos.</p>
+</div>
+
+<div class="info-box example">
+<div class="box-title">Example: A Flea Across the Universe</div>
+<p>Consider a flea at $r \approx 10^{27}\,\text{m}$ away waving its wing by $\Delta r = 10^{-6}\,\text{m}$. This gives $\Delta\theta_1 \approx 10^{-97}$. Even for such a tiny angle, it would take only <strong>33 collisions</strong> ($10^{-7}$ seconds) for the trajectory of the atom to change completely. After 1 second, every molecule has a vastly different position and velocity from what it would have had if the flea had not waved its hand.</p>
+</div>
+
+<p>A chaotic system is one in which the late time behavior is exponentially sensitive to initial conditions: changing the initial condition by a little bit has an enormous effect on the outcome. Because of chaos, we can never hope to know the state of a gas exactly. There is simply no physical limit in which a state can be isolated and well defined. We must resort to probabilities if we are to make any physical predictions for gases.</p>
+
+<p>In addition, even if we pretend a system is completely isolated &mdash; turn off gravity and fleas, etc &mdash; the system is still chaotic due to (classical) uncertainty. With an even exponentially small uncertainty on the initial condition, the final state after long enough time will be completely unknown. In quantum mechanics, the relevant uncertainty on the initial state is not the Heisenberg uncertainty (on knowing position given momentum), but on how well we can actually know the initial state wavefunction. Again, there is no hope of solving the time-evolution exactly.</p>
+
+<!-- Interactive Chaos Double Pendulum -->
+<div class="interactive-container" id="vis-chaos">
+  <h3>Interactive: Chaos &mdash; Double Pendulum</h3>
+  <div class="vis-controls">
+    <label>Initial offset: <input type="range" id="chaos-offset" min="0.001" max="0.5" step="0.001" value="0.01"><span class="slider-value">0.01</span></label>
+    <button id="chaos-start">Start</button>
+    <button id="chaos-reset">Reset</button>
+  </div>
+  <canvas class="vis-canvas" width="600" height="400"></canvas>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3-3">3 &mdash; Maxwell and Molecular Chaos</h2>
+
+<h3 id="s3-3-1">3.1 &mdash; Equilibration of molecular velocities</h3>
+
+<p>Say we have a gas with different types of molecules in it, of different masses, $m_1, m_2$, etc. If the gas is in equilibrium, then there will be well-defined probabilities for the velocities of the different molecule types. What can we say about these probabilities?</p>
+
+<p>Pick randomly one molecule of mass $m_1$ and one of mass $m_2$. Say these two molecules come in to hit each other with incoming velocities $\vec{v}_1$ and $\vec{v}_2$, respectively. If there is no preferred direction in the system, then the velocities are equally likely to point in any direction. Thus the dot product $\vec{v}_1 \cdot \vec{v}_2 = |\vec{v}_1||\vec{v}_2|\cos\theta$ is equally likely to be positive or negative and therefore the expectation value of the dot product of the incoming velocities must be zero:</p>
+<div class="equation">
+$$\langle\vec{v}_1\cdot\vec{v}_2\rangle = \langle|\vec{v}_1|\rangle\langle|\vec{v}_2|\rangle\langle\cos\theta\rangle = \langle|\vec{v}_1|\rangle\langle|\vec{v}_2|\rangle\frac{1}{\pi}\int_0^{\pi}d\theta\,\cos\theta = 0$$
+<span class="eq-number">(8)</span>
+</div>
+
+<p>That is, two random initial velocities are uncorrelated.</p>
+
+<p>For collisions, it is often helpful to work in the center of mass frame. The velocity of the center of mass is</p>
+<div class="equation">
+$$\vec{v}_{\text{cm}} = \frac{1}{m_1 + m_2}(m_1\vec{v}_1 + m_2\vec{v}_2)$$
+<span class="eq-number">(9)</span>
+</div>
+
+<p>Note that $\vec{v}_{\text{cm}}$ does not change as a result of the collision, by momentum conservation. The relative velocity:</p>
+<div class="equation">
+$$\Delta v = \vec{v}_1 - \vec{v}_2$$
+<span class="eq-number">(10)</span>
+</div>
+
+<p>is unchanged by the shift to the center of mass frame. Since $\vec{v}_1$ and $\vec{v}_2$ pointed in random directions, $\Delta v$ also points in a random direction as does $\vec{v}_{\text{cm}}$. Moreover: $\Delta v$ and $\vec{v}_{\text{cm}}$ are totally uncorrelated. Thus,</p>
+<div class="equation">
+$$\langle\Delta v \cdot \vec{v}_{\text{cm}}\rangle = 0$$
+<span class="eq-number">(11)</span>
+</div>
+
+<p>Next, write</p>
+<div class="equation">
+$$\Delta v \cdot \vec{v}_{\text{cm}} = \frac{1}{m_1 + m_2}(\vec{v}_1 - \vec{v}_2)\cdot(m_1\vec{v}_1 + m_2\vec{v}_2) = \frac{m_1 v_1^2 - m_2 v_2^2 + (m_2 - m_1)\vec{v}_1\cdot\vec{v}_2}{m_1 + m_2}$$
+<span class="eq-number">(13)</span>
+</div>
+
+<p>Now take the average value over all possible choices for molecules 1 and 2. Since $\langle\vec{v}_1\cdot\vec{v}_2\rangle = 0$ and $\langle\Delta v\cdot\vec{v}_{\text{cm}}\rangle = 0$ we must therefore have</p>
+<div class="equation key-result">
+$$\langle m_1 \vec{v}_1^{\,2}\rangle = \langle m_2 \vec{v}_2^{\,2}\rangle$$
+<span class="eq-number">(14)</span>
+</div>
+
+<p>Dividing by two, we conclude that <strong>the average kinetic energy of any molecular species in the gas is the same</strong>. This calculation of Maxwell's was one of the first theoretical results demonstrating progress towards equilibrium.</p>
+
+<div class="info-box physical">
+<div class="box-title">Maxwell's Insight</div>
+<p>This result is remarkable because it is so simple, yet so profound. All we used was that the velocities point in random directions, and we learned something non-trivial about the <em>magnitudes</em> of the velocities. Not only do heavier molecules move slower, on average, but the average kinetic energy for any molecules is a universal quantity determined by the state of the gas, independent of the mass.</p>
+</div>
+
+<h3 id="s3-3-2">3.2 &mdash; Molecular chaos</h3>
+
+<p>Note that Maxwell's argument depended on $\langle\vec{v}_1\cdot\vec{v}_2\rangle = 0$, which we justified with the logic that there is no preferred direction in the system. This justification is very reasonable, but it is still an assumption:</p>
+
+<div class="info-box concept">
+<div class="box-title">Assumption of Molecular Chaos</div>
+<p>Velocities of colliding particles are independent of each other, and independent of the position of the collision.</p>
+</div>
+
+<p>This assumption is an excellent approximation for most physical systems. It is however, never exactly true.</p>
+
+<p>To turn the assumption into an equation, it is helpful to refer to the state of the entire gas at time $t$ as a point $(\vec{q}_i, \vec{p}_i)$ in phase space. We are interested in the probability $P(\vec{q}_i, \vec{p}_i, t)$ of finding all the particles with given positions and momenta at the same time $t$. The assumption of molecular chaos lets us write</p>
+<div class="equation key-result">
+$$P(\vec{q}_1, \vec{p}_1, \ldots, \vec{q}_N, \vec{p}_N, t) = P_1(\vec{q}_1, \vec{p}_1, t) \times \cdots \times P_1(\vec{q}_N, \vec{p}_N, t) = \prod_j P_1(\vec{q}_j, \vec{p}_j, t)$$
+<span class="eq-number">(15)</span>
+</div>
+
+<p>for a simpler function $P_1(\vec{q}, \vec{p}, t)$ of just 7 variables. Now, the expectation value of observables, like the average velocity-squared, can be computed just with the 7-dimensional function $P_1$ rather than the $10^{23}$ dimensional function $P$:</p>
+<div class="equation">
+$$\langle\vec{v}_k^{\,2}\rangle(t) = \int d^{3N}q\, d^{3N}p\, \frac{\vec{p}_k^{\,2}}{m^2}\, P(\vec{q}_1,\vec{p}_1,\ldots,\vec{q}_N,\vec{p}_N,t) = \int d^3 q_k\, d^3 p_k\, \frac{\vec{p}_k^{\,2}}{m^2}\, P_1(\vec{q}_k,\vec{p}_k,t)$$
+<span class="eq-number">(16)</span>
+</div>
+
+<p>To see the subtlety in the assumption of molecular chaos, return to the example of two colliding particles. Are the outgoing velocities $\vec{v}_1'$ and $\vec{v}_2'$ uncorrelated as well? The answer must be <em>no</em>. For example, say $m_1 \gg m_2$, like a truck hitting a bicycle. After the collision, the truck and the bicycle will be going close to the truck's initial direction. So the angle $\theta$ measured with respect to the incoming truck's direction will likely be close to zero and therefore $\langle\vec{v}_1'\cdot\vec{v}_2'\rangle \neq 0$. In other words, after a collision, two uncorrelated velocities become correlated.</p>
+
+<figure>
+<img src="images/3-Equilibrium_p5_img0.png" alt="Two molecules colliding with correlated outgoing velocities">
+<figcaption>Figure 2. When two molecules collide, the outgoing velocities are correlated.</figcaption>
+</figure>
+
+<p>Since outgoing particles eventually become incoming particles when they collide again, the assumption of molecular chaos must not strictly hold. Why then can we use it?</p>
+
+<p>The key to tracking what happens to the correlations is that the dynamics of multibody systems are chaotic, as discussed in Section 2. Since we never know exactly what the initial state is of any physical system &mdash; there is some measurement uncertainty or uncertainty due to motion of fleas across the universe &mdash; we should properly specify the state not as a point in phase space but as a region $\mathcal{R}$ in phase space around the point $(p_i, q_i)$ of volume $\Delta V = (\Delta q)^{3N}(\Delta p)^{3N}$.</p>
+
+<figure>
+<img src="images/3-Equilibrium_p5_img1.png" alt="Nearby points in phase space following correlated trajectories">
+<figcaption>Figure 3. After a short time, nearby points in phase space follow highly-correlated trajectories through phase space.</figcaption>
+</figure>
+
+<p>But now let's wait a bit longer. Suppose for the exact point $(\vec{q}_i, \vec{p}_i)$ there are 9 collisions in $10^{-8}\,\text{s}$. Now consider a point $10^{-32}\,\text{m} < \Delta q$ away still within the region $\mathcal{R}$. As we saw in Eq.&nbsp;(7) the trajectory of such a point will be off by an angle of order 1 after 8 collisions, so will miss the 9th collision and move on to a very different region in phase space. Thus, as time moves on, the original region $\mathcal{R}$ of volume $\Delta V$ gets fragmented and split up into an enormous number of disconnected regions.</p>
+
+<figure>
+<img src="images/3-Equilibrium_p6_img0.png" alt="Phase space region fragmenting over time and coarse graining">
+<figcaption>Figure 4. Over time, a phase space region $\mathcal{R}$ of size $\Delta V$ fragments into an enormous number of small regions with the same total volume (left). When we coarse grain, the phase space volume increases (middle). Further time evolution with coarse graining fills up more and more of phase space (right).</figcaption>
+</figure>
+
+<p>Now we invoke a result from classical mechanics called <span class="tooltip-trigger">Liouville's theorem<span class="tooltip-content">A theorem in classical mechanics stating that the phase space volume occupied by a set of trajectories is conserved under Hamiltonian time evolution. It follows from Hamilton's equations of motion.</span></span>, which says that the sum of the phase-space volumes of all the fragments is the same as the original volume $\Delta V$ of the region $\mathcal{R}$.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Liouville's theorem</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Proof</div>
+<p>Think about an infinitesimal time evolution as a change of variables, from $q, p$ to $q' = q + \dot{q}\,dt$ and $p' = p + \dot{p}\,dt$. Then, to leading order in $dt$, the phase space volume $dq\,dp$ changes to</p>
+$$dq'\,dp' = \frac{\partial q'}{\partial q}\frac{\partial p'}{\partial p}\,dq\,dp = \left(1 + \frac{\partial\dot{q}}{\partial q}dt + \frac{\partial\dot{p}}{\partial p}dt\right)dq\,dp = \left(1 + \frac{\partial}{\partial q}\frac{\partial H}{\partial p}dt - \frac{\partial}{\partial p}\frac{\partial H}{\partial q}dt + \cdots\right)dq\,dp = dq\,dp$$
+<span class="eq-number">(17)</span>
+<p>where Hamilton's equations of motion $\dot{q} = \frac{\partial H}{\partial p}$, $\dot{p} = -\frac{\partial H}{\partial q}$ were used. Thus the phase space volume does not change upon time evolution.</p>
+</div>
+</div></div>
+</div>
+
+<p>This means the volumes of the fragments are getting smaller and smaller after each collision. However, we already said that we cannot possibly know what point in phase space our system is in with a precision better than $\Delta V$. So we must <span class="tooltip-trigger">coarse-grain<span class="tooltip-content">The process of averaging over nearby points in phase space, treating them as indistinguishable. This washes out correlations that are present at finer scales.</span></span> these small phase space volumes, treating them all the same way. Although the original small fragmented regions were highly correlated, nearby fragments that we absorb through coarse graining are not. In other words, the correlations are still there, but we cannot ever measure anything sensitive to them: it would be beyond our experimental resolution. So the effective phase space volume, from the point of view of things we can physically distinguish, is increasing. When we coarse-grain, the correlations are completely washed out.</p>
+
+<div class="info-box concept">
+<div class="box-title">The Arrow of Time</div>
+<p>If we had perfect knowledge of a system, the trajectories of all the particles would be highly correlated. However, with any arbitrarily small amount of uncertainty, those correlations get dispersed into small phase space fragments due to the chaotic nature of multibody systems. When these fragments are coarse-grained, the correlations are lost forever.</p>
+<p>This simple fact, that chaos forces us to discard correlations, is our first indication of the <strong>arrow of time</strong>. Microscopic laws of physics are time-reversal invariant (a video of two point masses orbiting each other looks realistic in reverse), but average properties of large systems change in a fixed time direction (a video of a gas expanding does not look realistic in reverse). The arrow of time is the direction in which our ignorance grows.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3-4">4 &mdash; Boltzmann's H theorem</h2>
+
+<p>Not long after Maxwell's work, Ludwig Boltzmann attempted to make the arguments for approaching equilibrium more robust and general.</p>
+
+<p>Say we have some state $a$. For concreteness, think of $a$ as a specification of all the momenta and positions of all the particles in a gas. Let's denote by $P_a(t)$ the probability of finding the gas in state $a$. Let's denote the rate for $a$ to turn into some other state $b$ by $T_{ab}$, and the rate for $b$ to turn into $a$ by $T_{ba}$. Then the rate of change of $P_a(t)$ is given by summing over possible states $b$ by the equation</p>
+<div class="equation key-result">
+$$\frac{d}{dt}P_a(t) = \underbrace{\sum_b P_b(t)\,T_{ba}}_{\text{transitions }b\to a} - \underbrace{P_a(t)\sum_b T_{ab}}_{\text{transitions }a\to b}$$
+<span class="eq-number">(18)</span>
+</div>
+
+<p>The key property of physical systems that allows equilibrium to be approached is the <span class="tooltip-trigger">principle of detailed balance<span class="tooltip-content">The transition rate from state $a$ to state $b$ equals the rate from $b$ to $a$: $T_{ab} = T_{ba}$. This follows from time-reversal invariance in classical mechanics and unitarity in quantum mechanics.</span></span>: the transition rate from one state $a$ to $b$ is the same as the rate for $b$ going to $a$: $T_{ab} = T_{ba}$. In classical mechanics, this follows from time-reversal invariance of the equations of motion; in quantum mechanics, it follows from the fact that the interaction Hamiltonian $H_{\text{int}}$ is Hermitian:</p>
+<div class="equation">
+$$T_{ab} = |\langle a|H_{\text{int}}|b\rangle|^2 = \langle a|H_{\text{int}}|b\rangle\langle b|H_{\text{int}}^\dagger|a\rangle = \langle b|H_{\text{int}}|a\rangle\langle a|H_{\text{int}}^\dagger|b\rangle = |\langle b|H_{\text{int}}|a\rangle|^2 = T_{ba}$$
+<span class="eq-number">(19)</span>
+</div>
+
+<p>Once we know that $T_{ab} = T_{ba}$ it follows from Eq.&nbsp;(18) that</p>
+<div class="equation">
+$$\frac{d}{dt}P_a(t) = \sum_b T_{ab}[P_b(t) - P_a(t)]$$
+<span class="eq-number">(20)</span>
+</div>
+
+<p>This is a powerful equation. For example, say there are only two states. Then this equation says that if $P_a(t) > P_b(t)$ then $P_a(t)$ will go down, and if $P_b(t) > P_a(t)$ then $P_a(t)$ will go up. Thus, over time, the probabilities will become the same: $\lim_{t\to\infty} P_a(t) = \lim_{t\to\infty} P_b(t)$.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Boltzmann's H theorem</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: Define H</div>
+<p>Consider the quantity</p>
+$$H(t) = -\sum_a P_a(t)\ln P_a(t)$$
+<span class="eq-number">(21)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 2: Compute $dH/dt$</div>
+$$\frac{d}{dt}H(t) = -\sum_a \left[\frac{d}{dt}P_a(t)\right]\ln P_a(t) - \frac{d}{dt}\sum_a P_a(t)$$
+<p>Since $\sum_a P_a(t) = 1$ the second term is zero. Substituting Eq.&nbsp;(20):</p>
+$$\frac{d}{dt}H(t) = \sum_a \sum_b T_{ab}[P_a(t) - P_b(t)]\ln P_a(t)$$
+<span class="eq-number">(23)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 3: Symmetrize</div>
+<p>Switching the labels $a$ and $b$ gives another expression. Averaging the two:</p>
+$$\frac{d}{dt}H(t) = \frac{1}{2}\sum_a\sum_b T_{ab}[\ln P_a(t) - \ln P_b(t)][P_a(t) - P_b(t)]$$
+<span class="eq-number">(25)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 4: Conclusion</div>
+<p>Since $\ln x$ is a monotonic function, if $P_a > P_b$ then $\ln P_a > \ln P_b$. This means every term in the sum is non-negative and therefore</p>
+$$\frac{d}{dt}H(t) \geq 0$$
+<span class="eq-number">(26)</span>
+</div>
+
+</div></div>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">Boltzmann H theorem<span class="tooltip-content">The theorem that the quantity $H = -\sum P_a \ln P_a$ always increases (or stays constant) over time. It implies that probabilities tend toward uniformity &mdash; the equilibrium state.</span></span>.</p>
+
+<p>If $H(t)$ is changing, then the probabilities must also be changing and we cannot be in equilibrium. Thus, equilibrium is only possible if $\frac{d}{dt}H(t) = 0$ which only happens if $P_a(t) = P_b(t)$ for all states $a$ and $b$. That is,</p>
+
+<div class="info-box concept">
+<div class="box-title">Postulate of Equal A Priori Probabilities</div>
+<p>In equilibrium, the probabilities of finding the system in any two states $a$ and $b$ for which transitions can possibly occur ($T_{ab} \neq 0$) are the same.</p>
+</div>
+
+<p>For a simple example, imagine you have 5 coins in a box and they all start heads up. Then you start throwing golf balls into the box, one by one. Each golf ball could hit a coin and flip it. So initially, $P(\text{HHHHH}) = 1$. But after a long enough time, the probability of any configuration will be the same, $\frac{1}{2^5} = \frac{1}{32}$ and $P(\text{HHHHH}) = \frac{1}{32}$.</p>
+
+<h3>Loschmidt's paradox</h3>
+
+<p>Note that the Boltzmann H theorem is not time-reversal invariant: $H$ increases as we move forward in time, not backwards in time. How did this happen? The microscopic equations of motion are time-reversal invariant, so where did this arrow of time come from? This mystery is known as <span class="tooltip-trigger">Loschmidt's paradox<span class="tooltip-content">The apparent contradiction between the time-reversal symmetry of microscopic physics and the irreversible increase of H (and entropy). It is resolved by recognizing that the implicit coarse-graining and discarding of correlations breaks time-reversal invariance.</span></span>.</p>
+
+<p>To understand Loschmidt's paradox, we have to decode the implicit assumptions in Boltzmann's H theorem. If we knew exactly what the state was and evolved it with time perfectly, we would always know the state, so $P_a(t)$ would either be zero or 1 for all time. Then $H = 0$ for all time and $dH/dt = 0$, which is consistent with the H theorem but does not lead to equal a priori probabilities.</p>
+
+<p>The key assumption in Boltzmann's H theorem is that a state $a$ can transition to <em>multiple</em> states $b$. This is generally not possible in a unitary causal theory, since the time evolution should uniquely determine $a(t)$. So even though the theory is causal at the microscopic level, the apparent violation of causality, allowing $H(t)$ to grow, comes about because we discard information that is in principle available but practically inaccessible. We do this by time-averaging, by averaging over unknown parts of the initial conditions, and by coarse graining. These, often implicit, operations are the key to the Boltzmann H theorem, the postulate of equal a priori probabilities, and the increase of entropy.</p>
+
+<!-- ============================================================ -->
+<h2 id="s3-5">5 &mdash; The ergodic hypothesis</h2>
+
+<p>Another concept related to chaos and coarse graining that we will need is <span class="tooltip-trigger">ergodicity<span class="tooltip-content">A system is ergodic if the time average of any observable equals the ensemble average over all accessible states. This connects what we compute (ensemble averages) to what experiments measure (time averages).</span></span>.</p>
+
+<div class="info-box concept">
+<div class="box-title">The Ergodic Hypothesis</div>
+<p>An <strong>ergodic system</strong> is one for which the average over all possible states (the <em>ensemble average</em>) is the same as the average over the states that a given state will evolve into over time (the <em>time average</em>).</p>
+</div>
+
+<p>In other words, we can find the probabilities of a system being in a state at a given time $t$ by looking at the possible states a system passes through over time.</p>
+
+<p>We used ergodicity already in describing diffusion when we equated the probability of finding a particle at position $x$ at time $t$, $P(x, t)$ with the number density: $n(x, t) = NP(x, t)$. Strictly speaking, $P(x, t)$ is a smooth function but $n(x, t)$ is not. At any time $n_{\text{true}}(x, t) = \frac{1}{V}\sum_i \delta(x - x_i(t))$ since the molecules are only ever at some precise points. When we write $n(x, t) = NP(x, t)$ what we mean is the time-averaged number density $\overline{n}(x, t) = \frac{1}{T}\int_0^T dt'\, n_{\text{true}}(x, t + t')$ for some time $T$ greater than the typical collision time $\tau$ will agree with $NP(x, t)$.</p>
+
+<p>The idea behind ergodicity is that a classical trajectory through phase space $\vec{q}(t), \vec{p}(t)$ will eventually pass close to any other accessible phase space point $\vec{q}', \vec{p}'$. For example, a gas molecule bouncing around a room will eventually go everywhere and eventually have any momentum.</p>
+
+<p>Unfortunately, most systems are not ergodic, in the strict mathematical sense. Hence ergodic "hypothesis". An example of a non-ergodic system is one with closed orbits in phase space.</p>
+
+<figure>
+<img src="images/3-Equilibrium_p9_img0.png" alt="Circular pool table (non-ergodic) vs cardioid pool table (ergodic)">
+<figcaption>Figure 5. A circular container (left) is non-ergodic while a cardioid container (right) is. If let to continue indefinitely, the left trajectory would never reach the center, while the right trajectory would eventually fill the entire volume.</figcaption>
+</figure>
+
+<p>Most systems are believed to have regions of phase space which do not mix, so generally ergodicity is not exact. Moreover, even in systems where it does hold, the time for all the points in phase space to be passed through is astronomical. This is simply because the volume of phase space is astronomical: $6N \sim 10^{24}$ dimensional.</p>
+
+<p>The fact that systems are not strictly ergodic and take a long time to be approximately ergodic is largely irrelevant. The reason is that we coarse grain the phase space. So instead of a $6N \sim 10^{24}$ dimensional space, we treat phase space as essentially 6 dimensional as in Eq.&nbsp;(15). Although it takes forever for the entire collection of $10^{24}$ molecules to pass near any point in the $10^{24}$ dimensional phase space, it does not take long at all for one of the $10^{24}$ molecules to get close to any given position and velocity.</p>
+
+<p>In any case, the main reason that people care about ergodicity is the simple fact that <strong>experiments measure time averages, but the things we compute in statistical mechanics are ensemble averages</strong>. Without ergodicity our calculations would not allow us to make any physical predictions.</p>
+
+<!-- ============================================================ -->
+<h2 id="s3-6">6 &mdash; Counting states</h2>
+
+<p>Boltzmann's H theorem immediately implies the</p>
+
+<div class="info-box concept">
+<div class="box-title">Postulate of Equal A Priori Probabilities</div>
+<p>All accessible microstates are equally likely.</p>
+</div>
+
+<p>The word "accessible" is required because we only proved Boltzmann's H theorem for the sets of states for which $T_{ab} \neq 0$. Accessibility can be limited by physical barriers, or by conservation laws (number of particles, energy, charge, etc.).</p>
+
+<p>To make the postulate precise, we need to know how to compare probabilities. There is always some measure for the probabilities. For phase space points $(\vec{q}_i, \vec{p}_i)$ there is some intrinsic resolution $(\Delta q)^{3N}(\Delta p)^{3N}$. Ultimately, the phase space resolution is limited by quantum uncertainty: $\Delta q\,\Delta p \gtrsim \hbar$.</p>
+
+<p>Let's take an example: an ideal gas in a box with energy $E$. We treat it classically, so that positions and momenta are continuous. We assume there are no external forces, so the energy is independent of position $\vec{q}_i$. Then the number of states is the product of the number of choices for momenta and positions:</p>
+<div class="equation">
+$$\Omega = \Omega_q\,\Omega_p$$
+<span class="eq-number">(27)</span>
+</div>
+
+<p>For positions, each molecule can be in a box of size $\Delta q$, so there are $\frac{V}{(\Delta q)^3}$ choices in 3 dimensions. For the whole ensemble,</p>
+<div class="equation">
+$$\Omega_q = \left[\frac{V}{(\Delta q)^3}\right]^N$$
+<span class="eq-number">(28)</span>
+</div>
+
+<p>For momenta, if we know the total energy $E$ we have a constraint:</p>
+<div class="equation">
+$$E = \sum_j \frac{\vec{p}_j^{\,2}}{2m}$$
+<span class="eq-number">(29)</span>
+</div>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Counting momentum states</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: 2 particles in 1D</div>
+<p>$2mE = p_1^2 + p_2^2$. We count the number of boxes of size $\Delta p$ that a circle with radius $R = \sqrt{2mE}$ passes through. The circumference divided by $\Delta p$ gives:</p>
+$$\Omega_p = \frac{2\pi\sqrt{2mE}}{\Delta p}$$
+</div>
+
+<figure>
+<img src="images/3-Equilibrium_p11_img0.png" alt="Counting states on a circle in 2D momentum space">
+<figcaption>Counting the number of small boxes of size $(\Delta p)^2$ that a circle of radius $R = \sqrt{2mE}$ passes through.</figcaption>
+</figure>
+
+<div class="step"><div class="step-label">Step 2: General case</div>
+<p>With $N$ particles in 3 dimensions, $2mE = p_{1x}^2 + p_{1y}^2 + p_{1z}^2 + \cdots + p_{Nz}^2$ is the sum of the squares of $3N$ independent momenta. Then</p>
+$$\Omega_p = \sigma_{3N}\left(\frac{\sqrt{2mE}}{\Delta p}\right)^{3N}$$
+<span class="eq-number">(34)</span>
+<p>where $\sigma_d$ is the surface area of a $d$-dimensional unit sphere:</p>
+$$\sigma_d = \frac{2(\sqrt{\pi})^d}{\left(\frac{d}{2} - 1\right)!}$$
+<span class="eq-number">(37)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 3: Large $N$ limit</div>
+<p>For large $N$, using Stirling's approximation:</p>
+$$\Omega_p = e^{3N/2}\left(\frac{4\pi m E}{3N(\Delta p)^2}\right)^{3N/2}$$
+<span class="eq-number">(39)</span>
+</div>
+
+</div></div>
+</div>
+
+<p>Combining with the phase space for position in Eq.&nbsp;(28), we get</p>
+<div class="equation key-result">
+$$\Omega(N, V, E) = e^{3N/2}\left(\frac{V}{(\Delta q\,\Delta p)^3}\right)^N\left(\frac{4\pi m E}{3N}\right)^{3N/2}$$
+<span class="eq-number">(40)</span>
+</div>
+
+<p>A key feature of the number of states is that it is an extremely rapidly growing function of energy &mdash; it grows like energy to the power $10^{24}$. That is,</p>
+<div class="equation">
+$$\Omega(E) \sim E^{10^{24}}$$
+<span class="eq-number">(41)</span>
+</div>
+
+<p>So when you add energy to a system, the number of states grows enormously. For example, say we increased the energy by 0.00001% ($E \to E + 10^{-7}E$). Then the number of new states is</p>
+<div class="equation">
+$$\text{\# new states} = \Omega(E + 10^{-7}E) - \Omega(E) = 10^{-7}\partial_E E^{10^{24}} = 10^{18}\,\Omega(E)$$
+<span class="eq-number">(42)</span>
+</div>
+
+<p>In the next lecture, we will consider situations that have more contributions to the energy, such as from vibrational modes of a molecule. In such situations, the calculation is similar, resulting in $\Omega \sim E^{fN/2}$ rather than $\Omega \sim E^{3N/2}$ with $f$ the number of degrees of freedom.</p>
+
+<!-- ============================================================ -->
+<h2 id="s3-7">7 &mdash; Maxwell-Boltzmann distribution</h2>
+
+<p>After all this rather formal introduction, we are finally ready to compute something observable: the velocity distribution of molecules in a gas.</p>
+
+<p>What is the probability of finding the $p_x$ component of the momentum of one molecule in a small region of size $\Delta p$ around $p_x$? According to the postulate of equal a priori probabilities, this probability is proportional to the number of states compatible with this restriction, divided by the total number of states: $P(p_x) = \frac{\Omega_{p_x\,\text{fixed}}}{\Omega_{\text{total}}}$.</p>
+
+<p>Once we fix $p_x$ the remaining energy is $E' = E - \frac{p_x^2}{2m}$. So the remaining phase space volume is</p>
+<div class="equation">
+$$\Omega(E') \approx e^{3N/2}\left(\frac{V}{(\Delta q\,\Delta p)^3}\right)^N\left(\frac{4\pi m E'}{3N}\right)^{3N/2}\Delta p$$
+<span class="eq-number">(43)</span>
+</div>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Maxwell-Boltzmann distribution</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: Probability ratio</div>
+<p>The probability is</p>
+$$\frac{\Delta P}{\Delta p} = \frac{\Omega(E')}{\Omega(E)\Delta p} = \frac{(E')^{3N/2}}{(E)^{3N/2}} = \left(1 - \frac{p_x^2}{2mE}\right)^{3N/2}$$
+<span class="eq-number">(44)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 2: Take $N \to \infty$</div>
+<p>Introducing the average energy $\bar{\epsilon} = \frac{E}{N}$ and using $e^{-x} = \lim_{N\to\infty}(1 - x/N)^N$:</p>
+$$\frac{\Delta P}{\Delta p} = \left[\left(1 - \frac{1}{N}\frac{p_x^2}{2m\bar{\epsilon}}\right)^N\right]^{3/2} \xrightarrow{N\to\infty} \exp\!\left(-\frac{3p_x^2}{4m\bar{\epsilon}}\right)$$
+<span class="eq-number">(47)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 3: Normalize</div>
+<p>Choosing the normalization so that $\int \frac{dP}{dp_x}dp_x = 1$:</p>
+$$\frac{dP(p_x)}{dp_x} = \sqrt{\frac{3}{4\pi m\bar{\epsilon}}}\exp\!\left(-\frac{3p_x^2}{4m\bar{\epsilon}}\right)$$
+<span class="eq-number">(48)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 4: Full 3D distribution</div>
+<p>By rotational symmetry, the same result holds for $p_y$ and $p_z$. Therefore:</p>
+$$\frac{d^3P(\vec{p})}{dp_x\,dp_y\,dp_z} = \left(\frac{3}{4\pi m\bar{\epsilon}}\right)^{3/2}\exp\!\left(-\frac{3\vec{p}^{\,2}}{4m\bar{\epsilon}}\right)$$
+<span class="eq-number">(50)</span>
+</div>
+
+</div></div>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">Maxwell-Boltzmann distribution<span class="tooltip-content">The probability distribution for the momenta (or velocities) of molecules in a gas in thermal equilibrium. It is a Gaussian in each component of momentum.</span></span>.</p>
+
+<p>As a check, we compute the average value of kinetic energy:</p>
+<div class="equation">
+$$\left\langle\frac{\vec{p}^{\,2}}{2m}\right\rangle = \int d^3p\,\frac{\vec{p}^{\,2}}{2m}\left(\frac{3}{4\pi m\bar{\epsilon}}\right)^{3/2}e^{-\frac{3\vec{p}^{\,2}}{4m\bar{\epsilon}}} = \bar{\epsilon} = \frac{E}{N}$$
+<span class="eq-number">(51)</span>
+</div>
+
+<p>This is as expected, since all energy is kinetic. Note that this result is consistent with Eq.&nbsp;(14) from Maxwell's kinetic theory argument.</p>
+
+<div class="info-box concept">
+<div class="box-title">Equal States vs. Exponential Distribution</div>
+<p>Didn't we say each state is equally likely, but now we say each state has probability $e^{-3\vec{p}^{\,2}/(4m\bar{\epsilon})}$? These statements are consistent! Each <em>microstate</em> with total energy $E$ is equally likely. But if we group microstates by the value of $\vec{p}^{\,2}$ for a given molecule, we find fewer microstates with larger $\vec{p}^{\,2}$. The bigger $\vec{p}$ is, the fewer ways there are to split up the remaining energy among the other molecules, and thus the probability goes down.</p>
+</div>
+
+<p>If we change variables from $\vec{p}^{\,2}$ to speed $v = \frac{|\vec{p}|}{m}$ (using $d^3p = 4\pi|\vec{p}|^2 d|\vec{p}| = 4\pi m^3 v^2 dv$) and substitute $\bar{\epsilon} = \frac{3}{2}k_B T$ (a result we'll derive in the next lecture), we get the Maxwell-Boltzmann distribution:</p>
+<div class="equation key-result">
+$$\frac{dP(v)}{dv} = 4\pi v^2 \left(\frac{m}{2\pi k_B T}\right)^{3/2}e^{-mv^2/(2k_BT)}$$
+<span class="eq-number">(52)</span>
+</div>
+
+<figure>
+<img src="images/3-Equilibrium_p13_img0.png" alt="Maxwell-Boltzmann velocity distributions for different gases">
+<figcaption>Figure 6. Maxwell-Boltzmann velocity distributions for some gases with the same value of the average energy $\bar{\epsilon} = \frac{E}{N} = \frac{3}{2}k_BT$.</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2 id="s3-8">8 &mdash; Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Chaos:</strong> the trajectories of molecules in a gas are strongly sensitive to even the smallest perturbations, like a flea flapping its wings across the universe.</li>
+<li><strong>Molecular chaos:</strong> when molecules scatter, their outgoing velocities are correlated. Due to chaos, these correlations rapidly disperse throughout phase space, dissolving into ever smaller, separated regions, like a kind of phase space dust.</li>
+<li>Because the correlations are dilute, they get lost when we <strong>coarse grain</strong> (average over nearby regions in phase space). Coarse graining lets us treat the probability of each molecule occupying a point in its phase space as independent of what the other molecules are doing. It breaks time-reversal invariance.</li>
+<li>The <strong>Boltzmann H-Theorem:</strong> with correlations discarded, probabilities tend towards uniformity over phase space.</li>
+<li>The H-theorem follows from the <strong>principle of detailed balance:</strong> the rate for a process and the reverse process is the same.</li>
+<li><strong>Ergodicity:</strong> the probability of finding a molecule at point $(\vec{p}, \vec{q})$ at a given time $t$ is the same as the probability of finding it at $(\vec{p}, \vec{q})$ averaged over $t$.</li>
+<li><strong>Postulate of equal a priori probabilities:</strong> in equilibrium, a system is equally likely to be found in any accessible state.</li>
+<li><strong>Maxwell-Boltzmann distribution:</strong> the distribution of velocities of gas molecules is computed by counting the number of ways the total energy of the gas can be distributed among the molecules. The result is $\frac{dP(v)}{dv} = 4\pi v^2\left(\frac{m}{2\pi k_BT}\right)^{3/2}e^{-mv^2/(2k_BT)}$.</li>
+</ul>
+<p>Much of the material in this lecture was abstract and foundational. It built up to the postulate of equal a priori probabilities. We then applied this postulate to derive the Maxwell-Boltzmann distribution. Going forward, we will do many more applications, referring back to this foundational material when appropriate.</p>
+</div>

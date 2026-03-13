@@ -1,0 +1,285 @@
+<div class="chapter-number">Chapter 5</div>
+<h1 class="chapter-title">Thermodynamics</h1>
+<p class="chapter-intro">Thermodynamics is the study of heat and temperature. One thing that makes thermodynamics hard is all the variables. Everything is related and it is often tough to keep straight what is independent and what is dependent. We will do our best to write the dependent variables explicitly whenever possible.</p>
+
+<h2>1. Introduction</h2>
+
+<p>Another thing that makes thermodynamics hard is that we give new definitions to common words. Words like <span class="tooltip-trigger">system<span class="tooltip-content">The thing we are observing or calculating properties of. It is separated from the surroundings by a barrier.</span></span>, energy, work, heat, temperature, etc. have precise meanings in physics that do not always agree with their everyday meanings. For example, we defined temperature in terms of the number of states, not what you measure with a thermometer. So learning thermodynamics means unlearning some of your associations.</p>
+
+<p>Let's start by defining some concepts we will use a lot. We define a <strong>system</strong> as the thing we are observing or calculating properties of. The system is separated from the <strong>surroundings</strong> by a barrier. The barrier could be open, so matter and energy can pass through, or closed.</p>
+
+<p>For example, when we talk about doing work on a gas by moving a piston, the piston is usually part of the surroundings and the gas is the system. We could alternatively treat the whole gas/piston complex as the system, and our arm that pushes the piston as the surroundings. Or we could attach the piston to a weight, put a box around the whole thing and call everything together the system. In such a case, where the surroundings have no influence on the system, we say the system is <span class="tooltip-trigger">isolated<span class="tooltip-content">An isolated system has no exchange of energy, work, or matter with the surroundings.</span></span>.</p>
+
+<p><strong>Energy</strong> we take to mean the internal energy of the system, stored in chemical bonds, or kinetic motion of the atoms. Generally, we won't include in energy the gravitational energy from the earth or nuclear energy within the atoms. We use the symbol $E$ for energy, although sometimes $U$ is used for internal energy. Quantum mechanically, energy is the expectation value of the Hamiltonian; classically it is the value of the (classical) Hamiltonian. An important constraint on energy is:</p>
+
+<div class="info-box concept">
+<div class="box-title">The First Law of Thermodynamics</div>
+<p>The total energy is conserved in time; energy is neither created nor destroyed.</p>
+</div>
+
+<p>This law follows from Noether's theorem: energy is conserved in any system whose Hamiltonian is independent of time.</p>
+
+<p>One kind of energy is in the motion of molecules. This is called kinetic energy, $\frac{1}{2}m\vec{v}^{\,2}$. Another kind of energy is vibrational and rotational energy. When we have a large group of molecules all moving/vibrating/rotating incoherently we call the energy <span class="tooltip-trigger">thermal energy<span class="tooltip-content">The energy associated with the random, incoherent motion of molecules. Distinguished from potential energy, which is coherent and easily converted to other forms.</span></span>. A kind of non-thermal energy is potential energy, such as from lifting a rock over your head (gravitational potential energy), or from separating two opposite charges, like in a battery (chemical potential energy). These types of potential energy are coherent and can be easily converted into other forms of energy. One goal of this lecture is to understand limits on how to convert thermal energy into other energy forms.</p>
+
+<p><strong>Work</strong> is an amount of energy we put in to change a system by organized motion. For example, lifting a weight up a height $h$ against gravity requires work. The work required is $W = Fh = mgh$. In fact, we can define work as follows: a process that does work is one that could be used to lift a weight by some height. One theme for this Lecture is how thermal energy can be turned into work, since it is not immediately clear how incoherent random motion can be coerced into coherent organized motion.</p>
+
+<p><strong>Heat</strong> is the transfer of energy from a temperature difference between two systems. Heat is a transfer of thermal energy. Energy transfer by heat involves incoherent chaotic molecular motion. Thus, one question we will try to answer in this lecture is how heat can be used to do work. A machine that does so is called a <span class="tooltip-trigger">heat engine<span class="tooltip-content">A device that converts heat (thermal energy transfer) into useful work. Examples include steam engines, internal combustion engines, and power plants.</span></span>.</p>
+
+<p>Importantly, the distinction between work and heat is about the surroundings, not the system itself. If we attach a weight to a pinwheel in a pot of water, as the weight falls, the pinwheel turns. This does work on the water, increasing its molecular motion and increasing its temperature. We could have induced the same change on the system by heating it over a fire. Thus these two processes leave the system the same. The distinction between work and heat is in the surroundings.</p>
+
+<p>Another useful concept is a <span class="tooltip-trigger">quasistatic process<span class="tooltip-content">A process where things are changed slowly enough that equilibrium holds at all times. It just needs to be slower than the rate at which molecules hit the walls (around the speed of sound).</span></span>. This is one where things are changed slowly enough that equilibrium holds at all times. For example, if we allow a gas to expand by easing the pressure on the walls, that would be quasistatic. If we abruptly remove the wall of a gas, like popping a balloon, that would not be quasistatic.</p>
+
+<p>Finally, we can talk about <span class="tooltip-trigger">reversibility<span class="tooltip-content">A process is reversible if it can be brought back to a previous state exactly, with no net change in the system or surroundings. Reversible processes must be quasistatic.</span></span>. A process is reversible if it can be brought back to a previous state exactly, with no net change in the system or surroundings. Compressing a gas quasistatically with a piston is reversible. Letting a gas expand abruptly is not reversible &mdash; it takes work to compress it back to where it was.</p>
+
+<p>The <strong>thermodynamic limit</strong> means taking $N$ large and $V$ large holding the number density $n = \frac{N}{V}$ fixed.</p>
+
+<div class="info-box concept">
+<div class="box-title">The Four Laws of Thermodynamics</div>
+<p><strong>0th Law:</strong> If two systems are in equilibrium with a third system, they are in equilibrium with each other.</p>
+<p><strong>1st Law:</strong> Energy is conserved in time. Energy is neither created nor destroyed.</p>
+<p><strong>2nd Law:</strong> The total entropy (system + surroundings) never decreases: $\Delta S_{\text{total}} \geq 0$.</p>
+<p><strong>3rd Law:</strong> Entropy is finite as $T \to 0$.</p>
+</div>
+
+<p>The first and second laws are sometimes summarized as "you can't win" and "you can't break even."</p>
+
+<h2>2. Heat</h2>
+
+<p>Say we have two systems with different temperatures $T_1$ and $T_2$, energies $E_1$ and $E_2$ and numbers of particles $N_1$ and $N_2$. The number of microstates of each is $\Omega_1(N_1, E_1)$ and $\Omega_2(N_2, E_2)$ and their entropies are $S_1 = k_B \ln \Omega_1$ and $S_2 = k_B \ln \Omega_2$.</p>
+
+<p>Let us then put these systems into thermal contact. They will exchange energy until equilibrium is reached, where $T_1 = T_2$. As equilibrium has maximal entropy, we must have $\Omega_{\text{final}} \geq \Omega_{\text{initial}}$. So entropy of the whole system increases:</p>
+
+<div class="equation key-result">$$\Delta S_1 + \Delta S_2 \geq 0$$<span class="eq-number">(1)</span></div>
+
+<p>The <span class="tooltip-trigger">heat<span class="tooltip-content">Heat $Q$ is the energy transferred between systems due to a temperature difference. It is a process quantity, not a state variable.</span></span> $Q$ is defined as the amount by which the energy changes through thermal contact:</p>
+
+<div class="equation">$$Q = -\Delta E_1 = \Delta E_2$$<span class="eq-number">(2)</span></div>
+
+<p>When a positive amount of heat $Q > 0$ leaves system 1, its energy goes down. Note that heat is not a property of a system in equilibrium. Heat is a non-equilibrium quantity related to how energy is transferred in the approach to equilibrium.</p>
+
+<p>When energy enters a system, through heat or work, usually the temperature goes up too. But this is not guaranteed. Whether the temperature goes up is indicated by the <span class="tooltip-trigger">heat capacity<span class="tooltip-content">$C_V = \frac{\partial E}{\partial T}\big|_V$ measures how much energy is needed per degree of temperature increase. Most systems have $C_V > 0$, but gravitational systems can have $C_V < 0$.</span></span> $C_V = \frac{\partial E}{\partial T}\big|_V$. Most systems have positive heat capacities, but some have negative heat capacities. For the total energy to go down when the temperature goes up, so $C_V < 0$, we generally need some kind of long-range interactions, like gravity. Stars, black holes, galaxies, etc, all have $C_V < 0$.</p>
+
+<p>For an infinitesimal heat transfer:</p>
+
+<div class="equation">$$dS_{\text{heat transfer}} = \frac{\partial S}{\partial E}\,dE = \frac{1}{T}\,dQ = \frac{dQ}{T}$$<span class="eq-number">(3)</span></div>
+
+<h3>2.1 Heat reservoirs</h3>
+
+<p>A <span class="tooltip-trigger">heat reservoir<span class="tooltip-content">A system so large that its temperature doesn't change when heat is transferred. Any system acts like a reservoir if $Q \ll E_{\text{res}}$.</span></span> is a system that does not change temperature or volume when heat is put in. For a heat reservoir:</p>
+
+<div class="equation key-result">$$\Delta S_{\text{heat reservoir}} = \frac{Q}{T}$$<span class="eq-number">(5)</span></div>
+
+<h3>2.2 Heat + work</h3>
+
+<p>In general, we can transfer energy through heat and work at the same time:</p>
+
+<div class="equation key-result">$$\Delta E = Q + W$$<span class="eq-number">(6)</span></div>
+
+<p>or differentially, $dE = dQ + dW$. Note that $Q$ is the heat put into the system and $W$ is the work done on the system.</p>
+
+<h3>2.3 Clausius entropy</h3>
+
+<p>Historically, the first definition of entropy was due to Rudolf Clausius in 1865. Clausius did not have a microscopic definition of entropy, and only specified a way to calculate entropy differences. His formula was that to compute the entropy change from a state $A$ to a state $B$, find a reversible path connecting the two and then compute</p>
+
+<div class="equation key-result">$$\Delta S_{\text{system}} = S_A - S_B = \int_{\text{rev.}} \frac{dQ_{\text{in}}}{T}$$<span class="eq-number">(9)</span></div>
+
+<p>Clausius was implicitly using that there are two sources of entropy increase: irreversibility and heat transfer. If you make the path reversible, then all you need to know is how much heat comes in as a function of temperature and you can compute the entropy change.</p>
+
+<p>Clausius showed that $\Delta S_{\text{tot}} = 0$ for any reversible process. To see that, note that if states $A$ and $B$ can be connected reversibly, then $S_B^{\text{tot}} - S_A^{\text{tot}} \geq 0$. For the reverse process $S_A^{\text{tot}} - S_B^{\text{tot}} \geq 0$. Thus $S_A^{\text{tot}} = S_B^{\text{tot}}$.</p>
+
+<p>Clausius argued that only heat flow matters for entropy change, not work. Along a reversible path, work does not cause an entropy increase. This confirms Eq. (9) &mdash; entropy change is due to heat flow.</p>
+
+<h2>3. Ideal Gases</h2>
+
+<p>Ideal gases, and monatomic ideal gases in particular, provide very useful systems for which we will be able to check many thermodynamic relations explicitly. The molecules of ideal gases are assumed to occupy no volume and have no long-range interactions.</p>
+
+<h3>3.1 Pressure</h3>
+
+<p>Pressure is the force per unit area on the walls of a container: $P = \frac{|\vec{F}_{\text{wall}}|}{A}$. For an ideal gas, we can derive a relation between pressure, volume and temperature using Maxwell's kinetic theory of gases.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">▶</span> Derivation: Ideal Gas Law from Kinetic Theory</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Step 1</div>In time $\Delta t$, the number of molecules hitting a wall of area $A$ is $N_{\text{hit}} = \frac{1}{2}nAv_x\Delta t$, where $n = N/V$ is the number density. Each delivers an impulse $|\Delta \vec{p}| = 2mv_x$.</div>
+<div class="step"><div class="step-label">Step 2</div>The force is $|\vec{F}_{\text{wall}}| = N_{\text{hit}}\frac{2mv_x}{\Delta t} = mnv_x^2 A$. Taking the average: $P = mn\langle v_x^2\rangle$.</div>
+<div class="step"><div class="step-label">Step 3</div>By equipartition, $\langle\frac{1}{2}mv_x^2\rangle = \frac{1}{2}k_BT$, so $P = \frac{N}{V}k_BT$.</div>
+</div></div>
+</div>
+
+<div class="equation key-result">$$PV = Nk_BT$$<span class="eq-number">(15)</span></div>
+
+<p>This is the <span class="tooltip-trigger">ideal gas law<span class="tooltip-content">Relates pressure, volume, number of molecules, and temperature for any ideal gas. Also written $PV = nRT$ with $R = k_BN_A$.</span></span>. We also write it as $PV = nRT$ where $R = k_BN_A = 8.3\;\frac{\text{J}}{\text{K}\cdot\text{mol}}$.</p>
+
+<h3>3.2 Heat capacity</h3>
+
+<p><span class="tooltip-trigger">Heat capacity<span class="tooltip-content">Characterizes how temperature changes when heat is put in. $C_V$ is at constant volume, $C_P$ at constant pressure.</span></span> characterizes how temperature changes when heat is put in:</p>
+
+<div class="equation">$$C_V = \left(\frac{\partial Q}{\partial T}\right)_V = \left(\frac{\partial E}{\partial T}\right)_V, \qquad C_P = \left(\frac{\partial Q}{\partial T}\right)_P$$<span class="eq-number">(17-18)</span></div>
+
+<p>For most common gases: $C_V = \frac{3}{2}Nk_B$ (monatomic), $C_V = \frac{5}{2}Nk_B$ (diatomic at room temperature), $C_V = 3Nk_B$ (nonlinear molecules). In general, $C_V = \frac{f}{2}Nk_B$ with $f$ excitable degrees of freedom.</p>
+
+<p>If $C_V$ is temperature-independent:</p>
+
+<div class="equation key-result">$$E = C_V T = \frac{C_V}{Nk_B}PV \qquad \text{(ideal gas)}$$<span class="eq-number">(20)</span></div>
+
+<p>For heating at constant pressure, the gas does work $dW = P\,dV$ as it expands. Using $dE = C_V\,dT$ and $dV = \frac{Nk_B}{P}\,dT$ at constant $P$:</p>
+
+<div class="equation">$$C_V\,dT = dQ - Nk_B\,dT$$<span class="eq-number">(23)</span></div>
+
+<div class="equation key-result">$$C_P = C_V + Nk_B$$<span class="eq-number">(25)</span></div>
+
+<p>$C_P$ is always larger than $C_V$: the extra heat goes into work on expanding the gas against the pressure.</p>
+
+<p>The entropy for a general ideal gas has the form:</p>
+
+<div class="equation">$$S = Nk_B \ln V + C_V \ln\frac{E}{N} + \text{const}$$<span class="eq-number">(28)</span></div>
+
+<div class="equation">$$S = (C_P - C_V)\ln V + C_V \ln\frac{E}{N} + \text{const}$$<span class="eq-number">(29)</span></div>
+
+<h3>3.3 Compressing/expanding an ideal gas</h3>
+
+<p><strong>Free expansion</strong> means letting a gas expand on its own. Energy doesn't change, so temperature doesn't change either ($E = C_V T$). The pressure goes down: $P_2 = P_1\frac{V_1}{V_2}$. From the Sackur-Tetrode equation:</p>
+
+<div class="equation">$$\Delta S = Nk_B\ln\frac{V_2}{V_1}$$<span class="eq-number">(30)</span></div>
+
+<p>Since $V_2 > V_1$, entropy increases upon free expansion.</p>
+
+<p><strong>Quasistatic isothermal expansion</strong> means letting a gas expand at fixed temperature.</p>
+
+<figure><img src="images/5-Thermodynamics_p8_img0.png" alt="Isothermal expansion against a piston covered with sand"><figcaption>Isothermal expansion against a piston covered with sand.</figcaption></figure>
+
+<p>Since $dW = P\,dV$ and $P = \frac{Nk_BT}{V}$:</p>
+
+<div class="equation">$$W = \int_{V_1}^{V_2} P\,dV = Nk_BT\ln\frac{V_2}{V_1}$$<span class="eq-number">(31)</span></div>
+
+<p>All the energy comes from heat withdrawn from the reservoir: $Q = Nk_BT\ln\frac{V_2}{V_1}$. The entropy of the reservoir goes down by $\Delta S_{\text{res}} = -Nk_B\ln\frac{V_2}{V_1}$, the entropy of the gas goes up by $\Delta S_{\text{gas}} = Nk_B\ln\frac{V_2}{V_1}$. The net entropy change is zero. The process is reversible.</p>
+
+<p><strong>Quasistatic adiabatic expansion.</strong> Adiabatic means without transferring heat. Because $\Delta S = \int\frac{1}{T}\,dQ$, the system's entropy doesn't change.</p>
+
+<figure><img src="images/5-Thermodynamics_p9_img0.png" alt="Adiabatic expansion with no heat bath"><figcaption>In adiabatic expansion there is no heat bath, so no heat transfer.</figcaption></figure>
+
+<p>In adiabatic expansion, even though no heat flows, the temperature may still change. Using $dE = \frac{C_V}{Nk_B}d(PV)$ and energy conservation $dE + dW = 0$:</p>
+
+<div class="equation">$$C_P\frac{dV}{V} = -C_V\frac{dP}{P}$$<span class="eq-number">(37)</span></div>
+
+<p>Defining the <span class="tooltip-trigger">adiabatic index<span class="tooltip-content">$\gamma = C_P/C_V$. For monatomic gas $\gamma = 5/3$, for diatomic gas at room temperature $\gamma = 7/5$.</span></span> $\gamma = \frac{C_P}{C_V}$:</p>
+
+<div class="equation key-result">$$PV^\gamma = \text{constant}$$<span class="eq-number">(39)</span></div>
+
+<p>Equivalently, $TV^{\gamma-1}$ is constant, as is $TP^{\frac{1-\gamma}{\gamma}}$.</p>
+
+<figure><img src="images/5-Thermodynamics_p10_img0.png" alt="Isothermal vs adiabatic curves"><figcaption>Comparison of isothermal and adiabatic curves in a PV diagram.</figcaption></figure>
+
+<p>The speed of sound in a gas is $c_{\text{sound}} = \sqrt{\frac{\gamma k_BT}{m}}$. A sound wave is adiabatic compression and rarefaction.</p>
+
+<p><strong>Isobaric expansion.</strong> Isobaric means constant pressure. The <span class="tooltip-trigger">coefficient of thermal expansion<span class="tooltip-content">$\alpha_V = \frac{1}{V}\left(\frac{\partial V}{\partial T}\right)_P$ measures fractional volume change per degree.</span></span> is:</p>
+
+<div class="equation">$$\alpha_V = \frac{1}{V}\left(\frac{\partial V}{\partial T}\right)_P$$<span class="eq-number">(42)</span></div>
+
+<p>For an ideal gas, $\alpha_V = \frac{1}{T}$. At $298.2\;\text{K}$, the measured value for $\text{N}_2$ is $\alpha_{N_2} = 0.003365\;\text{K}^{-1} = \frac{1}{297.2\;\text{K}}$, in excellent agreement. Liquid mercury has $\alpha_{\text{Hg}} = 0.000181\;\text{K}^{-1}$, about 20 times smaller.</p>
+
+<figure><img src="images/5-Thermodynamics_p11_img0.png" alt="Watt steam engine"><figcaption>James Watt steam engine.</figcaption></figure>
+
+<figure><img src="images/5-Thermodynamics_p11_img1.png" alt="Mercury thermometer"><figcaption>Mercury thermometer.</figcaption></figure>
+
+<p>A mercury thermometer has liquid mercury in a tiny capillary with vacuum above it. Now we can understand why the temperature measured by a thermometer is the same as the $T$ we defined by $\frac{1}{k_BT} = \frac{\partial S}{\partial E}$. All we need is that $T$ takes the same value for all systems in equilibrium with each other, establishing a 1-to-1 correspondence with thermometer readings.</p>
+
+<h2>4. Carnot's Engine</h2>
+
+<p>In the 1820's Sadi Carnot became interested in understanding how efficient steam engines could be. His important observation was that there is a maximal efficiency for such an engine, depending only on the temperatures of the steam and the air.</p>
+
+<p>An idealized heat engine has two heat baths at temperatures $T_H$ and $T_C$ with $T_H > T_C$. The efficiency is:</p>
+
+<div class="equation">$$\eta = \frac{W}{Q_{\text{in}}}$$<span class="eq-number">(45)</span></div>
+
+<p>By energy conservation, $Q_{\text{out}} = Q_{\text{in}} - W$.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">▶</span> Derivation: Carnot Cycle Efficiency</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Stage 1</div><strong>Isothermal expansion at $T_H$:</strong> Expand from $V_1$ to $V_2$. $Q_{\text{in}} = W_1^{\text{out}} = Nk_BT_H\ln\frac{V_2}{V_1}$.</div>
+<div class="step"><div class="step-label">Stage 2</div><strong>Adiabatic expansion to $T_C$:</strong> $W_2^{\text{out}} = C_V(T_H - T_C)$. $V_3 = V_2\left(\frac{T_H}{T_C}\right)^{\frac{1}{\gamma-1}}$.</div>
+<div class="step"><div class="step-label">Stage 3</div><strong>Isothermal compression at $T_C$:</strong> $Q_{\text{out}} = W_3^{\text{in}} = Nk_BT_C\ln\frac{V_3}{V_4}$.</div>
+<div class="step"><div class="step-label">Stage 4</div><strong>Adiabatic compression to $T_H$:</strong> $W_4^{\text{in}} = C_V(T_H - T_C)$. Key relation: $\frac{V_3}{V_4} = \frac{V_2}{V_1}$.</div>
+<div class="step"><div class="step-label">Result</div>Net work: $W = Nk_B(T_H - T_C)\ln\frac{V_2}{V_1}$.</div>
+</div></div>
+</div>
+
+<div class="equation key-result">$$\eta_{\text{Carnot}} = \frac{W}{Q_{\text{in}}} = \frac{T_H - T_C}{T_H}$$<span class="eq-number">(55)</span></div>
+
+<p>This is the <span class="tooltip-trigger">Carnot efficiency<span class="tooltip-content">The maximum possible efficiency for any heat engine operating between $T_H$ and $T_C$. No real engine can exceed this.</span></span>.</p>
+
+<figure><img src="images/5-Thermodynamics_p13_img0.png" alt="PV diagram for Carnot cycle"><figcaption>PV diagram for Carnot cycle.</figcaption></figure>
+
+<figure><img src="images/5-Thermodynamics_p13_img1.png" alt="ST diagram for Carnot cycle"><figcaption>ST diagram for Carnot cycle. The enclosed area equals the net work done.</figcaption></figure>
+
+<p>The area under a curve in the PV diagram is $\int P\,dV$, which is the work done. The area under a reversible curve in a TS diagram is the heat, $Q = \int T\,dS$. The area in a closed region equals the net heat transferred, which equals the net work by energy conservation.</p>
+
+<!-- INTERACTIVE: Carnot Cycle -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">⚙️</span> Interactive: Carnot Engine Cycle</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-carnot" class="sim"></canvas></div>
+  <div class="vis-controls">
+    <button id="carnot-start">Start</button>
+  </div>
+</div>
+
+<h2>5. Second Law of Thermodynamics</h2>
+
+<p>For the Carnot cycle: $\frac{Q_{\text{in}}}{T_H} = Nk_B\ln\frac{V_2}{V_1} = \frac{Q_{\text{out}}}{T_C}$. The entropy decrease of the hot bath is exactly compensated by the entropy increase in the cold bath. The net $\Delta S_{\text{total}} = 0$.</p>
+
+<p>Using $\Delta S_{\text{total}} = 0$ along with $\Delta S_{\text{gas}} = 0$ after a complete cycle immediately gives:</p>
+
+<div class="equation">$$\frac{Q_{\text{in}}}{T_H} = \frac{Q_{\text{out}}}{T_C}$$<span class="eq-number">(57)</span></div>
+
+<p>Can we make an engine more efficient than the Carnot engine? If we could, we could run the Carnot engine in reverse. The net effect would be converting heat directly into work &mdash; a perpetual motion machine. The net effect would also decrease the overall total entropy.</p>
+
+<div class="info-box warning">
+<div class="box-title">Second Law &mdash; Equivalent Formulations</div>
+<ul>
+<li>Total entropy of system + surroundings never decreases: $\Delta S_{\text{total}} \geq 0$.</li>
+<li>Maximum work from heat $Q_{\text{in}}$ at $T_H$: $W = Q_{\text{in}}\frac{T_H - T_C}{T_H}$.</li>
+<li>Maximally efficient heat engines are reversible with $\frac{Q_H}{T_H} = \frac{Q_C}{T_C}$.</li>
+<li>All reversible heat engines have the same efficiency.</li>
+<li>No work can be extracted from heat at uniform temperature.</li>
+<li>Perpetual motion machines converting thermal energy to work with no other consequence are impossible.</li>
+<li>No machine can have the sole effect of transferring heat from cold to hot.</li>
+</ul>
+</div>
+
+<p>The second law does not say we cannot convert thermal energy into work. For example, a hot gas expanding against a piston until it is at zero degrees converts all thermal energy into work. This doesn't violate the second law since the vacuum on the other side is at zero temperature ($T_C = 0$). The forbidden process is taking a single heat source and converting all thermal energy into work without dumping heat anywhere.</p>
+
+<h2>6. Brownian Ratchet</h2>
+
+<p>The second law seems to be true and has enormously important consequences, but no one can prove it. All the "proofs" (like the Boltzmann $H$ theorem) involve assumptions that are mostly true but not true in every situation.</p>
+
+<p>One of the most famous illustrations is the <span class="tooltip-trigger">Brownian Ratchet<span class="tooltip-content">A thought experiment by Smoluchowski (1912), popularized by Feynman. It appears to extract work from thermal fluctuations but actually obeys the second law.</span></span>, conceived by Marian Smoluchowski in 1912 and popularized by Richard Feynman.</p>
+
+<figure><img src="images/5-Thermodynamics_p15_img0.png" alt="Brownian ratchet"><figcaption>Brownian ratchet. A ratchet and pawl in a box at $T_2$, connected via an axle to a vane at $T_1$, with a weight attached.</figcaption></figure>
+
+<p>A ratchet and pawl is a tool designed to turn only in one direction. The setup: thermal motion jiggles the vane, sometimes pushing the pawl over the ratchet to turn the axle and lift the weight.</p>
+
+<p>If this works when $T_1 = T_2$, it generates work from a system at constant temperature, violating the second law. The catch: thermal fluctuations affect the pawl too! If it takes energy $\epsilon$ to push past a gear, $P_{\text{forward}} = e^{-\epsilon/(k_BT_1)}$ and $P_{\text{backward}} = e^{-\epsilon/(k_BT_2)}$. If $T_1 = T_2$, these are equal, so no net work.</p>
+
+<p>For $T_1 \neq T_2$, let the work per click be $\Delta = \mathcal{L}\theta$. In equilibrium:</p>
+
+<div class="equation">$$\frac{\epsilon + \Delta}{T_1} = \frac{\epsilon}{T_2}$$<span class="eq-number">(61)</span></div>
+
+<p>Near equilibrium, with a tiny change to start lifting: heat $Q_1 = \epsilon + \Delta$ is withdrawn from $T_1$, work $W = \Delta$ is done, heat $Q_2 = \epsilon$ goes to $T_2$. Thus:</p>
+
+<div class="equation">$$\frac{Q_1}{T_1} = \frac{Q_2}{T_2}$$<span class="eq-number">(62)</span></div>
+
+<p>This is exactly the Carnot condition! The Brownian Ratchet is a maximum efficiency heat engine. As Feynman says, an advantage of this system over Carnot's is that you can see what is happening physically.</p>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Work</strong> ($W$): energy transferred by organized motion. <strong>Heat</strong> ($Q$): energy transferred by thermal motion. First law: $\Delta E = Q + W$.</li>
+<li><strong>Clausius entropy:</strong> $\Delta S = \int_{\text{rev.}}\frac{dQ_{\text{in}}}{T}$. Entropy change comes from heat flow, not work.</li>
+<li><strong>Ideal gas law:</strong> $PV = Nk_BT$. Heat capacities: $C_P = C_V + Nk_B$.</li>
+<li><strong>Adiabatic processes:</strong> $PV^\gamma = \text{const}$ with $\gamma = C_P/C_V$.</li>
+<li><strong>Carnot efficiency:</strong> $\eta_{\max} = \frac{T_H - T_C}{T_H}$ for any heat engine between $T_H$ and $T_C$.</li>
+<li><strong>Second law:</strong> $\Delta S_{\text{total}} \geq 0$. No perpetual motion from thermal energy alone.</li>
+<li><strong>Brownian Ratchet:</strong> A mechanical system that seems to violate the second law, but actually operates at Carnot efficiency.</li>
+</ul>
+</div>

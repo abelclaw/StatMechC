@@ -1,0 +1,366 @@
+<div class="chapter-number">Chapter 10</div>
+<h1 class="chapter-title">Quantum Statistical Mechanics</h1>
+<p class="chapter-intro">Classical statistical mechanics treats energy as continuous and particles as distinguishable. Quantum mechanics changes both: energy is quantized, and identical particles are fundamentally indistinguishable &mdash; they are either bosons or fermions. In this chapter we derive the three quantum distribution functions and determine when quantum effects become important.</p>
+
+<h2>1. Introduction</h2>
+
+<p>So far, we have been considering mostly classical statistical mechanics. In classical mechanics, energies are continuous, for example momenta $\vec{p}$ and hence kinetic energy $E = \frac{\vec{p}^2}{2m}$ can be any real number. Positions $\vec{q}$ can also take any continuous values in a volume $V = L^3$. Thus the number of states $\Omega$, the entropy $S$, the partition function $Z$, all involve $\int dq\,dp$ which is formally infinite. We regulated these infinities by artificially putting limits $\Delta q$ and $\Delta p$ on the positions and momenta that are allowed, and we found that physical predictions we made did not depend on $\Delta p$ and $\Delta q$. Quantum statistical mechanics will allow us to remove these arbitrary cutoffs.</p>
+
+<p>In quantum mechanics there are two important changes we must take into account. First, position, momentum and energy are in general quantized. We cannot specify the position and momentum independently, since they are constrained by the <span class="tooltip-trigger">uncertainty principle<span class="tooltip-content">Heisenberg's uncertainty principle: $\Delta p \, \Delta q \geq \frac{\hbar}{2}$. This fundamental limit prevents us from specifying both position and momentum of a particle simultaneously.</span></span> $\Delta p\,\Delta q \geq \frac{\hbar}{2}$. For example, the momenta modes of a particle in a box of size $L$ are quantized as $p_n = \frac{2\pi}{L}\hbar n$, with $n$ an integer. There is no extra degree of freedom associated with position. When summing over states, we sum over $n = \frac{Lp_n}{2\pi\hbar}$ only, not over $q$. However, in the continuum limit we can replace the sum over $n$ with an integral, and suggestively write $L = \int dq$. That is, the quantum sum gets replaced by an integral as</p>
+
+<div class="equation key-result">$$\sum_n \to \int dn = \frac{L}{2\pi\hbar}\int dp = \int \frac{dq\,dp}{h}$$<span class="eq-number">(1)</span></div>
+
+<p>Recall that in classical statistical mechanics when we first computed $\Omega$ in the microcanonical ensemble, we had to arbitrarily break up position and momentum into sizes $\Delta q$ and $\Delta p$. Eq. (1) justifies the replacement $\Delta p\,\Delta q \to h$ that we previously inserted without proof in the Sackur-Tetrode equation and elsewhere. Note that the integral measure has a factor of $h$ not $\hbar$. We'll do conversions between sums and integrals like in Eq. (1) in more detail in deriving the density of states over the next several lectures.</p>
+
+<div class="info-box physical">
+<div class="box-title">Why $h$ and not $\hbar$?</div>
+<p>Eq. (1) makes the appearance of $dq$ seem like a trick. This is an artifact of using momentum eigenstates for our basis. If we used something symmetric in $p$ and $q$ like coherent states, the product $dp\,dq$ would appear more naturally.</p>
+</div>
+
+<p>Quantization is important when we are not in the continuum limit. One regime where quantum effects are clearly important is when the temperature is of order the lowest energy of the system, $k_BT \sim \epsilon_0$. For example, classically, each vibrational mode of a molecule contributes $Nk_B$ to the heat capacity, but at low temperature, the measured heat capacity does not show this contribution. In quantum statistical mechanics, the vibrational contribution to the heat capacity is cut off at temperatures below $k_BT \lesssim \hbar\omega_0$, with $\omega_0$ the vibrational frequency, in agreement with measurements. We discussed this effect in Lecture 7.</p>
+
+<p>The second quantum effect we need to account for has to do with <span class="tooltip-trigger">identical particles<span class="tooltip-content">In quantum mechanics, identical particles are truly indistinguishable &mdash; not just hard to tell apart, but fundamentally impossible to distinguish. This has profound consequences for counting microstates.</span></span>. In quantum mechanics, identical particles of half-integer spin, like the electron, can never occupy the same state, by the <span class="tooltip-trigger">Pauli exclusion principle<span class="tooltip-content">No two identical fermions can occupy the same quantum state simultaneously. This principle is responsible for the structure of atoms, the stability of matter, and the properties of metals and white dwarfs.</span></span>. These particles obey <strong>Fermi-Dirac statistics</strong>. Identical particles of integer spin, like the photon, can occupy the same state but the overall wavefunction must be symmetric in the interchange of the two particles. Integer-spin particles obey <strong>Bose-Einstein statistics</strong>.</p>
+
+<p>We discussed indistinguishability before in Lecture 6, in the context of the second law of thermodynamics and the Gibbs paradox. In that lecture, we found that we could decide if we want to treat particles as distinguishable or indistinguishable. If we want to treat the particles as distinguishable, then we must include the entropy increase from measuring the identity of all the particles to avoid a conflict with the second law of thermodynamics. Alternatively, if we never plan on actually distinguishing them, we can treat them as indistinguishable. We do this by adding a factor of $\frac{1}{N!}$ to the number of states $\Omega$, i.e. instead of $\Omega \sim V^N$ we take $\Omega \sim \frac{1}{N!}V^N$; then there is automatically no conflict with the second law of thermodynamics. This kind of classical indistinguishable-particle statistics, with the $N!$ included, is known as <span class="tooltip-trigger">Maxwell-Boltzmann statistics<span class="tooltip-content">Classical statistics for indistinguishable particles. Treats particles as distinguishable for counting, then divides by $N!$. No physical system obeys this exactly, but it's an excellent approximation in the classical regime.</span></span>. Quantum identical particles is a stronger requirement, since it means the multiparticle wavefunction must be totally symmetric or totally antisymmetric. In a classical system, the states are continuous, so there is exactly zero chance of two particles being in the same state. Thus, the difference among Fermi-Dirac, Bose-Einstein and Maxwell-Boltzmann statistics arises entirely from situations where a single state has a nonzero chance of being multiply occupied.</p>
+
+<h2>2. Bosons and Fermions</h2>
+
+<p>The wavefunction $\psi(x, s)$ of an electron depends on the coordinate $x$ and the spin $s = \pm\frac{1}{2}$. When there are two electrons, the wavefunction depends on two coordinates and two spins. We can write it as $\psi(x_1, s_1, x_2, s_2)$. Thus $|\psi(x_1, s_1, x_2, s_2)|^2$ gives the probability of finding one electron at $x_1$ with spin $s_1$ and one electron at $x_2$ with spin $s_2$. Every electron is identical and therefore</p>
+
+<div class="equation">$$|\psi(x_1, s_1, x_2, s_2)|^2 = |\psi(x_2, s_2, x_1, s_1)|^2$$<span class="eq-number">(2)</span></div>
+
+<p>If the modulus of two complex numbers is the same, they can only differ by a phase. We thus have</p>
+
+<div class="equation">$$\psi(x_1, s_1, x_2, s_2) = \eta\,\psi(x_2, s_2, x_1, s_1)$$<span class="eq-number">(3)</span></div>
+
+<p>for some phase $\eta = e^{i\theta}$ with $|\eta| = 1$. If we swap the particles back, we then find</p>
+
+<div class="equation">$$\psi(x_1, s_1, x_2, s_2) = \eta\,\psi(x_2, s_2, x_1, s_1) = \eta^2\,\psi(x_1, s_1, x_2, s_2)$$<span class="eq-number">(4)</span></div>
+
+<p>So that $\eta^2 = 1$ and $\eta = \pm 1$. We call particles with $\eta = 1$ <strong>bosons</strong> and those with $\eta = -1$ <strong>fermions</strong>.</p>
+
+<p>Particles come with different spins $s = 0, \frac{1}{2}, 1, \frac{3}{2}, \cdots$. A beautiful result from quantum field theory is that particles with integer spins, $s = 0, 1, 2, \cdots$ are bosons and particles with half-integer spins $s = \frac{1}{2}, \frac{3}{2}, \cdots$ are fermions. This correspondence is known as the <span class="tooltip-trigger">spin-statistics theorem<span class="tooltip-content">A deep result from relativistic quantum field theory: integer-spin particles must be bosons (symmetric wavefunctions) and half-integer-spin particles must be fermions (antisymmetric wavefunctions).</span></span>.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Spin-Statistics Theorem (Heuristic)</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Step 1</div>
+<p>First we need to know what spin means. The spin determines how the state $|\psi\rangle$ changes under rotations. Say a particle is localized at $x = 0$, so $\psi(\vec{x}) = \langle x|\psi\rangle = \delta^3(x)$, and has spin pointing in the $z$ direction, so $j_z = s$. Rotate it around the $x$ axis by angle $\theta$:</p>
+$$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
+<p>The spin $s$ is the coefficient of $\theta$ in the phase. For example, write the electric field vector $\vec{E}$ as a complex number $z = E_x + iE_y$. Under a rotation by angle $\theta$, $z \to e^{i\theta}z$, so $s = 1$. This tells us photons have spin 1.</p>
+</div>
+<div class="step"><div class="step-label">Step 2</div>
+<p>Under a $360°$ rotation ($\theta = 2\pi$), we are back to where we started. But that doesn't mean $|\psi\rangle \to |\psi\rangle$. If $s$ is a half-integer, then $|\psi\rangle \to -|\psi\rangle$ while if $s$ is an integer then $|\psi\rangle \to |\psi\rangle$.</p>
+</div>
+<div class="step"><div class="step-label">Step 3</div>
+<p>Consider a two-particle state $\psi(x_1, \uparrow, x_2, \uparrow)$. Rotate by $180°$ around the center between $x_1$ and $x_2$: this interchanges the particles, but adds a phase $e^{is\pi}$ for particle 1 and another phase $e^{is\pi}$ for particle 2. So the interchange adds a factor of $e^{2\pi i s} = \pm 1$ total to the wavefunction. This is exactly the factor $\eta$ in Eq. (3). Thus $\eta = e^{2\pi i s}$ which is $1$ for integer spins and $-1$ for half-integer spins.</p>
+</div>
+</div></div>
+</div>
+
+<p>The main implication of the spin-statistics theorem for statistical mechanics is the <strong>Pauli exclusion principle</strong>: no two fermions (like electrons) with the same quantum numbers (like spin) can occupy the same state. To see this, say the wavefunction for a state is $\psi_0(x, s)$. Then if two particles were in the same state with the same spin then $\psi(x_2, s_2, x_1, s_1) = \psi_0(x_1, s_1)\psi_0(x_2, s_2)$. This is symmetric under interchange. So if $\psi(x_2, s_2, x_1, s_1) = -\psi(x_1, s_1, x_2, s_2)$, as for fermions, then $\psi$ must vanish. Instead, for fermions we can only have $\psi(x_2, s_2, x_1, s_1) = \psi_0(x_1, s_1)\psi_1(x_2, s_2)$ with two different single particle wavefunctions $\psi_0$ and $\psi_1$. More generally, each identical fermion must be in a different state, so when we pile $N$ fermions into a system, they start filling the energy levels from the bottom up.</p>
+
+<h3>2.1 Three Types of Statistics</h3>
+
+<p>There are 3 types of statistics we will discuss:</p>
+
+<div class="info-box concept">
+<div class="box-title">Three Types of Quantum Statistics</div>
+<ul>
+<li><strong>Maxwell-Boltzmann statistics</strong> (classical): any particle can be in any state and an overall factor of $\frac{1}{N!}$ for indistinguishability is added ad hoc to the number of states $\Omega = \frac{1}{N!}\sum_k 1$ (microcanonical ensemble) or to partition function: $Z = \frac{1}{N!}\sum_k e^{-\beta E_k}$ (canonical ensemble).</li>
+<li><strong>Bose-Einstein statistics</strong>: multiple particles can occupy each single-particle state. But when they do, there is only one combined state with the multiple particles in it. No $N!$ is added: $Z = \sum e^{-\beta E_k}$.</li>
+<li><strong>Fermi-Dirac statistics</strong>: no two particles can occupy the same state. No $N!$ is added and $Z = \sum e^{-\beta E_k}$.</li>
+</ul>
+</div>
+
+<p>Let's compare the situations with an example. Suppose there are 2 particles and 3 possible single-particle states with energies $\epsilon_1$, $\epsilon_2$ and $\epsilon_3$. These energies do not have to be different, but let's suppose they are for simplicity (the single-particle states could have the same energies but different quantum numbers, such as different spin or position or vibrational excitation along a different axis). For Maxwell-Boltzmann statistics, the particles are treated as distinguishable for counting states, and the $\frac{1}{N!}$ is added at the end. Denoting the two particles $A$ and $B$, the possible states and canonical partition function (with $\beta = 1$ for simplicity) in this case is:</p>
+
+<div class="equation">$$Z_\text{MB} = \frac{1}{2!}\left[e^{-2\epsilon_1} + e^{-2\epsilon_2} + e^{-2\epsilon_3} + 2e^{-\epsilon_1 - \epsilon_2} + 2e^{-\epsilon_1 - \epsilon_3} + 2e^{-\epsilon_2 - \epsilon_3}\right]$$<span class="eq-number">(6)</span></div>
+
+<p>The $\frac{1}{2!}$ is the identical particles factor. Note that we treat the two particles as different when constructing the partition function, then divide by $N!$.</p>
+
+<p>For Bose-Einstein statistics, the possible states and canonical partition function are:</p>
+
+<div class="equation">$$Z_\text{BE} = e^{-2\epsilon_1} + e^{-2\epsilon_2} + e^{-2\epsilon_3} + e^{-\epsilon_1 - \epsilon_2} + e^{-\epsilon_1 - \epsilon_3} + e^{-\epsilon_2 - \epsilon_3}$$<span class="eq-number">(7)</span></div>
+
+<p>Note that we treat the particles as identical, so $AA = BA = AB$ is one state. No $N!$ is added.</p>
+
+<p>For Fermi-Dirac statistics, the possible states and canonical partition function are:</p>
+
+<div class="equation">$$Z_\text{FD} = e^{-\epsilon_1 - \epsilon_2} + e^{-\epsilon_1 - \epsilon_3} + e^{-\epsilon_2 - \epsilon_3}$$<span class="eq-number">(8)</span></div>
+
+<p>Note that there are 9 two-particle states for the Maxwell-Boltzmann case, 6 for the boson case and only 3 for the fermion case. The 3 two-particle states in the fermion case are the ones where each particle has a different energy. If there were $m$ possible energy levels instead of 3 for the two particles, then there would be</p>
+
+<div class="equation">$$n_\text{fermi} = \binom{m}{2} = \frac{1}{2}m^2 - \frac{1}{2}m$$<span class="eq-number">(9)</span></div>
+
+<p>possible two-fermion states. The number of boson two-particle states would include all the possible fermion ones plus the $m$ states where both particles have the same energy, so</p>
+
+<div class="equation">$$n_\text{bose} = n_\text{fermi} + m = \frac{1}{2}m^2 + \frac{1}{2}m$$<span class="eq-number">(10)</span></div>
+
+<p>The number of classical two-particle states is $n_\text{class} = m^2$. To compare to the fermion or boson cases, note that in the limit that $k_BT \gg \epsilon_i$ for all the energies, the Boltzmann factors all go to 1 so the partition function $Z$ just counts the number of states. Thus the effective number of states in Maxwell-Boltzmann statistics is</p>
+
+<div class="equation">$$n_\text{MB} = Z_\text{MB}(k_BT \gg \epsilon_j) = \frac{1}{2!}n_\text{class} = \frac{1}{2}m^2$$<span class="eq-number">(11)</span></div>
+
+<p>Thus we see that for 2 particles when the number of thermally accessible energies $m$ is large, the number of two-particle states is the same in all three cases.</p>
+
+<p>For $N$ particles and $m$ energy levels, the same analysis applies. The difference between the fermion and boson cases is due to the importance of states where more than one particle occupies the same energy level. The number of such states is always down by at least a factor of $m$ from the number of states where all the particles have different energies. Thus when $m$ gets very large, so that there are a large number of thermally accessible energy levels, then the distinction between bosons and fermions starts to vanish. In other words, $m \gg N$ almost all the microstates will have all the particles at different energies. For any particular set of $N$ energies for the $N$ particles there would be $N!$ classical assignments of the particles to the energy levels, but only one quantum assignment. This explains why the $\frac{1}{N!}$ Gibbs factor for identical particles in Maxwell-Boltzmann statistics is consistent with quantum statistical mechanics. We will make more quantitative the limit in which quantum statistics is important in Section 4.</p>
+
+<h2>3. Non-interacting Gases</h2>
+
+<p>Next we compute the probability distributions for the different statistics, assuming only that the particles are non-interacting. We call the non-interacting systems gases, i.e. Bose gas and Fermi gas. Neglecting interactions allows us to write the total energy as the sum of the individual particle energies. For photons, neglecting interactions is an excellent approximation since Maxwell's equations are linear &mdash; the electromagnetic field does not interact with itself. For fermions, like electrons, even though there are electromagnetic interactions, because fermions like to stay away from each other (due to the Pauli exclusion principle), the interactions are generally weak. Thus the non-interacting-gas approximation will be excellent for many bosonic and fermionic systems, as we will see over the next 5 lectures.</p>
+
+<p>Let us index the possible energy levels each particle can have by $i = 1, 2, 3, \cdots$. The energy of level $i$ is $\epsilon_i$. For example, a particle in a box of size $L$ has quantized momenta, $p_n = \frac{n\pi}{L}\hbar$ and energies $\epsilon_n = \frac{p_n^2}{2m}$. In any microstate with a given $N$ and $E$ there will be some number $n_i$ of particles at level $i$, so $\sum n_i = N$ and $\sum n_i \epsilon_i = E$. It is actually very difficult to work with either the microcanonical ensemble (fixed $N$ and $E$) or the canonical ensemble (fixed $N$ and $T$) for quantum statistics. For example, with 2 particles, the canonical partition function for a Bose gas would be</p>
+
+<div class="equation">$$Z_\text{BE} = \sum_{i=1}^{\infty}\sum_{j=i}^{\infty} e^{-\beta(\epsilon_i + \epsilon_j)}$$<span class="eq-number">(12)</span></div>
+
+<p>You can check that with only 3 energy levels, this reproduces Eq. (7). Note that we must have $j \geq i$ in the second sum to avoid double counting the $(i, j)$ and $(j, i)$ states. For $N$ particles, we would need $N$ indices and can write</p>
+
+<div class="equation">$$Z_\text{BE} = \sum_{i_1 \leq i_2 \leq \cdots \leq i_N} e^{-\beta(\epsilon_{i_1} + \epsilon_{i_2} + \cdots + \epsilon_{i_N})}$$<span class="eq-number">(13)</span></div>
+
+<p>Doing the sum this way over $N$ indices is very difficult; even in the simplest cases it is impossible to do in closed form. For Fermi-Dirac statistics the partition function can be written the same way with the sum over indices with strict ordering: $i_1 < i_2 < \cdots < i_N$. It is also very hard to do.</p>
+
+<p>Conveniently, the <span class="tooltip-trigger">grand canonical ensemble<span class="tooltip-content">In the grand canonical ensemble, both energy and particle number can fluctuate. We fix the temperature $T$ and chemical potential $\mu$ instead. This makes quantum statistics tractable because each single-particle state becomes independent.</span></span> comes to the rescue. In the grand canonical ensemble, we sum over $N$ and $E$, fixing instead $\mu$ and $T$. The grand partition function is</p>
+
+<div class="equation">$$\mathcal{Z} = \sum_{N, E} e^{-\beta(E - N\mu)}$$<span class="eq-number">(14)</span></div>
+
+<p>Since $\sum n_i = N$ and $\sum n_i \epsilon_i = E$ the grand partition function can also be written as</p>
+
+<div class="equation key-result">$$\mathcal{Z} = \prod_{\text{single particle states } i} \sum_{n_i=0}^{\infty} e^{-n_i\beta(\epsilon_i - \mu)}$$<span class="eq-number">(15)</span></div>
+
+<p>where $n_i$ is the number of particles in state $i$. To see that this agrees with Eq. (14) consider that each term in the product over $i$ picks one factor from each term in the sum over $n_i$. Since all possible values of $\epsilon_i$ and $n_i$ are included once, we reproduce the sum over all possible $N$ and $E$ with $\sum n_i = N$ and $\sum n_i \epsilon_i = E$.</p>
+
+<p>Eq. (15) can be written more suggestively as</p>
+
+<div class="equation key-result">$$\mathcal{Z} = \prod_{\text{single particle states } i} \mathcal{Z}_i$$<span class="eq-number">(18)</span></div>
+
+<p>with</p>
+
+<div class="equation">$$\mathcal{Z}_i = \sum_{\text{possible occupancies } n_i} e^{-n_i\beta(\epsilon_i - \mu)}$$<span class="eq-number">(19)</span></div>
+
+<p>This factor $\mathcal{Z}_i$ is the one-state grand-canonical partition function, i.e. the grand-canonical partition function for a system with only one single-particle state, although the state can be multiply-occupied. Eq. (18) means that the full grand partition function is a product of the grand partition functions for the separate single-particle states: each degree of freedom can be excited independently. This is very powerful, since it means the probability of finding $n_i$ particles occupying state $i$ is completely independent of whatever else is happening. This is true at fixed $\mu$ but wouldn't be true at fixed $N$.</p>
+
+<p>The grand canonical ensemble makes it very easy to write an expression for the expected occupation number of state $i$:</p>
+
+<div class="equation">$$\langle n_i \rangle = \frac{1}{\mathcal{Z}_i}\sum_{n_i} n_i e^{-n_i\beta(\epsilon_i - \mu)} = \frac{1}{\beta}\frac{\partial \ln \mathcal{Z}_i}{\partial \mu}$$<span class="eq-number">(20)</span></div>
+
+<p>We can also express this as</p>
+
+<div class="equation">$$\langle n_i \rangle = -\frac{\partial \Phi_i}{\partial \mu}$$<span class="eq-number">(21)</span></div>
+
+<p>where</p>
+
+<div class="equation">$$\Phi_i = -\frac{1}{\beta}\ln \mathcal{Z}_i$$<span class="eq-number">(22)</span></div>
+
+<p>is the grand free energy for state $i$.</p>
+
+<h3>3.1 Non-interacting Bose Gas</h3>
+
+<p>For a Bose system, there can be any number $n_i = 0, 1, 2, \cdots$ of bosons in a given state $i$. The single-state grand-canonical partition function for the state $i$ with energy $\epsilon_i$, from Eq. (19), is then</p>
+
+<div class="equation">$$\mathcal{Z}_i = \sum_{n=0}^{\infty} e^{-n\beta(\epsilon_i - \mu)}$$<span class="eq-number">(23)</span></div>
+
+<p>This is a simple geometric series: there can be 0 particles, 1 particle, 2 particles, etc in the state, and so the total amount of energy in the state is an integer multiple of $\epsilon_i$. Performing the sum, we find</p>
+
+<div class="equation">$$\mathcal{Z}_i = \sum_{n=0}^{\infty} e^{-n\beta(\epsilon_i - \mu)} = \frac{1}{1 - e^{-\beta(\epsilon_i - \mu)}}$$<span class="eq-number">(24)</span></div>
+
+<p>The full partition function from Eq. (18) is then</p>
+
+<div class="equation">$$\mathcal{Z} = \prod_i \mathcal{Z}_i = \prod_i \frac{1}{1 - e^{-\beta(\epsilon_i - \mu)}}$$<span class="eq-number">(25)</span></div>
+
+<p>Note again that the product is over all the different states $i$, with $\epsilon_i$ the energy of that state.</p>
+
+<p>The grand free energy for each state is</p>
+
+<div class="equation">$$\Phi_i = -\frac{1}{\beta}\ln \mathcal{Z}_i = \frac{1}{\beta}\ln\!\left(1 - e^{-\beta(\epsilon_i - \mu)}\right)$$<span class="eq-number">(26)</span></div>
+
+<p>Then the occupation number for each state is</p>
+
+<div class="equation key-result">$$\langle n_i \rangle = -\frac{\partial \Phi_i}{\partial \mu} = \frac{1}{e^{\beta(\epsilon_i - \mu)} - 1}$$<span class="eq-number">(27)</span></div>
+
+<p>This is known as the <span class="tooltip-trigger">Bose-Einstein distribution<span class="tooltip-content">The average number of bosons occupying a state with energy $\epsilon_i$ at temperature $T$ and chemical potential $\mu$. It diverges as $\epsilon_i \to \mu$, which is key to understanding Bose-Einstein condensation.</span></span>.</p>
+
+<figure><img src="images/10-QuantumStatMech_p6_img0.png" alt="Bose-Einstein distribution function"><figcaption>The Bose-Einstein distribution function $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ as a function of energy.</figcaption></figure>
+
+<p>Note that if $\epsilon_i < \mu$ then $\langle n_i \rangle$ is negative, which is impossible. This means that $\mu < \epsilon_i$ for all $\epsilon_i$, i.e. the chemical potential for any Bose system will be less than all of the energies. Often we set the ground state energy to zero in which case</p>
+
+<div class="info-box warning">
+<div class="box-title">Chemical Potential for Bosons</div>
+<p>$\mu < 0$ for bosons (when $\epsilon_0 = 0$). This is consistent with the formula for a classical monatomic ideal gas: $\mu = k_BT \ln(n\lambda^3) \approx -0.39\,\text{eV} < 0$ with $n$ the number density and $\lambda$ the thermal wavelength.</p>
+</div>
+
+<h3>3.2 Non-interacting Fermi Gas</h3>
+
+<p>For fermions, no two particles can occupy the same single-particle state. So the one-state grand-canonical partition function is simply</p>
+
+<div class="equation">$$\mathcal{Z}_i = \sum_{n=0,1} e^{-\beta(\epsilon_i - \mu)n} = 1 + e^{-\beta(\epsilon_i - \mu)}$$<span class="eq-number">(28)</span></div>
+
+<p>The full grand-canonical partition function is then</p>
+
+<div class="equation">$$\mathcal{Z} = \prod_i \mathcal{Z}_i = \prod_i \left[1 + e^{-\beta(\epsilon_i - \mu)}\right]$$<span class="eq-number">(29)</span></div>
+
+<p>The grand free energy for state $i$ is</p>
+
+<div class="equation">$$\Phi_i = -\frac{1}{\beta}\ln \mathcal{Z}_i = -\frac{1}{\beta}\ln\!\left[1 + e^{-\beta(\epsilon_i - \mu)}\right]$$<span class="eq-number">(30)</span></div>
+
+<p>So that the occupation number for state $i$ is</p>
+
+<div class="equation key-result">$$\langle n_i \rangle = -\frac{\partial \Phi_i}{\partial \mu} = \frac{1}{e^{\beta(\epsilon_i - \mu)} + 1} \equiv f(\epsilon)$$<span class="eq-number">(31)</span></div>
+
+<p>This is known as the <span class="tooltip-trigger">Fermi-Dirac distribution<span class="tooltip-content">The average occupation of a state with energy $\epsilon$ for fermions. At $T = 0$, it's a step function: states below $\mu$ are completely filled, states above are empty. At finite $T$, the step is smeared over a width $\sim k_BT$.</span></span> or <strong>Fermi function</strong>, $f(\epsilon)$. We see that at low temperature, states with energy greater than $\mu$ are essentially unoccupied: $f(\epsilon > \mu) \approx 0$ and states with energies less than $\mu$ are completely filled.</p>
+
+<figure><img src="images/10-QuantumStatMech_p7_img0.png" alt="Fermi-Dirac distribution function"><figcaption>The Fermi-Dirac distribution function $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$ as a function of energy.</figcaption></figure>
+
+<p>The chemical potential at $T = 0$ is called the <span class="tooltip-trigger">Fermi energy<span class="tooltip-content">$\epsilon_F = \mu(T=0)$: the energy of the highest occupied state at zero temperature. All states below $\epsilon_F$ are filled; all above are empty. The Fermi energy sets the scale for quantum effects in metals.</span></span>, $\epsilon_F = \mu(T = 0)$. At $T = 0$, all states below the Fermi energy are filled and the ones above the Fermi energy are empty. Thus the chemical potential for Fermi systems is positive at low temperature and corresponds to the highest occupied energy level of the system. We'll use the Fermi energy extensively to discuss fermionic systems in the quantum regime, in Lectures 13, 14 and 15.</p>
+
+<p>As the temperature increases, the chemical potential decreases. This follows from $\frac{\partial \mu}{\partial T} = -\frac{S}{N}$ and $S > 0$. Eventually, the chemical potential will drop below all of the energy levels of the system. That is, it becomes negative, as with a Bose system or a classical gas.</p>
+
+<h3>3.3 Maxwell-Boltzmann Statistics</h3>
+
+<p>Maxwell-Boltzmann statistics are the statistics of classical indistinguishable particles. The partition function is computed by summing over states with any particles in any state, and the sum is divided by $N!$ to account for indistinguishability. Although it is often an excellent approximation, no physical system actually obeys Maxwell-Boltzmann statistics exactly. Nevertheless, counting states this way turns out to be very much easier than using Bose or Fermi statistics and gives the same answer in the continuum/classical limit.</p>
+
+<p>For Bose or Fermi gases, we were able to write the partition function as the product of partition functions for each state, as in Eq. (18): $\mathcal{Z} = \prod_i \mathcal{Z}_i$. With Maxwell-Boltzmann statistics, it's not clear yet if we can do this since we must divide by $N!$ where $N$ is the total number of particles, not just the number of particles in state $i$. To avoid this subtlety, let's instead compute the grand-canonical partition function directly from the canonical partition function. Indeed, we can always write</p>
+
+<div class="equation">$$\mathcal{Z} = \sum_N Z_N e^{\beta N\mu}$$<span class="eq-number">(32)</span></div>
+
+<p>where $Z_N$ is the canonical partition function with $N$ particles.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Maxwell-Boltzmann Grand Partition Function</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+<div class="step"><div class="step-label">Step 1</div>
+<p>The canonical partition function $Z_N$ with Maxwell-Boltzmann statistics is:</p>
+$$Z_N = \frac{1}{N!}\sum_{\text{distinguishable } N\text{-particle microstates } k} e^{-\beta E_k}$$
+<p>In this sum the particles are treated as distinguishable and indistinguishability is enforced entirely through the $N!$ factor.</p>
+</div>
+<div class="step"><div class="step-label">Step 2</div>
+<p>Since each particle is independent and the total energy $E$ is unconstrained, we can pick any state $i$ for any particle:</p>
+$$Z_N = \frac{1}{N!}\sum_{i_1}\cdots\sum_{i_N} e^{-\beta(\epsilon_{i_1} + \cdots + \epsilon_{i_N})} = \frac{1}{N!}\left(\sum_i e^{-\beta \epsilon_i}\right)^N = \frac{1}{N!}Z_1^N$$
+<p>where $Z_1 = \sum_i e^{-\beta \epsilon_i}$ is the single-particle canonical partition function.</p>
+</div>
+<div class="step"><div class="step-label">Step 3</div>
+<p>The grand partition function for Maxwell-Boltzmann statistics is then:</p>
+$$\mathcal{Z} = \sum_N \frac{1}{N!}Z_1^N e^{\beta N\mu} = \exp\!\left[Z_1 e^{\beta\mu}\right] = \exp\!\left[\sum_i e^{-\beta(\epsilon_i - \mu)}\right] = \prod_i \exp\!\left[e^{-\beta(\epsilon_i - \mu)}\right]$$
+</div>
+</div></div>
+</div>
+
+<p>This has the same form as Eq. (18): $\mathcal{Z} = \prod_i \mathcal{Z}_i$ with</p>
+
+<div class="equation">$$\mathcal{Z}_i = \exp\!\left[e^{-\beta(\epsilon_i - \mu)}\right]$$<span class="eq-number">(39)</span></div>
+
+<p>In fact, if we write</p>
+
+<div class="equation">$$\mathcal{Z}_i = \sum_n \frac{1}{n!}e^{-n\beta(\epsilon_i - \mu)}$$<span class="eq-number">(40)</span></div>
+
+<p>We see that $\mathcal{Z}_i$ is exactly the grand partition function for a single state using Maxwell-Boltzmann statistics.</p>
+
+<p>The grand free energy for state $i$ is then</p>
+
+<div class="equation">$$\Phi_i = -\frac{1}{\beta}\ln \mathcal{Z}_i = -\frac{1}{\beta}e^{-\beta(\epsilon_i - \mu)}$$<span class="eq-number">(41)</span></div>
+
+<p>and the expected number of particles in state $i$ is</p>
+
+<div class="equation key-result">$$\langle n_i \rangle = -\frac{\partial \Phi_i}{\partial \mu} = e^{-\beta(\epsilon_i - \mu)}$$<span class="eq-number">(42)</span></div>
+
+<p>This is known as the <span class="tooltip-trigger">Maxwell-Boltzmann distribution function<span class="tooltip-content">The classical distribution: occupation decays exponentially with energy. Valid when states are rarely multiply occupied ($\langle n_i \rangle \ll 1$).</span></span>. It looks a lot like the Bose-Einstein distribution function.</p>
+
+<figure><img src="images/10-QuantumStatMech_p9_img0.png" alt="Comparison of three distribution functions"><figcaption>Comparison of the Bose-Einstein, Fermi-Dirac, and Maxwell-Boltzmann distribution functions.</figcaption></figure>
+
+<p>Unlike the Bose-Einstein case, taking $\mu > \epsilon_i$ does not give negative occupation numbers. It can however, give occupation numbers greater than 1. When states are multiply occupied then using classical statistics is no longer justified and we must use Bose or Fermi statistics. Thus for Maxwell-Boltzmann statistics, we should have $\mu < \epsilon_i$ for all $\epsilon_i$. Or, setting the ground state energy $\epsilon_0 = 0$ we should have $\mu < 0$. Note that this is consistent with our understanding of $\mu$ from classical statistical thermodynamics. For example, in Lecture 7 we saw that for a monatomic ideal gas with $\epsilon_0 = 0$ then $\mu = k_BT\ln(n\lambda^3)$ with $\lambda = \sqrt{\frac{h^2}{2\pi mk_BT}}$ the thermal wavelength. As long as we are at low density $n < \lambda^{-3}$, then $\mu < 0$. When $n \approx \lambda^{-3}$ then quantum effects become important and the sign of $\mu$ will depend on whether the gas is bosonic or fermionic.</p>
+
+<!-- INTERACTIVE: Quantum statistics comparison -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">&#9883;&#65039;</span> Interactive: Quantum vs Classical Statistics</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-quantum" class="sim"></canvas></div>
+  <div class="vis-controls">
+    <label>kT: <input type="range" id="qs-temp" min="0.1" max="5" step="0.05" value="1"> <span class="value-display" id="qs-temp-val">1.00</span></label>
+  </div>
+</div>
+
+<h2>4. Quantum and Classical Regime</h2>
+
+<p>Note that all of the statistics predict that the expected number of particles in state $i$ is</p>
+
+<div class="equation key-result">$$\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} + c}$$<span class="eq-number">(43)</span></div>
+
+<p>with $c = -1, 0$ or $1$ for Bose-Einstein, Maxwell-Boltzmann and Fermi-Dirac statistics, respectively. The classical limit is when the probability of two particles being in the same state is irrelevant. This limit requires that the $\langle n_i \rangle$ are all small, $\langle n_i \rangle \ll 1$, which, from Eq. (43) implies</p>
+
+<div class="equation">$$e^{\beta(\epsilon_i - \mu)} \gg 1$$<span class="eq-number">(44)</span></div>
+
+<p>In this limit, all the statistics give the same results:</p>
+
+<div class="equation">$$\langle n_i \rangle \approx e^{-\beta(\epsilon_i - \mu)} \ll 1$$<span class="eq-number">(45)</span></div>
+
+<p>Let's think a little about why the condition $e^{\beta(\epsilon_i - \mu)} \gg 1$ is appropriate for the classical limit. Since $\beta \to \infty$ means $T \to 0$, this seems like a low temperature limit. It certainly can be a low temperature limit: taking $k_BT \ll \epsilon$ guarantees the state with energy $\epsilon$ doesn't have even one particle in it, much less two. But the classical limit can be achieved other ways as well. The key point you have to keep in mind is that while the grand canonical ensemble works at fixed $\mu$, our intuition is for fixed $N$. If $N$ is fixed, then $\mu$ is a dependent variable and has strong temperature dependence, stronger even than $\beta$. For example, recall that for a classical ideal gas (Lecture 7, Section 7.2)</p>
+
+<div class="equation">$$\mu = \epsilon_0 + k_BT\ln\frac{N}{V} - \frac{3}{2}k_BT\ln\frac{2\pi mk_BT}{h^2} - f_v k_BT\ln\frac{T}{T_v} + \cdots$$<span class="eq-number">(46)</span></div>
+
+<p>where $\epsilon_0$ is ground state energy, $f_v$ are quadratic vibrational degrees of freedom, and other possible contributions are in the $\cdots$. So $\mu \sim T\ln T$ at large $T$ when $N$ is fixed. Therefore, for Maxwell-Boltzmann statistics at fixed $N$ we find for a monatomic ideal gas</p>
+
+<div class="equation">$$e^{-\beta(\epsilon_i - \mu)} = \frac{N}{V}\left(\frac{h^2}{2\pi mk_BT}\right)^{3/2}\left(\frac{T_v}{T}\right)^{f_v}e^{-\frac{\epsilon_i}{k_BT}}$$<span class="eq-number">(47)</span></div>
+
+<p>At large $T$ and fixed $N$, this goes to zero, so that any individual single-particle state is unlikely to be multiply occupied. More physically, at high $T$, more and more states become accessible so it is less and less likely for any state to be multiply occupied. In addition, at high $T$ particles are moving fast and their de Broglie wavelengths shrink: they become more like classical particles. So we can have $\langle n_i \rangle \ll 1$ either when $T \to 0$ at fixed $\mu$ or when $T \to \infty$ at fixed $N$. Another classical limit is $V \to \infty$ to make more and more states. There are many ways to get $\langle n_i \rangle \ll 1$.</p>
+
+<p>Quite generally, increasing the temperature at fixed $N$ decreases the chemical potential, since $\frac{\partial \mu}{\partial T} = -\frac{S}{N} < 0$. For a Bose system, $\mu < \epsilon_i$ for all $\epsilon_i$ so $\epsilon_i - \mu > 0$ and grows with temperature. In fact, it grows with temperature faster than $\beta$ decreases with temperature: roughly $\epsilon - \mu \sim \frac{S}{N}T \sim fT\ln T$ for some $f$ (e.g. $S \sim Nk_B \ln T$ in an ideal gas) so $\beta(\epsilon - \mu) \sim f\ln T$ and $\langle n_i \rangle \sim \frac{1}{T^f}$ at large $T$. Thus we see more broadly that high temperature gives classical statistics, as you would expect, despite the fact that a superficial reading of $e^{-\beta(\epsilon_i - \mu)} \ll 1$ makes it seem otherwise.</p>
+
+<p>We have seen that many limits (large $T$, small $T$, large $V$) lead to classical statistics. The challenge is to find a regime where the quantum statistics dominate. For quantum statistics to be relevant, we need $\langle n_i \rangle$ not to be $\ll 1$. Since the higher energy states are going to be less populated than the ground state, a reasonable condition is that $\langle n_0 \rangle \approx 1$. Using Eq. (47), the ground state with $\epsilon_i = 0$ has $\langle n_0 \rangle = 1$ when</p>
+
+<div class="equation key-result">$$\frac{N}{V} = \left(\frac{2\pi mk_BT}{h^2}\right)^{3/2} = \frac{1}{\lambda^3}$$<span class="eq-number">(48)</span></div>
+
+<p>So we want $\lambda \approx \left(\frac{V}{N}\right)^{1/3}$. In other words:</p>
+
+<div class="info-box concept">
+<div class="box-title">When Are Quantum Statistics Important?</div>
+<p><strong>Quantum statistics are important when the thermal de Broglie wavelength is of order or bigger than the interparticle spacing.</strong></p>
+<p>$\lambda \gtrsim \left(\frac{V}{N}\right)^{1/3}$, equivalently $n\lambda^3 \gtrsim 1$.</p>
+</div>
+
+<p>For example, at room temperature $\lambda_\text{air} \approx 1.87 \times 10^{-11}\,\text{m}$ while the average interparticle spacing in air is $\left(\frac{V}{N}\right)^{1/3} = \left(\frac{k_BT}{P}\right)^{1/3} = 3 \times 10^{-9}\,\text{m}$, so particles in air are around a factor of 100 times too far for quantum effects to be important. If we keep the pressure at 1 atm, we would have to cool air to $T = 0.57\,\text{K}$ for quantum effects to matter.</p>
+
+<p>For a classical monatomic ideal gas $\mu = k_BT\ln(\lambda^3 n)$. Thus in the classical regime when $\lambda^3 \frac{N}{V} \ll 1$ the chemical potential is a large negative number, $\mu \ll 0$. As temperature is decreased at constant $N$ and $V$ then $\lambda$ goes up and $\lambda^3 n$ increases. As $\lambda^3 n$ gets close to 1 then $\mu \to 0$ from below (more precisely, $\mu \to \epsilon_0$ with $\epsilon_0$ the ground state energy, but we usually set $\epsilon_0 = 0$). As $\mu \to 0$, whether the system is bosonic or fermionic becomes important. For a bosonic system, $\mu$ can get closer and closer to 0, but can never reach it. As we will see in Lecture 12, as $\mu \to 0$, bosons accumulate in the ground state, a process called <strong>Bose-Einstein condensation</strong>. For a fermionic system, $\mu$ goes right through zero and ends up at a positive value the Fermi energy $\mu = \epsilon_F > 0$ at $T = 0$. Thus the closeness of $\mu$ to 0 or equivalently the closeness of $\lambda^3 n$ to 1 indicates the onset of quantum statistics.</p>
+
+<h2>5. Summary</h2>
+
+<p>In this lecture we have seen how statistical mechanics is modified for systems of identical particles. There are three types of statistics we use:</p>
+
+<ul>
+<li><strong>Fermi-Dirac statistics</strong> applies to particles of half-integer spin like electrons in metals or white-dwarf stars or half-integer spin nuclei like protons or neutrons. Fermi-Dirac statistics applies not just to elementary particles, but also to atoms that have an odd number of fermions, such as $^3$He, which comprises 2 protons, 1 neutron and 2 electrons. In Fermi-Dirac statistics, no two identical particles can occupy the same single-particle state.</li>
+
+<li><strong>Bose-Einstein statistics</strong> applies to particles of integer spin, like photons, phonons, vibrational modes, $^4$He atoms (= 2 neutrons, 2 protons and 2 electrons) or $^{95}$Rb atoms (35 protons, 60 neutrons, 35 electrons). In Bose-Einstein statistics, any number of bosons can occupy the same state.</li>
+
+<li><strong>Maxwell-Boltzmann statistics</strong> are a kind of phony classical statistics for which calculations are generally easier than with bosons or fermions. We treat the particles as all distinguishable, then throw in a factor of $\frac{1}{N!}$ to the partition function to account for indistinguishability.</li>
+</ul>
+
+<p>The main results of this lecture were the expressions for the partition functions and probability distributions for the various statistics. We observed that for ideal gases (non-interacting particles) with any statistics, the grand-canonical partition function can be written as</p>
+
+<div class="equation">$$\mathcal{Z} = \prod_{\text{single particle states } i} \mathcal{Z}_i$$<span class="eq-number">(49)</span></div>
+
+<p>where $\mathcal{Z}_i$ is the grand-canonical partition function for a single state. For the various statistics we found</p>
+
+<div class="equation">$$\mathcal{Z}_i = \frac{1}{1 - e^{-\beta(\epsilon_i - \mu)}} \qquad \text{(Bose-Einstein)}$$<span class="eq-number">(50)</span></div>
+<div class="equation">$$\mathcal{Z}_i = 1 + e^{-\beta(\epsilon_i - \mu)} \qquad \text{(Fermi-Dirac)}$$<span class="eq-number">(51)</span></div>
+<div class="equation">$$\mathcal{Z}_i = \exp\!\left[e^{-\beta(\epsilon_i - \mu)}\right] \qquad \text{(Maxwell-Boltzmann)}$$<span class="eq-number">(52)</span></div>
+
+<p>From these, we deduce the probabilities $\langle n_i \rangle$ for finding $n_i$ particles in a given state $i$ with energy $\epsilon_i$. The general formula is $\langle n_i \rangle = \frac{\partial}{\partial \mu}\!\left(\frac{1}{\beta}\ln \mathcal{Z}_i\right)$. We found</p>
+
+<div class="equation">$$\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} - 1} \qquad \text{(Bose-Einstein)}$$<span class="eq-number">(53)</span></div>
+<div class="equation">$$\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} + 1} \qquad \text{(Fermi-Dirac)}$$<span class="eq-number">(54)</span></div>
+<div class="equation">$$\langle n_i \rangle = e^{-\beta(\epsilon_i - \mu)} \qquad \text{(Maxwell-Boltzmann)}$$<span class="eq-number">(55)</span></div>
+
+<p>The general rule of thumb is that quantum statistics are relevant when states have a decent chance of being multiply occupied. At room temperature, there are so many possible states for the momenta and position of the molecules, that the chance of two being in the same state is utterly negligible. That's why classical statistical mechanics works fine most of the time. The way to find out if quantum statistics are important is to look at the <span class="tooltip-trigger">thermal de Broglie wavelength<span class="tooltip-content">$\lambda = \sqrt{\frac{h^2}{2\pi m k_BT}}$ &mdash; the quantum "size" of a particle at temperature $T$. When this becomes comparable to the interparticle spacing, quantum statistics matters.</span></span></p>
+
+<div class="equation key-result">$$\lambda = \sqrt{\frac{h^2}{2\pi mk_BT}}$$<span class="eq-number">(56)</span></div>
+
+<p>When the interparticle spacing $(V/N)^{1/3}$ is smaller than $\lambda$ then quantum statistics is important.</p>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li>Quantum mechanics quantizes energy levels and enforces particle indistinguishability, leading to three types of statistics: Bose-Einstein, Fermi-Dirac, and Maxwell-Boltzmann.</li>
+<li>The grand canonical ensemble factorizes for non-interacting particles: $\mathcal{Z} = \prod_i \mathcal{Z}_i$, making each state independent.</li>
+<li>Bosons ($\eta = +1$, integer spin): $\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} - 1}$ &mdash; can pile into one state; $\mu < \epsilon_0$.</li>
+<li>Fermions ($\eta = -1$, half-integer spin): $\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} + 1}$ &mdash; at most one per state (Pauli exclusion).</li>
+<li>Maxwell-Boltzmann (classical): $\langle n_i \rangle = e^{-\beta(\epsilon_i - \mu)}$ &mdash; approximate, valid when $\langle n_i \rangle \ll 1$.</li>
+<li>Quantum statistics matter when the thermal de Broglie wavelength $\lambda$ is comparable to or larger than the interparticle spacing $(V/N)^{1/3}$.</li>
+</ul>
+</div>

@@ -1,0 +1,380 @@
+<div class="chapter-number">Chapter 9</div>
+<h1 class="chapter-title">Phase Transitions</h1>
+<p class="chapter-intro">
+Some phases of matter are familiar from everyday experience: solids, liquids and gases. But in fact, there are thousands of phases -- ferromagnetic, conducting, insulating, superconducting, quark-gluon plasma, and many more. Phase transitions are an incredibly important area of physics, connecting to everything from boiling water to the early universe.
+</p>
+
+<!-- Section 1: Introduction -->
+<h2>9.1 Introduction</h2>
+
+<p>Solid H$_2$O (ice) melting into liquid H$_2$O (water) is an example of a phase transition. You may have heard somewhere that there are 4 phases of matter: solid, liquid, gas and plasma. A plasma is an ionized gas, like the sun. I don't know why plasmas get special treatment though -- perhaps it's the old idea of the "four elements." In fact, there are thousands of phases. For example, ferromagnetic is a phase, like a permanent iron magnet. When you heat such a magnet to high enough temperature, it undergoes a phase transition and stops being magnetic. Conductors, insulators, and semi-conductors are also phases of matter. At very very high temperatures, nuclei break apart into a quark-gluon phase. Solids generally have lots of phases, determined by crystal structure or topological properties. For example, diamond and graphite are two phases of carbon with different lattice structure:</p>
+
+<figure>
+<img src="images/9-Phases_p1_img0.png" alt="Diamond and graphite crystal structures">
+<figcaption>Figure 1. Two of the phases of solid carbon.</figcaption>
+</figure>
+
+<p>It's actually quite hard to come up with a precise definition of a phase. Some textbooks say:</p>
+
+<div class="info-box concept">
+<div class="box-title">Definitions of a Phase</div>
+<p><strong>Intuitive definition:</strong> A phase is a uniform state of matter.</p>
+<p>This is too general: a gas at a different temperature is a different uniform state of matter, but we want "gas" to be the phase.</p>
+<p><strong>Precise definition:</strong> A <span class="tooltip-trigger">phase<span class="tooltip-content">A state of matter whose properties vary smoothly (are analytic functions of $P$, $V$, $T$, etc.)</span></span> is a state of matter whose properties vary smoothly (i.e. it is an analytic function of $P$, $V$, $T$ etc).</p>
+<p>For example, consider the temperature of water as heat is added. As you heat it the temperature rises. But when it hits the boiling point, the temperature does not rise anymore -- instead the heat goes into vaporizing the water. The density of H$_2$O changes discontinuously: $\rho(T = 99.9^\circ\text{C})$ is very different from $\rho(T = 100.1^\circ\text{C})$.</p>
+</div>
+
+<p>Connecting phase to smoothness properties allows us to shift focus from phases themselves to the transformations between phases called <span class="tooltip-trigger">phase transitions<span class="tooltip-content">A transformation between two phases, characterized by non-analytic behavior of thermodynamic quantities</span></span>.</p>
+
+<p>Physicists take two different approaches to phase transitions. On the one hand, we can treat each phase as its own statistical mechanical system. For example, the ensemble we use to describe ice is very different from the one we use to describe water vapor. This lets us derive very useful formulas for phase transformations, such as how the pressure and temperature of the phase transformation are related.</p>
+
+<p>The second approach is to construct a statistical mechanical system that describes a substance on both sides of a phase transition. For example, if we knew the exact partition function for $N$ molecules of H$_2$O, we should be able to see the gas, liquid and solid states arise from different limits. It is the kinks in otherwise smooth functions that make phase transitions so interesting. Pursuing simpler systems leads to concepts like critical phenomena, the renormalization group, mean-field theories, etc.</p>
+
+<!-- Section 2: Solids, Liquids and Gases -->
+<h2>9.2 Solids, Liquids and Gases</h2>
+
+<p>Both solids and liquids are essentially incompressible. The <span class="tooltip-trigger">compressibility<span class="tooltip-content">$\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$: measures how much volume changes under pressure</span></span> is defined</p>
+
+<div class="equation">
+$$\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$$
+<span class="eq-number">(1)</span>
+</div>
+
+<p>So solids and liquids have $\kappa_T \approx 0$. Gases have much larger values of $\kappa_T$. Indeed, from the ideal gas law $PV = Nk_BT$, we see that for a gas $\kappa_T = 1/P \neq 0$. Compressibility is an example of an <span class="tooltip-trigger">order parameter<span class="tooltip-content">A quantity whose value characterizes the phase, and which changes discontinuously or non-analytically at a phase transition</span></span>, something whose value characterizes the phase.</p>
+
+<p>Solids and liquids of the same substance often have approximately the same density, while the density of gases is much lower. Solids differ from liquids and gases in that they are rigid. More precisely, they do not deform under a shear stress, i.e. they have zero shear modulus. Thus shear stress is an order parameter for the liquid-solid phase transition. Liquids and gases are collectively called fluids.</p>
+
+<p>Liquids generally have around the same density as solids, so the atoms are all in contact with each other. Instead of having strong covalent or metallic bonds, like in a solid, liquids have weaker ionic or hydrogen bonds that keep the molecules close.</p>
+
+<figure>
+<img src="images/9-Phases_p3_img0.png" alt="Hydrogen bonds in water">
+<figcaption>Figure 2. The H and O atoms in water have small charges (left) forming attractive hydrogen bonds (middle). Surfaces cannot saturate all the bonds, therefore there is an energy cost $G = \sigma A$ to having a surface, with $\sigma$ the surface tension.</figcaption>
+</figure>
+
+<p>All liquids have a <span class="tooltip-trigger">surface tension<span class="tooltip-content">$\sigma = G/A$: the Gibbs free energy per area of surface, arising because surface molecules have fewer bonds than bulk molecules</span></span>. The surface tension of water happens to be particularly large ($\sigma_{\text{water}} = 73\;\text{mN/m}$). One consequence of surface tension is that a liquid will not expand to fill all available volume. Liquids form droplets.</p>
+
+<figure>
+<img src="images/9-Phases_p3_img2.png" alt="Water and mercury in zero gravity">
+<figcaption>Figure 3. (Left) water in zero gravity. (Right) a ball of liquid mercury in zero gravity being hit by a piece of metal.</figcaption>
+</figure>
+
+<p>Whether a solid turns into a liquid when heated depends not only on the types of interactions among the molecules, but also on the pressure. At low pressures, when solids are heated, the atoms that break free fly off into gas, and the solid sublimates. Only if the pressure is sufficiently high will the molecules stick around close enough for the weak attractive interactions to dominate and the liquid phase to form.</p>
+
+<p>Two phases can be in equilibrium with each other. Consider an unopened bottle of water (constant volume and temperature). The liquid water and water vapor are in equilibrium. An open bottle is at constant temperature and pressure. Under these conditions generally a single phase dominates. Thus, phases of matter can be characterized by temperature and pressure.</p>
+
+<p>Why are there single phases at constant $T$ and $P$? For a single pure substance, the chemical potential is a function of $P$ and $T$ alone: $\mu = \mu(P, T)$. When there are two phases present, the Gibbs free energy is $G = N_1\mu_1(T,P) + N_2\mu_2(T,P)$. Importantly, there is no entropy of mixing between phases (solids and liquids coagulate because of surface tension).</p>
+
+<p>At constant $T$ and $P$, equilibrium is determined by minimizing $G$. If $\Delta N$ particles go from phase 1 to phase 2:</p>
+
+<div class="equation">
+$$\Delta G = (\mu_2 - \mu_1)\Delta N$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p>Thus particles move from higher chemical potential to lower chemical potential. As long as $\mu_1 \neq \mu_2$, only one phase is allowed -- one phase completely annihilates the other.</p>
+
+<p>It is only when $\mu_1(T, P) = \mu_2(T, P)$ that two phases can be present at once. Setting them equal generates a curve in the $T/P$ plane. This curve is the <span class="tooltip-trigger">phase boundary<span class="tooltip-content">A curve in the $T$-$P$ plane where two phases have equal chemical potential and can coexist</span></span>.</p>
+
+<figure>
+<img src="images/9-Phases_p4_img0.png" alt="Phase diagrams for CO2, Ar, and H2O">
+<figcaption>Figure 4. Phase diagrams for CO$_2$, Ar, and H$_2$O. The point STP in these plots refers to $T = 20^\circ\text{C} = 293\;\text{K}$ and $P = 1\;\text{atm}$.</figcaption>
+</figure>
+
+<p>The thick lines in the phase diagram are the phase boundaries, determined by $\mu_1 = \mu_2$. We define:</p>
+<ul>
+<li><strong>Melting:</strong> transition from solid to liquid.</li>
+<li><strong>Freezing/Fusion:</strong> transition from liquid to solid.</li>
+<li><strong>Boiling/vaporization:</strong> transition from liquid to gas.</li>
+<li><strong>Condensation:</strong> transition from gas to liquid.</li>
+<li><strong>Sublimation:</strong> transition from solid to gas.</li>
+<li><strong>Deposition:</strong> transition from gas to solid.</li>
+</ul>
+
+<p>Note in the CO$_2$ phase diagram that as temperature is increased at $P = 1\;\text{atm}$, CO$_2$ goes from solid directly to gas: it sublimates. This is why smoke comes off dry ice, but there is no liquid. Liquid CO$_2$ requires at least 5 atmospheres of pressure.</p>
+
+<p>In a pure phase, $\mu = G/N$ so</p>
+
+<div class="equation">
+$$\left(\frac{\partial \mu}{\partial T}\right)_P = -\frac{S}{N}$$
+<span class="eq-number">(4)</span>
+</div>
+
+<p>Since $S > 0$ this implies that the chemical potential always decreases as the temperature goes up. Moreover, the phase with the larger molar entropy will have its chemical potential go down more. Thus the higher entropy state is preferred at larger temperature. This explains why solids melt when you heat them: the phase transitions are driven by entropy, with $S_{\text{solid}} < S_{\text{liquid}} < S_{\text{gas}}$.</p>
+
+<p>The phase boundaries do not extend forever. They end at a point in $P$, $T$ space called the <span class="tooltip-trigger">critical point<span class="tooltip-content">The endpoint of a phase boundary where the distinction between two phases vanishes and the transition becomes second order</span></span>. An implication of the phase boundary ending is that one can go around the phase transition line -- one can smoothly transform a liquid into a gas without crossing a phase boundary.</p>
+
+<p>The point where three phase boundaries intersect is called the <span class="tooltip-trigger">triple point<span class="tooltip-content">A special value of $(P, T)$ where three phases are in equilibrium: $\mu_{\text{solid}} = \mu_{\text{liquid}} = \mu_{\text{gas}}$</span></span>. At the triple point, three phases are in equilibrium together.</p>
+
+<!-- Section 3: Phase Boundaries -->
+<h2>9.3 Phase Boundaries</h2>
+
+<p>Suppose we are close to a phase boundary. In a pure phase, $dG = Nd\mu$ and from $dG = VdP - SdT$:</p>
+
+<div class="equation">
+$$d\mu = \frac{V}{N}dP - \frac{S}{N}dT$$
+<span class="eq-number">(5)</span>
+</div>
+
+<p>On the phase boundary, $\mu_1 = \mu_2$, so setting $d\mu_1 = d\mu_2$ gives</p>
+
+<div class="equation key-result">
+$$\frac{dP}{dT} = \frac{\Delta\left(\frac{S}{N}\right)}{\Delta\left(\frac{V}{N}\right)}$$
+<span class="eq-number">(7)</span>
+</div>
+
+<p>This equation, called the <span class="tooltip-trigger">Clapeyron equation<span class="tooltip-content">$dP/dT = \Delta(S/N)/\Delta(V/N)$: determines the slope of the phase boundary in the $P$-$T$ plane</span></span>, determines the shape of the phase boundary.</p>
+
+<h3>9.3.1 Latent Heat</h3>
+
+<p>Since $\mu_1 = \mu_2$ on the boundary, we have $T\Delta(S/N) = \Delta(H/N)$. The Clapeyron equation becomes</p>
+
+<div class="equation key-result">
+$$\frac{dP}{dT} = \frac{1}{T}\frac{L}{\Delta\left(\frac{1}{n}\right)}$$
+<span class="eq-number">(8)</span>
+</div>
+
+<p>where $n = N/V$ is the number density and</p>
+
+<div class="equation key-result">
+$$L = \Delta\left(\frac{H}{N}\right)$$
+<span class="eq-number">(9)</span>
+</div>
+
+<p>is called the <span class="tooltip-trigger">latent heat<span class="tooltip-content">The change in molar enthalpy at a phase transition. It is the heat required per molecule to change the phase at saturation.</span></span>.</p>
+
+<p>Latent heat is the change in enthalpy per molecule. When you boil water, you put more and more heat in, and more water evaporates, but the temperature doesn't change. The heat provides the energy to break up the hydrogen bonds.</p>
+
+<div class="info-box physical">
+<div class="box-title">Latent Heat of Water</div>
+<p>The enthalpy of formation of liquid water is $\Delta_f^\circ H = -286\;\text{kJ/mol}$ and for water vapor is $\Delta_f^\circ H = -242\;\text{kJ/mol}$. The difference is the latent heat of vaporization: $L_{\text{vap}} = 44\;\text{kJ/mol}$.</p>
+<p>For comparison, the heat capacity of liquid water is $C_P = 75\;\text{J/(mol}\cdot\text{K)}$, so heating from 0$^\circ$C to 100$^\circ$C takes only $\Delta H = 7.5\;\text{kJ/mol}$. It takes <strong>6 times as much energy</strong> to vaporize water as to heat it from freezing to boiling.</p>
+<p>This is why sweating is such an efficient form of cooling. The latent heat of fusion for melting ice is $L_{\text{fuse}} = 6.0\;\text{kJ/mol}$, much smaller.</p>
+</div>
+
+<p>Using the Clapeyron equation, we can deduce features of phase boundaries:</p>
+
+<p><strong>Solid to liquid (melting):</strong> $L_{\text{fuse}} > 0$. In general, the density change is small and slightly negative (most solids are denser than their liquids). So $\Delta(1/n) \gtrsim 0$ and $dP/dT$ is very large and positive: the solid/liquid phase boundary is steep and goes slightly to the right.</p>
+
+<figure>
+<img src="images/9-Phases_p7_img0.png" alt="Phase diagram for water">
+<figcaption>Figure 5. Phase diagram for water. Note the solid-liquid boundary goes up and to the left ($dP/dT < 0$), because ice is less dense than water.</figcaption>
+</figure>
+
+<p>A well known exception is water. Water expands when it freezes due to the unusual importance of hydrogen bonding. The tetrahedral structure of solid ice makes it not particularly dense.</p>
+
+<p><strong>Liquid to gas (vaporization):</strong> $L > 0$. Gases are much less dense than liquids ($n_{\text{gas}} \ll n_{\text{liquid}}$), so we can approximate $\Delta(1/n) \approx 1/n_{\text{gas}} = k_BT/P$. This gives the <span class="tooltip-trigger">Clausius-Clapeyron equation<span class="tooltip-content">$dP/dT = PL/(RT^2)$: describes the slope of the liquid-gas phase boundary, valid when the gas is much less dense than the liquid</span></span>:</p>
+
+<div class="equation key-result">
+$$\frac{dP}{dT} = \frac{PL}{RT^2}$$
+<span class="eq-number">(11)</span>
+</div>
+
+<p>If we assume $L$ is independent of $T$, we can integrate:</p>
+
+<div class="equation key-result">
+$$P = P^\circ \exp\left(-\frac{L}{R}\left(\frac{1}{T} - \frac{1}{T^\circ}\right)\right)$$
+<span class="eq-number">(14)</span>
+</div>
+
+<div class="info-box example">
+<div class="box-title">Example: Boiling Point at Altitude</div>
+<p>At sea level ($P^\circ = 1\;\text{bar}$), water boils at $T^\circ = 373\;\text{K}$. At 1000 m, $P = 0.9\;\text{bar}$. Using $L = 42\;\text{kJ/mol}$:</p>
+$$T = \left(\frac{1}{T^\circ} - \frac{R}{L}\ln\frac{P}{P^\circ}\right)^{-1} = 370.1\;\text{K}$$
+<p>which is three degrees lower.</p>
+</div>
+
+<h3>9.3.2 Vapor Pressure</h3>
+
+<p>The <span class="tooltip-trigger">vapor pressure<span class="tooltip-content">The pressure of a pure substance at saturation (on the phase boundary). When two phases are in equilibrium, the gas pressure must equal the vapor pressure.</span></span> is the pressure of a pure substance at saturation (on the phase boundary). At room temperature, the vapor pressure of water is $P = 0.034\;\text{atm}$, much lower than atmospheric pressure. Air is only around 1% water, so the partial pressure of water in air is about $0.01\;\text{atm}$, which is about 3 times smaller than the vapor pressure. So water does evaporate into air.</p>
+
+<p>What happens if we mix some solute into the water? The chemical potential of the solvent in the mix is lowered by the entropy of mixing:</p>
+
+<div class="equation">
+$$\mu_w^{\text{mix}}(P, T) = \mu_w(P, T) - k_BT\frac{N_s}{N_w}$$
+<span class="eq-number">(17)</span>
+</div>
+
+<p>Setting the mixed chemical potential equal to the gas chemical potential leads to</p>
+
+<div class="equation key-result">
+$$\Delta P = -\frac{N_s}{N_w}P_0$$
+<span class="eq-number">(22)</span>
+</div>
+
+<p>This is known as <span class="tooltip-trigger">Raoult's law<span class="tooltip-content">The vapor pressure decreases when a solute is added, proportional to the molar fraction of the solute: $\Delta P = -(N_s/N_w)P_0$</span></span>. It says the vapor pressure decreases when a solute is added, proportional to the molar fraction of the solute.</p>
+
+<p>Using the Clausius-Clapeyron equation to find the temperature change:</p>
+
+<div class="equation">
+$$\Delta T = \frac{N_s}{N_w}\frac{RT_0^2}{L}$$
+<span class="eq-number">(23)</span>
+</div>
+
+<p>Since $\Delta P < 0$ at fixed $T$, we have $\Delta T > 0$ at fixed $P$: the boiling point goes up.</p>
+
+<figure>
+<img src="images/9-Phases_p10_img0.png" alt="Phase boundary shift with salt">
+<figcaption>Figure 6. Black curve is the phase boundary for pure water, pink is for salt water. At 1 atm, the boiling point goes up and the freezing point goes down.</figcaption>
+</figure>
+
+<div class="info-box example">
+<div class="box-title">Example: Salting Water and Icy Sidewalks</div>
+<p><strong>Cooking:</strong> Adding a tablespoon of salt (0.547 mol) to 2 liters of water (111 mol), the boiling point goes up by $\Delta T = 0.14\;\text{K}$, less than a degree. So raising the temperature is not the reason we add salt to water when cooking!</p>
+<p><strong>De-icing:</strong> Put 1 cup of salt (8.7 moles) per square meter of ice that is 1 mm thick (1L total, 55 moles). Using $L_{\text{fuse}} = 6.0\;\text{kJ/mol}$:</p>
+$$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;\text{K})^2}{6.0\;\text{kJ/mol}} = -16\;\text{K}$$
+<p>So if you salt your sidewalk, it won't freeze until the temperature drops to $-16^\circ\text{C} = 3^\circ\text{F}$.</p>
+</div>
+
+<p>The easiest way to understand these effects: salt dissolves in the liquid phase. This increases the entropy of the liquid, lowering its Gibbs free energy relative to other phases, and making the liquid relatively preferable.</p>
+
+<h3>9.3.3 Chemical Potential Phase Diagrams</h3>
+
+<p>Phase boundaries are determined by the condition that chemical potentials agree. At a given pressure, a given phase will dominate over the range of temperatures for which its chemical potential is lowest.</p>
+
+<p>We know that $\left(\frac{\partial \mu}{\partial T}\right)_P = -S/N < 0$, so slopes are always negative. Since $S_{\text{solid}} < S_{\text{liquid}} < S_{\text{gas}}$, the gas has the steepest chemical potential curve. By the 3rd law of thermodynamics, the solid line starts off horizontal at $T = 0$.</p>
+
+<figure>
+<img src="images/9-Phases_p11_img0.png" alt="Chemical potential phase diagram for H2O">
+<figcaption>Figure 7. Phase diagram in the chemical potential/temperature plane for H$_2$O. Left shows the curves at some pressure $P$. Right shows the effect of increasing the pressure.</figcaption>
+</figure>
+
+<p>When we change the pressure: $\left(\frac{\partial \mu}{\partial P}\right)_T = V/N = 1/n > 0$. The less dense the phase, the more its chemical potential changes. The gas curve shifts up the most. For water, the liquid is denser than the solid so its chemical potential changes less -- leading to a lower melting temperature at higher pressure.</p>
+
+<figure>
+<img src="images/9-Phases_p11_img2.png" alt="Phase diagram for subatomic matter">
+<figcaption>Figure 8. Phase diagram for subatomic matter: quarks and gluons, as a function of temperature and baryon chemical potential. An open question is whether there is a critical point between the quark-gluon plasma and hadron gas phases.</figcaption>
+</figure>
+
+<!-- Section 4: General Phase Transitions -->
+<h2>9.4 General Phase Transitions</h2>
+
+<p>We saw with the liquid/solid/gas phase transitions that $\left(\frac{\partial G}{\partial T}\right)_P$ changes discontinuously at the phase boundary. When this happens we say the transition is of the first order.</p>
+
+<div class="info-box concept">
+<div class="box-title">Ehrenfest Classification of Phase Transitions</div>
+<ul>
+<li><strong>First-order phase transition:</strong> $\left(\frac{\partial G}{\partial T}\right)_P$ changes discontinuously at the phase boundary. Has <strong>latent heat</strong>, which is a barrier to changing phases.</li>
+<li><strong>$n$th order phase transition:</strong> $\left(\frac{\partial^n G}{\partial T^n}\right)_P$ changes discontinuously at the phase boundary.</li>
+<li><strong>Second-order phase transition:</strong> $\left(\frac{\partial G}{\partial T}\right)_P$ is continuous across the phase boundary. Smooth with no barrier. Occurs where phases merge and latent heat vanishes.</li>
+</ul>
+</div>
+
+<p>In modern treatments, the thing whose continuity we question is called the order parameter. For boiling water, density is a natural order parameter.</p>
+
+<h3>9.4.1 Paramagnetism</h3>
+
+<p><span class="tooltip-trigger">Paramagnetic<span class="tooltip-content">A material attracted to an applied magnetic field, typically with unpaired electrons free to align with the field</span></span> means that a material is attracted to an applied magnetic field. The opposite is <span class="tooltip-trigger">diamagnetic<span class="tooltip-content">A material repelled by an applied magnetic field</span></span>. A third type is <span class="tooltip-trigger">ferromagnetism<span class="tooltip-content">A material that can produce a coherent magnetic field on its own, like an iron refrigerator magnet</span></span>, whereby a material can produce a coherent magnetic field, as in an ordinary iron refrigerator magnet. If you heat an iron magnet above 1043 K it will lose its magnetism and become paramagnetic.</p>
+
+<figure>
+<img src="images/9-Phases_p12_img0.png" alt="Spin alignment in ferromagnetic transition">
+<figcaption>Figure 9. When a magnetic material is cooled, its spins spontaneously align as it enters the ferromagnetic phase.</figcaption>
+</figure>
+
+<p>In a crude model, each pair has energy $-\epsilon$ if they are aligned and $+\epsilon$ if they are not aligned. The difference between the fully aligned (ferromagnetic) state and disordered (paramagnetic) state is roughly $E = 2N\epsilon$. The disordered state has $\Omega = 2^N$ configurations and entropy $S = Nk_B\ln 2$. The free energies are:</p>
+
+<div class="equation">
+$$F_{\text{magnetic}} = E - TS = -N\epsilon$$
+<span class="eq-number">(27)</span>
+</div>
+
+<div class="equation">
+$$F_{\text{disordered}} = E - TS = N(\epsilon - Tk_B\ln 2)$$
+<span class="eq-number">(28)</span>
+</div>
+
+<p>By minimizing free energy, the transition occurs when these cross, at</p>
+
+<div class="equation key-result">
+$$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
+<span class="eq-number">(29)</span>
+</div>
+
+<p>$T_c$ is known as the <span class="tooltip-trigger">Curie temperature<span class="tooltip-content">The critical temperature for the paramagnetic-to-ferromagnetic phase transition</span></span>.</p>
+
+<p>The entropy change as the magnet is cooled is smooth: near $T_c$ the material has some spins aligned and some intermediate entropy. Thus the ferromagnetic phase transition is second order.</p>
+
+<p>One super interesting thing about the magnetization direction $\vec{M}$ is that we cannot know ahead of time which direction it will point. At high temperature no direction is preferred: the theory is rotationally invariant. At low temperature, $\vec{M}$ picks up a definite value. The Hamiltonian is rotationally invariant but the state is not. When this happens we say the rotational symmetry is <span class="tooltip-trigger">spontaneously broken<span class="tooltip-content">When the ground state of a system has less symmetry than the Hamiltonian that governs it</span></span>.</p>
+
+<p>Similarly, a liquid is invariant under translations. A solid is not: once you know where one atom is, you can pinpoint all the rest. We say the solid has <span class="tooltip-trigger">long-range order<span class="tooltip-content">Correlations between distant parts of a system that persist at arbitrarily large separations</span></span>. When a liquid freezes, translational symmetry is spontaneously broken and long-range order results.</p>
+
+<p>One consequence of spontaneous symmetry breaking is that there must be arbitrarily low energy excitations. This is <span class="tooltip-trigger">Goldstone's theorem<span class="tooltip-content">When a continuous symmetry is spontaneously broken, there exist massless excitations (Goldstone bosons) with $\omega(k) \to 0$ as $k \to 0$</span></span>. The excitations of a solid are called phonons with dispersion $\omega(k) \to 0$ as $k \to 0$. The excitations in a magnet are called spin waves.</p>
+
+<h3>9.4.2 Critical Phenomena</h3>
+
+<p>The final topic concerns the dot at the end of the liquid/gas phase boundary: the critical point. Critical points are super-interesting places with a lot of unusual properties.</p>
+
+<figure>
+<img src="images/9-Phases_p14_img0.png" alt="P-V phase diagram for CO2">
+<figcaption>Figure 10. P-V phase diagram for CO$_2$. The x-axis is the specific volume $v = V/N$. The green region has liquid and gas.</figcaption>
+</figure>
+
+<p>The lines in this plot are isotherms. During a phase transition, pressure and temperature are fixed, so we move horizontally ($\partial P/\partial v = 0$). As temperature increases, the difference in specific volume between liquid and gas at constant temperature gets smaller. Eventually the latent heat vanishes: it takes no energy to convert a liquid to a gas. This happens at the <strong>critical temperature</strong> $T_c$, at the <strong>critical pressure</strong> $P_c$ and <strong>critical specific volume</strong> $v_c$.</p>
+
+<p>At temperatures above the critical temperature, the material is a <span class="tooltip-trigger">supercritical fluid<span class="tooltip-content">A substance above its critical temperature, having properties intermediate between gas and liquid</span></span>. Supercritical CO$_2$ is used to decaffeinate coffee -- its viscosity and diffusivity are like those of a gas, and its density is like that of a liquid.</p>
+
+<p>At the critical point, $\frac{\partial P}{\partial v}\bigg|_T = 0$ and $\frac{\partial^2 P}{\partial v^2}\bigg|_T = 0$. In fact, all derivatives vanish: $\frac{\partial^n P}{\partial v^n}\bigg|_T = 0$. This means $P(v)$ is a non-analytic function at the critical point.</p>
+
+<figure>
+<img src="images/9-Phases_p15_img0.png" alt="TV diagram for water">
+<figcaption>Figure 11. TV diagram for water.</figcaption>
+</figure>
+
+<p>Because all the derivatives vanish, all dimensionful physical quantities we use to characterize a material either vanish or are infinite at the critical point:</p>
+
+<figure>
+<img src="images/9-Phases_p15_img1.png" alt="Heat capacity near critical point">
+<figcaption>Figure 12. Heat capacity of propane near the critical point, showing the singularity.</figcaption>
+</figure>
+
+<p>We say that the theory near the critical point is <span class="tooltip-trigger">scale-invariant<span class="tooltip-content">Having no characteristic scale. At a critical point, all dimensionful quantities vanish or diverge, and the system looks the same at all length scales.</span></span> or conformal. Choosing reduced units:</p>
+
+<div class="equation">
+$$\hat{T} = \frac{T}{T_c},\qquad \hat{P} = \frac{P}{P_c},\qquad \hat{v} = \frac{v}{v_c},\qquad \hat{n} = \frac{n}{n_c}$$
+<span class="eq-number">(30)</span>
+</div>
+
+<p>all thermodynamic quantities become independent of any other property of the material.</p>
+
+<figure>
+<img src="images/9-Phases_p16_img0.png" alt="Law of corresponding states">
+<figcaption>Figure 13. Reduced temperature versus reduced number density for a variety of substances at saturation. Adapted from E.A. Guggenheim, J. Chem. Phys. 13, 253 (1945).</figcaption>
+</figure>
+
+<p>Remarkably, in the vicinity of the critical point, the $\hat{T}$-$\hat{n}$ phase boundaries all have exactly the same shape! This powerful observation is known as the <span class="tooltip-trigger">law of corresponding states<span class="tooltip-content">Near their critical points, all simple fluids have the same thermodynamic behavior when expressed in reduced units</span></span>.</p>
+
+<p>The shape is fit by functions:</p>
+
+<div class="equation">
+$$\hat{n}_\ell(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) + \frac{7}{4}(1 - \hat{T})^{1/3}$$
+<span class="eq-number">(32)</span>
+</div>
+<div class="equation">
+$$\hat{n}_g(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) - \frac{7}{4}(1 - \hat{T})^{1/3}$$
+</div>
+
+<p>The exponent $1/3$ is an example of a <span class="tooltip-trigger">critical exponent<span class="tooltip-content">An exponent characterizing how an order parameter approaches its value at the critical point. Critical exponents are universal -- they depend only on symmetry and dimensionality, not on microscopic details.</span></span>. It characterizes the approach of the density towards the critical point. The fractional exponent makes these functions non-analytic. Because of the law of corresponding states, the critical exponents can be calculated with any material -- even a made-up theoretical one. An important example is the <span class="tooltip-trigger">Ising model<span class="tooltip-content">A theoretical model of a material as a lattice of spins with interaction energies $\pm 1$. Its critical exponents agree with measured values in real fluids to one part in 1000.</span></span>, which treats a material as a lattice of spins with interaction energies $\pm 1$. Computing the critical exponents of the Ising model agrees with measured values in water to one part in 1000!</p>
+
+<!-- Section 5: Summary -->
+<h2>9.5 Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li>A <strong>phase</strong> is a state of matter whose properties vary smoothly. Phase transitions are characterized by non-analytic behavior of thermodynamic quantities.</li>
+<li><strong>First-order</strong> phase transitions have discontinuous first derivatives of $G$ and nonzero <strong>latent heat</strong>. <strong>Second-order</strong> transitions are smooth with no latent heat.</li>
+<li>Phase boundaries in the $P$-$T$ plane are determined by equality of chemical potentials: $\mu_1 = \mu_2$.</li>
+<li>The <strong>Clapeyron equation</strong> $\frac{dP}{dT} = \frac{1}{T}\frac{L}{\Delta(1/n)}$ gives the slope of phase boundaries. For liquid-gas: the <strong>Clausius-Clapeyron equation</strong> $\frac{dP}{dT} = \frac{PL}{RT^2}$.</li>
+<li><strong>Latent heat</strong> $L = \Delta(H/N)$ is the energy cost of a phase transition. For water: $L_{\text{vap}} = 44\;\text{kJ/mol}$ and $L_{\text{fuse}} = 6.0\;\text{kJ/mol}$.</li>
+<li><strong>Raoult's law:</strong> adding solute decreases vapor pressure by $\Delta P = -(N_s/N_w)P_0$, raising the boiling point and lowering the freezing point.</li>
+<li>At the <strong>critical point</strong>, the distinction between two phases vanishes, the latent heat is zero, and the system is scale-invariant. The <strong>law of corresponding states</strong> shows that all simple fluids behave the same near their critical points in reduced units.</li>
+<li><strong>Spontaneous symmetry breaking</strong> occurs when the ground state has less symmetry than the Hamiltonian. <strong>Goldstone's theorem</strong> guarantees low-energy excitations (phonons, spin waves).</li>
+<li><strong>Critical exponents</strong> are universal -- they depend only on symmetry and dimensionality, not on microscopic details.</li>
+</ul>
+</div>
+
+<!-- Interactive Visualization -->
+<h3>Interactive: Phase Diagram</h3>
+<div class="interactive-container">
+<canvas id="vis-phase" width="600" height="400"></canvas>
+<p class="vis-caption">Interactive phase diagram. Explore the different phases (solid, liquid, gas) as a function of temperature and pressure. Notice the triple point where all three phases coexist, and the critical point where the liquid-gas distinction vanishes.</p>
+</div>

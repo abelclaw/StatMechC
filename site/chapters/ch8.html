@@ -1,0 +1,546 @@
+<div class="chapter-number">Chapter 8</div>
+<h1 class="chapter-title">Free Energy</h1>
+<p class="chapter-intro">
+Using our various ensembles, we were led to a rather simple differential relation between energy and other state variables: $dE = TdS - PdV + \mu dN$. In this lecture, we construct new variables (free energies) that depend on $T$ and $P$ rather than $E$ and $V$. These are the Helmholtz free energy $F$, enthalpy $H$, Gibbs free energy $G$, and the grand free energy $\Omega$.
+</p>
+
+<!-- Section 1: Introduction -->
+<h2>8.1 Introduction</h2>
+
+<p>The terms on the right of $dE = TdS - PdV + \mu dN$ are different ways the energy can change: the first term is when heat comes in, since $dS = dQ/T$, the second term is work going out from expanding volume, the third term is the energy associated with bond formation or increasing particle creation.</p>
+
+<p>Holding any two of the four differentials fixed we can derive from this equation lots of other formulas</p>
+
+<div class="equation">
+$$\left(\frac{\partial S}{\partial E}\right)_{V,N} = \frac{1}{T};\quad \left(\frac{\partial S}{\partial N}\right)_{E,V} = -\frac{\mu}{T};\quad \left(\frac{\partial S}{\partial V}\right)_{E,N} = \frac{P}{T};\quad \left(\frac{\partial E}{\partial S}\right)_{V,N} = T;\quad \left(\frac{\partial E}{\partial V}\right)_{S,N} = -P$$
+<span class="eq-number">(2)</span>
+</div>
+
+<p>and so on. Some of these are more useful than others. It's important to label what you are holding fixed because $S$, $E$, $V$, $N$ are not all independent. Any one of these variables is a function of the others:</p>
+
+<div class="equation">
+$$E = E(S, V, N);\qquad S = S(E, V, N);\qquad V = V(E, S, N);\qquad N = N(E, S, V)$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p>The variables $T$, $P$, $\mu$ are then derived quantities, calculated by taking partial derivatives with respect to the independent variables.</p>
+
+<p>We often use monatomic ideal gases to check these general relations. For example, the entropy of a monatomic ideal gas is</p>
+
+<div class="equation">
+$$S(E, V, N) = Nk_B\left[\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{4\pi mE}{3Nh^2}\right) + \frac{5}{2}\right]$$
+<span class="eq-number">(4)</span>
+</div>
+
+<p>Then $\frac{1}{T} = \left(\frac{\partial S}{\partial E}\right)_{V,N} = \frac{3}{2}\frac{Nk_B}{E}$, consistent with $E = \frac{3}{2}Nk_BT$. Similarly, $P = T\left(\frac{\partial S}{\partial V}\right)_{E,N} = \frac{Nk_BT}{V}$, which is the ideal gas law.</p>
+
+<p>Since partial derivatives commute, we can derive additional relations:</p>
+
+<div class="equation">
+$$\left(\frac{\partial T}{\partial V}\right)_{S,N} = -\left(\frac{\partial P}{\partial S}\right)_{V,N}$$
+<span class="eq-number">(7)</span>
+</div>
+
+<p>and so on. These type of relations among derivatives are known as <span class="tooltip-trigger">Maxwell relations<span class="tooltip-content">Relations between second partial derivatives of thermodynamic potentials that follow from the commutativity of mixed partial derivatives</span></span>.</p>
+
+<p>When we have a function like $S(V, E, N)$, we can see how the system responds when we change $V$, $E$ and $N$. In physical situations, we are often much more interested in knowing how our system responds to changes in temperature or pressure. So we would like the system to be described by functions that depend explicitly on $T$ and $P$ rather than $E$ and $V$. In this lecture, we construct new variables (free energies) that depend on $T$ and $P$. The four new potentials we introduce are</p>
+
+<div class="info-box concept">
+<div class="box-title">Thermodynamic Potentials</div>
+<p><strong>Helmholtz free energy:</strong> $F \equiv E - TS$</p>
+<p><strong>Enthalpy:</strong> $H \equiv E + PV$</p>
+<p><strong>Gibbs free energy:</strong> $G \equiv E + PV - TS$</p>
+<p><strong>Grand free energy:</strong> $\Omega \equiv E - TS - \mu N$</p>
+</div>
+
+<p>These are general definitions of these new variables, holding for arbitrary systems.</p>
+
+<p>As a warning, this business of dependent and independent variables is going to feel a bit awkward at first. That is because we are used to having a clear distinction between independent and dependent variables, while in statistical mechanics it is very handy to mix up the dependent and independent variables depending on context. Although awkward at first, this approach is very powerful and worth mastering.</p>
+
+<!-- Section 2: Euler Identity -->
+<h2>8.2 Euler Identity</h2>
+
+<p>Before getting started with all the new potentials, there is actually a very nice relation we can derive among all the different interdependent variables using only $dE = TdS - PdV + \mu dN$ and the fact that entropy is extensive.</p>
+
+<p>$E$, $V$, $N$ and $S$ are all extensive quantities. When we double the size of a system, they all double. This is in contrast to $P$, $\mu$ and $T$ which are intensive quantities.</p>
+
+<p>It's actually very hard to make an extensive function. Any extensive function $f(x)$ must satisfy $f(cx) = cf(x)$ for any $c$. Differentiating with respect to $c$ gives $xf'(cx) = f(x)$. Setting $c = 1$ gives $xf' = f$, so $f(x) = ax$ for some $a$: $f$ must be a linear function.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Euler Equation</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1</div>
+Extensivity requires $S(cE, cV, cN) = cS(E, V, N)$.
+</div>
+
+<div class="step"><div class="step-label">Step 2</div>
+Differentiating both sides with respect to $c$:
+$$\left(\frac{\partial S}{\partial(cE)}\right)_{V,N} E + \left(\frac{\partial S}{\partial(cV)}\right)_{E,N} V + \left(\frac{\partial S}{\partial(cN)}\right)_{V,E} N = S(E, V, N)$$
+</div>
+
+<div class="step"><div class="step-label">Step 3</div>
+Setting $c = 1$ and using the definitions of $T$, $P$, $\mu$:
+$$S = \frac{E}{T} + \frac{P}{T}V - \frac{\mu}{T}N$$
+</div>
+
+</div></div>
+</div>
+
+<p>This gives the <span class="tooltip-trigger">Euler equation<span class="tooltip-content">$E = TS - PV + \mu N$: a fundamental relation linking all thermodynamic variables, valid when entropy is extensive</span></span>:</p>
+
+<div class="equation key-result">
+$$E = TS - PV + \mu N$$
+<span class="eq-number">(17)</span>
+</div>
+
+<p>A related result comes from taking the total derivative of both sides and subtracting $dE = TdS - PdV + \mu dN$:</p>
+
+<div class="equation key-result">
+$$SdT - VdP + Nd\mu = 0$$
+<span class="eq-number">(19)</span>
+</div>
+
+<p>This is called the <span class="tooltip-trigger">Gibbs-Duhem equation<span class="tooltip-content">$SdT - VdP + Nd\mu = 0$: it says that $T$, $P$ and $\mu$ are not independent -- changing $T$ and $P$ makes $\mu$ change in a certain way.</span></span>. It says that $T$, $P$ and $\mu$ are not independent -- changing $T$ and $P$ makes $\mu$ change in a certain way.</p>
+
+<!-- Section 3: Helmholtz Free Energy -->
+<h2>8.3 Helmholtz Free Energy</h2>
+
+<p>We define the <span class="tooltip-trigger">Helmholtz free energy<span class="tooltip-content">$F = E - TS$: the energy available to do work at constant temperature and volume</span></span> as</p>
+
+<div class="equation key-result">
+$$F \equiv E - TS$$
+<span class="eq-number">(21)</span>
+</div>
+
+<p>Free energy is a concept particularly useful at constant temperature. We can take the differential of $F$:</p>
+
+<div class="equation key-result">
+$$dF = dE - TdS - SdT = -PdV + \mu dN - SdT$$
+<span class="eq-number">(22)</span>
+</div>
+
+<p>Note that the $dS$ has dropped out. The right-hand side suggests that we should think of $F$ as a function of $V$, $N$ and $T$: $F = F(V, N, T)$. We say that $V$, $N$, $T$ are the natural arguments of the Helmholtz free energy. We can then generate Maxwell relations:</p>
+
+<div class="equation">
+$$\left(\frac{\partial F}{\partial V}\right)_{N,T} = -P;\qquad \left(\frac{\partial F}{\partial N}\right)_{V,T} = \mu;\qquad \left(\frac{\partial F}{\partial T}\right)_{V,N} = -S$$
+<span class="eq-number">(24)</span>
+</div>
+
+<p>It is worth pointing out that the operation of replacing the dependent variable $S$ in $E(S, V, N)$ with a new dependent variable given by a derivative, $T = \frac{\partial E}{\partial S}$, is known as a <span class="tooltip-trigger">Legendre transform<span class="tooltip-content">A mathematical operation that trades a variable for its conjugate derivative, e.g. going from $E(S,V,N)$ to $F(T,V,N) = E - TS$</span></span>.</p>
+
+<h3>8.3.1 Free Energy for Work</h3>
+
+<p>The Helmholtz free energy is one of the most useful quantities in thermodynamics. Its usefulness stems from the fact that $dV$, $dN$ and $dT$ are readily measurable. Free energy is particularly powerful for systems at constant temperature where $dF = dE - TdS$. In previous courses you have studied mechanical systems using energy. Mechanical systems all have fixed degrees of freedom, so $S = 0$ and $F = E$. Free energy is a generalization of energy whose importance is revealed by working at finite $T$.</p>
+
+<p>Consider an isolated system in volume $V$ kept at constant $T$ by being in contact with a heat bath. The change in free energy satisfies:</p>
+
+<div class="equation key-result">
+$$W \leq -\Delta F_{\text{system}}$$
+<span class="eq-number">(26)</span>
+</div>
+
+<p>where the inequality becomes an equality if and only if the transformation is done reversibly. So the free energy of the system is depleted to do the work. This is why free energy is called free: it is the energy available to do work.</p>
+
+<p>When $W = 0$, we get $\Delta F_{\text{system}} \leq 0$. Thus:</p>
+
+<div class="info-box concept">
+<div class="box-title">Key Properties of Helmholtz Free Energy</div>
+<ul>
+<li>Free energy is to a constant $T$ system what $E$ is to a mechanical system.</li>
+<li>Helmholtz free energy is the available energy to do work at constant $T$ and $V$.</li>
+<li>In a system kept at constant $T$ and $V$, interacting with the surroundings only through an exchange of heat (i.e. no work), the Helmholtz free energy never increases.</li>
+<li><strong>In an isolated system at constant $T$ and $V$, Helmholtz free energy is minimized in equilibrium.</strong></li>
+<li>Free energy refers to the free energy of the system only, $F = F_{\text{system}}$.</li>
+</ul>
+</div>
+
+<p>Another important point to keep in mind is that free energy, like entropy, is a property of the ensemble. You cannot talk about the free energy or entropy of an individual microstate.</p>
+
+<h3>8.3.2 Free Energy and the Partition Function</h3>
+
+<p>Recall that in the canonical ensemble, $S = \frac{\langle E \rangle}{T} + k_B\ln Z$. So for an isolated system where $\langle E \rangle = E$ we immediately get that</p>
+
+<div class="equation key-result">
+$$F = -k_BT \ln Z$$
+<span class="eq-number">(28)</span>
+</div>
+
+<p>Equivalently, $e^{-\beta F} = Z = \sum e^{-\beta E}$, which shows that the free energy is the same as the energy if there is only one microstate.</p>
+
+<p>For a monatomic ideal gas:</p>
+
+<div class="equation">
+$$F = -Nk_BT\left(\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{2\pi mk_BT}{h^2}\right) + 1\right)$$
+<span class="eq-number">(31)</span>
+</div>
+
+<p>One can verify that $\left(\frac{\partial F}{\partial T}\right)_{V,N} = -S$ reproduces the Sackur-Tetrode formula, and $P = -\left(\frac{\partial F}{\partial V}\right)_{T,N} = \frac{Nk_BT}{V}$ gives the ideal gas law.</p>
+
+<h3>8.3.3 Spring and Gas</h3>
+
+<p>To build some more intuition for free energy, let's consider some examples. First, consider the free expansion of a gas from $V_1 \to V_2$. No work is done. The internal energy doesn't change, $\Delta E = 0$. The entropy change is $\Delta S = Nk_B \ln \frac{V_2}{V_1}$. So the change in free energy is</p>
+
+<div class="equation">
+$$\Delta F = \Delta E - T\Delta S = -Nk_BT\ln\frac{V_2}{V_1}$$
+<span class="eq-number">(34)</span>
+</div>
+
+<p>This transition is completely driven by entropic considerations.</p>
+
+<figure>
+<img src="images/8-FreeEnergy_p7_img0.png" alt="Spring-loaded piston against gas in a heat bath">
+<figcaption>Figure 1. Spring-loaded piston against gas in a heat bath.</figcaption>
+</figure>
+
+<p>Now consider a piston on a spring, with force constant $k$, immersed in a heat bath. Let $x$ be the displacement of the piston from its equilibrium position, with energy $E(x, \dot{x}) = \frac{1}{2}m\dot{x}^2 + \frac{1}{2}kx^2$. The entropy of the spring is zero. Since $S = 0$, $F = E$. Minimizing $F$ corresponds to minimizing $E$, giving equilibrium at $x = \dot{x} = 0$.</p>
+
+<p>Now put the spring and the gas together. Setting $\frac{\partial F}{\partial x} = 0$ gives</p>
+
+<div class="equation">
+$$\frac{\partial F}{\partial x} = \mathcal{F}_{\text{piston}} - \mathcal{F}_{\text{gas}}$$
+<span class="eq-number">(38)</span>
+</div>
+
+<p>Setting the variation to zero implies $\mathcal{F}_{\text{piston}} = \mathcal{F}_{\text{gas}}$: forces are equal at equilibrium. We can find the equilibrium by minimizing the free energy -- the result is the same as demanding that forces balance.</p>
+
+<h3>8.3.4 Energy (Non)-Minimization</h3>
+
+<p>It is common lore to think of energy being minimized: a ball rolls down to the bottom of a hill and stays there. But energy is conserved, so where does this come from? It comes from free energy! All those systems in which energy is minimized are really minimizing free energy.</p>
+
+<div class="info-box physical">
+<div class="box-title">Energy Minimization is Really Entropy Maximization</div>
+$$\Delta F = \Delta E - T\Delta S = -T\left[\underbrace{\frac{-\Delta E}{T}}_{\Delta S_{\text{surr}}} + \underbrace{\Delta S}_{\Delta S_{\text{sys}}}\right]$$
+<p>The tendency to minimize free energy is entirely because of a tendency to maximize entropy. In summary, energy minimization is really free energy minimization, which really is entropy maximization.</p>
+</div>
+
+<!-- Section 4: Enthalpy -->
+<h2>8.4 Enthalpy</h2>
+
+<p>We use the symbol $H$ for <span class="tooltip-trigger">enthalpy<span class="tooltip-content">$H = E + PV$: the thermodynamic potential useful at constant pressure. The heat capacity at constant pressure is $C_P = (\partial H/\partial T)_P$.</span></span>. It is defined as</p>
+
+<div class="equation key-result">
+$$H \equiv E + PV$$
+<span class="eq-number">(40)</span>
+</div>
+
+<p>So, using $dE = TdS - PdV + \mu dN$:</p>
+
+<div class="equation">
+$$dH = TdS + VdP + \mu dN$$
+<span class="eq-number">(41)</span>
+</div>
+
+<p>Thus</p>
+
+<div class="equation">
+$$\left(\frac{\partial H}{\partial S}\right)_{P,N} = T;\qquad \left(\frac{\partial H}{\partial P}\right)_{S,N} = V;\qquad \left(\frac{\partial H}{\partial N}\right)_{P,S} = \mu$$
+<span class="eq-number">(42)</span>
+</div>
+
+<p>Enthalpy is useful at constant pressure. It is a function $H = H(S, P, N)$.</p>
+
+<p>Recall the two heat capacities: $C_V = \left(\frac{\partial Q}{\partial T}\right)_V$ and $C_P = \left(\frac{\partial Q}{\partial T}\right)_P$. For constant $V$, $C_V = \left(\frac{\partial E}{\partial T}\right)_V$. For constant $P$, the total energy change is $\Delta E = Q - P\Delta V$, so $\Delta H = Q$. Thus:</p>
+
+<div class="equation key-result">
+$$C_P = \left(\frac{\partial H}{\partial T}\right)_P$$
+<span class="eq-number">(44)</span>
+</div>
+
+<p>Thus enthalpy plays the role at constant pressure that energy does at constant volume.</p>
+
+<p>For a monatomic ideal gas, $H = E + PV = \frac{5}{2}Nk_BT$, so $C_P = \frac{5}{2}Nk_B$.</p>
+
+<h3>8.4.1 Enthalpy of Chemical Bonds</h3>
+
+<p>Enthalpy is especially useful in chemistry, where pressure is nearly always constant but volume is not under control. Since chemistry (and biology) takes place at constant pressure and temperature, when a chemical reaction occurs the heat released is $Q = \Delta H$. Thus when you measure the heat released or absorbed in a reaction, you are measuring the enthalpy.</p>
+
+<p>Consider for example the hydrogenation of ethene (C$_2$H$_4$) into ethane (C$_2$H$_6$):</p>
+
+$$\text{H}_2 + \text{C}_2\text{H}_4 \to \text{C}_2\text{H}_6$$
+
+<figure>
+<img src="images/8-FreeEnergy_p8_img0.png" alt="Enthalpy of reaction diagram">
+<figcaption>Enthalpy diagram for the hydrogenation of ethene.</figcaption>
+</figure>
+
+<p>The standard enthalpy of reaction is $\Delta_r H^\circ = -136.3 \pm 0.3\;\text{kJ/mol}$. Since the enthalpy change is negative, the reaction is <span class="tooltip-trigger">exothermic<span class="tooltip-content">A reaction that releases heat ($\Delta H < 0$)</span></span> (heat is released).</p>
+
+<p>If we don't know the reaction enthalpy, we can compute it by taking the differences of the enthalpies of the products and reactants. That we can add and subtract enthalpies to get the reaction enthalpy is known as <span class="tooltip-trigger">Hess's law<span class="tooltip-content">The total enthalpy change of a reaction is independent of the pathway, so we can add enthalpies of intermediate steps</span></span>.</p>
+
+<figure>
+<img src="images/8-FreeEnergy_p9_img0.png" alt="Bond enthalpies table">
+<figcaption>Figure 2. Average enthalpies of common covalent bonds. Numbers are listed as positive, as enthalpies required to break the bonds.</figcaption>
+</figure>
+
+<div class="info-box concept">
+<div class="box-title">Computing Reaction Enthalpies</div>
+<ul>
+<li><strong>Using enthalpies of reaction</strong> is best (when available).</li>
+<li><strong>Using enthalpies of formation and Hess' law</strong> is the most convenient compromise.</li>
+<li><strong>Using bond enthalpies</strong> is a last resort, only recommended when formation enthalpies are not available.</li>
+</ul>
+</div>
+
+<h3>8.4.2 Expansion Work</h3>
+
+<p>A natural question to ask is whether the difference between enthalpy and energy even matters. The difference is $\Delta(PV)$.</p>
+
+<p>For chemical reactions in solids (e.g. aragonite converting to calcite), $P\Delta V \ll \Delta H$ and enthalpy and energy changes are nearly identical.</p>
+
+<p>Volume change is more important when the total number of molecules is not the same on both sides of a reaction. For the formation of ammonia:</p>
+
+$$3\text{H}_2 + \text{N}_2 \to 2\text{NH}_3$$
+
+<p>This converts 4 molecules into 2, so $\Delta n = -2$. Using the ideal gas law:</p>
+
+<div class="equation">
+$$\Delta(PV) = (\Delta n)RT = -2 \times 8.3\;\frac{\text{J}}{\text{mol}\cdot\text{K}} \times 298\;\text{K} = -4.9\;\frac{\text{kJ}}{\text{mol}}$$
+<span class="eq-number">(50)</span>
+</div>
+
+<p>Compared to $\Delta H = -97\;\text{kJ/mol}$, this is about 5%. As a rule of thumb, enthalpies and energies are pretty similar for solids and liquids, but for gases the difference can be relatively large. The difference is $\Delta H - \Delta E = (\Delta n)RT$.</p>
+
+<!-- Section 5: Gibbs Free Energy -->
+<h2>8.5 Gibbs Free Energy</h2>
+
+<p><span class="tooltip-trigger">Gibbs free energy<span class="tooltip-content">$G = H - TS = E + PV - TS$: the thermodynamic potential minimized at equilibrium at constant $T$ and $P$</span></span> is defined as</p>
+
+<div class="equation key-result">
+$$G \equiv H - TS = E + PV - TS$$
+<span class="eq-number">(51)</span>
+</div>
+
+<p>The differential of $G$ is</p>
+
+<div class="equation key-result">
+$$dG = VdP - SdT + \mu dN$$
+<span class="eq-number">(52)</span>
+</div>
+
+<p>so $G = G(P, N, T)$ and</p>
+
+<div class="equation">
+$$\left(\frac{\partial G}{\partial T}\right)_{P,N} = -S;\qquad \left(\frac{\partial G}{\partial P}\right)_{T,N} = V;\qquad \left(\frac{\partial G}{\partial N}\right)_{P,T} = \mu$$
+<span class="eq-number">(53)</span>
+</div>
+
+<p>Gibbs free energy is the constant pressure version of Helmholtz free energy. At constant pressure and constant temperature, Gibbs free energy has its minimum value at equilibrium.</p>
+
+<div class="info-box concept">
+<div class="box-title">Direction of Reactions</div>
+<p>In a chemical reaction at constant $T$ and $P$, the total entropy change is $\Delta S = \Delta_r S - \frac{\Delta_r H}{T} = -\frac{\Delta_r G}{T}$. Since total entropy always increases, the reaction can only proceed if $\Delta_r G < 0$. Thus the sign of the Gibbs free energy change indicates which way the reaction will spontaneously proceed.</p>
+</div>
+
+<p>For an ideal monatomic gas, using $V = Nk_BT/P$:</p>
+
+<div class="equation">
+$$G = -Nk_BT\left(\ln\frac{k_BT}{P} + \frac{3}{2}\ln\left(\frac{2\pi mT}{h^2}\right)\right)$$
+<span class="eq-number">(55)</span>
+</div>
+
+<p>Then $\mu = G/N = k_BT\ln(n\lambda^3)$, confirming that for a monatomic ideal gas the chemical potential is the Gibbs free energy per molecule.</p>
+
+<p>Note that we found $G = \mu N$ for the ideal gas. This relation is actually very general. It follows immediately from the Euler relation $E = TS - PV + \mu N$. When there are multiple species, $G = \sum \mu_i N_i$.</p>
+
+<h3>8.5.1 Partial Pressure</h3>
+
+<p>If we have a gas with $N_1$ molecules of type 1 and $N_2$ molecules of type 2, the partial pressure for type $i$ is</p>
+
+<div class="equation">
+$$P_i \equiv \frac{N_i}{V}k_BT \qquad \text{(ideal gases)}$$
+<span class="eq-number">(57)</span>
+</div>
+
+<p>This gives <span class="tooltip-trigger">Dalton's law<span class="tooltip-content">$P_i/P = N_i/N$: the partial pressure of a gas in a mixture is proportional to its mole fraction</span></span>:</p>
+
+<div class="equation">
+$$\frac{P_i}{P} = \frac{N_i}{N}$$
+<span class="eq-number">(58)</span>
+</div>
+
+<p>The total Gibbs free energy is extensive: $G = G_1 + G_2 + \cdots$, where each $G_i$ uses the partial pressure $P_i$.</p>
+
+<h3>8.5.2 Law of Mass Action</h3>
+
+<p>Now we want to generalize to an arbitrary mixture of ideal gases. The partition function for a single molecule of an ideal gas is</p>
+
+<div class="equation">
+$$\zeta = Z_{\text{single molecule}} = \int \frac{d^3x\,d^3p}{h^3}\sum_{\text{internal states } j} e^{-\beta\left(\frac{\vec{p}^2}{2m} + \epsilon_j\right)}$$
+<span class="eq-number">(63)</span>
+</div>
+
+<p>Including binding energy $\epsilon_b$ and a vibrational mode of frequency $\omega$:</p>
+
+<div class="equation">
+$$\zeta = \frac{V}{\lambda^3}e^{-\beta\epsilon_b}\frac{1}{2\sinh\left(\frac{\beta}{2}\hbar\omega\right)}$$
+<span class="eq-number">(64)</span>
+</div>
+
+<p>For $N_1$ molecules, the partition function is $Z_1 = \frac{1}{N_1!}\zeta_1^{N_1}$. The chemical potential for gas 1 is</p>
+
+<div class="equation">
+$$\mu_1 = -k_BT\ln\frac{\zeta_1}{N_1}$$
+<span class="eq-number">(68)</span>
+</div>
+
+<p>Using the notation $x_j \equiv N_j/N$ for the molar fraction of a reactant, for a reaction like $2A + 3B \rightleftharpoons 7C$:</p>
+
+<div class="equation key-result">
+$$K \equiv \frac{x_C^7}{x_A^2 x_B^3} = \exp\left(-\frac{\Delta_r G^0}{k_BT}\right) = \exp\left(-\frac{\Delta_r G}{RT}\right)$$
+<span class="eq-number">(79)</span>
+</div>
+
+<p>This is the <span class="tooltip-trigger">law of mass action<span class="tooltip-content">The equilibrium constant $K$ relates molar fractions (or partial pressures) of reactants and products to the Gibbs reaction energy</span></span>. The powers on the left hand side are determined by the stoichiometric coefficients and $\Delta_r G^0$ is the change in Gibbs free energy per particle.</p>
+
+<div class="info-box example">
+<div class="box-title">Example: Decomposition of Water at 5000 K</div>
+<p>In the reaction $\text{H}_2\text{O(g)} \rightleftharpoons \text{H}_2\text{(g)} + \frac{1}{2}\text{O}_2\text{(g)}$ at $T = 5000\;\text{K}$ the Gibbs reaction energy is $\Delta_r G = 118\;\text{kJ/mol}$. Starting with 1 mol of H$_2$O, it will decompose into $\xi$ moles of H$_2$ and $\xi/2$ moles of O$_2$ leaving $1 - \xi$ moles of H$_2$O. The total number of moles is $1 + \xi/2$. Solving:</p>
+$$\frac{x_{\text{H}_2} x_{\text{O}_2}^{1/2}}{x_{\text{H}_2\text{O}}} = \exp\left(-\frac{118\;\text{kJ/mol}}{8.3\;\text{J/(mol}\cdot\text{K)} \times 5000\;\text{K}}\right) = 0.058$$
+<p>Solving numerically gives $\xi = 0.17$. Thus at 5000 K, 17% of the water molecules will be decomposed. At room temperature $\Delta_r G = 228\;\text{kJ/mol}$ and $\xi = 10^{-27}$.</p>
+</div>
+
+<p>Generally $\Delta_r G$ is of order hundreds of kJ/mol while $RT = 2.5\;\text{kJ/mol}$ at room temperature. So the factor $\exp(-\Delta_r G/RT)$ is almost always either very very small or very very large. Thus:</p>
+
+<div class="info-box concept">
+<div class="box-title">Rule of Thumb</div>
+<p>If we mix some chemicals, the sign of $\Delta_r G$ tells which way the reaction will go.</p>
+</div>
+
+<h3>8.5.3 Direction of Chemical Reactions</h3>
+
+<p>The direction a reaction proceeds is determined by the sign of $\Delta_r G$. It is useful to compute $\Delta_r G$ via:</p>
+
+<div class="equation key-result">
+$$\Delta_r G = \Delta_r H - T\Delta_r S$$
+<span class="eq-number">(81)</span>
+</div>
+
+<p>Both $\Delta_r H$ and $\Delta_r S$ are generally weakly dependent on temperature, while $\Delta_r G$ depends strongly on $T$ because of the explicit factor of $T$.</p>
+
+<figure>
+<img src="images/8-FreeEnergy_p15_img0.png" alt="Standard molar entropies table">
+<figcaption>Figure 3. Standard molar entropies for some compounds at 298 K.</figcaption>
+</figure>
+
+<div class="info-box example">
+<div class="box-title">Example: Lime Kiln</div>
+<p>Limestone (CaCO$_3$) can be converted to lime (CaO) via: $\text{CaCO}_3 \rightleftharpoons \text{CaO} + \text{CO}_2$</p>
+<p>$\Delta_r H = 178\;\text{kJ/mol}$, $\Delta_r S = 161\;\text{J/(K}\cdot\text{mol)}$.</p>
+<p>At room temperature ($T = 298\;\text{K}$): $\Delta_r G = 178 - 298 \times 0.161 = 130\;\text{kJ/mol} > 0$. The reaction does not spontaneously occur.</p>
+<p>At $T = 1500\;\text{K}$: $\Delta_r G = 178 - 1500 \times 0.161 = -64\;\text{kJ/mol} < 0$. The kiln allows the reaction to occur.</p>
+<p>Heating does not just make the reaction go faster -- it changes the direction of the reaction.</p>
+</div>
+
+<p>When a system is in equilibrium at some temperature and we add more of one product, the system will adjust to restore equilibrium. This is an example of <span class="tooltip-trigger">Le Chatelier's principle<span class="tooltip-content">A system will work to restore equilibrium by counteracting any change</span></span>.</p>
+
+<!-- Section 6: Osmotic Pressure -->
+<h2>8.6 Osmotic Pressure</h2>
+
+<p><span class="tooltip-trigger">Osmotic pressure<span class="tooltip-content">The pressure resulting from a concentration imbalance on two sides of a semi-permeable barrier. It is an entropic effect.</span></span> is the pressure resulting from a concentration imbalance on the two sides of a semi-permeable barrier. For example, if you put a raisin in water, the higher sugar content of the raisin forces the water to be drawn into the raisin, swelling it up.</p>
+
+<figure>
+<img src="images/8-FreeEnergy_p17_img0.png" alt="Osmotic pressure in a U-tube">
+<figcaption>Figure 4. Osmotic pressure arises when concentrations are different on two sides of a semi-permeable barrier.</figcaption>
+</figure>
+
+<p>To compute the osmotic pressure, we use the entropy of mixing. For $N_w$ molecules of solvent and $N_s$ molecules of solute, in the limit $N_s \ll N_w$:</p>
+
+<div class="equation">
+$$\Delta S_{\text{mix}} = k_BN_s\left(1 - \ln\frac{N_s}{N_w}\right)$$
+<span class="eq-number">(88)</span>
+</div>
+
+<p>The chemical potential of the solvent on the mixed side is</p>
+
+<div class="equation">
+$$\mu_w^{\text{mixed}}(T, P) = \mu_w(T, P) - k_BT\frac{N_s}{N_w}$$
+<span class="eq-number">(90)</span>
+</div>
+
+<p>Setting the chemical potentials equal on both sides of the barrier and expanding leads to:</p>
+
+<div class="equation key-result">
+$$\Pi = k_BT\frac{N_s}{V}$$
+<span class="eq-number">(95)</span>
+</div>
+
+<p>This is known as <span class="tooltip-trigger">van 't Hoff's formula<span class="tooltip-content">$\Pi = k_BT N_s/V$: the osmotic pressure has the same form as the ideal gas law, even for liquids and solids, because dilute solutes behave ideally</span></span>. Remarkably, this formula has the same form as the ideal gas law $P = k_BTN/V$. The key insight is that for dilute solutes, the $N_s$ dependence is always linear, approaching ideal extensive scaling behavior.</p>
+
+<p>For multiple solute species, the osmotic pressure is a <span class="tooltip-trigger">colligative property<span class="tooltip-content">A property that depends only on the total concentration of solute particles, not their identity</span></span>:</p>
+
+<div class="equation">
+$$\Pi = k_BT\sum_s \frac{N_s}{V}$$
+<span class="eq-number">(96)</span>
+</div>
+
+<div class="info-box example">
+<div class="box-title">Example: Blood Osmolarity</div>
+<p>The osmotic pressure in blood is 7.65 atm at 37$^\circ$C = 310 K. The net concentration of dissolved solvents is:</p>
+$$n_s = \frac{\Pi}{RT} = \frac{7.65\;\text{atm}}{0.08314\;\frac{\text{L}\cdot\text{atm}}{\text{mol}\cdot\text{K}} \times 310\;\text{K}} = 296\;\text{mmol/L}$$
+<p>Mixing a little more than 50 g of sugar (about 2 tablespoons) with a liter of water gives 277 mmol/L, below this threshold, and will not increase your blood pressure.</p>
+</div>
+
+<p>Osmotic pressure really is an entropic effect. It has physical observable consequences and makes quantitative predictions that can be tested experimentally.</p>
+
+<!-- Section 7: Grand Free Energy -->
+<h2>8.7 Grand Free Energy</h2>
+
+<p>There is one more free energy, called the grand free energy $\Omega$. Recall that the grand canonical partition function is $\mathcal{Z}(V, T, \mu) = \sum_k e^{-\beta\epsilon_k + \beta\mu N_k}$. We define</p>
+
+<div class="equation key-result">
+$$\Omega = -k_BT\ln\mathcal{Z}$$
+<span class="eq-number">(101)</span>
+</div>
+
+<p>Thus</p>
+
+<div class="equation">
+$$\Omega(T, V, \mu) = \langle E \rangle - TS - \mu\langle N \rangle$$
+<span class="eq-number">(102)</span>
+</div>
+
+<p>We can also write $\Omega(T, V, \mu) = F - \mu N$. Using $dE = TdS - PdV + \mu dN$:</p>
+
+<div class="equation">
+$$d\Omega = -SdT - PdV - Nd\mu$$
+<span class="eq-number">(104)</span>
+</div>
+
+<p>An important property is that $\Omega$ is extensive and depends on only a single extensive variable $V$. Since $\frac{\partial\Omega}{\partial V}\big|_{\mu,T} = -P$, we have</p>
+
+<div class="equation key-result">
+$$\Omega = -PV$$
+<span class="eq-number">(105)</span>
+</div>
+
+<p>This is a useful relation, similar to $G = \mu N$ for the Gibbs free energy.</p>
+
+<!-- Section 8: Summary -->
+<h2>8.8 Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Helmholtz free energy</strong> $F = E - TS$ represents the energy available to do work at constant $T$ and $V$. It is minimized in equilibrium. $F = -k_BT\ln Z$.</li>
+<li><strong>Enthalpy</strong> $H = E + PV$ is useful at constant pressure. $C_P = (\partial H/\partial T)_P$. Heat released in reactions at constant $P$ equals $\Delta H$.</li>
+<li><strong>Gibbs free energy</strong> $G = H - TS$ is minimized at equilibrium at constant $T$ and $P$. $G = \mu N$ for a single species. The sign of $\Delta_r G$ determines which direction a reaction proceeds.</li>
+<li>The <strong>Euler equation</strong> $E = TS - PV + \mu N$ and <strong>Gibbs-Duhem equation</strong> $SdT - VdP + Nd\mu = 0$ relate all thermodynamic variables.</li>
+<li>The <strong>law of mass action</strong> determines equilibrium concentrations: $K = \exp(-\Delta_r G/RT)$.</li>
+<li><strong>Le Chatelier's principle</strong>: a system works to restore equilibrium by counteracting any change.</li>
+<li><strong>Osmotic pressure</strong> $\Pi = k_BT N_s/V$ (van 't Hoff's formula) is an entropic effect. It has the form of the ideal gas law because dilute solutes always behave ideally.</li>
+<li>Energy minimization is really free energy minimization, which really is entropy maximization.</li>
+</ul>
+</div>
+
+<!-- Interactive Visualization -->
+<h3>Interactive: Free Energy Landscape</h3>
+<div class="interactive-container">
+<canvas id="vis-freeenergy" width="600" height="400"></canvas>
+<div class="slider-container">
+<label for="fe-temp">Temperature $T$:</label>
+<input type="range" id="fe-temp" min="0.1" max="5" step="0.1" value="1">
+<span class="slider-value" id="fe-temp-value">1.0</span>
+</div>
+<p class="vis-caption">Adjust the temperature to see how free energy $F = E - TS$ changes. At low temperature, the energy term dominates and the system prefers the lowest-energy state. At high temperature, the entropy term dominates and the system prefers the highest-entropy (most disordered) state.</p>
+</div>

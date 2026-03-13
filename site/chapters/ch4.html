@@ -1,0 +1,324 @@
+<div class="chapter-number">Chapter 4</div>
+<h1 class="chapter-title">Temperature</h1>
+<p class="chapter-intro">The number of microstates $\Omega(N,V,E)$ is an extremely rapidly varying function of energy. In this lecture we harness that rapid variation to derive the concept of temperature as a quantity shared by systems that can exchange energy, and establish the equipartition theorem.</p>
+
+<h2>1. Introduction</h2>
+
+<p>In the last lecture, we considered an ideal gas that is completely specified by the positions $\vec{q}_i$ and momenta $\vec{p}_i$ of the $N$ molecules. We found the total number of states of the gas for large $N$ was</p>
+
+<div class="equation">$$\Omega(N, V, E) = e^{\frac{3}{2}N}\left(\frac{V}{(\Delta q\,\Delta p)^3}\right)^N \left(\frac{4\pi m E}{3N}\right)^{\frac{3N}{2}}$$<span class="eq-number">(1)</span></div>
+
+<p>Then we asked how many fewer states were accessible if we know the velocity of a single molecule. This told us the probability that the molecule had that velocity, leading to the <span class="tooltip-trigger">Maxwell-Boltzmann velocity distribution<span class="tooltip-content">The probability distribution for molecular speeds in an ideal gas at thermal equilibrium. It was first derived by James Clerk Maxwell in 1860.</span></span></p>
+
+<div class="equation key-result">$$P(\vec{v}) = \left(\frac{3m}{4\pi\bar{\epsilon}}\right)^{3/2} e^{-\frac{3}{4\bar{\epsilon}}m\vec{v}^{\,2}}, \qquad P(v) = 4\pi v^2 \left(\frac{3m}{4\pi\bar{\epsilon}}\right)^{3/2} e^{-\frac{3mv^2}{4\bar{\epsilon}}}$$<span class="eq-number">(2)</span></div>
+
+<p>where $\bar{\epsilon} = \frac{E}{N}$.</p>
+
+<p>The key to the computation of the Maxwell-Boltzmann distribution is that the number of states $\Omega(N, V, E)$ is an extremely rapidly varying function of energy, $\Omega \sim E^{3N/2}$. In this lecture we will see how to use the rapid variation of $\Omega$ to extract some general features of arbitrary systems. This will lead to the concept of temperature, as a constant among systems that can exchange energy.</p>
+
+<h2>2. Temperature</h2>
+
+<p>We defined $\Omega(E, V, N)$ for a system as the number of <span class="tooltip-trigger">microstates<span class="tooltip-content">A microstate is a complete specification of every particle's position and momentum. The set of all microstates compatible with given macroscopic parameters defines $\Omega$.</span></span> compatible with some macroscopic parameters. What happens if we have two different types of systems that can interact? For example, nitrogen and oxygen gas in the air around you. The gas molecules can collide with each other and exchange energy, but the two types of gas are still distinct. What can we say about how the energy of the system is distributed among the two gases in equilibrium?</p>
+
+<p>Say the total energy of both gases combined is $E$. By energy conservation, $E$ does not change with time. So if there is energy $E_1$ in one gas, then the other gas has to have energy $E_2 = E - E_1$. Then the number of states with this partitioning is given by</p>
+
+<div class="equation">$$\Omega(E, E_1) = \Omega_1(E_1)\,\Omega_2(E - E_1)$$<span class="eq-number">(3)</span></div>
+
+<p>where $\Omega_1(E)$ and $\Omega_2(E)$ are the number of microstates of the two gases separately. The functions $\Omega_1$ and $\Omega_2$ can be completely different &mdash; they don't have to be ideal gases. The probability of finding the system in a state with energy $E_1$ in the first gas is then</p>
+
+<div class="equation">$$P(E_1) = C\,\Omega_1(E_1)\,\Omega_2(E - E_1)$$<span class="eq-number">(4)</span></div>
+
+<p>where $C$ is a normalization constant.</p>
+
+<p>For example, let's say these are ideal monatomic gases where $\Omega \sim E^{\frac{3}{2}N}$. Then</p>
+
+<div class="equation">$$P(E_1) = C' \times E_1^{\frac{3N_1}{2}}\,(E - E_1)^{\frac{3N_2}{2}}$$<span class="eq-number">(5)</span></div>
+
+<p>where $N_1$ and $N_2 = N - N_1$ are the numbers of the different types of gases and the constant $C'$ has absorbed any factors that don't depend on $E_1$.</p>
+
+<figure><img src="images/4-Temperature_p2_img0.png" alt="Plot of P(E_1) showing a sharp peak"><figcaption>$P(E_1)$ for $N_1 = N_2 = 10$. The peak becomes extremely sharp for large $N$.</figcaption></figure>
+
+<p>This function looks like a Gaussian and has a very sharp peak around the most likely value $\langle E_1\rangle$. Using similar techniques to those we employed for the binomial distribution, we find</p>
+
+<div class="equation">$$\langle E_1\rangle = \frac{N_1}{N_1 + N_2} E$$<span class="eq-number">(6)</span></div>
+
+<p>and the width of the distribution is</p>
+
+<div class="equation">$$\sigma = \frac{\sqrt{N_1 N_2}}{N_1 + N_2} \sqrt{\frac{2}{3}}\; E$$<span class="eq-number">(7)</span></div>
+
+<p>So that the <span class="tooltip-trigger">relative fluctuations<span class="tooltip-content">The ratio $\sigma/\langle E_1\rangle$ tells us how much the energy of subsystem 1 fluctuates compared to its mean. For large $N$, this is negligibly small.</span></span> are</p>
+
+<div class="equation">$$\frac{\sigma}{\langle E_1\rangle} = \frac{1}{\sqrt{N_1}}\sqrt{\frac{2N_2}{3(N_1+N_2)}} \sim \frac{1}{\sqrt{N_1}}$$<span class="eq-number">(8)</span></div>
+
+<p>which goes to zero as $N_1 \to \infty$. So in the thermodynamic limit, the fluctuations around the most likely value are negligible and the energy distribution approaches a delta function.</p>
+
+<p>More importantly, the most likely value can be found for any system, not just ideal gases. Starting from Eq. (4), the peak satisfies</p>
+
+<div class="equation">$$\frac{\partial P}{\partial E_1} = C\left[\frac{\partial \Omega_1}{\partial E_1}\,\Omega_2 + \Omega_1 \frac{\partial \Omega_2}{\partial E_1}\right] = 0$$<span class="eq-number">(9)</span></div>
+
+<p>which gives</p>
+
+<div class="equation">$$\frac{\partial P}{\partial E_1} = C\,\Omega_1(E_1)\,\Omega_2(E_2)\left[\frac{1}{\Omega_1(E_1)}\frac{\partial \Omega_1(E_1)}{\partial E_1} - \frac{1}{\Omega_2(E_2)}\frac{\partial \Omega_2(E_2)}{\partial E_2}\right]\bigg|_{E_1=\langle E_1\rangle} = 0$$<span class="eq-number">(10)</span></div>
+
+<p>Using that $E = E_1 + E_2$ is fixed, then $\frac{\partial}{\partial E_1} = -\frac{\partial}{\partial E_2}$ and so we can rewrite the second term. Setting $\frac{\partial P}{\partial E_1} = 0$ tells us at the peak, the following must be true:</p>
+
+<div class="equation key-result">$$\frac{\partial \ln \Omega_1}{\partial E_1} = \frac{\partial \ln \Omega_2}{\partial E_2}$$<span class="eq-number">(11)</span></div>
+
+<p>This equation says that the quantity $\frac{\partial \ln \Omega}{\partial E}$ must be the same in any two systems that can exchange energy and are in equilibrium. This naturally motivates us to define the <span class="tooltip-trigger">entropy<span class="tooltip-content">A measure of the number of microstates compatible with macroscopic parameters. Entropy is extensive (doubles when you double the system) and is maximized at equilibrium.</span></span>:</p>
+
+<div class="equation key-result">$$S \equiv k_B \ln \Omega$$<span class="eq-number">(12)</span></div>
+
+<p>so that the equilibrium condition becomes</p>
+
+<div class="equation">$$\frac{\partial S_1}{\partial E_1} = \frac{\partial S_2}{\partial E_2}$$<span class="eq-number">(13)</span></div>
+
+<p>This says that two systems in thermal equilibrium have the same value of $\frac{\partial S}{\partial E}$. We define the <span class="tooltip-trigger">temperature<span class="tooltip-content">Temperature is defined as the inverse of the rate at which entropy changes with energy. Two systems that can exchange energy will reach the same temperature at equilibrium.</span></span> through</p>
+
+<div class="equation key-result">$$\frac{1}{T} \equiv \frac{\partial S}{\partial E}\bigg|_{V,N}$$<span class="eq-number">(14)</span></div>
+
+<p>so at equilibrium $T_1 = T_2$.</p>
+
+<h3>2.1 What is entropy?</h3>
+
+<p>At this point, we have defined the <span class="tooltip-trigger">entropy<span class="tooltip-content">Entropy $S = k_B \ln \Omega$ is the logarithm of the number of microstates, times Boltzmann's constant. It has units of J/K.</span></span> as</p>
+
+<div class="equation key-result">$$S = k_B \ln \Omega$$<span class="eq-number">(15)</span></div>
+
+<p>and we have defined the temperature through $\frac{1}{T} = \frac{\partial S}{\partial E}$. Note that $S$ has the same units as Boltzmann's constant, $k_B = 1.38 \times 10^{-23}\;\text{J/K}$.</p>
+
+<p>For a monatomic ideal gas, we already computed the number of states $\Omega$ in Eq. (1). Taking the logarithm and multiplying by $k_B$ gives the entropy as defined in Eq. (15):</p>
+
+<div class="equation">$$S = Nk_B\left[\ln V + \frac{3}{2}\ln\left(\frac{4\pi mE}{3N(\Delta p)^2}\right) + c\right]$$<span class="eq-number">(16)</span></div>
+
+<p>where $c = \frac{3}{2} - 3\ln(\Delta q)$ is a constant. Since $S$ should only depend on physics (not the arbitrary volume elements $\Delta q$ and $\Delta p$), there must be a physical value for $\Delta q\,\Delta p$. This turns out to be Planck's constant, $\Delta q\,\Delta p = h$. Then</p>
+
+<div class="equation">$$S = Nk_B\left[\ln V + \frac{3}{2}\ln\left(\frac{4\pi mE}{3Nh^2}\right) + c\right]$$<span class="eq-number">(17)</span></div>
+
+<p>Then, using $\frac{1}{T} = \frac{\partial S}{\partial E}$:</p>
+
+<div class="equation">$$\frac{1}{T} = \frac{\partial S}{\partial E} = Nk_B \frac{3}{2}\frac{1}{E} = \frac{3Nk_B}{2E}$$<span class="eq-number">(18)</span></div>
+
+<p>so that</p>
+
+<div class="equation key-result">$$E = \frac{3}{2}Nk_BT$$<span class="eq-number">(19)</span></div>
+
+<p>This says the average energy of an ideal gas is $\frac{3}{2}k_BT$ per molecule. Since the energy is entirely kinetic, $E = \sum_{i}\frac{1}{2}m v_i^2$ with 3 velocity components per molecule, we also have $\frac{1}{2}m\langle v_x^2\rangle = \frac{1}{2}k_BT$, i.e. the energy per quadratic degree of freedom is $\frac{1}{2}k_BT$.</p>
+
+<h3>2.2 Temperature intuition</h3>
+
+<p>It is worth building a little intuition for the size of $k_BT$. At room temperature $k_BT = 25\;\text{meV}$. Thus the kinetic energy of any given molecule at room temperature is $36\;\text{meV}$. You can compare this to the energy scales of various physical processes:</p>
+
+<div class="info-box physical">
+<div class="box-title">Energy Scales at Room Temperature</div>
+<ul>
+<li>$k_BT = 25\;\text{meV}$ at $T = 298\;\text{K}$ (room temperature)</li>
+<li>Visible light: $1.5\text{-}3\;\text{eV}$ (much larger than $k_BT$)</li>
+<li>Chemical bonds: $\sim 1\;\text{eV}$</li>
+<li>Thermal energy per molecule: $\frac{3}{2}k_BT = 36\;\text{meV}$</li>
+<li>Hydrogen bond: $\sim 0.2\;\text{eV}$</li>
+</ul>
+</div>
+
+<p>We also note the very useful conversion factors:</p>
+<div class="equation">$$k_B = 8.617 \times 10^{-5}\;\frac{\text{eV}}{\text{K}}, \qquad \frac{k_B}{hc} = 0.69\;\frac{\text{cm}^{-1}}{\text{K}}$$<span class="eq-number">(20)</span></div>
+
+<p>Also, the Maxwell-Boltzmann speed distribution can be written in terms of temperature. Replacing $\bar{\epsilon} = \frac{E}{N} = \frac{3}{2}k_BT$ in Eq. (2):</p>
+
+<div class="equation key-result">$$P(\vec{v}) = \left(\frac{m}{2\pi k_BT}\right)^{3/2} e^{-\frac{mv^2}{2k_BT}}$$<span class="eq-number">(21)</span></div>
+
+<p>The most likely speed is $v_{\text{mp}} = \sqrt{\frac{2k_BT}{m}}$, the mean speed is $\langle v \rangle = \sqrt{\frac{8k_BT}{\pi m}}$, and the root-mean-square speed is $v_{\text{rms}} = \sqrt{\frac{3k_BT}{m}}$.</p>
+
+<h2>3. Ideal Gas Law</h2>
+
+<p>One can also use the entropy to derive the pressure. We define</p>
+
+<div class="equation">$$\frac{P}{T} \equiv \frac{\partial S}{\partial V}\bigg|_{E,N}$$<span class="eq-number">(22)</span></div>
+
+<p>For the ideal gas entropy from Eq. (17),</p>
+
+<div class="equation">$$\frac{P}{T} = \frac{\partial S}{\partial V} = \frac{Nk_B}{V}$$<span class="eq-number">(23)</span></div>
+
+<p>so that</p>
+
+<div class="equation key-result">$$PV = Nk_BT$$<span class="eq-number">(24)</span></div>
+
+<p>This is the <span class="tooltip-trigger">ideal gas law<span class="tooltip-content">Relates pressure, volume, number of molecules, and temperature for an ideal gas. It holds for any dilute gas where intermolecular interactions are negligible.</span></span>. We will re-derive this from a more physical perspective in the next lecture.</p>
+
+<h2>4. Equipartition Theorem</h2>
+
+<p>We showed that the average energy of a monatomic ideal gas is $E = \frac{3}{2}Nk_BT$, i.e. $\frac{1}{2}k_BT$ per degree of freedom. This result is actually much more general.</p>
+
+<h3>4.1 Non-relativistic particles</h3>
+
+<p>For $N$ non-relativistic particles in 3 dimensions, the energy is</p>
+
+<div class="equation">$$E = \frac{p_1^2}{2m} + \frac{p_2^2}{2m} + \cdots + \frac{p_{3N}^2}{2m}$$<span class="eq-number">(25)</span></div>
+
+<p>Since each momentum component appears quadratically, and the $\Omega$ calculation treats all components symmetrically, each contributes $\frac{1}{2}k_BT$ to the average energy.</p>
+
+<div class="info-box concept">
+<div class="box-title">Equipartition Theorem</div>
+<p>Every <strong>quadratic</strong> degree of freedom in the Hamiltonian contributes $\frac{1}{2}k_BT$ to the average energy at temperature $T$. For a term $\alpha q^2$ or $\alpha p^2$ in the energy:</p>
+$$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
+</div>
+
+<h3>4.2 Relativistic particles</h3>
+
+<p>It is not hard to repeat the calculation we did for the non-relativistic momentum for a situation in which the energy is linear. Energy for $N$ particles is</p>
+
+<div class="equation">$$E = c(p_1 + p_2 + \cdots + p_N)$$<span class="eq-number">(28)</span></div>
+
+<p>where $p_j = |\vec{p}_j|$ are the magnitudes of each 3-momentum. Going through the same analysis, the number of states is</p>
+
+<div class="equation">$$\Omega(N,V,E) \propto V^N\left(\frac{E}{N}\right)^{3N}$$<span class="eq-number">(29)</span></div>
+
+<p>which gives</p>
+
+<div class="equation">$$S = Nk_B[\ln V + 3\ln E - 3\ln N + c']$$<span class="eq-number">(30)</span></div>
+
+<p>and therefore</p>
+
+<div class="equation">$$\frac{1}{T} = \frac{\partial S}{\partial E} = \frac{3Nk_B}{E}$$<span class="eq-number">(31)</span></div>
+
+<p>so $E = 3Nk_BT$, or $k_BT$ per degree of freedom. Each <em>linear</em> degree of freedom contributes $k_BT$ rather than $\frac{1}{2}k_BT$.</p>
+
+<h3>4.3 Summary</h3>
+
+<p>The point of the <span class="tooltip-trigger">equipartition theorem<span class="tooltip-content">Each independent quadratic degree of freedom contributes $\frac{1}{2}k_BT$ to the average energy; each linear degree of freedom contributes $k_BT$.</span></span> is that $k_BT$ characterizes the energy in each mode independent of the other modes. So $\frac{3}{2}k_BT$ is always the average kinetic energy of a non-relativistic molecule in 3D, and $3k_BT$ is always the average kinetic energy of a relativistic (massless) particle in 3D. Equipartition holds if the degrees of freedom are independent, meaning there are no terms in the energy of the form $p_1 p_2$ that couple different degrees of freedom, and the energy is either all quadratic or all linear.</p>
+
+<!-- INTERACTIVE: Gas particles -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔴</span> Interactive: Ideal Gas — Temperature and Speed</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-equipartition" class="sim"></canvas></div>
+  <div class="vis-controls">
+    <label>Temperature: <input type="range" id="ep-temp" min="50" max="1000" step="10" value="300"> <span class="value-display" id="ep-temp-val">300</span> K</label>
+    <button id="ep-start">Start</button>
+  </div>
+</div>
+
+<h2>5. Heat Capacity</h2>
+
+<h3>5.1 Molecular degrees of freedom</h3>
+
+<p>For an ideal monatomic gas in 3D (e.g., helium or argon) the energy is entirely translational kinetic energy, giving $E = \frac{3}{2}Nk_BT$. The <span class="tooltip-trigger">heat capacity at constant volume<span class="tooltip-content">$C_V = \frac{\partial E}{\partial T}\big|_V$ measures how much energy is needed to raise the temperature by one degree at constant volume.</span></span> is</p>
+
+<div class="equation">$$C_V = \frac{\partial E}{\partial T}\bigg|_V = \frac{3}{2}Nk_B$$<span class="eq-number">(32)</span></div>
+
+<p>For a diatomic gas, things are more interesting. Think of a diatomic molecule (like $\text{N}_2$ or $\text{O}_2$) as two point masses connected by a spring.</p>
+
+<figure><img src="images/4-Temperature_p8_img0.png" alt="Diagram of diatomic molecule showing translational, rotational, and vibrational modes"><figcaption>A diatomic molecule has translational, rotational, and vibrational degrees of freedom.</figcaption></figure>
+
+<p>Once we have approximated the molecule as pointlike atoms, we can consider how these atoms can be excited. The molecule can either be excited to rotate along one of 3 possible axes, or it can be excited to vibrate (stretch and compress) along the intermolecular axis. For rotation around the intermolecular axis, the moment of inertia is negligibly small (since the atoms are pointlike), so effectively there are only 2 rotational modes. For vibration along the intermolecular axis, there is 1 vibrational mode (which has both kinetic and potential energy, so it counts as 2 quadratic degrees of freedom).</p>
+
+<p>Thus, the total energy and heat capacity depends on how many modes are excited:</p>
+
+<div class="info-box concept">
+<div class="box-title">Degrees of Freedom for Diatomic Molecules</div>
+<ul>
+<li><strong>Translation only (3 modes):</strong> $E = \frac{3}{2}Nk_BT$, $C_V = \frac{3}{2}Nk_B$</li>
+<li><strong>Translation + rotation (5 modes):</strong> $E = \frac{5}{2}Nk_BT$, $C_V = \frac{5}{2}Nk_B$</li>
+<li><strong>Translation + rotation + vibration (7 modes):</strong> $E = \frac{7}{2}Nk_BT$, $C_V = \frac{7}{2}Nk_B$</li>
+</ul>
+</div>
+
+<h3>5.2 Quantum freeze-out</h3>
+
+<p>In practice, the heat capacity of a diatomic gas like $\text{H}_2$ depends on temperature. At low temperatures, $C_V = \frac{3}{2}Nk_B$ (translation only). As the temperature rises, the rotational modes become excited and $C_V = \frac{5}{2}Nk_B$. At very high temperatures, vibrational modes kick in and $C_V = \frac{7}{2}Nk_B$.</p>
+
+<p>Classically, rotational kinetic energy is $E = \frac{1}{2}I\omega^2$, with $I$ the moment of inertia and $\omega$ the angular velocity. In quantum mechanics, rotational energies are quantized:</p>
+
+<div class="equation">$$\epsilon_{\text{rot}} = \frac{\hbar^2}{2I}\,\ell(\ell+1), \qquad \ell = 0, 1, 2, \ldots$$<span class="eq-number">(40)</span></div>
+
+<p>and vibrational energies are also quantized:</p>
+
+<div class="equation">$$\epsilon_{\text{vib}} = \hbar\omega_0\left(n + \frac{1}{2}\right), \qquad n = 0, 1, 2, \ldots$$<span class="eq-number">(41)</span></div>
+
+<p>When $k_BT$ is much less than the spacing between levels, the mode is "frozen out" &mdash; it cannot be excited and does not contribute to the heat capacity. The mode becomes active when $k_BT$ is comparable to the energy spacing.</p>
+
+<p>For the moment of inertia of a diatomic molecule, using the <span class="tooltip-trigger">reduced mass<span class="tooltip-content">For two masses $m_1$ and $m_2$, the reduced mass is $\mu = \frac{m_1 m_2}{m_1 + m_2}$. It characterizes the effective mass for the relative motion.</span></span> $\mu$ and the bond length $r_0$:</p>
+
+<div class="equation">$$I = \mu r_0^2, \qquad \mu = \frac{m_1 m_2}{m_1 + m_2}$$<span class="eq-number">(42)</span></div>
+
+<p>The rotational and vibrational energy scales are:</p>
+
+<div class="equation">$$\epsilon_{\text{rot}} = \frac{\hbar^2}{2\mu r_0^2}, \qquad \epsilon_{\text{vib}} = \hbar\omega_0 = \hbar\sqrt{\frac{k}{\mu}}$$<span class="eq-number">(43)</span></div>
+
+<p>In spectroscopy these are characterized by wavenumbers $\tilde{\nu} = \frac{\epsilon}{hc}$:</p>
+
+<div class="equation">$$\frac{k_B}{hc} = 0.69\;\frac{\text{cm}^{-1}}{\text{K}}$$<span class="eq-number">(45)</span></div>
+
+<p>Thus for $\text{H}_2$:</p>
+
+<div class="equation">$$\epsilon_{\text{vib}} = hc\,\tilde{\nu}_{\text{vib}} = 0.54\;\text{eV}, \quad \frac{\epsilon_{\text{vib}}}{k_B} = 6300\;\text{K}$$<span class="eq-number">(46)</span></div>
+
+<div class="equation">$$\epsilon_{\text{rot}} = hc\,\tilde{\nu}_{\text{rot}} = 7.4\;\text{meV}, \quad \frac{\epsilon_{\text{rot}}}{k_B} = 85\;\text{K}$$<span class="eq-number">(47)</span></div>
+
+<figure><img src="images/4-Temperature_p10_img0.png" alt="Heat capacity of H2 as a function of temperature"><figcaption>Heat capacity of $\text{H}_2$ as a function of temperature, showing the activation of rotational and vibrational modes.</figcaption></figure>
+
+<figure><img src="images/4-Temperature_p10_img1.png" alt="Table of diatomic molecule properties"><figcaption>Vibrational and rotational constants for various diatomic molecules.</figcaption></figure>
+
+<p>To understand this data, we can think about the scaling of the rotational and vibrational energies with mass. From Eqs. (40) and (41) we see that a larger reduced mass decreases both the vibrational and rotational energies. A larger bond length decreases the rotational energy but does not affect vibration directly. For heavier molecules like $\text{I}_2$, both the rotational and vibrational temperatures are much lower, so more modes are active at room temperature.</p>
+
+<h3>5.3 Specific heat</h3>
+
+<p>Heat capacity is an extensive quantity (proportional to the amount of material). An intensive quantity is the <span class="tooltip-trigger">specific heat<span class="tooltip-content">Heat capacity per unit mass. An intensive property that characterizes the material itself, independent of how much you have.</span></span>, which is the heat capacity per unit mass:</p>
+
+<div class="equation">$$s \equiv \frac{\Delta E}{m\,\Delta T} = \frac{C_V}{m}$$<span class="eq-number">(50)</span></div>
+
+<p>Specific heat has units of $\frac{\text{J}}{\text{kg}\cdot\text{K}}$.</p>
+
+<h2>6. Principle of Maximum Entropy</h2>
+
+<p>In Section 2 we defined the entropy as $S = k_B \ln \Omega$. We showed that $\frac{\partial S}{\partial E} = \frac{1}{T}$ was the same among systems in thermal equilibrium. The formula $\frac{1}{T} = \frac{\partial S}{\partial E}$ tells us that the most likely energy distribution <em>maximizes the total entropy</em>. This is the <span class="tooltip-trigger">principle of maximum entropy<span class="tooltip-content">At equilibrium, the macroscopic state of a system is the one that maximizes the total entropy, subject to constraints like fixed total energy.</span></span>.</p>
+
+<p>The principle of maximum entropy can also be applied to determine the most likely distribution of particles among various groups. Suppose we have $N$ particles which are each in one of $m$ groups of size $n_i$. The total number of ways to arrange the particles is</p>
+
+<div class="equation">$$\Omega = \frac{N!}{n_1!\,n_2!\cdots n_m!}$$<span class="eq-number">(52)</span></div>
+
+<p>This formula is due to Boltzmann. It is a generalization of the binomial distribution.</p>
+
+<p>Now, if $N$ and the $n_i$ are all very large, then we can use Stirling's approximation:</p>
+
+<div class="equation">$$\ln \Omega \approx N\ln N - N - \sum_{i=1}^{m}\left(n_i \ln n_i - n_i\right) = -\sum_{i=1}^{m} n_i \ln\frac{n_i}{N} = -N\sum_{i=1}^{m} f_i \ln f_i$$<span class="eq-number">(53)</span></div>
+
+<p>where $f_i = \frac{n_i}{N}$ are the fractions. Entropy is then</p>
+
+<div class="equation key-result">$$S = k_B \ln \Omega = -Nk_B\sum_{i=1}^{m} f_i \ln f_i$$<span class="eq-number">(54)</span></div>
+
+<p>This is important. We want to find what set of $\{f_i\}$ maximizes $S$. To maximize with the constraint $\sum f_i = 1$, we use a <span class="tooltip-trigger">Lagrange multiplier<span class="tooltip-content">A technique for finding extrema of a function subject to constraints. We add $\lambda$ times the constraint to the function we're optimizing.</span></span> $\lambda$:</p>
+
+<div class="equation">$$\frac{\partial}{\partial f_j}\left[-Nk_B \sum_i f_i \ln f_i + \lambda\left(\sum_i f_i - 1\right)\right] = 0$$<span class="eq-number">(55)</span></div>
+
+<p>which gives $-Nk_B(\ln f_j + 1) + \lambda = 0$, so $f_j = e^{\lambda/(Nk_B) - 1}$. Since this is the same for all $j$:</p>
+
+<div class="equation">$$f_i = \frac{1}{m}$$<span class="eq-number">(63)</span></div>
+
+<p>We have found that, if we don't know anything about the system except for the total number of particles and the number of groupings $m$, then the probability distribution that maximizes the entropy is uniform: all groups are equally populated.</p>
+
+<p>What if we know the average energy? Then we maximize $S$ subject to both $\sum f_i = 1$ and $\sum f_i \epsilon_i = \bar{\epsilon}$. Using two Lagrange multipliers:</p>
+
+<div class="equation">$$\frac{\partial}{\partial f_j}\left[-Nk_B\sum_i f_i \ln f_i + \lambda\left(\sum_i f_i - 1\right) + \beta\left(\sum_i f_i \epsilon_i - \bar{\epsilon}\right)\right] = 0$$<span class="eq-number">(64)</span></div>
+
+<p>This gives</p>
+
+<div class="equation key-result">$$f_i = \frac{1}{Z}e^{-\beta \epsilon_i}, \qquad Z = \sum_j e^{-\beta \epsilon_j}$$<span class="eq-number">(66)</span></div>
+
+<p>The variations around this probability are very small, scaling like $\frac{1}{\sqrt{N}}$ by the law of large numbers. This is one of the most important equations in all of statistical mechanics, perhaps all of physics. It is the <span class="tooltip-trigger">Boltzmann distribution<span class="tooltip-content">The probability of a system being in a state with energy $\epsilon_i$ at temperature $T$. The exponential suppression of high-energy states is the fundamental prediction of statistical mechanics.</span></span>. The normalization factor $Z$ is called the <span class="tooltip-trigger">partition function<span class="tooltip-content">$Z = \sum_j e^{-\beta \epsilon_j}$ normalizes the Boltzmann distribution. It encodes all thermodynamic information about the system.</span></span>.</p>
+
+<p>Note that the function we just maximized</p>
+
+<div class="equation">$$H[P] = -\sum_i P_i \ln P_i$$<span class="eq-number">(67)</span></div>
+
+<p>is Boltzmann's $H$ function from Lecture 3. Boltzmann's $H$ theorem says that $H$ always increases with time. We'll come back to $H$, and see that it is directly proportional to entropy, when we discuss information theory in Lecture 6.</p>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Temperature from entropy:</strong> Two systems exchanging energy reach equilibrium when $\frac{\partial \ln \Omega_1}{\partial E_1} = \frac{\partial \ln \Omega_2}{\partial E_2}$. We define entropy $S = k_B \ln \Omega$ and temperature $\frac{1}{T} = \frac{\partial S}{\partial E}\big|_{V,N}$.</li>
+<li><strong>Ideal gas:</strong> For a monatomic ideal gas, $E = \frac{3}{2}Nk_BT$ and $PV = Nk_BT$.</li>
+<li><strong>Equipartition theorem:</strong> Each quadratic degree of freedom contributes $\frac{1}{2}k_BT$ to the average energy. Linear degrees of freedom contribute $k_BT$.</li>
+<li><strong>Heat capacity:</strong> For monatomic gas $C_V = \frac{3}{2}Nk_B$. For diatomic gas, $C_V$ ranges from $\frac{3}{2}Nk_B$ to $\frac{7}{2}Nk_B$ depending on which modes are thermally active.</li>
+<li><strong>Quantum freeze-out:</strong> Modes are frozen out when $k_BT \ll \epsilon_{\text{spacing}}$. This explains why $C_V$ increases with temperature for diatomic molecules.</li>
+<li><strong>Maximum entropy principle:</strong> The equilibrium distribution maximizes entropy subject to constraints. With a fixed average energy, this gives the Boltzmann distribution $f_i \propto e^{-\beta \epsilon_i}$.</li>
+</ul>
+</div>

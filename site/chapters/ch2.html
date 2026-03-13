@@ -1,0 +1,512 @@
+<div class="chapter-number">Chapter 2</div>
+<h1 class="chapter-title">Diffusion</h1>
+<p class="chapter-intro">If you put a drop of red dye in water, it will slowly diffuse throughout the water. In this chapter we explore the microscopic mechanism of diffusion through random walks, derive the diffusion equation, and connect it to Brownian motion.</p>
+
+<!-- ============================================================ -->
+<h2 id="s2-1">1 &mdash; Introduction</h2>
+
+<p>If we put a drop of red dye in water, it will slowly diffuse throughout the water. Why does this happen? How fast does it happen? What is going on microscopically?</p>
+
+<p>The microscopic mechanism of diffusion is very simple: the dye molecules start densely concentrated near one point. Then they get bumped by neighboring molecules until they are spread out all over. To model this process, we can suppose that the dye molecule moves a distance $\ell$ between collisions and after each collision its direction is completely randomized. This approximation is called a <span class="tooltip-trigger">random walk<span class="tooltip-content">A mathematical model of a path consisting of successive random steps. Each step's direction is independent of the previous one.</span></span>. Although the distance $\ell$ between collisions has some variation and the direction of scattering is somewhat correlated with the initial direction, because molecules collide billions of times per second, the law of large numbers applies to their net displacement and random walks provide an excellent approximation to real diffusion.</p>
+
+<p>Random walks are actually quite common. They can be used to model any stochastic process. For another example, say you're playing blackjack with a friend. You are both expert players and evenly matched. Sometimes you win, sometimes she wins. Each time you play, you bet 1 dollar. This is a 1-D random walk. Say you play $N$ games. Although we can't say who will be winning after $N$ games, we can predict how much they would be winning.</p>
+
+<p>The 2-dimensional random walk is sometimes called the <span class="tooltip-trigger">drunkard's walk<span class="tooltip-content">A 2D random walk where each step goes in a completely random direction. Named for the image of a disoriented person stumbling randomly.</span></span>. The idea is that a drunkard leaves a party late at night, takes a step in one direction, then gets totally disoriented and takes a step in another direction. How far will she get after $N$ steps?</p>
+
+<!-- ============================================================ -->
+<h2 id="s2-2">2 &mdash; 1D random walk</h2>
+
+<p>Let's work out the blackjack problem. We'll make it a little more interesting. Say you have a probability $a$ of winning and your opponent has a probability $b = 1 - a$ of winning. If you play $N$ times, the chance of you winning $m$ of them is</p>
+<div class="equation key-result">
+$$B_N(m) = a^m b^{N-m} \binom{N}{m}$$
+<span class="eq-number">(1)</span>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">binomial distribution<span class="tooltip-content">The probability distribution for the number of successes in a fixed number of independent Bernoulli trials, each with the same probability of success.</span></span>. The factor "N choose m"</p>
+<div class="equation">
+$$\binom{N}{m} = {}_N C_m = \frac{N!}{m!(N-m)!}$$
+<span class="eq-number">(2)</span>
+</div>
+
+<p>is known as the <span class="tooltip-trigger">binomial coefficient<span class="tooltip-content">The number of ways to choose $m$ objects from $N$ objects, disregarding order. Equal to $\frac{N!}{m!(N-m)!}$.</span></span>. It is the number of ways of picking $m$ of the games for you to have won out of the $N$ total games.</p>
+
+<p>Binomial coefficients come up in the expansion of powers of sums. Namely</p>
+<div class="equation">
+$$(x + y)^N = x^N + Nx^{N-1}y + \cdots + y^N = \sum_{m=0}^{N} x^m y^{N-m} \binom{N}{m}$$
+<span class="eq-number">(3)</span>
+</div>
+
+<p>So the binomial distribution is simply the coefficient of the $m$-th term in this sum. In fact, this relationship makes it easy to see that the probabilities in the blackjack game sum to 1:</p>
+<div class="equation">
+$$\sum_{m=0}^{N} B_N(m) = \sum_{m=0}^{N} a^m b^{N-m} \binom{N}{m} = (a + b)^N = 1$$
+<span class="eq-number">(4)</span>
+</div>
+
+<p>since $b = 1 - a$.</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Mean and standard deviation of the binomial distribution</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1: Mean</div>
+<p>The expected number of wins is</p>
+$$\langle m \rangle = \sum_{m=0}^{N} m\, a^m b^{N-m} \binom{N}{m}$$
+<p>We use the trick of noting that $m\, a^m = a\,\partial_a\, a^m$. Then</p>
+$$\sum_{m=0}^{N} m\, a^m b^{N-m} \binom{N}{m} = a\,\partial_a\left[\sum_{m=0}^{N} a^m b^{N-m} \binom{N}{m}\right] = a\,\partial_a\,(a+b)^N = Na(a+b)^{N-1}$$
+<p>Setting $b = 1 - a$:</p>
+$$\langle m \rangle = Na$$
+<span class="eq-number">(7)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 2: Standard deviation</div>
+<p>Using the same trick for $\langle m^2 \rangle$:</p>
+$$\sigma_m = \sqrt{\sum_{m=0}^{N}(m^2 - \langle m \rangle^2)\,B_N(m)} = \sqrt{Nab}$$
+<span class="eq-number">(8)</span>
+</div>
+
+</div></div>
+</div>
+
+<p>As $N \to \infty$ the binomial distribution approaches a Gaussian, by the central limit theorem. Thus knowing the mean and standard deviation, we know the whole answer at large $N$:</p>
+<div class="equation key-result">
+$$B_N(m) \to \frac{1}{\sqrt{2\pi Nab}}\exp\!\left[-\frac{(m - Na)^2}{2Nab}\right]$$
+<span class="eq-number">(9)</span>
+</div>
+
+<p>For the blackjack game, $\langle m \rangle = Na$ is the expected number of times you win. The expected number of times you lose is $Nb$. If you gain \$1 when you win, or lose \$1 when you lose, then</p>
+<div class="equation">
+$$\langle\text{winnings}\rangle = N(a - b) \times \$1$$
+<span class="eq-number">(10)</span>
+</div>
+
+<p>and the standard deviation is:</p>
+<div class="equation">
+$$\sigma_{\text{winnings}} = 2\sqrt{Nab} \times \$1$$
+<span class="eq-number">(11)</span>
+</div>
+
+<p>For a fair match $a = b = \frac{1}{2}$ and so the expected winnings are $\langle\text{winnings}\rangle = 0$ with standard deviation</p>
+<div class="equation key-result">
+$$\sigma = \sqrt{N}$$
+<span class="eq-number">(12)</span>
+</div>
+
+<p>That $\sigma$ grows as $\sqrt{N}$ is exactly what we expect for the sum of random values by the central limit theorem. The $a = b = \frac{1}{2}$ case is sometimes called an <span class="tooltip-trigger">unbiased 1D random walk<span class="tooltip-content">A random walk where the probability of stepping in each direction is equal. The mean displacement is zero, but the RMS displacement grows as $\sqrt{N}$.</span></span>.</p>
+
+<div class="info-box example">
+<div class="box-title">Example: Blackjack</div>
+<p>If you play 100 games for \$1 each and are evenly matched, then $\langle\text{winnings}\rangle = 0$ and $\sigma_{\text{winnings}} = \sqrt{100} \times \$1 = \$10$. This means that after 100 games, we don't know who's winning but there is a 32% chance someone is up by at least \$10.</p>
+</div>
+
+<p>For an unbiased 1D random walk, the mean displacement is 0. In this case, the typical scale for displacement is better described by the <span class="tooltip-trigger">root-mean-square (RMS) fluctuation<span class="tooltip-content">The square root of the average of the squared displacement. When the mean displacement is zero, it equals the standard deviation and gives the characteristic scale of fluctuations.</span></span>, which reduces to the standard deviation when the mean is zero. That is, the RMS fluctuation is $x_{\text{rms}} = \sigma = \sqrt{N}$.</p>
+
+<h3 id="s2-2-binom-poisson">Binomial vs. Poisson</h3>
+
+<p>Let us compare the binomial distribution to the Poisson distribution. The binomial distribution $B_N(m)$ is defined for discrete $N$ and $m$, in contrast to the Poisson distribution $P_m(t) = \frac{(\lambda t)^m}{m!}e^{-\lambda t}$ which has discrete $m$ but continuous $t$. For a binomial distribution, the smallest interval is one discrete step, with probability of occurrence $a$. For Poisson, we can take an arbitrarily small timestep $\Delta t$ with probability $dP = \lambda\Delta t$.</p>
+
+<p>If we identify the interval for the binomial distribution with that of the Poisson distribution by setting $a = \lambda\Delta t = \lambda\frac{t}{N}$, and then take the limit $N \to \infty$ we find</p>
+<div class="equation">
+$$\lim_{N\to\infty} B_N(m) = \lim_{N\to\infty} \underbrace{\binom{N}{m}}_{\text{pick } m \text{ to decay}} \underbrace{\left(1 - \frac{\lambda t}{N}\right)^{N-m}}_{N-m\text{ do not decay}} \underbrace{\left(\frac{\lambda t}{N}\right)^m}_{m\text{ decays}} = \frac{(\lambda t)^m}{m!}e^{-\lambda t}$$
+<span class="eq-number">(13)</span>
+</div>
+
+<p>which formally recovers the Poisson distribution from the binomial distribution. Note that this requires taking $N \to \infty$ holding $\lambda t = Na$ fixed, and therefore $a \to 0$ and $b \to 1$. In other words, a Poisson process is like a random walk that always goes in one direction but you don't know when the step will be taken.</p>
+
+<div class="info-box concept">
+<div class="box-title">Binomial vs. Poisson: When to use which</div>
+<p><strong>Binomial</strong> is used when steps are <em>discrete</em> and <em>incoherent</em> (random directions). <strong>Poisson</strong> is used when time is <em>continuous</em> but steps are <em>coherent</em> (counts always increase). If we are flipping coins, then $a = \frac{1}{2}$ is fixed and the Poisson distribution is not relevant since it needs $a = 0$. For a decay process, a decay can happen at any time $t$ and so the binomial distribution is not appropriate.</p>
+</div>
+
+<!-- ============================================================ -->
+<h3 id="s2-2-1">2.1 &mdash; Random walks in 2D and 3D</h3>
+
+<p>For the 2D case, a popular picture of the random walk is a drunkard stumbling around. In each time step she moves a distance $\ell$ in some random direction. In 3D you can imagine a dye molecule diffusing in water and in each time step it bumps into something, and then gets buffeted into a different direction. For simplicity, we'll assume in the 2D and 3D cases that the distance is the same each step and the angle totally random. Where will the drunkard or molecule be after $N$ steps?</p>
+
+<p>Let us say that in the $j$-th step she moves by a displacement $\vec{\ell}_j$. The vectors $\vec{\ell}_j$ all have length $\ell$. The dot product of two vectors is</p>
+<div class="equation">
+$$\vec{\ell}_j \cdot \vec{\ell}_k = \ell^2 \cos\theta_{jk}$$
+<span class="eq-number">(14)</span>
+</div>
+
+<p>where $\theta_{jk}$ is the angle between the two steps. Since we are assuming the angle is random, then the expectation value of this dot product is zero:</p>
+<div class="equation">
+$$\langle \vec{\ell}_j \cdot \vec{\ell}_k \rangle = \ell^2 \frac{1}{\pi}\int_0^{\pi} d\theta\, \cos\theta = 0$$
+<span class="eq-number">(15)</span>
+</div>
+
+<p>Now let $\vec{s}_N$ be the total displacement from the origin after $N$ timesteps.</p>
+<div class="equation">
+$$\vec{s}_N = \sum_{j=1}^{N} \vec{\ell}_j$$
+<span class="eq-number">(16)</span>
+</div>
+
+<p>Then</p>
+<div class="equation">
+$$\langle \vec{s}_N^{\,2} \rangle = \langle(\vec{s}_{N-1} + \vec{\ell}_N)^2\rangle = \langle \vec{s}_{N-1}^{\,2}\rangle + 2\langle \vec{s}_{N-1}\cdot\vec{\ell}_N\rangle + \langle \vec{\ell}_N^{\,2}\rangle$$
+<span class="eq-number">(17)</span>
+</div>
+
+<p>Now, the angle between the last step $\vec{\ell}_N$ and the sum $\vec{s}_{N-1}$ of the ones before is totally random, so $\langle \vec{s}_{N-1}\cdot\vec{\ell}_N\rangle = 0$. Also $\langle\vec{\ell}_N^{\,2}\rangle = \ell^2$. So we find</p>
+<div class="equation">
+$$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2$$
+<span class="eq-number">(18)</span>
+</div>
+
+<p>Since this is true for any $N$ we can compute that</p>
+<div class="equation key-result">
+$$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \langle\vec{s}_{N-2}^{\,2}\rangle + 2\ell^2 = \cdots = N\ell^2$$
+<span class="eq-number">(19)</span>
+</div>
+
+<p>and the RMS distance moved is $\sqrt{N}\,\ell$, just like in the 1D case.</p>
+
+<!-- Interactive Random Walk -->
+<div class="interactive-container" id="vis-randomwalk">
+  <h3>Interactive: 2D Random Walk</h3>
+  <div class="vis-controls">
+    <button id="rw-start">Start Walk</button>
+    <button id="rw-reset">Reset</button>
+  </div>
+  <canvas class="vis-canvas" width="600" height="400"></canvas>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2-3">3 &mdash; Diffusion from random walks</h2>
+
+<p><span class="tooltip-trigger">Diffusion<span class="tooltip-content">The net spreading of the distribution of molecules due to random molecular motion. It is the macroscopic consequence of many microscopic random walks.</span></span> refers to the net spreading of the distribution of molecules due to random molecular motion. Think about an individual molecule in a gas, say some CO molecule coming out of a car's exhaust. It leaves the exhaust and moves in a straight line until it hits another molecule, in which case it is buffeted essentially randomly in a different direction. As all the CO molecules are doing the same thing, on average, the net effect is a diffusion of the CO gas. We want to compute the probability distribution $P_t(x)$ for where a CO molecule is after a time $t$ and then use this to determine the equation of motion of the density of the gas.</p>
+
+<h3 id="s2-3-1">3.1 &mdash; Collisions in a gas</h3>
+
+<p>It's helpful to discuss random walks for gases in terms of a set of convenient physical quantities.</p>
+
+<div class="info-box concept">
+<div class="box-title">Key Quantities for Gas Kinetics</div>
+<ul>
+<li>$\tau$ = the <span class="tooltip-trigger">collision time<span class="tooltip-content">The average time a molecule travels before colliding with another molecule.</span></span>: the average time a molecule goes before colliding with another molecule</li>
+<li>$\ell$ = the <span class="tooltip-trigger">mean free path<span class="tooltip-content">The average distance a molecule travels between collisions. Related to the collision time by $\ell = \bar{v}\tau$.</span></span>: the average distance a molecule goes between collisions</li>
+<li>$\bar{v}$ = the average molecular speed, $\bar{v} = \langle|\vec{v}|\rangle$</li>
+<li>$n$ = the <span class="tooltip-trigger">number density<span class="tooltip-content">The number of molecules per unit volume. Related to mass density by $\rho = mn$.</span></span> = number of molecules per unit volume</li>
+<li>$\rho$ = the mass density, where $\rho = mn$</li>
+</ul>
+</div>
+
+<p>The number of collisions in a time $t$ is then</p>
+<div class="equation">
+$$N = \frac{t}{\tau}$$
+<span class="eq-number">(20)</span>
+</div>
+
+<p>The mean free path is related to the collision time by</p>
+<div class="equation">
+$$\ell = \bar{v}\tau$$
+<span class="eq-number">(21)</span>
+</div>
+
+<p>Sometimes a more useful quantity is the root-mean-square velocity $v_{\text{rms}} = \sqrt{\langle\vec{v}^2\rangle}$. We can also use the speed of sound $c_s$ in a gas, which is of course limited by the speed by which the molecules move. All three of these, $\bar{v}$, $v_{\text{rms}}$ and $c_s$ are related by coefficients of order one, as we will see once we understand gases in more detail in future lectures. For example, in air at room temperature, $\bar{v} = 467\,\text{m/s}$, $v_{\text{rms}} = 507\,\text{m/s}$ and $c_s = 346\,\text{m/s}$.</p>
+
+<p>The mean free path is related to the density and size of the molecules. Treating molecules as spheres of radius $R$, two molecules will hit if their centers are within $2R$ of each other. Thus you can think of a moving molecule as having an effective cross sectional area of $\sigma = \pi(2R)^2$. This effective cross sectional area is also called the <span class="tooltip-trigger">collisional cross section<span class="tooltip-content">The effective area a molecule presents to other molecules for collisions. For spheres of radius $R$, $\sigma = \pi(2R)^2$.</span></span>. After $N$ collisions a molecule will have swept out a volume $V = N\ell\sigma$. The number of molecules it hits during this sweeping is $N = Vn$. Thus,</p>
+<div class="equation key-result">
+$$\ell = \frac{1}{n\sigma}$$
+<span class="eq-number">(22)</span>
+</div>
+
+<p>Bigger molecules have bigger cross sectional areas so they will have smaller mean free paths. Since liquids are more dense than gases, generally they will have smaller mean free paths.</p>
+
+<div class="info-box physical">
+<div class="box-title">Typical Values for Air at Room Temperature</div>
+<p>The radius of a typical atom is around the Bohr radius $a_0 = 0.05\,\text{nm}$. An air molecule (N$_2$ or O$_2$) has $R \approx 2a_0 \sim 0.1\,\text{nm}$. Thus $\sigma \approx \pi(2R)^2 = 0.14\,\text{nm}^2$. Air has density $\rho = 1.3\,\text{kg/m}^3$ and average molecular mass $m = 4.81 \times 10^{-26}\,\text{kg}$, so $n = \frac{\rho}{m} = 2.6 \times 10^{25}\,\text{m}^{-3}$. The mean inter-molecular spacing is $n^{-1/3} = 3.3\,\text{nm}$. The mean free path is $\ell = \frac{1}{n\sigma} = 0.26\,\mu\text{m}$. The collision time is $\tau = \frac{\ell}{\bar{v}} = 0.57\,\text{ns}$.</p>
+<p>In summary: molecules have velocities around $v \sim 500\,\text{m/s} \approx 1100\,\text{mph}$, are around $R \sim 0.1\,\text{nm}$ big and $n^{-1/3} \sim 1\,\text{nm}$ apart. They collide around once every nanosecond (one billion times per second) after having moved around $\ell \sim 100\,\text{nm}$ (one thousand molecule lengths).</p>
+</div>
+
+<h3 id="s2-3-2">3.2 &mdash; Diffusion from random walks</h3>
+
+<p>Let's now consider the probability distribution $P_t(x)$ for where a CO molecule is after a time $t$. We'll start in one dimension. Treating molecular interactions as a random walk, we take $a = b = \frac{1}{2}$ since the molecule should be equally likely to be knocked left as right. Such a random walk is unbiased. For an unbiased random walk, the mean displacement is $\bar{x} = 0$ and therefore does not tell us much about how fast the molecules are diffusing. Instead, the RMS displacement is more useful. The RMS displacement after a time $t$ is, from Eq.&nbsp;(12)</p>
+<div class="equation key-result">
+$$x_{\text{rms}} = \sqrt{N}\,\ell = \sqrt{\frac{t}{\tau}}\,\ell = \sqrt{\ell \bar{v} t}$$
+<span class="eq-number">(23)</span>
+</div>
+
+<p>This $x \sim \sqrt{t}$ behavior is the key characteristic of a random walk. Note that this is going to be a much smaller distance than an unhindered molecule would move on average, $\Delta x \sim vt$.</p>
+
+<p>Knowing the mean ($\bar{x} = 0$) and the standard deviation ($\sigma = \sqrt{\ell\bar{v}t}$) we can immediately write down the full probability distribution for large times ($t \gg \tau$) using the central limit theorem:</p>
+<div class="equation key-result">
+$$P_t(x) = \frac{1}{\sqrt{2\pi \ell\bar{v}t}}\exp\!\left[-\frac{x^2}{2t\ell\bar{v}}\right]$$
+<span class="eq-number">(24)</span>
+</div>
+
+<p>Note that this probability distribution satisfies the differential equation</p>
+<div class="equation key-result">
+$$\frac{\partial P_t(x)}{\partial t} = D\frac{\partial^2 P_t(x)}{\partial x^2}$$
+<span class="eq-number">(25)</span>
+</div>
+
+<p>where $D = \frac{1}{2}\ell\bar{v}$. This is the <strong>1D diffusion equation</strong>. You can easily check by plugging Eq.&nbsp;(24) into Eq.&nbsp;(25).</p>
+
+<p>We defined $P_t(x)$ as a probability distribution for one particular CO molecule in a gas. But the same probability distribution holds for any molecule. Since there are usually an enormous number $N \sim 10^{24}$ of gas molecules, if each one has a probability $P_t(x)$ of being at the point $x$ then the number density will be simply</p>
+<div class="equation">
+$$n(x, t) = N P_t(x)$$
+<span class="eq-number">(26)</span>
+</div>
+
+<p>Thus we find</p>
+<div class="equation">
+$$\frac{\partial n(x,t)}{\partial t} = D\frac{\partial^2 n(x,t)}{\partial x^2}$$
+<span class="eq-number">(27)</span>
+</div>
+
+<p>In 2 or 3 dimensions, the resulting equation is the rotationally symmetric version of this:</p>
+<div class="equation key-result">
+$$\frac{\partial n(\vec{x},t)}{\partial t} = D\nabla^2 n(\vec{x},t)$$
+<span class="eq-number">(28)</span>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">diffusion equation<span class="tooltip-content">A partial differential equation describing how the density of a diffusing substance changes over time. Also known as Fick's second law.</span></span>. It describes how substances move due to random motion. The coefficient is</p>
+<div class="equation key-result">
+$$D = \frac{1}{2}\ell\bar{v} = \frac{1}{2}\frac{\ell^2}{\tau}$$
+<span class="eq-number">(29)</span>
+</div>
+
+<p>This coefficient $D$ is called the <span class="tooltip-trigger">diffusion constant<span class="tooltip-content">A proportionality constant in the diffusion equation that characterizes how fast a substance spreads. Has units of $\text{m}^2/\text{s}$.</span></span> and the relation $D = \frac{1}{2}\frac{\ell^2}{\tau}$ is known as the <span class="tooltip-trigger">Einstein-Smoluchowski equation<span class="tooltip-content">The relation connecting the macroscopic diffusion constant $D$ to the microscopic quantities mean free path $\ell$ and collision time $\tau$.</span></span>.</p>
+
+<div class="info-box physical">
+<div class="box-title">How Fast is Diffusion?</div>
+<p>In air, $\ell \approx 0.26\,\mu\text{m}$ and $\tau \approx 0.57\,\text{ns}$ so $D = 5.9 \times 10^{-5}\,\text{m}^2/\text{s}$. This means it takes <strong>1 day</strong> for an individual gas molecule to diffuse 1 meter. Then it takes <strong>100 days</strong> to diffuse 10 meters. Diffusion in air over macroscopic distances is generally very slow.</p>
+<p>For proteins in water, $D \approx 10^{-11}\,\text{m}^2/\text{s}$. To diffuse across a cell of size $10^{-4}\,\text{m}$ takes 15 minutes. To diffuse across a cell nucleus of size $6\,\mu\text{m}$ takes only 3.6 seconds.</p>
+</div>
+
+<p>Just because the diffusion equation looks simple does not mean it has trivial consequences! For example, it is mathematically identical to the Schrodinger equation, which accounts for a great variety of interesting physics. It is also mathematically identical to the <span class="tooltip-trigger">heat equation<span class="tooltip-content">A PDE describing heat conduction: $\partial T/\partial t = \kappa \nabla^2 T$. Mathematically identical to the diffusion equation.</span></span>: heat conduction is a diffusive process.</p>
+
+<p>The diffusion equation is linear, so that if $n_1(\vec{x},t)$ and $n_2(\vec{x},t)$ are solutions, then so is their sum. In particular if we start with a bunch of particles at some positions $x_i$, then they will diffuse independently of each other. This gives us a way to solve the diffusion equation in general. For one particle, starting at $\vec{x} = 0$, the solution is given by Eq.&nbsp;(24). Note that at $t = 0$, this solution really does represent a localized source. In fact, the limit as $t \to 0$ of this solution is one of the possible definitions of a $\delta$-function:</p>
+<div class="equation">
+$$\lim_{t\to 0}\left(\frac{1}{4\pi Dt}\right)^{3/2}\exp\!\left[-\frac{\vec{x}^{\,2}}{4Dt}\right] = \delta^3(\vec{x})$$
+<span class="eq-number">(30)</span>
+</div>
+
+<p>Since any function can be described as a set of points, we can construct any solution to the diffusion equation by combining the solutions as in Eq.&nbsp;(24). More precisely, if $n_0(\vec{x}, 0)$ is the number density at time 0, then the solution for all times is</p>
+<div class="equation key-result">
+$$n(\vec{x}, t) = \int d^3y\left(\frac{1}{2\pi\ell\bar{v}t}\right)^{3/2}\exp\!\left[-\frac{(\vec{x} - \vec{y})^2}{2t\ell\bar{v}}\right]n_0(\vec{y}, 0)$$
+<span class="eq-number">(31)</span>
+</div>
+
+<p>Solving differential equations in this way is known as the <span class="tooltip-trigger">Green's function method<span class="tooltip-content">A technique for solving differential equations by expressing the solution as a convolution of the source with the Green's function &mdash; the response to a point source.</span></span>. It converts solving a difficult differential equation to doing an integral.</p>
+
+<p>Eq.&nbsp;(31) has a simple physical interpretation: the number of molecules at a point $\vec{x}$ are those that have walked there randomly from any other point $\vec{y}$ over the time $t$.</p>
+
+<!-- Interactive Diffusion Simulation -->
+<div class="interactive-container" id="vis-diffusion">
+  <h3>Interactive: Diffusion Simulation</h3>
+  <div class="vis-controls">
+    <label>Diffusion constant ($D$): <input type="range" id="diff-D" min="0.1" max="5" step="0.1" value="1"><span class="slider-value">1</span></label>
+  </div>
+  <canvas class="vis-canvas" width="600" height="300"></canvas>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2-4">4 &mdash; Fick's laws of diffusion</h2>
+
+<p>The approach to diffusion we discussed was based on a microscopic picture of random walks of individual molecules. We can also approach diffusion from the continuum perspective. Let us continue to denote the number density by $n(\vec{x}, t)$ and let us also denote the local velocity as the vector field $\vec{v}(\vec{x}, t)$. It can be helpful to think of $n(\vec{x}, t)$ as the density of a fluid, like water in a stream, and $\vec{v}(\vec{x}, t)$ as its velocity at the point $\vec{x}$ at time $t$. For simplicity, let's assume that $n$ and $\vec{v}$ are constant in the $y$ and $z$ directions, so they only depend on $x$.</p>
+
+<p>Now, the total number of molecules between $x_1$ and $x_2$ can only change if particles flow in or out of that region. So</p>
+<div class="equation">
+$$\frac{\partial}{\partial t}\int_{x_1}^{x_2} dx\, n(x,t) = \underbrace{n(x_1,t)v_x(x_1,t)}_{\text{number coming in past }x_1} - \underbrace{n(x_2,t)v_x(x_2,t)}_{\text{number going out past }x_2}$$
+<span class="eq-number">(32)</span>
+</div>
+
+<p>Pulling the $\frac{\partial}{\partial t}$ into the integral, and using that $x_1$ and $x_2$ are arbitrary, we get</p>
+<div class="equation">
+$$\frac{\partial}{\partial t}n(x,t) = -\frac{\partial}{\partial x}J_x(x,t)$$
+<span class="eq-number">(34)</span>
+</div>
+
+<p>where $J_x(x,t) = n(x,t)v_x(x,t)$. The 3D version of this equation is called the <span class="tooltip-trigger">continuity equation<span class="tooltip-content">A conservation law stating that the rate of change of density equals the negative divergence of the flux: $\partial n/\partial t + \nabla \cdot \vec{J} = 0$.</span></span></p>
+<div class="equation key-result">
+$$\frac{\partial n}{\partial t} + \vec{\nabla}\cdot\vec{J} = 0$$
+<span class="eq-number">(36)</span>
+</div>
+
+<p>and $\vec{J}(\vec{x}, t)$ is called the <span class="tooltip-trigger">flux<span class="tooltip-content">The number of particles passing by a given point per unit area per unit time. Equals the number density times velocity: $\vec{J} = n\vec{v}$.</span></span>. The flux is the number density times velocity $\vec{J}(\vec{x}, t) = n(\vec{x}, t) \times \vec{v}(\vec{x}, t)$. It gives the number of particles passing by a given point per unit area per unit time.</p>
+
+<p>How does the flux relate to the density during diffusion? Well, if the density is constant in position, then the net diffusion should be zero and the flux should vanish. Conversely, if the density has some spatial gradient, then there should be net flux from high density to low density. Thus, the leading order thing we could imagine is that $\vec{J}$ is proportional to the concentration gradient:</p>
+<div class="equation key-result">
+$$\vec{J} = -D\vec{\nabla}n$$
+<span class="eq-number">(37)</span>
+</div>
+
+<p>with $D$ a proportionality constant. We put in the minus sign so that $D$ would be a positive number (if $\partial_x n > 0$, so the gradient increases to the right, then particles flow to the left). This is known as <span class="tooltip-trigger">Fick's first law<span class="tooltip-content">The empirical observation that diffusive flux is proportional to the negative concentration gradient: $\vec{J} = -D\nabla n$.</span></span>. It's a law because we didn't derive it (neither did Fick), it just seems reasonable. Note that Fick's first law is not some general property of fluxes &mdash; you can certainly have a nonzero flux at constant density, like current in a river, if there's some potential driving the flow. Fick's first law is a statement about fluxes in diffusive systems, where there is no other source of motion other than random motion.</p>
+
+<p>Once we have Eq.&nbsp;(37) we can plug into the continuity equation, Eq.&nbsp;(36) to get</p>
+<div class="equation key-result">
+$$\frac{\partial n(\vec{x}, t)}{\partial t} = D\nabla^2 n(\vec{x}, t)$$
+<span class="eq-number">(38)</span>
+</div>
+
+<p>This is also known as <span class="tooltip-trigger">Fick's second law<span class="tooltip-content">The diffusion equation, which follows from combining Fick's first law with the continuity equation.</span></span>. It is none other than the diffusion equation. Since Fick's second law follows from Fick's first law, in fact, we have justified Fick's first law through our analysis of random walks. Moreover, through our analysis of random walks, we have related $D$ to properties of the gas, $D = \frac{1}{2}\ell\bar{v}$ as in Eq.&nbsp;(29).</p>
+
+<div class="info-box example">
+<div class="box-title">Example: Lemmings Walking off a Cliff</div>
+<p>Say we have some lemmings that come out of a hole, walk left or right randomly, and maybe fall off a cliff a distance $a$ away. Let their density be $n(z)$, with $z = 0$ the hole and $z = a$ the cliff. In a steady state, $\frac{\partial n}{\partial t} = 0$, the solution to the diffusion equation is $n(z) = n_0 + \frac{z}{a}(n_1 - n_0)$. Then $J_z = -\frac{D}{a}(n_1 - n_0)$. This is a constant flux of lemmings coming out of the hole and falling off the cliff.</p>
+</div>
+
+<p>To get a feel for how fast diffusion is, the diffusion constant in water for nitrogen molecules is $D = 2 \times 10^{-9}\,\text{m}^2/\text{s}$. Bigger molecules should have smaller diffusion rates. Indeed, benzene molecules C$_6$H$_6$ in water have $D = 1 \times 10^{-9}\,\text{m}^2/\text{s}$. For large molecules like proteins in water the diffusion constant is even smaller $D \approx 10^{-11}\,\text{m}^2/\text{s}$. In gases, densities $n$ are smaller so $\ell$ is larger and the diffusion constants are generally larger. For example, CO molecules in air at room temperature and pressure have $D = 2 \times 10^{-5}\,\text{m}^2/\text{s}$.</p>
+
+<p>To use the diffusion constant, we can either plug in the exponential solution, Eq.&nbsp;(24), or more simply use Eq.&nbsp;(23):</p>
+<div class="equation key-result">
+$$x_{\text{rms}} = \sqrt{2Dt}$$
+<span class="eq-number">(39)</span>
+</div>
+
+<p>For example, taking a dye molecule in water with $D \approx 10^{-9}\,\text{m}^2/\text{s}$, to move $\Delta x = 1\,\text{m}$ would take $\frac{(\Delta x)^2}{2D} = 31\,\text{years}$. So clearly diffusion is not the main mechanism by which dyes move around in water.</p>
+
+<p>By the way, thermal conduction is very much like diffusion. Instead of the diffusion equation, temperature satisfies the <strong>heat equation</strong>:</p>
+<div class="equation">
+$$\frac{\partial T(x,y,z,t)}{\partial t} = \kappa\, \nabla^2 T(x,y,z,t)$$
+<span class="eq-number">(40)</span>
+</div>
+
+<p>where $\kappa$ is called the <span class="tooltip-trigger">coefficient of thermal diffusivity<span class="tooltip-content">The proportionality constant in the heat equation, analogous to the diffusion constant $D$. Measures how quickly temperature equilibrates.</span></span>. This equation describes diffusion of temperature, rather than diffusion of particle number. The derivation of the heat equation is identical to the derivation of Fick's second law, with conservation of energy replacing conservation of particle number. The analog of Fick's first law for thermal conduction is called <span class="tooltip-trigger">Fourier's law<span class="tooltip-content">The empirical observation that the rate of heat flow is proportional to the temperature difference, analogous to Fick's first law for particle diffusion.</span></span>.</p>
+
+<h3 id="s2-4-1">4.1 &mdash; Convection (optional)</h3>
+
+<p>Diffusion refers to the motion of a molecule through random collisions. Think of a liquid in equilibrium and just try to follow one molecule. <span class="tooltip-trigger">Convection<span class="tooltip-content">The transport of molecules by bulk motion of the fluid, as opposed to diffusion which is transport by random molecular motion. Convection dominates when the system is out of equilibrium.</span></span> occurs when the system is not in equilibrium to begin with. In such situations, there can be coherent convective currents, like a hot or cold wind, that move the dye much faster than through a random walk. Or if you dropped the dye into the water with a dropper it hits with some force and has some inertia; then it takes a while for the system to equilibrate and the dye molecules are for a while moving much faster than they would if there were only diffusion.</p>
+
+<p>If there is some external effect causing the medium to flow with velocity $\vec{v}_{\text{conv}}(\vec{x}, t)$, then there will be flux even if there is no concentration gradient. We can introduce the convective flux</p>
+<div class="equation">
+$$\vec{J}_{\text{conv}}(\vec{x},t) = \vec{v}_{\text{conv}}\, n(\vec{x},t)$$
+<span class="eq-number">(41)</span>
+</div>
+
+<p>Adding this convective flux to the diffusive flux, we get a new term:</p>
+<div class="equation">
+$$\frac{\partial n(\vec{x},t)}{\partial t} = D\nabla^2 n(\vec{x},t) + \vec{v}_{\text{conv}}\cdot\nabla n(\vec{x},t)$$
+<span class="eq-number">(42)</span>
+</div>
+
+<p>This is called the <strong>generalized diffusion equation</strong> and describes situations where diffusion and convection are both important. Unfortunately, it is usually impossible to determine $\vec{J}_{\text{conv}}(\vec{x},t)$, since when there is convection usually molecules are all moving around in different directions and it is a horribly non-linear process. Think about this next time you pour milk into your coffee &mdash; all those little eddy currents and funny shapes are convective. Good luck describing them analytically! Convection is almost always studied with numerical simulations.</p>
+
+<p>So for diffusion to actually be visible, a system has to be very calm &mdash; no chemical, temperature, or density gradients. A place where diffusion is more important than convection is in biology. In biological systems, temperature is often very constant, convection is small, and molecules do not have to move very far. Diffusion of heat (thermal conduction) is the dominant mechanism of heat transfer in solids, for example as you heat up a pan on the stove. However, when you heat a room, convection dominates and the heat equation, Eq.&nbsp;(40) is not relevant.</p>
+
+<!-- ============================================================ -->
+<h2 id="s2-5">5 &mdash; Brownian motion</h2>
+
+<p>An important application of the diffusion equation is to study <span class="tooltip-trigger">Brownian motion<span class="tooltip-content">The random walk of a large particle due to stochastic collisions with smaller particles. Named after botanist Robert Brown who observed it in pollen grains in 1827.</span></span>. In 1827, a botanist named Robert Brown collected some pollen one Spring afternoon and put it in some water in a Petri dish in his lab, then went to bed. When he woke up, he found that the pollen grain had moved a significant distance. "It's alive!" he concluded. In fact, the pollen moved not because it is alive, but rather because it underwent a random walk due to the water molecules surrounding it constantly giving it little kicks. This movement is called Brownian motion, after Robert Brown.</p>
+
+<p>Brownian motion refers to the random walk of a large particle due to stochastic collisions with smaller particles. Although each hit from a small particle does very little, the hits add up to a macroscopically observable displacement. You can see Brownian motion easily with a microscope, where a dust particle or a bacterium will move a finite distance in a reasonable time. What is fascinating about this migration is that you cannot resolve the small molecules, like water molecules, in the microscope, so it looks like the big particle is moving by magic. Of course, it is not magic, and indeed we can deduce the existence of "invisible" molecules from Brownian motion of something visible. Einstein used this insight to measure Avogadro's number, as we will now see.</p>
+
+<p>The molecular collisions have another effect too &mdash; they slow down a moving particle, through a <span class="tooltip-trigger">drag force<span class="tooltip-content">A resistive force experienced by a particle moving through a medium, arising from the collective effect of molecular collisions impeding the motion.</span></span>. Indeed, drag, that you experience running your hand through the air or in water is a collective effect of many small molecules impeding the motion. Drag forces are macroscopic and can be measured without ever talking about molecules. A drag force, by definition, slows down a particle, so if $\vec{v} = 0$ it should vanish. Thus, the leading effect in an expansion around $\vec{v} = 0$ is that it is linear in the velocity:</p>
+<div class="equation key-result">
+$$m\frac{d^2\vec{x}}{dt^2} + \mu\frac{d\vec{x}}{dt} = \vec{F}_{\text{ext}}$$
+<span class="eq-number">(43)</span>
+</div>
+
+<p>where $m$ is the mass of a particle, $\vec{F}_{\text{ext}}$ is some external force, and $\mu$ is the <span class="tooltip-trigger">drag coefficient<span class="tooltip-content">Also called mobility. The proportionality constant between the drag force and velocity: $F_{\text{drag}} = \mu v$.</span></span> (also called mobility).</p>
+
+<div class="derivation">
+<div class="derivation-header"><span class="arrow">&#9654;</span> Derivation: Einstein's relation for Brownian motion</div>
+<div class="derivation-body"><div class="derivation-body-inner">
+
+<div class="step"><div class="step-label">Step 1</div>
+<p>With $\vec{F}_{\text{ext}} = 0$, we note</p>
+$$\frac{d}{dt}(\vec{x}\cdot\vec{v}) = \vec{v}\cdot\vec{v} + \vec{x}\cdot\frac{d\vec{v}}{dt}$$
+<p>and $\frac{d\vec{v}}{dt} = -\frac{\mu}{m}\vec{v}$, so</p>
+$$\frac{d}{dt}\langle\vec{x}\cdot\vec{v}\rangle = \langle\vec{v}^2\rangle - \frac{\mu}{m}\langle\vec{x}\cdot\vec{v}\rangle$$
+<span class="eq-number">(46)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 2</div>
+<p>The general solution starting at $\vec{x} = 0$ is</p>
+$$\langle\vec{x}\cdot\vec{v}\rangle = \frac{m}{\mu}\langle\vec{v}^2\rangle\left(1 - e^{-\mu t/m}\right)$$
+<span class="eq-number">(47)</span>
+<p>For late times $t \gg \frac{m}{\mu}$, the exponential vanishes and $\langle\vec{x}\cdot\vec{v}\rangle = \frac{m}{\mu}\langle\vec{v}^2\rangle$ is constant.</p>
+</div>
+
+<div class="step"><div class="step-label">Step 3</div>
+<p>Next use that</p>
+$$\frac{d}{dt}\langle\vec{x}^{\,2}\rangle = 2\langle\vec{x}\cdot\vec{v}\rangle = \frac{m}{\mu}\langle\vec{v}^2\rangle$$
+<span class="eq-number">(48)</span>
+<p>This says that the displacement-squared grows linearly with time, characteristic of a random walk:</p>
+$$\langle\vec{x}^{\,2}\rangle = \frac{m}{\mu}\langle\vec{v}^2\rangle\, t$$
+<span class="eq-number">(49)</span>
+</div>
+
+<div class="step"><div class="step-label">Step 4: Einstein relation</div>
+<p>The RMS displacement is</p>
+$$x_{\text{rms}} = \sqrt{\langle\vec{x}^{\,2}\rangle} = v_{\text{rms}}\sqrt{\frac{2m}{\mu}}\sqrt{t}$$
+<span class="eq-number">(50)</span>
+<p>Comparing to $x_{\text{rms}} = \sqrt{2Dt}$ we have</p>
+$$D = \frac{1}{\mu}\langle m\vec{v}^2\rangle$$
+<span class="eq-number">(51)</span>
+<p>This is known as the <strong>Einstein relation</strong>.</p>
+</div>
+
+</div></div>
+</div>
+
+<p>To proceed, we need to borrow a result from Lecture 4, that the average kinetic energy per particle is $\langle\frac{1}{2}m\vec{v}^2\rangle = \frac{3RT}{2N_A}$ with $R$ the ideal gas constant and $T$ the temperature. Then Eq.&nbsp;(51) implies</p>
+<div class="equation key-result">
+$$N_A = \frac{3RT}{\mu D}$$
+<span class="eq-number">(52)</span>
+</div>
+
+<p>So by measuring the temperature (with a thermometer), the drag coefficient (with an external force) and the rate of diffusion (from Brownian motion), the number of water molecules $N_A$ can be determined. This is how Albert Einstein proposed to measure Avogadro's number $N_A$ using Brownian motion in 1905.</p>
+
+<h3 id="s2-5-1">5.1 &mdash; Viscosity</h3>
+
+<p>Consider a ball falling through a fluid. It is accelerated from a downward force due to gravity and encounters resistance, or drag, from the fluid. There are two sources of drag. The first, called <em>inertial drag</em>, is due to the ball bonking molecules in front of it and speeding them up. The inertial force goes like the square of the velocity: $\vec{F}_{\text{inertial}} = \pi R^2 \rho |\vec{v}|\vec{v}$. For slow objects, the dominant drag force is due to <span class="tooltip-trigger">viscosity<span class="tooltip-content">A measure of a fluid's resistance to shear deformation. More viscous fluids (like honey) resist flow more than less viscous ones (like water).</span></span>, called viscous drag.</p>
+
+<figure>
+<img src="images/2-Diffusion_p11_img0.png" alt="Ball falling through a viscous fluid with gravity and drag forces">
+<figcaption>Figure 1. A ball falling through a viscous fluid has a downward force due to gravity and a drag force due to viscosity.</figcaption>
+</figure>
+
+<p>Viscosity is another physical effect whose microscopic origin is in the stochastic collision of molecules. The more precise name for viscosity is <em>dynamic shear viscosity</em>. It measures how a fluid responds to shear forces: you push the top layer and ask how much the bottom layer moves. Intuitively, viscosity is a measure of how well a fluid flows.</p>
+
+<p>A shear force is applied to an area. Think of floating a block of wood on water and applying an external force $\vec{F}_{\text{ext}}$ to move it parallel to the surface. The parameter $\eta$ is defined by</p>
+<div class="equation">
+$$\eta\frac{\partial\vec{v}}{\partial z} = \frac{\vec{F}_{\text{ext}}}{A}$$
+<span class="eq-number">(54)</span>
+</div>
+
+<p>The parameter $\eta$ in this equation is called the <strong>dynamic shear viscosity</strong>.</p>
+
+<p>For a sphere falling through a fluid, working out all the factors, the result is</p>
+<div class="equation key-result">
+$$\vec{F}_{\text{drag}} = 6\pi\eta R\vec{v}$$
+<span class="eq-number">(56)</span>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">Stokes drag force<span class="tooltip-content">The drag force on a sphere moving slowly through a viscous fluid: $F = 6\pi\eta Rv$. It is linear in velocity and applies at low Reynolds numbers.</span></span>. This equation relates a property of the fluid (the viscosity), to the resistance experienced by an external object as it is being forced through the fluid (the viscous drag force). It is linear in the velocity, compared to the inertial force which was quadratic in velocity, so at small velocities, the viscous drag force dominates. Keep in mind that viscosity is a property of the fluid itself, while drag depends on what is being dragged through the fluid.</p>
+
+<p>Recall that we defined mobility as the drag coefficient in Eq.&nbsp;(43). So</p>
+<div class="equation">
+$$\mu = 6\pi\eta R$$
+<span class="eq-number">(57)</span>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">Stokes relation<span class="tooltip-content">The relation between the drag coefficient and viscosity for a sphere: $\mu = 6\pi\eta R$.</span></span>. Plugging it into the Einstein relation in Eq.&nbsp;(51) gives</p>
+<div class="equation key-result">
+$$D = \frac{1}{6\pi\eta R}\langle m\vec{v}^2\rangle$$
+<span class="eq-number">(58)</span>
+</div>
+
+<p>This is known as the <span class="tooltip-trigger">Einstein-Stokes relation<span class="tooltip-content">Connects the diffusion constant to viscosity: $D = k_BT/(6\pi\eta R)$. It tells us that viscosity and diffusion share a microscopic origin in random molecular collisions.</span></span>. It relates the diffusion constant $D$ and the viscosity, telling us that viscosity also has its origin in the microscopic random walks of the molecules in the fluid.</p>
+
+<!-- ============================================================ -->
+<h2 id="s2-6">6 &mdash; Summary</h2>
+
+<div class="summary">
+<h3>Chapter Summary</h3>
+<ul>
+<li><strong>Random walks:</strong> A particle/system has a fixed probability of moving in each direction. We are interested in the net motion after $N$ steps.</li>
+<li>If we move left with probability $a$ and right with probability $b = 1 - a$, the chance of taking $m$ steps right is given by the <strong>binomial distribution:</strong> $B_N(m) = a^m b^{N-m}\binom{N}{m}$.</li>
+<li>The average distance moved in a random walk after $N$ steps scales as $\sigma \sim \sqrt{N}\,\ell$ where $\ell$ is the step size. This is true in any number of dimensions.</li>
+<li>A bunch of molecules random-walking is called <strong>diffusion</strong>. The number of steps $N$ is proportional to time $t$ so the distance moved is $\Delta x \sim \sqrt{t}\,\ell$. This scaling of distance $\propto$ square-root of time is the characteristic feature of diffusion.</li>
+<li>In the continuum limit, molecules are described by a <strong>number density</strong> $n(\vec{x}, t)$.</li>
+<li>The number density satisfies the <strong>diffusion equation</strong> $\frac{\partial n(\vec{x},t)}{\partial t} = D\nabla^2 n(\vec{x},t)$ when diffusion is dominant.</li>
+<li>The exact solution to the diffusion equation with boundary condition $n(\vec{x}, 0) = \delta^3(\vec{x})$ is $n(\vec{x},t) = \left(\frac{1}{4\pi Dt}\right)^{3/2}\exp\!\left[-\frac{\vec{x}^{\,2}}{4Dt}\right]$. This confirms the scaling $\Delta x \sim \sqrt{t}$.</li>
+<li>The diffusion equation comes from modeling the microscopic system as undergoing random walks. An alternative classical-field approach uses <strong>Fick's laws</strong>: the continuity equation $\frac{\partial n}{\partial t} + \nabla\cdot\vec{J} = 0$ combined with $\vec{J} = -D\nabla n$ leads to the same diffusion equation.</li>
+<li>The conduction of heat is described by the <strong>heat equation:</strong> $\frac{\partial T(\vec{x},t)}{\partial t} = \kappa\,\nabla^2 T(\vec{x},t)$. This has identical form to the diffusion equation.</li>
+<li>In liquids and gases, diffusion is rarely dominant unless the system is very calm. <strong>Convection</strong>, coming from non-equilibrium initial conditions, is usually more important. In solids, diffusion and the heat equation work well.</li>
+<li>A large molecule in a calm liquid or gas can be modeled by a random walk / diffusion. This is called <strong>Brownian motion</strong>. The diffusion constant is given by the <strong>Einstein relation:</strong> $D = \frac{1}{\mu}\langle m\vec{v}^2\rangle$ with $\mu$ the drag coefficient. Measuring $D$ and $\mu$ gives Avogadro's number: $N_A = \frac{3RT}{\mu D}$.</li>
+<li>The drag coefficient is also related to viscosity $\eta$ by $\mu = 6\pi\eta R$. Then $D = \frac{1}{6\pi\eta R}\langle m\vec{v}^2\rangle$. This is the <strong>Einstein-Stokes relation</strong>.</li>
+</ul>
+</div>
