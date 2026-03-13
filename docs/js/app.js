@@ -7827,8 +7827,526 @@ function initCh13Vis() {
 // CH14: Semiconductors - Band Gap
 // =============================================================================
 function initCh14Vis() {
+  // ----- Orbital Energy Levels vs Atomic Number -----
+  const cOrb = document.getElementById('vis-orbital-energies');
+  if (cOrb) {
+    const { ctx: ctxOE, W: WOE, H: HOE } = setupCanvas(cOrb);
+    const zSlider = document.getElementById('orbital-z');
+
+    // Approximate orbital energies (in eV, negative) as function of Z
+    // Based on screened hydrogen model with empirical corrections
+    const orbitalNames = ['1s','2s','2p','3s','3p','3d','4s','4p','4d','4f','5s','5p','5d','6s','6p'];
+    const orbitalColors = [COLORS.blue, COLORS.green, COLORS.green, COLORS.cyan, COLORS.cyan, COLORS.cyan,
+                           COLORS.orange, COLORS.orange, COLORS.orange, COLORS.orange,
+                           COLORS.purple, COLORS.purple, COLORS.purple, COLORS.red, COLORS.red];
+    const orbitalN = [1,2,2,3,3,3,4,4,4,4,5,5,5,6,6];
+    const orbitalL = [0,0,1,0,1,2,0,1,2,3,0,1,2,0,1];
+
+    // Screening parameters (Slater's rules approximation)
+    function orbitalEnergy(Z, n, l) {
+      if (Z < 1) return 0;
+      // Effective nuclear charge using simplified Slater rules
+      let sigma = 0;
+      // Very simplified model that captures the key crossings
+      if (n === 1) sigma = 0.3 * Math.min(Z - 1, 1);
+      else if (n === 2 && l === 0) sigma = 2 + 0.85 * Math.min(Z - 3, 5);
+      else if (n === 2 && l === 1) sigma = 2.05 + 0.85 * Math.min(Z - 3, 5);
+      else if (n === 3 && l === 0) sigma = 4.15 + 0.85 * Math.max(0, Z - 11) * 0.7 + 2 * 0.85;
+      else if (n === 3 && l === 1) sigma = 4.5 + 0.85 * Math.max(0, Z - 11) * 0.7 + 2 * 0.85;
+      else if (n === 3 && l === 2) sigma = 5.5 + 0.85 * Math.max(0, Z - 21) * 0.5 + 8;
+      else if (n === 4 && l === 0) sigma = 11 + 0.85 * Math.max(0, Z - 19) * 0.5 + 4;
+      else if (n === 4 && l === 1) sigma = 14 + 0.85 * Math.max(0, Z - 31) * 0.5 + 4;
+      else if (n === 4 && l === 2) sigma = 22 + 0.85 * Math.max(0, Z - 39) * 0.4;
+      else if (n === 4 && l === 3) sigma = 32 + 0.85 * Math.max(0, Z - 57) * 0.35;
+      else if (n === 5 && l === 0) sigma = 28 + 0.85 * Math.max(0, Z - 37) * 0.45;
+      else if (n === 5 && l === 1) sigma = 32 + 0.85 * Math.max(0, Z - 49) * 0.45;
+      else if (n === 5 && l === 2) sigma = 40 + 0.85 * Math.max(0, Z - 57) * 0.4;
+      else if (n === 6 && l === 0) sigma = 46 + 0.85 * Math.max(0, Z - 55) * 0.4;
+      else if (n === 6 && l === 1) sigma = 52 + 0.85 * Math.max(0, Z - 81) * 0.4;
+      else sigma = Z * 0.65;
+
+      const Zeff = Math.max(0.5, Z - sigma);
+      return -13.6 * Zeff * Zeff / (n * n);
+    }
+
+    // Element symbols for labels
+    const elements = ['','H','He','Li','Be','B','C','N','O','F','Ne',
+      'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca',
+      'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',
+      'Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr',
+      'Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn',
+      'Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd',
+      'Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb',
+      'Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg',
+      'Tl','Pb','Bi','Po','At','Rn'];
+
+    let hoverOE = -1;
+
+    function drawOrbitalEnergies() {
+      clearCanvas(ctxOE, WOE, HOE);
+      const Z = parseInt(zSlider?.value || 14);
+      const sym = Z <= 86 ? elements[Z] : 'Z=' + Z;
+      document.getElementById('orbital-z-val')?.replaceChildren(document.createTextNode(Z + ' (' + sym + ')'));
+
+      const ox = 65, oy = 25, pw = WOE - 85, ph = HOE - 70;
+      const logEmin = -5, logEmax = 0.5; // log10(-E/Ry) range
+
+      // Axes
+      drawAxes(ctxOE, ox, oy, pw, ph, { xLabel: 'Atomic Number Z' });
+      ctxOE.fillStyle = COLORS.textDim; ctxOE.font = FONT_SM; ctxOE.textAlign = 'center';
+      for (let z = 10; z <= 80; z += 10) {
+        ctxOE.fillText(z.toString(), ox + (z / 86) * pw, oy + ph + 14);
+      }
+      ctxOE.fillText('1', ox + (1 / 86) * pw, oy + ph + 14);
+
+      // Y-axis label
+      ctxOE.save(); ctxOE.translate(15, oy + ph / 2); ctxOE.rotate(-Math.PI / 2);
+      ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_SM; ctxOE.textAlign = 'center';
+      ctxOE.fillText('Orbital Energy (log scale)', 0, 0); ctxOE.restore();
+
+      // Y ticks
+      ctxOE.textAlign = 'right';
+      const yLabels = ['-0.1','-1','-10','-100','-1000','-10000'];
+      const yVals = [-0.1, -1, -10, -100, -1000, -10000];
+      yVals.forEach((v, i) => {
+        const logV = Math.log10(-v / 13.6);
+        const py = oy + ph - ((logV - logEmin) / (logEmax - logEmin)) * ph;
+        if (py > oy && py < oy + ph) {
+          ctxOE.fillStyle = COLORS.textDim; ctxOE.font = '10px Inter, system-ui, sans-serif';
+          ctxOE.fillText(yLabels[i] + ' eV', ox - 4, py + 3);
+          ctxOE.strokeStyle = COLORS.grid; ctxOE.lineWidth = 0.5;
+          ctxOE.beginPath(); ctxOE.moveTo(ox, py); ctxOE.lineTo(ox + pw, py); ctxOE.stroke();
+        }
+      });
+
+      // Draw orbital curves
+      for (let oi = 0; oi < orbitalNames.length; oi++) {
+        const n = orbitalN[oi], l = orbitalL[oi];
+        // Only draw where orbital exists (Z large enough to have this orbital occupied or relevant)
+        const minZ = n === 1 ? 1 : (n === 2 ? 2 : (n === 3 ? 11 : (n === 4 ? 19 : (n === 5 ? 37 : 55))));
+
+        ctxOE.strokeStyle = orbitalColors[oi]; ctxOE.lineWidth = 1.8;
+        ctxOE.beginPath();
+        let started = false;
+        for (let z = Math.max(1, minZ - 2); z <= 86; z++) {
+          const E = orbitalEnergy(z, n, l);
+          if (E >= -0.01) continue;
+          const logE = Math.log10(-E / 13.6);
+          const px = ox + (z / 86) * pw;
+          const py = oy + ph - ((logE - logEmin) / (logEmax - logEmin)) * ph;
+          if (py < oy || py > oy + ph) continue;
+          !started ? (ctxOE.moveTo(px, py), started = true) : ctxOE.lineTo(px, py);
+        }
+        ctxOE.stroke();
+
+        // Label at right end
+        const E86 = orbitalEnergy(86, n, l);
+        if (E86 < -0.01) {
+          const logE = Math.log10(-E86 / 13.6);
+          const py = oy + ph - ((logE - logEmin) / (logEmax - logEmin)) * ph;
+          if (py > oy && py < oy + ph) {
+            ctxOE.fillStyle = orbitalColors[oi]; ctxOE.font = '10px Inter, system-ui, sans-serif';
+            ctxOE.textAlign = 'left';
+            ctxOE.fillText(orbitalNames[oi], ox + pw + 4, py + 3);
+          }
+        }
+      }
+
+      // Highlight selected Z with vertical line
+      const zPx = ox + (Z / 86) * pw;
+      ctxOE.strokeStyle = COLORS.yellow; ctxOE.lineWidth = 1.5; ctxOE.setLineDash([4, 4]);
+      ctxOE.beginPath(); ctxOE.moveTo(zPx, oy); ctxOE.lineTo(zPx, oy + ph); ctxOE.stroke();
+      ctxOE.setLineDash([]);
+
+      // Mark energy levels at selected Z
+      ctxOE.fillStyle = COLORS.yellow;
+      for (let oi = 0; oi < orbitalNames.length; oi++) {
+        const E = orbitalEnergy(Z, orbitalN[oi], orbitalL[oi]);
+        if (E >= -0.01) continue;
+        const logE = Math.log10(-E / 13.6);
+        const py = oy + ph - ((logE - logEmin) / (logEmax - logEmin)) * ph;
+        if (py > oy && py < oy + ph) {
+          ctxOE.beginPath(); ctxOE.arc(zPx, py, 3.5, 0, 2 * Math.PI); ctxOE.fill();
+        }
+      }
+
+      ctxOE.fillStyle = COLORS.yellow; ctxOE.font = FONT; ctxOE.textAlign = 'center';
+      ctxOE.fillText(sym + ' (Z = ' + Z + ')', zPx, oy - 5);
+
+      // Noble gas markers
+      const nobles = [{z:2,s:'He'},{z:10,s:'Ne'},{z:18,s:'Ar'},{z:36,s:'Kr'},{z:54,s:'Xe'},{z:86,s:'Rn'}];
+      ctxOE.fillStyle = COLORS.textDim; ctxOE.font = '9px Inter, system-ui, sans-serif'; ctxOE.textAlign = 'center';
+      nobles.forEach(ng => {
+        ctxOE.fillText(ng.s, ox + (ng.z / 86) * pw, oy + ph + 26);
+      });
+
+      ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_LG; ctxOE.textAlign = 'left';
+      ctxOE.fillText('Orbital Energies vs Z', ox + 5, oy + 14);
+    }
+
+    zSlider?.addEventListener('input', drawOrbitalEnergies);
+    drawOrbitalEnergies();
+  }
+
+  // ----- Molecular Orbital Diagram -----
+  const cMO = document.getElementById('vis-mo-diagram');
+  if (cMO) {
+    const { ctx: ctxMO, W: WMO, H: HMO } = setupCanvas(cMO);
+    const molSelect = document.getElementById('mo-molecule');
+
+    const molecules = {
+      'H2': {
+        name: 'H₂', atoms: ['H','H'],
+        leftLevels: [{e: 0.5, label: '1s', n: 1}],
+        rightLevels: [{e: 0.5, label: '1s', n: 1}],
+        moLevels: [{e: 0.3, label: 'σ₁ₛ', n: 2, type: 'bonding'}, {e: 0.7, label: 'σ*₁ₛ', n: 0, type: 'antibonding'}],
+        bondOrder: 1
+      },
+      'HF': {
+        name: 'HF', atoms: ['H','F'],
+        leftLevels: [{e: 0.55, label: '1s', n: 1}],
+        rightLevels: [{e: 0.3, label: '2p', n: 5}],
+        moLevels: [{e: 0.2, label: 'σ (bonding)', n: 2, type: 'bonding'}, {e: 0.35, label: 'π nb', n: 4, type: 'nonbonding'}, {e: 0.7, label: 'σ* (antibonding)', n: 0, type: 'antibonding'}],
+        bondOrder: 1
+      },
+      'He2': {
+        name: 'He₂', atoms: ['He','He'],
+        leftLevels: [{e: 0.5, label: '1s', n: 2}],
+        rightLevels: [{e: 0.5, label: '1s', n: 2}],
+        moLevels: [{e: 0.3, label: 'σ₁ₛ', n: 2, type: 'bonding'}, {e: 0.7, label: 'σ*₁ₛ', n: 2, type: 'antibonding'}],
+        bondOrder: 0
+      },
+      'N2': {
+        name: 'N₂', atoms: ['N','N'],
+        leftLevels: [{e: 0.65, label: '2s', n: 2}, {e: 0.4, label: '2p', n: 3}],
+        rightLevels: [{e: 0.65, label: '2s', n: 2}, {e: 0.4, label: '2p', n: 3}],
+        moLevels: [
+          {e: 0.18, label: 'σ₂ₛ', n: 2, type: 'bonding'},
+          {e: 0.28, label: 'π₂ₚ', n: 4, type: 'bonding'},
+          {e: 0.35, label: 'σ₂ₚ', n: 2, type: 'bonding'},
+          {e: 0.58, label: 'π*₂ₚ', n: 0, type: 'antibonding'},
+          {e: 0.72, label: 'σ*₂ₛ', n: 2, type: 'antibonding'},
+          {e: 0.82, label: 'σ*₂ₚ', n: 0, type: 'antibonding'}
+        ],
+        bondOrder: 3
+      }
+    };
+
+    function drawMODiagram() {
+      clearCanvas(ctxMO, WMO, HMO);
+      const mol = molecules[molSelect?.value || 'H2'];
+
+      const colW = WMO / 3;
+      const oy = 40, ph = HMO - 80;
+
+      // Column headers
+      ctxMO.fillStyle = COLORS.text; ctxMO.font = FONT; ctxMO.textAlign = 'center';
+      ctxMO.fillText(mol.atoms[0] + ' (AO)', colW * 0.5, 22);
+      ctxMO.fillText(mol.name + ' (MO)', colW * 1.5, 22);
+      ctxMO.fillText(mol.atoms[1] + ' (AO)', colW * 2.5, 22);
+
+      // Energy axis
+      ctxMO.save(); ctxMO.translate(12, oy + ph / 2); ctxMO.rotate(-Math.PI / 2);
+      ctxMO.fillStyle = COLORS.textDim; ctxMO.font = FONT_SM; ctxMO.textAlign = 'center';
+      ctxMO.fillText('Energy →', 0, 0); ctxMO.restore();
+
+      // Draw energy levels
+      function drawLevel(x, w, e, label, electrons, color) {
+        const y = oy + ph - e * ph;
+        ctxMO.strokeStyle = color; ctxMO.lineWidth = 2.5;
+        ctxMO.beginPath(); ctxMO.moveTo(x - w / 2, y); ctxMO.lineTo(x + w / 2, y); ctxMO.stroke();
+        // Label
+        ctxMO.fillStyle = color; ctxMO.font = FONT_SM; ctxMO.textAlign = 'center';
+        ctxMO.fillText(label, x, y + 16);
+        // Electrons as arrows
+        for (let i = 0; i < Math.min(electrons, 2); i++) {
+          const ex = x + (i === 0 ? -8 : 8);
+          const dir = i === 0 ? -1 : 1;
+          ctxMO.strokeStyle = COLORS.yellow; ctxMO.lineWidth = 2;
+          ctxMO.beginPath(); ctxMO.moveTo(ex, y - 5); ctxMO.lineTo(ex, y - 18); ctxMO.stroke();
+          // Arrowhead
+          ctxMO.beginPath();
+          if (dir === -1) { // up arrow
+            ctxMO.moveTo(ex - 4, y - 14); ctxMO.lineTo(ex, y - 18); ctxMO.lineTo(ex + 4, y - 14);
+          } else { // down arrow
+            ctxMO.moveTo(ex - 4, y - 9); ctxMO.lineTo(ex, y - 5); ctxMO.lineTo(ex + 4, y - 9);
+          }
+          ctxMO.stroke();
+        }
+      }
+
+      // Left atomic orbitals
+      mol.leftLevels.forEach(lv => drawLevel(colW * 0.5, 70, lv.e, lv.label, lv.n, COLORS.blue));
+
+      // Right atomic orbitals
+      mol.rightLevels.forEach(lv => drawLevel(colW * 2.5, 70, lv.e, lv.label, lv.n, COLORS.red));
+
+      // Molecular orbitals
+      mol.moLevels.forEach(lv => {
+        const color = lv.type === 'bonding' ? COLORS.green : (lv.type === 'antibonding' ? COLORS.red : COLORS.purple);
+        drawLevel(colW * 1.5, 90, lv.e, lv.label, lv.n, color);
+      });
+
+      // Dashed connection lines
+      ctxMO.strokeStyle = 'rgba(255,255,255,0.12)'; ctxMO.lineWidth = 1; ctxMO.setLineDash([3, 4]);
+      mol.leftLevels.forEach(lv => {
+        mol.moLevels.forEach(mlv => {
+          const y1 = oy + ph - lv.e * ph, y2 = oy + ph - mlv.e * ph;
+          ctxMO.beginPath(); ctxMO.moveTo(colW * 0.5 + 35, y1); ctxMO.lineTo(colW * 1.5 - 45, y2); ctxMO.stroke();
+        });
+      });
+      mol.rightLevels.forEach(lv => {
+        mol.moLevels.forEach(mlv => {
+          const y1 = oy + ph - lv.e * ph, y2 = oy + ph - mlv.e * ph;
+          ctxMO.beginPath(); ctxMO.moveTo(colW * 2.5 - 35, y1); ctxMO.lineTo(colW * 1.5 + 45, y2); ctxMO.stroke();
+        });
+      });
+      ctxMO.setLineDash([]);
+
+      // Bond order
+      ctxMO.fillStyle = COLORS.text; ctxMO.font = FONT; ctxMO.textAlign = 'center';
+      const bondText = mol.bondOrder === 0 ? 'Bond order = 0 (no bond forms!)' : 'Bond order = ' + mol.bondOrder;
+      ctxMO.fillText(bondText, WMO / 2, HMO - 12);
+      if (mol.bondOrder === 0) { ctxMO.fillStyle = COLORS.red; ctxMO.fillText(bondText, WMO / 2, HMO - 12); }
+
+      // Legend
+      ctxMO.font = FONT_SM; ctxMO.textAlign = 'left';
+      ctxMO.fillStyle = COLORS.green; ctxMO.fillText('Bonding', WMO - 150, oy + 14);
+      ctxMO.fillStyle = COLORS.red; ctxMO.fillText('Antibonding', WMO - 150, oy + 30);
+      ctxMO.fillStyle = COLORS.yellow; ctxMO.fillText('↑↓ = electrons', WMO - 150, oy + 46);
+    }
+
+    molSelect?.addEventListener('change', drawMODiagram);
+    drawMODiagram();
+  }
+
+  // ----- Ionization Energies -----
+  const cIon = document.getElementById('vis-ionization');
+  if (cIon) {
+    const { ctx: ctxIon, W: WIon, H: HIon } = setupCanvas(cIon);
+    const periodSelect = document.getElementById('ion-period');
+
+    // First ionization energies in eV (Z=1..54)
+    const ionData = [
+      13.60,24.59,5.39,9.32,8.30,11.26,14.53,13.62,17.42,21.56,
+      5.14,7.65,5.99,8.15,10.49,10.36,12.97,15.76,4.34,6.11,
+      6.56,6.83,6.75,6.77,7.43,7.90,7.88,7.64,7.73,9.39,
+      6.00,7.90,9.79,9.75,11.81,14.00,4.18,5.69,6.22,6.63,
+      6.76,7.09,7.28,7.36,7.46,8.34,7.58,8.99,5.79,7.34,
+      8.61,9.01,10.45,12.13
+    ];
+    const elSym = ['','H','He','Li','Be','B','C','N','O','F','Ne',
+      'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca',
+      'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',
+      'Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr',
+      'Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn',
+      'Sb','Te','I','Xe'];
+    const periodBounds = [[1,2],[3,10],[11,18],[19,36],[37,54]];
+    const periodColors = [COLORS.red, COLORS.orange, COLORS.green, COLORS.blue, COLORS.purple];
+
+    let hoverIon = -1;
+
+    function drawIonization() {
+      clearCanvas(ctxIon, WIon, HIon);
+      const selPeriod = parseInt(periodSelect?.value || 0);
+
+      const ox = 60, oy = 25, pw = WIon - 80, ph = HIon - 70;
+      const maxE = 26;
+
+      drawAxes(ctxIon, ox, oy, pw, ph, { xLabel: 'Atomic Number Z' });
+
+      // Y ticks
+      ctxIon.fillStyle = COLORS.textDim; ctxIon.font = FONT_SM; ctxIon.textAlign = 'right';
+      for (let e = 0; e <= 25; e += 5) {
+        const py = oy + ph - (e / maxE) * ph;
+        ctxIon.fillText(e.toString(), ox - 5, py + 4);
+        ctxIon.strokeStyle = COLORS.grid; ctxIon.lineWidth = 0.5;
+        ctxIon.beginPath(); ctxIon.moveTo(ox, py); ctxIon.lineTo(ox + pw, py); ctxIon.stroke();
+      }
+      // X ticks
+      ctxIon.textAlign = 'center';
+      for (let z = 10; z <= 50; z += 10) {
+        ctxIon.fillText(z.toString(), ox + (z / 54) * pw, oy + ph + 14);
+      }
+
+      ctxIon.save(); ctxIon.translate(15, oy + ph / 2); ctxIon.rotate(-Math.PI / 2);
+      ctxIon.fillStyle = COLORS.text; ctxIon.font = FONT_SM; ctxIon.textAlign = 'center';
+      ctxIon.fillText('Ionization Energy (eV)', 0, 0); ctxIon.restore();
+
+      // Connect points with line
+      ctxIon.strokeStyle = 'rgba(255,255,255,0.2)'; ctxIon.lineWidth = 1;
+      ctxIon.beginPath();
+      for (let z = 1; z <= ionData.length; z++) {
+        const px = ox + (z / 54) * pw;
+        const py = oy + ph - (ionData[z - 1] / maxE) * ph;
+        z === 1 ? ctxIon.moveTo(px, py) : ctxIon.lineTo(px, py);
+      }
+      ctxIon.stroke();
+
+      // Draw data points colored by period
+      for (let z = 1; z <= ionData.length; z++) {
+        let pIdx = -1;
+        for (let p = 0; p < periodBounds.length; p++) {
+          if (z >= periodBounds[p][0] && z <= periodBounds[p][1]) { pIdx = p; break; }
+        }
+        const highlight = selPeriod === 0 || selPeriod === pIdx + 1;
+        const px = ox + (z / 54) * pw;
+        const py = oy + ph - (ionData[z - 1] / maxE) * ph;
+
+        ctxIon.globalAlpha = highlight ? 1.0 : 0.2;
+        ctxIon.fillStyle = pIdx >= 0 ? periodColors[pIdx] : COLORS.textDim;
+        ctxIon.beginPath(); ctxIon.arc(px, py, 4, 0, 2 * Math.PI); ctxIon.fill();
+
+        // Label noble gases and alkali metals
+        const nobles = [2,10,18,36,54];
+        const alkalis = [1,3,11,19,37];
+        if (nobles.includes(z) || alkalis.includes(z)) {
+          ctxIon.fillStyle = highlight ? COLORS.text : 'rgba(255,255,255,0.15)';
+          ctxIon.font = '10px Inter, system-ui, sans-serif';
+          ctxIon.textAlign = 'center';
+          ctxIon.fillText(elSym[z], px, py - 8);
+        }
+        ctxIon.globalAlpha = 1.0;
+      }
+
+      // Hover info
+      if (hoverIon >= 1 && hoverIon <= ionData.length) {
+        const z = hoverIon;
+        const px = ox + (z / 54) * pw;
+        const py = oy + ph - (ionData[z - 1] / maxE) * ph;
+        ctxIon.fillStyle = COLORS.yellow;
+        ctxIon.beginPath(); ctxIon.arc(px, py, 6, 0, 2 * Math.PI); ctxIon.fill();
+        ctxIon.fillStyle = COLORS.text; ctxIon.font = FONT; ctxIon.textAlign = 'center';
+        ctxIon.fillText(elSym[z] + ' (Z=' + z + '): ' + ionData[z - 1].toFixed(2) + ' eV', ox + pw / 2, oy + ph + 38);
+      }
+
+      // Legend
+      ctxIon.font = FONT_SM; ctxIon.textAlign = 'left';
+      periodBounds.forEach((pb, i) => {
+        ctxIon.fillStyle = periodColors[i];
+        ctxIon.globalAlpha = selPeriod === 0 || selPeriod === i + 1 ? 1 : 0.3;
+        ctxIon.fillText('Period ' + (i + 1), ox + pw - 80, oy + 14 + i * 14);
+        ctxIon.globalAlpha = 1;
+      });
+
+      ctxIon.fillStyle = COLORS.text; ctxIon.font = FONT_LG; ctxIon.textAlign = 'left';
+      ctxIon.fillText('First Ionization Energies', ox + 5, oy + 14);
+    }
+
+    cIon.addEventListener('mousemove', (e) => {
+      const rect = cIon.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const ox = 60, pw = WIon - 80;
+      hoverIon = Math.round((mx - ox) / pw * 54);
+      drawIonization();
+    });
+    cIon.addEventListener('mouseleave', () => { hoverIon = -1; drawIonization(); });
+    periodSelect?.addEventListener('change', drawIonization);
+    drawIonization();
+  }
+
+  // ----- Band Filling in 3rd-Row Metals -----
+  const cBF3 = document.getElementById('vis-band-filling-3rd');
+  if (cBF3) {
+    const { ctx: ctxBF3, W: WBF3, H: HBF3 } = setupCanvas(cBF3);
+    const bf3Select = document.getElementById('bf3-element');
+
+    const elemData = {
+      'Na': { name: 'Na', config: '[Ne] 3s¹', valence: 1, total: 8, fill3s: 0.5, fill3p: 0 },
+      'Mg': { name: 'Mg', config: '[Ne] 3s²', valence: 2, total: 8, fill3s: 1.0, fill3p: 0.15 },
+      'Al': { name: 'Al', config: '[Ne] 3s² 3p¹', valence: 3, total: 8, fill3s: 1.0, fill3p: 0.35 },
+      'Si': { name: 'Si', config: '[Ne] 3s² 3p²', valence: 4, total: 8, fill3s: 1.0, fill3p: 0.5 },
+    };
+
+    function drawBandFilling3rd() {
+      clearCanvas(ctxBF3, WBF3, HBF3);
+      const elem = elemData[bf3Select?.value || 'Na'];
+
+      const ox = 80, pw = WBF3 - 160;
+      const bandH = 50, gap = 15;
+
+      // Band structure: 1s, 2s/2p, 3s/3p, 4s/3d/4p (from bottom to top)
+      const bands = [
+        { label: '1s band', y: HBF3 - 60, fill: 1.0, color: COLORS.textDim, cap: 2 },
+        { label: '2s/2p band', y: HBF3 - 60 - bandH - gap, fill: 1.0, color: COLORS.blue, cap: 8 },
+        { label: '3s/3p band', y: HBF3 - 60 - 2 * (bandH + gap), fill: (elem.valence) / elem.total, color: COLORS.green, cap: 8 },
+        { label: '4s/3d/4p band', y: HBF3 - 60 - 3 * (bandH + gap), fill: 0, color: COLORS.orange, cap: 18 },
+      ];
+
+      bands.forEach((band, idx) => {
+        const y = band.y - bandH;
+
+        // Band background
+        ctxBF3.fillStyle = 'rgba(255,255,255,0.04)';
+        ctxBF3.fillRect(ox, y, pw, bandH);
+        ctxBF3.strokeStyle = 'rgba(255,255,255,0.15)'; ctxBF3.lineWidth = 1;
+        ctxBF3.strokeRect(ox, y, pw, bandH);
+
+        // Fill
+        if (band.fill > 0) {
+          ctxBF3.fillStyle = band.color; ctxBF3.globalAlpha = 0.3;
+          ctxBF3.fillRect(ox, y + bandH * (1 - band.fill), pw, bandH * band.fill);
+          ctxBF3.globalAlpha = 1;
+        }
+
+        // Label
+        ctxBF3.fillStyle = band.color; ctxBF3.font = FONT_SM; ctxBF3.textAlign = 'right';
+        ctxBF3.fillText(band.label, ox - 8, y + bandH / 2 + 4);
+
+        // Capacity label
+        ctxBF3.fillStyle = COLORS.textDim; ctxBF3.textAlign = 'left';
+        ctxBF3.fillText(band.cap + ' states', ox + pw + 8, y + bandH / 2 + 4);
+      });
+
+      // Fermi level
+      const fermiY = bands[2].y - bandH * bands[2].fill;
+      ctxBF3.strokeStyle = COLORS.yellow; ctxBF3.lineWidth = 2; ctxBF3.setLineDash([6, 4]);
+      ctxBF3.beginPath(); ctxBF3.moveTo(ox - 5, fermiY); ctxBF3.lineTo(ox + pw + 5, fermiY); ctxBF3.stroke();
+      ctxBF3.setLineDash([]);
+      ctxBF3.fillStyle = COLORS.yellow; ctxBF3.font = FONT; ctxBF3.textAlign = 'left';
+      ctxBF3.fillText('εF', ox + pw + 8, fermiY + 5);
+
+      // Band gaps
+      for (let i = 0; i < bands.length - 1; i++) {
+        const gapTop = bands[i + 1].y;
+        const gapBot = bands[i].y - bandH;
+        if (i < 2) { // show gap label for lower bands
+          ctxBF3.fillStyle = COLORS.textDim; ctxBF3.font = '9px Inter, system-ui, sans-serif'; ctxBF3.textAlign = 'center';
+          ctxBF3.fillText('gap', ox + pw / 2, (gapTop + gapBot) / 2 + 3);
+        }
+      }
+
+      // 3s/3p overlap indication
+      if (elem.valence >= 2) {
+        const band3 = bands[2];
+        const overlapY = band3.y - bandH * 0.5;
+        ctxBF3.strokeStyle = COLORS.textDim; ctxBF3.lineWidth = 1; ctxBF3.setLineDash([2, 3]);
+        ctxBF3.beginPath(); ctxBF3.moveTo(ox, overlapY); ctxBF3.lineTo(ox + pw, overlapY); ctxBF3.stroke();
+        ctxBF3.setLineDash([]);
+        ctxBF3.fillStyle = COLORS.textDim; ctxBF3.font = '9px Inter, system-ui, sans-serif'; ctxBF3.textAlign = 'right';
+        ctxBF3.fillText('3s top / 3p bottom overlap', ox + pw - 5, overlapY - 4);
+      }
+
+      // Element info
+      ctxBF3.fillStyle = COLORS.text; ctxBF3.font = FONT_LG; ctxBF3.textAlign = 'left';
+      ctxBF3.fillText(elem.name + ': ' + elem.config, ox, 22);
+      ctxBF3.fillStyle = COLORS.textDim; ctxBF3.font = FONT;
+      ctxBF3.fillText(elem.valence + ' valence electrons in 3s/3p band (' + (elem.valence) + '/' + elem.total + ' filled)', ox, 40);
+
+      // Conductor/semiconductor classification
+      const isConductor = elem.fill3p < 0.5 || elem.fill3s < 1.0;
+      ctxBF3.fillStyle = isConductor ? COLORS.green : COLORS.orange;
+      ctxBF3.font = FONT;
+      const classLabel = elem.name === 'Si' ? 'SEMICONDUCTOR — half-filled band, prefers covalent bonds' : 'CONDUCTOR — partially filled band';
+      ctxBF3.fillText(classLabel, ox, HBF3 - 15);
+    }
+
+    bf3Select?.addEventListener('change', drawBandFilling3rd);
+    drawBandFilling3rd();
+  }
+
   const c = document.getElementById('vis-bands');
-  if (!c) return;
+  if (c) {
   const { ctx, W, H } = setupCanvas(c);
 
   const tempSlider = document.getElementById('band-temp');
@@ -7915,6 +8433,7 @@ function initCh14Vis() {
   tempSlider?.addEventListener('input', draw);
   gapSlider?.addEventListener('input', draw);
   draw();
+  }
 
   // ----- Diode I-V Characteristic -----
   const cIV = document.getElementById('vis-iv-curve');
@@ -8245,11 +8764,11 @@ function initCh14Vis() {
       ctxBS.font = FONT_SM;
       ctxBS.textAlign = 'center';
       if (N === 1) {
-        ctxBS.fillText('Single atom: discrete levels', WBS / 2, HIV - 8);
+        ctxBS.fillText('Single atom: discrete levels', WBS / 2, HBS - 8);
       } else if (N < 6) {
-        ctxBS.fillText('Each level splits into ' + N + ' closely-spaced levels', WBS / 2, HIV - 8);
+        ctxBS.fillText('Each level splits into ' + N + ' closely-spaced levels', WBS / 2, HBS - 8);
       } else {
-        ctxBS.fillText('Levels merge into quasi-continuous bands (N = ' + N + ')', WBS / 2, HIV - 8);
+        ctxBS.fillText('Levels merge into quasi-continuous bands (N = ' + N + ')', WBS / 2, HBS - 8);
       }
 
       document.getElementById('band-n-atoms-val')?.replaceChildren(document.createTextNode(N.toString()));

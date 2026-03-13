@@ -59,11 +59,14 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>To understand the periodic table, we need more than Hund's rule. We have to go beyond the hydrogenic atom spectrum and understand how the electron screening moves the energy levels up and down. It turns out to be very complicated. The energy levels as a function of $Z$ look like:</p>
 
-<figure>
-<img src="images/14-Semiconductors_p3_img0.png" alt="Orbital energies vs atomic number (realistic)">
-<img src="images/14-Semiconductors_p3_img1.png" alt="Orbital energies vs atomic number (cartoon)">
-<figcaption>Figure 2. Energies of orbitals as a function of atomic number, including electron screening effects. Left is more realistic, from an old book, and right is more of a cartoon. Note that the $3d$ orbitals have energies above the $4s$ orbitals around $Z = 19$ (potassium).</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Orbital Energy Levels vs Atomic Number</h4>
+<canvas id="vis-orbital-energies" width="700" height="400"></canvas>
+<div class="controls">
+<label>Highlight Z: <input type="range" id="orbital-z" min="1" max="86" step="1" value="14"><span id="orbital-z-val">14 (Si)</span></label>
+</div>
+<figcaption>Figure 2. Energies of orbitals as a function of atomic number, including electron screening effects. Note that the $3d$ orbitals have energies above the $4s$ orbitals around $Z = 19$ (potassium). Drag the slider to highlight any element.</figcaption>
+</div>
 
 <p>We see a few things from this plot. First of all, there is always a large gap between the $p$ orbitals and the $s$ orbitals in the shell above it. This gap is very important. It makes the elements with filled $p$ orbitals and no extra electrons very stable. Such elements are called the <span class="tooltip-trigger">noble gases<span class="tooltip-content">Elements with completely filled $p$ orbitals (He, Ne, Ar, Kr, Xe, Rn). They are extremely stable and chemically inert.</span></span> and sit at the far right of the periodic table. Note that the noble gases do not have all the orbitals filled for a given $n$, just all the $p$ orbitals filled for a given $n$.</p>
 
@@ -97,11 +100,14 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>The same thing happens when we bring two atoms together. Consider two hydrogen atoms. Each separately has two $1s$ orbitals (the two spin states) with energies $\epsilon_0$. When we bring them together, two states get higher in energy and two get lower in energy, so their new energies are $\epsilon_\pm = \epsilon_0 \pm \Delta$ just like in 1D quantum mechanics. We call the lower energy states the <span class="tooltip-trigger">bonding orbitals<span class="tooltip-content">Molecular orbitals formed from the symmetric combination of atomic orbitals. They have lower energy than the isolated atomic orbitals.</span></span> and the higher energy states the <span class="tooltip-trigger">antibonding orbitals<span class="tooltip-content">Molecular orbitals formed from the antisymmetric combination of atomic orbitals. They have higher energy than the isolated atomic orbitals.</span></span>. This idea of constructing orbitals for the molecules by taking linear combinations of the atomic orbitals is called <span class="tooltip-trigger">molecular orbital theory<span class="tooltip-content">A method for determining the electronic structure of molecules by combining atomic orbitals into molecular bonding and antibonding orbitals.</span></span>. It works pretty well and can explain a lot of chemistry.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p5_img1.png" alt="H2 molecular orbitals">
-<img src="images/14-Semiconductors_p5_img2.png" alt="HF molecular orbitals">
-<figcaption>Figure 5. Left shows $\text{H}_2$. When the two H are apart, each has one electron in a $1s$ orbital. When they are close, the orbitals combine into a bonding ($\sigma_{1s}$) and antibonding ($\sigma^*_{1s}$) orbital. The two electrons go into the bonding orbital since it has lower energy. Right shows HF: when different elements bind, the molecular orbitals are asymmetric combinations of the two atomic orbitals.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Molecular Orbital Diagrams</h4>
+<canvas id="vis-mo-diagram" width="700" height="380"></canvas>
+<div class="controls">
+<label>Molecule: <select id="mo-molecule"><option value="H2">H₂ (symmetric)</option><option value="HF">HF (asymmetric)</option><option value="He2">He₂ (no bond)</option><option value="N2">N₂ (triple bond)</option></select></label>
+</div>
+<figcaption>Figure 5. Molecular orbital energy diagram. Atomic orbitals combine into bonding (lower energy, $\sigma$) and antibonding (higher energy, $\sigma^*$) molecular orbitals. Electrons fill from the bottom up. Select different molecules to compare.</figcaption>
+</div>
 
 <p>So for two H atoms, there are 2 total electrons and the energy is lowered if both electrons are shared in the bonding orbitals. This is a <span class="tooltip-trigger">covalent bond<span class="tooltip-content">A chemical bond formed by the sharing of electrons between atoms in bonding molecular orbitals.</span></span>. On the other hand, if we bring two helium atoms together, with a total of 4 electrons, the two bonding orbitals would get filled with two electrons, but then the other two electrons must go into the antibonding orbitals. This is not energetically favorable, so it doesn't happen: He doesn't bond with itself.</p>
 
@@ -116,10 +122,14 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>When different elements are brought together, the eigenstates are again linear combinations $\psi_+ \sim c_1\psi_1 + c_2\psi_2$ and $\psi_- = c_1\psi_1 - c_2\psi_2$ but the linear combinations are not symmetric ($c_1 \neq c_2$). The bonding orbital will be more like the lower-energy atomic orbital, and the antibonding orbital will be more like the higher-energy atomic orbital (see the right diagram in Fig. 5). Consequently the electrons will be localized close to the element with the lower-energy orbital.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p6_img0.png" alt="Ionization energies of elements">
-<figcaption>Figure 6. Ionization energies of the various elements.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Ionization Energies</h4>
+<canvas id="vis-ionization" width="700" height="350"></canvas>
+<div class="controls">
+<label>Highlight period: <select id="ion-period"><option value="0">All</option><option value="1">Period 1</option><option value="2">Period 2</option><option value="3">Period 3</option><option value="4">Period 4</option><option value="5">Period 5</option></select></label>
+</div>
+<figcaption>Figure 6. First ionization energies of the elements. Noble gases (He, Ne, Ar, etc.) have the highest values; alkali metals (Li, Na, K, etc.) the lowest. Hover over points for element details.</figcaption>
+</div>
 
 <p>We see from this figure that the noble gases have the highest ionization energies so they are the most stable. Elements with one electron above a filled $p$ orbital, namely those in the first column of the periodic table (H and the Alkali metals, Li, Na, K, Rb) have low ionization energies: they want to give up an electron. The valence electrons are very weakly bound to these elements. On the other hand, elements that are one electron short of a filled $p$ orbital (the halogens, F, Cl, Br, I) would become very stable if an electron were added. Their valence electrons are tightly bound and will not be given up easily. These have high ionization energies (but not as high as the noble gases which really really do not want to give up electrons).</p>
 
@@ -186,10 +196,14 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>For elements above hydrogen, the $2p$ and $2s$ orbitals are not degenerate even for a single molecule (recall Fig. 2). Thus, when the orbitals combine, the center of the bands are offset but the bands may overlap. For example, in sodium: the bands look like</p>
 
-<figure>
-<img src="images/14-Semiconductors_p9_img1.png" alt="Bands of metals on the 3rd row">
-<figcaption>Figure 10. Bands of metals on the 3rd row of the periodic table. In Na the 3s/3p band is 1/8 filled. In Mg it is 1/4 filled and in Al it is 3/8 filled. In all three metals, the Fermi energy is within a band (not in a band gap).</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Band Filling in 3rd-Row Metals</h4>
+<canvas id="vis-band-filling-3rd" width="700" height="400"></canvas>
+<div class="controls">
+<label>Element: <select id="bf3-element"><option value="Na">Na (1 valence e⁻)</option><option value="Mg">Mg (2 valence e⁻)</option><option value="Al">Al (3 valence e⁻)</option><option value="Si">Si (4 valence e⁻)</option></select></label>
+</div>
+<figcaption>Figure 10. Bands of metals on the 3rd row. Each atom contributes valence electrons that fill the bands from the bottom. The Fermi level sits within a band for conductors (Na, Mg, Al) but at a band edge for Si.</figcaption>
+</div>
 
 <p>Sodium is Na $= 1s^2 2s^2 2p^6 3s^1$, so each atom has one valence electron in the $3s$ orbital. When the bands form, the $N$ valence electrons from the $3s^1$ orbitals get distributed over the $N$ energy levels of the bonding band. Thus the $3s$ band is half filled.</p>
 
