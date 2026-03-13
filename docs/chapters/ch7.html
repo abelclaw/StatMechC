@@ -58,10 +58,14 @@ $$\mathcal{Z} = \sum_{\substack{\text{microstates } k \\ \text{with same } V}} e
 
 <p>In order to fix the temperature, it is a useful conceptual trick to imagine our system of interest in thermal contact with a heat reservoir. This means the system and heat reservoir can exchange energy through heat, but no work can be done by the system on the reservoir or vice versa. The point of the reservoir is to make concrete the idea of fixing the temperature and letting the energy fluctuate.</p>
 
-<figure>
-<img src="images/7-Ensembles_p2_img0.png" alt="System in thermal contact with a heat reservoir">
-<figcaption>Figure 1. When a system is in thermal contact with a heat reservoir, its temperature is fixed. Its energy fluctuates around its average value.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: System + Heat Reservoir</h4>
+<canvas id="vis-reservoir" width="600" height="300"></canvas>
+<div class="controls">
+<label>Reservoir T: <input type="range" id="res-temp" min="0.5" max="5" step="0.1" value="2.0"><span id="res-temp-val">2.0</span></label>
+</div>
+<figcaption>A small system in thermal contact with a large reservoir. The system's energy fluctuates while its temperature is fixed by the reservoir. The energy distribution follows the Boltzmann distribution P(E) ∝ e<sup>−E/kT</sup>.</figcaption>
+</div>
 
 <p>We do not allow particles to go from the system to the reservoir, only energy. The number of particles in the system can be small -- we can have a single atom even -- it won't matter. This is important because the canonical ensemble will allow us to discuss systems with a limited number of quantum states, in contrast to the microcanonical ensemble where we really did need to expand at large $N$ to make progress. Although the system can be small, the reservoir must be large, so that it has much much more energy than the system. But this is not a constraint, just a conceptual trick, since the reservoir does not actually need to exist. As we will see, the actual computation of the partition function for the canonical ensemble does not involve the reservoir at all.</p>
 
@@ -372,10 +376,15 @@ $$0 = \frac{\partial S_1(E)}{\partial E} + \frac{\partial S_2(E_{\text{tot}} - E
 <span class="eq-number">(41)</span>
 </div>
 
-<figure>
-<img src="images/7-Ensembles_p9_img0.png" alt="Two systems exchanging volume">
-<figcaption>Figure 2. An ensemble where volume is allowed to vary.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Volume Exchange (Gibbs Ensemble)</h4>
+<canvas id="vis-volume-exchange" width="600" height="280"></canvas>
+<div class="controls">
+<label>Total volume: <input type="range" id="vex-vtot" min="2" max="10" step="0.1" value="6"><span id="vex-vtot-val">6.0</span></label>
+<label>Temperature T: <input type="range" id="vex-temp" min="0.5" max="5" step="0.1" value="2.0"><span id="vex-temp-val">2.0</span></label>
+</div>
+<figcaption>Two systems can exchange both energy and volume. Equilibrium requires equal temperatures (∂S/∂E) and equal pressures (∂S/∂V).</figcaption>
+</div>
 
 <p>Now let's consider an ensemble that lets $V$ vary. In the Gibbs ensemble you have two systems in equilibrium that can exchange energy and volume. The total volume is conserved. The entropy is the sum of the entropy of the two sides, and the total volume is fixed: $V_1 + V_2 = V_{\text{tot}}$. Maximizing entropy gives that the temperature $\frac{1}{T} = \frac{\partial S}{\partial E}$ is the same on both sides, and that</p>
 
@@ -545,10 +554,16 @@ $$n = \frac{1}{\lambda^3} \exp\left(\frac{\mu}{k_BT}\right)$$
 
 <p>This says that the number density is related exponentially to the chemical potential. As the system gets denser and denser, the chemical potential rises towards 0. When the chemical potential is negative, the gas is not too crowded and can be considered dilute.</p>
 
-<figure>
-<img src="images/7-Ensembles_p14_img0.png" alt="Chemical potential gradient">
-<figcaption>Figure 3. Chemical potential is higher in more dense regions. It is like potential energy for particle number. Particles move from high to low $\mu$, until the $\mu$'s are all equal.</figcaption>
-</figure>
+<!-- INTERACTIVE: Chemical Potential Gradient -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">⚗️</span> Interactive: Chemical Potential and Particle Flow</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-chempot" width="600" height="300"></canvas></div>
+  <div class="vis-controls">
+    <button id="chempot-start">Start</button>
+    <button id="chempot-reset">Reset</button>
+    <span style="color:var(--text-muted)">Particles flow from high $\mu$ to low $\mu$ until equilibrium</span>
+  </div>
+</div>
 
 <h3>7.7.2 Ground-State Energy</h3>
 

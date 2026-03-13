@@ -38,7 +38,16 @@
 
 <p>The model of a solid we will use is called a <span class="tooltip-trigger">harmonic solid<span class="tooltip-content">A model where atoms in a crystal lattice are connected by springs (harmonic potentials). The normal modes of this system are independent oscillators whose quanta are phonons.</span></span>. It is envisioned as a lattice of nuclei connected by covalent bonds which act as springs.</p>
 
-<figure><img src="images/11-PhononsPhotons_p2_img0.png" alt="Harmonic solid model with atoms connected by springs"><figcaption>Figure 1. A harmonic solid treats atoms as connected by springs.</figcaption></figure>
+<!-- INTERACTIVE: Phonon Wave in 1D Chain -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔊</span> Interactive: Phonon Modes in a 1D Chain</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-phonon-chain" width="600" height="250"></canvas></div>
+  <div class="vis-controls">
+    <label>Mode $n$: <input type="range" id="phonon-mode" min="1" max="10" step="1" value="1"> <span class="value-display" id="phonon-mode-val">1</span></label>
+    <label>Amplitude: <input type="range" id="phonon-amp" min="0.1" max="1.0" step="0.05" value="0.5"> <span class="value-display" id="phonon-amp-val">0.50</span></label>
+    <button id="phonon-start">Animate</button>
+  </div>
+</div>
 
 <p>If you knock one side of the solid, a sound wave will propagate through by vibrating each successive molecule. The quanta of sound-wave excitations in solids are called phonons.</p>
 
@@ -380,7 +389,7 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <p>This intensity has units of power per area per wavelength. It describes the wavelength-dependence of the emitted power from a blackbody, known as the <strong>blackbody spectrum</strong>:</p>
 
-<figure><img src="images/11-PhononsPhotons_p11_img0.png" alt="Blackbody spectrum from the Planck distribution"><figcaption>Figure 4. Blackbody spectrum from the Planck distribution. Blue dots are the maxima: $\lambda_\text{max} = 0.201\,\frac{hc}{k_BT}$.</figcaption></figure>
+<!-- Static image removed: interactive blackbody widget is directly below -->
 
 <!-- INTERACTIVE: Blackbody spectrum -->
 <div class="visualization">

@@ -86,10 +86,14 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>Recall from quantum mechanics that if we have a potential well, there will be a bound state with some energy $\epsilon_0$ and wavefunction $\psi(x)$. If we put two of these wells next to each other, then instead of two states with energy $\epsilon_0$, one state will have energy $\epsilon_- = \epsilon_0 - \Delta$ and the other energy $\epsilon_+ = \epsilon_0 + \Delta$. The state with lower energy is the symmetric combination $\psi_+ = \frac{1}{\sqrt{2}}(\psi_1 + \psi_2)$ and the state with high energy is the antisymmetric combination $\psi_- = \frac{1}{\sqrt{2}}(\psi_1 - \psi_2)$. This is a very generic feature of quantum mechanical systems: when two systems are brought together, their energies will split, with some going lower and some going higher.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p5_img0.png" alt="Two potential wells brought together">
-<figcaption>Figure 4. When two 1D systems are brought together, the energy eigenstates are approximately the sum and difference of the two separate energy eigenstates.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Double Well Splitting</h4>
+<canvas id="vis-well-splitting" width="600" height="300"></canvas>
+<div class="controls">
+<label>Well separation: <input type="range" id="well-sep" min="10" max="100" step="1" value="80"><span id="well-sep-val">80</span></label>
+</div>
+<figcaption>Bring two potential wells together. As they approach, the degenerate energy levels split into bonding ($\psi_+$, lower) and antibonding ($\psi_-$, higher) states with splitting $2\Delta$.</figcaption>
+</div>
 
 <p>The same thing happens when we bring two atoms together. Consider two hydrogen atoms. Each separately has two $1s$ orbitals (the two spin states) with energies $\epsilon_0$. When we bring them together, two states get higher in energy and two get lower in energy, so their new energies are $\epsilon_\pm = \epsilon_0 \pm \Delta$ just like in 1D quantum mechanics. We call the lower energy states the <span class="tooltip-trigger">bonding orbitals<span class="tooltip-content">Molecular orbitals formed from the symmetric combination of atomic orbitals. They have lower energy than the isolated atomic orbitals.</span></span> and the higher energy states the <span class="tooltip-trigger">antibonding orbitals<span class="tooltip-content">Molecular orbitals formed from the antisymmetric combination of atomic orbitals. They have higher energy than the isolated atomic orbitals.</span></span>. This idea of constructing orbitals for the molecules by taking linear combinations of the atomic orbitals is called <span class="tooltip-trigger">molecular orbital theory<span class="tooltip-content">A method for determining the electronic structure of molecules by combining atomic orbitals into molecular bonding and antibonding orbitals.</span></span>. It works pretty well and can explain a lot of chemistry.</p>
 
@@ -214,10 +218,15 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>Now that we understand the origin of real bands in actual elements, we can start classifying materials. First some more terminology. If the Fermi level is between two bands we call the band above it the <span class="tooltip-trigger">conduction band<span class="tooltip-content">The band of energy levels above the Fermi level (above the band gap). Electrons in the conduction band can move freely and carry current.</span></span> and the band below it the <span class="tooltip-trigger">valence band<span class="tooltip-content">The band of energy levels below the Fermi level (below the band gap). In semiconductors, the valence band is nearly fully occupied.</span></span>. The <span class="tooltip-trigger">bandgap<span class="tooltip-content">The energy difference between the top of the valence band and the bottom of the conduction band. It determines whether a material is a conductor, semiconductor, or insulator.</span></span> is the energy difference between the valence and conduction band. In a metal, the Fermi level is within a band, so the valence and conduction bands overlap. In an insulator there is a big bandgap. A semiconductor is somewhere between an insulator and a conductor: it has a bandgap, typically of order 1 eV.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p11_img0.png" alt="Metal, semiconductor, and insulator band structures">
-<figcaption>Figure 11. Metals have no bandgap, intrinsic semiconductors a small bandgap and insulators have a large bandgap.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Band Structure Comparison</h4>
+<canvas id="vis-band-compare" width="600" height="300"></canvas>
+<div class="controls">
+<label>Bandgap (eV): <input type="range" id="bc-gap" min="0" max="8" step="0.1" value="1.1"><span id="bc-gap-val">1.1</span></label>
+<label>Temperature (K): <input type="range" id="bc-temp" min="50" max="1000" step="10" value="300"><span id="bc-temp-val">300</span></label>
+</div>
+<figcaption>Metal (no gap), semiconductor (small gap ~1 eV), insulator (large gap). Adjust bandgap and temperature to see how the Fermi-Dirac distribution fills the bands.</figcaption>
+</div>
 
 <p>In <span class="tooltip-trigger">intrinsic semiconductors<span class="tooltip-content">A pure semiconductor without any dopants. The Fermi level sits in the middle of the bandgap and the number of electrons equals the number of holes.</span></span>, or insulators, the Fermi level is right in the center of the bandgap. This follows from charge conservation and the symmetry of the Fermi distribution. Charge conservation implies the same total number of electrons and holes (since electron-hole pairs come from real electrons being excited from the valence to conduction band). Recall that the Fermi distribution</p>
 
@@ -252,10 +261,14 @@ $$f\!\left(\epsilon_F + \tfrac{1}{2}\epsilon_{\text{bg}}\right) = \frac{1}{\exp\
 <span class="eq-number">(2)</span>
 </div>
 
-<figure>
-<img src="images/14-Semiconductors_p11_img1.png" alt="Occupation probability vs bandgap">
-<figcaption>Probability of finding an electron at the bottom of the conduction band as a function of bandgap energy.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Occupation vs Bandgap</h4>
+<canvas id="vis-occupation-bandgap" width="600" height="300"></canvas>
+<div class="controls">
+<label>Temperature: <input type="range" id="occgap-temp" min="100" max="1000" step="50" value="300"><span id="occgap-temp-val">300</span> K</label>
+</div>
+<figcaption>Probability of finding an electron at the bottom of the conduction band as a function of bandgap energy. Key materials (Si, GaAs, diamond, NaCl) are marked. Adjust temperature to see how thermal excitation changes.</figcaption>
+</div>
 
 <p>We see that this function is exponentially falling. For $\epsilon_{\text{bg}} = 1\;\text{eV}$, the base of the conduction band only has a $10^{-9}$ chance of being occupied. At $\epsilon_{\text{bg}} = 2\;\text{eV}$ the probability is already down to $10^{-18}$, and at $\epsilon_{\text{bg}} = 3\;\text{eV}$ it's down to $10^{-27}$. Considering there are of order $N_A \sim 10^{24}$ electrons around, we conclude that for a bandgap of order $\epsilon_{\text{bg}} \gtrsim 2.5\;\text{eV}$ a material will no longer conduct and become an insulator.</p>
 
@@ -310,10 +323,15 @@ $$n_e n_h = n_I^2 = 4\left(\frac{mk_B T}{2\pi\hbar^2}\right)^3 e^{-\frac{\epsilo
 
 <p>We can also dope silicon by adding some of the element on its left, aluminum: Al = [Ne]$3s^2 3p^1$. Aluminum has one fewer electron than silicon. Thus it provides new places for the electrons in Si to go. The energies of these new states are slightly above the valence band, so we call these states "acceptor" sites. For aluminum, the new acceptor sites are centered 57 meV above the valence band. Thus, Al-doped Si is also more conductive than pure silicon because electrons can move from the valence band into these new acceptor sites. Al-doped Si is called a <span class="tooltip-trigger">p-type semiconductor<span class="tooltip-content">A semiconductor doped with atoms that accept electrons, creating extra holes (e.g. aluminum in silicon). The majority carriers are positively charged holes.</span></span> because holes are positively charged.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p13_img0.png" alt="Doping changes band structure">
-<figcaption>Figure 12. Doping of semiconductors changes the band structure. Left: n-type (extra donor levels near conduction band). Right: p-type (extra acceptor levels near valence band).</figcaption>
-</figure>
+<!-- INTERACTIVE: Doping and Band Structure -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">💎</span> Interactive: Doping — n-type and p-type Semiconductors</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-doping" width="600" height="300"></canvas></div>
+  <div class="vis-controls">
+    <label>Doping type: <select id="doping-type"><option value="intrinsic">Intrinsic</option><option value="n-type">n-type (donor)</option><option value="p-type">p-type (acceptor)</option></select></label>
+    <label>Temperature $T/T_0$: <input type="range" id="doping-temp" min="0.1" max="3" step="0.05" value="1"> <span class="value-display" id="doping-temp-val">1.00</span></label>
+  </div>
+</div>
 
 <p>FYI, typical doping fractions range from 1 part per thousand to 1 part per billion.</p>
 
@@ -322,10 +340,15 @@ $$n_e n_h = n_I^2 = 4\left(\frac{mk_B T}{2\pi\hbar^2}\right)^3 e^{-\frac{\epsilo
 
 <p>Now it gets interesting. What happens if we put a p-type semiconductor next to an n-type one? The extra electrons from the P atoms will diffuse across the junction to find the Al atoms. Eventually, enough charge will be transferred that a substantial charge difference will build up, inhibiting further charge transfer. We call the accumulated voltage the <span class="tooltip-trigger">junction potential<span class="tooltip-content">The built-in voltage across a p-n junction, typically around 0.6 V for silicon. It arises from the diffusion of carriers across the junction.</span></span> and denote it by $V_{\text{junc}}$.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p14_img0.png" alt="p-n junction diagram">
-<figcaption>Figure 13. When p-type and n-type semiconductors are brought together, electrons move from the n side to the p side. Charge builds up in the interface forming a p-n junction.</figcaption>
-</figure>
+<!-- INTERACTIVE: p-n Junction -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔋</span> Interactive: p-n Junction</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-pn-junction" width="600" height="350"></canvas></div>
+  <div class="vis-controls">
+    <label>Applied voltage $V/V_T$: <input type="range" id="pn-voltage" min="-3" max="3" step="0.1" value="0"> <span class="value-display" id="pn-voltage-val">0.0</span></label>
+    <span style="color:var(--text-muted)">Positive = forward bias, negative = reverse bias</span>
+  </div>
+</div>
 
 <p>To be more quantitative, consider first the pure n-type or pure p-type semiconductor. On the n-type side, the donor (electron) concentrations are typically $n_e^{\text{n-type}} = 1.0 \times 10^{16}\;\text{cm}^{-3}$. Because of the law of mass action, Eq. (6), the concentration of holes on the n-type side is then $n_h^{\text{n-type}} = n_I^2/n_e^{\text{n-type}} = 2.2 \times 10^4\;\text{cm}^{-3}$ with $n_I = 1.5 \times 10^{10}\;\text{cm}^{-3}$ the intrinsic carrier concentration. On the p-type side, the acceptor (hole) concentrations are typically $n_h^{\text{p-type}} = 1.0 \times 10^{15}\;\text{cm}^{-3}$ and so $n_e^{\text{p-type}} = n_I^2/n_h^{\text{p-type}} = 2.2 \times 10^5\;\text{cm}^{-3}$.</p>
 

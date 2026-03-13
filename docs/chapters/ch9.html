@@ -162,10 +162,14 @@ $$L = \Delta\left(\frac{H}{N}\right)$$
 
 <p><strong>Solid to liquid (melting):</strong> $L_{\text{fuse}} > 0$. In general, the density change is small and slightly negative (most solids are denser than their liquids). So $\Delta(1/n) \gtrsim 0$ and $dP/dT$ is very large and positive: the solid/liquid phase boundary is steep and goes slightly to the right.</p>
 
-<figure>
-<img src="images/9-Phases_p7_img0.png" alt="Phase diagram for water">
-<figcaption>Figure 5. Phase diagram for water. Note the solid-liquid boundary goes up and to the left ($dP/dT < 0$), because ice is less dense than water.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Phase Diagram</h4>
+<canvas id="vis-water-phase" width="600" height="350"></canvas>
+<div class="controls">
+<label>Substance: <select id="wp-substance"><option value="water">Water (anomalous solid-liquid slope)</option><option value="co2">CO₂ (normal solid-liquid slope)</option></select></label>
+</div>
+<figcaption>Phase diagram showing solid, liquid, and gas regions. Water has an anomalous negative slope for the solid-liquid boundary because ice is less dense than water. Click anywhere to see the phase at that T, P.</figcaption>
+</div>
 
 <p>A well known exception is water. Water expands when it freezes due to the unusual importance of hydrogen bonding. The tetrahedral structure of solid ice makes it not particularly dense.</p>
 
@@ -219,10 +223,14 @@ $$\Delta T = \frac{N_s}{N_w}\frac{RT_0^2}{L}$$
 
 <p>Since $\Delta P < 0$ at fixed $T$, we have $\Delta T > 0$ at fixed $P$: the boiling point goes up.</p>
 
-<figure>
-<img src="images/9-Phases_p10_img0.png" alt="Phase boundary shift with salt">
-<figcaption>Figure 6. Black curve is the phase boundary for pure water, pink is for salt water. At 1 atm, the boiling point goes up and the freezing point goes down.</figcaption>
-</figure>
+<!-- INTERACTIVE: Colligative Properties -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🧂</span> Interactive: Colligative Properties — Boiling Point Elevation</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-colligative" width="600" height="350"></canvas></div>
+  <div class="vis-controls">
+    <label>Solute fraction $N_s/N_w$: <input type="range" id="col-frac" min="0" max="0.15" step="0.005" value="0"> <span class="value-display" id="col-frac-val">0.000</span></label>
+  </div>
+</div>
 
 <div class="info-box example">
 <div class="box-title">Example: Salting Water and Icy Sidewalks</div>
@@ -240,10 +248,14 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 
 <p>We know that $\left(\frac{\partial \mu}{\partial T}\right)_P = -S/N < 0$, so slopes are always negative. Since $S_{\text{solid}} < S_{\text{liquid}} < S_{\text{gas}}$, the gas has the steepest chemical potential curve. By the 3rd law of thermodynamics, the solid line starts off horizontal at $T = 0$.</p>
 
-<figure>
-<img src="images/9-Phases_p11_img0.png" alt="Chemical potential phase diagram for H2O">
-<figcaption>Figure 7. Phase diagram in the chemical potential/temperature plane for H$_2$O. Left shows the curves at some pressure $P$. Right shows the effect of increasing the pressure.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Chemical Potential Phase Diagram</h4>
+<canvas id="vis-chem-potential" width="600" height="320"></canvas>
+<div class="controls">
+<label>Pressure: <input type="range" id="chempot-pressure" min="0" max="100" step="1" value="50"><span id="chempot-pressure-val">50</span>%</label>
+</div>
+<figcaption>Phase diagram in the $\mu$–$T$ plane. Adjust pressure to see how gas, liquid, and solid chemical potential curves shift, changing the phase boundaries. The stable phase has the lowest $\mu$.</figcaption>
+</div>
 
 <p>When we change the pressure: $\left(\frac{\partial \mu}{\partial P}\right)_T = V/N = 1/n > 0$. The less dense the phase, the more its chemical potential changes. The gas curve shifts up the most. For water, the liquid is denser than the solid so its chemical potential changes less -- leading to a lower melting temperature at higher pressure.</p>
 
@@ -272,10 +284,15 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 
 <p><span class="tooltip-trigger">Paramagnetic<span class="tooltip-content">A material attracted to an applied magnetic field, typically with unpaired electrons free to align with the field</span></span> means that a material is attracted to an applied magnetic field. The opposite is <span class="tooltip-trigger">diamagnetic<span class="tooltip-content">A material repelled by an applied magnetic field</span></span>. A third type is <span class="tooltip-trigger">ferromagnetism<span class="tooltip-content">A material that can produce a coherent magnetic field on its own, like an iron refrigerator magnet</span></span>, whereby a material can produce a coherent magnetic field, as in an ordinary iron refrigerator magnet. If you heat an iron magnet above 1043 K it will lose its magnetism and become paramagnetic.</p>
 
-<figure>
-<img src="images/9-Phases_p12_img0.png" alt="Spin alignment in ferromagnetic transition">
-<figcaption>Figure 9. When a magnetic material is cooled, its spins spontaneously align as it enters the ferromagnetic phase.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Ferromagnetic Phase Transition</h4>
+<canvas id="vis-ferromagnet" width="600" height="300"></canvas>
+<div class="controls">
+<label>Temperature T/T<sub>c</sub>: <input type="range" id="ferro-temp" min="0.1" max="2.0" step="0.05" value="0.5"><span id="ferro-temp-val">0.50</span></label>
+<button id="ferro-randomize">Randomize Spins</button>
+</div>
+<figcaption>Below the Curie temperature T<sub>c</sub>, spins spontaneously align (ferromagnetic). Above T<sub>c</sub>, thermal fluctuations destroy the order (paramagnetic).</figcaption>
+</div>
 
 <p>In a crude model, each pair has energy $-\epsilon$ if they are aligned and $+\epsilon$ if they are not aligned. The difference between the fully aligned (ferromagnetic) state and disordered (paramagnetic) state is roughly $E = 2N\epsilon$. The disordered state has $\Omega = 2^N$ configurations and entropy $S = Nk_B\ln 2$. The free energies are:</p>
 
@@ -326,17 +343,25 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
 
 <p>At the critical point, $\frac{\partial P}{\partial v}\bigg|_T = 0$ and $\frac{\partial^2 P}{\partial v^2}\bigg|_T = 0$. In fact, all derivatives vanish: $\frac{\partial^n P}{\partial v^n}\bigg|_T = 0$. This means $P(v)$ is a non-analytic function at the critical point.</p>
 
-<figure>
-<img src="images/9-Phases_p15_img0.png" alt="TV diagram for water">
-<figcaption>Figure 11. TV diagram for water.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: TV Diagram</h4>
+<canvas id="vis-tv-diagram" width="600" height="350"></canvas>
+<div class="controls">
+<label>Pressure: <input type="range" id="tv-pressure" min="1" max="100" step="1" value="50"><span id="tv-pressure-val">50</span>%</label>
+</div>
+<figcaption>Temperature–Volume diagram for water. At a given pressure, the liquid–gas coexistence region shrinks to a point at the critical point. Adjust pressure to see how the coexistence dome changes.</figcaption>
+</div>
 
 <p>Because all the derivatives vanish, all dimensionful physical quantities we use to characterize a material either vanish or are infinite at the critical point:</p>
 
-<figure>
-<img src="images/9-Phases_p15_img1.png" alt="Heat capacity near critical point">
-<figcaption>Figure 12. Heat capacity of propane near the critical point, showing the singularity.</figcaption>
-</figure>
+<!-- INTERACTIVE: Heat Capacity Near Critical Point -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🌡️</span> Interactive: Heat Capacity Near Critical Point</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-cp-critical" width="600" height="350"></canvas></div>
+  <div class="vis-controls">
+    <label>$T/T_c$ range: <input type="range" id="cpc-range" min="0.5" max="2" step="0.01" value="1.5"> <span class="value-display" id="cpc-range-val">1.50</span></label>
+  </div>
+</div>
 
 <p>We say that the theory near the critical point is <span class="tooltip-trigger">scale-invariant<span class="tooltip-content">Having no characteristic scale. At a critical point, all dimensionful quantities vanish or diverge, and the system looks the same at all length scales.</span></span> or conformal. Choosing reduced units:</p>
 
@@ -347,10 +372,21 @@ $$\hat{T} = \frac{T}{T_c},\qquad \hat{P} = \frac{P}{P_c},\qquad \hat{v} = \frac{
 
 <p>all thermodynamic quantities become independent of any other property of the material.</p>
 
-<figure>
-<img src="images/9-Phases_p16_img0.png" alt="Law of corresponding states">
-<figcaption>Figure 13. Reduced temperature versus reduced number density for a variety of substances at saturation. Adapted from E.A. Guggenheim, J. Chem. Phys. 13, 253 (1945).</figcaption>
-</figure>
+<!-- INTERACTIVE: Law of Corresponding States -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔬</span> Interactive: Law of Corresponding States</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-corresponding" width="600" height="400"></canvas></div>
+  <div class="vis-controls">
+    <label><input type="checkbox" id="cs-ne" checked> Ne</label>
+    <label><input type="checkbox" id="cs-ar" checked> Ar</label>
+    <label><input type="checkbox" id="cs-kr" checked> Kr</label>
+    <label><input type="checkbox" id="cs-xe" checked> Xe</label>
+    <label><input type="checkbox" id="cs-n2" checked> N₂</label>
+    <label><input type="checkbox" id="cs-o2" checked> O₂</label>
+    <label><input type="checkbox" id="cs-co2"> CO₂</label>
+    <label><input type="checkbox" id="cs-h2o"> H₂O</label>
+  </div>
+</div>
 
 <p>Remarkably, in the vicinity of the critical point, the $\hat{T}$-$\hat{n}$ phase boundaries all have exactly the same shape! This powerful observation is known as the <span class="tooltip-trigger">law of corresponding states<span class="tooltip-content">Near their critical points, all simple fluids have the same thermodynamic behavior when expressed in reduced units</span></span>.</p>
 

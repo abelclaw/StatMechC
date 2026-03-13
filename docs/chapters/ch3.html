@@ -30,10 +30,14 @@
 
 <p>Let's treat the molecules in a gas as hard sphere particles of radius $R$. If you follow one sphere, it will bounce off another sphere after travelling, on average, a distance $\ell$ (the mean free path). The angle $\theta$ it deflects will depend on the <span class="tooltip-trigger">impact parameter<span class="tooltip-content">The perpendicular distance between the centers of two colliding particles, measured relative to the direction of motion. It determines the scattering angle.</span></span> $b$, defined as the distance between the sphere's centers perpendicular to the direction of motion.</p>
 
-<figure>
-<img src="images/3-Equilibrium_p2_img0.png" alt="Geometry of hard sphere collision showing impact parameter b, radius R, and scattering angle theta">
-<figcaption>The geometry of a hard-sphere collision. The impact parameter $b$, sphere radius $R$, and scattering angle $\theta$ are related by $b/2 = R\sin(\theta/2)$.</figcaption>
-</figure>
+<!-- INTERACTIVE: Hard Sphere Collision Geometry -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">⚾</span> Interactive: Hard Sphere Collision Geometry</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-hardsphere" width="600" height="300"></canvas></div>
+  <div class="vis-controls">
+    <label>Impact parameter $b/2R$: <input type="range" id="hs-impact" min="0" max="1" step="0.01" value="0.5"> <span class="value-display" id="hs-impact-val">0.50</span></label>
+  </div>
+</div>
 
 <p>By working out the geometry, we see that $b$, $R$ and $\theta$ are related by:</p>
 <div class="equation">
@@ -41,10 +45,15 @@ $$\frac{b}{2} = R\sin\frac{\theta}{2}$$
 <span class="eq-number">(2)</span>
 </div>
 
-<figure>
-<img src="images/3-Equilibrium_p2_img1.png" alt="Three-ball collision showing how small change in impact parameter propagates">
-<figcaption>Figure 1. The green ball hits the red ball at an impact parameter $b_1$, scatters at an angle $\theta_1$, then hits the blue ball at impact parameter $b_2$. A small change $\Delta b_1$ in $b_1$ leads to a change $\Delta\theta_1$ in $\theta_1$ and a change $\Delta b_2$ in $b_2$.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Chaos in Collisions</h4>
+<canvas id="vis-chaos-balls" width="600" height="300"></canvas>
+<div class="controls">
+<label>Δb₁ perturbation: <input type="range" id="chaos-perturb" min="0" max="5" step="0.1" value="0"><span id="chaos-perturb-val">0.0</span></label>
+<button id="chaos-reset">Reset</button>
+</div>
+<figcaption>The green ball hits the red ball at impact parameter $b_1$, scatters at angle $\theta_1$, then hits the blue ball. Increase $\Delta b_1$ to see how a tiny change propagates through successive collisions.</figcaption>
+</div>
 
 <p>Let us follow one ball. It first collides with an impact parameter $b_1$ deflecting at an angle $\theta_1$, then hits another ball, with impact parameter $b_2$ at angle $\theta_2$ and so on. We are interested in how the trajectory of this molecule changes upon a really weak force. If the force changes the impact parameter of the first collision by some small $\Delta b_1$, then after the first collision, the scattering angle will change by $\Delta\theta_1$ where, by Taylor expanding around $\theta_1$ we get</p>
 <div class="equation">
@@ -184,10 +193,16 @@ $$\langle\vec{v}_k^{\,2}\rangle(t) = \int d^{3N}q\, d^{3N}p\, \frac{\vec{p}_k^{\
 
 <p>But now let's wait a bit longer. Suppose for the exact point $(\vec{q}_i, \vec{p}_i)$ there are 9 collisions in $10^{-8}\,\text{s}$. Now consider a point $10^{-32}\,\text{m} < \Delta q$ away still within the region $\mathcal{R}$. As we saw in Eq.&nbsp;(7) the trajectory of such a point will be off by an angle of order 1 after 8 collisions, so will miss the 9th collision and move on to a very different region in phase space. Thus, as time moves on, the original region $\mathcal{R}$ of volume $\Delta V$ gets fragmented and split up into an enormous number of disconnected regions.</p>
 
-<figure>
-<img src="images/3-Equilibrium_p6_img0.png" alt="Phase space region fragmenting over time and coarse graining">
-<figcaption>Figure 4. Over time, a phase space region $\mathcal{R}$ of size $\Delta V$ fragments into an enormous number of small regions with the same total volume (left). When we coarse grain, the phase space volume increases (middle). Further time evolution with coarse graining fills up more and more of phase space (right).</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Phase Space Coarse-Graining</h4>
+<canvas id="vis-phase-coarse" width="600" height="300"></canvas>
+<div class="controls">
+<button id="coarse-evolve">Evolve</button>
+<button id="coarse-grain">Coarse Grain</button>
+<button id="coarse-reset">Reset</button>
+</div>
+<figcaption>A region in phase space fragments over time (Liouville: total volume preserved). After coarse-graining, the effective volume increases. Repeated evolution + coarse-graining fills more of phase space, increasing entropy.</figcaption>
+</div>
 
 <p>Now we invoke a result from classical mechanics called <span class="tooltip-trigger">Liouville's theorem<span class="tooltip-content">A theorem in classical mechanics stating that the phase space volume occupied by a set of trajectories is conserved under Hamiltonian time evolution. It follows from Hamilton's equations of motion.</span></span>, which says that the sum of the phase-space volumes of all the fragments is the same as the original volume $\Delta V$ of the region $\mathcal{R}$.</p>
 
@@ -305,10 +320,16 @@ $$\frac{d}{dt}H(t) \geq 0$$
 
 <p>Unfortunately, most systems are not ergodic, in the strict mathematical sense. Hence ergodic "hypothesis". An example of a non-ergodic system is one with closed orbits in phase space.</p>
 
-<figure>
-<img src="images/3-Equilibrium_p9_img0.png" alt="Circular pool table (non-ergodic) vs cardioid pool table (ergodic)">
-<figcaption>Figure 5. A circular container (left) is non-ergodic while a cardioid container (right) is. If let to continue indefinitely, the left trajectory would never reach the center, while the right trajectory would eventually fill the entire volume.</figcaption>
-</figure>
+<!-- INTERACTIVE: Ergodic vs Non-Ergodic Billiards -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🎱</span> Interactive: Ergodic vs Non-Ergodic Billiards</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-billiards" width="600" height="300"></canvas></div>
+  <div class="vis-controls">
+    <button id="billiards-start">Start</button>
+    <button id="billiards-reset">Reset</button>
+    <span style="color:var(--text-muted)">Left: circular table (non-ergodic). Right: Bunimovich stadium (ergodic).</span>
+  </div>
+</div>
 
 <p>Most systems are believed to have regions of phase space which do not mix, so generally ergodicity is not exact. Moreover, even in systems where it does hold, the time for all the points in phase space to be passed through is astronomical. This is simply because the volume of phase space is astronomical: $6N \sim 10^{24}$ dimensional.</p>
 
@@ -357,10 +378,15 @@ $$E = \sum_j \frac{\vec{p}_j^{\,2}}{2m}$$
 $$\Omega_p = \frac{2\pi\sqrt{2mE}}{\Delta p}$$
 </div>
 
-<figure>
-<img src="images/3-Equilibrium_p11_img0.png" alt="Counting states on a circle in 2D momentum space">
-<figcaption>Counting the number of small boxes of size $(\Delta p)^2$ that a circle of radius $R = \sqrt{2mE}$ passes through.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: State Counting on a Sphere</h4>
+<canvas id="vis-state-counting" width="500" height="400"></canvas>
+<div class="controls">
+<label>Energy (radius): <input type="range" id="state-radius" min="30" max="180" step="5" value="100"><span id="state-radius-val">100</span></label>
+<label>Δp (box size): <input type="range" id="state-dp" min="8" max="40" step="1" value="20"><span id="state-dp-val">20</span></label>
+</div>
+<figcaption>Counting the number of small boxes of size $(\Delta p)^2$ that a circle of radius $R = \sqrt{2mE}$ passes through. Highlighted cells show $\Omega$.</figcaption>
+</div>
 
 <div class="step"><div class="step-label">Step 2: General case</div>
 <p>With $N$ particles in 3 dimensions, $2mE = p_{1x}^2 + p_{1y}^2 + p_{1z}^2 + \cdots + p_{Nz}^2$ is the sum of the squares of $3N$ independent momenta. Then</p>

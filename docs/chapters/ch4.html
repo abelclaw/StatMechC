@@ -36,7 +36,15 @@
 
 <p>where $N_1$ and $N_2 = N - N_1$ are the numbers of the different types of gases and the constant $C'$ has absorbed any factors that don't depend on $E_1$.</p>
 
-<figure><img src="images/4-Temperature_p2_img0.png" alt="Plot of P(E_1) showing a sharp peak"><figcaption>$P(E_1)$ for $N_1 = N_2 = 10$. The peak becomes extremely sharp for large $N$.</figcaption></figure>
+<!-- INTERACTIVE: Energy Distribution P(E₁) -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">📊</span> Interactive: Energy Distribution $P(E_1)$</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-energy-dist" width="600" height="300"></canvas></div>
+  <div class="vis-controls">
+    <label>$N_1$: <input type="range" id="edist-n1" min="2" max="100" step="1" value="10"> <span class="value-display" id="edist-n1-val">10</span></label>
+    <label>$N_2$: <input type="range" id="edist-n2" min="2" max="100" step="1" value="10"> <span class="value-display" id="edist-n2-val">10</span></label>
+  </div>
+</div>
 
 <p>This function looks like a Gaussian and has a very sharp peak around the most likely value $\langle E_1\rangle$. Using similar techniques to those we employed for the binomial distribution, we find</p>
 
@@ -206,7 +214,15 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <p>For a diatomic gas, things are more interesting. Think of a diatomic molecule (like $\text{N}_2$ or $\text{O}_2$) as two point masses connected by a spring.</p>
 
-<figure><img src="images/4-Temperature_p8_img0.png" alt="Diagram of diatomic molecule showing translational, rotational, and vibrational modes"><figcaption>A diatomic molecule has translational, rotational, and vibrational degrees of freedom.</figcaption></figure>
+<!-- INTERACTIVE: Diatomic Molecule Modes -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">⚛️</span> Interactive: Diatomic Molecule Modes</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-diatomic" width="600" height="250"></canvas></div>
+  <div class="vis-controls">
+    <button id="diatomic-start">Animate</button>
+    <label>Mode: <select id="diatomic-mode"><option value="all">All</option><option value="translate">Translation</option><option value="rotate">Rotation</option><option value="vibrate">Vibration</option></select></label>
+  </div>
+</div>
 
 <p>Once we have approximated the molecule as pointlike atoms, we can consider how these atoms can be excited. The molecule can either be excited to rotate along one of 3 possible axes, or it can be excited to vibrate (stretch and compress) along the intermolecular axis. For rotation around the intermolecular axis, the moment of inertia is negligibly small (since the atoms are pointlike), so effectively there are only 2 rotational modes. For vibration along the intermolecular axis, there is 1 vibrational mode (which has both kinetic and potential energy, so it counts as 2 quadratic degrees of freedom).</p>
 

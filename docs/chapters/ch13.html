@@ -435,11 +435,14 @@ $$\frac{C_V}{T} = \frac{\pi^2}{2}Nk_B\frac{1}{T_F} + \frac{12\pi^4}{5}Nk_B\frac{
 
 <p>To improve on the free electron model, we can consider how electrons become free. If the atoms are far apart, then the electrons would have been in orbitals around their atom. There is thus some kind of attractive potential $V(r)$ trying to keep each electron bound to one atom. As atoms move closer together, their potentials start to overlap. In the limit that the potentials overlap a lot, the sum of the potentials can be very weakly position dependent:</p>
 
-<figure>
-<img src="images/13-Metals_p11_img0.png" alt="Isolated atomic potentials">
-<img src="images/13-Metals_p11_img1.png" alt="Overlapping atomic potentials">
-<figcaption>Figure 2. When atoms are far apart (left), the atomic potentials do not overlap. When atoms become close (right), potentials overlap with the net result of a nearly free potential: the sum of the potentials is nearly flat.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Atomic Potentials → Nearly Free Electrons</h4>
+<canvas id="vis-atomic-potentials" width="600" height="300"></canvas>
+<div class="controls">
+<label>Atom spacing: <input type="range" id="atom-spacing" min="20" max="100" step="1" value="80"><span id="atom-spacing-val">80</span></label>
+</div>
+<figcaption>Drag the slider to bring atoms closer together. When far apart, electrons are bound in isolated wells. When close, the potentials overlap and the sum becomes nearly flat — the nearly free electron regime.</figcaption>
+</div>
 
 <p>Most metals have a very regular lattice structure. More precisely, these potentials are periodic, meaning that there exists a vector $\vec{a}$ such that $V(\vec{x} + \vec{a}) = V(\vec{x})$. It is interesting therefore to consider a weak periodic potential as a model of the atomic system. This is known as the <span class="tooltip-trigger">nearly free electron model<span class="tooltip-content">A model where electrons move in a weak periodic potential. It predicts the emergence of energy bands and band gaps.</span></span>. It is hard to calculate properties of periodic potentials in three dimensions exactly, but in one dimension we can actually find some exact solutions that are qualitatively similar to 3D systems and to real metals.</p>
 
@@ -449,11 +452,6 @@ $$\frac{C_V}{T} = \frac{\pi^2}{2}Nk_B\frac{1}{T_F} + \frac{12\pi^4}{5}Nk_B\frac{
 $$V(x) = \sum_{n=-\infty}^{\infty} V_1(x - na)$$
 <span class="eq-number">(50)</span>
 </div>
-
-<figure>
-<img src="images/13-Metals_p11_img2.png" alt="Periodic potential">
-<figcaption>A periodic potential formed by the sum of individual atomic potentials.</figcaption>
-</figure>
 
 <p>Infinite periodic potentials have been studied in great detail and a lot of general results are known about them. A general result known as <span class="tooltip-trigger">Bloch's theorem<span class="tooltip-content">Energy eigenstates in a periodic potential can be written as a plane wave times a function with the periodicity of the lattice: $\psi_k(x) = e^{ika}u_k(x)$.</span></span> is that energy eigenstates can be written as</p>
 
@@ -482,10 +480,15 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 
 <p>Let's look at the energies of the Kronig-Penney model as a function of $k$. We do this by finding solutions to Eq. (52) using the expressions in Eq. (53) for $|t_k|$ and $\delta_k$:</p>
 
-<figure>
-<img src="images/13-Metals_p12_img0.png" alt="Band structure in the Kronig-Penney model">
-<figcaption>Figure 3. Allowed and forbidden regions in the Kronig-Penney model. Only half the bands, for $k > 0$, are shown. There are mirror image bands for $k < 0$.</figcaption>
-</figure>
+<!-- INTERACTIVE: Band Structure (Kronig-Penney Model) -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">📊</span> Interactive: Kronig-Penney Band Structure</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-kronig-penney" width="600" height="400"></canvas></div>
+  <div class="vis-controls">
+    <label>Potential strength $\lambda$: <input type="range" id="kp-lambda" min="0" max="10" step="0.1" value="3"> <span class="value-display" id="kp-lambda-val">3.0</span></label>
+    <span style="color:var(--text-muted)">$\lambda = 0$: free electron parabola. Increase $\lambda$ to see band gaps open.</span>
+  </div>
+</div>
 
 <p>In this figure, you can see that the energies break up into a series of <span class="tooltip-trigger">bands<span class="tooltip-content">Groups of allowed energy levels in a periodic potential, separated by forbidden energy ranges called band gaps.</span></span>. The energy difference between the top of one band and bottom of the next is known as the bandwidth. As $k$ is increased, there are certain energies that never appear. These are energies in the <span class="tooltip-trigger">band gap<span class="tooltip-content">A range of energies for which no allowed quantum states exist in a periodic potential. The band gap determines whether a material is a conductor, semiconductor, or insulator.</span></span>. The Kronig-Penney model is the simplest exactly solvable model where the band structure appears. Bands are critical to understanding properties of metals and semiconductors.</p>
 
@@ -495,11 +498,15 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 
 <p>Although this model was only one-dimensional, periodic potentials predict bands also in three dimensions, and bands are observed experimentally in metals. What is critically important in determining properties of the solid is whether the Fermi level is in the middle of a band or in the band gap. For example, suppose each potential corresponds to one atom and each atom donates one electron to the nearly-free electron gas. In this case, there are $N$ electrons and the maximum $k$ allowed (in 1D) is $k = N\frac{\pi}{L}$ with $L$ the size of the system. Using $L = Na$ we see $k \leq \frac{\pi}{a}$, which, matching onto Figure 3 would be the highest occupied electron level right at the edge of the band. Remember though that electrons have two spin states, so each level is actually two-fold degenerate. This means that if each atom donates one electron, the lowest band will actually be only half filled. With a half-filled band the electrons can easily be excited, gaining energy and momentum. If you put an electric field on such a system, the electrons can adjust, picking up momentum in one direction:</p>
 
-<figure>
-<img src="images/13-Metals_p13_img0.png" alt="Half-filled band - conductor">
-<img src="images/13-Metals_p13_img1.png" alt="Full band - insulator">
-<figcaption>Figure 4. The thin curve shows the band: how the energy levels $E$ depend on wavenumber $k$. The thick curve shows the occupied levels. For metals in which atoms donate one electron each, half the band is filled. With a half-filled band, an applied electric field can easily make the energy levels adjust, showing that such materials are conductors. Insulators have a completely filled band and cannot easily adjust to an applied field.</figcaption>
-</figure>
+<!-- INTERACTIVE: Band Filling — Conductor vs Insulator -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">⚡</span> Interactive: Band Filling — Conductor vs Insulator</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-band-filling" width="600" height="350"></canvas></div>
+  <div class="vis-controls">
+    <label>Electrons per atom: <input type="range" id="bf-electrons" min="0.1" max="2.0" step="0.1" value="1.0"> <span class="value-display" id="bf-electrons-val">1.0</span></label>
+    <label>Applied field: <input type="range" id="bf-field" min="0" max="1" step="0.05" value="0"> <span class="value-display" id="bf-field-val">0.00</span></label>
+  </div>
+</div>
 
 <p>Thus mono-valent (one electron donated per atom) materials (most metals) are <strong>conductors</strong>. That metals conduct is closely related to their shininess: the conduction electrons move freely, so they easily absorb and re-emit radiation.</p>
 

@@ -85,7 +85,14 @@
 
 <p>This limit shows the growth of $\frac{\langle N_\text{ground}^\text{BE}\rangle}{N}$ toward 1 as $T \to 0$. The comparison of these approximations to Eq. (10) looks like:</p>
 
-<figure><img src="images/12-BEC_p3_img0.png" alt="Approximations to BEC ground state fraction"><figcaption>Figure 2. The approximations to the Bose-Einstein curve in Eqs. (11) and (12).</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: BEC Approximation Curves</h4>
+<canvas id="vis-bec-approx" width="600" height="300"></canvas>
+<div class="controls">
+<label>N particles: <input type="range" id="beca-N" min="10" max="500" step="10" value="100"><span id="beca-N-val">100</span></label>
+</div>
+<figcaption>Comparison of the low-T approximation (Eq. 11, blue) and high-T approximation (Eq. 12, green) to the exact two-state result (white). The crossover region defines T<sub>c</sub>.</figcaption>
+</div>
 
 <p>The crossover point is roughly where the approximations used for our expansions break down. The first term is the same order as the second term in Eq. (11) when $k_BT = \frac{N\epsilon}{6}$. For Eq. (12) the crossover is at $k_BT = N\epsilon$. Thus we find a critical temperature $T_c \sim \frac{N\epsilon}{6k_B} \sim \frac{N\epsilon}{k_B}$ for this two state model indicating the onset of Bose-Einstein condensation. (The crossover point in this 2-state example is not at a precise temperature, as you can see from the plot. $T_c$ will become precise when we consider a realistic system with a large number of states in the next section.)</p>
 
@@ -101,7 +108,14 @@
 
 <div class="equation">$$\langle N_\text{ground}\rangle = \frac{1}{e^{-\beta\mu} - 1}$$<span class="eq-number">(14)</span></div>
 
-<figure><img src="images/12-BEC_p4_img0.png" alt="Ground state occupation as function of chemical potential"><figcaption>The ground state occupation $\langle N_\text{ground}\rangle = \frac{1}{e^{-\beta\mu} - 1}$ diverges as $\mu \to 0$.</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Ground State Occupation vs Chemical Potential</h4>
+<canvas id="vis-bec-mu" width="600" height="300"></canvas>
+<div class="controls">
+<label>Temperature kT/ε: <input type="range" id="becmu-temp" min="0.1" max="5" step="0.1" value="1.0"><span id="becmu-temp-val">1.0</span></label>
+</div>
+<figcaption>The ground state occupation diverges as μ → 0. For bosons, μ must always be below the ground state energy.</figcaption>
+</div>
 
 <p>Recall that for Bose gases, $\mu$ will always be lower than all the energies (i.e. $\mu < 0$ when $\epsilon_0 = 0$). We can see this explicitly from the plot since there is a singularity at $\mu = 0$. This singularity, that $N_\text{ground} \to \infty$ as $\mu \to 0$ is not physical. Recall that in the grand canonical ensemble we do not fix $N$, so the same distribution has to allow for arbitrarily large $N$. If we know $N$ then we have to trade $\mu$ for $N$ by imposing the constraint $\sum_i \langle N_i \rangle = N$. This is not so easy, but we can do it.</p>
 
@@ -146,7 +160,14 @@ $$\langle N_1 \rangle = \frac{1}{e^{\beta(\epsilon_1 - \mu)} - 1} = \frac{1}{e^{
 
 <p>What we really want is to specify $N$ and $T$ and find $\langle N_\text{ground}\rangle$. To get this function, we need to do the sum in Eq. (22) and then solve for $\langle N_\text{ground}\rangle$ in terms of $\beta\epsilon_1$ and $N$. Unfortunately, we cannot do the sum exactly, but at least we can do it numerically. For $N = 100$ we find the numerical solution for $\frac{\langle N_\text{ground}\rangle}{N}$ has the form:</p>
 
-<figure><img src="images/12-BEC_p5_img0.png" alt="Exact numerical result for ground state occupancy"><figcaption>Figure 3. Exact numerical result for the ground state occupancy in a Bose system with $N = 100$.</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: BEC Ground State (Exact Numerical)</h4>
+<canvas id="vis-bec-exact" width="600" height="300"></canvas>
+<div class="controls">
+<label>N particles: <input type="range" id="bece-N" min="10" max="500" step="10" value="100"><span id="bece-N-val">100</span></label>
+</div>
+<figcaption>Exact numerical result for ground state occupancy vs temperature in a Bose system, compared to Maxwell-Boltzmann statistics. Adjust N to see how the condensation transition sharpens.</figcaption>
+</div>
 
 <p>I added to the plot the prediction using Maxwell-Boltzmann statistics. For MB statistics, we drop all the factors of $\pm 1$. So, $\langle N_\text{ground}\rangle = e^{\beta\mu}$ and so Eq. (22) becomes</p>
 
@@ -233,7 +254,14 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 
 <p>We also checked the $\mu = 0$ approximation numerically. When does it break down? The approximation $\mu \approx 0$ is good in the BEC regime (low $T$), where the ground state is anomalously filled. It breaks down at higher $T$ when $\langle N_\text{ground}\rangle$ gets small, as you can see from Eq. (14): as $\langle N_\text{ground}\rangle \to 0$ then $\mu \to -\infty$.</p>
 
-<figure><img src="images/12-BEC_p7_img0.png" alt="Comparing exact and approximate N1"><figcaption>Figure 5. Comparing $\langle N_1 \rangle$ computed numerically (solid) to $\langle N_1 \rangle$ in the $\mu = 0$ approximation (dashed).</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Exact vs Approximate ⟨N₁⟩</h4>
+<canvas id="vis-n1-compare" width="600" height="320"></canvas>
+<div class="controls">
+<label>N particles: <input type="range" id="n1-particles" min="10" max="500" step="10" value="100"><span id="n1-particles-val">100</span></label>
+</div>
+<figcaption>Comparing $\langle N_1 \rangle$ computed numerically (solid) to the $\mu = 0$ approximation (dashed). The approximation works well below $T_c$ but diverges above it.</figcaption>
+</div>
 
 <h2>4. Experimental Evidence</h2>
 

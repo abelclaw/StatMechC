@@ -146,7 +146,16 @@
 
 <p><strong>Quasistatic isothermal expansion</strong> means letting a gas expand at fixed temperature.</p>
 
-<figure><img src="images/5-Thermodynamics_p8_img0.png" alt="Isothermal expansion against a piston covered with sand"><figcaption>Isothermal expansion against a piston covered with sand.</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Piston Expansion</h4>
+<canvas id="vis-piston-expansion" width="600" height="350"></canvas>
+<div class="controls">
+<label>Process: <select id="piston-mode"><option value="isothermal">Isothermal (constant T)</option><option value="adiabatic">Adiabatic (no heat transfer)</option></select></label>
+<button id="piston-expand">Expand</button>
+<button id="piston-reset">Reset</button>
+</div>
+<figcaption>Isothermal expansion: gas does work W = NkT ln(V₂/V₁), drawing heat from the reservoir. Adiabatic expansion: no heat transfer, so the gas cools as it expands.</figcaption>
+</div>
 
 <p>Since $dW = P\,dV$ and $P = \frac{Nk_BT}{V}$:</p>
 
@@ -155,8 +164,6 @@
 <p>All the energy comes from heat withdrawn from the reservoir: $Q = Nk_BT\ln\frac{V_2}{V_1}$. The entropy of the reservoir goes down by $\Delta S_{\text{res}} = -Nk_B\ln\frac{V_2}{V_1}$, the entropy of the gas goes up by $\Delta S_{\text{gas}} = Nk_B\ln\frac{V_2}{V_1}$. The net entropy change is zero. The process is reversible.</p>
 
 <p><strong>Quasistatic adiabatic expansion.</strong> Adiabatic means without transferring heat. Because $\Delta S = \int\frac{1}{T}\,dQ$, the system's entropy doesn't change.</p>
-
-<figure><img src="images/5-Thermodynamics_p9_img0.png" alt="Adiabatic expansion with no heat bath"><figcaption>In adiabatic expansion there is no heat bath, so no heat transfer.</figcaption></figure>
 
 <p>In adiabatic expansion, even though no heat flows, the temperature may still change. Using $dE = \frac{C_V}{Nk_B}d(PV)$ and energy conservation $dE + dW = 0$:</p>
 
@@ -168,7 +175,15 @@
 
 <p>Equivalently, $TV^{\gamma-1}$ is constant, as is $TP^{\frac{1-\gamma}{\gamma}}$.</p>
 
-<figure><img src="images/5-Thermodynamics_p10_img0.png" alt="Isothermal vs adiabatic curves"><figcaption>Comparison of isothermal and adiabatic curves in a PV diagram.</figcaption></figure>
+<!-- INTERACTIVE: Isothermal vs Adiabatic PV Curves -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">📈</span> Interactive: Isothermal vs Adiabatic Expansion</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-isothermal-adiabatic" width="600" height="350"></canvas></div>
+  <div class="vis-controls">
+    <label>$\gamma = C_P/C_V$: <input type="range" id="ia-gamma" min="1.1" max="2.0" step="0.01" value="1.67"> <span class="value-display" id="ia-gamma-val">1.67</span></label>
+    <span style="color:var(--text-muted)">Monatomic: 5/3 ≈ 1.67 | Diatomic: 7/5 = 1.40</span>
+  </div>
+</div>
 
 <p>The speed of sound in a gas is $c_{\text{sound}} = \sqrt{\frac{\gamma k_BT}{m}}$. A sound wave is adiabatic compression and rarefaction.</p>
 
@@ -258,7 +273,17 @@
 
 <p>One of the most famous illustrations is the <span class="tooltip-trigger">Brownian Ratchet<span class="tooltip-content">A thought experiment by Smoluchowski (1912), popularized by Feynman. It appears to extract work from thermal fluctuations but actually obeys the second law.</span></span>, conceived by Marian Smoluchowski in 1912 and popularized by Richard Feynman.</p>
 
-<figure><img src="images/5-Thermodynamics_p15_img0.png" alt="Brownian ratchet"><figcaption>Brownian ratchet. A ratchet and pawl in a box at $T_2$, connected via an axle to a vane at $T_1$, with a weight attached.</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Brownian Ratchet</h4>
+<canvas id="vis-ratchet" width="600" height="300"></canvas>
+<div class="controls">
+<label>T₁ (vane): <input type="range" id="ratchet-t1" min="200" max="600" step="10" value="400"><span id="ratchet-t1-val">400</span> K</label>
+<label>T₂ (ratchet): <input type="range" id="ratchet-t2" min="200" max="600" step="10" value="400"><span id="ratchet-t2-val">400</span> K</label>
+<button id="ratchet-start">Start</button>
+<button id="ratchet-reset">Reset</button>
+</div>
+<figcaption>Brownian ratchet: when T₁ = T₂, forward and backward rates are equal — no net work. When T₁ ≠ T₂, net rotation can lift the weight.</figcaption>
+</div>
 
 <p>A ratchet and pawl is a tool designed to turn only in one direction. The setup: thermal motion jiggles the vane, sometimes pushing the pawl over the ratchet to turn the axle and lift the weight.</p>
 

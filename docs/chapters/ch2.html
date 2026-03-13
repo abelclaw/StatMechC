@@ -453,10 +453,17 @@ $$N_A = \frac{3RT}{\mu D}$$
 
 <p>Consider a ball falling through a fluid. It is accelerated from a downward force due to gravity and encounters resistance, or drag, from the fluid. There are two sources of drag. The first, called <em>inertial drag</em>, is due to the ball bonking molecules in front of it and speeding them up. The inertial force goes like the square of the velocity: $\vec{F}_{\text{inertial}} = \pi R^2 \rho |\vec{v}|\vec{v}$. For slow objects, the dominant drag force is due to <span class="tooltip-trigger">viscosity<span class="tooltip-content">A measure of a fluid's resistance to shear deformation. More viscous fluids (like honey) resist flow more than less viscous ones (like water).</span></span>, called viscous drag.</p>
 
-<figure>
-<img src="images/2-Diffusion_p11_img0.png" alt="Ball falling through a viscous fluid with gravity and drag forces">
-<figcaption>Figure 1. A ball falling through a viscous fluid has a downward force due to gravity and a drag force due to viscosity.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Stokes Drag &amp; Terminal Velocity</h4>
+<canvas id="vis-stokes" width="600" height="350"></canvas>
+<div class="controls">
+<label>Viscosity η: <input type="range" id="stokes-eta" min="0.5" max="5" step="0.1" value="1.5"><span id="stokes-eta-val">1.5</span></label>
+<label>Radius R: <input type="range" id="stokes-radius" min="0.5" max="3" step="0.1" value="1.0"><span id="stokes-radius-val">1.0</span></label>
+<button id="stokes-start">Drop</button>
+<button id="stokes-reset">Reset</button>
+</div>
+<figcaption>A ball falling through a viscous fluid reaches terminal velocity when gravity balances drag. Adjust viscosity and radius to see the effect on terminal velocity.</figcaption>
+</div>
 
 <p>Viscosity is another physical effect whose microscopic origin is in the stochastic collision of molecules. The more precise name for viscosity is <em>dynamic shear viscosity</em>. It measures how a fluid responds to shear forces: you push the top layer and ask how much the bottom layer moves. Intuitively, viscosity is a measure of how well a fluid flows.</p>
 

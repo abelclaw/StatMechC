@@ -188,10 +188,15 @@ $$\Delta F = \Delta E - T\Delta S = -Nk_BT\ln\frac{V_2}{V_1}$$
 
 <p>This transition is completely driven by entropic considerations.</p>
 
-<figure>
-<img src="images/8-FreeEnergy_p7_img0.png" alt="Spring-loaded piston against gas in a heat bath">
-<figcaption>Figure 1. Spring-loaded piston against gas in a heat bath.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Spring-Piston Equilibrium</h4>
+<canvas id="vis-spring-piston" width="600" height="300"></canvas>
+<div class="controls">
+<label>Spring constant k: <input type="range" id="sp-k" min="0.5" max="5" step="0.1" value="2.0"><span id="sp-k-val">2.0</span></label>
+<label>Temperature T: <input type="range" id="sp-temp" min="0.5" max="5" step="0.1" value="2.0"><span id="sp-temp-val">2.0</span></label>
+</div>
+<figcaption>Spring-loaded piston against gas in a heat bath. Equilibrium occurs where the Helmholtz free energy F = E − TS is minimized.</figcaption>
+</div>
 
 <p>Now consider a piston on a spring, with force constant $k$, immersed in a heat bath. Let $x$ be the displacement of the piston from its equilibrium position, with energy $E(x, \dot{x}) = \frac{1}{2}m\dot{x}^2 + \frac{1}{2}kx^2$. The entropy of the spring is zero. Since $S = 0$, $F = E$. Minimizing $F$ corresponds to minimizing $E$, giving equilibrium at $x = \dot{x} = 0$.</p>
 
@@ -259,10 +264,14 @@ $$C_P = \left(\frac{\partial H}{\partial T}\right)_P$$
 
 $$\text{H}_2 + \text{C}_2\text{H}_4 \to \text{C}_2\text{H}_6$$
 
-<figure>
-<img src="images/8-FreeEnergy_p8_img0.png" alt="Enthalpy of reaction diagram">
-<figcaption>Enthalpy diagram for the hydrogenation of ethene.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Reaction Enthalpy Diagram</h4>
+<canvas id="vis-reaction-enthalpy" width="600" height="300"></canvas>
+<div class="controls">
+<label>Temperature T (K): <input type="range" id="rh-temp" min="200" max="1000" step="10" value="298"><span id="rh-temp-val">298</span></label>
+</div>
+<figcaption>Enthalpy diagram for the hydrogenation of ethene. Adjust temperature to see how ΔG = ΔH − TΔS changes — the reaction remains spontaneous (ΔG &lt; 0) at all reasonable temperatures.</figcaption>
+</div>
 
 <p>The standard enthalpy of reaction is $\Delta_r H^\circ = -136.3 \pm 0.3\;\text{kJ/mol}$. Since the enthalpy change is negative, the reaction is <span class="tooltip-trigger">exothermic<span class="tooltip-content">A reaction that releases heat ($\Delta H < 0$)</span></span> (heat is released).</p>
 
@@ -439,10 +448,15 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 
 <p><span class="tooltip-trigger">Osmotic pressure<span class="tooltip-content">The pressure resulting from a concentration imbalance on two sides of a semi-permeable barrier. It is an entropic effect.</span></span> is the pressure resulting from a concentration imbalance on the two sides of a semi-permeable barrier. For example, if you put a raisin in water, the higher sugar content of the raisin forces the water to be drawn into the raisin, swelling it up.</p>
 
-<figure>
-<img src="images/8-FreeEnergy_p17_img0.png" alt="Osmotic pressure in a U-tube">
-<figcaption>Figure 4. Osmotic pressure arises when concentrations are different on two sides of a semi-permeable barrier.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Osmotic Pressure</h4>
+<canvas id="vis-osmotic" width="600" height="350"></canvas>
+<div class="controls">
+<label>Solute fraction: <input type="range" id="osm-frac" min="0.01" max="0.2" step="0.005" value="0.05"><span id="osm-frac-val">0.05</span></label>
+<label>Temperature T: <input type="range" id="osm-temp" min="200" max="400" step="5" value="300"><span id="osm-temp-val">300</span></label>
+</div>
+<figcaption>Osmotic pressure arises when concentrations differ across a semi-permeable membrane. Water flows toward the higher-solute side, raising the liquid level until the hydrostatic pressure balances.</figcaption>
+</div>
 
 <p>To compute the osmotic pressure, we use the entropy of mixing. For $N_w$ molecules of solvent and $N_s$ molecules of solute, in the limit $N_s \ll N_w$:</p>
 
