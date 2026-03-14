@@ -1401,211 +1401,145 @@ function initCh3Vis() {
       const bRatio = parseFloat(hsSlider?.value || 0.5); // b/(2R)
       clearCanvas(ctxHS, WHS, HHS);
 
-      // Geometry setup
-      const R = 50; // sphere radius
-      const Tx = WHS / 2 + 20, Ty = HHS / 2; // target center
-      const b = bRatio * 2 * R; // impact parameter
+      const R = 40; // each sphere's radius
+      const Tx = WHS / 2 + 30, Ty = HHS / 2 + 10; // target center
+      const b = bRatio * 2 * R; // impact parameter (center-to-center perp distance)
 
       // φ = angle of line-of-centers from approach axis; sin(φ) = b/(2R)
       const phi = Math.asin(Math.min(bRatio, 0.9999));
       // Text's θ = 2φ, satisfying b/2 = R sin(θ/2)
       const theta = 2 * phi;
-      // Actual deflection from forward direction = π - θ
+      // Actual deflection from forward = π − θ
       const deflection = Math.PI - theta;
 
-      // Draw target sphere
+      // --- Target sphere ---
       ctxHS.beginPath();
       ctxHS.arc(Tx, Ty, R, 0, 2 * Math.PI);
-      ctxHS.fillStyle = 'rgba(79,195,247,0.08)';
+      ctxHS.fillStyle = 'rgba(79,195,247,0.1)';
       ctxHS.fill();
       ctxHS.strokeStyle = COLORS.blue;
       ctxHS.lineWidth = 2;
       ctxHS.stroke();
+      ctxHS.beginPath(); ctxHS.arc(Tx, Ty, 3, 0, 2 * Math.PI);
+      ctxHS.fillStyle = COLORS.blue; ctxHS.fill();
 
-      // Target center dot
-      ctxHS.beginPath();
-      ctxHS.arc(Tx, Ty, 3, 0, 2 * Math.PI);
-      ctxHS.fillStyle = COLORS.blue;
-      ctxHS.fill();
-
-      // Incoming trajectory: horizontal line at y = Ty - b (above target center)
-      // For a point particle hitting sphere of effective radius 2R,
-      // or equivalently the center-of-mass trajectory for two equal spheres
+      // --- Projectile trajectory follows its CENTER ---
+      // Approaches horizontally at y = Ty − b (above target in screen coords)
       const approachY = Ty - b;
-      const startX = 30;
+      const startX = 20;
 
-      // Contact point on sphere surface (in screen coords, y-down):
-      // Normal from target center toward projectile is upper-left
-      // angle = -(π - φ) in screen coords
-      const contactX = Tx - R * Math.cos(phi);
-      const contactY = Ty - R * Math.sin(phi);
+      // Projectile CENTER at moment of contact: 2R from target center
+      // projX = Tx − 2R cos(φ),  projY = approachY = Ty − b
+      const projX = Tx - 2 * R * Math.cos(phi);
 
-      if (bRatio > 0.001) {
-        // Draw dashed extension of approach line (forward continuation)
-        ctxHS.strokeStyle = COLORS.textDim;
-        ctxHS.lineWidth = 1;
+      // Surface contact point (on target sphere, R from target center toward projectile)
+      const surfX = Tx - R * Math.cos(phi);
+      const surfY = Ty - R * Math.sin(phi);
+
+      if (bRatio > 0.005) {
+        // Dashed forward continuation (no-collision path)
+        ctxHS.strokeStyle = COLORS.textDim; ctxHS.lineWidth = 1;
         ctxHS.setLineDash([4, 4]);
         ctxHS.beginPath();
-        ctxHS.moveTo(contactX, approachY);
-        ctxHS.lineTo(WHS - 30, approachY);
+        ctxHS.moveTo(projX, approachY);
+        ctxHS.lineTo(WHS - 20, approachY);
         ctxHS.stroke();
         ctxHS.setLineDash([]);
 
-        // Incoming trajectory (green arrow → contact)
-        ctxHS.strokeStyle = COLORS.green;
-        ctxHS.lineWidth = 2;
-        ctxHS.beginPath();
-        ctxHS.moveTo(startX, approachY);
-        ctxHS.lineTo(contactX, approachY);
-        ctxHS.stroke();
-        // Small projectile circle at approach
-        ctxHS.beginPath();
-        ctxHS.arc(startX + 12, approachY, 8, 0, 2 * Math.PI);
-        ctxHS.fillStyle = 'rgba(102,187,106,0.3)';
-        ctxHS.fill();
-        ctxHS.strokeStyle = COLORS.green;
-        ctxHS.lineWidth = 1.5;
-        ctxHS.stroke();
+        // --- Incoming arrow (horizontal → projectile center at contact) ---
+        ctxHS.strokeStyle = COLORS.green; ctxHS.lineWidth = 2;
+        drawArrow(ctxHS, startX, approachY, projX, approachY, 10);
 
-        // Draw line of centers at contact (dashed)
-        ctxHS.strokeStyle = COLORS.textDim;
-        ctxHS.lineWidth = 1;
+        // --- Projectile sphere at contact (dashed outline) ---
+        ctxHS.beginPath();
+        ctxHS.arc(projX, approachY, R, 0, 2 * Math.PI);
+        ctxHS.fillStyle = 'rgba(102,187,106,0.06)';
+        ctxHS.fill();
+        ctxHS.strokeStyle = COLORS.green; ctxHS.lineWidth = 1.5;
+        ctxHS.setLineDash([4, 3]); ctxHS.stroke(); ctxHS.setLineDash([]);
+
+        // --- Line of centers (target → projectile center at contact) ---
+        ctxHS.strokeStyle = COLORS.textDim; ctxHS.lineWidth = 1;
         ctxHS.setLineDash([3, 3]);
         ctxHS.beginPath();
         ctxHS.moveTo(Tx, Ty);
-        ctxHS.lineTo(contactX, contactY);
+        ctxHS.lineTo(projX, approachY);
         ctxHS.stroke();
         ctxHS.setLineDash([]);
-        // Label R on line of centers
-        const rmx = (Tx + contactX) / 2 + 8, rmy = (Ty + contactY) / 2 - 8;
-        ctxHS.fillStyle = COLORS.text;
-        ctxHS.font = FONT_SM;
-        ctxHS.textAlign = 'left';
-        ctxHS.fillText('R', rmx, rmy);
+        // Label "2R"
+        const lx = (Tx + projX) / 2, ly = (Ty + approachY) / 2;
+        ctxHS.fillStyle = COLORS.text; ctxHS.font = FONT_SM; ctxHS.textAlign = 'center';
+        ctxHS.fillText('2R', lx + 12 * Math.sin(phi), ly - 12 * Math.cos(phi) + 3);
 
-        // Outgoing trajectory (red arrow from contact)
-        // In screen coords: v_out direction = angle (θ - π) from +x axis
-        // where θ = 2φ. This sends ball backward-and-upward for small b.
-        const outDirX = -Math.cos(theta); // = -cos(2φ)
-        const outDirY = -Math.sin(theta); // = -sin(2φ), negative = upward on screen
-        const outLen = 140;
-        const endX = contactX + outLen * outDirX;
-        const endY = contactY + outLen * outDirY;
-        ctxHS.strokeStyle = COLORS.red;
-        ctxHS.lineWidth = 2;
-        ctxHS.beginPath();
-        ctxHS.moveTo(contactX, contactY);
-        ctxHS.lineTo(endX, endY);
-        ctxHS.stroke();
-        drawArrow(ctxHS, contactX, contactY, endX, endY, 10);
+        // Surface contact marker
+        ctxHS.beginPath(); ctxHS.arc(surfX, surfY, 3.5, 0, 2 * Math.PI);
+        ctxHS.fillStyle = COLORS.orange; ctxHS.fill();
 
-        // Incoming arrow
-        drawArrow(ctxHS, startX, approachY, contactX - 2, approachY, 10);
+        // --- Outgoing arrow from projectile center at contact ---
+        // Reflected velocity in screen coords: (-cos 2φ, -sin 2φ)
+        const outDirX = -Math.cos(theta);
+        const outDirY = -Math.sin(theta);
+        const outLen = 130;
+        const endX = projX + outLen * outDirX;
+        const endY = approachY + outLen * outDirY;
+        ctxHS.strokeStyle = COLORS.red; ctxHS.lineWidth = 2;
+        drawArrow(ctxHS, projX, approachY, endX, endY, 10);
 
-        // Draw deflection angle arc (angle between forward continuation and outgoing)
-        // Forward direction = 0 (positive x). Outgoing direction = atan2(outDirY, outDirX)
+        // --- Deflection angle arc at the turning point ---
         const outAngle = Math.atan2(outDirY, outDirX);
-        const arcR = 45;
-        ctxHS.strokeStyle = COLORS.orange;
-        ctxHS.lineWidth = 2;
-        ctxHS.beginPath();
-        // Arc from outgoing angle to forward (0), going clockwise if outAngle < 0
-        if (deflection > 0.02) {
-          ctxHS.arc(contactX, approachY, arcR, outAngle, 0);
-          ctxHS.stroke();
-          // Label deflection angle
-          const labelAngle = outAngle / 2;
-          ctxHS.fillStyle = COLORS.orange;
-          ctxHS.font = FONT;
-          ctxHS.textAlign = 'center';
-          ctxHS.fillText('π−θ', contactX + (arcR + 16) * Math.cos(labelAngle),
-                         approachY + (arcR + 16) * Math.sin(labelAngle) + 4);
-        }
-
-        // Draw θ arc (angle at contact between backward direction and outgoing)
-        // θ = 2φ; shown as arc from outgoing direction to backward direction (π)
-        if (theta > 0.02) {
-          ctxHS.strokeStyle = COLORS.yellow;
-          ctxHS.lineWidth = 1.5;
-          const arcR2 = 32;
+        if (deflection > 0.05) {
+          const arcR = 40;
+          ctxHS.strokeStyle = COLORS.orange; ctxHS.lineWidth = 2;
           ctxHS.beginPath();
-          ctxHS.arc(contactX, approachY, arcR2, Math.PI, outAngle, true);
+          ctxHS.arc(projX, approachY, arcR, outAngle, 0);
           ctxHS.stroke();
-          const thetaLabelAngle = (Math.PI + outAngle) / 2;
-          ctxHS.fillStyle = COLORS.yellow;
-          ctxHS.font = FONT;
-          ctxHS.textAlign = 'center';
-          ctxHS.fillText('θ', contactX + (arcR2 + 14) * Math.cos(thetaLabelAngle),
-                         approachY + (arcR2 + 14) * Math.sin(thetaLabelAngle) + 4);
+          const midA = outAngle / 2;
+          ctxHS.fillStyle = COLORS.orange; ctxHS.font = FONT; ctxHS.textAlign = 'center';
+          ctxHS.fillText('π−θ', projX + (arcR + 18) * Math.cos(midA),
+                         approachY + (arcR + 18) * Math.sin(midA) + 4);
         }
 
-        // Contact point marker
-        ctxHS.beginPath();
-        ctxHS.arc(contactX, contactY, 4, 0, 2 * Math.PI);
-        ctxHS.fillStyle = COLORS.orange;
-        ctxHS.fill();
+        // --- φ arc at target center ---
+        if (phi > 0.05) {
+          const arcR3 = 50;
+          ctxHS.strokeStyle = COLORS.yellow; ctxHS.lineWidth = 1.5;
+          ctxHS.beginPath();
+          const locAngle = Math.atan2(approachY - Ty, projX - Tx);
+          ctxHS.arc(Tx, Ty, arcR3, Math.PI, locAngle, true);
+          ctxHS.stroke();
+          const phiMid = (Math.PI + locAngle) / 2;
+          ctxHS.fillStyle = COLORS.yellow; ctxHS.font = FONT; ctxHS.textAlign = 'center';
+          ctxHS.fillText('φ', Tx + (arcR3 + 14) * Math.cos(phiMid),
+                         Ty + (arcR3 + 14) * Math.sin(phiMid) + 4);
+        }
       } else {
         // Head-on: bounces straight back
-        ctxHS.strokeStyle = COLORS.green;
-        ctxHS.lineWidth = 2;
-        ctxHS.beginPath();
-        ctxHS.moveTo(startX, approachY);
-        ctxHS.lineTo(Tx - R, approachY);
-        ctxHS.stroke();
-        drawArrow(ctxHS, startX, approachY, Tx - R - 2, approachY, 10);
-        ctxHS.strokeStyle = COLORS.red;
-        ctxHS.beginPath();
-        ctxHS.moveTo(Tx - R, approachY);
-        ctxHS.lineTo(startX, approachY - 6);
-        ctxHS.stroke();
-        drawArrow(ctxHS, Tx - R, approachY, startX + 5, approachY - 6, 10);
-        ctxHS.fillStyle = COLORS.text;
-        ctxHS.font = FONT;
-        ctxHS.textAlign = 'center';
-        ctxHS.fillText('Head-on: bounces straight back', WHS / 2, 28);
+        ctxHS.strokeStyle = COLORS.green; ctxHS.lineWidth = 2;
+        drawArrow(ctxHS, startX, Ty, Tx - 2 * R, Ty, 10);
+        ctxHS.strokeStyle = COLORS.red; ctxHS.lineWidth = 2;
+        drawArrow(ctxHS, Tx - 2 * R, Ty, startX + 5, Ty - 4, 10);
       }
 
-      // Draw impact parameter b dimension line
-      const dimX = startX + 20;
-      ctxHS.strokeStyle = COLORS.textDim;
-      ctxHS.lineWidth = 1;
-      ctxHS.setLineDash([4, 4]);
-      // Dashed horizontal line from target center extending left
-      ctxHS.beginPath();
-      ctxHS.moveTo(Tx, Ty);
-      ctxHS.lineTo(dimX - 8, Ty);
-      ctxHS.stroke();
-      ctxHS.setLineDash([]);
-      // Vertical bracket for b
-      if (b > 2) {
-        ctxHS.strokeStyle = COLORS.text;
-        ctxHS.lineWidth = 1.5;
-        ctxHS.beginPath();
-        ctxHS.moveTo(dimX, Ty);
-        ctxHS.lineTo(dimX, approachY);
-        ctxHS.stroke();
-        // Tick marks
-        ctxHS.beginPath();
-        ctxHS.moveTo(dimX - 4, Ty);
-        ctxHS.lineTo(dimX + 4, Ty);
-        ctxHS.stroke();
-        ctxHS.beginPath();
-        ctxHS.moveTo(dimX - 4, approachY);
-        ctxHS.lineTo(dimX + 4, approachY);
-        ctxHS.stroke();
-        ctxHS.fillStyle = COLORS.text;
-        ctxHS.font = FONT;
-        ctxHS.textAlign = 'left';
+      // --- Impact parameter b bracket ---
+      const dimX = 55;
+      if (b > 3) {
+        ctxHS.strokeStyle = COLORS.textDim; ctxHS.lineWidth = 1;
+        ctxHS.setLineDash([3, 3]);
+        ctxHS.beginPath(); ctxHS.moveTo(dimX - 5, Ty); ctxHS.lineTo(Tx, Ty); ctxHS.stroke();
+        ctxHS.setLineDash([]);
+        ctxHS.strokeStyle = COLORS.text; ctxHS.lineWidth = 1.5;
+        ctxHS.beginPath(); ctxHS.moveTo(dimX, Ty); ctxHS.lineTo(dimX, approachY); ctxHS.stroke();
+        ctxHS.beginPath(); ctxHS.moveTo(dimX - 4, Ty); ctxHS.lineTo(dimX + 4, Ty); ctxHS.stroke();
+        ctxHS.beginPath(); ctxHS.moveTo(dimX - 4, approachY); ctxHS.lineTo(dimX + 4, approachY); ctxHS.stroke();
+        ctxHS.fillStyle = COLORS.text; ctxHS.font = FONT; ctxHS.textAlign = 'left';
         ctxHS.fillText('b', dimX + 8, (Ty + approachY) / 2 + 5);
       }
 
-      // Info text
-      ctxHS.fillStyle = COLORS.text;
-      ctxHS.font = FONT;
-      ctxHS.textAlign = 'left';
-      ctxHS.fillText('b/(2R) = ' + bRatio.toFixed(2), WHS - 180, 28);
-      ctxHS.fillText('θ = ' + (theta * 180 / Math.PI).toFixed(1) + '°', WHS - 180, 48);
-      ctxHS.fillText('deflection = ' + (deflection * 180 / Math.PI).toFixed(1) + '°', WHS - 180, 68);
+      // --- Info readout ---
+      ctxHS.fillStyle = COLORS.text; ctxHS.font = FONT; ctxHS.textAlign = 'right';
+      ctxHS.fillText('b/(2R) = ' + bRatio.toFixed(2), WHS - 16, 24);
+      ctxHS.fillText('θ = 2φ = ' + (theta * 180 / Math.PI).toFixed(1) + '°', WHS - 16, 44);
+      ctxHS.fillText('deflection = ' + (deflection * 180 / Math.PI).toFixed(1) + '°', WHS - 16, 64);
 
       document.getElementById('hs-impact-val')?.replaceChildren(document.createTextNode(bRatio.toFixed(2)));
     }
