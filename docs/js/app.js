@@ -378,73 +378,293 @@ function initCh1Vis() {
   drawGaussian();
 
   // ----- CLT Visualization -----
+  // Animated: pick a distribution, draw N samples, average, build histogram.
   const cClt = document.getElementById('vis-clt');
   if (cClt) {
     const clt = setupCanvas(cClt);
     const ctx2 = clt.ctx, W2 = clt.W, H2 = clt.H;
     const nSlider = document.getElementById('clt-n');
+    const distSelect = document.getElementById('clt-dist');
+    const customInput = document.getElementById('clt-custom-fn');
+    const cltGoBtn = document.getElementById('clt-go');
+    const cltClearBtn = document.getElementById('clt-clear');
+    const cltCountDisp = document.getElementById('clt-count');
 
-    function drawCLT() {
+    let cltRunning = false;
+    let cltAnimId = null;
+    let histBins = new Float64Array(80);
+    let histCount = 0;
+
+    // Show/hide custom function input
+    distSelect?.addEventListener('change', () => {
+      if (customInput) customInput.style.display = distSelect.value === 'custom' ? 'inline-block' : 'none';
+      resetCLT();
+    });
+
+    // Box-Muller for Gaussian random numbers
+    function gaussRand() {
+      let u, v, s;
+      do { u = 2 * Math.random() - 1; v = 2 * Math.random() - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
+      return u * Math.sqrt(-2 * Math.log(s) / s);
+    }
+
+    // Distribution samplers — each returns a sample value + PDF for display
+    function getDistribution() {
+      const name = distSelect?.value || 'uniform';
+      if (name === 'uniform') {
+        return {
+          sample: () => Math.random(),
+          pdf: (x) => (x >= 0 && x <= 1) ? 1 : 0,
+          label: 'Uniform [0,1]',
+          domain: [0, 1]
+        };
+      }
+      if (name === 'exponential') {
+        return {
+          sample: () => -Math.log(1 - Math.random()) / 3,
+          pdf: (x) => x >= 0 ? 3 * Math.exp(-3 * x) : 0,
+          label: 'Exponential (λ=3)',
+          domain: [0, 2.5]
+        };
+      }
+      if (name === 'bimodal') {
+        return {
+          sample: () => Math.random() < 0.5 ? 0.2 + 0.08 * gaussRand() : 0.8 + 0.08 * gaussRand(),
+          pdf: (x) => Math.exp(-0.5 * ((x - 0.2) / 0.08) ** 2) + Math.exp(-0.5 * ((x - 0.8) / 0.08) ** 2),
+          label: 'Bimodal',
+          domain: [0, 1]
+        };
+      }
+      if (name === 'skewed') {
+        return {
+          sample: () => { let s = 0; for (let i = 0; i < 3; i++) { const u = gaussRand(); s += u * u; } return s; },
+          pdf: (x) => x > 0 ? Math.sqrt(x) * Math.exp(-x / 2) : 0,
+          label: 'Chi-squared (k=3)',
+          domain: [0, 12]
+        };
+      }
+      if (name === 'custom') {
+        const expr = (customInput?.value || 'x').trim();
+        let fn;
+        try { fn = new Function('x', 'return (' + expr + ')'); fn(0.5); }
+        catch (e) { fn = () => 1; }
+        let fMax = 0;
+        for (let i = 0; i <= 200; i++) { const v = Math.abs(fn(i / 200)); if (v > fMax) fMax = v; }
+        if (fMax < 1e-10) fMax = 1;
+        return {
+          sample: () => {
+            for (let tries = 0; tries < 1000; tries++) {
+              const x = Math.random();
+              if (Math.random() * fMax < Math.abs(fn(x))) return x;
+            }
+            return Math.random();
+          },
+          pdf: (x) => Math.abs(fn(x)),
+          label: 'Custom: ' + expr,
+          domain: [0, 1]
+        };
+      }
+      return { sample: () => Math.random(), pdf: () => 1, label: 'Uniform', domain: [0, 1] };
+    }
+
+    // Histogram range — adaptive from distribution and N
+    let histMin = 0, histMax = 1;
+    function setupHistRange() {
+      const dist = getDistribution();
       const N = parseInt(nSlider?.value || 1);
+      const samples = [];
+      for (let i = 0; i < 500; i++) {
+        let s = 0;
+        for (let j = 0; j < N; j++) s += dist.sample();
+        samples.push(s / N);
+      }
+      samples.sort((a, b) => a - b);
+      histMin = samples[Math.floor(samples.length * 0.005)];
+      histMax = samples[Math.floor(samples.length * 0.995)];
+      const margin = (histMax - histMin) * 0.15;
+      histMin -= margin;
+      histMax += margin;
+      if (histMax - histMin < 0.01) { histMin -= 0.5; histMax += 0.5; }
+    }
+
+    function resetCLT() {
+      histBins = new Float64Array(80);
+      histCount = 0;
+      setupHistRange();
+      if (cltCountDisp) cltCountDisp.textContent = '0 averages';
+      drawCLTFig();
+    }
+
+    function drawCLTFig() {
       clearCanvas(ctx2, W2, H2);
+      const N = parseInt(nSlider?.value || 1);
+      const dist = getDistribution();
 
-      const bins = 200;
-      let dist = new Float64Array(bins).fill(1 / bins);
+      // Layout: left = source PDF, right = histogram of averages
+      const divX = W2 * 0.3;
+      const rightX = divX + 30;
+      const rightW = W2 - rightX - 20;
 
-      for (let i = 1; i < N; i++) {
-        const newDist = new Float64Array(bins).fill(0);
-        for (let j = 0; j < bins; j++) {
-          for (let k = 0; k < bins; k++) {
-            const target = Math.round((j + k) / 2);
-            if (target < bins) newDist[target] += dist[j] * dist[k];
-          }
-        }
-        let sum = 0;
-        for (let j = 0; j < bins; j++) sum += newDist[j];
-        for (let j = 0; j < bins; j++) newDist[j] /= sum;
-        dist = newDist;
+      // --- LEFT: source distribution ---
+      const lx = 25, ly = 35, lw = divX - 40, lh = H2 - 80;
+      const d = dist.domain;
+      const nPdf = 200;
+      let pdfMax = 0;
+      const pdfVals = [];
+      for (let i = 0; i <= nPdf; i++) {
+        const x = d[0] + (d[1] - d[0]) * i / nPdf;
+        const v = dist.pdf(x);
+        pdfVals.push(v);
+        if (v > pdfMax) pdfMax = v;
       }
+      if (pdfMax < 1e-10) pdfMax = 1;
 
-      const maxVal = Math.max(...dist);
-      const xAxis = H2 - 40;
-      const barW = (W2 - 60) / bins;
+      ctx2.strokeStyle = COLORS.axis; ctx2.lineWidth = 1;
+      ctx2.beginPath(); ctx2.moveTo(lx, ly); ctx2.lineTo(lx, ly + lh); ctx2.lineTo(lx + lw, ly + lh); ctx2.stroke();
 
-      ctx2.fillStyle = 'rgba(102,187,106,0.5)';
-      for (let i = 0; i < bins; i++) {
-        const barH = (dist[i] / maxVal) * (xAxis - 20);
-        const x = 30 + i * barW;
-        ctx2.fillRect(x, xAxis - barH, barW, barH);
+      ctx2.fillStyle = COLORS.blue + '30';
+      ctx2.beginPath(); ctx2.moveTo(lx, ly + lh);
+      for (let i = 0; i <= nPdf; i++) {
+        ctx2.lineTo(lx + (i / nPdf) * lw, ly + lh - (pdfVals[i] / pdfMax) * lh * 0.9);
       }
+      ctx2.lineTo(lx + lw, ly + lh); ctx2.closePath(); ctx2.fill();
 
-      // Gaussian overlay
-      const mean = bins / 2;
-      const sigma = (bins / (2 * Math.sqrt(3))) / Math.sqrt(N);
-      ctx2.strokeStyle = COLORS.red;
-      ctx2.lineWidth = 2;
+      ctx2.strokeStyle = COLORS.blue; ctx2.lineWidth = 2;
       ctx2.beginPath();
-      for (let i = 0; i < bins; i++) {
-        const gaussVal = Math.exp(-0.5 * ((i - mean) / sigma) ** 2);
-        const x = 30 + i * barW + barW / 2;
-        const y = xAxis - gaussVal * (xAxis - 20);
-        i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+      for (let i = 0; i <= nPdf; i++) {
+        const px = lx + (i / nPdf) * lw;
+        const py = ly + lh - (pdfVals[i] / pdfMax) * lh * 0.9;
+        i === 0 ? ctx2.moveTo(px, py) : ctx2.lineTo(px, py);
       }
       ctx2.stroke();
 
-      ctx2.fillStyle = COLORS.text;
-      ctx2.font = FONT_LG;
-      ctx2.textAlign = 'center';
-      ctx2.fillText('N = ' + N + ' (average of ' + N + ' uniform draws)', W2 / 2, 20);
-      ctx2.font = FONT_SM;
-      ctx2.fillStyle = COLORS.green;
-      ctx2.fillText('Simulation', W2 / 2 - 80, 38);
-      ctx2.fillStyle = COLORS.red;
-      ctx2.fillText('Gaussian fit', W2 / 2 + 80, 38);
+      ctx2.fillStyle = COLORS.text; ctx2.font = FONT_SM; ctx2.textAlign = 'center';
+      ctx2.fillText('Source distribution', lx + lw / 2, ly - 8);
+      ctx2.fillStyle = COLORS.blue; ctx2.font = FONT_SM;
+      ctx2.fillText(dist.label, lx + lw / 2, ly + lh + 16);
 
-      document.getElementById('clt-n-val')?.replaceChildren(document.createTextNode(N));
+      // Divider
+      ctx2.strokeStyle = COLORS.grid; ctx2.lineWidth = 1;
+      ctx2.beginPath(); ctx2.moveTo(divX, 10); ctx2.lineTo(divX, H2 - 10); ctx2.stroke();
+
+      // --- RIGHT: histogram of averages ---
+      const hy = 35, hh = H2 - 80;
+      const nBins = histBins.length;
+      const barW = rightW / nBins;
+
+      ctx2.strokeStyle = COLORS.axis; ctx2.lineWidth = 1;
+      ctx2.beginPath(); ctx2.moveTo(rightX, hy); ctx2.lineTo(rightX, hy + hh); ctx2.lineTo(rightX + rightW, hy + hh); ctx2.stroke();
+
+      let hMax = 0;
+      for (let i = 0; i < nBins; i++) if (histBins[i] > hMax) hMax = histBins[i];
+      if (hMax < 1) hMax = 1;
+
+      ctx2.fillStyle = COLORS.green + '70';
+      for (let i = 0; i < nBins; i++) {
+        if (histBins[i] === 0) continue;
+        const bh = (histBins[i] / hMax) * hh * 0.9;
+        ctx2.fillRect(rightX + i * barW, hy + hh - bh, barW - 1, bh);
+      }
+
+      // Gaussian fit overlay when enough data
+      if (histCount > 20) {
+        let mean = 0, m2 = 0, total = 0;
+        for (let i = 0; i < nBins; i++) {
+          const x = histMin + (i + 0.5) * (histMax - histMin) / nBins;
+          mean += x * histBins[i]; total += histBins[i];
+        }
+        mean /= total;
+        for (let i = 0; i < nBins; i++) {
+          const x = histMin + (i + 0.5) * (histMax - histMin) / nBins;
+          m2 += histBins[i] * (x - mean) ** 2;
+        }
+        const sigma = Math.sqrt(m2 / total);
+        if (sigma > 1e-10) {
+          const binW = (histMax - histMin) / nBins;
+          ctx2.strokeStyle = COLORS.red; ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          for (let i = 0; i < nBins; i++) {
+            const x = histMin + (i + 0.5) * (histMax - histMin) / nBins;
+            const g = total * binW / (sigma * Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
+            const px = rightX + (i + 0.5) * barW;
+            const py = hy + hh - (g / hMax) * hh * 0.9;
+            i === 0 ? ctx2.moveTo(px, py) : ctx2.lineTo(px, py);
+          }
+          ctx2.stroke();
+        }
+      }
+
+      // X-axis ticks
+      ctx2.fillStyle = COLORS.textDim; ctx2.font = '10px Inter, system-ui, sans-serif'; ctx2.textAlign = 'center';
+      for (let i = 0; i <= 5; i++) {
+        const frac = i / 5;
+        const val = histMin + frac * (histMax - histMin);
+        const tx = rightX + frac * rightW;
+        ctx2.beginPath(); ctx2.moveTo(tx, hy + hh); ctx2.lineTo(tx, hy + hh + 4); ctx2.strokeStyle = COLORS.axis; ctx2.stroke();
+        ctx2.fillText(val.toFixed(2), tx, hy + hh + 15);
+      }
+
+      ctx2.fillStyle = COLORS.text; ctx2.font = FONT_SM; ctx2.textAlign = 'center';
+      ctx2.fillText('Histogram of x\u0304  (N=' + N + ', ' + histCount + ' averages)', rightX + rightW / 2, hy - 8);
+
+      if (histCount > 20) {
+        ctx2.fillStyle = COLORS.green; ctx2.font = FONT_SM; ctx2.textAlign = 'left';
+        ctx2.fillText('Histogram', rightX + 8, hy + 14);
+        ctx2.fillStyle = COLORS.red;
+        ctx2.fillText('Gaussian', rightX + 8, hy + 28);
+      }
     }
 
-    nSlider?.addEventListener('input', drawCLT);
-    drawCLT();
+    function cltTick() {
+      if (!cltRunning) return;
+      const N = parseInt(nSlider?.value || 1);
+      const dist = getDistribution();
+      const nBins = histBins.length;
+
+      // Batch several averages per frame
+      for (let b = 0; b < 10; b++) {
+        let sum = 0;
+        for (let i = 0; i < N; i++) sum += dist.sample();
+        const avg = sum / N;
+        const binIdx = Math.floor((avg - histMin) / (histMax - histMin) * nBins);
+        if (binIdx >= 0 && binIdx < nBins) histBins[binIdx]++;
+        histCount++;
+      }
+
+      if (cltCountDisp) cltCountDisp.textContent = histCount + ' averages';
+      document.getElementById('clt-n-val')?.replaceChildren(document.createTextNode(N));
+      drawCLTFig();
+      cltAnimId = requestAnimationFrame(cltTick);
+    }
+
+    cltGoBtn?.addEventListener('click', () => {
+      cltRunning = !cltRunning;
+      if (cltRunning) {
+        cltGoBtn.textContent = '\u23F8 Stop';
+        if (histCount === 0) setupHistRange();
+        cltAnimId = requestAnimationFrame(cltTick);
+      } else {
+        cltGoBtn.textContent = '\u25B6 Go';
+        if (cltAnimId) { cancelAnimationFrame(cltAnimId); cltAnimId = null; }
+      }
+    });
+
+    cltClearBtn?.addEventListener('click', () => {
+      cltRunning = false;
+      if (cltGoBtn) cltGoBtn.textContent = '\u25B6 Go';
+      if (cltAnimId) { cancelAnimationFrame(cltAnimId); cltAnimId = null; }
+      resetCLT();
+    });
+
+    nSlider?.addEventListener('input', () => {
+      document.getElementById('clt-n-val')?.replaceChildren(document.createTextNode(nSlider.value));
+      resetCLT();
+    });
+
+    customInput?.addEventListener('change', resetCLT);
+
+    setupHistRange();
+    drawCLTFig();
   }
 
   // ----- Poisson Distribution Explorer -----

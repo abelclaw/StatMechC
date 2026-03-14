@@ -396,12 +396,26 @@ $$\frac{\sigma}{\bar{x}} \to \frac{1}{\sqrt{N}}\frac{\sigma}{\bar{x}}$$
 <p>Thus a foolproof way to think of the scaling is that the dimensionless ratio $\frac{\sigma}{\bar{x}}$ should decrease as $\frac{1}{\sqrt{N}}$.</p>
 
 <!-- Interactive CLT Visualizer -->
-<div class="interactive-container">
-  <h3>Interactive: Central Limit Theorem Visualizer</h3>
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">📊</span> Interactive: Central Limit Theorem</div>
   <div class="vis-controls">
-    <label>Number of samples ($N$): <input type="range" id="clt-n" min="1" max="30" step="1" value="1"><span class="slider-value" id="clt-n-val">1</span></label>
+    <label>Distribution:
+      <select id="clt-dist">
+        <option value="uniform">Uniform</option>
+        <option value="exponential">Exponential</option>
+        <option value="bimodal">Bimodal</option>
+        <option value="skewed">Skewed (χ²)</option>
+        <option value="custom">Custom f(x)</option>
+      </select>
+    </label>
+    <input type="text" id="clt-custom-fn" placeholder="e.g. x*x*(1-x)" style="width:140px;display:none;background:var(--bg-card);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;">
+    <label>N per average: <input type="range" id="clt-n" min="1" max="30" step="1" value="1"><span class="slider-value" id="clt-n-val">1</span></label>
+    <button id="clt-go">▶ Go</button>
+    <button id="clt-clear">Clear</button>
+    <span class="value-display" id="clt-count">0 averages</span>
   </div>
-  <canvas id="vis-clt" width="600" height="300"></canvas>
+  <div class="vis-canvas-wrap"><canvas id="vis-clt" width="700" height="340"></canvas></div>
+  <div class="vis-caption">Choose any distribution, then hit Go. Each frame draws $N$ samples, averages them, and adds the result to the histogram. Regardless of the starting distribution, the histogram of averages converges to a Gaussian (red curve) as $N$ grows.</div>
 </div>
 
 <h3 id="s1-3-3">3.3 &mdash; Why we take logarithms in statistical mechanics</h3>
