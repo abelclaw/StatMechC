@@ -1971,7 +1971,7 @@ function initCh3Vis() {
       particles[0].trail.push({ x: particles[0].x, y: particles[0].y });
       particles[1].trail.push({ x: particles[1].x, y: particles[1].y });
       running = true;
-      animate();
+      animateChaoBalls();
     }
 
     function stepParticle(p) {
@@ -2138,7 +2138,7 @@ function initCh3Vis() {
       ctxC.fillText('Particle B', WC - 8, 32);
     }
 
-    function animate() {
+    function animateChaoBalls() {
       if (!running || !particles) return;
       const anyAlive = particles.some(p => p.alive);
       if (!anyAlive) { running = false; drawScene(); return; }
@@ -2146,7 +2146,7 @@ function initCh3Vis() {
         for (const p of particles) stepParticle(p);
       }
       drawScene();
-      activeAnimations['chaos-balls'] = requestAnimationFrame(animate);
+      activeAnimations['chaos-balls'] = requestAnimationFrame(animateChaoBalls);
     }
 
     angleSlider?.addEventListener('input', () => { if (!running) { particles = null; drawScene(); } });
