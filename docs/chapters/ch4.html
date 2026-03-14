@@ -197,10 +197,22 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 <!-- INTERACTIVE: Gas particles -->
 <div class="visualization">
   <div class="vis-header"><span class="vis-icon">🔴</span> Interactive: Ideal Gas — Temperature and Speed</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-equipartition" class="sim"></canvas></div>
+  <div class="vis-canvas-wrap"><canvas id="vis-equipartition" width="600" height="300"></canvas></div>
   <div class="vis-controls">
     <label>Temperature: <input type="range" id="ep-temp" min="50" max="1000" step="10" value="300"> <span class="value-display" id="ep-temp-val">300</span> K</label>
     <button id="ep-start">Start</button>
+  </div>
+</div>
+
+<!-- Interactive: Ideal Gas Kinetic Theory Simulator -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">💨</span> Interactive: Ideal Gas &mdash; Kinetic Theory in Action</div>
+  <p class="vis-caption">Gas particles collide elastically with each other and the walls. The histogram on the right shows the distribution of particle speeds, which converges to the Maxwell-Boltzmann distribution (green curve) regardless of the initial conditions.</p>
+  <div class="vis-canvas-wrap"><canvas id="vis-gaskinetic" width="700" height="380"></canvas></div>
+  <div class="vis-controls">
+    <label>Temperature: <input type="range" id="gk-temp" min="100" max="1500" step="50" value="400"> <span class="value-display" id="gk-temp-val">400</span> K</label>
+    <button id="gk-start">Start</button>
+    <button id="gk-reset">Reset</button>
   </div>
 </div>
 
@@ -275,7 +287,29 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
   <canvas id="vis-heatcap" width="600" height="300"></canvas>
 </div>
 
-<figure><img src="images/4-Temperature_p10_img1.png" alt="Table of diatomic molecule properties"><figcaption>Vibrational and rotational constants for various diatomic molecules.</figcaption></figure>
+<figure>
+<table style="width:100%; max-width:600px; margin:16px auto; border-collapse:collapse; font-size:0.9rem;">
+<thead>
+<tr>
+<th style="border:1px solid #ddd; padding:6px 10px; text-align:center; background:#e8ecf1;">Molecule</th>
+<th style="border:1px solid #ddd; padding:6px 10px; text-align:center; background:#e8ecf1;">&theta;<sub>rot</sub> (K)</th>
+<th style="border:1px solid #ddd; padding:6px 10px; text-align:center; background:#e8ecf1;">&theta;<sub>vib</sub> (K)</th>
+<th style="border:1px solid #ddd; padding:6px 10px; text-align:center; background:#e8ecf1;">Bond length (pm)</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">H&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">85</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">6300</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">74</td></tr>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">HCl</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">15</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">4300</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">127</td></tr>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">N&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">2.9</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">3390</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">110</td></tr>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">O&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">2.1</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">2270</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">121</td></tr>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">F&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">1.3</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">1320</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">142</td></tr>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">Cl&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">0.35</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">810</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">199</td></tr>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">Br&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">0.12</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">470</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">229</td></tr>
+<tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">I&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">0.054</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">310</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">267</td></tr>
+</tbody>
+</table>
+<figcaption>Vibrational and rotational constants for various diatomic molecules.</figcaption>
+</figure>
 
 <p>To understand this data, we can think about the scaling of the rotational and vibrational energies with mass. From Eqs. (40) and (41) we see that a larger reduced mass decreases both the vibrational and rotational energies. A larger bond length decreases the rotational energy but does not affect vibration directly. For heavier molecules like $\text{I}_2$, both the rotational and vibrational temperatures are much lower, so more modes are active at room temperature.</p>
 

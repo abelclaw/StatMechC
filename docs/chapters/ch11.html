@@ -394,7 +394,7 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 <!-- INTERACTIVE: Blackbody spectrum -->
 <div class="visualization">
   <div class="vis-header"><span class="vis-icon">&#9728;&#65039;</span> Interactive: Blackbody Radiation Spectrum</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-blackbody" class="sim"></canvas></div>
+  <div class="vis-canvas-wrap"><canvas id="vis-blackbody" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <label>Temperature: <input type="range" id="bb-temp" min="1000" max="12000" step="100" value="5000"> <span class="value-display" id="bb-temp-val">5000</span> K</label>
   </div>
@@ -479,6 +479,15 @@ $$\eta = \frac{n_B}{n_\gamma} = 6 \times 10^{-10}$$
 <div class="equation key-result">$$I(\lambda, T)\,d\lambda = \frac{2c^2 h\pi}{\lambda^5}\frac{1}{e^{hc/(\lambda k_BT)} - 1}\,d\lambda$$<span class="eq-number">(76)</span></div>
 
 <p>Intensity is the power radiated per unit area per unit wavelength. Integrating it over $\lambda$ gives the total radiated power per unit area, aka the total flux, $\Phi = \sigma T^4$. For example, from this we can compute the total power radiated from the sun given its surface temperature: $\Phi_\odot = \sigma \times (5780\,\text{K})^4 = 6.32 \times 10^7\,\frac{\text{W}}{\text{m}^2}$.</p>
+
+<!-- Explore Further -->
+<div class="info-box explore">
+<div class="box-title">Explore Further</div>
+<ul>
+<li><a href="https://lampz.tugraz.at/~hadley/ss1/phonons/phonon_script.php" target="_blank">Interactive Phonon Simulation (TU Graz)</a> <span class="link-desc">&mdash; Adjustable 8&times;8 lattice showing thermal vibrations vs. individual normal modes, with temperature control and Bose-Einstein occupation</span></li>
+<li><a href="https://henriquemiranda.github.io/phononwebsite/phonon.html" target="_blank">Phonon Band Structure Visualizer</a> <span class="link-desc">&mdash; 3D animations of phonon modes in real crystals, with data from the Materials Project</span></li>
+</ul>
+</div>
 
 <div class="summary">
 <h3>Chapter Summary</h3>

@@ -335,6 +335,16 @@ li { margin-bottom: 6px; }
 .info-box.warning .box-title { color: var(--warning); }
 .info-box.example .box-title { color: #8e44ad; }
 .info-box.physical .box-title { color: var(--accent-light); }
+.info-box.explore {
+  background: #f0f4f8;
+  border-left: 4px solid #5b7ea8;
+}
+.info-box.explore .box-title { color: #5b7ea8; }
+.info-box.explore ul { margin: 6px 0 0; padding-left: 18px; }
+.info-box.explore li { margin-bottom: 4px; }
+.info-box.explore a { color: #2c5282; text-decoration: none; border-bottom: 1px solid rgba(44,82,130,0.3); }
+.info-box.explore a:hover { border-bottom-color: #2c5282; }
+.info-box.explore .link-desc { color: #666; font-size: 0.85em; }
 
 /* ===== INTERACTIVE VISUALIZATIONS ===== */
 .visualization {
@@ -443,6 +453,76 @@ li { margin-bottom: 6px; }
   color: var(--text-muted);
   line-height: 1.5;
   margin: 4px 0 8px;
+}
+
+/* Interactive wrappers (ch5+ style) */
+.interactive-wrapper {
+  margin: 24px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+  padding: 16px;
+}
+.interactive-wrapper h4 {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 10px;
+}
+.interactive-wrapper canvas {
+  display: block;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto 12px;
+  border-radius: var(--radius);
+}
+.interactive-wrapper .controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border);
+}
+.interactive-wrapper .controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+.interactive-wrapper .controls input[type="range"] {
+  width: 120px;
+  accent-color: var(--accent-light);
+}
+.interactive-wrapper .controls button {
+  padding: 5px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.interactive-wrapper .controls button:hover { background: var(--accent-light); }
+.interactive-wrapper .controls select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+}
+.interactive-wrapper .controls .value-display {
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 36px;
+  text-align: center;
 }
 
 /* Slider containers (ch7+ style) */

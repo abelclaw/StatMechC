@@ -175,6 +175,19 @@ $$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \
 
 <p><span class="tooltip-trigger">Diffusion<span class="tooltip-content">The net spreading of the distribution of molecules due to random molecular motion. It is the macroscopic consequence of many microscopic random walks.</span></span> refers to the net spreading of the distribution of molecules due to random molecular motion. Think about an individual molecule in a gas, say some CO molecule coming out of a car's exhaust. It leaves the exhaust and moves in a straight line until it hits another molecule, in which case it is buffeted essentially randomly in a different direction. As all the CO molecules are doing the same thing, on average, the net effect is a diffusion of the CO gas. We want to compute the probability distribution $P_t(x)$ for where a CO molecule is after a time $t$ and then use this to determine the equation of motion of the density of the gas.</p>
 
+<!-- Interactive Brownian Motion -->
+<div class="interactive-container">
+  <h3>Interactive: Brownian Motion</h3>
+  <p class="vis-caption">A large particle (yellow) is buffeted by many small gas molecules, producing the random jittery motion first observed by Robert Brown in 1827. The trail shows the pollen grain's path &mdash; a physical random walk driven by molecular collisions.</p>
+  <div class="vis-controls">
+    <label>Temperature: <input type="range" id="bm-temp" min="0.5" max="5" step="0.1" value="2"><span class="slider-value" id="bm-temp-val">2</span></label>
+    <label>Pollen size: <input type="range" id="bm-size" min="8" max="25" step="1" value="14"><span class="slider-value" id="bm-size-val">14</span></label>
+    <button id="bm-start">Start</button>
+    <button id="bm-reset">Reset</button>
+  </div>
+  <canvas id="vis-brownian" width="600" height="400"></canvas>
+</div>
+
 <h3 id="s2-3-1">3.1 &mdash; Collisions in a gas</h3>
 
 <p>It's helpful to discuss random walks for gases in terms of a set of convenient physical quantities.</p>
@@ -496,6 +509,15 @@ $$D = \frac{1}{6\pi\eta R}\langle m\vec{v}^2\rangle$$
 </div>
 
 <p>This is known as the <span class="tooltip-trigger">Einstein-Stokes relation<span class="tooltip-content">Connects the diffusion constant to viscosity: $D = k_BT/(6\pi\eta R)$. It tells us that viscosity and diffusion share a microscopic origin in random molecular collisions.</span></span>. It relates the diffusion constant $D$ and the viscosity, telling us that viscosity also has its origin in the microscopic random walks of the molecules in the fluid.</p>
+
+<!-- Explore Further -->
+<div class="info-box explore">
+<div class="box-title">Explore Further</div>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=nrUBPO6zZ40&list=PLED25F943F8D6081C" target="_blank">Einstein: The Size and Existence of Atoms</a> <span class="link-desc">&mdash; Historical documentary on how Einstein used Brownian motion to prove atoms exist</span></li>
+<li><a href="https://www.youtube.com/watch?v=iuLAc3G9tvc&t=8s" target="_blank">Diffusion in Outer Space</a> <span class="link-desc">&mdash; Diffusion without convection, filmed in microgravity on the ISS</span></li>
+</ul>
+</div>
 
 <!-- ============================================================ -->
 <h2 id="s2-6">6 &mdash; Summary</h2>

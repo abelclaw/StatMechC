@@ -45,14 +45,15 @@ $$\frac{b}{2} = R\sin\frac{\theta}{2}$$
 <span class="eq-number">(2)</span>
 </div>
 
-<div class="interactive-wrapper">
-<h4>Interactive: Chaos in Collisions</h4>
-<canvas id="vis-chaos-balls" width="600" height="300"></canvas>
-<div class="controls">
-<label>Δb₁ perturbation: <input type="range" id="chaos-perturb" min="0" max="5" step="0.1" value="0"><span id="chaos-perturb-val">0.0</span></label>
-<button id="chaos-reset">Reset</button>
-</div>
-<figcaption>The green ball hits the red ball at impact parameter $b_1$, scatters at angle $\theta_1$, then hits the blue ball. Increase $\Delta b_1$ to see how a tiny change propagates through successive collisions.</figcaption>
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">💥</span> Interactive: Chaos — Exponential Divergence</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-chaos-balls" width="700" height="420"></canvas></div>
+  <div class="vis-controls">
+    <label>Initial offset Δb: <input type="range" id="chaos-perturb" min="0.1" max="3" step="0.1" value="0.5"> <span class="value-display" id="chaos-perturb-val">0.5</span> px</label>
+    <button id="chaos-launch">Launch</button>
+    <button id="chaos-reset">Reset</button>
+  </div>
+  <div class="vis-caption">Two particles launched with a tiny vertical offset Δb scatter off fixed obstacles. Watch how after just a few collisions their paths diverge completely — this is chaos.</div>
 </div>
 
 <p>Let us follow one ball. It first collides with an impact parameter $b_1$ deflecting at an angle $\theta_1$, then hits another ball, with impact parameter $b_2$ at angle $\theta_2$ and so on. We are interested in how the trajectory of this molecule changes upon a really weak force. If the force changes the impact parameter of the first collision by some small $\Delta b_1$, then after the first collision, the scattering angle will change by $\Delta\theta_1$ where, by Taylor expanding around $\theta_1$ we get</p>

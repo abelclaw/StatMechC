@@ -961,6 +961,212 @@ function initCh2Vis() {
     radiusSlider?.addEventListener('input', drawStokes);
     drawStokes();
   }
+
+  // ----- Brownian Motion Simulation -----
+  const cBM = document.getElementById('vis-brownian');
+  if (cBM) {
+    const { ctx: ctxBM, W: WBM, H: HBM } = setupCanvas(cBM);
+    let bmRunning = false;
+    let gasParticles = [];
+    let pollen = null;
+    let bmTime = 0;
+    let msdData = [];
+
+    function getTemp() { return parseFloat(document.getElementById('bm-temp')?.value || 2); }
+    function getPollenR() { return parseFloat(document.getElementById('bm-size')?.value || 14); }
+
+    function initBrownian() {
+      const T = getTemp();
+      const pollenR = getPollenR();
+      gasParticles = [];
+      bmTime = 0;
+      msdData = [];
+      const nGas = 120;
+      for (let i = 0; i < nGas; i++) {
+        const speed = T * (0.3 + Math.random() * 1.4);
+        const angle = Math.random() * 2 * Math.PI;
+        gasParticles.push({
+          x: 20 + Math.random() * (WBM - 40),
+          y: 20 + Math.random() * (HBM - 40),
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle),
+          r: 2
+        });
+      }
+      pollen = {
+        x: WBM / 2, y: HBM / 2,
+        vx: 0, vy: 0,
+        r: pollenR, mass: pollenR * pollenR,
+        trail: [{ x: WBM / 2, y: HBM / 2 }],
+        x0: WBM / 2, y0: HBM / 2
+      };
+    }
+
+    function stepBrownian() {
+      const T = getTemp();
+      const gasMass = 1;
+
+      // Move gas particles
+      gasParticles.forEach(g => {
+        g.x += g.vx;
+        g.y += g.vy;
+        if (g.x < g.r) { g.vx = Math.abs(g.vx); g.x = g.r; }
+        if (g.x > WBM - g.r) { g.vx = -Math.abs(g.vx); g.x = WBM - g.r; }
+        if (g.y < g.r) { g.vy = Math.abs(g.vy); g.y = g.r; }
+        if (g.y > HBM - g.r) { g.vy = -Math.abs(g.vy); g.y = HBM - g.r; }
+      });
+
+      // Move pollen
+      pollen.x += pollen.vx;
+      pollen.y += pollen.vy;
+      // Damping on pollen (viscous drag)
+      pollen.vx *= 0.998;
+      pollen.vy *= 0.998;
+      if (pollen.x < pollen.r) { pollen.vx = Math.abs(pollen.vx); pollen.x = pollen.r; }
+      if (pollen.x > WBM - pollen.r) { pollen.vx = -Math.abs(pollen.vx); pollen.x = WBM - pollen.r; }
+      if (pollen.y < pollen.r) { pollen.vy = Math.abs(pollen.vy); pollen.y = pollen.r; }
+      if (pollen.y > HBM - pollen.r) { pollen.vy = -Math.abs(pollen.vy); pollen.y = HBM - pollen.r; }
+
+      // Gas-pollen collisions (elastic)
+      gasParticles.forEach(g => {
+        const dx = g.x - pollen.x;
+        const dy = g.y - pollen.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = g.r + pollen.r;
+        if (dist < minDist && dist > 0) {
+          const nx = dx / dist, ny = dy / dist;
+          // Relative velocity along collision normal
+          const dvx = g.vx - pollen.vx;
+          const dvy = g.vy - pollen.vy;
+          const dvn = dvx * nx + dvy * ny;
+          if (dvn < 0) { // approaching
+            const mRatio = gasMass / pollen.mass;
+            const impulse = 2 * dvn / (1 + mRatio);
+            g.vx -= impulse * nx;
+            g.vy -= impulse * ny;
+            pollen.vx += impulse * mRatio * nx;
+            pollen.vy += impulse * mRatio * ny;
+          }
+          // Separate
+          const overlap = minDist - dist;
+          g.x += nx * overlap * 0.8;
+          g.y += ny * overlap * 0.8;
+          pollen.x -= nx * overlap * 0.2;
+          pollen.y -= ny * overlap * 0.2;
+        }
+      });
+
+      bmTime++;
+      if (bmTime % 3 === 0) {
+        pollen.trail.push({ x: pollen.x, y: pollen.y });
+        if (pollen.trail.length > 800) pollen.trail.shift();
+      }
+      if (bmTime % 10 === 0) {
+        const dr2 = (pollen.x - pollen.x0) ** 2 + (pollen.y - pollen.y0) ** 2;
+        msdData.push({ t: bmTime, r2: dr2 });
+        if (msdData.length > 200) msdData.shift();
+      }
+    }
+
+    function drawBrownian() {
+      clearCanvas(ctxBM, WBM, HBM);
+
+      // Box
+      ctxBM.strokeStyle = COLORS.axis;
+      ctxBM.lineWidth = 2;
+      ctxBM.strokeRect(1, 1, WBM - 2, HBM - 2);
+
+      // Gas particles
+      ctxBM.fillStyle = 'rgba(79,195,247,0.5)';
+      gasParticles.forEach(g => {
+        ctxBM.beginPath();
+        ctxBM.arc(g.x, g.y, g.r, 0, 2 * Math.PI);
+        ctxBM.fill();
+      });
+
+      // Pollen trail
+      if (pollen.trail.length > 1) {
+        ctxBM.lineWidth = 1.5;
+        for (let i = 1; i < pollen.trail.length; i++) {
+          const alpha = 0.1 + 0.6 * (i / pollen.trail.length);
+          ctxBM.strokeStyle = 'rgba(255,167,38,' + alpha + ')';
+          ctxBM.beginPath();
+          ctxBM.moveTo(pollen.trail[i - 1].x, pollen.trail[i - 1].y);
+          ctxBM.lineTo(pollen.trail[i].x, pollen.trail[i].y);
+          ctxBM.stroke();
+        }
+      }
+
+      // Pollen grain
+      ctxBM.beginPath();
+      ctxBM.arc(pollen.x, pollen.y, pollen.r, 0, 2 * Math.PI);
+      ctxBM.fillStyle = COLORS.yellow;
+      ctxBM.globalAlpha = 0.85;
+      ctxBM.fill();
+      ctxBM.globalAlpha = 1;
+      ctxBM.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctxBM.lineWidth = 1.5;
+      ctxBM.stroke();
+
+      // Origin marker
+      ctxBM.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctxBM.lineWidth = 1;
+      ctxBM.beginPath();
+      ctxBM.arc(pollen.x0, pollen.y0, 4, 0, 2 * Math.PI);
+      ctxBM.stroke();
+
+      // MSD info
+      if (msdData.length > 0) {
+        const latest = msdData[msdData.length - 1];
+        const rms = Math.sqrt(latest.r2);
+        ctxBM.fillStyle = COLORS.text;
+        ctxBM.font = FONT;
+        ctxBM.textAlign = 'left';
+        ctxBM.fillText('Time: ' + bmTime, 10, 20);
+        ctxBM.fillText('RMS displacement: ' + rms.toFixed(1) + ' px', 10, 38);
+        ctxBM.fillStyle = COLORS.orange;
+        ctxBM.fillText('\u2014 Pollen trail', 10, 56);
+      }
+    }
+
+    function animateBrownian() {
+      if (!bmRunning) return;
+      for (let i = 0; i < 2; i++) stepBrownian();
+      drawBrownian();
+      activeAnimations['brownian'] = requestAnimationFrame(animateBrownian);
+    }
+
+    document.getElementById('bm-start')?.addEventListener('click', function () {
+      bmRunning = !bmRunning;
+      this.textContent = bmRunning ? 'Pause' : 'Start';
+      if (bmRunning) animateBrownian();
+    });
+
+    document.getElementById('bm-reset')?.addEventListener('click', () => {
+      bmRunning = false;
+      const btn = document.getElementById('bm-start');
+      if (btn) btn.textContent = 'Start';
+      if (activeAnimations['brownian']) cancelAnimationFrame(activeAnimations['brownian']);
+      initBrownian();
+      drawBrownian();
+    });
+
+    document.getElementById('bm-temp')?.addEventListener('input', function () {
+      document.getElementById('bm-temp-val')?.replaceChildren(document.createTextNode(parseFloat(this.value).toFixed(1)));
+    });
+
+    document.getElementById('bm-size')?.addEventListener('input', function () {
+      document.getElementById('bm-size-val')?.replaceChildren(document.createTextNode(this.value));
+      if (!bmRunning) {
+        pollen.r = parseFloat(this.value);
+        pollen.mass = pollen.r * pollen.r;
+        drawBrownian();
+      }
+    });
+
+    initBrownian();
+    drawBrownian();
+  }
 }
 
 
@@ -1575,115 +1781,212 @@ function initCh3Vis() {
     drawPhaseCoarse();
   }
 
-  // ----- Chaos in Collisions -----
+  // ----- Chaos — Exponential Divergence -----
   const cChaos = document.getElementById('vis-chaos-balls');
   if (cChaos) {
     const { ctx: ctxC, W: WC, H: HC } = setupCanvas(cChaos);
     const perturbSlider = document.getElementById('chaos-perturb');
+    const launchBtn = document.getElementById('chaos-launch');
     const resetBtn = document.getElementById('chaos-reset');
-    const R = 18;
+    const SR = 22; // scatterer radius
+    const PR = 4;  // particle radius
+    const speed = 3.5;
 
-    function drawChaosBalls() {
-      clearCanvas(ctxC, WC, HC);
-      const db = parseFloat(perturbSlider?.value || 0);
-      document.getElementById('chaos-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
-
-      // Geometry: green ball comes from left, hits red, scatters to blue
-      const cx = WC / 2, cy = HC / 2;
-      // Original trajectory
-      const b1 = 0.4 * R;  // impact parameter
-      const theta1 = 2 * Math.asin(b1 / (2 * R));
-
-      // Perturbed trajectory
-      const b1p = b1 + db;
-      const theta1p = 2 * Math.asin(Math.min(b1p / (2 * R), 0.999));
-
-      // Red ball at center
-      const redX = cx - 40, redY = cy;
-      // Green approach from left
-      const greenStartX = 30, greenStartY = redY - b1;
-      const greenStartYp = redY - b1p;
-
-      // After hitting red, green scatters
-      const scatterLen = 120;
-      const origAngle = theta1;
-      const pertAngle = theta1p;
-      const greenEndX = redX + scatterLen * Math.cos(origAngle);
-      const greenEndY = redY - scatterLen * Math.sin(origAngle);
-      const greenEndXp = redX + scatterLen * Math.cos(pertAngle);
-      const greenEndYp = redY - scatterLen * Math.sin(pertAngle);
-
-      // Blue ball position (along original trajectory)
-      const blueX = cx + 100, blueY = redY - 80;
-
-      // Draw approach lines (original in solid, perturbed in dashed)
-      ctxC.strokeStyle = COLORS.green; ctxC.lineWidth = 2;
-      ctxC.beginPath(); ctxC.moveTo(greenStartX, greenStartY); ctxC.lineTo(redX - R, greenStartY); ctxC.stroke();
-      // scatter line original
-      ctxC.beginPath(); ctxC.moveTo(redX, redY); ctxC.lineTo(greenEndX, greenEndY); ctxC.stroke();
-
-      if (db > 0.1) {
-        ctxC.strokeStyle = COLORS.green; ctxC.setLineDash([5, 5]);
-        ctxC.beginPath(); ctxC.moveTo(greenStartX, greenStartYp); ctxC.lineTo(redX - R, greenStartYp); ctxC.stroke();
-        ctxC.beginPath(); ctxC.moveTo(redX, redY); ctxC.lineTo(greenEndXp, greenEndYp); ctxC.stroke();
-        ctxC.setLineDash([]);
-
-        // Show angular spread
-        const spreadDist = 80;
-        ctxC.strokeStyle = COLORS.yellow; ctxC.lineWidth = 1;
-        ctxC.beginPath();
-        ctxC.arc(redX, redY, spreadDist, -pertAngle, -origAngle);
-        ctxC.stroke();
-        ctxC.fillStyle = COLORS.yellow; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
-        ctxC.fillText('Δθ₁', redX + spreadDist + 5, redY - spreadDist * Math.sin((origAngle + pertAngle) / 2));
+    // Place scatterers in staggered rows so particles bounce through them
+    const scatterers = [];
+    const cols = [160, 280, 400, 520];
+    const rows = [100, 210, 320];
+    for (let r = 0; r < rows.length; r++) {
+      for (let ci = 0; ci < cols.length; ci++) {
+        const offset = (r % 2 === 1) ? 60 : 0;
+        const x = cols[ci] + offset;
+        if (x > 30 && x < WC - 30) scatterers.push({ x, y: rows[r] });
       }
-
-      // Draw impact parameter annotations
-      ctxC.strokeStyle = COLORS.textDim; ctxC.lineWidth = 1;
-      const annotX = redX - 50;
-      ctxC.beginPath(); ctxC.moveTo(annotX, redY); ctxC.lineTo(annotX, greenStartY); ctxC.stroke();
-      ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT_SM; ctxC.textAlign = 'right';
-      ctxC.fillText('b₁', annotX - 4, (redY + greenStartY) / 2 + 4);
-
-      if (db > 0.1) {
-        ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 1;
-        ctxC.beginPath(); ctxC.moveTo(annotX - 15, greenStartY); ctxC.lineTo(annotX - 15, greenStartYp); ctxC.stroke();
-        ctxC.fillStyle = COLORS.orange; ctxC.font = FONT_SM;
-        ctxC.fillText('Δb₁', annotX - 19, (greenStartY + greenStartYp) / 2 + 4);
-      }
-
-      // Draw balls
-      function drawBall(x, y, color, label) {
-        ctxC.beginPath(); ctxC.arc(x, y, R, 0, 2 * Math.PI);
-        ctxC.fillStyle = color; ctxC.globalAlpha = 0.7; ctxC.fill(); ctxC.globalAlpha = 1;
-        ctxC.strokeStyle = color; ctxC.lineWidth = 2; ctxC.stroke();
-        ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'center';
-        ctxC.fillText(label, x, y + 5);
-      }
-      drawBall(greenStartX + 15, greenStartY, COLORS.green, '');
-      drawBall(redX, redY, COLORS.red, '');
-      drawBall(blueX, blueY, COLORS.blue, '');
-
-      // Labels
-      ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'center';
-      ctxC.fillText('Green', greenStartX + 15, greenStartY + R + 16);
-      ctxC.fillText('Red', redX, redY + R + 16);
-      ctxC.fillText('Blue', blueX, blueY + R + 16);
-
-      // Second collision parameters
-      if (db > 0.1) {
-        const db2 = Math.abs(greenEndY - greenEndYp);
-        ctxC.fillStyle = COLORS.orange; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
-        ctxC.fillText('Δb₂ ≈ ' + (db2 / R * db).toFixed(1) + ' (amplified!)', greenEndXp + 10, (greenEndY + greenEndYp) / 2);
-      }
-
-      ctxC.fillStyle = COLORS.text; ctxC.font = FONT_LG; ctxC.textAlign = 'left';
-      ctxC.fillText('Chaos in Collisions', 10, 20);
     }
 
-    perturbSlider?.addEventListener('input', drawChaosBalls);
-    resetBtn?.addEventListener('click', () => { if (perturbSlider) perturbSlider.value = 0; drawChaosBalls(); });
-    drawChaosBalls();
+    let particles = null; // [{x,y,vx,vy,trail:[],collisions,alive}] x2
+    let running = false;
+
+    function resetSim() {
+      running = false;
+      if (activeAnimations['chaos-balls']) {
+        cancelAnimationFrame(activeAnimations['chaos-balls']);
+        delete activeAnimations['chaos-balls'];
+      }
+      particles = null;
+      drawScene();
+    }
+
+    function launchParticles() {
+      const db = parseFloat(perturbSlider?.value || 0.5);
+      document.getElementById('chaos-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
+      const startX = 20, startY = HC / 2;
+      const angle = -0.15; // slight upward angle to hit first scatterer
+      particles = [
+        { x: startX, y: startY - db / 2, vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
+          trail: [{ x: startX, y: startY - db / 2 }], collisions: 0, alive: true },
+        { x: startX, y: startY + db / 2, vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
+          trail: [{ x: startX, y: startY + db / 2 }], collisions: 0, alive: true }
+      ];
+      running = true;
+      animate();
+    }
+
+    function stepParticle(p) {
+      if (!p.alive) return;
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // Wall bounces (top/bottom)
+      if (p.y < PR) { p.y = PR; p.vy = -p.vy; }
+      if (p.y > HC - PR) { p.y = HC - PR; p.vy = -p.vy; }
+
+      // Scatterer collisions (elastic, scatterer is fixed/infinite mass)
+      for (const s of scatterers) {
+        const dx = p.x - s.x, dy = p.y - s.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = SR + PR;
+        if (dist < minDist && dist > 0) {
+          // Normal vector from scatterer to particle
+          const nx = dx / dist, ny = dy / dist;
+          // Reflect velocity
+          const dot = p.vx * nx + p.vy * ny;
+          if (dot < 0) { // only if approaching
+            p.vx -= 2 * dot * nx;
+            p.vy -= 2 * dot * ny;
+            // Push out of overlap
+            p.x = s.x + nx * minDist;
+            p.y = s.y + ny * minDist;
+            p.collisions++;
+          }
+        }
+      }
+
+      // Off screen right → stop
+      if (p.x > WC + 10 || p.x < -10) p.alive = false;
+
+      // Record trail
+      p.trail.push({ x: p.x, y: p.y });
+    }
+
+    function drawScene() {
+      clearCanvas(ctxC, WC, HC);
+
+      // Draw scatterers
+      for (const s of scatterers) {
+        ctxC.beginPath();
+        ctxC.arc(s.x, s.y, SR, 0, 2 * Math.PI);
+        ctxC.fillStyle = 'rgba(100, 120, 140, 0.25)';
+        ctxC.fill();
+        ctxC.strokeStyle = COLORS.textDim;
+        ctxC.lineWidth = 1.5;
+        ctxC.stroke();
+      }
+
+      if (!particles) {
+        // Show launch position hint
+        const db = parseFloat(perturbSlider?.value || 0.5);
+        document.getElementById('chaos-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
+        const cy = HC / 2;
+        ctxC.fillStyle = COLORS.blue;
+        ctxC.beginPath(); ctxC.arc(20, cy - db / 2, PR + 1, 0, 2 * Math.PI); ctxC.fill();
+        ctxC.fillStyle = COLORS.red;
+        ctxC.beginPath(); ctxC.arc(20, cy + db / 2, PR + 1, 0, 2 * Math.PI); ctxC.fill();
+        // Label
+        if (db > 0.5) {
+          ctxC.strokeStyle = COLORS.textDim; ctxC.lineWidth = 1;
+          ctxC.beginPath(); ctxC.moveTo(32, cy - db / 2); ctxC.lineTo(32, cy + db / 2); ctxC.stroke();
+          ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
+          ctxC.fillText('Δb', 36, cy + 4);
+        }
+        ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'center';
+        ctxC.fillText('Press Launch to fire two particles', WC / 2, HC - 15);
+        return;
+      }
+
+      const colors = [COLORS.blue, COLORS.red];
+      const dashes = [[], [6, 4]];
+
+      // Draw trails
+      for (let i = 0; i < 2; i++) {
+        const p = particles[i];
+        if (p.trail.length < 2) continue;
+        ctxC.strokeStyle = colors[i];
+        ctxC.lineWidth = 2;
+        ctxC.setLineDash(dashes[i]);
+        ctxC.beginPath();
+        ctxC.moveTo(p.trail[0].x, p.trail[0].y);
+        for (let j = 1; j < p.trail.length; j++) {
+          ctxC.lineTo(p.trail[j].x, p.trail[j].y);
+        }
+        ctxC.stroke();
+        ctxC.setLineDash([]);
+      }
+
+      // Draw particles (current positions)
+      for (let i = 0; i < 2; i++) {
+        const p = particles[i];
+        if (!p.alive) continue;
+        ctxC.beginPath();
+        ctxC.arc(p.x, p.y, PR + 1, 0, 2 * Math.PI);
+        ctxC.fillStyle = colors[i];
+        ctxC.fill();
+      }
+
+      // Info overlay
+      const maxCol = Math.max(particles[0].collisions, particles[1].collisions);
+      ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'left';
+      ctxC.fillText('Collisions: ' + maxCol, 12, 22);
+
+      // Show separation
+      if (particles[0].alive || particles[1].alive) {
+        const t0 = particles[0].trail, t1 = particles[1].trail;
+        const len = Math.min(t0.length, t1.length);
+        if (len > 1) {
+          const dx = t0[len - 1].x - t1[len - 1].x;
+          const dy = t0[len - 1].y - t1[len - 1].y;
+          const sep = Math.sqrt(dx * dx + dy * dy);
+          const db0 = parseFloat(perturbSlider?.value || 0.5);
+          const amp = sep / db0;
+          ctxC.fillText('Separation: ' + sep.toFixed(1) + ' px', 12, 42);
+          if (amp > 1.5) {
+            ctxC.fillStyle = COLORS.orange;
+            ctxC.fillText('Amplification: ×' + amp.toFixed(0), 12, 62);
+          }
+        }
+      }
+
+      // Legend
+      ctxC.font = FONT_SM; ctxC.textAlign = 'right';
+      ctxC.fillStyle = COLORS.blue;
+      ctxC.fillRect(WC - 120, 10, 20, 3);
+      ctxC.fillText('Particle A', WC - 12, 16);
+      ctxC.fillStyle = COLORS.red;
+      ctxC.setLineDash([6, 4]); ctxC.strokeStyle = COLORS.red; ctxC.lineWidth = 2;
+      ctxC.beginPath(); ctxC.moveTo(WC - 120, 30); ctxC.lineTo(WC - 100, 30); ctxC.stroke();
+      ctxC.setLineDash([]);
+      ctxC.fillStyle = COLORS.red;
+      ctxC.fillText('Particle B', WC - 12, 34);
+    }
+
+    function animate() {
+      if (!running || !particles) return;
+      const anyAlive = particles.some(p => p.alive);
+      if (!anyAlive) { running = false; drawScene(); return; }
+
+      for (let sub = 0; sub < 2; sub++) { // 2 substeps per frame for smoothness
+        for (const p of particles) stepParticle(p);
+      }
+      drawScene();
+      activeAnimations['chaos-balls'] = requestAnimationFrame(animate);
+    }
+
+    perturbSlider?.addEventListener('input', () => {
+      if (!running) { particles = null; drawScene(); }
+    });
+    launchBtn?.addEventListener('click', () => { resetSim(); setTimeout(launchParticles, 50); });
+    resetBtn?.addEventListener('click', resetSim);
+    drawScene();
   }
 
   // ----- State Counting on a Circle -----
@@ -2151,6 +2454,244 @@ function initCh4Vis() {
 
     modeSelect?.addEventListener('change', drawDiatomic);
     drawDiatomic();
+  }
+
+  // ----- Ideal Gas Kinetic Theory with Live Velocity Histogram -----
+  const cGK = document.getElementById('vis-gaskinetic');
+  if (cGK) {
+    const { ctx: ctxGK, W: WGK, H: HGK } = setupCanvas(cGK);
+    let gkRunning = false;
+    let gkParticles = [];
+    const nGK = 150;
+    const gasR = 3;
+    const boxW = WGK * 0.48; // left portion is the box
+    const histX = boxW + 40; // histogram starts here
+    const histW = WGK - histX - 20;
+    const nBins = 25;
+    let speedHistory = new Array(nBins).fill(0);
+    let histFrames = 0;
+
+    function getGKTemp() { return parseFloat(document.getElementById('gk-temp')?.value || 400); }
+
+    function initGKParticles() {
+      const T = getGKTemp();
+      // v_rms scales as sqrt(T); use arbitrary units where v_rms ~ sqrt(T/100)
+      const v0 = Math.sqrt(T / 80);
+      gkParticles = [];
+      speedHistory = new Array(nBins).fill(0);
+      histFrames = 0;
+      for (let i = 0; i < nGK; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        // Box-Muller for Maxwell-like initial speeds
+        const u1 = Math.random(), u2 = Math.random();
+        const vx = v0 * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        const vy = v0 * Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
+        gkParticles.push({
+          x: gasR + 5 + Math.random() * (boxW - gasR * 2 - 10),
+          y: gasR + 5 + Math.random() * (HGK - gasR * 2 - 10),
+          vx: vx,
+          vy: vy,
+          r: gasR
+        });
+      }
+    }
+
+    function stepGK() {
+      // Move particles
+      gkParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        // Wall collisions
+        if (p.x < p.r) { p.vx = Math.abs(p.vx); p.x = p.r; }
+        if (p.x > boxW - p.r) { p.vx = -Math.abs(p.vx); p.x = boxW - p.r; }
+        if (p.y < p.r) { p.vy = Math.abs(p.vy); p.y = p.r; }
+        if (p.y > HGK - p.r) { p.vy = -Math.abs(p.vy); p.y = HGK - p.r; }
+      });
+
+      // Particle-particle elastic collisions
+      for (let i = 0; i < nGK; i++) {
+        for (let j = i + 1; j < nGK; j++) {
+          const a = gkParticles[i], b = gkParticles[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const dist2 = dx * dx + dy * dy;
+          const minD = a.r + b.r;
+          if (dist2 < minD * minD && dist2 > 0) {
+            const dist = Math.sqrt(dist2);
+            const nx = dx / dist, ny = dy / dist;
+            // Relative velocity along normal
+            const dvn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+            if (dvn > 0) { // approaching
+              // Equal mass elastic: swap normal components
+              a.vx -= dvn * nx;
+              a.vy -= dvn * ny;
+              b.vx += dvn * nx;
+              b.vy += dvn * ny;
+              // Separate
+              const overlap = minD - dist;
+              a.x -= nx * overlap * 0.5;
+              a.y -= ny * overlap * 0.5;
+              b.x += nx * overlap * 0.5;
+              b.y += ny * overlap * 0.5;
+            }
+          }
+        }
+      }
+
+      // Accumulate speed histogram
+      histFrames++;
+      const speeds = gkParticles.map(p => Math.sqrt(p.vx * p.vx + p.vy * p.vy));
+      const maxBinSpeed = 12; // upper limit for histogram
+      speeds.forEach(s => {
+        const bin = Math.floor(s / maxBinSpeed * nBins);
+        if (bin >= 0 && bin < nBins) speedHistory[bin]++;
+      });
+    }
+
+    function drawGK() {
+      clearCanvas(ctxGK, WGK, HGK);
+
+      // Draw box
+      ctxGK.strokeStyle = COLORS.axis;
+      ctxGK.lineWidth = 2;
+      ctxGK.strokeRect(1, 1, boxW - 2, HGK - 2);
+
+      // Draw particles colored by speed
+      const speeds = gkParticles.map(p => Math.sqrt(p.vx * p.vx + p.vy * p.vy));
+      const maxSpeed = 10;
+      gkParticles.forEach((p, i) => {
+        const frac = Math.min(speeds[i] / maxSpeed, 1);
+        const r = Math.round(239 * frac + 79 * (1 - frac));
+        const g = Math.round(83 * frac + 195 * (1 - frac));
+        const b = Math.round(80 * frac + 247 * (1 - frac));
+        ctxGK.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+        ctxGK.beginPath();
+        ctxGK.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+        ctxGK.fill();
+      });
+
+      // Draw histogram on right
+      const histBot = HGK - 40;
+      const histTop = 30;
+      const histH = histBot - histTop;
+      const maxBinSpeed = 12;
+      const barW = histW / nBins;
+
+      // Find max bin count for scaling
+      let maxCount = 1;
+      for (let i = 0; i < nBins; i++) {
+        if (speedHistory[i] > maxCount) maxCount = speedHistory[i];
+      }
+
+      // Draw histogram bars
+      for (let i = 0; i < nBins; i++) {
+        const barH = (speedHistory[i] / maxCount) * histH;
+        const frac = (i + 0.5) / nBins;
+        const r = Math.round(239 * frac + 79 * (1 - frac));
+        const g = Math.round(83 * frac + 195 * (1 - frac));
+        const b = Math.round(80 * frac + 247 * (1 - frac));
+        ctxGK.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.6)';
+        ctxGK.fillRect(histX + i * barW, histBot - barH, barW - 1, barH);
+      }
+
+      // Overlay theoretical Maxwell-Boltzmann (2D: f(v) = (v/sigma^2) exp(-v^2/(2*sigma^2)))
+      if (histFrames > 10) {
+        // Estimate sigma from data
+        let sumV2 = 0;
+        gkParticles.forEach(p => { sumV2 += p.vx * p.vx + p.vy * p.vy; });
+        const sigma2 = sumV2 / (2 * nGK); // <v^2> = 2*sigma^2 in 2D
+        const sigma = Math.sqrt(sigma2);
+
+        ctxGK.strokeStyle = COLORS.green;
+        ctxGK.lineWidth = 2.5;
+        ctxGK.beginPath();
+        // Normalize: total histogram area = sum of bins
+        let totalHist = 0;
+        for (let i = 0; i < nBins; i++) totalHist += speedHistory[i];
+        const binWidth = maxBinSpeed / nBins;
+        for (let px = 0; px < histW; px++) {
+          const v = (px / histW) * maxBinSpeed;
+          // 2D Maxwell-Boltzmann: f(v) = (v/sigma^2) exp(-v^2/(2 sigma^2))
+          const fv = (v / sigma2) * Math.exp(-v * v / (2 * sigma2));
+          // Scale to match histogram
+          const barH = fv * (totalHist * binWidth / maxCount) * histH;
+          const py = histBot - barH;
+          if (px === 0) ctxGK.moveTo(histX + px, py);
+          else ctxGK.lineTo(histX + px, py);
+        }
+        ctxGK.stroke();
+      }
+
+      // Axes for histogram
+      ctxGK.strokeStyle = COLORS.axis;
+      ctxGK.lineWidth = 1;
+      ctxGK.beginPath();
+      ctxGK.moveTo(histX, histTop);
+      ctxGK.lineTo(histX, histBot);
+      ctxGK.lineTo(histX + histW, histBot);
+      ctxGK.stroke();
+
+      // Labels
+      ctxGK.fillStyle = COLORS.text;
+      ctxGK.font = FONT;
+      ctxGK.textAlign = 'center';
+      ctxGK.fillText('Speed distribution', histX + histW / 2, 18);
+      ctxGK.fillStyle = COLORS.textDim;
+      ctxGK.font = FONT_SM;
+      ctxGK.fillText('Speed v', histX + histW / 2, histBot + 16);
+      ctxGK.fillText('f(v)', histX - 14, histTop + histH / 2);
+
+      // Legend
+      ctxGK.fillStyle = COLORS.green;
+      ctxGK.font = FONT_SM;
+      ctxGK.textAlign = 'left';
+      ctxGK.fillText('\u2014 Maxwell-Boltzmann (2D)', histX + 5, histBot + 30);
+
+      // Speed ticks
+      ctxGK.fillStyle = COLORS.textDim;
+      ctxGK.font = '10px Inter, system-ui, sans-serif';
+      ctxGK.textAlign = 'center';
+      for (let v = 0; v <= maxBinSpeed; v += 3) {
+        const tx = histX + (v / maxBinSpeed) * histW;
+        ctxGK.fillText(v.toString(), tx, histBot + 12);
+      }
+
+      // Temp display
+      const T = getGKTemp();
+      document.getElementById('gk-temp-val')?.replaceChildren(document.createTextNode(T.toString()));
+    }
+
+    function animateGK() {
+      if (!gkRunning) return;
+      for (let i = 0; i < 2; i++) stepGK();
+      drawGK();
+      activeAnimations['gaskinetic'] = requestAnimationFrame(animateGK);
+    }
+
+    document.getElementById('gk-start')?.addEventListener('click', function () {
+      gkRunning = !gkRunning;
+      this.textContent = gkRunning ? 'Pause' : 'Start';
+      if (gkRunning) animateGK();
+    });
+
+    document.getElementById('gk-reset')?.addEventListener('click', () => {
+      gkRunning = false;
+      const btn = document.getElementById('gk-start');
+      if (btn) btn.textContent = 'Start';
+      if (activeAnimations['gaskinetic']) cancelAnimationFrame(activeAnimations['gaskinetic']);
+      initGKParticles();
+      drawGK();
+    });
+
+    document.getElementById('gk-temp')?.addEventListener('input', function () {
+      document.getElementById('gk-temp-val')?.replaceChildren(document.createTextNode(this.value));
+      if (!gkRunning) {
+        initGKParticles();
+        drawGK();
+      }
+    });
+
+    initGKParticles();
+    drawGK();
   }
 }
 
