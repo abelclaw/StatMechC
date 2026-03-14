@@ -1725,198 +1725,310 @@ function initCh3Vis() {
     drawBilliards();
   }
 
-  // ----- Figure 2: Correlated Outgoing Velocities -----
-  // ----- Figure 2: Correlated Outgoing Velocities -----
-  // Shows that after a collision, knowing v1' determines v2' (momentum + energy conservation)
+  // ----- Figure 2: Correlated Outgoing Velocities (Interactive) -----
+  // Drag slider to change v1' scattering angle; v2' updates via conservation laws
   const cCorr = document.getElementById('vis-correlated-vel');
   if (cCorr) {
-    const {ctx: ctxCorr, W: WCorr, H: HCorr} = setupCanvas(cCorr);
-    clearCanvas(ctxCorr, WCorr, HCorr);
+    const {ctx: ctxCorr, W: WC, H: HC} = setupCanvas(cCorr);
+    const thetaSlider = document.getElementById('corr-theta');
+    const thetaVal = document.getElementById('corr-theta-val');
 
-    const cx = WCorr * 0.38, cy = HCorr / 2;
-    const R1 = 18, R2 = 10; // big and small molecule
-    const arrowLen = 55;
+    // Collision setup: 2D elastic collision
+    // m1 moves right, m2 stationary (CM frame simplification)
+    const m1 = 3, m2 = 1;
+    const v1i = 3.0; // initial speed of m1
+    const collPt = { x: WC * 0.38, y: HC * 0.48 }; // collision point
+    const arrowScale = 22; // pixels per unit velocity
 
-    // --- BEFORE panel (left) ---
-    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_LG; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('Before', cx, 18);
+    function drawCorrelated() {
+      const theta1 = parseFloat(thetaSlider?.value || 20) * Math.PI / 180;
+      if (thetaVal) thetaVal.textContent = Math.round(theta1 * 180 / Math.PI);
+      clearCanvas(ctxCorr, WC, HC);
 
-    // Big molecule (m₁) coming from left
-    const b1x = cx - 60, b1y = cy - 5;
-    const b1angle = 0.08; // nearly horizontal rightward
-    ctxCorr.fillStyle = COLORS.orange;
-    ctxCorr.beginPath(); ctxCorr.arc(b1x, b1y, R1, 0, 2 * Math.PI); ctxCorr.fill();
-    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('m₁', b1x, b1y + 4);
-    // velocity arrow
-    ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2.5;
-    drawArrow(ctxCorr, b1x + R1 + 4, b1y, b1x + R1 + 4 + arrowLen, b1y + arrowLen * Math.sin(b1angle), 10);
-    ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
-    ctxCorr.fillText('v⃗₁', b1x + R1 + arrowLen + 8, b1y - 4);
+      // Solve elastic collision in lab frame (m2 initially at rest)
+      // v1' magnitude from elastic collision formula:
+      // v1' = v1i * (m1*cos(theta1) + sqrt(m2^2 - m1^2*sin^2(theta1))) / (m1 + m2)
+      const sinT = Math.sin(theta1), cosT = Math.cos(theta1);
+      const disc = m2 * m2 - m1 * m1 * sinT * sinT;
+      const v1f = disc >= 0 ? v1i * (m1 * cosT + Math.sqrt(disc)) / (m1 + m2) : v1i * m1 * cosT / (m1 + m2);
 
-    // Small molecule (m₂) coming from right
-    const b2x = cx + 65, b2y = cy + 15;
-    const b2angle = Math.PI + 0.5; // heading left and slightly up
-    ctxCorr.fillStyle = COLORS.cyan;
-    ctxCorr.beginPath(); ctxCorr.arc(b2x, b2y, R2, 0, 2 * Math.PI); ctxCorr.fill();
-    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('m₂', b2x, b2y + 4);
-    // velocity arrow
-    ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2;
-    drawArrow(ctxCorr, b2x + (R2 + 4) * Math.cos(b2angle), b2y + (R2 + 4) * Math.sin(b2angle),
-              b2x + (R2 + 4 + arrowLen * 0.7) * Math.cos(b2angle), b2y + (R2 + 4 + arrowLen * 0.7) * Math.sin(b2angle), 8);
-    ctxCorr.fillStyle = COLORS.cyan; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'right';
-    ctxCorr.fillText('v⃗₂', b2x + (R2 + arrowLen * 0.7 + 10) * Math.cos(b2angle), b2y + (R2 + arrowLen * 0.7 + 10) * Math.sin(b2angle) - 4);
+      // v2' from momentum conservation: m1*v1i = m1*v1' + m2*v2'
+      const v1fx = v1f * Math.cos(theta1);
+      const v1fy = v1f * Math.sin(theta1);
+      const v2fx = (m1 * v1i - m1 * v1fx) / m2;
+      const v2fy = (-m1 * v1fy) / m2;
+      const v2f = Math.sqrt(v2fx * v2fx + v2fy * v2fy);
+      const theta2 = Math.atan2(v2fy, v2fx);
 
-    // Label: "uncorrelated — v₁, v₂ independent"
-    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('v⃗₁, v⃗₂ independent', cx, HCorr - 15);
+      // --- INCOMING ---
+      // m1 approaching from left
+      const inLen = 90;
+      const in1start = { x: collPt.x - inLen, y: collPt.y };
+      ctxCorr.setLineDash([5, 4]);
+      ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 1.5;
+      ctxCorr.beginPath(); ctxCorr.moveTo(in1start.x, in1start.y); ctxCorr.lineTo(collPt.x, collPt.y); ctxCorr.stroke();
+      ctxCorr.setLineDash([]);
+      // m1 ball at start
+      ctxCorr.fillStyle = COLORS.orange;
+      ctxCorr.beginPath(); ctxCorr.arc(in1start.x, in1start.y, 14, 0, 2 * Math.PI); ctxCorr.fill();
+      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+      ctxCorr.fillText('m₁', in1start.x, in1start.y + 4);
+      // v1 arrow
+      ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2;
+      drawArrow(ctxCorr, in1start.x + 18, in1start.y, in1start.x + 18 + v1i * arrowScale, in1start.y, 9);
+      ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
+      ctxCorr.fillText('v⃗₁', in1start.x + 20 + v1i * arrowScale, in1start.y - 6);
 
-    // --- Arrow between panels ---
-    const midX = WCorr * 0.56;
-    ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 2;
-    drawArrow(ctxCorr, midX - 15, cy, midX + 15, cy, 10);
-    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('collision', midX, cy - 12);
+      // m2 stationary at collision point
+      ctxCorr.fillStyle = COLORS.cyan;
+      ctxCorr.beginPath(); ctxCorr.arc(collPt.x + 25, collPt.y + 20, 9, 0, 2 * Math.PI); ctxCorr.fill();
+      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+      ctxCorr.fillText('m₂', collPt.x + 25, collPt.y + 24);
+      ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM;
+      ctxCorr.fillText('(at rest)', collPt.x + 25, collPt.y + 38);
 
-    // --- AFTER panel (right) ---
-    const ax = WCorr * 0.76;
-    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_LG; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('After', ax, 18);
+      // Collision marker
+      ctxCorr.fillStyle = 'rgba(255,255,255,0.08)';
+      ctxCorr.beginPath(); ctxCorr.arc(collPt.x, collPt.y, 12, 0, 2 * Math.PI); ctxCorr.fill();
 
-    // Both molecules now heading roughly in m₁'s original direction
-    // Big molecule barely deflected
-    const a1x = ax - 40, a1y = cy - 15;
-    const a1angle = 0.12;
-    ctxCorr.fillStyle = COLORS.orange;
-    ctxCorr.beginPath(); ctxCorr.arc(a1x, a1y, R1, 0, 2 * Math.PI); ctxCorr.fill();
-    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('m₁', a1x, a1y + 4);
-    ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2.5;
-    drawArrow(ctxCorr, a1x + R1 + 4, a1y, a1x + R1 + 4 + arrowLen * 0.9, a1y + arrowLen * 0.9 * Math.sin(a1angle), 10);
-    ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
-    ctxCorr.fillText("v⃗₁'", a1x + R1 + arrowLen + 6, a1y - 6);
+      // --- OUTGOING ---
+      const outStart = { x: WC * 0.55, y: HC * 0.48 };
 
-    // Small molecule kicked roughly same direction (slightly more deflected)
-    const a2x = ax - 15, a2y = cy + 20;
-    const a2angle = 0.35;
-    ctxCorr.fillStyle = COLORS.cyan;
-    ctxCorr.beginPath(); ctxCorr.arc(a2x, a2y, R2, 0, 2 * Math.PI); ctxCorr.fill();
-    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('m₂', a2x, a2y + 4);
-    ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2;
-    drawArrow(ctxCorr, a2x + R2 + 4, a2y, a2x + R2 + 4 + arrowLen * 0.8 * Math.cos(a2angle),
-              a2y + arrowLen * 0.8 * Math.sin(a2angle), 8);
-    ctxCorr.fillStyle = COLORS.cyan; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
-    ctxCorr.fillText("v⃗₂'", a2x + R2 + arrowLen * 0.8 * Math.cos(a2angle) + 6, a2y + arrowLen * 0.8 * Math.sin(a2angle) - 4);
+      // v1' arrow (user-controlled angle)
+      const v1endx = outStart.x + v1f * arrowScale * Math.cos(theta1);
+      const v1endy = outStart.y + v1f * arrowScale * Math.sin(theta1);
+      ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2.5;
+      drawArrow(ctxCorr, outStart.x, outStart.y, v1endx, v1endy, 10);
+      // m1 ball at arrow tip
+      ctxCorr.fillStyle = COLORS.orange;
+      ctxCorr.beginPath(); ctxCorr.arc(v1endx + 14 * Math.cos(theta1), v1endy + 14 * Math.sin(theta1), 14, 0, 2 * Math.PI); ctxCorr.fill();
+      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+      ctxCorr.fillText('m₁', v1endx + 14 * Math.cos(theta1), v1endy + 14 * Math.sin(theta1) + 4);
+      ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT;
+      ctxCorr.textAlign = 'left';
+      ctxCorr.fillText("v⃗₁'", v1endx + 20 * Math.cos(theta1) + 5, v1endy + 20 * Math.sin(theta1) - 8);
 
-    // Curly brace / link showing correlation
-    ctxCorr.strokeStyle = COLORS.green; ctxCorr.lineWidth = 1.5;
-    ctxCorr.setLineDash([3, 3]);
-    // Connect the two arrow tips
-    const tip1x = a1x + R1 + 4 + arrowLen * 0.9, tip1y = a1y + arrowLen * 0.9 * Math.sin(a1angle);
-    const tip2x = a2x + R2 + 4 + arrowLen * 0.8 * Math.cos(a2angle), tip2y = a2y + arrowLen * 0.8 * Math.sin(a2angle);
-    ctxCorr.beginPath();
-    ctxCorr.moveTo(tip1x, tip1y);
-    ctxCorr.quadraticCurveTo(Math.max(tip1x, tip2x) + 15, (tip1y + tip2y) / 2, tip2x, tip2y);
-    ctxCorr.stroke();
-    ctxCorr.setLineDash([]);
+      // v2' arrow (determined by conservation)
+      const v2endx = outStart.x + v2fx * arrowScale;
+      const v2endy = outStart.y + v2fy * arrowScale;
+      ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2.5;
+      drawArrow(ctxCorr, outStart.x, outStart.y, v2endx, v2endy, 10);
+      // m2 ball at arrow tip
+      ctxCorr.fillStyle = COLORS.cyan;
+      ctxCorr.beginPath(); ctxCorr.arc(v2endx + 9 * Math.cos(theta2), v2endy + 9 * Math.sin(theta2), 9, 0, 2 * Math.PI); ctxCorr.fill();
+      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+      ctxCorr.fillText('m₂', v2endx + 9 * Math.cos(theta2), v2endy + 9 * Math.sin(theta2) + 4);
+      ctxCorr.fillStyle = COLORS.cyan; ctxCorr.font = FONT;
+      ctxCorr.textAlign = 'left';
+      ctxCorr.fillText("v⃗₂'", v2endx + 14 * Math.cos(theta2) + 5, v2endy + 14 * Math.sin(theta2) + 12);
 
-    // Label: "correlated — knowing v₁' determines v₂'"
-    ctxCorr.fillStyle = COLORS.green; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText("knowing v⃗₁' determines v⃗₂'", ax + 10, HCorr - 15);
+      // Dashed link between arrow tips
+      ctxCorr.strokeStyle = COLORS.green; ctxCorr.lineWidth = 1.5;
+      ctxCorr.setLineDash([4, 3]);
+      ctxCorr.beginPath(); ctxCorr.moveTo(v1endx, v1endy);
+      ctxCorr.quadraticCurveTo(Math.max(v1endx, v2endx) + 20, (v1endy + v2endy) / 2, v2endx, v2endy);
+      ctxCorr.stroke();
+      ctxCorr.setLineDash([]);
 
-    // Conservation law annotation
-    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-    ctxCorr.fillText('(momentum + energy conservation)', ax + 10, HCorr - 2);
+      // Labels
+      ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+      ctxCorr.fillText('Before', collPt.x - 30, 18);
+      ctxCorr.fillText('After', outStart.x + 40, 18);
+
+      ctxCorr.fillStyle = COLORS.green; ctxCorr.font = FONT; ctxCorr.textAlign = 'center';
+      ctxCorr.fillText("v⃗₂' is fully determined by v⃗₁'", WC * 0.65, HC - 10);
+    }
+
+    thetaSlider?.addEventListener('input', drawCorrelated);
+    drawCorrelated();
   }
 
-  // ----- Figure 3: Phase Space Trajectories -----
-  const cTraj = document.getElementById('vis-phase-trajectories');
-  if (cTraj) {
-    const {ctx: ctxT, W: WT, H: HT} = setupCanvas(cTraj);
-    clearCanvas(ctxT, WT, HT);
+  // ----- Figure 3: Reversible Billiard Trajectories -----
+  // Two balls bounce among frozen obstacles. Forward/reverse shows time-reversibility.
+  const cRev = document.getElementById('vis-reversible-billiards');
+  if (cRev) {
+    const {ctx: ctxR, W: WR, H: HR} = setupCanvas(cRev);
+    const playBtn = document.getElementById('rev-play');
+    const revBtn = document.getElementById('rev-reverse');
+    const pauseBtn = document.getElementById('rev-pause');
+    const resetRevBtn = document.getElementById('rev-reset');
+    const revInfo = document.getElementById('rev-info');
 
-    const ox = 50, oy = 30, pw = WT - 80, ph = HT - 70;
+    const pad = 5;
+    const ballR = 7;
 
-    // Box and axes
-    ctxT.strokeStyle = COLORS.axis; ctxT.lineWidth = 2;
-    ctxT.strokeRect(ox, oy, pw, ph);
-    ctxT.fillStyle = COLORS.textDim; ctxT.font = FONT_SM; ctxT.textAlign = 'center';
-    ctxT.fillText('q (position)', ox + pw / 2, oy + ph + 22);
-    ctxT.save(); ctxT.translate(ox - 20, oy + ph / 2); ctxT.rotate(-Math.PI / 2);
-    ctxT.fillText('p (momentum)', 0, 0); ctxT.restore();
+    // Frozen obstacles
+    const frozenObs = [
+      { x: WR * 0.25, y: HR * 0.30, r: 20 },
+      { x: WR * 0.55, y: HR * 0.22, r: 16 },
+      { x: WR * 0.75, y: HR * 0.35, r: 18 },
+      { x: WR * 0.40, y: HR * 0.55, r: 22 },
+      { x: WR * 0.65, y: HR * 0.60, r: 15 },
+      { x: WR * 0.20, y: HR * 0.70, r: 17 },
+      { x: WR * 0.80, y: HR * 0.72, r: 19 },
+      { x: WR * 0.50, y: HR * 0.82, r: 14 },
+      { x: WR * 0.12, y: HR * 0.48, r: 13 },
+      { x: WR * 0.88, y: HR * 0.50, r: 14 },
+    ];
 
-    // Generate trajectories: start clustered, diverge after bouncing
-    const nTraj = 6;
-    const startX = ox + pw * 0.12, startY = oy + ph * 0.45;
-    const trajColors = [COLORS.blue, COLORS.cyan, COLORS.green, COLORS.orange, COLORS.red, COLORS.purple];
-    const nSteps = 300;
-    const dt = 1;
+    // Pre-record full trajectory so we can play forward and backward
+    const totalSteps = 3000;
+    let history = []; // [{b1:{x,y}, b2:{x,y}}]
+    let curFrame = 0;
+    let direction = 0; // 1=forward, -1=reverse, 0=paused
 
-    // Seed slightly different initial velocities
-    const trajs = [];
-    for (let t = 0; t < nTraj; t++) {
-      const angle = 0.35 + (t - nTraj / 2) * 0.02;
-      const speed = 2.2 + t * 0.05;
-      let x = startX + (t - nTraj / 2) * 2;
-      let y = startY + (t - nTraj / 2) * 1.5;
-      let vx = speed * Math.cos(angle);
-      let vy = speed * Math.sin(angle);
-      const path = [{x, y}];
-      for (let s = 0; s < nSteps; s++) {
-        x += vx * dt;
-        y += vy * dt;
-        // Reflect off walls
-        if (x < ox) { x = 2 * ox - x; vx = -vx; }
-        if (x > ox + pw) { x = 2 * (ox + pw) - x; vx = -vx; }
-        if (y < oy) { y = 2 * oy - y; vy = -vy; }
-        if (y > oy + ph) { y = 2 * (oy + ph) - y; vy = -vy; }
-        path.push({x, y});
+    function initRevBilliards() {
+      // Two balls with different starting positions and velocities
+      let b1 = { x: WR * 0.15, y: HR * 0.45, vx: 2.8, vy: 1.5 };
+      let b2 = { x: WR * 0.85, y: HR * 0.55, vx: -2.2, vy: -1.8 };
+
+      history = [{ b1: {x: b1.x, y: b1.y}, b2: {x: b2.x, y: b2.y} }];
+
+      for (let s = 0; s < totalSteps; s++) {
+        // Step each ball
+        for (const ball of [b1, b2]) {
+          ball.x += ball.vx;
+          ball.y += ball.vy;
+          // Wall reflections
+          if (ball.x < pad + ballR) { ball.x = 2 * (pad + ballR) - ball.x; ball.vx = -ball.vx; }
+          if (ball.x > WR - pad - ballR) { ball.x = 2 * (WR - pad - ballR) - ball.x; ball.vx = -ball.vx; }
+          if (ball.y < pad + ballR) { ball.y = 2 * (pad + ballR) - ball.y; ball.vy = -ball.vy; }
+          if (ball.y > HR - pad - ballR) { ball.y = 2 * (HR - pad - ballR) - ball.y; ball.vy = -ball.vy; }
+          // Obstacle reflections
+          for (const ob of frozenObs) {
+            const dx = ball.x - ob.x, dy = ball.y - ob.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const minD = ob.r + ballR;
+            if (dist < minD) {
+              const nx = dx / dist, ny = dy / dist;
+              const vn = ball.vx * nx + ball.vy * ny;
+              if (vn < 0) {
+                ball.vx -= 2 * vn * nx;
+                ball.vy -= 2 * vn * ny;
+              }
+              ball.x = ob.x + (minD + 1) * nx;
+              ball.y = ob.y + (minD + 1) * ny;
+            }
+          }
+        }
+        // Ball-ball collision
+        const dx = b2.x - b1.x, dy = b2.y - b1.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 2 * ballR) {
+          const nx = dx / dist, ny = dy / dist;
+          const v1n = b1.vx * nx + b1.vy * ny;
+          const v2n = b2.vx * nx + b2.vy * ny;
+          // Elastic collision (equal mass)
+          b1.vx += (v2n - v1n) * nx;
+          b1.vy += (v2n - v1n) * ny;
+          b2.vx += (v1n - v2n) * nx;
+          b2.vy += (v1n - v2n) * ny;
+          // Separate
+          const overlap = 2 * ballR - dist;
+          b1.x -= overlap / 2 * nx;
+          b1.y -= overlap / 2 * ny;
+          b2.x += overlap / 2 * nx;
+          b2.y += overlap / 2 * ny;
+        }
+        history.push({ b1: {x: b1.x, y: b1.y}, b2: {x: b2.x, y: b2.y} });
       }
-      trajs.push(path);
+      curFrame = 0;
+      direction = 0;
     }
 
-    // Draw trajectories with fading opacity
-    for (let t = 0; t < nTraj; t++) {
-      const path = trajs[t];
-      ctxT.lineWidth = 1.5;
-      // Draw in segments with changing opacity
-      for (let s = 1; s < path.length; s++) {
-        const frac = s / path.length;
-        const alpha = 0.3 + 0.5 * (1 - frac);
-        ctxT.strokeStyle = trajColors[t] + Math.round(alpha * 255).toString(16).padStart(2, '0');
-        ctxT.beginPath();
-        ctxT.moveTo(path[s - 1].x, path[s - 1].y);
-        ctxT.lineTo(path[s].x, path[s].y);
-        ctxT.stroke();
+    function drawRevFrame() {
+      clearCanvas(ctxR, WR, HR);
+
+      // Border
+      ctxR.strokeStyle = COLORS.axis; ctxR.lineWidth = 2;
+      ctxR.strokeRect(pad, pad, WR - 2 * pad, HR - 2 * pad);
+
+      // Frozen obstacles
+      for (const ob of frozenObs) {
+        ctxR.fillStyle = 'rgba(255,255,255,0.06)';
+        ctxR.beginPath(); ctxR.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxR.fill();
+        ctxR.strokeStyle = 'rgba(255,255,255,0.18)'; ctxR.lineWidth = 1;
+        ctxR.beginPath(); ctxR.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxR.stroke();
       }
+
+      // Draw trails (last ~200 frames)
+      const trailLen = Math.min(200, curFrame);
+      const startF = curFrame - trailLen;
+      if (trailLen > 1) {
+        for (let bi = 0; bi < 2; bi++) {
+          const key = bi === 0 ? 'b1' : 'b2';
+          const color = bi === 0 ? COLORS.blue : COLORS.red;
+          ctxR.lineWidth = 1.5;
+          for (let f = startF + 1; f <= curFrame; f++) {
+            const alpha = 0.05 + 0.45 * ((f - startF) / trailLen);
+            ctxR.strokeStyle = color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+            ctxR.beginPath();
+            ctxR.moveTo(history[f - 1][key].x, history[f - 1][key].y);
+            ctxR.lineTo(history[f][key].x, history[f][key].y);
+            ctxR.stroke();
+          }
+        }
+      }
+
+      // Draw balls at current frame
+      const frame = history[curFrame];
+      ctxR.fillStyle = COLORS.blue;
+      ctxR.beginPath(); ctxR.arc(frame.b1.x, frame.b1.y, ballR, 0, 2 * Math.PI); ctxR.fill();
+      ctxR.strokeStyle = '#fff'; ctxR.lineWidth = 1;
+      ctxR.beginPath(); ctxR.arc(frame.b1.x, frame.b1.y, ballR, 0, 2 * Math.PI); ctxR.stroke();
+
+      ctxR.fillStyle = COLORS.red;
+      ctxR.beginPath(); ctxR.arc(frame.b2.x, frame.b2.y, ballR, 0, 2 * Math.PI); ctxR.fill();
+      ctxR.strokeStyle = '#fff'; ctxR.lineWidth = 1;
+      ctxR.beginPath(); ctxR.arc(frame.b2.x, frame.b2.y, ballR, 0, 2 * Math.PI); ctxR.stroke();
+
+      // Direction indicator
+      ctxR.fillStyle = direction > 0 ? COLORS.green : direction < 0 ? COLORS.orange : COLORS.textDim;
+      ctxR.font = FONT; ctxR.textAlign = 'left';
+      const label = direction > 0 ? '▶ Forward' : direction < 0 ? '◀ Reverse' : 'Paused';
+      ctxR.fillText(label, 10, 20);
+
+      if (revInfo) revInfo.textContent = 't = ' + curFrame;
     }
 
-    // Draw starting region R
-    ctxT.fillStyle = 'rgba(79,195,247,0.25)';
-    ctxT.beginPath(); ctxT.arc(startX, startY, 14, 0, 2 * Math.PI); ctxT.fill();
-    ctxT.strokeStyle = COLORS.blue; ctxT.lineWidth = 1.5;
-    ctxT.beginPath(); ctxT.arc(startX, startY, 14, 0, 2 * Math.PI); ctxT.stroke();
-    // Starting dots
-    for (let t = 0; t < nTraj; t++) {
-      ctxT.fillStyle = trajColors[t];
-      ctxT.beginPath(); ctxT.arc(trajs[t][0].x, trajs[t][0].y, 3, 0, 2 * Math.PI); ctxT.fill();
+    function animateRev() {
+      if (direction === 0) return;
+      const speed = 3; // frames per animation tick
+      curFrame += direction * speed;
+      if (curFrame >= totalSteps) { curFrame = totalSteps; direction = 0; }
+      if (curFrame <= 0) { curFrame = 0; direction = 0; }
+      drawRevFrame();
+      if (direction !== 0) activeAnimations['rev-billiards'] = requestAnimationFrame(animateRev);
     }
-    // Label R
-    ctxT.fillStyle = COLORS.text; ctxT.font = FONT_LG; ctxT.textAlign = 'center';
-    ctxT.fillText('ℛ', startX, startY - 20);
 
-    // Annotations
-    // "correlated" near early part of trajectories
-    const earlyX = trajs[0][40].x, earlyY = trajs[0][40].y;
-    ctxT.fillStyle = COLORS.green; ctxT.font = FONT_SM; ctxT.textAlign = 'left';
-    ctxT.fillText('short time: correlated', earlyX + 10, earlyY - 15);
+    playBtn?.addEventListener('click', () => {
+      direction = 1;
+      animateRev();
+    });
+    revBtn?.addEventListener('click', () => {
+      direction = -1;
+      animateRev();
+    });
+    pauseBtn?.addEventListener('click', () => {
+      direction = 0;
+      if (activeAnimations['rev-billiards']) {
+        cancelAnimationFrame(activeAnimations['rev-billiards']);
+        delete activeAnimations['rev-billiards'];
+      }
+      drawRevFrame();
+    });
+    resetRevBtn?.addEventListener('click', () => {
+      direction = 0;
+      if (activeAnimations['rev-billiards']) {
+        cancelAnimationFrame(activeAnimations['rev-billiards']);
+        delete activeAnimations['rev-billiards'];
+      }
+      initRevBilliards();
+      drawRevFrame();
+    });
 
-    // "diverge" near late part
-    const lateIdx = Math.floor(nSteps * 0.7);
-    ctxT.fillStyle = COLORS.red; ctxT.font = FONT_SM; ctxT.textAlign = 'right';
-    ctxT.fillText('long time: diverge', ox + pw - 10, oy + 20);
+    initRevBilliards();
+    drawRevFrame();
   }
 
   // ----- Phase Space Coarse-Graining -----

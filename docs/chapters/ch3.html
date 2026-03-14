@@ -181,9 +181,12 @@ $$\langle\vec{v}_k^{\,2}\rangle(t) = \int d^{3N}q\, d^{3N}p\, \frac{\vec{p}_k^{\
 <p>To see the subtlety in the assumption of molecular chaos, return to the example of two colliding particles. Are the outgoing velocities $\vec{v}_1'$ and $\vec{v}_2'$ uncorrelated as well? The answer must be <em>no</em>. For example, say $m_1 \gg m_2$, like a truck hitting a bicycle. After the collision, the truck and the bicycle will be going close to the truck's initial direction. So the angle $\theta$ measured with respect to the incoming truck's direction will likely be close to zero and therefore $\langle\vec{v}_1'\cdot\vec{v}_2'\rangle \neq 0$. In other words, after a collision, two uncorrelated velocities become correlated.</p>
 
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔀</span> Figure 2: Correlated Outgoing Velocities</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-correlated-vel" width="500" height="260"></canvas></div>
-  <div class="vis-caption">When two molecules collide, the outgoing velocities are correlated.</div>
+  <div class="vis-header"><span class="vis-icon">🔀</span> Interactive: Correlated Outgoing Velocities</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-correlated-vel" width="550" height="300"></canvas></div>
+  <div class="vis-controls">
+    <label>Scattering angle of $m_1$: <input type="range" id="corr-theta" min="-80" max="80" step="1" value="20"> <span class="value-display" id="corr-theta-val">20</span>°</label>
+  </div>
+  <div class="vis-caption">Drag the slider to change $\vec{v}_1'$. Conservation of momentum and energy completely determine $\vec{v}_2'$. The outgoing velocities are correlated: knowing one fixes the other.</div>
 </div>
 
 <p>Since outgoing particles eventually become incoming particles when they collide again, the assumption of molecular chaos must not strictly hold. Why then can we use it?</p>
@@ -191,9 +194,16 @@ $$\langle\vec{v}_k^{\,2}\rangle(t) = \int d^{3N}q\, d^{3N}p\, \frac{\vec{p}_k^{\
 <p>The key to tracking what happens to the correlations is that the dynamics of multibody systems are chaotic, as discussed in Section 2. Since we never know exactly what the initial state is of any physical system &mdash; there is some measurement uncertainty or uncertainty due to motion of fleas across the universe &mdash; we should properly specify the state not as a point in phase space but as a region $\mathcal{R}$ in phase space around the point $(p_i, q_i)$ of volume $\Delta V = (\Delta q)^{3N}(\Delta p)^{3N}$.</p>
 
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">📐</span> Figure 3: Phase Space Trajectories</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-phase-trajectories" width="550" height="320"></canvas></div>
-  <div class="vis-caption">After a short time, nearby points in phase space follow highly-correlated trajectories. After longer times, chaos causes them to diverge completely.</div>
+  <div class="vis-header"><span class="vis-icon">📐</span> Interactive: Reversible Billiard Trajectories</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-reversible-billiards" width="600" height="380"></canvas></div>
+  <div class="vis-controls">
+    <button id="rev-play">▶ Forward</button>
+    <button id="rev-reverse">◀ Reverse</button>
+    <button id="rev-pause">Pause</button>
+    <button id="rev-reset">Reset</button>
+    <span class="value-display" id="rev-info">t = 0</span>
+  </div>
+  <div class="vis-caption">Two balls bounce among frozen obstacles. Press Forward, then Reverse — the balls retrace their paths exactly. The information about where they came from is never lost; the dynamics are perfectly time-reversible.</div>
 </div>
 
 <p>But now let's wait a bit longer. Suppose for the exact point $(\vec{q}_i, \vec{p}_i)$ there are 9 collisions in $10^{-8}\,\text{s}$. Now consider a point $10^{-32}\,\text{m} < \Delta q$ away still within the region $\mathcal{R}$. As we saw in Eq.&nbsp;(7) the trajectory of such a point will be off by an angle of order 1 after 8 collisions, so will miss the 9th collision and move on to a very different region in phase space. Thus, as time moves on, the original region $\mathcal{R}$ of volume $\Delta V$ gets fragmented and split up into an enormous number of disconnected regions.</p>
