@@ -1046,7 +1046,7 @@ function initCh2Vis() {
 
   // ----- Diffusion Equation -----
   const c2 = document.getElementById('vis-diffusion');
-  if (!c2) return;
+  if (c2) {
   const diff = setupCanvas(c2);
   const ctx2 = diff.ctx, W2 = diff.W, H2 = diff.H;
   const diffSlider = document.getElementById('diff-D');
@@ -1087,6 +1087,7 @@ function initCh2Vis() {
 
   diffSlider?.addEventListener('input', drawDiffusion);
   drawDiffusion();
+  }
 
   // ----- Stokes Drag & Terminal Velocity -----
   const cStokes = document.getElementById('vis-stokes');
@@ -1558,7 +1559,7 @@ function initCh3Vis() {
 
   // ----- Maxwell-Boltzmann Speed Distribution -----
   const cMB = document.getElementById('vis-maxwell');
-  if (!cMB) return;
+  if (cMB) {
   const mb = setupCanvas(cMB);
   const ctxMB = mb.ctx, WMB = mb.W, HMB = mb.H;
   const mbTempSlider = document.getElementById('mb-temp');
@@ -1665,6 +1666,7 @@ function initCh3Vis() {
 
   mbTempSlider?.addEventListener('input', drawMaxwell);
   drawMaxwell();
+  }
 
   // ----- Hard Sphere Collision Geometry -----
   const cHS = document.getElementById('vis-hardsphere');
@@ -3233,7 +3235,7 @@ function initCh4Vis() {
 
   // ----- Heat Capacity of H2 vs Temperature -----
   const cHC = document.getElementById('vis-heatcap');
-  if (!cHC) return;
+  if (cHC) {
   const hc = setupCanvas(cHC);
   const ctxHC = hc.ctx, WHC = hc.W, HHC = hc.H;
 
@@ -3365,6 +3367,7 @@ function initCh4Vis() {
   }
 
   drawHeatCap();
+  }
 
   // ----- Energy Distribution P(E₁) -----
   const cED = document.getElementById('vis-energy-dist');
@@ -6147,7 +6150,7 @@ function initCh8Vis() {
 function initCh9Vis() {
   // ----- Phase Diagram -----
   const c = document.getElementById('vis-phase');
-  if (!c) return;
+  if (c) {
   const { ctx, W, H } = setupCanvas(c);
 
   function drawPhaseDiagram() {
@@ -6229,10 +6232,11 @@ function initCh9Vis() {
   });
 
   drawPhaseDiagram();
+  }
 
   // ----- 2D Ising Model -----
   const cIsing = document.getElementById('vis-ising');
-  if (!cIsing) return;
+  if (cIsing) {
   const ising = setupCanvas(cIsing);
   const ctxI = ising.ctx, WI = ising.W, HI = ising.H;
 
@@ -6378,6 +6382,7 @@ function initCh9Vis() {
     initIsing();
     drawIsing();
   });
+  }
 
   // ----- Interactive P-T Phase Diagram -----
   const cPT = document.getElementById('vis-pt-phase');
@@ -7571,7 +7576,7 @@ function initCh11Vis() {
 
   // ----- Debye Model Heat Capacity -----
   const cDebye = document.getElementById('vis-debye');
-  if (!cDebye) return;
+  if (cDebye) {
   const dby = setupCanvas(cDebye);
   const ctxD = dby.ctx, WD = dby.W, HD = dby.H;
   const debyeSlider = document.getElementById('debye-td');
@@ -7683,6 +7688,7 @@ function initCh11Vis() {
 
   debyeSlider?.addEventListener('input', drawDebye);
   drawDebye();
+  }
 
   // ----- UV Catastrophe -----
   const cUV = document.getElementById('vis-uv-catastrophe');
@@ -11018,7 +11024,7 @@ function initCh14Vis() {
 // =============================================================================
 function initCh15Vis() {
   const c = document.getElementById('vis-hr');
-  if (!c) return;
+  if (c) {
   const { ctx, W, H } = setupCanvas(c);
 
   function draw() {
@@ -11120,6 +11126,7 @@ function initCh15Vis() {
   }
 
   draw();
+  }
 
   // ----- Lane-Emden Solutions -----
   const cLE = document.getElementById('vis-lane-emden');
