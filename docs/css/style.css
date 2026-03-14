@@ -207,6 +207,59 @@ body {
   padding-bottom: 24px;
 }
 
+/* ===== CHAPTER TABLE OF CONTENTS ===== */
+.chapter-toc {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 24px 12px;
+  margin-bottom: 36px;
+  max-width: 480px;
+}
+.toc-title {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.toc-list {
+  margin: 0;
+  padding-left: 8px;
+  list-style: none;
+}
+.toc-list > li {
+  margin-bottom: 4px;
+}
+.toc-list a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-family: var(--font-sans);
+  transition: color 0.15s;
+}
+.toc-list a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.toc-sublist {
+  margin: 2px 0 4px 16px;
+  padding-left: 0;
+  list-style: none;
+}
+.toc-sublist li {
+  margin-bottom: 2px;
+}
+.toc-sublist a {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.toc-sublist a:hover {
+  color: var(--accent);
+}
+
 h2 {
   font-family: var(--font-sans);
   font-size: 1.45rem;

@@ -41,6 +41,7 @@ async function navigateTo(id) {
         const html = await resp.text();
         target.innerHTML = html;
         loadedChapters[id] = true;
+        buildChapterTOC(target);
         target.querySelectorAll('.derivation-header').forEach(header => {
           header.addEventListener('click', () => {
             const d = header.parentElement;
@@ -70,6 +71,67 @@ async function navigateTo(id) {
   }
 
   initChapterVisualizations(id);
+}
+
+// ===== CHAPTER TABLE OF CONTENTS =====
+function buildChapterTOC(container) {
+  const headings = container.querySelectorAll('h2, h3');
+  if (headings.length < 2) return; // not worth a TOC for 1 section
+
+  const intro = container.querySelector('.chapter-intro');
+  if (!intro) return;
+
+  // Auto-assign IDs to headings that lack them
+  let autoId = 0;
+  headings.forEach(h => {
+    if (!h.id) {
+      autoId++;
+      h.id = 'sec-' + autoId;
+    }
+  });
+
+  const toc = document.createElement('nav');
+  toc.className = 'chapter-toc';
+  const title = document.createElement('div');
+  title.className = 'toc-title';
+  title.textContent = 'Contents';
+  toc.appendChild(title);
+
+  const list = document.createElement('ol');
+  list.className = 'toc-list';
+  let currentH2Item = null;
+  let subList = null;
+
+  headings.forEach(h => {
+    // Skip headings that are just "Chapter Summary" or appendix-like
+    const text = h.textContent.trim();
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = text;
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    if (h.tagName === 'H2') {
+      li.appendChild(a);
+      list.appendChild(li);
+      currentH2Item = li;
+      subList = null;
+    } else if (h.tagName === 'H3' && currentH2Item) {
+      if (!subList) {
+        subList = document.createElement('ol');
+        subList.className = 'toc-sublist';
+        currentH2Item.appendChild(subList);
+      }
+      li.appendChild(a);
+      subList.appendChild(li);
+    }
+  });
+
+  toc.appendChild(list);
+  intro.insertAdjacentElement('afterend', toc);
 }
 
 // ===== DERIVATIONS =====
@@ -596,34 +658,6 @@ function initCh1Vis() {
         ctx2.fillRect(rightX + i * barW, hy + hh - bh, barW - 1, bh);
       }
 
-      // Gaussian fit overlay when enough data
-      if (histCount > 20) {
-        let mean = 0, m2 = 0, total = 0;
-        for (let i = 0; i < nBins; i++) {
-          const x = histMin + (i + 0.5) * (histMax - histMin) / nBins;
-          mean += x * histBins[i]; total += histBins[i];
-        }
-        mean /= total;
-        for (let i = 0; i < nBins; i++) {
-          const x = histMin + (i + 0.5) * (histMax - histMin) / nBins;
-          m2 += histBins[i] * (x - mean) ** 2;
-        }
-        const sigma = Math.sqrt(m2 / total);
-        if (sigma > 1e-10) {
-          const binW = (histMax - histMin) / nBins;
-          ctx2.strokeStyle = COLORS.red; ctx2.lineWidth = 2;
-          ctx2.beginPath();
-          for (let i = 0; i < nBins; i++) {
-            const x = histMin + (i + 0.5) * (histMax - histMin) / nBins;
-            const g = total * binW / (sigma * Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
-            const px = rightX + (i + 0.5) * barW;
-            const py = hy + hh - (g / hMax) * hh * 0.9;
-            i === 0 ? ctx2.moveTo(px, py) : ctx2.lineTo(px, py);
-          }
-          ctx2.stroke();
-        }
-      }
-
       // X-axis ticks
       ctx2.fillStyle = COLORS.textDim; ctx2.font = '10px Inter, system-ui, sans-serif'; ctx2.textAlign = 'center';
       for (let i = 0; i <= 5; i++) {
@@ -635,14 +669,7 @@ function initCh1Vis() {
       }
 
       ctx2.fillStyle = COLORS.text; ctx2.font = FONT_SM; ctx2.textAlign = 'center';
-      ctx2.fillText('Histogram of x\u0304  (N=' + N + ', ' + histCount + ' averages)', rightX + rightW / 2, hy - 8);
-
-      if (histCount > 20) {
-        ctx2.fillStyle = COLORS.green; ctx2.font = FONT_SM; ctx2.textAlign = 'left';
-        ctx2.fillText('Histogram', rightX + 8, hy + 14);
-        ctx2.fillStyle = COLORS.red;
-        ctx2.fillText('Gaussian', rightX + 8, hy + 28);
-      }
+      ctx2.fillText('Normalized histogram of x\u0304  (N=' + N + ', ' + histCount + ' averages)', rightX + rightW / 2, hy - 8);
     }
 
     let cltFrameCount = 0;
@@ -653,10 +680,10 @@ function initCh1Vis() {
       const dist = getDistribution();
       const nBins = histBins.length;
 
-      // Speed controls: at speed 1, do 1 average every 8 frames.
+      // Speed controls: at speed 1, do 1 average every ~60 frames (~1/sec at 60fps).
       // At speed 6, do 20 averages per frame.
-      const batchSizes = [0, 1, 1, 2, 5, 10, 20]; // index by speed
-      const frameSkips = [0, 8, 3, 1, 1, 1, 1];
+      const batchSizes = [0, 1, 1, 1, 2, 5, 10, 20]; // index by speed
+      const frameSkips = [0, 60, 30, 8, 3, 1, 1, 1];
       const batch = batchSizes[speed] || 1;
       const skip = frameSkips[speed] || 1;
 
