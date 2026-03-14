@@ -208,9 +208,24 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 <div class="visualization">
   <div class="vis-header"><span class="vis-icon">💨</span> Interactive: Ideal Gas &mdash; Kinetic Theory in Action</div>
   <p class="vis-caption">Gas particles collide elastically with each other and the walls. The histogram on the right shows the distribution of particle speeds, which converges to the Maxwell-Boltzmann distribution (green curve) regardless of the initial conditions.</p>
-  <div class="vis-canvas-wrap"><canvas id="vis-gaskinetic" width="700" height="380"></canvas></div>
+  <div class="vis-canvas-wrap"><canvas id="vis-gaskinetic" width="700" height="400"></canvas></div>
   <div class="vis-controls">
+    <label>Initial velocities:
+      <select id="gk-init">
+        <option value="random">Random (thermal)</option>
+        <option value="one">One particle moving</option>
+        <option value="equal">All equal speeds</option>
+      </select>
+    </label>
+    <label>Particle types:
+      <select id="gk-types">
+        <option value="1">One type</option>
+        <option value="2">Two types (light &amp; heavy)</option>
+        <option value="3">Three types</option>
+      </select>
+    </label>
     <label>Temperature: <input type="range" id="gk-temp" min="100" max="1500" step="50" value="400"> <span class="value-display" id="gk-temp-val">400</span> K</label>
+    <label>Speed: <input type="range" id="gk-speed" min="1" max="8" step="1" value="2"> <span class="value-display" id="gk-speed-val">2</span>&times;</label>
     <button id="gk-start">Start</button>
     <button id="gk-reset">Reset</button>
   </div>

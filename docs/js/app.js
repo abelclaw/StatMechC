@@ -3570,60 +3570,111 @@ function initCh4Vis() {
   }
 
   // ----- Ideal Gas Kinetic Theory with Live Velocity Histogram -----
+  // Supports multiple initial conditions, 1-3 particle types, and speed slider
   const cGK = document.getElementById('vis-gaskinetic');
   if (cGK) {
     const { ctx: ctxGK, W: WGK, H: HGK } = setupCanvas(cGK);
     let gkRunning = false;
     let gkParticles = [];
-    const nGK = 150;
-    const gasR = 3;
-    const boxW = WGK * 0.48; // left portion is the box
-    const histX = boxW + 40; // histogram starts here
+    const boxW = WGK * 0.48;
+    const histX = boxW + 40;
     const histW = WGK - histX - 20;
     const nBins = 25;
-    let speedHistory = new Array(nBins).fill(0);
+    const maxBinSpeed = 12;
+
+    // Per-type histogram accumulators and config
+    // Type definitions: { mass, radius, color, name }
+    const typeConfigs = {
+      1: [{ mass: 1, radius: 3, color: [79, 195, 247], name: 'Gas' }],
+      2: [
+        { mass: 1, radius: 2.5, color: [79, 195, 247], name: 'Light (m)' },
+        { mass: 4, radius: 5,   color: [239, 83, 80],  name: 'Heavy (4m)' }
+      ],
+      3: [
+        { mass: 1, radius: 2,   color: [79, 195, 247],  name: 'Light (m)' },
+        { mass: 3, radius: 4,   color: [255, 183, 77],  name: 'Medium (3m)' },
+        { mass: 8, radius: 6.5, color: [239, 83, 80],   name: 'Heavy (8m)' }
+      ]
+    };
+    let speedHistByType = {};  // typeIdx -> array of bin counts
     let histFrames = 0;
 
     function getGKTemp() { return parseFloat(document.getElementById('gk-temp')?.value || 400); }
+    function getGKSpeed() { return parseInt(document.getElementById('gk-speed')?.value || 2); }
+    function getGKInit() { return document.getElementById('gk-init')?.value || 'random'; }
+    function getGKTypes() { return parseInt(document.getElementById('gk-types')?.value || 1); }
 
     function initGKParticles() {
       const T = getGKTemp();
-      // v_rms scales as sqrt(T); use arbitrary units where v_rms ~ sqrt(T/100)
-      const v0 = Math.sqrt(T / 80);
+      const initMode = getGKInit();
+      const nTypes = getGKTypes();
+      const types = typeConfigs[nTypes];
+
       gkParticles = [];
-      speedHistory = new Array(nBins).fill(0);
+      speedHistByType = {};
+      for (let t = 0; t < types.length; t++) speedHistByType[t] = new Array(nBins).fill(0);
       histFrames = 0;
-      for (let i = 0; i < nGK; i++) {
-        const angle = Math.random() * 2 * Math.PI;
-        // Box-Muller for Maxwell-like initial speeds
-        const u1 = Math.random(), u2 = Math.random();
-        const vx = v0 * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-        const vy = v0 * Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
-        gkParticles.push({
-          x: gasR + 5 + Math.random() * (boxW - gasR * 2 - 10),
-          y: gasR + 5 + Math.random() * (HGK - gasR * 2 - 10),
-          vx: vx,
-          vy: vy,
-          r: gasR
-        });
+
+      // Distribute particles across types
+      const totalN = 150;
+      const perType = Math.floor(totalN / types.length);
+
+      for (let t = 0; t < types.length; t++) {
+        const tc = types[t];
+        const n = (t === types.length - 1) ? totalN - perType * t : perType;
+        // v_rms = sqrt(2 k_B T / m) in 2D; in our units v0 = sqrt(T / (80 * m))
+        const v0 = Math.sqrt(T / (80 * tc.mass));
+
+        for (let i = 0; i < n; i++) {
+          let vx = 0, vy = 0;
+
+          if (initMode === 'random') {
+            // Box-Muller for Maxwell-like initial speeds
+            const u1 = Math.random(), u2 = Math.random();
+            vx = v0 * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            vy = v0 * Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
+          } else if (initMode === 'one') {
+            // Only the very first particle of the first type gets all the energy
+            if (t === 0 && i === 0) {
+              const totalKE = totalN * v0 * v0; // total energy budget
+              const speed = Math.sqrt(2 * totalKE / tc.mass);
+              const angle = Math.random() * 2 * Math.PI;
+              vx = speed * Math.cos(angle);
+              vy = speed * Math.sin(angle);
+            }
+          } else if (initMode === 'equal') {
+            // All particles get the same speed (= v_rms), random direction
+            const speed = v0 * Math.sqrt(2); // v_rms in 2D
+            const angle = Math.random() * 2 * Math.PI;
+            vx = speed * Math.cos(angle);
+            vy = speed * Math.sin(angle);
+          }
+
+          gkParticles.push({
+            x: tc.radius + 5 + Math.random() * (boxW - tc.radius * 2 - 10),
+            y: tc.radius + 5 + Math.random() * (HGK - tc.radius * 2 - 10),
+            vx: vx, vy: vy,
+            r: tc.radius, mass: tc.mass, typeIdx: t
+          });
+        }
       }
     }
 
     function stepGK() {
+      const nP = gkParticles.length;
       // Move particles
       gkParticles.forEach(p => {
         p.x += p.vx;
         p.y += p.vy;
-        // Wall collisions
         if (p.x < p.r) { p.vx = Math.abs(p.vx); p.x = p.r; }
         if (p.x > boxW - p.r) { p.vx = -Math.abs(p.vx); p.x = boxW - p.r; }
         if (p.y < p.r) { p.vy = Math.abs(p.vy); p.y = p.r; }
         if (p.y > HGK - p.r) { p.vy = -Math.abs(p.vy); p.y = HGK - p.r; }
       });
 
-      // Particle-particle elastic collisions
-      for (let i = 0; i < nGK; i++) {
-        for (let j = i + 1; j < nGK; j++) {
+      // Elastic collisions (general unequal mass)
+      for (let i = 0; i < nP; i++) {
+        for (let j = i + 1; j < nP; j++) {
           const a = gkParticles[i], b = gkParticles[j];
           const dx = b.x - a.x, dy = b.y - a.y;
           const dist2 = dx * dx + dy * dy;
@@ -3631,110 +3682,132 @@ function initCh4Vis() {
           if (dist2 < minD * minD && dist2 > 0) {
             const dist = Math.sqrt(dist2);
             const nx = dx / dist, ny = dy / dist;
-            // Relative velocity along normal
             const dvn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
-            if (dvn > 0) { // approaching
-              // Equal mass elastic: swap normal components
-              a.vx -= dvn * nx;
-              a.vy -= dvn * ny;
-              b.vx += dvn * nx;
-              b.vy += dvn * ny;
-              // Separate
+            if (dvn > 0) {
+              // General elastic collision impulse
+              const mSum = a.mass + b.mass;
+              const impulse = 2 * dvn / mSum;
+              a.vx -= impulse * b.mass * nx;
+              a.vy -= impulse * b.mass * ny;
+              b.vx += impulse * a.mass * nx;
+              b.vy += impulse * a.mass * ny;
               const overlap = minD - dist;
-              a.x -= nx * overlap * 0.5;
-              a.y -= ny * overlap * 0.5;
-              b.x += nx * overlap * 0.5;
-              b.y += ny * overlap * 0.5;
+              const wa = b.mass / mSum, wb = a.mass / mSum;
+              a.x -= nx * overlap * wa;
+              a.y -= ny * overlap * wa;
+              b.x += nx * overlap * wb;
+              b.y += ny * overlap * wb;
             }
           }
         }
       }
 
-      // Accumulate speed histogram
+      // Accumulate per-type speed histograms
       histFrames++;
-      const speeds = gkParticles.map(p => Math.sqrt(p.vx * p.vx + p.vy * p.vy));
-      const maxBinSpeed = 12; // upper limit for histogram
-      speeds.forEach(s => {
+      gkParticles.forEach(p => {
+        const s = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
         const bin = Math.floor(s / maxBinSpeed * nBins);
-        if (bin >= 0 && bin < nBins) speedHistory[bin]++;
+        if (bin >= 0 && bin < nBins) speedHistByType[p.typeIdx][bin]++;
       });
     }
 
     function drawGK() {
       clearCanvas(ctxGK, WGK, HGK);
+      const nTypes = getGKTypes();
+      const types = typeConfigs[nTypes];
 
       // Draw box
       ctxGK.strokeStyle = COLORS.axis;
       ctxGK.lineWidth = 2;
       ctxGK.strokeRect(1, 1, boxW - 2, HGK - 2);
 
-      // Draw particles colored by speed
-      const speeds = gkParticles.map(p => Math.sqrt(p.vx * p.vx + p.vy * p.vy));
-      const maxSpeed = 10;
-      gkParticles.forEach((p, i) => {
-        const frac = Math.min(speeds[i] / maxSpeed, 1);
-        const r = Math.round(239 * frac + 79 * (1 - frac));
-        const g = Math.round(83 * frac + 195 * (1 - frac));
-        const b = Math.round(80 * frac + 247 * (1 - frac));
-        ctxGK.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+      // Draw particles colored by type
+      gkParticles.forEach(p => {
+        const tc = types[p.typeIdx];
+        const c = tc.color;
+        ctxGK.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
         ctxGK.beginPath();
         ctxGK.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
         ctxGK.fill();
       });
 
-      // Draw histogram on right
+      // Histogram area
       const histBot = HGK - 40;
       const histTop = 30;
       const histH = histBot - histTop;
-      const maxBinSpeed = 12;
       const barW = histW / nBins;
 
-      // Find max bin count for scaling
+      // Combine all types for the overall histogram bars
+      const combinedHist = new Array(nBins).fill(0);
+      for (let t = 0; t < types.length; t++) {
+        for (let i = 0; i < nBins; i++) combinedHist[i] += (speedHistByType[t]?.[i] || 0);
+      }
       let maxCount = 1;
       for (let i = 0; i < nBins; i++) {
-        if (speedHistory[i] > maxCount) maxCount = speedHistory[i];
+        if (combinedHist[i] > maxCount) maxCount = combinedHist[i];
       }
 
-      // Draw histogram bars
-      for (let i = 0; i < nBins; i++) {
-        const barH = (speedHistory[i] / maxCount) * histH;
-        const frac = (i + 0.5) / nBins;
-        const r = Math.round(239 * frac + 79 * (1 - frac));
-        const g = Math.round(83 * frac + 195 * (1 - frac));
-        const b = Math.round(80 * frac + 247 * (1 - frac));
-        ctxGK.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.6)';
-        ctxGK.fillRect(histX + i * barW, histBot - barH, barW - 1, barH);
-      }
-
-      // Overlay theoretical Maxwell-Boltzmann (2D: f(v) = (v/sigma^2) exp(-v^2/(2*sigma^2)))
-      if (histFrames > 10) {
-        // Estimate sigma from data
-        let sumV2 = 0;
-        gkParticles.forEach(p => { sumV2 += p.vx * p.vx + p.vy * p.vy; });
-        const sigma2 = sumV2 / (2 * nGK); // <v^2> = 2*sigma^2 in 2D
-        const sigma = Math.sqrt(sigma2);
-
-        ctxGK.strokeStyle = COLORS.green;
-        ctxGK.lineWidth = 2.5;
-        ctxGK.beginPath();
-        // Normalize: total histogram area = sum of bins
-        let totalHist = 0;
-        for (let i = 0; i < nBins; i++) totalHist += speedHistory[i];
-        const binWidth = maxBinSpeed / nBins;
-        for (let px = 0; px < histW; px++) {
-          const v = (px / histW) * maxBinSpeed;
-          // 2D Maxwell-Boltzmann: f(v) = (v/sigma^2) exp(-v^2/(2 sigma^2))
-          const fv = (v / sigma2) * Math.exp(-v * v / (2 * sigma2));
-          // Scale to match histogram
-          const barH = fv * (totalHist * binWidth / maxCount) * histH;
-          const py = histBot - barH;
-          if (px === 0) ctxGK.moveTo(histX + px, py);
-          else ctxGK.lineTo(histX + px, py);
+      if (types.length === 1) {
+        // Single type: gradient-colored bars like before
+        for (let i = 0; i < nBins; i++) {
+          const barH = (combinedHist[i] / maxCount) * histH;
+          const frac = (i + 0.5) / nBins;
+          const r = Math.round(239 * frac + 79 * (1 - frac));
+          const g = Math.round(83 * frac + 195 * (1 - frac));
+          const b = Math.round(80 * frac + 247 * (1 - frac));
+          ctxGK.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.6)';
+          ctxGK.fillRect(histX + i * barW, histBot - barH, barW - 1, barH);
         }
-        ctxGK.stroke();
+      } else {
+        // Multiple types: stacked bars by type
+        for (let i = 0; i < nBins; i++) {
+          let yOff = 0;
+          for (let t = 0; t < types.length; t++) {
+            const count = speedHistByType[t]?.[i] || 0;
+            const barH = (count / maxCount) * histH;
+            const c = types[t].color;
+            ctxGK.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',0.45)';
+            ctxGK.fillRect(histX + i * barW, histBot - yOff - barH, barW - 1, barH);
+            yOff += barH;
+          }
+        }
       }
 
-      // Axes for histogram
+      // Overlay theoretical Maxwell-Boltzmann curves per type
+      if (histFrames > 10) {
+        const mbColors = types.length === 1
+          ? [COLORS.green]
+          : types.map(tc => 'rgb(' + tc.color[0] + ',' + tc.color[1] + ',' + tc.color[2] + ')');
+
+        for (let t = 0; t < types.length; t++) {
+          // Estimate sigma^2 = k_B T / m for this type from data
+          let sumV2 = 0, count = 0;
+          gkParticles.forEach(p => {
+            if (p.typeIdx === t) { sumV2 += p.vx * p.vx + p.vy * p.vy; count++; }
+          });
+          if (count < 2) continue;
+          const sigma2 = sumV2 / (2 * count); // <v^2> = 2*sigma^2 in 2D
+
+          ctxGK.strokeStyle = mbColors[t];
+          ctxGK.lineWidth = 2.5;
+          ctxGK.beginPath();
+          // Normalization: total histogram area for this type
+          let totalHist = 0;
+          for (let i = 0; i < nBins; i++) totalHist += (speedHistByType[t]?.[i] || 0);
+          const binWidth = maxBinSpeed / nBins;
+          for (let px = 0; px < histW; px++) {
+            const v = (px / histW) * maxBinSpeed;
+            const fv = (v / sigma2) * Math.exp(-v * v / (2 * sigma2));
+            const barH = fv * (totalHist * binWidth / maxCount) * histH;
+            const py = histBot - barH;
+            if (px === 0) ctxGK.moveTo(histX + px, py);
+            else ctxGK.lineTo(histX + px, py);
+          }
+          ctxGK.stroke();
+        }
+      }
+
+      // Axes
       ctxGK.strokeStyle = COLORS.axis;
       ctxGK.lineWidth = 1;
       ctxGK.beginPath();
@@ -3751,13 +3824,26 @@ function initCh4Vis() {
       ctxGK.fillStyle = COLORS.textDim;
       ctxGK.font = FONT_SM;
       ctxGK.fillText('Speed v', histX + histW / 2, histBot + 16);
-      ctxGK.fillText('f(v)', histX - 14, histTop + histH / 2);
+      ctxGK.save();
+      ctxGK.translate(histX - 16, histTop + histH / 2);
+      ctxGK.rotate(-Math.PI / 2);
+      ctxGK.textAlign = 'center';
+      ctxGK.fillText('f(v)', 0, 0);
+      ctxGK.restore();
 
       // Legend
-      ctxGK.fillStyle = COLORS.green;
       ctxGK.font = FONT_SM;
       ctxGK.textAlign = 'left';
-      ctxGK.fillText('\u2014 Maxwell-Boltzmann (2D)', histX + 5, histBot + 30);
+      if (types.length === 1) {
+        ctxGK.fillStyle = COLORS.green;
+        ctxGK.fillText('\u2014 Maxwell\u2013Boltzmann (2D)', histX + 5, histBot + 32);
+      } else {
+        for (let t = 0; t < types.length; t++) {
+          const c = types[t].color;
+          ctxGK.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+          ctxGK.fillText('\u2014 ' + types[t].name, histX + 5 + t * 90, histBot + 32);
+        }
+      }
 
       // Speed ticks
       ctxGK.fillStyle = COLORS.textDim;
@@ -3775,7 +3861,8 @@ function initCh4Vis() {
 
     function animateGK() {
       if (!gkRunning) return;
-      for (let i = 0; i < 2; i++) stepGK();
+      const stepsPerFrame = getGKSpeed();
+      for (let i = 0; i < stepsPerFrame; i++) stepGK();
       drawGK();
       activeAnimations['gaskinetic'] = requestAnimationFrame(animateGK);
     }
@@ -3797,10 +3884,30 @@ function initCh4Vis() {
 
     document.getElementById('gk-temp')?.addEventListener('input', function () {
       document.getElementById('gk-temp-val')?.replaceChildren(document.createTextNode(this.value));
-      if (!gkRunning) {
-        initGKParticles();
-        drawGK();
-      }
+      if (!gkRunning) { initGKParticles(); drawGK(); }
+    });
+
+    document.getElementById('gk-speed')?.addEventListener('input', function () {
+      document.getElementById('gk-speed-val')?.replaceChildren(document.createTextNode(this.value));
+    });
+
+    // Re-init when initial condition or particle type changes
+    document.getElementById('gk-init')?.addEventListener('change', () => {
+      gkRunning = false;
+      const btn = document.getElementById('gk-start');
+      if (btn) btn.textContent = 'Start';
+      if (activeAnimations['gaskinetic']) cancelAnimationFrame(activeAnimations['gaskinetic']);
+      initGKParticles();
+      drawGK();
+    });
+
+    document.getElementById('gk-types')?.addEventListener('change', () => {
+      gkRunning = false;
+      const btn = document.getElementById('gk-start');
+      if (btn) btn.textContent = 'Start';
+      if (activeAnimations['gaskinetic']) cancelAnimationFrame(activeAnimations['gaskinetic']);
+      initGKParticles();
+      drawGK();
     });
 
     initGKParticles();
