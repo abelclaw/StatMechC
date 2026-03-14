@@ -1018,11 +1018,11 @@ function initCh2Vis() {
     ctx.fillStyle = COLORS.green; ctx.fillText('\u2014 Expected \u221AN', 10, 92);
   }
 
-  function animate() {
+  function animateRW() {
     if (!running) return;
     for (let i = 0; i < 3; i++) step();
     draw();
-    activeAnimations['randomwalk'] = requestAnimationFrame(animate);
+    activeAnimations['randomwalk'] = requestAnimationFrame(animateRW);
   }
 
   // Wire up buttons using onclick to avoid any listener issues
@@ -1033,7 +1033,7 @@ function initCh2Vis() {
     rwStartBtn.onclick = function() {
       running = !running;
       rwStartBtn.textContent = running ? '⏸ Pause' : '▶ Start';
-      if (running) animate();
+      if (running) animateRW();
     };
   }
 
@@ -1203,7 +1203,7 @@ function initCh2Vis() {
       document.getElementById('stokes-radius-val')?.replaceChildren(document.createTextNode(R.toFixed(1)));
     }
 
-    function animate() {
+    function animateStokes() {
       if (!running) return;
       const eta = getEta(), R = getR();
       const vt = terminalVel();
@@ -1216,11 +1216,11 @@ function initCh2Vis() {
       ballY += ballV * dt;
       if (ballY > HS - 30) { ballY = HS - 30; ballV = vt; running = false; }
       drawStokes();
-      if (running) activeAnimations['stokes'] = requestAnimationFrame(animate);
+      if (running) activeAnimations['stokes'] = requestAnimationFrame(animateStokes);
     }
 
     stokesStartBtn?.addEventListener('click', () => {
-      if (!running) { running = true; animate(); }
+      if (!running) { running = true; animateStokes(); }
     });
     stokesResetBtn?.addEventListener('click', () => {
       running = false;
