@@ -1398,89 +1398,214 @@ function initCh3Vis() {
     const hsSlider = document.getElementById('hs-impact');
 
     function drawHardSphere() {
-      const bRatio = parseFloat(hsSlider?.value || 0.5);
+      const bRatio = parseFloat(hsSlider?.value || 0.5); // b/(2R)
       clearCanvas(ctxHS, WHS, HHS);
 
-      const cx = WHS / 2, cy = HHS / 2, R = 50;
-      const b = bRatio * 2 * R;
+      // Geometry setup
+      const R = 50; // sphere radius
+      const Tx = WHS / 2 + 20, Ty = HHS / 2; // target center
+      const b = bRatio * 2 * R; // impact parameter
+
+      // φ = angle of line-of-centers from approach axis; sin(φ) = b/(2R)
+      const phi = Math.asin(Math.min(bRatio, 0.9999));
+      // Text's θ = 2φ, satisfying b/2 = R sin(θ/2)
+      const theta = 2 * phi;
+      // Actual deflection from forward direction = π - θ
+      const deflection = Math.PI - theta;
 
       // Draw target sphere
+      ctxHS.beginPath();
+      ctxHS.arc(Tx, Ty, R, 0, 2 * Math.PI);
+      ctxHS.fillStyle = 'rgba(79,195,247,0.08)';
+      ctxHS.fill();
       ctxHS.strokeStyle = COLORS.blue;
       ctxHS.lineWidth = 2;
-      ctxHS.beginPath();
-      ctxHS.arc(cx + 40, cy, R, 0, 2 * Math.PI);
       ctxHS.stroke();
-      ctxHS.fillStyle = 'rgba(79,195,247,0.1)';
+
+      // Target center dot
+      ctxHS.beginPath();
+      ctxHS.arc(Tx, Ty, 3, 0, 2 * Math.PI);
+      ctxHS.fillStyle = COLORS.blue;
       ctxHS.fill();
 
-      // Impact parameter line
-      const theta = 2 * Math.asin(Math.min(bRatio, 0.999));
-      const halfB = b / 2;
+      // Incoming trajectory: horizontal line at y = Ty - b (above target center)
+      // For a point particle hitting sphere of effective radius 2R,
+      // or equivalently the center-of-mass trajectory for two equal spheres
+      const approachY = Ty - b;
+      const startX = 30;
 
-      // Incoming trajectory
-      const startX = cx - 180;
-      const hitY = cy - halfB;
-      ctxHS.strokeStyle = COLORS.green;
-      ctxHS.lineWidth = 2;
-      ctxHS.setLineDash([]);
-      ctxHS.beginPath();
-      ctxHS.moveTo(startX, hitY);
+      // Contact point on sphere surface (in screen coords, y-down):
+      // Normal from target center toward projectile is upper-left
+      // angle = -(π - φ) in screen coords
+      const contactX = Tx - R * Math.cos(phi);
+      const contactY = Ty - R * Math.sin(phi);
 
       if (bRatio > 0.001) {
-        // Contact point on sphere
-        const contactAngle = Math.PI - theta / 2;
-        const contactX = cx + 40 + R * Math.cos(contactAngle);
-        const contactY = cy + R * Math.sin(contactAngle);
-        ctxHS.lineTo(contactX, contactY);
+        // Draw dashed extension of approach line (forward continuation)
+        ctxHS.strokeStyle = COLORS.textDim;
+        ctxHS.lineWidth = 1;
+        ctxHS.setLineDash([4, 4]);
+        ctxHS.beginPath();
+        ctxHS.moveTo(contactX, approachY);
+        ctxHS.lineTo(WHS - 30, approachY);
+        ctxHS.stroke();
+        ctxHS.setLineDash([]);
+
+        // Incoming trajectory (green arrow → contact)
+        ctxHS.strokeStyle = COLORS.green;
+        ctxHS.lineWidth = 2;
+        ctxHS.beginPath();
+        ctxHS.moveTo(startX, approachY);
+        ctxHS.lineTo(contactX, approachY);
+        ctxHS.stroke();
+        // Small projectile circle at approach
+        ctxHS.beginPath();
+        ctxHS.arc(startX + 12, approachY, 8, 0, 2 * Math.PI);
+        ctxHS.fillStyle = 'rgba(102,187,106,0.3)';
+        ctxHS.fill();
+        ctxHS.strokeStyle = COLORS.green;
+        ctxHS.lineWidth = 1.5;
         ctxHS.stroke();
 
-        // Outgoing trajectory
-        const outAngle = -(Math.PI - theta);
-        const endX = contactX + 120 * Math.cos(outAngle);
-        const endY = contactY + 120 * Math.sin(outAngle);
+        // Draw line of centers at contact (dashed)
+        ctxHS.strokeStyle = COLORS.textDim;
+        ctxHS.lineWidth = 1;
+        ctxHS.setLineDash([3, 3]);
+        ctxHS.beginPath();
+        ctxHS.moveTo(Tx, Ty);
+        ctxHS.lineTo(contactX, contactY);
+        ctxHS.stroke();
+        ctxHS.setLineDash([]);
+        // Label R on line of centers
+        const rmx = (Tx + contactX) / 2 + 8, rmy = (Ty + contactY) / 2 - 8;
+        ctxHS.fillStyle = COLORS.text;
+        ctxHS.font = FONT_SM;
+        ctxHS.textAlign = 'left';
+        ctxHS.fillText('R', rmx, rmy);
+
+        // Outgoing trajectory (red arrow from contact)
+        // In screen coords: v_out direction = angle (θ - π) from +x axis
+        // where θ = 2φ. This sends ball backward-and-upward for small b.
+        const outDirX = -Math.cos(theta); // = -cos(2φ)
+        const outDirY = -Math.sin(theta); // = -sin(2φ), negative = upward on screen
+        const outLen = 140;
+        const endX = contactX + outLen * outDirX;
+        const endY = contactY + outLen * outDirY;
         ctxHS.strokeStyle = COLORS.red;
+        ctxHS.lineWidth = 2;
         ctxHS.beginPath();
         ctxHS.moveTo(contactX, contactY);
         ctxHS.lineTo(endX, endY);
         ctxHS.stroke();
         drawArrow(ctxHS, contactX, contactY, endX, endY, 10);
 
-        // Draw scattering angle arc
-        ctxHS.strokeStyle = COLORS.yellow;
-        ctxHS.lineWidth = 1;
+        // Incoming arrow
+        drawArrow(ctxHS, startX, approachY, contactX - 2, approachY, 10);
+
+        // Draw deflection angle arc (angle between forward continuation and outgoing)
+        // Forward direction = 0 (positive x). Outgoing direction = atan2(outDirY, outDirX)
+        const outAngle = Math.atan2(outDirY, outDirX);
+        const arcR = 45;
+        ctxHS.strokeStyle = COLORS.orange;
+        ctxHS.lineWidth = 2;
         ctxHS.beginPath();
-        ctxHS.arc(contactX, contactY, 30, Math.PI, Math.PI + theta, true);
-        ctxHS.stroke();
+        // Arc from outgoing angle to forward (0), going clockwise if outAngle < 0
+        if (deflection > 0.02) {
+          ctxHS.arc(contactX, approachY, arcR, outAngle, 0);
+          ctxHS.stroke();
+          // Label deflection angle
+          const labelAngle = outAngle / 2;
+          ctxHS.fillStyle = COLORS.orange;
+          ctxHS.font = FONT;
+          ctxHS.textAlign = 'center';
+          ctxHS.fillText('π−θ', contactX + (arcR + 16) * Math.cos(labelAngle),
+                         approachY + (arcR + 16) * Math.sin(labelAngle) + 4);
+        }
+
+        // Draw θ arc (angle at contact between backward direction and outgoing)
+        // θ = 2φ; shown as arc from outgoing direction to backward direction (π)
+        if (theta > 0.02) {
+          ctxHS.strokeStyle = COLORS.yellow;
+          ctxHS.lineWidth = 1.5;
+          const arcR2 = 32;
+          ctxHS.beginPath();
+          ctxHS.arc(contactX, approachY, arcR2, Math.PI, outAngle, true);
+          ctxHS.stroke();
+          const thetaLabelAngle = (Math.PI + outAngle) / 2;
+          ctxHS.fillStyle = COLORS.yellow;
+          ctxHS.font = FONT;
+          ctxHS.textAlign = 'center';
+          ctxHS.fillText('θ', contactX + (arcR2 + 14) * Math.cos(thetaLabelAngle),
+                         approachY + (arcR2 + 14) * Math.sin(thetaLabelAngle) + 4);
+        }
+
+        // Contact point marker
+        ctxHS.beginPath();
+        ctxHS.arc(contactX, contactY, 4, 0, 2 * Math.PI);
+        ctxHS.fillStyle = COLORS.orange;
+        ctxHS.fill();
       } else {
-        ctxHS.lineTo(cx + 200, hitY);
+        // Head-on: bounces straight back
+        ctxHS.strokeStyle = COLORS.green;
+        ctxHS.lineWidth = 2;
+        ctxHS.beginPath();
+        ctxHS.moveTo(startX, approachY);
+        ctxHS.lineTo(Tx - R, approachY);
         ctxHS.stroke();
+        drawArrow(ctxHS, startX, approachY, Tx - R - 2, approachY, 10);
+        ctxHS.strokeStyle = COLORS.red;
+        ctxHS.beginPath();
+        ctxHS.moveTo(Tx - R, approachY);
+        ctxHS.lineTo(startX, approachY - 6);
+        ctxHS.stroke();
+        drawArrow(ctxHS, Tx - R, approachY, startX + 5, approachY - 6, 10);
+        ctxHS.fillStyle = COLORS.text;
+        ctxHS.font = FONT;
+        ctxHS.textAlign = 'center';
+        ctxHS.fillText('Head-on: bounces straight back', WHS / 2, 28);
       }
 
-      // Draw b dimension
+      // Draw impact parameter b dimension line
+      const dimX = startX + 20;
       ctxHS.strokeStyle = COLORS.textDim;
       ctxHS.lineWidth = 1;
       ctxHS.setLineDash([4, 4]);
+      // Dashed horizontal line from target center extending left
       ctxHS.beginPath();
-      ctxHS.moveTo(startX + 20, cy);
-      ctxHS.lineTo(startX + 20, hitY);
+      ctxHS.moveTo(Tx, Ty);
+      ctxHS.lineTo(dimX - 8, Ty);
       ctxHS.stroke();
       ctxHS.setLineDash([]);
+      // Vertical bracket for b
+      if (b > 2) {
+        ctxHS.strokeStyle = COLORS.text;
+        ctxHS.lineWidth = 1.5;
+        ctxHS.beginPath();
+        ctxHS.moveTo(dimX, Ty);
+        ctxHS.lineTo(dimX, approachY);
+        ctxHS.stroke();
+        // Tick marks
+        ctxHS.beginPath();
+        ctxHS.moveTo(dimX - 4, Ty);
+        ctxHS.lineTo(dimX + 4, Ty);
+        ctxHS.stroke();
+        ctxHS.beginPath();
+        ctxHS.moveTo(dimX - 4, approachY);
+        ctxHS.lineTo(dimX + 4, approachY);
+        ctxHS.stroke();
+        ctxHS.fillStyle = COLORS.text;
+        ctxHS.font = FONT;
+        ctxHS.textAlign = 'left';
+        ctxHS.fillText('b', dimX + 8, (Ty + approachY) / 2 + 5);
+      }
 
-      // Labels
+      // Info text
       ctxHS.fillStyle = COLORS.text;
       ctxHS.font = FONT;
       ctxHS.textAlign = 'left';
-      ctxHS.fillText('b/2 = ' + (halfB).toFixed(0) + ' px', startX + 25, (cy + hitY) / 2);
-      ctxHS.fillText('θ = ' + (theta * 180 / Math.PI).toFixed(1) + '°', WHS / 2 - 40, 30);
-      ctxHS.fillText('R', cx + 40 + R + 8, cy);
-
-      // Draw R line
-      ctxHS.strokeStyle = COLORS.textDim;
-      ctxHS.lineWidth = 1;
-      ctxHS.beginPath();
-      ctxHS.moveTo(cx + 40, cy);
-      ctxHS.lineTo(cx + 40 + R, cy);
-      ctxHS.stroke();
+      ctxHS.fillText('b/(2R) = ' + bRatio.toFixed(2), WHS - 180, 28);
+      ctxHS.fillText('θ = ' + (theta * 180 / Math.PI).toFixed(1) + '°', WHS - 180, 48);
+      ctxHS.fillText('deflection = ' + (deflection * 180 / Math.PI).toFixed(1) + '°', WHS - 180, 68);
 
       document.getElementById('hs-impact-val')?.replaceChildren(document.createTextNode(bRatio.toFixed(2)));
     }
@@ -1786,25 +1911,31 @@ function initCh3Vis() {
   if (cChaos) {
     const { ctx: ctxC, W: WC, H: HC } = setupCanvas(cChaos);
     const perturbSlider = document.getElementById('cb-perturb');
+    const angleSlider = document.getElementById('cb-angle');
     const launchBtn = document.getElementById('cb-launch');
     const resetBtn = document.getElementById('cb-reset');
     const SR = 22; // scatterer radius
     const PR = 4;  // particle radius
-    const speed = 3.5;
+    const speed = 4;
 
-    // Place scatterers in staggered rows so particles bounce through them
+    // Cannon position
+    const cannonX = 45, cannonY = HC / 2;
+    const cannonLen = 32, cannonW = 10;
+
+    // Place scatterers in staggered rows
     const scatterers = [];
-    const cols = [160, 280, 400, 520];
-    const rows = [100, 210, 320];
+    const cols = [180, 300, 420, 540, 660];
+    const rows = [70, 170, 270, 370];
     for (let r = 0; r < rows.length; r++) {
       for (let ci = 0; ci < cols.length; ci++) {
         const offset = (r % 2 === 1) ? 60 : 0;
         const x = cols[ci] + offset;
-        if (x > 30 && x < WC - 30) scatterers.push({ x, y: rows[r] });
+        if (x > 80 && x < WC - 20 && rows[r] > 20 && rows[r] < HC - 20)
+          scatterers.push({ x, y: rows[r] });
       }
     }
 
-    let particles = null; // [{x,y,vx,vy,trail:[],collisions,alive}] x2
+    let particles = null;
     let running = false;
 
     function resetSim() {
@@ -1819,15 +1950,26 @@ function initCh3Vis() {
 
     function launchParticles() {
       const db = parseFloat(perturbSlider?.value || 0.5);
+      const angleDeg = parseFloat(angleSlider?.value || 0);
+      const angle = angleDeg * Math.PI / 180;
       document.getElementById('cb-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
-      const startX = 20, startY = HC / 2;
-      const angle = -0.15; // slight upward angle to hit first scatterer
+      document.getElementById('cb-angle-val')?.replaceChildren(document.createTextNode(angleDeg));
+      // Two particles fired from cannon muzzle with tiny perpendicular offset
+      const muzzleX = cannonX + cannonLen * Math.cos(angle);
+      const muzzleY = cannonY + cannonLen * Math.sin(angle);
+      // Perpendicular to firing direction
+      const perpX = -Math.sin(angle);
+      const perpY = Math.cos(angle);
       particles = [
-        { x: startX, y: startY - db / 2, vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
-          trail: [{ x: startX, y: startY - db / 2 }], collisions: 0, alive: true },
-        { x: startX, y: startY + db / 2, vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
-          trail: [{ x: startX, y: startY + db / 2 }], collisions: 0, alive: true }
+        { x: muzzleX + perpX * db / 2, y: muzzleY + perpY * db / 2,
+          vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
+          trail: [], collisions: 0, alive: true },
+        { x: muzzleX - perpX * db / 2, y: muzzleY - perpY * db / 2,
+          vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
+          trail: [], collisions: 0, alive: true }
       ];
+      particles[0].trail.push({ x: particles[0].x, y: particles[0].y });
+      particles[1].trail.push({ x: particles[1].x, y: particles[1].y });
       running = true;
       animate();
     }
@@ -1836,71 +1978,102 @@ function initCh3Vis() {
       if (!p.alive) return;
       p.x += p.vx;
       p.y += p.vy;
-
-      // Wall bounces (top/bottom)
+      // Wall bounces
       if (p.y < PR) { p.y = PR; p.vy = -p.vy; }
       if (p.y > HC - PR) { p.y = HC - PR; p.vy = -p.vy; }
-
-      // Scatterer collisions (elastic, scatterer is fixed/infinite mass)
+      if (p.x < PR) { p.x = PR; p.vx = -p.vx; }
+      // Scatterer collisions
       for (const s of scatterers) {
         const dx = p.x - s.x, dy = p.y - s.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const minDist = SR + PR;
         if (dist < minDist && dist > 0) {
-          // Normal vector from scatterer to particle
           const nx = dx / dist, ny = dy / dist;
-          // Reflect velocity
           const dot = p.vx * nx + p.vy * ny;
-          if (dot < 0) { // only if approaching
+          if (dot < 0) {
             p.vx -= 2 * dot * nx;
             p.vy -= 2 * dot * ny;
-            // Push out of overlap
             p.x = s.x + nx * minDist;
             p.y = s.y + ny * minDist;
             p.collisions++;
           }
         }
       }
-
-      // Off screen right → stop
-      if (p.x > WC + 10 || p.x < -10) p.alive = false;
-
-      // Record trail
+      if (p.x > WC + 10) p.alive = false;
       p.trail.push({ x: p.x, y: p.y });
+    }
+
+    function drawCannon(angle) {
+      ctxC.save();
+      ctxC.translate(cannonX, cannonY);
+      ctxC.rotate(angle);
+      // Barrel
+      ctxC.fillStyle = '#555';
+      ctxC.fillRect(0, -cannonW / 2, cannonLen, cannonW);
+      ctxC.strokeStyle = '#333';
+      ctxC.lineWidth = 1.5;
+      ctxC.strokeRect(0, -cannonW / 2, cannonLen, cannonW);
+      // Muzzle flare shape
+      ctxC.fillStyle = '#444';
+      ctxC.beginPath();
+      ctxC.moveTo(cannonLen, -cannonW / 2 - 3);
+      ctxC.lineTo(cannonLen + 6, -cannonW / 2 - 3);
+      ctxC.lineTo(cannonLen + 6, cannonW / 2 + 3);
+      ctxC.lineTo(cannonLen, cannonW / 2 + 3);
+      ctxC.fill();
+      ctxC.restore();
+      // Base wheel
+      ctxC.beginPath();
+      ctxC.arc(cannonX, cannonY, 12, 0, 2 * Math.PI);
+      ctxC.fillStyle = '#666';
+      ctxC.fill();
+      ctxC.strokeStyle = '#444';
+      ctxC.lineWidth = 2;
+      ctxC.stroke();
+      // Hub
+      ctxC.beginPath();
+      ctxC.arc(cannonX, cannonY, 4, 0, 2 * Math.PI);
+      ctxC.fillStyle = '#888';
+      ctxC.fill();
     }
 
     function drawScene() {
       clearCanvas(ctxC, WC, HC);
+      const angleDeg = parseFloat(angleSlider?.value || 0);
+      const angle = angleDeg * Math.PI / 180;
+      document.getElementById('cb-angle-val')?.replaceChildren(document.createTextNode(angleDeg));
+      const db = parseFloat(perturbSlider?.value || 0.5);
+      document.getElementById('cb-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
 
       // Draw scatterers
       for (const s of scatterers) {
         ctxC.beginPath();
         ctxC.arc(s.x, s.y, SR, 0, 2 * Math.PI);
-        ctxC.fillStyle = 'rgba(100, 120, 140, 0.25)';
+        ctxC.fillStyle = 'rgba(100, 120, 140, 0.2)';
         ctxC.fill();
-        ctxC.strokeStyle = COLORS.textDim;
+        ctxC.strokeStyle = 'rgba(100, 120, 140, 0.5)';
         ctxC.lineWidth = 1.5;
         ctxC.stroke();
       }
 
+      // Draw cannon
+      drawCannon(angle);
+
       if (!particles) {
-        // Show launch position hint
-        const db = parseFloat(perturbSlider?.value || 0.5);
-        document.getElementById('cb-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
-        const cy = HC / 2;
-        ctxC.fillStyle = COLORS.blue;
-        ctxC.beginPath(); ctxC.arc(20, cy - db / 2, PR + 1, 0, 2 * Math.PI); ctxC.fill();
-        ctxC.fillStyle = COLORS.red;
-        ctxC.beginPath(); ctxC.arc(20, cy + db / 2, PR + 1, 0, 2 * Math.PI); ctxC.fill();
-        // Label
-        if (db > 0.5) {
-          ctxC.strokeStyle = COLORS.textDim; ctxC.lineWidth = 1;
-          ctxC.beginPath(); ctxC.moveTo(32, cy - db / 2); ctxC.lineTo(32, cy + db / 2); ctxC.stroke();
-          ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
-          ctxC.fillText('Δb', 36, cy + 4);
-        }
+        // Show firing direction hint
+        const hintLen = 60;
+        ctxC.setLineDash([4, 4]);
+        ctxC.strokeStyle = COLORS.textDim;
+        ctxC.lineWidth = 1;
+        ctxC.beginPath();
+        ctxC.moveTo(cannonX + cannonLen * Math.cos(angle), cannonY + cannonLen * Math.sin(angle));
+        ctxC.lineTo(cannonX + (cannonLen + hintLen) * Math.cos(angle),
+                     cannonY + (cannonLen + hintLen) * Math.sin(angle));
+        ctxC.stroke();
+        ctxC.setLineDash([]);
+
         ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'center';
-        ctxC.fillText('Press Launch to fire two particles', WC / 2, HC - 15);
+        ctxC.fillText('Aim the cannon and press Fire!', WC / 2, HC - 12);
         return;
       }
 
@@ -1923,67 +2096,61 @@ function initCh3Vis() {
         ctxC.setLineDash([]);
       }
 
-      // Draw particles (current positions)
+      // Draw particles
       for (let i = 0; i < 2; i++) {
         const p = particles[i];
         if (!p.alive) continue;
         ctxC.beginPath();
-        ctxC.arc(p.x, p.y, PR + 1, 0, 2 * Math.PI);
+        ctxC.arc(p.x, p.y, PR + 2, 0, 2 * Math.PI);
         ctxC.fillStyle = colors[i];
         ctxC.fill();
       }
 
-      // Info overlay
+      // Stats
       const maxCol = Math.max(particles[0].collisions, particles[1].collisions);
       ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'left';
       ctxC.fillText('Collisions: ' + maxCol, 12, 22);
 
-      // Show separation
-      if (particles[0].alive || particles[1].alive) {
-        const t0 = particles[0].trail, t1 = particles[1].trail;
-        const len = Math.min(t0.length, t1.length);
-        if (len > 1) {
-          const dx = t0[len - 1].x - t1[len - 1].x;
-          const dy = t0[len - 1].y - t1[len - 1].y;
-          const sep = Math.sqrt(dx * dx + dy * dy);
-          const db0 = parseFloat(perturbSlider?.value || 0.5);
-          const amp = sep / db0;
-          ctxC.fillText('Separation: ' + sep.toFixed(1) + ' px', 12, 42);
-          if (amp > 1.5) {
-            ctxC.fillStyle = COLORS.orange;
-            ctxC.fillText('Amplification: ×' + amp.toFixed(0), 12, 62);
-          }
+      const t0 = particles[0].trail, t1 = particles[1].trail;
+      const len = Math.min(t0.length, t1.length);
+      if (len > 1) {
+        const dx = t0[len - 1].x - t1[len - 1].x;
+        const dy = t0[len - 1].y - t1[len - 1].y;
+        const sep = Math.sqrt(dx * dx + dy * dy);
+        const amp = sep / db;
+        ctxC.fillText('Separation: ' + sep.toFixed(1) + ' px', 12, 42);
+        if (amp > 2) {
+          ctxC.fillStyle = COLORS.orange;
+          ctxC.fillText('Amplification: ' + String.fromCharCode(215) + amp.toFixed(0), 12, 62);
         }
       }
 
       // Legend
       ctxC.font = FONT_SM; ctxC.textAlign = 'right';
       ctxC.fillStyle = COLORS.blue;
-      ctxC.fillRect(WC - 120, 10, 20, 3);
-      ctxC.fillText('Particle A', WC - 12, 16);
-      ctxC.fillStyle = COLORS.red;
-      ctxC.setLineDash([6, 4]); ctxC.strokeStyle = COLORS.red; ctxC.lineWidth = 2;
-      ctxC.beginPath(); ctxC.moveTo(WC - 120, 30); ctxC.lineTo(WC - 100, 30); ctxC.stroke();
+      ctxC.fillRect(WC - 110, 10, 16, 3);
+      ctxC.fillText('Particle A', WC - 8, 16);
+      ctxC.strokeStyle = COLORS.red; ctxC.lineWidth = 2;
+      ctxC.setLineDash([5, 3]);
+      ctxC.beginPath(); ctxC.moveTo(WC - 110, 28); ctxC.lineTo(WC - 94, 28); ctxC.stroke();
       ctxC.setLineDash([]);
       ctxC.fillStyle = COLORS.red;
-      ctxC.fillText('Particle B', WC - 12, 34);
+      ctxC.fillText('Particle B', WC - 8, 32);
     }
 
     function animate() {
       if (!running || !particles) return;
       const anyAlive = particles.some(p => p.alive);
       if (!anyAlive) { running = false; drawScene(); return; }
-
-      for (let sub = 0; sub < 2; sub++) { // 2 substeps per frame for smoothness
+      for (let sub = 0; sub < 2; sub++) {
         for (const p of particles) stepParticle(p);
       }
       drawScene();
       activeAnimations['chaos-balls'] = requestAnimationFrame(animate);
     }
 
-    perturbSlider?.addEventListener('input', () => {
-      if (!running) { particles = null; drawScene(); }
-    });
+    angleSlider?.addEventListener('input', () => { if (!running) { particles = null; drawScene(); } });
+    perturbSlider?.addEventListener('input', () => { if (!running) { particles = null; drawScene(); } });
     launchBtn?.addEventListener('click', () => { resetSim(); setTimeout(launchParticles, 50); });
     resetBtn?.addEventListener('click', resetSim);
     drawScene();
