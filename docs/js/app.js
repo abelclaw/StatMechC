@@ -3389,7 +3389,7 @@ function initCh4Vis() {
       const vals = [];
       for (let i = 0; i <= npts; i++) {
         const x = i / npts;
-        if (x <= 0 || x >= 1) { vals.push(0); continue; }
+        if (x <= 0 || x >= 1) { vals.push(-Infinity); continue; }
         const lnP = a * Math.log(x) + b * Math.log(1 - x);
         vals.push(lnP);
       }
@@ -3410,7 +3410,7 @@ function initCh4Vis() {
 
       // Mark peak
       const peakX = N1 / (N1 + N2);
-      const sigma = Math.sqrt(2 * N1 * N2 / (3 * (N1 + N2) * (N1 + N2) * (N1 + N2)));
+      const sigma = Math.sqrt(2 * N1 * N2 / (3 * (N1 + N2) * (N1 + N2)));
       ctxED.strokeStyle = COLORS.red;
       ctxED.lineWidth = 1;
       ctxED.setLineDash([5, 5]);
