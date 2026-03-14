@@ -1274,7 +1274,7 @@ function initCh3Vis() {
 
   document.getElementById('chaos-offset')?.addEventListener('input', function () {
     const d = document.getElementById('chaos-offset-val');
-    if (d) d.textContent = parseFloat(this.value).toFixed(4);
+    if (d) d.textContent = parseFloat(this.value).toFixed(2);
   });
 
   initPendulums();
