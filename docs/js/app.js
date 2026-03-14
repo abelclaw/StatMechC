@@ -1725,126 +1725,191 @@ function initCh3Vis() {
     drawBilliards();
   }
 
-  // ----- Figure 2: Correlated Outgoing Velocities (Interactive) -----
-  // Drag slider to change v1' scattering angle; v2' updates via conservation laws
+  // ----- Figure 2: Correlated Outgoing Velocities -----
+  // Left panel: collision diagram. Right panel: scatter plot of (|v1'|, |v2'|).
+  // Points accumulate on a curve showing perfect correlation.
   const cCorr = document.getElementById('vis-correlated-vel');
   if (cCorr) {
-    const {ctx: ctxCorr, W: WC, H: HC} = setupCanvas(cCorr);
-    const thetaSlider = document.getElementById('corr-theta');
-    const thetaVal = document.getElementById('corr-theta-val');
+    const {ctx: ctxC, W: WC, H: HC} = setupCanvas(cCorr);
+    const scatterBtn = document.getElementById('corr-scatter');
+    const clearBtn = document.getElementById('corr-clear');
+    const countDisp = document.getElementById('corr-count');
 
-    // Collision setup: 2D elastic collision
-    // m1 moves right, m2 stationary (CM frame simplification)
     const m1 = 3, m2 = 1;
-    const v1i = 3.0; // initial speed of m1
-    const collPt = { x: WC * 0.38, y: HC * 0.48 }; // collision point
-    const arrowScale = 22; // pixels per unit velocity
+    const v1i = 3.0;
+    const divX = WC * 0.45; // divider between panels
+    let scatterPts = []; // [{v1f, v2f, theta1}]
+    let curTheta = null; // current collision angle (radians)
 
-    function drawCorrelated() {
-      const theta1 = parseFloat(thetaSlider?.value || 20) * Math.PI / 180;
-      if (thetaVal) thetaVal.textContent = Math.round(theta1 * 180 / Math.PI);
-      clearCanvas(ctxCorr, WC, HC);
-
-      // Solve elastic collision in lab frame (m2 initially at rest)
-      // v1' magnitude from elastic collision formula:
-      // v1' = v1i * (m1*cos(theta1) + sqrt(m2^2 - m1^2*sin^2(theta1))) / (m1 + m2)
+    // Solve elastic collision: m1 hits stationary m2
+    function solveCollision(theta1) {
       const sinT = Math.sin(theta1), cosT = Math.cos(theta1);
       const disc = m2 * m2 - m1 * m1 * sinT * sinT;
-      const v1f = disc >= 0 ? v1i * (m1 * cosT + Math.sqrt(disc)) / (m1 + m2) : v1i * m1 * cosT / (m1 + m2);
-
-      // v2' from momentum conservation: m1*v1i = m1*v1' + m2*v2'
-      const v1fx = v1f * Math.cos(theta1);
-      const v1fy = v1f * Math.sin(theta1);
+      const v1f = disc >= 0 ? v1i * (m1 * cosT + Math.sqrt(disc)) / (m1 + m2) : v1i * Math.abs(m1 * cosT) / (m1 + m2);
+      const v1fx = v1f * Math.cos(theta1), v1fy = v1f * Math.sin(theta1);
       const v2fx = (m1 * v1i - m1 * v1fx) / m2;
       const v2fy = (-m1 * v1fy) / m2;
       const v2f = Math.sqrt(v2fx * v2fx + v2fy * v2fy);
       const theta2 = Math.atan2(v2fy, v2fx);
-
-      // --- INCOMING ---
-      // m1 approaching from left
-      const inLen = 90;
-      const in1start = { x: collPt.x - inLen, y: collPt.y };
-      ctxCorr.setLineDash([5, 4]);
-      ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 1.5;
-      ctxCorr.beginPath(); ctxCorr.moveTo(in1start.x, in1start.y); ctxCorr.lineTo(collPt.x, collPt.y); ctxCorr.stroke();
-      ctxCorr.setLineDash([]);
-      // m1 ball at start
-      ctxCorr.fillStyle = COLORS.orange;
-      ctxCorr.beginPath(); ctxCorr.arc(in1start.x, in1start.y, 14, 0, 2 * Math.PI); ctxCorr.fill();
-      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-      ctxCorr.fillText('m₁', in1start.x, in1start.y + 4);
-      // v1 arrow
-      ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2;
-      drawArrow(ctxCorr, in1start.x + 18, in1start.y, in1start.x + 18 + v1i * arrowScale, in1start.y, 9);
-      ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
-      ctxCorr.fillText('v⃗₁', in1start.x + 20 + v1i * arrowScale, in1start.y - 6);
-
-      // m2 stationary at collision point
-      ctxCorr.fillStyle = COLORS.cyan;
-      ctxCorr.beginPath(); ctxCorr.arc(collPt.x + 25, collPt.y + 20, 9, 0, 2 * Math.PI); ctxCorr.fill();
-      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-      ctxCorr.fillText('m₂', collPt.x + 25, collPt.y + 24);
-      ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM;
-      ctxCorr.fillText('(at rest)', collPt.x + 25, collPt.y + 38);
-
-      // Collision marker
-      ctxCorr.fillStyle = 'rgba(255,255,255,0.08)';
-      ctxCorr.beginPath(); ctxCorr.arc(collPt.x, collPt.y, 12, 0, 2 * Math.PI); ctxCorr.fill();
-
-      // --- OUTGOING ---
-      const outStart = { x: WC * 0.55, y: HC * 0.48 };
-
-      // v1' arrow (user-controlled angle)
-      const v1endx = outStart.x + v1f * arrowScale * Math.cos(theta1);
-      const v1endy = outStart.y + v1f * arrowScale * Math.sin(theta1);
-      ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2.5;
-      drawArrow(ctxCorr, outStart.x, outStart.y, v1endx, v1endy, 10);
-      // m1 ball at arrow tip
-      ctxCorr.fillStyle = COLORS.orange;
-      ctxCorr.beginPath(); ctxCorr.arc(v1endx + 14 * Math.cos(theta1), v1endy + 14 * Math.sin(theta1), 14, 0, 2 * Math.PI); ctxCorr.fill();
-      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-      ctxCorr.fillText('m₁', v1endx + 14 * Math.cos(theta1), v1endy + 14 * Math.sin(theta1) + 4);
-      ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT;
-      ctxCorr.textAlign = 'left';
-      ctxCorr.fillText("v⃗₁'", v1endx + 20 * Math.cos(theta1) + 5, v1endy + 20 * Math.sin(theta1) - 8);
-
-      // v2' arrow (determined by conservation)
-      const v2endx = outStart.x + v2fx * arrowScale;
-      const v2endy = outStart.y + v2fy * arrowScale;
-      ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2.5;
-      drawArrow(ctxCorr, outStart.x, outStart.y, v2endx, v2endy, 10);
-      // m2 ball at arrow tip
-      ctxCorr.fillStyle = COLORS.cyan;
-      ctxCorr.beginPath(); ctxCorr.arc(v2endx + 9 * Math.cos(theta2), v2endy + 9 * Math.sin(theta2), 9, 0, 2 * Math.PI); ctxCorr.fill();
-      ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-      ctxCorr.fillText('m₂', v2endx + 9 * Math.cos(theta2), v2endy + 9 * Math.sin(theta2) + 4);
-      ctxCorr.fillStyle = COLORS.cyan; ctxCorr.font = FONT;
-      ctxCorr.textAlign = 'left';
-      ctxCorr.fillText("v⃗₂'", v2endx + 14 * Math.cos(theta2) + 5, v2endy + 14 * Math.sin(theta2) + 12);
-
-      // Dashed link between arrow tips
-      ctxCorr.strokeStyle = COLORS.green; ctxCorr.lineWidth = 1.5;
-      ctxCorr.setLineDash([4, 3]);
-      ctxCorr.beginPath(); ctxCorr.moveTo(v1endx, v1endy);
-      ctxCorr.quadraticCurveTo(Math.max(v1endx, v2endx) + 20, (v1endy + v2endy) / 2, v2endx, v2endy);
-      ctxCorr.stroke();
-      ctxCorr.setLineDash([]);
-
-      // Labels
-      ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
-      ctxCorr.fillText('Before', collPt.x - 30, 18);
-      ctxCorr.fillText('After', outStart.x + 40, 18);
-
-      ctxCorr.fillStyle = COLORS.green; ctxCorr.font = FONT; ctxCorr.textAlign = 'center';
-      ctxCorr.fillText("v⃗₂' is fully determined by v⃗₁'", WC * 0.65, HC - 10);
+      return { v1f, v2f, v1fx, v1fy, v2fx, v2fy, theta2 };
     }
 
-    thetaSlider?.addEventListener('input', drawCorrelated);
-    drawCorrelated();
+    function drawCorrFig() {
+      clearCanvas(ctxC, WC, HC);
+
+      // --- LEFT PANEL: collision diagram ---
+      const cx = divX * 0.5, cy = HC * 0.5;
+      const aScale = 18;
+
+      // Divider line
+      ctxC.strokeStyle = COLORS.grid; ctxC.lineWidth = 1;
+      ctxC.beginPath(); ctxC.moveTo(divX, 10); ctxC.lineTo(divX, HC - 10); ctxC.stroke();
+
+      // Incoming m1
+      ctxC.setLineDash([5, 4]);
+      ctxC.strokeStyle = COLORS.textDim; ctxC.lineWidth = 1.5;
+      ctxC.beginPath(); ctxC.moveTo(cx - 80, cy); ctxC.lineTo(cx, cy); ctxC.stroke();
+      ctxC.setLineDash([]);
+      // m1 ball
+      ctxC.fillStyle = COLORS.orange;
+      ctxC.beginPath(); ctxC.arc(cx - 80, cy, 12, 0, 2 * Math.PI); ctxC.fill();
+      ctxC.fillStyle = '#fff'; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
+      ctxC.fillText('m₁', cx - 80, cy + 4);
+      // incoming arrow
+      ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 2;
+      drawArrow(ctxC, cx - 65, cy, cx - 65 + v1i * aScale, cy, 8);
+
+      // m2 at rest
+      ctxC.fillStyle = COLORS.cyan;
+      ctxC.beginPath(); ctxC.arc(cx + 15, cy + 18, 8, 0, 2 * Math.PI); ctxC.fill();
+      ctxC.fillStyle = '#fff'; ctxC.font = FONT_SM;
+      ctxC.fillText('m₂', cx + 15, cy + 22);
+
+      // Collision point
+      ctxC.fillStyle = 'rgba(255,255,255,0.06)';
+      ctxC.beginPath(); ctxC.arc(cx, cy, 10, 0, 2 * Math.PI); ctxC.fill();
+
+      if (curTheta !== null) {
+        const sol = solveCollision(curTheta);
+        // v1' arrow
+        ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 2.5;
+        const v1ex = cx + sol.v1f * aScale * Math.cos(curTheta);
+        const v1ey = cy + sol.v1f * aScale * Math.sin(curTheta);
+        drawArrow(ctxC, cx, cy, v1ex, v1ey, 9);
+        ctxC.fillStyle = COLORS.orange; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
+        ctxC.fillText("v⃗₁'", v1ex + 4, v1ey - 6);
+        // m1 at tip
+        ctxC.fillStyle = COLORS.orange;
+        ctxC.beginPath(); ctxC.arc(v1ex + 12 * Math.cos(curTheta), v1ey + 12 * Math.sin(curTheta), 12, 0, 2 * Math.PI); ctxC.fill();
+
+        // v2' arrow
+        ctxC.strokeStyle = COLORS.cyan; ctxC.lineWidth = 2.5;
+        const v2ex = cx + sol.v2fx * aScale;
+        const v2ey = cy + sol.v2fy * aScale;
+        drawArrow(ctxC, cx, cy, v2ex, v2ey, 8);
+        ctxC.fillStyle = COLORS.cyan; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
+        ctxC.fillText("v⃗₂'", v2ex + 4, v2ey + 12);
+        // m2 at tip
+        ctxC.fillStyle = COLORS.cyan;
+        ctxC.beginPath(); ctxC.arc(v2ex + 8 * Math.cos(sol.theta2), v2ey + 8 * Math.sin(sol.theta2), 8, 0, 2 * Math.PI); ctxC.fill();
+      }
+
+      // Panel label
+      ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
+      ctxC.fillText('Collision', cx, 16);
+
+      // --- RIGHT PANEL: scatter plot ---
+      const px = divX + 30, py = 30, pw = WC - divX - 55, ph = HC - 65;
+
+      // Axes
+      ctxC.strokeStyle = COLORS.axis; ctxC.lineWidth = 1.5;
+      ctxC.beginPath(); ctxC.moveTo(px, py); ctxC.lineTo(px, py + ph); ctxC.lineTo(px + pw, py + ph); ctxC.stroke();
+
+      // Axis labels
+      ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
+      ctxC.fillText("|v₁'|", px + pw / 2, py + ph + 18);
+      ctxC.save(); ctxC.translate(px - 16, py + ph / 2); ctxC.rotate(-Math.PI / 2);
+      ctxC.fillText("|v₂'|", 0, 0); ctxC.restore();
+
+      // Scale: v1f ranges from ~v1i*(m1-m2)/(m1+m2) to v1i (head-on to grazing)
+      const v1min = 0, v1max = v1i * 1.05;
+      const v2min = 0, v2max = v1i * 2 * m1 / (m1 + m2) * 1.05;
+
+      // Draw the theoretical curve first (faint)
+      ctxC.strokeStyle = COLORS.green + '30'; ctxC.lineWidth = 1.5;
+      ctxC.beginPath();
+      let first = true;
+      for (let deg = -18; deg <= 18; deg += 0.5) {
+        const t = deg * Math.PI / 180;
+        const s = solveCollision(t);
+        const sx = px + (s.v1f - v1min) / (v1max - v1min) * pw;
+        const sy = py + ph - (s.v2f - v2min) / (v2max - v2min) * ph;
+        if (first) { ctxC.moveTo(sx, sy); first = false; }
+        else ctxC.lineTo(sx, sy);
+      }
+      ctxC.stroke();
+
+      // Tick marks
+      ctxC.fillStyle = COLORS.textDim; ctxC.font = '10px Inter, system-ui, sans-serif';
+      ctxC.textAlign = 'center';
+      for (let v = 0; v <= v1max; v += 1) {
+        const tx = px + (v / v1max) * pw;
+        ctxC.beginPath(); ctxC.moveTo(tx, py + ph); ctxC.lineTo(tx, py + ph + 4); ctxC.strokeStyle = COLORS.axis; ctxC.stroke();
+        ctxC.fillText(v.toFixed(0), tx, py + ph + 13);
+      }
+      ctxC.textAlign = 'right';
+      for (let v = 0; v <= v2max; v += 1) {
+        const ty = py + ph - (v / v2max) * ph;
+        ctxC.beginPath(); ctxC.moveTo(px, ty); ctxC.lineTo(px - 4, ty); ctxC.strokeStyle = COLORS.axis; ctxC.stroke();
+        ctxC.fillText(v.toFixed(0), px - 6, ty + 4);
+      }
+
+      // Plot accumulated scatter points
+      for (let i = 0; i < scatterPts.length; i++) {
+        const pt = scatterPts[i];
+        const sx = px + (pt.v1f - v1min) / (v1max - v1min) * pw;
+        const sy = py + ph - (pt.v2f - v2min) / (v2max - v2min) * ph;
+        const isCurrent = (i === scatterPts.length - 1);
+        ctxC.fillStyle = isCurrent ? COLORS.green : COLORS.green + '90';
+        ctxC.beginPath(); ctxC.arc(sx, sy, isCurrent ? 5 : 3.5, 0, 2 * Math.PI); ctxC.fill();
+        if (isCurrent) {
+          ctxC.strokeStyle = '#fff'; ctxC.lineWidth = 1.5;
+          ctxC.beginPath(); ctxC.arc(sx, sy, 5, 0, 2 * Math.PI); ctxC.stroke();
+        }
+      }
+
+      // Panel label
+      ctxC.fillStyle = COLORS.text; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
+      ctxC.fillText('Scatter plot', px + pw / 2, 16);
+      if (scatterPts.length > 3) {
+        ctxC.fillStyle = COLORS.green; ctxC.font = FONT_SM;
+        ctxC.fillText('All points on one curve = perfect correlation', px + pw / 2, py - 2);
+      }
+    }
+
+    scatterBtn?.addEventListener('click', () => {
+      // Pick a random scattering angle
+      const theta1 = (Math.random() - 0.5) * 0.6; // ±~17 degrees
+      curTheta = theta1;
+      const sol = solveCollision(theta1);
+      scatterPts.push({ v1f: sol.v1f, v2f: sol.v2f, theta1 });
+      if (countDisp) countDisp.textContent = scatterPts.length + ' collision' + (scatterPts.length !== 1 ? 's' : '');
+      drawCorrFig();
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      scatterPts = [];
+      curTheta = null;
+      if (countDisp) countDisp.textContent = '0 collisions';
+      drawCorrFig();
+    });
+
+    drawCorrFig();
   }
 
   // ----- Figure 3: Reversible Billiard Trajectories -----
-  // Two balls bounce among frozen obstacles. Forward/reverse shows time-reversibility.
+  // Two balls bounce among frozen obstacles. Runs forever forward,
+  // records history so reverse retraces the exact path.
   const cRev = document.getElementById('vis-reversible-billiards');
   if (cRev) {
     const {ctx: ctxR, W: WR, H: HR} = setupCanvas(cRev);
@@ -1859,7 +1924,6 @@ function initCh3Vis() {
     const pad = 5;
     const ballR = 7;
 
-    // Frozen obstacles
     const frozenObs = [
       { x: WR * 0.25, y: HR * 0.30, r: 20 },
       { x: WR * 0.55, y: HR * 0.22, r: 16 },
@@ -1873,67 +1937,61 @@ function initCh3Vis() {
       { x: WR * 0.88, y: HR * 0.50, r: 14 },
     ];
 
-    // Pre-record full trajectory so we can play forward and backward
-    const totalSteps = 3000;
+    // Live state for on-the-fly computation
+    let liveBalls = null; // {b1:{x,y,vx,vy}, b2:{x,y,vx,vy}}
     let history = []; // [{b1:{x,y}, b2:{x,y}}]
     let curFrame = 0;
     let direction = 0; // 1=forward, -1=reverse, 0=paused
 
-    function initRevBilliards() {
-      // Two balls with different starting positions and velocities
-      let b1 = { x: WR * 0.15, y: HR * 0.45, vx: 1.1, vy: 0.6 };
-      let b2 = { x: WR * 0.85, y: HR * 0.55, vx: -0.9, vy: -0.7 };
-
-      history = [{ b1: {x: b1.x, y: b1.y}, b2: {x: b2.x, y: b2.y} }];
-
-      for (let s = 0; s < totalSteps; s++) {
-        // Step each ball
-        for (const ball of [b1, b2]) {
-          ball.x += ball.vx;
-          ball.y += ball.vy;
-          // Wall reflections
-          if (ball.x < pad + ballR) { ball.x = 2 * (pad + ballR) - ball.x; ball.vx = -ball.vx; }
-          if (ball.x > WR - pad - ballR) { ball.x = 2 * (WR - pad - ballR) - ball.x; ball.vx = -ball.vx; }
-          if (ball.y < pad + ballR) { ball.y = 2 * (pad + ballR) - ball.y; ball.vy = -ball.vy; }
-          if (ball.y > HR - pad - ballR) { ball.y = 2 * (HR - pad - ballR) - ball.y; ball.vy = -ball.vy; }
-          // Obstacle reflections
-          for (const ob of frozenObs) {
-            const dx = ball.x - ob.x, dy = ball.y - ob.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const minD = ob.r + ballR;
-            if (dist < minD) {
-              const nx = dx / dist, ny = dy / dist;
-              const vn = ball.vx * nx + ball.vy * ny;
-              if (vn < 0) {
-                ball.vx -= 2 * vn * nx;
-                ball.vy -= 2 * vn * ny;
-              }
-              ball.x = ob.x + (minD + 1) * nx;
-              ball.y = ob.y + (minD + 1) * ny;
-            }
+    function stepBalls(b1, b2) {
+      for (const ball of [b1, b2]) {
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        if (ball.x < pad + ballR) { ball.x = 2 * (pad + ballR) - ball.x; ball.vx = -ball.vx; }
+        if (ball.x > WR - pad - ballR) { ball.x = 2 * (WR - pad - ballR) - ball.x; ball.vx = -ball.vx; }
+        if (ball.y < pad + ballR) { ball.y = 2 * (pad + ballR) - ball.y; ball.vy = -ball.vy; }
+        if (ball.y > HR - pad - ballR) { ball.y = 2 * (HR - pad - ballR) - ball.y; ball.vy = -ball.vy; }
+        for (const ob of frozenObs) {
+          const dx = ball.x - ob.x, dy = ball.y - ob.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minD = ob.r + ballR;
+          if (dist < minD) {
+            const nx = dx / dist, ny = dy / dist;
+            const vn = ball.vx * nx + ball.vy * ny;
+            if (vn < 0) { ball.vx -= 2 * vn * nx; ball.vy -= 2 * vn * ny; }
+            ball.x = ob.x + (minD + 1) * nx;
+            ball.y = ob.y + (minD + 1) * ny;
           }
         }
-        // Ball-ball collision
-        const dx = b2.x - b1.x, dy = b2.y - b1.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 2 * ballR) {
-          const nx = dx / dist, ny = dy / dist;
-          const v1n = b1.vx * nx + b1.vy * ny;
-          const v2n = b2.vx * nx + b2.vy * ny;
-          // Elastic collision (equal mass)
-          b1.vx += (v2n - v1n) * nx;
-          b1.vy += (v2n - v1n) * ny;
-          b2.vx += (v1n - v2n) * nx;
-          b2.vy += (v1n - v2n) * ny;
-          // Separate
-          const overlap = 2 * ballR - dist;
-          b1.x -= overlap / 2 * nx;
-          b1.y -= overlap / 2 * ny;
-          b2.x += overlap / 2 * nx;
-          b2.y += overlap / 2 * ny;
-        }
-        history.push({ b1: {x: b1.x, y: b1.y}, b2: {x: b2.x, y: b2.y} });
       }
+      const dx = b2.x - b1.x, dy = b2.y - b1.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 2 * ballR) {
+        const nx = dx / dist, ny = dy / dist;
+        const v1n = b1.vx * nx + b1.vy * ny;
+        const v2n = b2.vx * nx + b2.vy * ny;
+        b1.vx += (v2n - v1n) * nx; b1.vy += (v2n - v1n) * ny;
+        b2.vx += (v1n - v2n) * nx; b2.vy += (v1n - v2n) * ny;
+        const overlap = 2 * ballR - dist;
+        b1.x -= overlap / 2 * nx; b1.y -= overlap / 2 * ny;
+        b2.x += overlap / 2 * nx; b2.y += overlap / 2 * ny;
+      }
+    }
+
+    function computeUpTo(targetFrame) {
+      // Extend history on-the-fly as needed
+      while (history.length - 1 < targetFrame) {
+        stepBalls(liveBalls.b1, liveBalls.b2);
+        history.push({ b1: {x: liveBalls.b1.x, y: liveBalls.b1.y}, b2: {x: liveBalls.b2.x, y: liveBalls.b2.y} });
+      }
+    }
+
+    function initRevBilliards() {
+      liveBalls = {
+        b1: { x: WR * 0.15, y: HR * 0.45, vx: 1.1, vy: 0.6 },
+        b2: { x: WR * 0.85, y: HR * 0.55, vx: -0.9, vy: -0.7 }
+      };
+      history = [{ b1: {x: liveBalls.b1.x, y: liveBalls.b1.y}, b2: {x: liveBalls.b2.x, y: liveBalls.b2.y} }];
       curFrame = 0;
       direction = 0;
     }
@@ -1941,11 +1999,9 @@ function initCh3Vis() {
     function drawRevFrame() {
       clearCanvas(ctxR, WR, HR);
 
-      // Border
       ctxR.strokeStyle = COLORS.axis; ctxR.lineWidth = 2;
       ctxR.strokeRect(pad, pad, WR - 2 * pad, HR - 2 * pad);
 
-      // Frozen obstacles
       for (const ob of frozenObs) {
         ctxR.fillStyle = 'rgba(255,255,255,0.06)';
         ctxR.beginPath(); ctxR.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxR.fill();
@@ -1953,7 +2009,7 @@ function initCh3Vis() {
         ctxR.beginPath(); ctxR.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxR.stroke();
       }
 
-      // Draw full persistent trails (frame 0 to curFrame)
+      // Persistent trails (frame 0 to curFrame)
       if (curFrame > 0) {
         for (let bi = 0; bi < 2; bi++) {
           const key = bi === 0 ? 'b1' : 'b2';
@@ -1969,7 +2025,6 @@ function initCh3Vis() {
         }
       }
 
-      // Draw balls at current frame
       const frame = history[curFrame];
       ctxR.fillStyle = COLORS.blue;
       ctxR.beginPath(); ctxR.arc(frame.b1.x, frame.b1.y, ballR, 0, 2 * Math.PI); ctxR.fill();
@@ -1981,7 +2036,6 @@ function initCh3Vis() {
       ctxR.strokeStyle = '#fff'; ctxR.lineWidth = 1;
       ctxR.beginPath(); ctxR.arc(frame.b2.x, frame.b2.y, ballR, 0, 2 * Math.PI); ctxR.stroke();
 
-      // Direction indicator
       ctxR.fillStyle = direction > 0 ? COLORS.green : direction < 0 ? COLORS.orange : COLORS.textDim;
       ctxR.font = FONT; ctxR.textAlign = 'left';
       const label = direction > 0 ? '▶ Forward' : direction < 0 ? '◀ Reverse' : 'Paused';
@@ -1993,9 +2047,14 @@ function initCh3Vis() {
     function animateRev() {
       if (direction === 0) return;
       const speed = parseInt(speedSlider?.value || 2);
-      curFrame += direction * speed;
-      if (curFrame >= totalSteps) { curFrame = totalSteps; direction = 0; }
-      if (curFrame <= 0) { curFrame = 0; direction = 0; }
+      const newFrame = curFrame + direction * speed;
+      if (newFrame <= 0) { curFrame = 0; direction = 0; drawRevFrame(); return; }
+      if (direction > 0) {
+        // Compute new frames on the fly
+        computeUpTo(newFrame);
+      }
+      // For reverse, history already exists
+      curFrame = Math.min(newFrame, history.length - 1);
       drawRevFrame();
       if (direction !== 0) activeAnimations['rev-billiards'] = requestAnimationFrame(animateRev);
     }

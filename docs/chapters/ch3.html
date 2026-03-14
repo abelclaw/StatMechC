@@ -182,11 +182,13 @@ $$\langle\vec{v}_k^{\,2}\rangle(t) = \int d^{3N}q\, d^{3N}p\, \frac{\vec{p}_k^{\
 
 <div class="visualization">
   <div class="vis-header"><span class="vis-icon">🔀</span> Interactive: Correlated Outgoing Velocities</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-correlated-vel" width="550" height="300"></canvas></div>
+  <div class="vis-canvas-wrap"><canvas id="vis-correlated-vel" width="700" height="300"></canvas></div>
   <div class="vis-controls">
-    <label>Scattering angle of $m_1$: <input type="range" id="corr-theta" min="-80" max="80" step="1" value="20"> <span class="value-display" id="corr-theta-val">20</span>°</label>
+    <button id="corr-scatter">Scatter!</button>
+    <button id="corr-clear">Clear</button>
+    <span class="value-display" id="corr-count">0 collisions</span>
   </div>
-  <div class="vis-caption">Drag the slider to change $\vec{v}_1'$. Conservation of momentum and energy completely determine $\vec{v}_2'$. The outgoing velocities are correlated: knowing one fixes the other.</div>
+  <div class="vis-caption">Each click picks a random scattering angle and plots the resulting $(|v_1'|, |v_2'|)$ on the right. All points fall on a single curve: the outgoing velocities are perfectly correlated. Knowing $|v_1'|$ completely determines $|v_2'|$.</div>
 </div>
 
 <p>Since outgoing particles eventually become incoming particles when they collide again, the assumption of molecular chaos must not strictly hold. Why then can we use it?</p>
