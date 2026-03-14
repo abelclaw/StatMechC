@@ -1731,7 +1731,7 @@ function initCh3Vis() {
   const cCorr = document.getElementById('vis-correlated-vel');
   if (cCorr) {
     const {ctx: ctxC, W: WC, H: HC} = setupCanvas(cCorr);
-    const scatterBtn = document.getElementById('corr-scatter');
+    const goBtn = document.getElementById('corr-go');
     const clearBtn = document.getElementById('corr-clear');
     const countDisp = document.getElementById('corr-count');
 
@@ -1743,6 +1743,7 @@ function initCh3Vis() {
     let scatterPts = []; // accumulated {v1f, v2f}
     let animState = null; // null or {phase, t, b, sol, ...}
     let corrAnimId = null;
+    let corrRunning = false; // machine-gun mode toggle
 
     // 2D hard-sphere elastic collision given impact parameter b.
     // Ball 1 moves along +x with speed v1i; ball 2 is stationary.
@@ -1894,7 +1895,7 @@ function initCh3Vis() {
           ctxC.fillStyle = COLORS.cyan;
           ctxC.fillText("v⃗₂'", collCx + sol.v2fx * aScale + 4, cy + sol.v2fy * aScale + 14);
         }
-        else if (phase === 'done') {
+        else if (phase === 'done' || phase === 'pause') {
           // Show final state with velocity arrows at collision center
           ctxC.fillStyle = 'rgba(255,255,255,0.08)';
           ctxC.beginPath(); ctxC.arc(collCx, cy, 4, 0, 2 * Math.PI); ctxC.fill();
@@ -1919,7 +1920,7 @@ function initCh3Vis() {
       } else {
         // Initial state: show balls at rest with instructions
         ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT; ctxC.textAlign = 'center';
-        ctxC.fillText('Click "Scatter!" to start', divX * 0.5, HC * 0.5 + 4);
+        ctxC.fillText('Click "Go" to start', divX * 0.5, HC * 0.5 + 4);
       }
 
       // Left panel label
@@ -1992,55 +1993,65 @@ function initCh3Vis() {
       }
     }
 
-    function runCollisionAnim(b) {
-      if (corrAnimId) { cancelAnimationFrame(corrAnimId); corrAnimId = null; }
-      const sol = solveHardSphere(b);
-
-      // Phase 1: incoming (ball 1 approaches)
-      animState = { phase: 'incoming', t: 0, b, sol };
-      const inDuration = 40; // frames
-      const outDuration = 35;
-      let frame = 0;
-
-      function tick() {
-        if (animState.phase === 'incoming') {
-          animState.t = Math.min(1, frame / inDuration);
-          drawCorrFig();
-          frame++;
-          if (animState.t >= 1) {
-            // Transition to outgoing
-            animState.phase = 'outgoing';
-            animState.t = 0;
-            frame = 0;
-          }
-          corrAnimId = requestAnimationFrame(tick);
-        } else if (animState.phase === 'outgoing') {
-          animState.t = Math.min(1, frame / outDuration);
-          drawCorrFig();
-          frame++;
-          if (animState.t >= 1) {
-            // Done — add scatter point and show final arrows
-            animState.phase = 'done';
-            scatterPts.push({ v1f: sol.v1f, v2f: sol.v2f });
-            if (countDisp) countDisp.textContent = scatterPts.length + ' collision' + (scatterPts.length !== 1 ? 's' : '');
-            drawCorrFig();
-            corrAnimId = null;
-            return;
-          }
-          corrAnimId = requestAnimationFrame(tick);
-        }
-      }
-      corrAnimId = requestAnimationFrame(tick);
-    }
-
-    scatterBtn?.addEventListener('click', () => {
-      // Pick a random impact parameter
+    function startNextCollision() {
       const bMax = R1 + R2;
       const b = (Math.random() - 0.5) * 2 * (bMax - 1);
-      runCollisionAnim(b);
+      const sol = solveHardSphere(b);
+      animState = { phase: 'incoming', t: 0, b, sol };
+      return sol;
+    }
+
+    function corrTick() {
+      if (!corrRunning) return;
+      const inDuration = 28; // frames — fast enough for machine-gun feel
+      const outDuration = 22;
+      const pauseFrames = 8; // brief pause between shots
+
+      if (!animState) startNextCollision();
+
+      if (animState.phase === 'incoming') {
+        animState.t += 1 / inDuration;
+        if (animState.t >= 1) {
+          animState.t = 1;
+          animState.phase = 'outgoing';
+          animState.t = 0;
+        }
+      } else if (animState.phase === 'outgoing') {
+        animState.t += 1 / outDuration;
+        if (animState.t >= 1) {
+          animState.t = 1;
+          // Record the scatter point
+          scatterPts.push({ v1f: animState.sol.v1f, v2f: animState.sol.v2f });
+          if (countDisp) countDisp.textContent = scatterPts.length + ' collision' + (scatterPts.length !== 1 ? 's' : '');
+          animState.phase = 'pause';
+          animState.t = 0;
+        }
+      } else if (animState.phase === 'pause') {
+        animState.t += 1 / pauseFrames;
+        if (animState.t >= 1) {
+          // Fire next collision
+          startNextCollision();
+        }
+      }
+
+      drawCorrFig();
+      corrAnimId = requestAnimationFrame(corrTick);
+    }
+
+    goBtn?.addEventListener('click', () => {
+      corrRunning = !corrRunning;
+      if (corrRunning) {
+        goBtn.textContent = '⏸ Stop';
+        corrAnimId = requestAnimationFrame(corrTick);
+      } else {
+        goBtn.textContent = '▶ Go';
+        if (corrAnimId) { cancelAnimationFrame(corrAnimId); corrAnimId = null; }
+      }
     });
 
     clearBtn?.addEventListener('click', () => {
+      corrRunning = false;
+      if (goBtn) goBtn.textContent = '▶ Go';
       if (corrAnimId) { cancelAnimationFrame(corrAnimId); corrAnimId = null; }
       scatterPts = [];
       animState = null;
