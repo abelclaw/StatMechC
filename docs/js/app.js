@@ -1853,6 +1853,8 @@ function initCh3Vis() {
     const pauseBtn = document.getElementById('rev-pause');
     const resetRevBtn = document.getElementById('rev-reset');
     const revInfo = document.getElementById('rev-info');
+    const speedSlider = document.getElementById('rev-speed');
+    const speedVal = document.getElementById('rev-speed-val');
 
     const pad = 5;
     const ballR = 7;
@@ -1879,8 +1881,8 @@ function initCh3Vis() {
 
     function initRevBilliards() {
       // Two balls with different starting positions and velocities
-      let b1 = { x: WR * 0.15, y: HR * 0.45, vx: 2.8, vy: 1.5 };
-      let b2 = { x: WR * 0.85, y: HR * 0.55, vx: -2.2, vy: -1.8 };
+      let b1 = { x: WR * 0.15, y: HR * 0.45, vx: 1.1, vy: 0.6 };
+      let b2 = { x: WR * 0.85, y: HR * 0.55, vx: -0.9, vy: -0.7 };
 
       history = [{ b1: {x: b1.x, y: b1.y}, b2: {x: b2.x, y: b2.y} }];
 
@@ -1951,22 +1953,19 @@ function initCh3Vis() {
         ctxR.beginPath(); ctxR.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxR.stroke();
       }
 
-      // Draw trails (last ~200 frames)
-      const trailLen = Math.min(200, curFrame);
-      const startF = curFrame - trailLen;
-      if (trailLen > 1) {
+      // Draw full persistent trails (frame 0 to curFrame)
+      if (curFrame > 0) {
         for (let bi = 0; bi < 2; bi++) {
           const key = bi === 0 ? 'b1' : 'b2';
           const color = bi === 0 ? COLORS.blue : COLORS.red;
-          ctxR.lineWidth = 1.5;
-          for (let f = startF + 1; f <= curFrame; f++) {
-            const alpha = 0.05 + 0.45 * ((f - startF) / trailLen);
-            ctxR.strokeStyle = color + Math.round(alpha * 255).toString(16).padStart(2, '0');
-            ctxR.beginPath();
-            ctxR.moveTo(history[f - 1][key].x, history[f - 1][key].y);
+          ctxR.strokeStyle = color + '70';
+          ctxR.lineWidth = 1.2;
+          ctxR.beginPath();
+          ctxR.moveTo(history[0][key].x, history[0][key].y);
+          for (let f = 1; f <= curFrame; f++) {
             ctxR.lineTo(history[f][key].x, history[f][key].y);
-            ctxR.stroke();
           }
+          ctxR.stroke();
         }
       }
 
@@ -1993,7 +1992,7 @@ function initCh3Vis() {
 
     function animateRev() {
       if (direction === 0) return;
-      const speed = 3; // frames per animation tick
+      const speed = parseInt(speedSlider?.value || 2);
       curFrame += direction * speed;
       if (curFrame >= totalSteps) { curFrame = totalSteps; direction = 0; }
       if (curFrame <= 0) { curFrame = 0; direction = 0; }
@@ -2025,6 +2024,10 @@ function initCh3Vis() {
       }
       initRevBilliards();
       drawRevFrame();
+    });
+
+    speedSlider?.addEventListener('input', function() {
+      if (speedVal) speedVal.textContent = this.value;
     });
 
     initRevBilliards();
