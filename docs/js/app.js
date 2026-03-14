@@ -1726,8 +1726,8 @@ function initCh3Vis() {
   }
 
   // ----- Figure 2: Correlated Outgoing Velocities -----
-  // Left panel: collision diagram. Right panel: scatter plot of (|v1'|, |v2'|).
-  // Points accumulate on a curve showing perfect correlation.
+  // Left panel: animated hard-sphere collision with random impact parameter.
+  // Right panel: scatter plot of (|v1'|, |v2'|) accumulating on a curve.
   const cCorr = document.getElementById('vis-correlated-vel');
   if (cCorr) {
     const {ctx: ctxC, W: WC, H: HC} = setupCanvas(cCorr);
@@ -1736,87 +1736,195 @@ function initCh3Vis() {
     const countDisp = document.getElementById('corr-count');
 
     const m1 = 3, m2 = 1;
-    const v1i = 3.0;
-    const divX = WC * 0.45; // divider between panels
-    let scatterPts = []; // [{v1f, v2f, theta1}]
-    let curTheta = null; // current collision angle (radians)
+    const v1i = 3.0; // incoming speed of m1
+    const R1 = 14, R2 = 9; // ball radii (pixels)
+    const divX = WC * 0.48; // divider between panels
+    const aScale = 20; // arrow length scale
+    let scatterPts = []; // accumulated {v1f, v2f}
+    let animState = null; // null or {phase, t, b, sol, ...}
+    let corrAnimId = null;
 
-    // Solve elastic collision: m1 hits stationary m2
-    function solveCollision(theta1) {
-      const sinT = Math.sin(theta1), cosT = Math.cos(theta1);
-      const disc = m2 * m2 - m1 * m1 * sinT * sinT;
-      const v1f = disc >= 0 ? v1i * (m1 * cosT + Math.sqrt(disc)) / (m1 + m2) : v1i * Math.abs(m1 * cosT) / (m1 + m2);
-      const v1fx = v1f * Math.cos(theta1), v1fy = v1f * Math.sin(theta1);
-      const v2fx = (m1 * v1i - m1 * v1fx) / m2;
-      const v2fy = (-m1 * v1fy) / m2;
+    // 2D hard-sphere elastic collision given impact parameter b.
+    // Ball 1 moves along +x with speed v1i; ball 2 is stationary.
+    // b = vertical offset of ball 2 center from ball 1's trajectory line.
+    // Returns outgoing velocity components and magnitudes.
+    function solveHardSphere(b) {
+      const bMax = R1 + R2;
+      const bClamped = Math.max(-bMax + 0.01, Math.min(bMax - 0.01, b));
+      // Normal direction: from ball 1 center to ball 2 center at contact
+      // At contact, ball 2 center is at (x_contact, b) relative to ball 1
+      const sinN = bClamped / bMax; // sin of angle of normal from x-axis
+      const cosN = Math.sqrt(1 - sinN * sinN);
+      const nx = cosN, ny = sinN; // unit normal pointing from m1 to m2
+
+      // Relative velocity along normal
+      const vRel_n = v1i * nx; // only m1 has velocity, along x
+      // Impulse magnitude for elastic collision
+      const j = 2 * m1 * m2 * vRel_n / (m1 + m2);
+
+      // Outgoing velocities
+      const v1fx = v1i - (j / m1) * nx;
+      const v1fy = -(j / m1) * ny;
+      const v2fx = (j / m2) * nx;
+      const v2fy = (j / m2) * ny;
+
+      const v1f = Math.sqrt(v1fx * v1fx + v1fy * v1fy);
       const v2f = Math.sqrt(v2fx * v2fx + v2fy * v2fy);
+      const theta1 = Math.atan2(v1fy, v1fx);
       const theta2 = Math.atan2(v2fy, v2fx);
-      return { v1f, v2f, v1fx, v1fy, v2fx, v2fy, theta2 };
+      return { v1f, v2f, v1fx, v1fy, v2fx, v2fy, theta1, theta2 };
+    }
+
+    // Compute theoretical curve for scatter plot (sweep over all impact parameters)
+    function theoryCurve() {
+      const bMax = R1 + R2;
+      const pts = [];
+      for (let i = -100; i <= 100; i++) {
+        const b = (i / 100) * (bMax - 0.01);
+        const s = solveHardSphere(b);
+        pts.push({ v1f: s.v1f, v2f: s.v2f });
+      }
+      return pts;
     }
 
     function drawCorrFig() {
       clearCanvas(ctxC, WC, HC);
-
-      // --- LEFT PANEL: collision diagram ---
-      const cx = divX * 0.5, cy = HC * 0.5;
-      const aScale = 18;
+      const cy = HC * 0.5;
+      const collCx = divX * 0.5; // collision center x
 
       // Divider line
       ctxC.strokeStyle = COLORS.grid; ctxC.lineWidth = 1;
       ctxC.beginPath(); ctxC.moveTo(divX, 10); ctxC.lineTo(divX, HC - 10); ctxC.stroke();
 
-      // Incoming m1
-      ctxC.setLineDash([5, 4]);
-      ctxC.strokeStyle = COLORS.textDim; ctxC.lineWidth = 1.5;
-      ctxC.beginPath(); ctxC.moveTo(cx - 80, cy); ctxC.lineTo(cx, cy); ctxC.stroke();
-      ctxC.setLineDash([]);
-      // m1 ball
-      ctxC.fillStyle = COLORS.orange;
-      ctxC.beginPath(); ctxC.arc(cx - 80, cy, 12, 0, 2 * Math.PI); ctxC.fill();
-      ctxC.fillStyle = '#fff'; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
-      ctxC.fillText('m₁', cx - 80, cy + 4);
-      // incoming arrow
-      ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 2;
-      drawArrow(ctxC, cx - 65, cy, cx - 65 + v1i * aScale, cy, 8);
+      // --- LEFT PANEL: collision animation ---
+      if (animState) {
+        const { phase, t, b, sol } = animState;
+        const bMax = R1 + R2;
+        // Contact point: where ball 1 center is when balls touch
+        const contactX = collCx;
+        const contactBallY = cy; // ball 1 travels along cy
+        // Ball 2 is at (contactX + R1+R2 * cosN, cy + b)... but let's simplify:
+        // Place the collision at collCx. Ball 2 sits at (collCx + sqrt((R1+R2)^2 - b^2), cy + b) ... no.
+        // Actually: ball 1 moves along y = cy. Ball 2 is at (cx2, cy + b).
+        // They collide when distance = R1+R2. Ball 1 center at contact: x1 = cx2 - sqrt((R1+R2)^2 - b^2).
+        // Let's place collision center at collCx. Ball 1 contact pos: collCx - cosN*(R1+R2)/2
+        // Ball 2 fixed pos: collCx + cosN*(R1+R2)/2, cy + b
+        const sinN = b / bMax;
+        const cosN = Math.sqrt(1 - sinN * sinN);
+        const b1ContactX = collCx - cosN * (R1 + R2) / 2;
+        const b2X = collCx + cosN * (R1 + R2) / 2;
+        const b2Y = cy + b;
 
-      // m2 at rest
-      ctxC.fillStyle = COLORS.cyan;
-      ctxC.beginPath(); ctxC.arc(cx + 15, cy + 18, 8, 0, 2 * Math.PI); ctxC.fill();
-      ctxC.fillStyle = '#fff'; ctxC.font = FONT_SM;
-      ctxC.fillText('m₂', cx + 15, cy + 22);
+        if (phase === 'incoming') {
+          // Ball 2 stationary
+          ctxC.fillStyle = COLORS.cyan; ctxC.globalAlpha = 0.3;
+          ctxC.beginPath(); ctxC.arc(b2X, b2Y, R2, 0, 2 * Math.PI); ctxC.fill();
+          ctxC.globalAlpha = 1;
+          ctxC.strokeStyle = COLORS.cyan; ctxC.lineWidth = 1.5;
+          ctxC.beginPath(); ctxC.arc(b2X, b2Y, R2, 0, 2 * Math.PI); ctxC.stroke();
 
-      // Collision point
-      ctxC.fillStyle = 'rgba(255,255,255,0.06)';
-      ctxC.beginPath(); ctxC.arc(cx, cy, 10, 0, 2 * Math.PI); ctxC.fill();
+          // Ball 1 approaching
+          const startX = collCx - 130;
+          const curX = startX + (b1ContactX - startX) * t;
+          ctxC.fillStyle = COLORS.orange; ctxC.globalAlpha = 0.3;
+          ctxC.beginPath(); ctxC.arc(curX, cy, R1, 0, 2 * Math.PI); ctxC.fill();
+          ctxC.globalAlpha = 1;
+          ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 1.5;
+          ctxC.beginPath(); ctxC.arc(curX, cy, R1, 0, 2 * Math.PI); ctxC.stroke();
 
-      if (curTheta !== null) {
-        const sol = solveCollision(curTheta);
-        // v1' arrow
-        ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 2.5;
-        const v1ex = cx + sol.v1f * aScale * Math.cos(curTheta);
-        const v1ey = cy + sol.v1f * aScale * Math.sin(curTheta);
-        drawArrow(ctxC, cx, cy, v1ex, v1ey, 9);
-        ctxC.fillStyle = COLORS.orange; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
-        ctxC.fillText("v⃗₁'", v1ex + 4, v1ey - 6);
-        // m1 at tip
-        ctxC.fillStyle = COLORS.orange;
-        ctxC.beginPath(); ctxC.arc(v1ex + 12 * Math.cos(curTheta), v1ey + 12 * Math.sin(curTheta), 12, 0, 2 * Math.PI); ctxC.fill();
+          // Incoming velocity arrow on ball 1
+          ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 2;
+          drawArrow(ctxC, curX + R1 + 4, cy, curX + R1 + 4 + v1i * aScale * 0.6, cy, 7);
 
-        // v2' arrow
-        ctxC.strokeStyle = COLORS.cyan; ctxC.lineWidth = 2.5;
-        const v2ex = cx + sol.v2fx * aScale;
-        const v2ey = cy + sol.v2fy * aScale;
-        drawArrow(ctxC, cx, cy, v2ex, v2ey, 8);
-        ctxC.fillStyle = COLORS.cyan; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
-        ctxC.fillText("v⃗₂'", v2ex + 4, v2ey + 12);
-        // m2 at tip
-        ctxC.fillStyle = COLORS.cyan;
-        ctxC.beginPath(); ctxC.arc(v2ex + 8 * Math.cos(sol.theta2), v2ey + 8 * Math.sin(sol.theta2), 8, 0, 2 * Math.PI); ctxC.fill();
+          // Labels
+          ctxC.fillStyle = '#fff'; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
+          ctxC.fillText('m₁', curX, cy + 4);
+          ctxC.fillText('m₂', b2X, b2Y + 4);
+
+          // Impact parameter indicator
+          ctxC.setLineDash([3, 3]);
+          ctxC.strokeStyle = COLORS.textDim; ctxC.lineWidth = 1;
+          ctxC.beginPath(); ctxC.moveTo(b2X - 40, cy); ctxC.lineTo(b2X + 30, cy); ctxC.stroke();
+          ctxC.beginPath(); ctxC.moveTo(b2X - 40, b2Y); ctxC.lineTo(b2X + 30, b2Y); ctxC.stroke();
+          ctxC.setLineDash([]);
+          if (Math.abs(b) > 3) {
+            ctxC.strokeStyle = COLORS.yellow; ctxC.lineWidth = 1;
+            ctxC.beginPath(); ctxC.moveTo(b2X + 25, cy); ctxC.lineTo(b2X + 25, b2Y); ctxC.stroke();
+            ctxC.fillStyle = COLORS.yellow; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
+            ctxC.fillText('b', b2X + 29, cy + b / 2 + 4);
+          }
+        }
+        else if (phase === 'outgoing') {
+          // Show collision point
+          ctxC.fillStyle = 'rgba(255,255,255,0.08)';
+          ctxC.beginPath(); ctxC.arc(collCx, cy, 4, 0, 2 * Math.PI); ctxC.fill();
+
+          // Outgoing ball 1
+          const b1x = b1ContactX + sol.v1fx * aScale * 2.5 * t;
+          const b1y = cy + sol.v1fy * aScale * 2.5 * t;
+          ctxC.fillStyle = COLORS.orange; ctxC.globalAlpha = 0.3;
+          ctxC.beginPath(); ctxC.arc(b1x, b1y, R1, 0, 2 * Math.PI); ctxC.fill();
+          ctxC.globalAlpha = 1;
+          ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 1.5;
+          ctxC.beginPath(); ctxC.arc(b1x, b1y, R1, 0, 2 * Math.PI); ctxC.stroke();
+
+          // Outgoing ball 2
+          const b2ox = b2X + sol.v2fx * aScale * 2.5 * t;
+          const b2oy = b2Y + sol.v2fy * aScale * 2.5 * t;
+          ctxC.fillStyle = COLORS.cyan; ctxC.globalAlpha = 0.3;
+          ctxC.beginPath(); ctxC.arc(b2ox, b2oy, R2, 0, 2 * Math.PI); ctxC.fill();
+          ctxC.globalAlpha = 1;
+          ctxC.strokeStyle = COLORS.cyan; ctxC.lineWidth = 1.5;
+          ctxC.beginPath(); ctxC.arc(b2ox, b2oy, R2, 0, 2 * Math.PI); ctxC.stroke();
+
+          // Labels
+          ctxC.fillStyle = '#fff'; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
+          ctxC.fillText('m₁', b1x, b1y + 4);
+          ctxC.fillText('m₂', b2ox, b2oy + 4);
+
+          // Velocity arrows from collision center (persistent)
+          ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 2.5;
+          drawArrow(ctxC, collCx, cy, collCx + sol.v1fx * aScale, cy + sol.v1fy * aScale, 8);
+          ctxC.strokeStyle = COLORS.cyan; ctxC.lineWidth = 2.5;
+          drawArrow(ctxC, collCx, cy, collCx + sol.v2fx * aScale, cy + sol.v2fy * aScale, 8);
+
+          // Arrow labels
+          ctxC.fillStyle = COLORS.orange; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
+          ctxC.fillText("v⃗₁'", collCx + sol.v1fx * aScale + 4, cy + sol.v1fy * aScale - 5);
+          ctxC.fillStyle = COLORS.cyan;
+          ctxC.fillText("v⃗₂'", collCx + sol.v2fx * aScale + 4, cy + sol.v2fy * aScale + 14);
+        }
+        else if (phase === 'done') {
+          // Show final state with velocity arrows at collision center
+          ctxC.fillStyle = 'rgba(255,255,255,0.08)';
+          ctxC.beginPath(); ctxC.arc(collCx, cy, 4, 0, 2 * Math.PI); ctxC.fill();
+
+          // Velocity arrows from collision center
+          ctxC.strokeStyle = COLORS.orange; ctxC.lineWidth = 2.5;
+          drawArrow(ctxC, collCx, cy, collCx + sol.v1fx * aScale, cy + sol.v1fy * aScale, 8);
+          ctxC.strokeStyle = COLORS.cyan; ctxC.lineWidth = 2.5;
+          drawArrow(ctxC, collCx, cy, collCx + sol.v2fx * aScale, cy + sol.v2fy * aScale, 8);
+
+          // Arrow labels
+          ctxC.fillStyle = COLORS.orange; ctxC.font = FONT_SM; ctxC.textAlign = 'left';
+          ctxC.fillText("v⃗₁'", collCx + sol.v1fx * aScale + 4, cy + sol.v1fy * aScale - 5);
+          ctxC.fillStyle = COLORS.cyan;
+          ctxC.fillText("v⃗₂'", collCx + sol.v2fx * aScale + 4, cy + sol.v2fy * aScale + 14);
+
+          // Speed labels
+          ctxC.fillStyle = COLORS.text; ctxC.font = '10px Inter, system-ui, sans-serif'; ctxC.textAlign = 'center';
+          ctxC.fillText("|v₁'|=" + sol.v1f.toFixed(1), collCx, HC - 12);
+          ctxC.fillText("|v₂'|=" + sol.v2f.toFixed(1), collCx + 70, HC - 12);
+        }
+      } else {
+        // Initial state: show balls at rest with instructions
+        ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT; ctxC.textAlign = 'center';
+        ctxC.fillText('Click "Scatter!" to start', divX * 0.5, HC * 0.5 + 4);
       }
 
-      // Panel label
+      // Left panel label
       ctxC.fillStyle = COLORS.textDim; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
-      ctxC.fillText('Collision', cx, 16);
+      ctxC.fillText('Collision', divX * 0.5, 16);
 
       // --- RIGHT PANEL: scatter plot ---
       const px = divX + 30, py = 30, pw = WC - divX - 55, ph = HC - 65;
@@ -1831,21 +1939,18 @@ function initCh3Vis() {
       ctxC.save(); ctxC.translate(px - 16, py + ph / 2); ctxC.rotate(-Math.PI / 2);
       ctxC.fillText("|v₂'|", 0, 0); ctxC.restore();
 
-      // Scale: v1f ranges from ~v1i*(m1-m2)/(m1+m2) to v1i (head-on to grazing)
-      const v1min = 0, v1max = v1i * 1.05;
-      const v2min = 0, v2max = v1i * 2 * m1 / (m1 + m2) * 1.05;
+      // Scale
+      const v1max = v1i * 1.05;
+      const v2max = v1i * 2 * m1 / (m1 + m2) * 1.05;
 
-      // Draw the theoretical curve first (faint)
-      ctxC.strokeStyle = COLORS.green + '30'; ctxC.lineWidth = 1.5;
+      // Draw the theoretical curve (faint)
+      const curve = theoryCurve();
+      ctxC.strokeStyle = COLORS.green + '25'; ctxC.lineWidth = 1.5;
       ctxC.beginPath();
-      let first = true;
-      for (let deg = -18; deg <= 18; deg += 0.5) {
-        const t = deg * Math.PI / 180;
-        const s = solveCollision(t);
-        const sx = px + (s.v1f - v1min) / (v1max - v1min) * pw;
-        const sy = py + ph - (s.v2f - v2min) / (v2max - v2min) * ph;
-        if (first) { ctxC.moveTo(sx, sy); first = false; }
-        else ctxC.lineTo(sx, sy);
+      for (let i = 0; i < curve.length; i++) {
+        const sx = px + (curve[i].v1f / v1max) * pw;
+        const sy = py + ph - (curve[i].v2f / v2max) * ph;
+        if (i === 0) ctxC.moveTo(sx, sy); else ctxC.lineTo(sx, sy);
       }
       ctxC.stroke();
 
@@ -1867,8 +1972,8 @@ function initCh3Vis() {
       // Plot accumulated scatter points
       for (let i = 0; i < scatterPts.length; i++) {
         const pt = scatterPts[i];
-        const sx = px + (pt.v1f - v1min) / (v1max - v1min) * pw;
-        const sy = py + ph - (pt.v2f - v2min) / (v2max - v2min) * ph;
+        const sx = px + (pt.v1f / v1max) * pw;
+        const sy = py + ph - (pt.v2f / v2max) * ph;
         const isCurrent = (i === scatterPts.length - 1);
         ctxC.fillStyle = isCurrent ? COLORS.green : COLORS.green + '90';
         ctxC.beginPath(); ctxC.arc(sx, sy, isCurrent ? 5 : 3.5, 0, 2 * Math.PI); ctxC.fill();
@@ -1880,26 +1985,65 @@ function initCh3Vis() {
 
       // Panel label
       ctxC.fillStyle = COLORS.text; ctxC.font = FONT_SM; ctxC.textAlign = 'center';
-      ctxC.fillText('Scatter plot', px + pw / 2, 16);
+      ctxC.fillText('|v₁\'| vs |v₂\'|', px + pw / 2, 16);
       if (scatterPts.length > 3) {
         ctxC.fillStyle = COLORS.green; ctxC.font = FONT_SM;
-        ctxC.fillText('All points on one curve = perfect correlation', px + pw / 2, py - 2);
+        ctxC.fillText('All on one curve → perfect correlation', px + pw / 2, py - 2);
       }
     }
 
+    function runCollisionAnim(b) {
+      if (corrAnimId) { cancelAnimationFrame(corrAnimId); corrAnimId = null; }
+      const sol = solveHardSphere(b);
+
+      // Phase 1: incoming (ball 1 approaches)
+      animState = { phase: 'incoming', t: 0, b, sol };
+      const inDuration = 40; // frames
+      const outDuration = 35;
+      let frame = 0;
+
+      function tick() {
+        if (animState.phase === 'incoming') {
+          animState.t = Math.min(1, frame / inDuration);
+          drawCorrFig();
+          frame++;
+          if (animState.t >= 1) {
+            // Transition to outgoing
+            animState.phase = 'outgoing';
+            animState.t = 0;
+            frame = 0;
+          }
+          corrAnimId = requestAnimationFrame(tick);
+        } else if (animState.phase === 'outgoing') {
+          animState.t = Math.min(1, frame / outDuration);
+          drawCorrFig();
+          frame++;
+          if (animState.t >= 1) {
+            // Done — add scatter point and show final arrows
+            animState.phase = 'done';
+            scatterPts.push({ v1f: sol.v1f, v2f: sol.v2f });
+            if (countDisp) countDisp.textContent = scatterPts.length + ' collision' + (scatterPts.length !== 1 ? 's' : '');
+            drawCorrFig();
+            corrAnimId = null;
+            return;
+          }
+          corrAnimId = requestAnimationFrame(tick);
+        }
+      }
+      corrAnimId = requestAnimationFrame(tick);
+    }
+
     scatterBtn?.addEventListener('click', () => {
-      // Pick a random scattering angle
-      const theta1 = (Math.random() - 0.5) * 0.6; // ±~17 degrees
-      curTheta = theta1;
-      const sol = solveCollision(theta1);
-      scatterPts.push({ v1f: sol.v1f, v2f: sol.v2f, theta1 });
-      if (countDisp) countDisp.textContent = scatterPts.length + ' collision' + (scatterPts.length !== 1 ? 's' : '');
-      drawCorrFig();
+      // Pick a random impact parameter
+      const bMax = R1 + R2;
+      const b = (Math.random() - 0.5) * 2 * (bMax - 1);
+      runCollisionAnim(b);
     });
 
     clearBtn?.addEventListener('click', () => {
+      if (corrAnimId) { cancelAnimationFrame(corrAnimId); corrAnimId = null; }
       scatterPts = [];
-      curTheta = null;
+      animState = null;
       if (countDisp) countDisp.textContent = '0 collisions';
       drawCorrFig();
     });
