@@ -2015,75 +2015,16 @@ function initCh3Vis() {
       ctxPC.fillText('S ~ ln(' + clusters.length + ')', bx + bw - 5, by - 6);
     }
 
-    // Evolve: scatter dots chaotically using billiard dynamics
-    evolveBtn?.addEventListener('click', () => {
-      if (!canEvolve) return;
-      step++;
-      canEvolve = false;
-      canGrain = true;
+    // Evolve: animate dots with billiard dynamics and trails
+    let evolving = false;
+    let evolveDots = []; // {x, y, vx, vy, trail: [{x,y}]}
+    const dotColors = [COLORS.blue, COLORS.cyan, COLORS.green, COLORS.orange, COLORS.red,
+                       COLORS.purple, COLORS.yellow, COLORS.pink];
 
-      // Save current clusters as ghosts
-      ghostClusters = clusters.map(c => ({ cx: c.cx, cy: c.cy }));
-
-      // Collect all dots, give them velocities and simulate
-      const allDots = [];
-      for (const cl of clusters) {
-        for (const d of cl.dots) {
-          // Velocity based on offset from cluster center (+ some randomness)
-          const dx = d.x - cl.cx, dy = d.y - cl.cy;
-          const baseAngle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.5;
-          const speed = 2.5 + Math.random() * 1.5;
-          allDots.push({
-            x: d.x, y: d.y,
-            vx: speed * Math.cos(baseAngle),
-            vy: speed * Math.sin(baseAngle)
-          });
-        }
-      }
-
-      // Run billiard simulation
-      const simSteps = 250;
-      const simDt = 1.0;
-      for (let s = 0; s < simSteps; s++) {
-        for (const dot of allDots) {
-          dot.x += dot.vx * simDt;
-          dot.y += dot.vy * simDt;
-
-          // Wall reflections
-          if (dot.x < bx + 3) { dot.x = 2 * (bx + 3) - dot.x; dot.vx = -dot.vx; }
-          if (dot.x > bx + bw - 3) { dot.x = 2 * (bx + bw - 3) - dot.x; dot.vx = -dot.vx; }
-          if (dot.y < by + 3) { dot.y = 2 * (by + 3) - dot.y; dot.vy = -dot.vy; }
-          if (dot.y > by + bh - 3) { dot.y = 2 * (by + bh - 3) - dot.y; dot.vy = -dot.vy; }
-
-          // Obstacle reflections
-          for (const ob of obstacles) {
-            const odx = dot.x - ob.x, ody = dot.y - ob.y;
-            const dist = Math.sqrt(odx * odx + ody * ody);
-            if (dist < ob.r + 3) {
-              // Reflect velocity about normal
-              const nx = odx / dist, ny = ody / dist;
-              const vn = dot.vx * nx + dot.vy * ny;
-              if (vn < 0) { // moving toward obstacle
-                dot.vx -= 2 * vn * nx;
-                dot.vy -= 2 * vn * ny;
-                // Push out
-                dot.x = ob.x + (ob.r + 4) * nx;
-                dot.y = ob.y + (ob.r + 4) * ny;
-              }
-            }
-          }
-        }
-      }
-
-      // Each dot becomes its own "cluster" with just itself (shown as scattered dot)
-      clusters = allDots.map(d => ({
-        cx: d.x, cy: d.y,
-        dots: [{ x: d.x, y: d.y }]
-      }));
-
-      // Don't draw circles around scattered dots yet — just the dots
-      // Override draw to show dots without circles
+    function drawEvolveFrame() {
       clearCanvas(ctxPC, WPC, HPC);
+
+      // Phase space box
       ctxPC.strokeStyle = COLORS.axis; ctxPC.lineWidth = 2;
       ctxPC.strokeRect(bx, by, bw, bh);
       ctxPC.fillStyle = COLORS.textDim; ctxPC.font = FONT_SM; ctxPC.textAlign = 'center';
@@ -2099,7 +2040,7 @@ function initCh3Vis() {
         ctxPC.beginPath(); ctxPC.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxPC.stroke();
       }
 
-      // Ghost circles
+      // Ghost circles (original cluster positions)
       for (const gc of ghostClusters) {
         ctxPC.setLineDash([4, 4]);
         ctxPC.strokeStyle = 'rgba(79,195,247,0.2)'; ctxPC.lineWidth = 1;
@@ -2107,16 +2048,117 @@ function initCh3Vis() {
         ctxPC.setLineDash([]);
       }
 
-      // Just the scattered dots, no circles
-      for (const d of allDots) {
-        ctxPC.fillStyle = COLORS.blue;
-        ctxPC.beginPath(); ctxPC.arc(d.x, d.y, 3, 0, 2 * Math.PI); ctxPC.fill();
+      // Trails and dots
+      for (let i = 0; i < evolveDots.length; i++) {
+        const d = evolveDots[i];
+        const color = dotColors[i % dotColors.length];
+        // Draw trail
+        if (d.trail.length > 1) {
+          ctxPC.lineWidth = 1;
+          for (let t = 1; t < d.trail.length; t++) {
+            const alpha = 0.1 + 0.4 * (t / d.trail.length);
+            ctxPC.strokeStyle = color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+            ctxPC.beginPath();
+            ctxPC.moveTo(d.trail[t - 1].x, d.trail[t - 1].y);
+            ctxPC.lineTo(d.trail[t].x, d.trail[t].y);
+            ctxPC.stroke();
+          }
+        }
+        // Draw dot
+        ctxPC.fillStyle = color;
+        ctxPC.beginPath(); ctxPC.arc(d.x, d.y, 3.5, 0, 2 * Math.PI); ctxPC.fill();
       }
 
-      ctxPC.fillStyle = COLORS.orange; ctxPC.font = FONT; ctxPC.textAlign = 'right';
-      ctxPC.fillText('dots scattered — click Coarse Grain', bx + bw - 5, by - 6);
+      // Status text
+      if (evolving) {
+        ctxPC.fillStyle = COLORS.orange; ctxPC.font = FONT; ctxPC.textAlign = 'right';
+        ctxPC.fillText('evolving...', bx + bw - 5, by - 6);
+      } else if (!canEvolve && canGrain) {
+        ctxPC.fillStyle = COLORS.orange; ctxPC.font = FONT; ctxPC.textAlign = 'right';
+        ctxPC.fillText('dots scattered — click Coarse Grain', bx + bw - 5, by - 6);
+      }
+    }
 
+    function stepBilliard(dot) {
+      dot.x += dot.vx;
+      dot.y += dot.vy;
+      if (dot.x < bx + 3) { dot.x = 2 * (bx + 3) - dot.x; dot.vx = -dot.vx; }
+      if (dot.x > bx + bw - 3) { dot.x = 2 * (bx + bw - 3) - dot.x; dot.vx = -dot.vx; }
+      if (dot.y < by + 3) { dot.y = 2 * (by + 3) - dot.y; dot.vy = -dot.vy; }
+      if (dot.y > by + bh - 3) { dot.y = 2 * (by + bh - 3) - dot.y; dot.vy = -dot.vy; }
+      for (const ob of obstacles) {
+        const odx = dot.x - ob.x, ody = dot.y - ob.y;
+        const dist = Math.sqrt(odx * odx + ody * ody);
+        if (dist < ob.r + 3) {
+          const nx = odx / dist, ny = ody / dist;
+          const vn = dot.vx * nx + dot.vy * ny;
+          if (vn < 0) {
+            dot.vx -= 2 * vn * nx;
+            dot.vy -= 2 * vn * ny;
+            dot.x = ob.x + (ob.r + 4) * nx;
+            dot.y = ob.y + (ob.r + 4) * ny;
+          }
+        }
+      }
+    }
+
+    evolveBtn?.addEventListener('click', () => {
+      if (!canEvolve || evolving) return;
+      step++;
+      canEvolve = false;
+      canGrain = false;
+      evolving = true;
       updateInfo();
+
+      // Save current clusters as ghosts
+      ghostClusters = clusters.map(c => ({ cx: c.cx, cy: c.cy }));
+
+      // Collect all dots with velocities and empty trails
+      evolveDots = [];
+      for (const cl of clusters) {
+        for (const d of cl.dots) {
+          const dx = d.x - cl.cx, dy = d.y - cl.cy;
+          const baseAngle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.5;
+          const speed = 2.0 + Math.random() * 1.0;
+          evolveDots.push({
+            x: d.x, y: d.y,
+            vx: speed * Math.cos(baseAngle),
+            vy: speed * Math.sin(baseAngle),
+            trail: [{ x: d.x, y: d.y }]
+          });
+        }
+      }
+
+      let frame = 0;
+      const totalFrames = 180;
+      const stepsPerFrame = 2;
+
+      function animateEvolve() {
+        if (frame >= totalFrames) {
+          evolving = false;
+          canGrain = true;
+          clusters = evolveDots.map(d => ({
+            cx: d.x, cy: d.y,
+            dots: [{ x: d.x, y: d.y }]
+          }));
+          updateInfo();
+          drawEvolveFrame();
+          return;
+        }
+        for (let s = 0; s < stepsPerFrame; s++) {
+          for (const dot of evolveDots) {
+            stepBilliard(dot);
+            if (frame % 2 === 0) {
+              dot.trail.push({ x: dot.x, y: dot.y });
+              if (dot.trail.length > 120) dot.trail.shift();
+            }
+          }
+        }
+        frame++;
+        drawEvolveFrame();
+        activeAnimations['coarse-evolve'] = requestAnimationFrame(animateEvolve);
+      }
+      animateEvolve();
     });
 
     // Coarse Grain: draw circle around each dot, spawn new dots inside
@@ -2157,6 +2199,12 @@ function initCh3Vis() {
     });
 
     resetBtnPC?.addEventListener('click', () => {
+      if (activeAnimations['coarse-evolve']) {
+        cancelAnimationFrame(activeAnimations['coarse-evolve']);
+        delete activeAnimations['coarse-evolve'];
+      }
+      evolving = false;
+      evolveDots = [];
       initCoarse();
     });
 
