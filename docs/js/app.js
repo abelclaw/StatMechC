@@ -1210,7 +1210,7 @@ function initCh3Vis() {
   function draw() {
     clearCanvas(ctx, W, H);
 
-    const ox = W / 2, oy = H * 0.3;
+    const ox = W / 2, oy = H * 0.5;
     const visible = showSecond ? pends : [pends[0]];
 
     visible.forEach(p => {
@@ -1715,91 +1715,109 @@ function initCh3Vis() {
   }
 
   // ----- Figure 2: Correlated Outgoing Velocities -----
+  // ----- Figure 2: Correlated Outgoing Velocities -----
+  // Shows that after a collision, knowing v1' determines v2' (momentum + energy conservation)
   const cCorr = document.getElementById('vis-correlated-vel');
   if (cCorr) {
     const {ctx: ctxCorr, W: WCorr, H: HCorr} = setupCanvas(cCorr);
     clearCanvas(ctxCorr, WCorr, HCorr);
 
-    const cx = WCorr / 2, cy = HCorr / 2;
-    const R = 14; // molecule radius
-    const arrowLen = 70;
+    const cx = WCorr * 0.38, cy = HCorr / 2;
+    const R1 = 18, R2 = 10; // big and small molecule
+    const arrowLen = 55;
 
-    // Incoming molecules (from upper-left and lower-left)
-    const in1 = { x: cx - 130, y: cy - 55, angle: 0.38 };
-    const in2 = { x: cx - 110, y: cy + 65, angle: -0.45 };
+    // --- BEFORE panel (left) ---
+    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_LG; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('Before', cx, 18);
 
-    // Outgoing molecules (both heading roughly right — correlated)
-    const out1 = { x: cx + 110, y: cy - 25, angle: 0.15 };
-    const out2 = { x: cx + 120, y: cy + 35, angle: -0.10 };
-
-    // Draw incoming trajectories (dashed)
-    ctxCorr.setLineDash([6, 5]);
-    ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 1.5;
-    ctxCorr.beginPath(); ctxCorr.moveTo(in1.x - 40, in1.y - 40 * Math.tan(in1.angle)); ctxCorr.lineTo(cx - 10, cy - 5); ctxCorr.stroke();
-    ctxCorr.beginPath(); ctxCorr.moveTo(in2.x - 40, in2.y + 40 * Math.tan(-in2.angle)); ctxCorr.lineTo(cx - 10, cy + 5); ctxCorr.stroke();
-    ctxCorr.setLineDash([]);
-
-    // Incoming velocity arrows
-    ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 2;
-    drawArrow(ctxCorr, in1.x, in1.y, in1.x + arrowLen * Math.cos(in1.angle), in1.y + arrowLen * Math.sin(in1.angle), 10);
-    drawArrow(ctxCorr, in2.x, in2.y, in2.x + arrowLen * Math.cos(in2.angle), in2.y + arrowLen * Math.sin(in2.angle), 10);
-
-    // Incoming molecules
+    // Big molecule (m₁) coming from left
+    const b1x = cx - 60, b1y = cy - 5;
+    const b1angle = 0.08; // nearly horizontal rightward
     ctxCorr.fillStyle = COLORS.orange;
-    ctxCorr.beginPath(); ctxCorr.arc(in1.x, in1.y, R, 0, 2 * Math.PI); ctxCorr.fill();
-    ctxCorr.beginPath(); ctxCorr.arc(in2.x, in2.y, R, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.beginPath(); ctxCorr.arc(b1x, b1y, R1, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('m₁', b1x, b1y + 4);
+    // velocity arrow
+    ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2.5;
+    drawArrow(ctxCorr, b1x + R1 + 4, b1y, b1x + R1 + 4 + arrowLen, b1y + arrowLen * Math.sin(b1angle), 10);
+    ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
+    ctxCorr.fillText('v⃗₁', b1x + R1 + arrowLen + 8, b1y - 4);
 
-    // Collision marker
-    ctxCorr.fillStyle = 'rgba(255,255,255,0.15)';
-    ctxCorr.beginPath(); ctxCorr.arc(cx, cy, 18, 0, 2 * Math.PI); ctxCorr.fill();
-    ctxCorr.strokeStyle = 'rgba(255,255,255,0.3)'; ctxCorr.lineWidth = 1;
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
-      ctxCorr.beginPath();
-      ctxCorr.moveTo(cx + 10 * Math.cos(a), cy + 10 * Math.sin(a));
-      ctxCorr.lineTo(cx + 22 * Math.cos(a), cy + 22 * Math.sin(a));
-      ctxCorr.stroke();
-    }
-
-    // Outgoing trajectories (solid)
-    ctxCorr.strokeStyle = COLORS.blue; ctxCorr.lineWidth = 1.5;
-    ctxCorr.beginPath(); ctxCorr.moveTo(cx + 10, cy - 5); ctxCorr.lineTo(out1.x, out1.y); ctxCorr.stroke();
-    ctxCorr.beginPath(); ctxCorr.moveTo(cx + 10, cy + 5); ctxCorr.lineTo(out2.x, out2.y); ctxCorr.stroke();
-
-    // Outgoing velocity arrows
-    ctxCorr.strokeStyle = COLORS.blue; ctxCorr.lineWidth = 2.5;
-    drawArrow(ctxCorr, out1.x, out1.y, out1.x + arrowLen * Math.cos(out1.angle), out1.y + arrowLen * Math.sin(out1.angle), 10);
-    ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2.5;
-    drawArrow(ctxCorr, out2.x, out2.y, out2.x + arrowLen * Math.cos(out2.angle), out2.y + arrowLen * Math.sin(out2.angle), 10);
-
-    // Outgoing molecules
-    ctxCorr.fillStyle = COLORS.blue;
-    ctxCorr.beginPath(); ctxCorr.arc(out1.x, out1.y, R, 0, 2 * Math.PI); ctxCorr.fill();
+    // Small molecule (m₂) coming from right
+    const b2x = cx + 65, b2y = cy + 15;
+    const b2angle = Math.PI + 0.5; // heading left and slightly up
     ctxCorr.fillStyle = COLORS.cyan;
-    ctxCorr.beginPath(); ctxCorr.arc(out2.x, out2.y, R, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.beginPath(); ctxCorr.arc(b2x, b2y, R2, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('m₂', b2x, b2y + 4);
+    // velocity arrow
+    ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2;
+    drawArrow(ctxCorr, b2x + (R2 + 4) * Math.cos(b2angle), b2y + (R2 + 4) * Math.sin(b2angle),
+              b2x + (R2 + 4 + arrowLen * 0.7) * Math.cos(b2angle), b2y + (R2 + 4 + arrowLen * 0.7) * Math.sin(b2angle), 8);
+    ctxCorr.fillStyle = COLORS.cyan; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'right';
+    ctxCorr.fillText('v⃗₂', b2x + (R2 + arrowLen * 0.7 + 10) * Math.cos(b2angle), b2y + (R2 + arrowLen * 0.7 + 10) * Math.sin(b2angle) - 4);
 
-    // Labels
-    ctxCorr.font = FONT; ctxCorr.textAlign = 'left';
-    ctxCorr.fillStyle = COLORS.textDim;
-    ctxCorr.fillText('uncorrelated', in1.x - 50, in1.y - 25);
-    ctxCorr.fillStyle = COLORS.green;
-    ctxCorr.fillText('correlated', out1.x + 50, out1.y - 15);
+    // Label: "uncorrelated — v₁, v₂ independent"
+    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('v⃗₁, v⃗₂ independent', cx, HCorr - 15);
 
-    // Bracket for correlated arrows
+    // --- Arrow between panels ---
+    const midX = WCorr * 0.56;
+    ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 2;
+    drawArrow(ctxCorr, midX - 15, cy, midX + 15, cy, 10);
+    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('collision', midX, cy - 12);
+
+    // --- AFTER panel (right) ---
+    const ax = WCorr * 0.76;
+    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_LG; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('After', ax, 18);
+
+    // Both molecules now heading roughly in m₁'s original direction
+    // Big molecule barely deflected
+    const a1x = ax - 40, a1y = cy - 15;
+    const a1angle = 0.12;
+    ctxCorr.fillStyle = COLORS.orange;
+    ctxCorr.beginPath(); ctxCorr.arc(a1x, a1y, R1, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('m₁', a1x, a1y + 4);
+    ctxCorr.strokeStyle = COLORS.orange; ctxCorr.lineWidth = 2.5;
+    drawArrow(ctxCorr, a1x + R1 + 4, a1y, a1x + R1 + 4 + arrowLen * 0.9, a1y + arrowLen * 0.9 * Math.sin(a1angle), 10);
+    ctxCorr.fillStyle = COLORS.orange; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
+    ctxCorr.fillText("v⃗₁'", a1x + R1 + arrowLen + 6, a1y - 6);
+
+    // Small molecule kicked roughly same direction (slightly more deflected)
+    const a2x = ax - 15, a2y = cy + 20;
+    const a2angle = 0.35;
+    ctxCorr.fillStyle = COLORS.cyan;
+    ctxCorr.beginPath(); ctxCorr.arc(a2x, a2y, R2, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.fillStyle = COLORS.text; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('m₂', a2x, a2y + 4);
+    ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2;
+    drawArrow(ctxCorr, a2x + R2 + 4, a2y, a2x + R2 + 4 + arrowLen * 0.8 * Math.cos(a2angle),
+              a2y + arrowLen * 0.8 * Math.sin(a2angle), 8);
+    ctxCorr.fillStyle = COLORS.cyan; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'left';
+    ctxCorr.fillText("v⃗₂'", a2x + R2 + arrowLen * 0.8 * Math.cos(a2angle) + 6, a2y + arrowLen * 0.8 * Math.sin(a2angle) - 4);
+
+    // Curly brace / link showing correlation
     ctxCorr.strokeStyle = COLORS.green; ctxCorr.lineWidth = 1.5;
     ctxCorr.setLineDash([3, 3]);
-    const bx = out1.x + 42;
-    ctxCorr.beginPath(); ctxCorr.moveTo(bx, out1.y - 5); ctxCorr.lineTo(bx, out2.y + 5); ctxCorr.stroke();
+    // Connect the two arrow tips
+    const tip1x = a1x + R1 + 4 + arrowLen * 0.9, tip1y = a1y + arrowLen * 0.9 * Math.sin(a1angle);
+    const tip2x = a2x + R2 + 4 + arrowLen * 0.8 * Math.cos(a2angle), tip2y = a2y + arrowLen * 0.8 * Math.sin(a2angle);
+    ctxCorr.beginPath();
+    ctxCorr.moveTo(tip1x, tip1y);
+    ctxCorr.quadraticCurveTo(Math.max(tip1x, tip2x) + 15, (tip1y + tip2y) / 2, tip2x, tip2y);
+    ctxCorr.stroke();
     ctxCorr.setLineDash([]);
 
-    // v1, v2 labels on incoming
-    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM;
-    ctxCorr.fillText('v₁', in1.x + arrowLen * Math.cos(in1.angle) + 5, in1.y + arrowLen * Math.sin(in1.angle) - 5);
-    ctxCorr.fillText('v₂', in2.x + arrowLen * Math.cos(in2.angle) + 5, in2.y + arrowLen * Math.sin(in2.angle) - 5);
-    // v1', v2' labels on outgoing
-    ctxCorr.fillStyle = COLORS.blue; ctxCorr.font = FONT_SM;
-    ctxCorr.fillText("v₁'", out1.x + arrowLen * Math.cos(out1.angle) + 5, out1.y + arrowLen * Math.sin(out1.angle) - 5);
-    ctxCorr.fillStyle = COLORS.cyan;
-    ctxCorr.fillText("v₂'", out2.x + arrowLen * Math.cos(out2.angle) + 5, out2.y + arrowLen * Math.sin(out2.angle) + 15);
+    // Label: "correlated — knowing v₁' determines v₂'"
+    ctxCorr.fillStyle = COLORS.green; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText("knowing v⃗₁' determines v⃗₂'", ax + 10, HCorr - 15);
+
+    // Conservation law annotation
+    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM; ctxCorr.textAlign = 'center';
+    ctxCorr.fillText('(momentum + energy conservation)', ax + 10, HCorr - 2);
   }
 
   // ----- Figure 3: Phase Space Trajectories -----
