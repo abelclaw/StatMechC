@@ -1180,12 +1180,13 @@ function initCh3Vis() {
 
   const L1 = 80, L2 = 80, m1 = 1, m2 = 1, g = 9.81;
   let pends = [];
+  let showSecond = false;
 
   function initPendulums() {
     const offset = parseFloat(document.getElementById('chaos-offset')?.value || 0.01);
     pends = [
-      { th1: Math.PI / 2, th2: Math.PI / 2, w1: 0, w2: 0, trail: [], color: COLORS.blue },
-      { th1: Math.PI / 2 + offset, th2: Math.PI / 2, w1: 0, w2: 0, trail: [], color: COLORS.red }
+      { th1: Math.PI - 0.01, th2: Math.PI - 0.02, w1: 0, w2: 0, trail: [], color: COLORS.blue },
+      { th1: Math.PI - 0.01 + offset, th2: Math.PI - 0.02, w1: 0, w2: 0, trail: [], color: COLORS.red }
     ];
   }
 
@@ -1209,9 +1210,10 @@ function initCh3Vis() {
   function draw() {
     clearCanvas(ctx, W, H);
 
-    const ox = W / 2, oy = 120;
+    const ox = W / 2, oy = H * 0.3;
+    const visible = showSecond ? pends : [pends[0]];
 
-    pends.forEach(p => {
+    visible.forEach(p => {
       const x1 = ox + L1 * Math.sin(p.th1);
       const y1 = oy + L1 * Math.cos(p.th1);
       const x2 = x1 + L2 * Math.sin(p.th2);
@@ -1244,9 +1246,13 @@ function initCh3Vis() {
     ctx.fillStyle = COLORS.text;
     ctx.font = FONT;
     ctx.textAlign = 'left';
-    ctx.fillText('Two double pendulums with tiny initial difference', 10, 20);
-    ctx.fillStyle = COLORS.blue; ctx.fillText('Pendulum 1', 10, 38);
-    ctx.fillStyle = COLORS.red; ctx.fillText('Pendulum 2', 10, 54);
+    if (showSecond) {
+      ctx.fillText('Two double pendulums with tiny initial difference', 10, 20);
+      ctx.fillStyle = COLORS.blue; ctx.fillText('Pendulum 1', 10, 38);
+      ctx.fillStyle = COLORS.red; ctx.fillText('Pendulum 2', 10, 54);
+    } else {
+      ctx.fillText('Double pendulum \u2014 chaotic motion', 10, 20);
+    }
   }
 
   function animate() {
@@ -1275,6 +1281,12 @@ function initCh3Vis() {
   document.getElementById('chaos-offset')?.addEventListener('input', function () {
     const d = document.getElementById('chaos-offset-val');
     if (d) d.textContent = parseFloat(this.value).toFixed(2);
+  });
+
+  document.getElementById('chaos-show-second')?.addEventListener('change', function () {
+    showSecond = this.checked;
+    initPendulums();
+    draw();
   });
 
   initPendulums();
@@ -1702,6 +1714,182 @@ function initCh3Vis() {
     drawBilliards();
   }
 
+  // ----- Figure 2: Correlated Outgoing Velocities -----
+  const cCorr = document.getElementById('vis-correlated-vel');
+  if (cCorr) {
+    const {ctx: ctxCorr, W: WCorr, H: HCorr} = setupCanvas(cCorr);
+    clearCanvas(ctxCorr, WCorr, HCorr);
+
+    const cx = WCorr / 2, cy = HCorr / 2;
+    const R = 14; // molecule radius
+    const arrowLen = 70;
+
+    // Incoming molecules (from upper-left and lower-left)
+    const in1 = { x: cx - 130, y: cy - 55, angle: 0.38 };
+    const in2 = { x: cx - 110, y: cy + 65, angle: -0.45 };
+
+    // Outgoing molecules (both heading roughly right — correlated)
+    const out1 = { x: cx + 110, y: cy - 25, angle: 0.15 };
+    const out2 = { x: cx + 120, y: cy + 35, angle: -0.10 };
+
+    // Draw incoming trajectories (dashed)
+    ctxCorr.setLineDash([6, 5]);
+    ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 1.5;
+    ctxCorr.beginPath(); ctxCorr.moveTo(in1.x - 40, in1.y - 40 * Math.tan(in1.angle)); ctxCorr.lineTo(cx - 10, cy - 5); ctxCorr.stroke();
+    ctxCorr.beginPath(); ctxCorr.moveTo(in2.x - 40, in2.y + 40 * Math.tan(-in2.angle)); ctxCorr.lineTo(cx - 10, cy + 5); ctxCorr.stroke();
+    ctxCorr.setLineDash([]);
+
+    // Incoming velocity arrows
+    ctxCorr.strokeStyle = COLORS.textDim; ctxCorr.lineWidth = 2;
+    drawArrow(ctxCorr, in1.x, in1.y, in1.x + arrowLen * Math.cos(in1.angle), in1.y + arrowLen * Math.sin(in1.angle), 10);
+    drawArrow(ctxCorr, in2.x, in2.y, in2.x + arrowLen * Math.cos(in2.angle), in2.y + arrowLen * Math.sin(in2.angle), 10);
+
+    // Incoming molecules
+    ctxCorr.fillStyle = COLORS.orange;
+    ctxCorr.beginPath(); ctxCorr.arc(in1.x, in1.y, R, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.beginPath(); ctxCorr.arc(in2.x, in2.y, R, 0, 2 * Math.PI); ctxCorr.fill();
+
+    // Collision marker
+    ctxCorr.fillStyle = 'rgba(255,255,255,0.15)';
+    ctxCorr.beginPath(); ctxCorr.arc(cx, cy, 18, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.strokeStyle = 'rgba(255,255,255,0.3)'; ctxCorr.lineWidth = 1;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+      ctxCorr.beginPath();
+      ctxCorr.moveTo(cx + 10 * Math.cos(a), cy + 10 * Math.sin(a));
+      ctxCorr.lineTo(cx + 22 * Math.cos(a), cy + 22 * Math.sin(a));
+      ctxCorr.stroke();
+    }
+
+    // Outgoing trajectories (solid)
+    ctxCorr.strokeStyle = COLORS.blue; ctxCorr.lineWidth = 1.5;
+    ctxCorr.beginPath(); ctxCorr.moveTo(cx + 10, cy - 5); ctxCorr.lineTo(out1.x, out1.y); ctxCorr.stroke();
+    ctxCorr.beginPath(); ctxCorr.moveTo(cx + 10, cy + 5); ctxCorr.lineTo(out2.x, out2.y); ctxCorr.stroke();
+
+    // Outgoing velocity arrows
+    ctxCorr.strokeStyle = COLORS.blue; ctxCorr.lineWidth = 2.5;
+    drawArrow(ctxCorr, out1.x, out1.y, out1.x + arrowLen * Math.cos(out1.angle), out1.y + arrowLen * Math.sin(out1.angle), 10);
+    ctxCorr.strokeStyle = COLORS.cyan; ctxCorr.lineWidth = 2.5;
+    drawArrow(ctxCorr, out2.x, out2.y, out2.x + arrowLen * Math.cos(out2.angle), out2.y + arrowLen * Math.sin(out2.angle), 10);
+
+    // Outgoing molecules
+    ctxCorr.fillStyle = COLORS.blue;
+    ctxCorr.beginPath(); ctxCorr.arc(out1.x, out1.y, R, 0, 2 * Math.PI); ctxCorr.fill();
+    ctxCorr.fillStyle = COLORS.cyan;
+    ctxCorr.beginPath(); ctxCorr.arc(out2.x, out2.y, R, 0, 2 * Math.PI); ctxCorr.fill();
+
+    // Labels
+    ctxCorr.font = FONT; ctxCorr.textAlign = 'left';
+    ctxCorr.fillStyle = COLORS.textDim;
+    ctxCorr.fillText('uncorrelated', in1.x - 50, in1.y - 25);
+    ctxCorr.fillStyle = COLORS.green;
+    ctxCorr.fillText('correlated', out1.x + 50, out1.y - 15);
+
+    // Bracket for correlated arrows
+    ctxCorr.strokeStyle = COLORS.green; ctxCorr.lineWidth = 1.5;
+    ctxCorr.setLineDash([3, 3]);
+    const bx = out1.x + 42;
+    ctxCorr.beginPath(); ctxCorr.moveTo(bx, out1.y - 5); ctxCorr.lineTo(bx, out2.y + 5); ctxCorr.stroke();
+    ctxCorr.setLineDash([]);
+
+    // v1, v2 labels on incoming
+    ctxCorr.fillStyle = COLORS.textDim; ctxCorr.font = FONT_SM;
+    ctxCorr.fillText('v₁', in1.x + arrowLen * Math.cos(in1.angle) + 5, in1.y + arrowLen * Math.sin(in1.angle) - 5);
+    ctxCorr.fillText('v₂', in2.x + arrowLen * Math.cos(in2.angle) + 5, in2.y + arrowLen * Math.sin(in2.angle) - 5);
+    // v1', v2' labels on outgoing
+    ctxCorr.fillStyle = COLORS.blue; ctxCorr.font = FONT_SM;
+    ctxCorr.fillText("v₁'", out1.x + arrowLen * Math.cos(out1.angle) + 5, out1.y + arrowLen * Math.sin(out1.angle) - 5);
+    ctxCorr.fillStyle = COLORS.cyan;
+    ctxCorr.fillText("v₂'", out2.x + arrowLen * Math.cos(out2.angle) + 5, out2.y + arrowLen * Math.sin(out2.angle) + 15);
+  }
+
+  // ----- Figure 3: Phase Space Trajectories -----
+  const cTraj = document.getElementById('vis-phase-trajectories');
+  if (cTraj) {
+    const {ctx: ctxT, W: WT, H: HT} = setupCanvas(cTraj);
+    clearCanvas(ctxT, WT, HT);
+
+    const ox = 50, oy = 30, pw = WT - 80, ph = HT - 70;
+
+    // Box and axes
+    ctxT.strokeStyle = COLORS.axis; ctxT.lineWidth = 2;
+    ctxT.strokeRect(ox, oy, pw, ph);
+    ctxT.fillStyle = COLORS.textDim; ctxT.font = FONT_SM; ctxT.textAlign = 'center';
+    ctxT.fillText('q (position)', ox + pw / 2, oy + ph + 22);
+    ctxT.save(); ctxT.translate(ox - 20, oy + ph / 2); ctxT.rotate(-Math.PI / 2);
+    ctxT.fillText('p (momentum)', 0, 0); ctxT.restore();
+
+    // Generate trajectories: start clustered, diverge after bouncing
+    const nTraj = 6;
+    const startX = ox + pw * 0.12, startY = oy + ph * 0.45;
+    const trajColors = [COLORS.blue, COLORS.cyan, COLORS.green, COLORS.orange, COLORS.red, COLORS.purple];
+    const nSteps = 300;
+    const dt = 1;
+
+    // Seed slightly different initial velocities
+    const trajs = [];
+    for (let t = 0; t < nTraj; t++) {
+      const angle = 0.35 + (t - nTraj / 2) * 0.02;
+      const speed = 2.2 + t * 0.05;
+      let x = startX + (t - nTraj / 2) * 2;
+      let y = startY + (t - nTraj / 2) * 1.5;
+      let vx = speed * Math.cos(angle);
+      let vy = speed * Math.sin(angle);
+      const path = [{x, y}];
+      for (let s = 0; s < nSteps; s++) {
+        x += vx * dt;
+        y += vy * dt;
+        // Reflect off walls
+        if (x < ox) { x = 2 * ox - x; vx = -vx; }
+        if (x > ox + pw) { x = 2 * (ox + pw) - x; vx = -vx; }
+        if (y < oy) { y = 2 * oy - y; vy = -vy; }
+        if (y > oy + ph) { y = 2 * (oy + ph) - y; vy = -vy; }
+        path.push({x, y});
+      }
+      trajs.push(path);
+    }
+
+    // Draw trajectories with fading opacity
+    for (let t = 0; t < nTraj; t++) {
+      const path = trajs[t];
+      ctxT.lineWidth = 1.5;
+      // Draw in segments with changing opacity
+      for (let s = 1; s < path.length; s++) {
+        const frac = s / path.length;
+        const alpha = 0.3 + 0.5 * (1 - frac);
+        ctxT.strokeStyle = trajColors[t] + Math.round(alpha * 255).toString(16).padStart(2, '0');
+        ctxT.beginPath();
+        ctxT.moveTo(path[s - 1].x, path[s - 1].y);
+        ctxT.lineTo(path[s].x, path[s].y);
+        ctxT.stroke();
+      }
+    }
+
+    // Draw starting region R
+    ctxT.fillStyle = 'rgba(79,195,247,0.25)';
+    ctxT.beginPath(); ctxT.arc(startX, startY, 14, 0, 2 * Math.PI); ctxT.fill();
+    ctxT.strokeStyle = COLORS.blue; ctxT.lineWidth = 1.5;
+    ctxT.beginPath(); ctxT.arc(startX, startY, 14, 0, 2 * Math.PI); ctxT.stroke();
+    // Starting dots
+    for (let t = 0; t < nTraj; t++) {
+      ctxT.fillStyle = trajColors[t];
+      ctxT.beginPath(); ctxT.arc(trajs[t][0].x, trajs[t][0].y, 3, 0, 2 * Math.PI); ctxT.fill();
+    }
+    // Label R
+    ctxT.fillStyle = COLORS.text; ctxT.font = FONT_LG; ctxT.textAlign = 'center';
+    ctxT.fillText('ℛ', startX, startY - 20);
+
+    // Annotations
+    // "correlated" near early part of trajectories
+    const earlyX = trajs[0][40].x, earlyY = trajs[0][40].y;
+    ctxT.fillStyle = COLORS.green; ctxT.font = FONT_SM; ctxT.textAlign = 'left';
+    ctxT.fillText('short time: correlated', earlyX + 10, earlyY - 15);
+
+    // "diverge" near late part
+    const lateIdx = Math.floor(nSteps * 0.7);
+    ctxT.fillStyle = COLORS.red; ctxT.font = FONT_SM; ctxT.textAlign = 'right';
+    ctxT.fillText('long time: diverge', ox + pw - 10, oy + 20);
+  }
+
   // ----- Phase Space Coarse-Graining -----
   const cPC = document.getElementById('vis-phase-coarse');
   if (cPC) {
@@ -1709,135 +1897,252 @@ function initCh3Vis() {
     const evolveBtn = document.getElementById('coarse-evolve');
     const grainBtn = document.getElementById('coarse-grain');
     const resetBtnPC = document.getElementById('coarse-reset');
+    const infoDisplay = document.getElementById('coarse-info');
 
-    const gridN = 20; // grid for coarse-graining
-    let points = [];
-    let coarseGrid = [];
+    // Phase space box
+    const bx = 50, by = 30, bw = WPC - 80, bh = HPC - 70;
+
+    // Fixed circular obstacles for chaotic scattering
+    const obstacles = [
+      { x: bx + bw * 0.35, y: by + bh * 0.30, r: 18 },
+      { x: bx + bw * 0.65, y: by + bh * 0.25, r: 15 },
+      { x: bx + bw * 0.50, y: by + bh * 0.60, r: 20 },
+      { x: bx + bw * 0.25, y: by + bh * 0.70, r: 16 },
+      { x: bx + bw * 0.75, y: by + bh * 0.70, r: 17 },
+      { x: bx + bw * 0.15, y: by + bh * 0.40, r: 14 },
+      { x: bx + bw * 0.85, y: by + bh * 0.45, r: 14 },
+    ];
+
+    const clusterRadius = 22;
+    let clusters = []; // { cx, cy, dots: [{x,y}], ghost: false }
+    let ghostClusters = []; // old clusters shown faded after evolve
     let step = 0;
+    let canEvolve = true;
+    let canGrain = false;
 
-    function initPhaseCoarse() {
-      points = [];
-      coarseGrid = Array.from({length: gridN}, () => Array(gridN).fill(false));
+    function initCoarse() {
       step = 0;
-      // Start with a compact cluster
-      const cx = WPC / 4, cy = HPC / 2;
-      for (let i = 0; i < 200; i++) {
-        points.push({
-          x: cx + (Math.random() - 0.5) * 60,
-          y: cy + (Math.random() - 0.5) * 60
-        });
+      canEvolve = true;
+      canGrain = false;
+      ghostClusters = [];
+      const startX = bx + bw * 0.18, startY = by + bh * 0.45;
+      const dots = [];
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2 + 0.3;
+        const r = 6 + Math.random() * 8;
+        dots.push({ x: startX + r * Math.cos(angle), y: startY + r * Math.sin(angle) });
       }
+      clusters = [{ cx: startX, cy: startY, dots }];
+      updateInfo();
+      drawCoarse();
     }
 
-    function drawPhaseCoarse() {
+    function updateInfo() {
+      if (infoDisplay) infoDisplay.textContent = 'Step ' + step + ' | ' + clusters.length + ' circle' + (clusters.length !== 1 ? 's' : '');
+      if (evolveBtn) evolveBtn.disabled = !canEvolve;
+      if (grainBtn) grainBtn.disabled = !canGrain;
+    }
+
+    function drawCoarse() {
       clearCanvas(ctxPC, WPC, HPC);
-      const ox = 30, oy = 20, pw = WPC - 60, ph = HPC - 50;
 
-      // Draw grid
-      ctxPC.strokeStyle = COLORS.grid; ctxPC.lineWidth = 0.5;
-      const cellW = pw / gridN, cellH = ph / gridN;
-      for (let i = 0; i <= gridN; i++) {
-        ctxPC.beginPath(); ctxPC.moveTo(ox + i * cellW, oy); ctxPC.lineTo(ox + i * cellW, oy + ph); ctxPC.stroke();
-        ctxPC.beginPath(); ctxPC.moveTo(ox, oy + i * cellH); ctxPC.lineTo(ox + pw, oy + i * cellH); ctxPC.stroke();
-      }
-
-      // Draw coarse-grained cells
-      for (let i = 0; i < gridN; i++) {
-        for (let j = 0; j < gridN; j++) {
-          if (coarseGrid[i][j]) {
-            ctxPC.fillStyle = 'rgba(100,180,255,0.12)';
-            ctxPC.fillRect(ox + i * cellW, oy + j * cellH, cellW, cellH);
-          }
-        }
-      }
-
-      // Draw points
-      for (const p of points) {
-        if (p.x >= ox && p.x <= ox + pw && p.y >= oy && p.y <= oy + ph) {
-          ctxPC.beginPath(); ctxPC.arc(p.x, p.y, 1.5, 0, 2 * Math.PI);
-          ctxPC.fillStyle = COLORS.blue; ctxPC.fill();
-        }
-      }
-
-      // Border
+      // Phase space box
       ctxPC.strokeStyle = COLORS.axis; ctxPC.lineWidth = 2;
-      ctxPC.strokeRect(ox, oy, pw, ph);
+      ctxPC.strokeRect(bx, by, bw, bh);
 
-      // Axes labels
+      // Axis labels
       ctxPC.fillStyle = COLORS.textDim; ctxPC.font = FONT_SM; ctxPC.textAlign = 'center';
-      ctxPC.fillText('q (position)', ox + pw / 2, oy + ph + 18);
-      ctxPC.save(); ctxPC.translate(ox - 15, oy + ph / 2); ctxPC.rotate(-Math.PI / 2); ctxPC.fillText('p (momentum)', 0, 0); ctxPC.restore();
+      ctxPC.fillText('q (position)', bx + bw / 2, by + bh + 22);
+      ctxPC.save(); ctxPC.translate(bx - 20, by + bh / 2); ctxPC.rotate(-Math.PI / 2);
+      ctxPC.fillText('p (momentum)', 0, 0); ctxPC.restore();
 
-      // Count occupied cells
-      let occupied = 0;
-      for (let i = 0; i < gridN; i++) for (let j = 0; j < gridN; j++) if (coarseGrid[i][j]) occupied++;
-      const totalCells = gridN * gridN;
+      // Obstacles
+      for (const ob of obstacles) {
+        ctxPC.fillStyle = 'rgba(255,255,255,0.07)';
+        ctxPC.beginPath(); ctxPC.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxPC.fill();
+        ctxPC.strokeStyle = 'rgba(255,255,255,0.15)'; ctxPC.lineWidth = 1;
+        ctxPC.beginPath(); ctxPC.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxPC.stroke();
+      }
 
-      ctxPC.fillStyle = COLORS.text; ctxPC.font = FONT_LG; ctxPC.textAlign = 'left';
-      ctxPC.fillText('Phase Space Coarse-Graining', ox + 5, oy - 4);
+      // Ghost clusters (from before evolve)
+      for (const gc of ghostClusters) {
+        ctxPC.setLineDash([4, 4]);
+        ctxPC.strokeStyle = 'rgba(79,195,247,0.2)'; ctxPC.lineWidth = 1;
+        ctxPC.beginPath(); ctxPC.arc(gc.cx, gc.cy, clusterRadius, 0, 2 * Math.PI); ctxPC.stroke();
+        ctxPC.setLineDash([]);
+      }
+
+      // Active clusters
+      for (const cl of clusters) {
+        ctxPC.fillStyle = 'rgba(79,195,247,0.08)';
+        ctxPC.beginPath(); ctxPC.arc(cl.cx, cl.cy, clusterRadius, 0, 2 * Math.PI); ctxPC.fill();
+        ctxPC.strokeStyle = 'rgba(79,195,247,0.5)'; ctxPC.lineWidth = 1.5;
+        ctxPC.beginPath(); ctxPC.arc(cl.cx, cl.cy, clusterRadius, 0, 2 * Math.PI); ctxPC.stroke();
+
+        // Dots inside
+        for (const d of cl.dots) {
+          ctxPC.fillStyle = COLORS.blue;
+          ctxPC.beginPath(); ctxPC.arc(d.x, d.y, 3, 0, 2 * Math.PI); ctxPC.fill();
+        }
+      }
+
+      // Scattered dots (after evolve, before coarse-grain)
+      if (!canEvolve && canGrain) {
+        // dots are stored on clusters but scattered — draw them all
+        // (already drawn above, they're just outside their circles now)
+      }
+
+      // Entropy info
       ctxPC.fillStyle = COLORS.green; ctxPC.font = FONT; ctxPC.textAlign = 'right';
-      ctxPC.fillText('Step ' + step + '  |  Occupied: ' + occupied + '/' + totalCells + '  |  S ∝ ln(' + (occupied || 1) + ')', ox + pw - 5, oy - 4);
+      ctxPC.fillText('S ~ ln(' + clusters.length + ')', bx + bw - 5, by - 6);
     }
 
+    // Evolve: scatter dots chaotically using billiard dynamics
     evolveBtn?.addEventListener('click', () => {
+      if (!canEvolve) return;
       step++;
-      // Chaotic evolution: stretch and fold (baker's map inspired)
-      const ox = 30, oy = 20, pw = WPC - 60, ph = HPC - 50;
-      const cx = ox + pw / 2, cy = oy + ph / 2;
-      for (const p of points) {
-        // Apply a nonlinear map that stretches and folds
-        const dx = p.x - cx, dy = p.y - cy;
-        const r = Math.sqrt(dx * dx + dy * dy);
-        const theta = Math.atan2(dy, dx) + 0.7 + 0.3 * Math.sin(r / 20);
-        const newR = r * 1.3 + (Math.random() - 0.5) * 15;
-        p.x = cx + newR * Math.cos(theta);
-        p.y = cy + newR * Math.sin(theta);
-        // Periodic boundaries
-        while (p.x < ox) p.x += pw;
-        while (p.x > ox + pw) p.x -= pw;
-        while (p.y < oy) p.y += ph;
-        while (p.y > oy + ph) p.y -= ph;
-      }
-      drawPhaseCoarse();
-    });
+      canEvolve = false;
+      canGrain = true;
 
-    grainBtn?.addEventListener('click', () => {
-      const ox = 30, oy = 20, pw = WPC - 60, ph = HPC - 50;
-      const cellW = pw / gridN, cellH = ph / gridN;
-      // Mark cells that contain points
-      for (const p of points) {
-        const gi = Math.floor((p.x - ox) / cellW);
-        const gj = Math.floor((p.y - oy) / cellH);
-        if (gi >= 0 && gi < gridN && gj >= 0 && gj < gridN) {
-          coarseGrid[gi][gj] = true;
+      // Save current clusters as ghosts
+      ghostClusters = clusters.map(c => ({ cx: c.cx, cy: c.cy }));
+
+      // Collect all dots, give them velocities and simulate
+      const allDots = [];
+      for (const cl of clusters) {
+        for (const d of cl.dots) {
+          // Velocity based on offset from cluster center (+ some randomness)
+          const dx = d.x - cl.cx, dy = d.y - cl.cy;
+          const baseAngle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.5;
+          const speed = 2.5 + Math.random() * 1.5;
+          allDots.push({
+            x: d.x, y: d.y,
+            vx: speed * Math.cos(baseAngle),
+            vy: speed * Math.sin(baseAngle)
+          });
         }
       }
-      // Spread points to fill coarse-grained cells
-      const newPoints = [];
-      for (let i = 0; i < gridN; i++) {
-        for (let j = 0; j < gridN; j++) {
-          if (coarseGrid[i][j]) {
-            const n = 3; // points per cell after coarse-graining
-            for (let k = 0; k < n; k++) {
-              newPoints.push({
-                x: ox + i * cellW + Math.random() * cellW,
-                y: oy + j * cellH + Math.random() * cellH
-              });
+
+      // Run billiard simulation
+      const simSteps = 250;
+      const simDt = 1.0;
+      for (let s = 0; s < simSteps; s++) {
+        for (const dot of allDots) {
+          dot.x += dot.vx * simDt;
+          dot.y += dot.vy * simDt;
+
+          // Wall reflections
+          if (dot.x < bx + 3) { dot.x = 2 * (bx + 3) - dot.x; dot.vx = -dot.vx; }
+          if (dot.x > bx + bw - 3) { dot.x = 2 * (bx + bw - 3) - dot.x; dot.vx = -dot.vx; }
+          if (dot.y < by + 3) { dot.y = 2 * (by + 3) - dot.y; dot.vy = -dot.vy; }
+          if (dot.y > by + bh - 3) { dot.y = 2 * (by + bh - 3) - dot.y; dot.vy = -dot.vy; }
+
+          // Obstacle reflections
+          for (const ob of obstacles) {
+            const odx = dot.x - ob.x, ody = dot.y - ob.y;
+            const dist = Math.sqrt(odx * odx + ody * ody);
+            if (dist < ob.r + 3) {
+              // Reflect velocity about normal
+              const nx = odx / dist, ny = ody / dist;
+              const vn = dot.vx * nx + dot.vy * ny;
+              if (vn < 0) { // moving toward obstacle
+                dot.vx -= 2 * vn * nx;
+                dot.vy -= 2 * vn * ny;
+                // Push out
+                dot.x = ob.x + (ob.r + 4) * nx;
+                dot.y = ob.y + (ob.r + 4) * ny;
+              }
             }
           }
         }
       }
-      points = newPoints;
-      drawPhaseCoarse();
+
+      // Each dot becomes its own "cluster" with just itself (shown as scattered dot)
+      clusters = allDots.map(d => ({
+        cx: d.x, cy: d.y,
+        dots: [{ x: d.x, y: d.y }]
+      }));
+
+      // Don't draw circles around scattered dots yet — just the dots
+      // Override draw to show dots without circles
+      clearCanvas(ctxPC, WPC, HPC);
+      ctxPC.strokeStyle = COLORS.axis; ctxPC.lineWidth = 2;
+      ctxPC.strokeRect(bx, by, bw, bh);
+      ctxPC.fillStyle = COLORS.textDim; ctxPC.font = FONT_SM; ctxPC.textAlign = 'center';
+      ctxPC.fillText('q (position)', bx + bw / 2, by + bh + 22);
+      ctxPC.save(); ctxPC.translate(bx - 20, by + bh / 2); ctxPC.rotate(-Math.PI / 2);
+      ctxPC.fillText('p (momentum)', 0, 0); ctxPC.restore();
+
+      // Obstacles
+      for (const ob of obstacles) {
+        ctxPC.fillStyle = 'rgba(255,255,255,0.07)';
+        ctxPC.beginPath(); ctxPC.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxPC.fill();
+        ctxPC.strokeStyle = 'rgba(255,255,255,0.15)'; ctxPC.lineWidth = 1;
+        ctxPC.beginPath(); ctxPC.arc(ob.x, ob.y, ob.r, 0, 2 * Math.PI); ctxPC.stroke();
+      }
+
+      // Ghost circles
+      for (const gc of ghostClusters) {
+        ctxPC.setLineDash([4, 4]);
+        ctxPC.strokeStyle = 'rgba(79,195,247,0.2)'; ctxPC.lineWidth = 1;
+        ctxPC.beginPath(); ctxPC.arc(gc.cx, gc.cy, clusterRadius, 0, 2 * Math.PI); ctxPC.stroke();
+        ctxPC.setLineDash([]);
+      }
+
+      // Just the scattered dots, no circles
+      for (const d of allDots) {
+        ctxPC.fillStyle = COLORS.blue;
+        ctxPC.beginPath(); ctxPC.arc(d.x, d.y, 3, 0, 2 * Math.PI); ctxPC.fill();
+      }
+
+      ctxPC.fillStyle = COLORS.orange; ctxPC.font = FONT; ctxPC.textAlign = 'right';
+      ctxPC.fillText('dots scattered — click Coarse Grain', bx + bw - 5, by - 6);
+
+      updateInfo();
+    });
+
+    // Coarse Grain: draw circle around each dot, spawn new dots inside
+    grainBtn?.addEventListener('click', () => {
+      if (!canGrain) return;
+      canEvolve = true;
+      canGrain = false;
+      ghostClusters = [];
+
+      // Each scattered dot gets a circle with new dots inside
+      const newClusters = [];
+      // Cap growth: reduce dots per cluster as count grows
+      const totalDots = clusters.length;
+      let dotsPerCluster = 5;
+      if (totalDots > 20) dotsPerCluster = 4;
+      if (totalDots > 60) dotsPerCluster = 3;
+      if (totalDots > 150) dotsPerCluster = 2;
+
+      for (const cl of clusters) {
+        const cx = cl.cx, cy = cl.cy;
+        const dots = [];
+        for (let i = 0; i < dotsPerCluster; i++) {
+          const a = (i / dotsPerCluster) * Math.PI * 2 + Math.random() * 0.5;
+          const r = 4 + Math.random() * (clusterRadius - 6);
+          let dx = cx + r * Math.cos(a);
+          let dy = cy + r * Math.sin(a);
+          // Clamp inside box
+          dx = Math.max(bx + 5, Math.min(bx + bw - 5, dx));
+          dy = Math.max(by + 5, Math.min(by + bh - 5, dy));
+          dots.push({ x: dx, y: dy });
+        }
+        newClusters.push({ cx, cy, dots });
+      }
+      clusters = newClusters;
+
+      updateInfo();
+      drawCoarse();
     });
 
     resetBtnPC?.addEventListener('click', () => {
-      initPhaseCoarse();
-      drawPhaseCoarse();
+      initCoarse();
     });
 
-    initPhaseCoarse();
-    drawPhaseCoarse();
+    initCoarse();
   }
 
   // ----- Chaos — Exponential Divergence -----
