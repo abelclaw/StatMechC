@@ -1785,9 +1785,9 @@ function initCh3Vis() {
   const cChaos = document.getElementById('vis-chaos-balls');
   if (cChaos) {
     const { ctx: ctxC, W: WC, H: HC } = setupCanvas(cChaos);
-    const perturbSlider = document.getElementById('chaos-perturb');
-    const launchBtn = document.getElementById('chaos-launch');
-    const resetBtn = document.getElementById('chaos-reset');
+    const perturbSlider = document.getElementById('cb-perturb');
+    const launchBtn = document.getElementById('cb-launch');
+    const resetBtn = document.getElementById('cb-reset');
     const SR = 22; // scatterer radius
     const PR = 4;  // particle radius
     const speed = 3.5;
@@ -1819,7 +1819,7 @@ function initCh3Vis() {
 
     function launchParticles() {
       const db = parseFloat(perturbSlider?.value || 0.5);
-      document.getElementById('chaos-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
+      document.getElementById('cb-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
       const startX = 20, startY = HC / 2;
       const angle = -0.15; // slight upward angle to hit first scatterer
       particles = [
@@ -1886,7 +1886,7 @@ function initCh3Vis() {
       if (!particles) {
         // Show launch position hint
         const db = parseFloat(perturbSlider?.value || 0.5);
-        document.getElementById('chaos-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
+        document.getElementById('cb-perturb-val')?.replaceChildren(document.createTextNode(db.toFixed(1)));
         const cy = HC / 2;
         ctxC.fillStyle = COLORS.blue;
         ctxC.beginPath(); ctxC.arc(20, cy - db / 2, PR + 1, 0, 2 * Math.PI); ctxC.fill();
