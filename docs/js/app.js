@@ -636,24 +636,6 @@ function initCh1Vis() {
       }
       ctxC.stroke();
 
-      // Gaussian overlay for N >= 2
-      if (N >= 2) {
-        const sig = 1 / (Math.sqrt(12) * Math.sqrt(N)); // sigma of mean of N uniform[-0.5,0.5]
-        ctxC.strokeStyle = COLORS.red;
-        ctxC.lineWidth = 1.5;
-        ctxC.setLineDash([6, 4]);
-        ctxC.beginPath();
-        for (let i = 0; i < nPts; i++) {
-          const xbar = xMin + (xMax - xMin) * i / nPts;
-          const g = (1 / (sig * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * (xbar / sig) ** 2);
-          const px = ox + i / nPts * plotW;
-          const py = xAxis - g * yScale;
-          i === 0 ? ctxC.moveTo(px, py) : ctxC.lineTo(px, py);
-        }
-        ctxC.stroke();
-        ctxC.setLineDash([]);
-      }
-
       // Labels
       ctxC.fillStyle = COLORS.text;
       ctxC.font = FONT;
@@ -661,10 +643,6 @@ function initCh1Vis() {
       ctxC.fillText('N = ' + N + (N === 1 ? ' (uniform)' : N === 2 ? ' (triangle)' : ' (converging to Gaussian)'), ox + 5, 28);
       ctxC.fillStyle = COLORS.green;
       ctxC.fillText('P\u2099(x\u0304)', WC - 150, 28);
-      if (N >= 2) {
-        ctxC.fillStyle = COLORS.red;
-        ctxC.fillText('Gaussian fit', WC - 150, 44);
-      }
 
       document.getElementById('conv-n-val')?.replaceChildren(document.createTextNode(N.toString()));
     }
