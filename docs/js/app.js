@@ -75,7 +75,7 @@ async function navigateTo(id) {
 
 // ===== CHAPTER TABLE OF CONTENTS =====
 function buildChapterTOC(container) {
-  const headings = container.querySelectorAll('h2, h3');
+  const headings = container.querySelectorAll('h2');
   if (headings.length < 2) return; // not worth a TOC for 1 section
 
   const intro = container.querySelector('.chapter-intro');
@@ -90,20 +90,17 @@ function buildChapterTOC(container) {
     }
   });
 
-  const toc = document.createElement('nav');
-  toc.className = 'chapter-toc';
-  const title = document.createElement('div');
-  title.className = 'toc-title';
-  title.textContent = 'Contents';
-  toc.appendChild(title);
+  const details = document.createElement('details');
+  details.className = 'chapter-toc';
+  const summary = document.createElement('summary');
+  summary.className = 'toc-title';
+  summary.textContent = 'Contents';
+  details.appendChild(summary);
 
   const list = document.createElement('ol');
   list.className = 'toc-list';
-  let currentH2Item = null;
-  let subList = null;
 
   headings.forEach(h => {
-    // Skip headings that are just "Chapter Summary" or appendix-like
     const text = h.textContent.trim();
     const li = document.createElement('li');
     const a = document.createElement('a');
@@ -113,25 +110,12 @@ function buildChapterTOC(container) {
       e.preventDefault();
       h.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-
-    if (h.tagName === 'H2') {
-      li.appendChild(a);
-      list.appendChild(li);
-      currentH2Item = li;
-      subList = null;
-    } else if (h.tagName === 'H3' && currentH2Item) {
-      if (!subList) {
-        subList = document.createElement('ol');
-        subList.className = 'toc-sublist';
-        currentH2Item.appendChild(subList);
-      }
-      li.appendChild(a);
-      subList.appendChild(li);
-    }
+    li.appendChild(a);
+    list.appendChild(li);
   });
 
-  toc.appendChild(list);
-  intro.insertAdjacentElement('afterend', toc);
+  details.appendChild(list);
+  intro.insertAdjacentElement('afterend', details);
 }
 
 // ===== DERIVATIONS =====
@@ -3737,20 +3721,18 @@ function initCh4Vis() {
       const histH = histBot - histTop;
       const barW = histW / nBins;
 
-      // Combine all types for the overall histogram bars
-      const combinedHist = new Array(nBins).fill(0);
-      for (let t = 0; t < types.length; t++) {
-        for (let i = 0; i < nBins; i++) combinedHist[i] += (speedHistByType[t]?.[i] || 0);
-      }
+      // Find per-type max for scaling (use global max across all types)
       let maxCount = 1;
-      for (let i = 0; i < nBins; i++) {
-        if (combinedHist[i] > maxCount) maxCount = combinedHist[i];
+      for (let t = 0; t < types.length; t++) {
+        for (let i = 0; i < nBins; i++) {
+          if ((speedHistByType[t]?.[i] || 0) > maxCount) maxCount = speedHistByType[t][i];
+        }
       }
 
       if (types.length === 1) {
         // Single type: gradient-colored bars like before
         for (let i = 0; i < nBins; i++) {
-          const barH = (combinedHist[i] / maxCount) * histH;
+          const barH = ((speedHistByType[0]?.[i] || 0) / maxCount) * histH;
           const frac = (i + 0.5) / nBins;
           const r = Math.round(239 * frac + 79 * (1 - frac));
           const g = Math.round(83 * frac + 195 * (1 - frac));
@@ -3759,16 +3741,14 @@ function initCh4Vis() {
           ctxGK.fillRect(histX + i * barW, histBot - barH, barW - 1, barH);
         }
       } else {
-        // Multiple types: stacked bars by type
-        for (let i = 0; i < nBins; i++) {
-          let yOff = 0;
-          for (let t = 0; t < types.length; t++) {
+        // Multiple types: overlaid bars from baseline (not stacked)
+        for (let t = types.length - 1; t >= 0; t--) {
+          const c = types[t].color;
+          for (let i = 0; i < nBins; i++) {
             const count = speedHistByType[t]?.[i] || 0;
             const barH = (count / maxCount) * histH;
-            const c = types[t].color;
-            ctxGK.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',0.45)';
-            ctxGK.fillRect(histX + i * barW, histBot - yOff - barH, barW - 1, barH);
-            yOff += barH;
+            ctxGK.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',0.35)';
+            ctxGK.fillRect(histX + i * barW, histBot - barH, barW - 1, barH);
           }
         }
       }
