@@ -390,10 +390,15 @@ function initCh1Vis() {
     const cltClearBtn = document.getElementById('clt-clear');
     const cltCountDisp = document.getElementById('clt-count');
 
+    const cltSpeedSlider = document.getElementById('clt-speed');
+
     let cltRunning = false;
     let cltAnimId = null;
     let histBins = new Float64Array(80);
     let histCount = 0;
+    let curSamples = []; // current N draw values to highlight on left
+    let curAvg = null;   // current average value
+    let lastBinIdx = -1; // last bin that changed on right
 
     // Show/hide custom function input
     distSelect?.addEventListener('change', () => {
@@ -490,6 +495,10 @@ function initCh1Vis() {
     function resetCLT() {
       histBins = new Float64Array(80);
       histCount = 0;
+      curSamples = [];
+      curAvg = null;
+      lastBinIdx = -1;
+      cltFrameCount = 0;
       setupHistRange();
       if (cltCountDisp) cltCountDisp.textContent = '0 averages';
       drawCLTFig();
@@ -538,10 +547,31 @@ function initCh1Vis() {
       }
       ctx2.stroke();
 
+      // Highlight current N sample draws as vertical lines on the PDF
+      if (curSamples.length > 0) {
+        for (let si = 0; si < curSamples.length; si++) {
+          const sv = curSamples[si];
+          const frac = (sv - d[0]) / (d[1] - d[0]);
+          if (frac < 0 || frac > 1) continue;
+          const sx = lx + frac * lw;
+          // Vertical line from axis to PDF curve
+          const pdfIdx = Math.round(frac * nPdf);
+          const pdfY = ly + lh - (pdfVals[Math.min(pdfIdx, nPdf)] / pdfMax) * lh * 0.9;
+          ctx2.strokeStyle = COLORS.orange; ctx2.lineWidth = 1.5;
+          ctx2.beginPath(); ctx2.moveTo(sx, ly + lh); ctx2.lineTo(sx, pdfY); ctx2.stroke();
+          // Dot at top
+          ctx2.fillStyle = COLORS.orange;
+          ctx2.beginPath(); ctx2.arc(sx, pdfY, 3, 0, 2 * Math.PI); ctx2.fill();
+          // Small number label
+          ctx2.fillStyle = COLORS.orange; ctx2.font = '9px Inter, system-ui, sans-serif'; ctx2.textAlign = 'center';
+          ctx2.fillText(si + 1, sx, ly + lh + 12);
+        }
+      }
+
       ctx2.fillStyle = COLORS.text; ctx2.font = FONT_SM; ctx2.textAlign = 'center';
       ctx2.fillText('Source distribution', lx + lw / 2, ly - 8);
       ctx2.fillStyle = COLORS.blue; ctx2.font = FONT_SM;
-      ctx2.fillText(dist.label, lx + lw / 2, ly + lh + 16);
+      ctx2.fillText(dist.label, lx + lw / 2, ly + lh + 24);
 
       // Divider
       ctx2.strokeStyle = COLORS.grid; ctx2.lineWidth = 1;
@@ -559,10 +589,10 @@ function initCh1Vis() {
       for (let i = 0; i < nBins; i++) if (histBins[i] > hMax) hMax = histBins[i];
       if (hMax < 1) hMax = 1;
 
-      ctx2.fillStyle = COLORS.green + '70';
       for (let i = 0; i < nBins; i++) {
         if (histBins[i] === 0) continue;
         const bh = (histBins[i] / hMax) * hh * 0.9;
+        ctx2.fillStyle = (i === lastBinIdx) ? COLORS.orange : COLORS.green + '70';
         ctx2.fillRect(rightX + i * barW, hy + hh - bh, barW - 1, bh);
       }
 
@@ -615,24 +645,49 @@ function initCh1Vis() {
       }
     }
 
+    let cltFrameCount = 0;
     function cltTick() {
       if (!cltRunning) return;
       const N = parseInt(nSlider?.value || 1);
+      const speed = parseInt(cltSpeedSlider?.value || 2);
       const dist = getDistribution();
       const nBins = histBins.length;
 
-      // Batch several averages per frame
-      for (let b = 0; b < 10; b++) {
+      // Speed controls: at speed 1, do 1 average every 8 frames.
+      // At speed 6, do 20 averages per frame.
+      const batchSizes = [0, 1, 1, 2, 5, 10, 20]; // index by speed
+      const frameSkips = [0, 8, 3, 1, 1, 1, 1];
+      const batch = batchSizes[speed] || 1;
+      const skip = frameSkips[speed] || 1;
+
+      cltFrameCount++;
+      if (cltFrameCount % skip !== 0) {
+        cltAnimId = requestAnimationFrame(cltTick);
+        return;
+      }
+
+      for (let b = 0; b < batch; b++) {
+        // Draw N samples and record them
+        curSamples = [];
         let sum = 0;
-        for (let i = 0; i < N; i++) sum += dist.sample();
-        const avg = sum / N;
-        const binIdx = Math.floor((avg - histMin) / (histMax - histMin) * nBins);
-        if (binIdx >= 0 && binIdx < nBins) histBins[binIdx]++;
+        for (let i = 0; i < N; i++) {
+          const v = dist.sample();
+          curSamples.push(v);
+          sum += v;
+        }
+        curAvg = sum / N;
+        const binIdx = Math.floor((curAvg - histMin) / (histMax - histMin) * nBins);
+        if (binIdx >= 0 && binIdx < nBins) {
+          histBins[binIdx]++;
+          lastBinIdx = binIdx;
+        }
         histCount++;
       }
 
       if (cltCountDisp) cltCountDisp.textContent = histCount + ' averages';
       document.getElementById('clt-n-val')?.replaceChildren(document.createTextNode(N));
+      if (document.getElementById('clt-speed-val'))
+        document.getElementById('clt-speed-val').textContent = speed;
       drawCLTFig();
       cltAnimId = requestAnimationFrame(cltTick);
     }
