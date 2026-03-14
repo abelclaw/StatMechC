@@ -1018,12 +1018,24 @@ function initCh2Vis() {
     ctx.fillStyle = COLORS.green; ctx.fillText('\u2014 Expected \u221AN', 10, 92);
   }
 
+  const rwSpeedSlider = document.getElementById('rw-speed');
+
   function animateRW() {
     if (!running) return;
-    for (let i = 0; i < 3; i++) step();
-    draw();
+    const speed = parseInt(rwSpeedSlider?.value || 3);
+    // speed 1 = 1 step every 4 frames, speed 6 = 10 steps per frame
+    const stepsPerFrame = [0, 1, 1, 1, 2, 5, 10][speed];
+    const frameSkip = [0, 4, 2, 1, 1, 1, 1][speed];
+    rwFrameCount++;
+    if (rwFrameCount % frameSkip === 0) {
+      for (let i = 0; i < stepsPerFrame; i++) step();
+      draw();
+    }
+    if (document.getElementById('rw-speed-val'))
+      document.getElementById('rw-speed-val').textContent = speed;
     activeAnimations['randomwalk'] = requestAnimationFrame(animateRW);
   }
+  let rwFrameCount = 0;
 
   // Wire up buttons using onclick to avoid any listener issues
   const rwStartBtn = document.getElementById('rw-start');
