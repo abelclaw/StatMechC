@@ -1025,21 +1025,27 @@ function initCh2Vis() {
     activeAnimations['randomwalk'] = requestAnimationFrame(animate);
   }
 
-  const startBtn = document.getElementById('rw-start');
-  const resetBtn = document.getElementById('rw-reset');
+  // Wire up buttons using onclick to avoid any listener issues
+  const rwStartBtn = document.getElementById('rw-start');
+  const rwResetBtn = document.getElementById('rw-reset');
 
-  startBtn?.addEventListener('click', () => {
-    running = !running;
-    if (startBtn) startBtn.textContent = running ? 'Pause' : 'Start';
-    if (running) animate();
-  });
+  if (rwStartBtn) {
+    rwStartBtn.onclick = function() {
+      running = !running;
+      rwStartBtn.textContent = running ? '⏸ Pause' : '▶ Start';
+      if (running) animate();
+    };
+  }
 
-  resetBtn?.addEventListener('click', () => {
-    running = false;
-    if (startBtn) startBtn.textContent = 'Start';
-    reset();
-    draw();
-  });
+  if (rwResetBtn) {
+    rwResetBtn.onclick = function() {
+      running = false;
+      if (rwStartBtn) rwStartBtn.textContent = '▶ Start';
+      if (activeAnimations['randomwalk']) cancelAnimationFrame(activeAnimations['randomwalk']);
+      reset();
+      draw();
+    };
+  }
 
   reset();
   draw();
@@ -1095,8 +1101,8 @@ function initCh2Vis() {
     const {ctx: ctxS, W: WS, H: HS} = setupCanvas(cStokes);
     const etaSlider = document.getElementById('stokes-eta');
     const radiusSlider = document.getElementById('stokes-radius');
-    const startBtn = document.getElementById('stokes-start');
-    const resetBtn = document.getElementById('stokes-reset');
+    const stokesStartBtn = document.getElementById('stokes-start');
+    const stokesResetBtn = document.getElementById('stokes-reset');
 
     let ballY = 30, ballV = 0, running = false;
     const g = 200; // px/s^2 effective gravity
@@ -1213,10 +1219,10 @@ function initCh2Vis() {
       if (running) activeAnimations['stokes'] = requestAnimationFrame(animate);
     }
 
-    startBtn?.addEventListener('click', () => {
+    stokesStartBtn?.addEventListener('click', () => {
       if (!running) { running = true; animate(); }
     });
-    resetBtn?.addEventListener('click', () => {
+    stokesResetBtn?.addEventListener('click', () => {
       running = false;
       if (activeAnimations['stokes']) cancelAnimationFrame(activeAnimations['stokes']);
       ballY = 30; ballV = 0;

@@ -161,13 +161,14 @@ $$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \
 <p>and the RMS distance moved is $\sqrt{N}\,\ell$, just like in the 1D case.</p>
 
 <!-- Interactive Random Walk -->
-<div class="interactive-container">
-  <h3>Interactive: 2D Random Walk</h3>
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🚶</span> Interactive: 2D Random Walk</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-randomwalk" width="600" height="400"></canvas></div>
   <div class="vis-controls">
-    <button id="rw-start">Start Walk</button>
+    <button id="rw-start">▶ Start</button>
     <button id="rw-reset">Reset</button>
   </div>
-  <canvas id="vis-randomwalk" width="600" height="400"></canvas>
+  <div class="vis-caption">50 walkers start at the center and take random steps. The dashed red circle shows the measured RMS distance; the green circle shows the expected $\ell\sqrt{N}$ scaling.</div>
 </div>
 
 <!-- ============================================================ -->
