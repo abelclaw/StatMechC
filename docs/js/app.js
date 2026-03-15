@@ -12221,60 +12221,91 @@ function initCh15Vis() {
 
     // Build stage list depending on mass (longer durations for drama)
     function getStages(M) {
-      if (M < 0.08) return [
-        {name:'Brown Dwarf', desc:'Too little mass for sustained fusion', dur:8,
-         R:0.12, Ts:2500, Tc:1e6, shells:[{el:'H',f:1}]},
+      // All stars begin as a collapsing gas cloud → protostar
+      const protostar = {name:'Gas Cloud', desc:'Gravitational collapse of hydrogen and helium gas', dur:5,
+        R:8, Ts:500, Tc:1e4, special:'cloud', shells:[{el:'H',f:1}]};
+      const proto2 = {name:'Protostar', desc:'Cloud contracts, core heats up toward fusion temperature', dur:4,
+        R:3, Ts:2000+500*(M/10), Tc:1e6, shells:[{el:'H',f:1}]};
+
+      // --- Brown dwarf: M < 0.08 Msun ---
+      // Too little mass to ignite H fusion. Just a ball of H, like Jupiter.
+      if (M < 0.08) return [protostar, proto2,
+        {name:'Brown Dwarf', desc:'Not massive enough for H fusion \u2014 slowly cools forever', dur:7,
+         R:0.1+0.15*M/0.08, Ts:1500+1000*M/0.08, Tc:3e6, shells:[{el:'H',f:1}]},
       ];
-      if (M < 0.5) return [
-        {name:'Main Sequence (Red Dwarf)', desc:'Slow H \u2192 He burning (trillions of years)', dur:6,
-         R:0.2+0.5*M, Ts:3000+2000*M, Tc:8e6, shells:[{el:'He',f:0.25},{el:'H',f:1}]},
-        {name:'Cooling', desc:'Hydrogen exhausted, star slowly cools', dur:5,
-         R:0.15+0.3*M, Ts:2500+1000*M, Tc:5e6, shells:[{el:'He',f:0.8},{el:'H',f:1}]},
+
+      // --- Red dwarf: 0.08-0.4 Msun ---
+      // H→He with convection mixing fuel. Burns for trillions of years.
+      // None have yet exhausted their fuel (universe is only 15 Gyr old).
+      if (M < 0.4) return [protostar, proto2,
+        {name:'Red Dwarf (Main Seq.)', desc:'H \u2192 He fusion. Convection mixes fuel \u2014 burns for trillions of years', dur:7,
+         R:0.15+0.7*M, Ts:2800+3000*M, Tc:8e6, shells:[{el:'He',f:0.2},{el:'H',f:1}]},
+        {name:'Still burning...', desc:'Universe is too young for any red dwarf to have run out of fuel', dur:4,
+         R:0.15+0.6*M, Ts:2600+2500*M, Tc:7e6, shells:[{el:'He',f:0.5},{el:'H',f:1}]},
       ];
-      if (M < 8) return [
-        {name:'Main Sequence', desc:'Core H \u2192 He fusion', dur:7,
-         R:0.8*Math.pow(M,0.57), Ts:5772*Math.pow(M,0.18), Tc:15e6*Math.pow(M,0.5),
+
+      // --- Sun-like: 0.4-8 Msun ---
+      // Main seq → core H exhausted, shell H burning → Red Giant (core He→C,O) →
+      // AGB (core He exhausted, shell He burning) → Planetary Nebula → White Dwarf
+      if (M < 8) return [protostar, proto2,
+        {name:'Main Sequence', desc:'H \u2192 He fusion in the core', dur:6,
+         R:Math.pow(M,0.8), Ts:5772*Math.pow(M,0.18), Tc:15e6*Math.pow(M,0.5),
          shells:[{el:'He',f:0.25},{el:'H',f:1}]},
-        {name:'Subgiant', desc:'H exhausted in core, shell H burning begins', dur:4,
-         R:1.5*Math.pow(M,0.57), Ts:5200*Math.pow(M,0.1), Tc:50e6,
-         shells:[{el:'He',f:0.35},{el:'H',f:0.7},{el:'H',f:1}]},
-        {name:'Red Giant', desc:'He burning in core, H burning in shell', dur:6,
-         R:5+15*(M/8), Ts:3800+400*(M/8), Tc:100e6,
-         shells:[{el:'C',f:0.1},{el:'He',f:0.3},{el:'H',f:1}]},
-        {name:'Planetary Nebula', desc:'Outer layers expelled, core exposed', dur:6,
-         R:0.02, Ts:25000+20000*(M/8), Tc:100e6, special:'nebula',
+        {name:'Subgiant', desc:'Core H exhausted. Shell H burning begins, core contracts, envelope expands', dur:4,
+         R:2*Math.pow(M,0.7), Ts:5000*Math.pow(M,0.08), Tc:50e6,
+         shells:[{el:'He',f:0.3},{el:'H',f:0.6},{el:'H',f:1}]},
+        {name:'Red Giant', desc:'He \u2192 C, O in the core. H burns in a shell. Star expands to ~100 R\u2609', dur:5,
+         R:10+40*(M/8), Ts:3800+400*(M/8), Tc:100e6,
+         shells:[{el:'C',f:0.08},{el:'He',f:0.25},{el:'H',f:1}]},
+        {name:'Asymptotic Giant Branch', desc:'Core He exhausted. Shell He and H burning. Heavy elements dredged up', dur:4,
+         R:50+80*(M/8), Ts:3200+300*(M/8), Tc:200e6,
+         shells:[{el:'C',f:0.1},{el:'He',f:0.2},{el:'H',f:1}]},
+        {name:'Planetary Nebula', desc:'Outer layers expelled in shells of glowing gas. Core exposed', dur:5,
+         R:0.02, Ts:30000+30000*(M/8), Tc:100e6, special:'nebula',
          shells:[{el:'C',f:0.6},{el:'He',f:1}]},
-        {name:'White Dwarf', desc:'C/O core supported by electron degeneracy', dur:5,
-         R:0.015, Ts:15000, Tc:10e6, shells:[{el:'C',f:0.7},{el:'He',f:1}]},
+        {name:'White Dwarf', desc:'C/O core supported by electron degeneracy pressure. No fusion', dur:5,
+         R:0.013, Ts:15000, Tc:10e6, shells:[{el:'C',f:0.7},{el:'He',f:1}]},
       ];
-      // Massive star
-      const stages = [
-        {name:'Main Sequence', desc:'Core H \u2192 He fusion', dur:6,
-         R:3*Math.pow(M/10,0.57), Ts:15000+10000*(M/40), Tc:30e6,
-         shells:[{el:'He',f:0.25},{el:'H',f:1}]},
-        {name:'Red Supergiant', desc:'Multiple shell burning stages', dur:5,
-         R:30+20*(M/40), Ts:3500+300*(M/40), Tc:300e6,
-         shells:[{el:'He',f:0.15},{el:'H',f:1}]},
-        {name:'Supergiant (Onion Shells)', desc:'Sequential fusion up to iron', dur:6,
-         R:25+20*(M/40), Ts:3600+200*(M/40), Tc:3e9,
+
+      // --- Massive: 8-25 Msun → Neutron star ---
+      // --- Very massive: >25 Msun → Black hole ---
+      // Main seq → Giant (shell H burning) → Supergiant with onion shells
+      // (C→Ne,Na,Mg → Ne→O,Mg → O→Si,S → Si→Fe) → Fe core, fusion stops →
+      // Core collapse → Supernova → Neutron star or Black hole
+      const msR = 4*Math.pow(M/10,0.6);
+      const msTs = M > 25 ? 20000+15000*((M-25)/15) : 10000+8000*((M-8)/17);
+      const stages = [protostar, proto2,
+        {name:'Main Sequence', desc:'H \u2192 He fusion in the core. Massive and luminous', dur:5,
+         R:msR, Ts:msTs, Tc:30e6,
+         shells:[{el:'He',f:0.3},{el:'H',f:1}]},
+        {name:'Giant', desc:'Core H exhausted. Shell H burning, star expands and cools', dur:4,
+         R:15+10*(M/40), Ts:5000+1000*(M/40), Tc:100e6,
+         shells:[{el:'C',f:0.05},{el:'He',f:0.2},{el:'H',f:1}]},
+        {name:'Supergiant', desc:'He \u2192 C, O in core. Multiple shell burning. Star becomes enormous', dur:5,
+         R:40+40*(M/40), Ts: M > 25 ? 12000+8000*((M-25)/15) : 3600+200*((M-8)/17),
+         Tc:500e6,
+         shells:[{el:'C',f:0.08},{el:'He',f:0.25},{el:'H',f:1}]},
+        {name:'Onion-Shell Structure', desc:'Sequential fusion: C, Ne, O, Si \u2192 Fe. Iron is the endpoint', dur:5,
+         R:30+30*(M/40), Ts: M > 25 ? 10000+5000*((M-25)/15) : 3500+200*((M-8)/17),
+         Tc:3e9,
          shells:[
            {el:'Fe',f:0.03},{el:'Si',f:0.06},{el:'O',f:0.10},
            {el:'Ne',f:0.14},{el:'C',f:0.20},{el:'He',f:0.35},{el:'H',f:1}
          ]},
-        {name:'Core Collapse', desc:'Iron core collapses at \u00BC speed of light', dur:4,
-         R:25+20*(M/40), Ts:3600, Tc:10e9, special:'collapse',
+        {name:'Core Collapse', desc:'No more fusion. Iron core collapses at \u00BC the speed of light', dur:3,
+         R:30+30*(M/40), Ts:3600, Tc:10e9, special:'collapse',
          shells:[
            {el:'Fe',f:0.03},{el:'Si',f:0.06},{el:'O',f:0.10},
            {el:'Ne',f:0.14},{el:'C',f:0.20},{el:'He',f:0.35},{el:'H',f:1}
          ]},
-        {name:'Supernova!', desc:'Shock wave blows star apart', dur:5,
+        {name:'Supernova!', desc:'Infalling matter rebounds off neutron core \u2192 enormous explosion', dur:6,
          R:0, Ts:50000, Tc:50e9, special:'supernova', shells:[]},
       ];
       if (M >= 25) {
-        stages.push({name:'Black Hole', desc:'Core too massive \u2014 collapses to a singularity', dur:6,
+        stages.push({name:'Black Hole', desc:'Remnant core too massive \u2014 collapses to a singularity', dur:5,
           R:0.005, Ts:0, Tc:0, special:'blackhole', shells:[]});
       } else {
-        stages.push({name:'Neutron Star', desc:'Neutron-degenerate core, radius ~10 km', dur:6,
+        stages.push({name:'Neutron Star', desc:'Neutron-degenerate remnant. Radius ~10 km, density ~4\u00d710\u00b9\u2077 kg/m\u00b3', dur:5,
           R:0.008, Ts:600000, Tc:1e11, special:'neutronstar', shells:[{el:'n',f:1}]});
       }
       return stages;
@@ -12559,6 +12590,33 @@ function initCh15Vis() {
       }
 
       const cx = WE * 0.32, cy = HE * 0.40;
+
+      // ---- GAS CLOUD / PROTOSTAR ----
+      if (stage.special === 'cloud') {
+        // Draw a diffuse, clumpy gas cloud that contracts over the stage
+        const cloudR = lerp(180, 80, easeInOut(frac));
+        const numBlobs = 18;
+        for (let i = 0; i < numBlobs; i++) {
+          const angle = (i / numBlobs) * 2 * Math.PI + Math.sin(time * 0.3 + i) * 0.3;
+          const dist = cloudR * (0.3 + 0.7 * ((i * 7 + 3) % numBlobs) / numBlobs) * lerp(1, 0.5, frac);
+          const bx = cx + Math.cos(angle) * dist;
+          const by = cy + Math.sin(angle) * dist * 0.7;
+          const blobR = lerp(40, 20, frac) + Math.sin(time * 0.5 + i * 2) * 5;
+          const grd = ctxE.createRadialGradient(bx, by, 0, bx, by, blobR);
+          grd.addColorStop(0, 'rgba(200,120,80,0.25)');
+          grd.addColorStop(0.5, 'rgba(150,80,50,0.12)');
+          grd.addColorStop(1, 'rgba(100,50,30,0)');
+          ctxE.fillStyle = grd;
+          ctxE.beginPath(); ctxE.arc(bx, by, blobR, 0, 2*Math.PI); ctxE.fill();
+        }
+        // Central brightening as cloud contracts
+        const coreGlow = ctxE.createRadialGradient(cx, cy, 0, cx, cy, cloudR * 0.6);
+        coreGlow.addColorStop(0, `rgba(255,200,150,${0.05 + frac * 0.3})`);
+        coreGlow.addColorStop(0.5, `rgba(200,100,50,${0.03 + frac * 0.1})`);
+        coreGlow.addColorStop(1, 'rgba(100,50,30,0)');
+        ctxE.fillStyle = coreGlow;
+        ctxE.beginPath(); ctxE.arc(cx, cy, cloudR * 0.6, 0, 2*Math.PI); ctxE.fill();
+      }
 
       // ---- PLANETARY NEBULA ----
       if (stage.special === 'nebula') {
