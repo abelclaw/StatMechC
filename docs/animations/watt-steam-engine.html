@@ -381,149 +381,167 @@ function drawEngine(a){
     X.lineTo(VPIPE_R.topCx+pw/2-5,VB_BOT+3);X.lineTo(VPIPE_R.botCx+pw/2-5,CYL.y);X.closePath();X.fill();
   }
 
-  // ─── 3. VALVE BOX: STEAM CHEST + SEPARATE EXHAUST + SLIDER ───
+  // ─── 3. THREE SEPARATE STRUCTURES ───
   //
-  // Layout of openings at the bottom of the valve area:
-  //   [LEFT PORT]  ----  [EXHAUST U-TUBE]  ----  [RIGHT PORT]
+  //  ┌──────────┐   ┌────────────────┐   ┌──────────┐
+  //  │  STEAM   │───│  SLIDER AREA   │───│ EXHAUST  │
+  //  │  CHEST   │   │   (middle)     │   │  PIPE    │
+  //  │  (hot)   │   │  slider ←──→   │   │  (cold)  │
+  //  └──────────┘   └──┬──────────┬──┘   └────┬─────┘
+  //                   LP          RP           │ (goes up
+  //                                            to chimney)
   //
-  // The EXHAUST is a SEPARATE chimney pipe coming down from above.
-  // The STEAM CHEST surrounds the left/right port openings.
-  // The SLIDER bridges one port to the exhaust center.
+  // The slider routes each cylinder pipe to either
+  // the steam chest (left) or the exhaust pipe (right).
 
   const exX_out=EX_PIPE_X;
 
-  // ── Outer valve box shell ──
-  X.fillStyle=mGrad(VB.x,VB.x+VB.w,'#555','#727272');
-  X.strokeStyle='#999';X.lineWidth=2;
-  rr(VB.x,VB.y,VB.w,VB.h,5,true,true);
+  // Zone boundaries
+  const steamBoxRight = PORT_L_CX - PORT_W/2 - 10;
+  const exhBoxLeft = PORT_R_CX + PORT_W/2 + 10;
+  const sliderAreaLeft = steamBoxRight + 4;
+  const sliderAreaRight = exhBoxLeft - 4;
 
-  // ── Steam chest interior (hot orange) ──
+  // ── A. STEAM CHEST (left box — hot, from boiler) ──
+  X.fillStyle=mGrad(VB.x,steamBoxRight,'#555','#727272');
+  X.strokeStyle='#999';X.lineWidth=2;
+  rr(VB.x, VB.y, steamBoxRight-VB.x, VB.h, 5, true, true);
+  // Hot interior
   X.fillStyle='#2e2e2e';
-  X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
-  X.fillStyle='rgba(230,70,20,.07)';
-  X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
-  for(let i=0;i<8;i++){
-    const sx=VB.x+15+Math.random()*(VB.w-30),sy=VB.y+10+Math.random()*(VB.h-25);
-    X.fillStyle=`rgba(230,80,25,${.02+Math.random()*.04})`;
+  X.fillRect(VB.x+4,VB.y+4,steamBoxRight-VB.x-8,VB.h-8);
+  X.fillStyle='rgba(230,70,20,.1)';
+  X.fillRect(VB.x+4,VB.y+4,steamBoxRight-VB.x-8,VB.h-8);
+  for(let i=0;i<5;i++){
+    const sx=VB.x+10+Math.random()*(steamBoxRight-VB.x-20),sy=VB.y+10+Math.random()*(VB.h-20);
+    X.fillStyle=`rgba(230,80,25,${.03+Math.random()*.05})`;
     X.beginPath();X.arc(sx,sy,2+Math.random()*3,0,Math.PI*2);X.fill();
   }
-  // Steam inlet on left wall
-  X.fillStyle='rgba(230,70,20,.25)';X.fillRect(VB.x,VB.y+VB.h/2-8,6,16);
-  X.fillStyle='rgba(230,100,40,.3)';X.font='9px Georgia';X.textAlign='center';
-  X.fillText('STEAM CHEST',VB.x+VB.w/2,VB.y+16);
+  // Steam inlet on left wall (from boiler)
+  X.fillStyle='rgba(230,70,20,.3)';X.fillRect(VB.x,VB.y+VB.h/2-8,5,16);
+  // Opening on right wall (to slider area)
+  X.fillStyle='rgba(230,70,20,.2)';X.fillRect(steamBoxRight-3,VB.y+VB.h/2-12,6,24);
+  // Label
+  X.fillStyle='rgba(230,100,40,.4)';X.font='8px Georgia';X.textAlign='center';
+  X.fillText('STEAM',(VB.x+steamBoxRight)/2,VB.y+VB.h/2-4);
+  X.fillText('CHEST',(VB.x+steamBoxRight)/2,VB.y+VB.h/2+8);
 
-  // ── SEPARATE EXHAUST CHIMNEY (comes down from above into center) ──
-  // The exhaust pipe is entirely separate from the steam chest.
-  // It comes down from the chimney and its bottom opening (the U-tube)
-  // sits between the two port openings.
-  const exPipeW=18;
-  // Exhaust pipe from chimney down to center of valve area
-  // Outer walls
-  X.fillStyle='#4a4a4a';
-  X.fillRect(PORT_EX_CX-exPipeW/2-2, VB.y-5, exPipeW+4, VB.h/2+10);
-  // Inner bore
+  // ── B. EXHAUST PIPE (right box — cold, separate, goes up to chimney) ──
+  X.fillStyle=mGrad(exhBoxLeft,VB.x+VB.w,'#484c50','#606468');
+  X.strokeStyle='#888';X.lineWidth=2;
+  rr(exhBoxLeft, VB.y, VB.x+VB.w-exhBoxLeft, VB.h, 5, true, true);
+  // Cold interior
   X.fillStyle='#222228';
-  X.fillRect(PORT_EX_CX-exPipeW/2, VB.y-3, exPipeW, VB.h/2+8);
+  X.fillRect(exhBoxLeft+4,VB.y+4,VB.x+VB.w-exhBoxLeft-8,VB.h-8);
   if(leftExh||rightExh){
-    X.fillStyle='rgba(90,110,160,.1)';
-    X.fillRect(PORT_EX_CX-exPipeW/2, VB.y-3, exPipeW, VB.h/2+8);
+    X.fillStyle='rgba(90,110,160,.08)';
+    X.fillRect(exhBoxLeft+4,VB.y+4,VB.x+VB.w-exhBoxLeft-8,VB.h-8);
   }
-  // Connect to the external exhaust pipe going up to chimney
-  X.fillStyle='#4a4a4a';
+  // Opening on left wall (from slider area)
+  X.fillStyle='rgba(90,110,160,.15)';X.fillRect(exhBoxLeft,VB.y+VB.h/2-12,5,24);
+  // Connects up to chimney pipe (from top of this box)
+  const exhMidX=(exhBoxLeft+VB.x+VB.w)/2;
+  X.fillStyle='#484c50';
   X.beginPath();
-  X.moveTo(PORT_EX_CX-exPipeW/2-2,VB.y-5);
-  X.lineTo(exX_out-exPipeW/2-2,VB.y);
-  X.lineTo(exX_out+exPipeW/2+2,VB.y);
-  X.lineTo(PORT_EX_CX+exPipeW/2+2,VB.y-5);
+  X.moveTo(exhMidX-12,VB.y);X.lineTo(exX_out-10,VB.y-5);
+  X.lineTo(exX_out+10,VB.y-5);X.lineTo(exhMidX+12,VB.y);
   X.closePath();X.fill();
   X.fillStyle='#222228';
   X.beginPath();
-  X.moveTo(PORT_EX_CX-exPipeW/2,VB.y-3);
-  X.lineTo(exX_out-exPipeW/2,VB.y+1);
-  X.lineTo(exX_out+exPipeW/2,VB.y+1);
-  X.lineTo(PORT_EX_CX+exPipeW/2,VB.y-3);
+  X.moveTo(exhMidX-9,VB.y+1);X.lineTo(exX_out-7,VB.y-3);
+  X.lineTo(exX_out+7,VB.y-3);X.lineTo(exhMidX+9,VB.y+1);
   X.closePath();X.fill();
-  // U-tube bottom opening (where exhaust gas enters from slider)
-  X.fillStyle='#222228';
-  X.fillRect(PORT_EX_CX-exPipeW/2, VB.y+VB.h/2+3, exPipeW, VB.h/2-8);
-  X.fillStyle='#4a4a4a';
-  X.fillRect(PORT_EX_CX-exPipeW/2-2, VB.y+VB.h/2+3, 2, VB.h/2-8);
-  X.fillRect(PORT_EX_CX+exPipeW/2, VB.y+VB.h/2+3, 2, VB.h/2-8);
   // Label
   X.fillStyle='rgba(90,110,160,.4)';X.font='8px Georgia';X.textAlign='center';
-  X.fillText('EXHAUST',PORT_EX_CX,VB.y+12);
+  X.fillText('EXHAUST',exhMidX,VB.y+VB.h/2-4);
+  X.fillText('(separate)',exhMidX,VB.y+VB.h/2+8);
 
-  // ── Bottom plate with three openings ──
-  X.fillStyle='#5a5a5a';X.fillRect(VB.x+3,VB_BOT-8,VB.w-6,8);
+  // ── C. SLIDER AREA (middle — where the slider moves) ──
+  X.fillStyle='#3a3a3e';
+  X.fillRect(sliderAreaLeft, VB.y, sliderAreaRight-sliderAreaLeft, VB.h);
+  X.strokeStyle='#777';X.lineWidth=1.5;
+  X.strokeRect(sliderAreaLeft, VB.y, sliderAreaRight-sliderAreaLeft, VB.h);
+  // Bottom plate under slider area
+  X.fillStyle='#5a5a5a';
+  X.fillRect(sliderAreaLeft, VB_BOT-6, sliderAreaRight-sliderAreaLeft, 6);
+  // Two port openings in bottom plate
   X.fillStyle='#2a2a2a';
-  X.fillRect(PORT_L_CX-PORT_W/2, VB_BOT-8, PORT_W, 8);
-  X.fillRect(PORT_EX_CX-PORT_W/2, VB_BOT-8, PORT_W, 8);
-  X.fillRect(PORT_R_CX-PORT_W/2, VB_BOT-8, PORT_W, 8);
+  X.fillRect(PORT_L_CX-PORT_W/2, VB_BOT-6, PORT_W, 6);
+  X.fillRect(PORT_R_CX-PORT_W/2, VB_BOT-6, PORT_W, 6);
 
-  // ── THE SLIDER ──
-  // A simple bridge piece that slides left-right.
-  // It connects one cylinder port to the exhaust U-tube center.
-  // When bridging LEFT: covers from left port to center (left exhausts)
-  // When bridging RIGHT: covers from center to right port (right exhausts)
-  const sliderCx = (PORT_L_CX+PORT_EX_CX)/2 + vo*((PORT_R_CX-PORT_L_CX)/(2*VALVE_TRAVEL));
-  // Slider spans from the port it's connecting to the exhaust center
-  let sliderLeft, sliderRight;
-  if(leftExh){
-    sliderLeft=PORT_L_CX-PORT_W/2-4;
-    sliderRight=PORT_EX_CX+PORT_W/2+4;
-  } else if(rightExh){
-    sliderLeft=PORT_EX_CX-PORT_W/2-4;
-    sliderRight=PORT_R_CX+PORT_W/2+4;
-  } else {
-    // Transitioning
-    const mid=(PORT_L_CX+PORT_R_CX)/2;
-    const t=vo/VALVE_TRAVEL; // -1 to 1
-    const span=(PORT_R_CX-PORT_L_CX)/2+PORT_W+8;
-    sliderLeft=mid+t*((PORT_R_CX-PORT_L_CX)/4)-span/2;
-    sliderRight=sliderLeft+span*0.55;
-  }
-  const slW=sliderRight-sliderLeft;
+  // ── THE SLIDER (a tube that gas flows through) ──
+  // The slider is a short TUBE/PIPE that slides left-right.
+  // It has openings at both ends.
+  // One end sits over a cylinder port (bottom), the other end faces the exhaust (right).
+  // Gas flows THROUGH the tube from the port to the exhaust.
+  // Whichever port the tube is NOT over is open to the steam chest (left).
+  //
+  // The tube slides so its bottom opening alternates between left and right ports.
 
-  // Slider body
-  const sGrad=mGrad(sliderLeft,sliderRight,'#606468','#888c92');
-  X.fillStyle=sGrad;
-  rr(sliderLeft,SLIDER_Y,slW,SLIDER_H,3,true,false);
-  X.strokeStyle='#aaa';X.lineWidth=1.5;
-  rr(sliderLeft,SLIDER_Y,slW,SLIDER_H,3,false,true);
+  const tubeLen = 60; // length of the tube
+  const tubeW = PORT_W + 4; // slightly wider than ports
+  const sliderTopY = SLIDER_Y;
 
-  // Internal channel through the slider (the passage connecting port to exhaust)
-  const chanW=PORT_W-2;
-  const chanY=SLIDER_Y+4;
-  const chanH=SLIDER_H-8;
-  // The channel runs horizontally through the slider from the port opening to the exhaust opening
+  // Tube bottom-center X: slides between left port and right port
+  const t01 = (vo/VALVE_TRAVEL + 1)/2; // 0=left port, 1=right port
+  const tubeBotCx = PORT_L_CX + t01*(PORT_R_CX-PORT_L_CX);
+  // Tube top always aims toward the exhaust pipe opening (right side)
+  const tubeTopCx = exhBoxLeft + 2;
+  const tubeBotY = VB_BOT - 6;
+  const tubeTopY = tubeBotY - tubeLen;
+
+  // Draw the tube (visible pipe cross-section, gas can flow through)
+  // Outer walls
+  X.fillStyle='#606468';
+  X.beginPath();
+  X.moveTo(tubeBotCx-tubeW/2, tubeBotY);
+  X.lineTo(tubeTopCx-tubeW/2, tubeTopY);
+  X.lineTo(tubeTopCx+tubeW/2, tubeTopY);
+  X.lineTo(tubeBotCx+tubeW/2, tubeBotY);
+  X.closePath();X.fill();
+  X.strokeStyle='#aaa';X.lineWidth=1.5;X.stroke();
+
+  // Inner bore (gas passage — visible)
+  X.fillStyle='#2a2a2e';
+  X.beginPath();
+  X.moveTo(tubeBotCx-tubeW/2+3, tubeBotY);
+  X.lineTo(tubeTopCx-tubeW/2+3, tubeTopY+2);
+  X.lineTo(tubeTopCx+tubeW/2-3, tubeTopY+2);
+  X.lineTo(tubeBotCx+tubeW/2-3, tubeBotY);
+  X.closePath();X.fill();
+
+  // Color bore with exhaust flow
   if(leftExh||rightExh){
     X.fillStyle='rgba(90,110,160,.15)';
-    X.fillRect(sliderLeft+4,chanY,slW-8,chanH);
-    X.strokeStyle='rgba(90,110,160,.3)';X.lineWidth=0.5;
-    X.strokeRect(sliderLeft+4,chanY,slW-8,chanH);
+    X.beginPath();
+    X.moveTo(tubeBotCx-tubeW/2+4, tubeBotY);
+    X.lineTo(tubeTopCx-tubeW/2+4, tubeTopY+3);
+    X.lineTo(tubeTopCx+tubeW/2-4, tubeTopY+3);
+    X.lineTo(tubeBotCx+tubeW/2-4, tubeBotY);
+    X.closePath();X.fill();
   }
 
   // Slider rod (driven by eccentric)
-  const sliderMidX=(sliderLeft+sliderRight)/2;
+  const sliderMidX=(tubeBotCx+tubeTopCx)/2;
+  const sliderMidY=(tubeBotY+tubeTopY)/2;
   X.strokeStyle='#999';X.lineWidth=4;
-  X.beginPath();X.moveTo(sliderMidX,SLIDER_Y);X.lineTo(sliderMidX,VB.y-8);X.stroke();
+  X.beginPath();X.moveTo(sliderMidX,sliderMidY);X.lineTo(sliderMidX,VB.y-8);X.stroke();
 
-  // Port glow: open port = orange, exhaust port = blue
+  // Port glow
   if(leftOpen){
-    X.fillStyle='rgba(230,70,20,.2)';
-    X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-8,PORT_W,8);
+    X.fillStyle='rgba(230,70,20,.25)';
+    X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-6,PORT_W,6);
   }
   if(rightOpen){
-    X.fillStyle='rgba(230,70,20,.2)';
-    X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-8,PORT_W,8);
+    X.fillStyle='rgba(230,70,20,.25)';
+    X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-6,PORT_W,6);
   }
   if(leftExh){
-    X.fillStyle='rgba(90,110,160,.2)';
-    X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-8,PORT_W,8);
+    X.fillStyle='rgba(90,110,160,.25)';
+    X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-6,PORT_W,6);
   }
   if(rightExh){
-    X.fillStyle='rgba(90,110,160,.2)';
-    X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-8,PORT_W,8);
+    X.fillStyle='rgba(90,110,160,.25)';
+    X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-6,PORT_W,6);
   }
 
   label('Sliding valve',sliderMidX,VB.y-14,11);
@@ -617,29 +635,36 @@ function drawEngine(a){
   // Constant hot molecules in supply pipe
   if(run&&Math.random()<.6) spawnMolecule(supplyPath,HOT,130,true);
 
-  // Hot intake: boiler → steam chest → open port → pipe → cylinder
+  // Hot intake: boiler → steam chest (left box) → through opening → slider area → open port → pipe → cylinder
+  const steamOpeningY=VB.y+VB.h/2;
   if(leftOpen&&run&&Math.random()<.7){
     spawnMolecule([...supplyPath,
-      {x:PORT_L_CX,y:VB.y+VB.h*.5},{x:PORT_L_CX,y:VB_BOT},
+      {x:steamBoxRight-5,y:steamOpeningY},{x:steamBoxRight+5,y:steamOpeningY},
+      {x:PORT_L_CX,y:steamOpeningY},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,140,true);
   }
   if(leftOpen&&run&&Math.random()<.5){
-    spawnMolecule([{x:PORT_L_CX,y:VB.y+VB.h*.4},{x:PORT_L_CX,y:VB_BOT},
+    spawnMolecule([
+      {x:steamBoxRight-10,y:steamOpeningY},{x:steamBoxRight+5,y:steamOpeningY},
+      {x:PORT_L_CX,y:steamOpeningY},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,120,true);
   }
   if(rightOpen&&run&&Math.random()<.7){
     spawnMolecule([...supplyPath,
-      {x:PORT_R_CX,y:VB.y+VB.h*.5},{x:PORT_R_CX,y:VB_BOT},
+      {x:steamBoxRight-5,y:steamOpeningY},{x:steamBoxRight+5,y:steamOpeningY},
+      {x:PORT_R_CX,y:steamOpeningY},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
     ],HOT,140,true);
   }
   if(rightOpen&&run&&Math.random()<.5){
-    spawnMolecule([{x:PORT_R_CX,y:VB.y+VB.h*.4},{x:PORT_R_CX,y:VB_BOT},
+    spawnMolecule([
+      {x:steamBoxRight-10,y:steamOpeningY},{x:steamBoxRight+5,y:steamOpeningY},
+      {x:PORT_R_CX,y:steamOpeningY},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
     ],HOT,120,true);
@@ -647,14 +672,15 @@ function drawEngine(a){
 
   // Exhaust: cylinder → pipe → slider → exhaust U-tube → chimney (SEPARATE path)
   if(leftExh&&run&&Math.random()<.35){
+    // Exhaust: cylinder → pipe → into slider tube bottom → through tube → exhaust box → chimney
     spawnMolecule([
       {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_L.cx,y:CYL.y},
       {x:VPIPE_L.botCx,y:CYL.y},{x:pipeMidLX,y:pipeMidLY},
-      {x:VPIPE_L.topCx,y:VB_BOT+5},{x:PORT_L_CX,y:VB_BOT},
-      {x:PORT_L_CX,y:SLIDER_Y+SLIDER_H/2},     // into slider
-      {x:PORT_EX_CX,y:SLIDER_Y+SLIDER_H/2},     // across slider to exhaust
-      {x:PORT_EX_CX,y:VB.y+VB.h/2},             // up exhaust pipe
-      {x:PORT_EX_CX,y:VB.y},
+      {x:VPIPE_L.topCx,y:VB_BOT+5},{x:tubeBotCx,y:tubeBotY},
+      {x:(tubeBotCx+tubeTopCx)/2,y:(tubeBotY+tubeTopY)/2}, // through tube
+      {x:tubeTopCx,y:tubeTopY},                             // out tube top
+      {x:exhMidX,y:VB.y+VB.h/2},                           // into exhaust box
+      {x:exhMidX,y:VB.y},
       {x:exX_out,y:VB.y},{x:exX_out,y:120},{x:exX_out-12,y:60}
     ],COLD,70,false);
   }
@@ -662,11 +688,11 @@ function drawEngine(a){
     spawnMolecule([
       {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_R.cx,y:CYL.y},
       {x:VPIPE_R.botCx,y:CYL.y},{x:pipeMidRX,y:pipeMidRY},
-      {x:VPIPE_R.topCx,y:VB_BOT+5},{x:PORT_R_CX,y:VB_BOT},
-      {x:PORT_R_CX,y:SLIDER_Y+SLIDER_H/2},
-      {x:PORT_EX_CX,y:SLIDER_Y+SLIDER_H/2},
-      {x:PORT_EX_CX,y:VB.y+VB.h/2},
-      {x:PORT_EX_CX,y:VB.y},
+      {x:VPIPE_R.topCx,y:VB_BOT+5},{x:tubeBotCx,y:tubeBotY},
+      {x:(tubeBotCx+tubeTopCx)/2,y:(tubeBotY+tubeTopY)/2},
+      {x:tubeTopCx,y:tubeTopY},
+      {x:exhMidX,y:VB.y+VB.h/2},
+      {x:exhMidX,y:VB.y},
       {x:exX_out,y:VB.y},{x:exX_out,y:120},{x:exX_out-12,y:60}
     ],COLD,70,false);
   }
