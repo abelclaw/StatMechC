@@ -11159,102 +11159,321 @@ function initCh15Vis() {
   if (c) {
   const { ctx, W, H } = setupCanvas(c);
 
+  // --- Real stellar data: [name, Teff(K), L/Lsun] ---
+  // Sources: Hipparcos, Gaia DR3, Pecaut & Mamajek (2013), Torres (2010)
+  const namedStars = [
+    // Main sequence
+    ['Sun', 5772, 1.0],
+    ['Sirius A', 9940, 25.4],
+    ['Vega', 9602, 40.1],
+    ['Fomalhaut', 8590, 16.6],
+    ['Altair', 7670, 10.6],
+    ['Procyon A', 6530, 6.93],
+    ['\u03b1 Cen A', 5790, 1.519],
+    ['\u03b1 Cen B', 5260, 0.5],
+    ['61 Cyg A', 4526, 0.153],
+    ['Barnard\'s Star', 3134, 0.0035],
+    ['Proxima Cen', 3042, 0.0017],
+    ['Spica', 25300, 20500],
+    ['Regulus', 12460, 288],
+    // Red giants / horizontal branch
+    ['Arcturus', 4286, 170],
+    ['Aldebaran', 3910, 439],
+    ['Pollux', 4666, 32.7],
+    ['Capella Aa', 4970, 78.7],
+    ['Capella Ab', 5690, 72.7],
+    ['Mira', 3192, 8400],
+    // Supergiants
+    ['Betelgeuse', 3600, 126000],
+    ['Antares', 3660, 75900],
+    ['Rigel', 12100, 120000],
+    ['Deneb', 8525, 196000],
+    ['Canopus', 7400, 10700],
+    ['Polaris', 6015, 1260],
+    // White dwarfs
+    ['Sirius B', 25200, 0.056],
+    ['Procyon B', 7740, 0.00049],
+    ['40 Eri B', 16500, 0.014],
+    ['van Maanen\'s', 6220, 0.00017],
+  ];
+
+  // Seeded pseudo-random for reproducible star field
+  function mulberry32(a) {
+    return function() {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(42);
+  function gaussRng() {
+    let u, v, s;
+    do { u = 2 * rng() - 1; v = 2 * rng() - 1; s = u*u + v*v; } while (s >= 1 || s === 0);
+    return u * Math.sqrt(-2 * Math.log(s) / s);
+  }
+
+  // Generate realistic population from IMF + stellar structure relations
+  const population = [];
+
+  // Main sequence: Kroupa IMF, mass-luminosity and mass-temperature relations
+  // L/Lsun ~ M^3.5 (low mass), M^4 (solar), M^3.5 (high mass)
+  // Teff ~ 5772 * (M)^0.57 (approximate)
+  for (let i = 0; i < 800; i++) {
+    // Kroupa IMF: draw mass from broken power law
+    const u = rng();
+    let mass;
+    if (u < 0.7) mass = 0.08 + rng() * 0.72;       // 0.08-0.8 Msun
+    else if (u < 0.93) mass = 0.8 + rng() * 1.2;    // 0.8-2 Msun
+    else if (u < 0.99) mass = 2 + rng() * 8;         // 2-10 Msun
+    else mass = 10 + rng() * 40;                      // 10-50 Msun
+
+    let logL;
+    if (mass < 0.43) logL = Math.log10(0.23 * Math.pow(mass, 2.3));
+    else if (mass < 2) logL = Math.log10(Math.pow(mass, 4));
+    else if (mass < 20) logL = Math.log10(1.4 * Math.pow(mass, 3.5));
+    else logL = Math.log10(32000 * mass);
+
+    // Mass-temperature: Pecaut & Mamajek calibration (approximate)
+    let logT;
+    if (mass < 0.6) logT = Math.log10(3100 + 2700 * mass);
+    else if (mass < 2) logT = Math.log10(3580 * Math.pow(mass, 0.21));
+    else logT = Math.log10(5000 * Math.pow(mass, 0.27));
+
+    // Add observational scatter
+    logL += gaussRng() * 0.12;
+    logT += gaussRng() * 0.015;
+    population.push([Math.pow(10, logT), Math.pow(10, logL)]);
+  }
+
+  // Red giant branch: T ~ 3800-5200K, L ~ 10-3000 Lsun
+  for (let i = 0; i < 90; i++) {
+    const logL = 1.0 + rng() * 2.5;   // 10 to ~3000 Lsun
+    const logT = 3.70 - 0.06 * logL + gaussRng() * 0.02; // cooler at higher L
+    population.push([Math.pow(10, logT), Math.pow(10, logL)]);
+  }
+
+  // Horizontal branch / red clump: T ~ 4500-6500K, L ~ 30-100 Lsun
+  for (let i = 0; i < 40; i++) {
+    const logT = 3.65 + rng() * 0.15 + gaussRng() * 0.015;
+    const logL = 1.5 + rng() * 0.5 + gaussRng() * 0.1;
+    population.push([Math.pow(10, logT), Math.pow(10, logL)]);
+  }
+
+  // Asymptotic giant branch: T ~ 2800-4000K, L ~ 1000-100000 Lsun
+  for (let i = 0; i < 25; i++) {
+    const logL = 3.0 + rng() * 2.0;
+    const logT = 3.58 - 0.04 * (logL - 3) + gaussRng() * 0.02;
+    population.push([Math.pow(10, logT), Math.pow(10, logL)]);
+  }
+
+  // White dwarfs: T ~ 4000-80000K, L ~ 0.0001-0.1 Lsun
+  // Follow cooling tracks: hotter WDs are more luminous
+  for (let i = 0; i < 50; i++) {
+    const logT = 3.6 + rng() * 1.3; // 4000-80000K
+    // L = 4pi R^2 sigma T^4, with R ~ 0.01 Rsun (spread 0.008-0.014)
+    const rWD = 0.008 + rng() * 0.006;
+    const logL = Math.log10(rWD * rWD) + 4 * (logT - Math.log10(5772));
+    population.push([Math.pow(10, logT), Math.pow(10, logL)]);
+  }
+
+  // Axis limits
+  const logTmin = Math.log10(2500), logTmax = Math.log10(50000);
+  const logLmin = -5, logLmax = 6.5;
+
+  function tToX(T, ox, pw) {
+    return ox + (1 - (Math.log10(T) - logTmin) / (logTmax - logTmin)) * pw;
+  }
+  function lToY(L, oy, ph) {
+    return oy + ph - (Math.log10(L) - logLmin) / (logLmax - logLmin) * ph;
+  }
+
+  function starColor(T) {
+    // Physically motivated B-V to RGB mapping
+    if (T > 30000) return [0.62, 0.72, 1.0];
+    if (T > 20000) return [0.67, 0.75, 1.0];
+    if (T > 10000) return [0.79, 0.84, 1.0];
+    if (T > 7500) return [0.97, 0.97, 1.0];
+    if (T > 6000) return [1.0, 0.96, 0.91];
+    if (T > 5000) return [1.0, 0.87, 0.68];
+    if (T > 4000) return [1.0, 0.73, 0.44];
+    if (T > 3300) return [1.0, 0.60, 0.30];
+    return [1.0, 0.45, 0.20];
+  }
+
+  let showLabels = true, showRegions = true, showRadii = true;
+  const cbLabels = document.getElementById('hr-show-labels');
+  const cbRegions = document.getElementById('hr-show-regions');
+  const cbRadii = document.getElementById('hr-show-radii');
+  if (cbLabels) cbLabels.addEventListener('change', () => { showLabels = cbLabels.checked; draw(); });
+  if (cbRegions) cbRegions.addEventListener('change', () => { showRegions = cbRegions.checked; draw(); });
+  if (cbRadii) cbRadii.addEventListener('change', () => { showRadii = cbRadii.checked; draw(); });
+
+  // Tooltip state
+  let hoverStar = null;
+  c.addEventListener('mousemove', e => {
+    const rect = c.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (W / rect.width);
+    const my = (e.clientY - rect.top) * (H / rect.height);
+    const ox = 80, oy = 30, pw = W - 120, ph = H - 85;
+    let closest = null, minD = 15;
+    namedStars.forEach(s => {
+      const sx = tToX(s[1], ox, pw), sy = lToY(s[2], oy, ph);
+      const d = Math.hypot(mx - sx, my - sy);
+      if (d < minD) { minD = d; closest = s; }
+    });
+    if (closest !== hoverStar) { hoverStar = closest; draw(); }
+    c.style.cursor = closest ? 'pointer' : 'default';
+  });
+  c.addEventListener('mouseleave', () => { hoverStar = null; draw(); c.style.cursor = 'default'; });
+
   function draw() {
     ctx.fillStyle = '#060a10';
     ctx.fillRect(0, 0, W, H);
 
-    const ox = 70, oy = 30, pw = W - 100, ph = H - 80;
+    const ox = 80, oy = 30, pw = W - 120, ph = H - 85;
+
+    // Grid lines
+    ctx.strokeStyle = COLORS.grid; ctx.lineWidth = 1;
+    [40000, 20000, 10000, 5000, 3000].forEach(T => {
+      const x = tToX(T, ox, pw);
+      ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + ph); ctx.stroke();
+    });
+    [-4, -2, 0, 2, 4, 6].forEach(l => {
+      const y = lToY(Math.pow(10, l), oy, ph);
+      ctx.beginPath(); ctx.moveTo(ox, y); ctx.lineTo(ox + pw, y); ctx.stroke();
+    });
+
+    // Constant-radius lines (R/Rsun)
+    if (showRadii) {
+      ctx.setLineDash([6, 6]);
+      [0.01, 0.1, 1, 10, 100, 1000].forEach(R => {
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        let started = false;
+        for (let lt = logTmin; lt <= logTmax; lt += 0.02) {
+          // L/Lsun = (R/Rsun)^2 * (T/Tsun)^4
+          const logL = 2 * Math.log10(R) + 4 * (lt - Math.log10(5772));
+          if (logL < logLmin || logL > logLmax) { started = false; continue; }
+          const x = tToX(Math.pow(10, lt), ox, pw);
+          const y = lToY(Math.pow(10, logL), oy, ph);
+          started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          started = true;
+        }
+        ctx.stroke();
+        // Label
+        const labelT = R >= 1 ? 45000 : (R >= 0.01 ? 15000 : 5000);
+        const labelLogL = 2 * Math.log10(R) + 4 * (Math.log10(labelT) - Math.log10(5772));
+        if (labelLogL >= logLmin && labelLogL <= logLmax) {
+          const lx = tToX(labelT, ox, pw), ly = lToY(Math.pow(10, labelLogL), oy, ph);
+          ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '9px Inter, system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          const label = R >= 1 ? R + ' R\u2609' : R + ' R\u2609';
+          ctx.fillText(label, lx + 3, ly - 3);
+        }
+      });
+      ctx.setLineDash([]);
+    }
 
     // Axes
-    ctx.strokeStyle = COLORS.axis;
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = COLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox, oy + ph); ctx.lineTo(ox + pw, oy + ph); ctx.stroke();
 
+    // Axis labels
     ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'center';
-    ctx.fillText('Temperature (K) \u2192  \u2190 hotter', ox + pw / 2, oy + ph + 25);
-    ctx.save(); ctx.translate(ox - 30, oy + ph / 2); ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Luminosity (L/L\u2609)', 0, 0); ctx.restore();
+    ctx.fillText('Surface temperature (K)', ox + pw / 2, oy + ph + 35);
+    // Arrow indicating hotter direction
+    ctx.fillStyle = COLORS.textDim; ctx.font = '10px Inter, system-ui, sans-serif';
+    ctx.fillText('\u2190 hotter', ox + pw / 2, oy + ph + 48);
+    ctx.save(); ctx.translate(ox - 50, oy + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = COLORS.text; ctx.font = FONT_SM;
+    ctx.fillText('Luminosity (L / L\u2609)', 0, 0); ctx.restore();
 
-    // Temp axis labels (reversed)
-    const tempLabels = [40000, 20000, 10000, 5000, 3000];
-    tempLabels.forEach(T => {
-      const x = ox + (1 - (Math.log10(T) - Math.log10(3000)) / (Math.log10(40000) - Math.log10(3000))) * pw;
-      ctx.fillStyle = COLORS.textDim; ctx.font = '10px Inter, system-ui, sans-serif';
-      ctx.fillText(T.toString(), x, oy + ph + 12);
+    // Temp tick labels (reversed axis)
+    const tempTicks = [40000, 20000, 10000, 5000, 3000];
+    ctx.fillStyle = COLORS.textDim; ctx.font = '10px Inter, system-ui, sans-serif'; ctx.textAlign = 'center';
+    tempTicks.forEach(T => {
+      const x = tToX(T, ox, pw);
+      ctx.fillText(T >= 10000 ? (T/1000) + 'k' : T.toString(), x, oy + ph + 14);
     });
 
-    // Luminosity labels
-    const lumLabels = [-4, -2, 0, 2, 4, 6];
-    lumLabels.forEach(l => {
-      const y = oy + ph - (l + 4) / 10 * ph;
-      ctx.fillStyle = COLORS.textDim; ctx.font = '10px Inter, system-ui, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText('10^' + l, ox - 5, y + 4);
+    // Luminosity tick labels
+    ctx.textAlign = 'right'; ctx.fillStyle = COLORS.textDim; ctx.font = '10px Inter, system-ui, sans-serif';
+    const lumTickData = [[-4,'10\u207B\u2074'],[-2,'10\u207B\u00B2'],[0,'1'],[2,'10\u00B2'],[4,'10\u2074'],[6,'10\u2076']];
+    lumTickData.forEach(([l, txt]) => {
+      const y = lToY(Math.pow(10, l), oy, ph);
+      ctx.fillText(txt, ox - 5, y + 4);
     });
-    ctx.textAlign = 'center';
 
-    function starColor(T) {
-      if (T > 20000) return '#aabfff';
-      if (T > 10000) return '#cad7ff';
-      if (T > 7500) return '#f8f7ff';
-      if (T > 6000) return '#fff4e8';
-      if (T > 5000) return '#ffd2a1';
-      if (T > 3500) return '#ffb56c';
-      return '#ff6b35';
-    }
+    // Plot population stars
+    population.forEach(([T, L]) => {
+      const x = tToX(T, ox, pw), y = lToY(L, oy, ph);
+      if (x < ox || x > ox + pw || y < oy || y > oy + ph) return;
+      const [r, g, b] = starColor(T);
+      const logL = Math.log10(Math.max(L, 1e-6));
+      const alpha = 0.45 + 0.35 * Math.min(1, (logL - logLmin) / (logLmax - logLmin));
+      ctx.fillStyle = `rgba(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)},${alpha.toFixed(2)})`;
+      ctx.beginPath(); ctx.arc(x, y, 1.5, 0, 2 * Math.PI); ctx.fill();
+    });
 
-    function plotStar(T, L, size, label) {
-      const x = ox + (1 - (Math.log10(T) - Math.log10(3000)) / (Math.log10(40000) - Math.log10(3000))) * pw;
-      const y = oy + ph - (Math.log10(L) + 4) / 10 * ph;
-      const col = starColor(T);
+    // Plot named stars with glow
+    namedStars.forEach(([name, T, L]) => {
+      const x = tToX(T, ox, pw), y = lToY(L, oy, ph);
+      if (x < ox - 5 || x > ox + pw + 5 || y < oy - 5 || y > oy + ph + 5) return;
+      const [r, g, b] = starColor(T);
+      const col = `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
+      const logL = Math.log10(Math.max(L, 1e-6));
+      const sz = 2 + 1.5 * Math.min(1, (logL + 4) / 10);
 
-      const grd = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
-      grd.addColorStop(0, col + 'aa');
-      grd.addColorStop(1, col + '00');
+      // Glow
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, sz * 4);
+      grd.addColorStop(0, `rgba(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)},0.5)`);
+      grd.addColorStop(1, `rgba(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)},0)`);
       ctx.fillStyle = grd;
-      ctx.beginPath(); ctx.arc(x, y, size * 3, 0, 2 * Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, sz * 4, 0, 2 * Math.PI); ctx.fill();
 
       ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(x, y, size, 0, 2 * Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, sz, 0, 2 * Math.PI); ctx.fill();
 
-      if (label) {
-        ctx.fillStyle = COLORS.text; ctx.font = '10px Inter, system-ui, sans-serif';
-        ctx.fillText(label, x, y - size - 6);
+      // Label
+      if (showLabels) {
+        const isHover = hoverStar && hoverStar[0] === name;
+        ctx.fillStyle = isHover ? '#ffffff' : 'rgba(255,255,255,0.7)';
+        ctx.font = isHover ? '12px Inter, system-ui, sans-serif' : '9px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(name, x, y - sz - 5);
       }
+    });
+
+    // Hover tooltip
+    if (hoverStar) {
+      const [name, T, L] = hoverStar;
+      const x = tToX(T, ox, pw), y = lToY(L, oy, ph);
+      const R = Math.sqrt(L) * Math.pow(5772 / T, 2);
+      const info = `${name}:  T = ${T} K,  L = ${L >= 1 ? L.toFixed(1) : L.toExponential(2)} L\u2609,  R \u2248 ${R >= 1 ? R.toFixed(1) : R.toExponential(2)} R\u2609`;
+      ctx.fillStyle = 'rgba(0,0,0,0.85)';
+      ctx.font = '11px Inter, system-ui, sans-serif';
+      const tw = ctx.measureText(info).width + 16;
+      let tx = x - tw / 2, ty = y + 15;
+      if (tx < 5) tx = 5; if (tx + tw > W - 5) tx = W - tw - 5;
+      if (ty + 24 > H) ty = y - 30;
+      ctx.fillRect(tx, ty, tw, 22);
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+      ctx.strokeRect(tx, ty, tw, 22);
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
+      ctx.fillText(info, tx + 8, ty + 15);
     }
 
-    // Main sequence
-    const msStars = [
-      [35000, 200000, 5], [25000, 50000, 4.5], [15000, 5000, 4],
-      [10000, 500, 3.5], [7500, 50, 3], [6000, 2, 2.5],
-      [5800, 1, 2.5], [5000, 0.5, 2], [4000, 0.1, 1.8], [3000, 0.01, 1.5]
-    ];
-
-    // Main sequence band
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 30;
-    ctx.beginPath();
-    msStars.forEach(([T, L], i) => {
-      const x = ox + (1 - (Math.log10(T) - Math.log10(3000)) / (Math.log10(40000) - Math.log10(3000))) * pw;
-      const y = oy + ph - (Math.log10(L) + 4) / 10 * ph;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    msStars.forEach(([T, L, s]) => plotStar(T, L, s));
-
-    // Named stars
-    plotStar(5800, 1, 3, 'Sun');
-    plotStar(3500, 100000, 6, 'Betelgeuse');
-    plotStar(10000, 10000, 5, 'Rigel');
-    plotStar(25000, 0.001, 1.5, 'White Dwarf');
-
     // Region labels
-    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.font = FONT_LG;
-    ctx.fillText('Main Sequence', ox + pw * 0.5, oy + ph * 0.55);
-    ctx.fillText('Giants', ox + pw * 0.65, oy + ph * 0.15);
-    ctx.fillText('Supergiants', ox + pw * 0.45, oy + ph * 0.08);
-    ctx.fillText('White Dwarfs', ox + pw * 0.25, oy + ph * 0.88);
+    if (showRegions) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.font = '16px Inter, system-ui, sans-serif';
+      ctx.fillText('Main Sequence', ox + pw * 0.48, oy + ph * 0.58);
+      ctx.font = '14px Inter, system-ui, sans-serif';
+      ctx.fillText('Red Giants', ox + pw * 0.7, oy + ph * 0.22);
+      ctx.fillText('Supergiants', ox + pw * 0.5, oy + ph * 0.04);
+      ctx.fillText('White Dwarfs', ox + pw * 0.2, oy + ph * 0.9);
+    }
   }
 
   draw();
