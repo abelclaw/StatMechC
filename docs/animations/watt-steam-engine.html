@@ -397,43 +397,59 @@ function drawEngine(a){
   const exX_out=EX_PIPE_X;
   const exhPW=16;
 
-  // ── A. EXHAUST PIPE (completely separate, on top) ──
-  // Vertical pipe going up to chimney, with bottom opening connecting
-  // to the center hole of the sliding compartment below.
-  // Draw from top of sliding compartment up to where external pipe begins.
-  const exhPipeBot=VB.y;  // bottom of exhaust pipe = top of sliding compartment
-  const exhPipeTop=VB.y-50; // extends upward
-  // Outer walls
+  // ── A. EXHAUST PIPE (separate, connects to BOTTOM of sliding compartment) ──
+  // The exhaust connects to the center hole in the FLOOR of the sliding
+  // compartment. From there it goes DOWN, then routes to the side and
+  // UP to the chimney. This way the slider's U-tube can bridge a port
+  // hole to the exhaust hole — everything is in the floor.
+  //
+  // Path: center floor hole → down → right → up to chimney
+
+  // Vertical drop from floor
+  const exhDropTop = VB_BOT;        // starts at floor of sliding compartment
+  const exhDropBot = VB_BOT + 35;   // goes down 35px
+  // Outer walls of vertical drop
   X.fillStyle='#484c50';
-  X.fillRect(PORT_EX_CX-exhPW/2-3, exhPipeTop, exhPW+6, exhPipeBot-exhPipeTop);
+  X.fillRect(PORT_EX_CX-exhPW/2-3, exhDropTop, exhPW+6, exhDropBot-exhDropTop);
   X.strokeStyle='#666';X.lineWidth=1;
-  X.strokeRect(PORT_EX_CX-exhPW/2-3, exhPipeTop, exhPW+6, exhPipeBot-exhPipeTop);
+  X.strokeRect(PORT_EX_CX-exhPW/2-3, exhDropTop, exhPW+6, exhDropBot-exhDropTop);
   // Inner bore
   X.fillStyle='#1e1e24';
-  X.fillRect(PORT_EX_CX-exhPW/2, exhPipeTop+2, exhPW, exhPipeBot-exhPipeTop-2);
+  X.fillRect(PORT_EX_CX-exhPW/2, exhDropTop+2, exhPW, exhDropBot-exhDropTop-2);
   if(leftExh||rightExh){
     X.fillStyle='rgba(90,110,160,.08)';
-    X.fillRect(PORT_EX_CX-exhPW/2, exhPipeTop+2, exhPW, exhPipeBot-exhPipeTop-2);
+    X.fillRect(PORT_EX_CX-exhPW/2, exhDropTop+2, exhPW, exhDropBot-exhDropTop-2);
   }
-  // Angled connection to the external chimney pipe at the top
+
+  // Horizontal run to the right (between cylinder pipes, behind them)
+  const exhRunRight = exX_out; // goes to where chimney pipe is
   X.fillStyle='#484c50';
-  X.beginPath();
-  X.moveTo(PORT_EX_CX-exhPW/2-3,exhPipeTop);
-  X.lineTo(exX_out-exhPW/2-3,exhPipeTop-10);
-  X.lineTo(exX_out+exhPW/2+3,exhPipeTop-10);
-  X.lineTo(PORT_EX_CX+exhPW/2+3,exhPipeTop);
-  X.closePath();X.fill();
-  X.strokeStyle='#666';X.lineWidth=1;X.stroke();
+  X.fillRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-6, exhRunRight-PORT_EX_CX-exhPW/2, exhPW+6);
+  X.strokeStyle='#666';X.lineWidth=1;
+  X.strokeRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-6, exhRunRight-PORT_EX_CX-exhPW/2, exhPW+6);
   X.fillStyle='#1e1e24';
-  X.beginPath();
-  X.moveTo(PORT_EX_CX-exhPW/2,exhPipeTop+1);
-  X.lineTo(exX_out-exhPW/2,exhPipeTop-8);
-  X.lineTo(exX_out+exhPW/2,exhPipeTop-8);
-  X.lineTo(PORT_EX_CX+exhPW/2,exhPipeTop+1);
-  X.closePath();X.fill();
+  X.fillRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-3, exhRunRight-PORT_EX_CX-exhPW/2, exhPW);
+  if(leftExh||rightExh){
+    X.fillStyle='rgba(90,110,160,.06)';
+    X.fillRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-3, exhRunRight-PORT_EX_CX-exhPW/2, exhPW);
+  }
+
+  // Vertical rise up to where the external chimney pipe takes over
+  // (this joins the existing exhaust pipe drawn in drawExternalPipes)
+  X.fillStyle='#484c50';
+  X.fillRect(exX_out-exhPW/2-3, VB.y-10, exhPW+6, exhDropBot-VB.y+10-exhPW);
+  X.strokeStyle='#666';X.lineWidth=1;
+  X.strokeRect(exX_out-exhPW/2-3, VB.y-10, exhPW+6, exhDropBot-VB.y+10-exhPW);
+  X.fillStyle='#1e1e24';
+  X.fillRect(exX_out-exhPW/2, VB.y-8, exhPW, exhDropBot-VB.y+8-exhPW);
+  if(leftExh||rightExh){
+    X.fillStyle='rgba(90,110,160,.06)';
+    X.fillRect(exX_out-exhPW/2, VB.y-8, exhPW, exhDropBot-VB.y+8-exhPW);
+  }
+
   // Label
-  X.fillStyle='rgba(90,110,160,.5)';X.font='9px Georgia';X.textAlign='center';
-  X.fillText('EXHAUST',PORT_EX_CX,exhPipeTop+exhPW+5);
+  X.fillStyle='rgba(90,110,160,.5)';X.font='8px Georgia';X.textAlign='center';
+  X.fillText('EXHAUST',(PORT_EX_CX+exX_out)/2,exhDropBot-5);
 
   // ── B. SLIDING COMPARTMENT (middle box — filled with hot steam) ──
   // This is where the slider lives. Hot steam from the boiler fills this.
@@ -454,9 +470,7 @@ function drawEngine(a){
   }
   // Steam inlet on left wall (from boiler)
   X.fillStyle='rgba(230,70,20,.3)';X.fillRect(VB.x,VB.y+VB.h/2-8,5,16);
-  // Opening in top wall where exhaust pipe connects
-  X.fillStyle='#2a2a2a';
-  X.fillRect(PORT_EX_CX-exhPW/2, VB.y, exhPW, 5);
+  // (exhaust connects through the FLOOR center hole, not the top)
   X.fillStyle='rgba(230,100,40,.25)';X.font='8px Georgia';X.textAlign='center';
   X.fillText('STEAM',VB.x+40,VB.y+15);
   X.fillText('(hot)',VB.x+40,VB.y+25);
@@ -685,21 +699,22 @@ function drawEngine(a){
   // Exhaust: cylinder → pipe → slider → exhaust U-tube → chimney (SEPARATE path)
   if(leftExh&&run&&Math.random()<.35){
     // Exhaust: cylinder → pipe → left port hole → up left leg of U-tube →
-    // across top of U → down right leg → center exhaust hole →
-    // up exhaust pipe → chimney
+    // across top of U → down right leg → center floor hole →
+    // DOWN through exhaust pipe → right → UP to chimney
     spawnMolecule([
       {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_L.cx,y:CYL.y},
       {x:VPIPE_L.botCx,y:CYL.y},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.topCx,y:VB_BOT+5},
-      {x:uLeftCx,y:uBotY},             // into left leg of U
-      {x:uLeftCx,y:uTopY+uW/2},        // up left leg
+      {x:uLeftCx,y:uBotY},              // into left leg of U
+      {x:uLeftCx,y:uTopY+uW/2},         // up left leg
       {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2}, // across top
-      {x:uRightCx,y:uTopY+uW/2},       // to right leg
-      {x:uRightCx,y:uBotY},            // down right leg
-      {x:PORT_EX_CX,y:VB_BOT},          // into center exhaust hole
-      {x:PORT_EX_CX,y:VB.y},            // up through exhaust pipe
-      {x:PORT_EX_CX,y:exhPipeTop},
-      {x:exX_out,y:exhPipeTop-8},{x:exX_out,y:120},{x:exX_out-12,y:60}
+      {x:uRightCx,y:uTopY+uW/2},        // to right leg
+      {x:uRightCx,y:uBotY},             // down right leg
+      {x:PORT_EX_CX,y:VB_BOT+5},        // down through center floor hole
+      {x:PORT_EX_CX,y:exhDropBot-exhPW}, // down to bottom of exhaust drop
+      {x:exX_out,y:exhDropBot-exhPW},    // right along horizontal run
+      {x:exX_out,y:VB.y-5},              // up the vertical rise
+      {x:exX_out,y:120},{x:exX_out-12,y:60}
     ],COLD,70,false);
   }
   if(rightExh&&run&&Math.random()<.35){
@@ -707,15 +722,16 @@ function drawEngine(a){
       {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_R.cx,y:CYL.y},
       {x:VPIPE_R.botCx,y:CYL.y},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.topCx,y:VB_BOT+5},
-      {x:uRightCx,y:uBotY},            // into right leg of U (now over right port)
+      {x:uRightCx,y:uBotY},
       {x:uRightCx,y:uTopY+uW/2},
       {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2},
       {x:uLeftCx,y:uTopY+uW/2},
-      {x:uLeftCx,y:uBotY},             // down left leg (now over center exhaust)
-      {x:PORT_EX_CX,y:VB_BOT},
-      {x:PORT_EX_CX,y:VB.y},
-      {x:PORT_EX_CX,y:exhPipeTop},
-      {x:exX_out,y:exhPipeTop-8},{x:exX_out,y:120},{x:exX_out-12,y:60}
+      {x:uLeftCx,y:uBotY},
+      {x:PORT_EX_CX,y:VB_BOT+5},
+      {x:PORT_EX_CX,y:exhDropBot-exhPW},
+      {x:exX_out,y:exhDropBot-exhPW},
+      {x:exX_out,y:VB.y-5},
+      {x:exX_out,y:120},{x:exX_out-12,y:60}
     ],COLD,70,false);
   }
 
