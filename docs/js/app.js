@@ -13500,6 +13500,12 @@ function initCh15Vis() {
     ];
     const earthR = 0.009;
 
+    // Unicode superscript digits for exponents
+    function superscript(n) {
+      const sup = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+      return String(n).split('').map(c => sup[c] || c).join('');
+    }
+
     // --- Star color from temperature ---
     function tempToRGB(T) {
       let r, g, b;
@@ -13579,9 +13585,10 @@ function initCh15Vis() {
     let mouseX = -1, mouseY = -1;
 
     // --- Convert world coordinate to screen coordinate ---
+    // Stars are centered vertically at 65% of canvas height so their tops are visible
     function worldToScreen(wx, wy, camX, scale) {
       const sx = WS / 2 + (wx - camX) * scale;
-      const sy = HS / 2 - wy * scale;
+      const sy = HS * 0.65 - wy * scale;
       return [sx, sy];
     }
 
@@ -13767,6 +13774,32 @@ function initCh15Vis() {
             ctxS.fillStyle = COLORS.textDim; ctxS.font = '10px Inter, system-ui, sans-serif';
             ctxS.fillText(v.s.R + ' R\u2609 \u00b7 ' + v.s.type, v.sx, labelAbove + 13);
           }
+        }
+
+        // Diameter marker <-> with size in km
+        if (v.rPx > 12 && v.sx > 0 && v.sx < WS) {
+          const dKm = v.s.R * 2 * 696340; // diameter in km
+          // Format as 10^x: find exponent
+          const exp = Math.floor(Math.log10(dKm));
+          const mantissa = dKm / Math.pow(10, exp);
+          const sizeStr = mantissa < 1.05 ? '10' + superscript(exp) + ' km'
+            : mantissa.toFixed(1) + '\u00d710' + superscript(exp) + ' km';
+          const markerY = v.sy; // across center of star
+          const mLeft = v.sx - v.rPx;
+          const mRight = v.sx + v.rPx;
+          // Horizontal line with arrows
+          ctxS.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctxS.lineWidth = 1;
+          ctxS.beginPath(); ctxS.moveTo(mLeft + 2, markerY); ctxS.lineTo(mRight - 2, markerY); ctxS.stroke();
+          // Left arrow
+          ctxS.beginPath(); ctxS.moveTo(mLeft + 2, markerY); ctxS.lineTo(mLeft + 7, markerY - 3); ctxS.moveTo(mLeft + 2, markerY); ctxS.lineTo(mLeft + 7, markerY + 3); ctxS.stroke();
+          // Right arrow
+          ctxS.beginPath(); ctxS.moveTo(mRight - 2, markerY); ctxS.lineTo(mRight - 7, markerY - 3); ctxS.moveTo(mRight - 2, markerY); ctxS.lineTo(mRight - 7, markerY + 3); ctxS.stroke();
+          // Size label
+          ctxS.fillStyle = 'rgba(255,255,255,0.5)';
+          ctxS.font = '10px Inter, system-ui, sans-serif';
+          ctxS.textAlign = 'center';
+          ctxS.fillText(sizeStr, v.sx, markerY - 5);
         }
       }
 
