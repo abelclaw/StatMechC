@@ -12196,71 +12196,96 @@ function initCh15Vis() {
       H: '#4fc3f7', He: '#66bb6a', C: '#ffa726', Ne: '#ef5350',
       O: '#ab47bc', Si: '#ffee58', Fe: '#e0e0e0', n: '#90a4ae'
     };
+    const ELEMENT_NAMES = {H:'Hydrogen', He:'Helium', C:'Carbon/Oxygen', Ne:'Neon', O:'Oxygen', Si:'Silicon', Fe:'Iron', n:'Neutrons'};
 
-    // Build stage list depending on mass
+    // Stage colors for timeline
+    const STAGE_COLORS = {
+      'Main Sequence': '#4fc3f7', 'Main Sequence (Red Dwarf)': '#ef5350',
+      'Brown Dwarf': '#8d6e63', 'Subgiant': '#ffa726', 'Red Giant': '#ef5350',
+      'Planetary Nebula': '#ab47bc', 'White Dwarf': '#e0e0e0', 'Cooling': '#8d6e63',
+      'Red Supergiant': '#ef5350', 'Supergiant (Onion Shells)': '#ffa726',
+      'Core Collapse': '#ffee58', 'Supernova!': '#ff5722',
+      'Neutron Star': '#26c6da', 'Black Hole': '#7c4dff'
+    };
+
+    // Generate static star field once
+    const bgStars = [];
+    for (let i = 0; i < 200; i++) {
+      bgStars.push({
+        x: Math.random() * WE, y: Math.random() * HE,
+        r: 0.3 + Math.random() * 1.2,
+        brightness: 0.3 + Math.random() * 0.7,
+        twinkleSpeed: 0.5 + Math.random() * 2
+      });
+    }
+
+    // Build stage list depending on mass (longer durations for drama)
     function getStages(M) {
       if (M < 0.08) return [
-        {name:'Brown Dwarf', desc:'Too little mass for fusion', dur:3,
-         R:0.12, Ts:2500, shells:[{el:'H',f:1}]},
+        {name:'Brown Dwarf', desc:'Too little mass for sustained fusion', dur:8,
+         R:0.12, Ts:2500, Tc:1e6, shells:[{el:'H',f:1}]},
       ];
       if (M < 0.5) return [
-        {name:'Main Sequence (Red Dwarf)', desc:'Slow H → He burning (trillions of years)', dur:4,
-         R:0.2+0.5*M, Ts:3000+2000*M, shells:[{el:'He',f:0.25},{el:'H',f:1}]},
-        {name:'Cooling', desc:'Hydrogen exhausted, star slowly cools', dur:2,
-         R:0.15+0.3*M, Ts:2500+1000*M, shells:[{el:'He',f:0.8},{el:'H',f:1}]},
+        {name:'Main Sequence (Red Dwarf)', desc:'Slow H \u2192 He burning (trillions of years)', dur:6,
+         R:0.2+0.5*M, Ts:3000+2000*M, Tc:8e6, shells:[{el:'He',f:0.25},{el:'H',f:1}]},
+        {name:'Cooling', desc:'Hydrogen exhausted, star slowly cools', dur:5,
+         R:0.15+0.3*M, Ts:2500+1000*M, Tc:5e6, shells:[{el:'He',f:0.8},{el:'H',f:1}]},
       ];
       if (M < 8) return [
-        {name:'Main Sequence', desc:'Core H → He fusion', dur:4,
-         R:0.8*Math.pow(M,0.57), Ts:5772*Math.pow(M,0.18),
+        {name:'Main Sequence', desc:'Core H \u2192 He fusion', dur:7,
+         R:0.8*Math.pow(M,0.57), Ts:5772*Math.pow(M,0.18), Tc:15e6*Math.pow(M,0.5),
          shells:[{el:'He',f:0.25},{el:'H',f:1}]},
-        {name:'Subgiant', desc:'H exhausted in core, shell H burning begins', dur:1.5,
-         R:1.5*Math.pow(M,0.57), Ts:5200*Math.pow(M,0.1),
+        {name:'Subgiant', desc:'H exhausted in core, shell H burning begins', dur:4,
+         R:1.5*Math.pow(M,0.57), Ts:5200*Math.pow(M,0.1), Tc:50e6,
          shells:[{el:'He',f:0.35},{el:'H',f:0.7},{el:'H',f:1}]},
-        {name:'Red Giant', desc:'He burning in core, H burning in shell', dur:2,
-         R:5+15*(M/8), Ts:3800+400*(M/8),
+        {name:'Red Giant', desc:'He burning in core, H burning in shell', dur:6,
+         R:5+15*(M/8), Ts:3800+400*(M/8), Tc:100e6,
          shells:[{el:'C',f:0.1},{el:'He',f:0.3},{el:'H',f:1}]},
-        {name:'Planetary Nebula', desc:'Outer layers expelled, core exposed', dur:2,
-         R:0.02, Ts:25000+20000*(M/8), special:'nebula',
+        {name:'Planetary Nebula', desc:'Outer layers expelled, core exposed', dur:6,
+         R:0.02, Ts:25000+20000*(M/8), Tc:100e6, special:'nebula',
          shells:[{el:'C',f:0.6},{el:'He',f:1}]},
-        {name:'White Dwarf', desc:'C/O core supported by electron degeneracy pressure', dur:2,
-         R:0.015, Ts:15000, shells:[{el:'C',f:0.7},{el:'He',f:1}]},
+        {name:'White Dwarf', desc:'C/O core supported by electron degeneracy', dur:5,
+         R:0.015, Ts:15000, Tc:10e6, shells:[{el:'C',f:0.7},{el:'He',f:1}]},
       ];
-      // Massive star (≥ 8 Msun)
+      // Massive star
       const stages = [
-        {name:'Main Sequence', desc:'Core H → He fusion', dur:3,
-         R:3*Math.pow(M/10,0.57), Ts:15000+10000*(M/40),
+        {name:'Main Sequence', desc:'Core H \u2192 He fusion', dur:6,
+         R:3*Math.pow(M/10,0.57), Ts:15000+10000*(M/40), Tc:30e6,
          shells:[{el:'He',f:0.25},{el:'H',f:1}]},
-        {name:'Red Supergiant', desc:'Multiple shell burning stages', dur:2,
-         R:30+20*(M/40), Ts:3500+300*(M/40),
+        {name:'Red Supergiant', desc:'Multiple shell burning stages', dur:5,
+         R:30+20*(M/40), Ts:3500+300*(M/40), Tc:300e6,
          shells:[{el:'He',f:0.15},{el:'H',f:1}]},
-        {name:'Supergiant (Onion Shells)', desc:'Sequential fusion up to iron', dur:2.5,
-         R:25+20*(M/40), Ts:3600+200*(M/40),
+        {name:'Supergiant (Onion Shells)', desc:'Sequential fusion up to iron', dur:6,
+         R:25+20*(M/40), Ts:3600+200*(M/40), Tc:3e9,
          shells:[
            {el:'Fe',f:0.03},{el:'Si',f:0.06},{el:'O',f:0.10},
            {el:'Ne',f:0.14},{el:'C',f:0.20},{el:'He',f:0.35},{el:'H',f:1}
          ]},
-        {name:'Core Collapse', desc:'Iron core collapses at ¼ speed of light', dur:1.5,
-         R:25+20*(M/40), Ts:3600, special:'collapse',
+        {name:'Core Collapse', desc:'Iron core collapses at \u00BC speed of light', dur:4,
+         R:25+20*(M/40), Ts:3600, Tc:10e9, special:'collapse',
          shells:[
            {el:'Fe',f:0.03},{el:'Si',f:0.06},{el:'O',f:0.10},
            {el:'Ne',f:0.14},{el:'C',f:0.20},{el:'He',f:0.35},{el:'H',f:1}
          ]},
-        {name:'Supernova!', desc:'Shock wave blows star apart', dur:2.5,
-         R:0, Ts:50000, special:'supernova',
-         shells:[]},
+        {name:'Supernova!', desc:'Shock wave blows star apart', dur:5,
+         R:0, Ts:50000, Tc:50e9, special:'supernova', shells:[]},
       ];
       if (M >= 25) {
-        stages.push({name:'Black Hole', desc:'Core too massive — collapses to a singularity', dur:2,
-          R:0.005, Ts:0, special:'blackhole', shells:[]});
+        stages.push({name:'Black Hole', desc:'Core too massive \u2014 collapses to a singularity', dur:6,
+          R:0.005, Ts:0, Tc:0, special:'blackhole', shells:[]});
       } else {
-        stages.push({name:'Neutron Star', desc:'Neutron-degenerate core, radius ~10 km', dur:2,
-          R:0.008, Ts:600000, special:'neutronstar', shells:[{el:'n',f:1}]});
+        stages.push({name:'Neutron Star', desc:'Neutron-degenerate core, radius ~10 km', dur:6,
+          R:0.008, Ts:600000, Tc:1e11, special:'neutronstar', shells:[{el:'n',f:1}]});
       }
       return stages;
     }
 
     let evoPlaying = false, evoTime = 0, evoStages = getStages(1.0);
     let snParticles = [], nebulaRings = [];
+    let lastFrameTime = 0;
+    let surfaceSparks = [];
+    let screenShake = {x: 0, y: 0, intensity: 0};
+    let pulsarAngle = 0;
 
     function evoTotalDur() { return evoStages.reduce((s,st) => s + st.dur, 0); }
 
@@ -12273,55 +12298,239 @@ function initCh15Vis() {
       return {idx: evoStages.length - 1, frac: 1};
     }
 
-    function lerp(a, b, t) { return a + (b - a) * t; }
+    function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
+    function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+    // Temperature to RGB color (more physically realistic)
+    function tempToColor(T) {
+      if (T <= 0) return {r:0, g:0, b:0};
+      let r, g, b;
+      const t = T / 1000;
+      if (t <= 6.6) { r = 255; }
+      else { r = Math.min(255, Math.max(0, 329.7 * Math.pow(t - 6, -0.1332))); }
+      if (t <= 1) { g = 0; }
+      else if (t <= 6.6) { g = Math.min(255, Math.max(0, 99.47 * Math.log(t) - 161.1)); }
+      else { g = Math.min(255, Math.max(0, 288.1 * Math.pow(t - 6, -0.0755))); }
+      if (t >= 6.6) { b = 255; }
+      else if (t <= 1.9) { b = 0; }
+      else { b = Math.min(255, Math.max(0, 138.5 * Math.log(t - 1) - 305.0)); }
+      return {r: Math.round(r), g: Math.round(g), b: Math.round(b)};
+    }
+
+    function colorToCSS(c, a) {
+      if (a !== undefined) return `rgba(${c.r},${c.g},${c.b},${a})`;
+      return `rgb(${c.r},${c.g},${c.b})`;
+    }
 
     function evoStarColor(T) {
-      if (T > 30000) return '#aabfff';
-      if (T > 15000) return '#cce0ff';
-      if (T > 10000) return '#e8eeff';
-      if (T > 7000) return '#fff8f0';
-      if (T > 5500) return '#fff0d0';
-      if (T > 4500) return '#ffd080';
-      if (T > 3500) return '#ffaa55';
-      return '#ff7733';
+      return colorToCSS(tempToColor(T));
+    }
+
+    function evoStarColorObj(T) {
+      return tempToColor(T);
     }
 
     function initSNParticles() {
       snParticles = [];
-      for (let i = 0; i < 120; i++) {
+      for (let i = 0; i < 300; i++) {
         const angle = Math.random() * 2 * Math.PI;
-        const speed = 1.5 + Math.random() * 4;
-        const hue = Math.random() < 0.3 ? 40 + Math.random()*30 : (Math.random() < 0.5 ? 15 + Math.random()*20 : 50+Math.random()*10);
+        const speed = 0.8 + Math.random() * 3.5;
+        const hue = Math.random() < 0.3 ? 40 + Math.random()*30 :
+                    (Math.random() < 0.5 ? 10 + Math.random()*25 : 50+Math.random()*10);
+        const lum = 50 + Math.random()*45;
         snParticles.push({
           x: 0, y: 0, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
-          life: 0.5 + Math.random()*0.5,
-          size: 1 + Math.random()*3,
-          color: `hsl(${hue}, 100%, ${60+Math.random()*30}%)`
+          life: 0.6 + Math.random()*0.4,
+          size: 0.8 + Math.random()*3.5,
+          color: `hsl(${hue}, 100%, ${lum}%)`,
+          trail: Math.random() < 0.4,
+          delay: Math.random() * 0.1
         });
       }
     }
 
+    function initSurfaceSparks(cx, cy, radius) {
+      if (surfaceSparks.length > 30) return;
+      for (let i = 0; i < 3; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        surfaceSparks.push({
+          angle: angle,
+          r: radius,
+          vr: 0.3 + Math.random() * 1.2,
+          life: 0.5 + Math.random() * 0.8,
+          age: 0,
+          size: 1 + Math.random() * 2,
+          hue: 30 + Math.random() * 30
+        });
+      }
+    }
+
+    function drawStarField(time) {
+      bgStars.forEach(s => {
+        const twinkle = 0.5 + 0.5 * Math.sin(time * s.twinkleSpeed + s.x);
+        const alpha = s.brightness * twinkle;
+        ctxE.fillStyle = `rgba(200,210,255,${alpha})`;
+        ctxE.beginPath();
+        ctxE.arc(s.x, s.y, s.r, 0, 2*Math.PI);
+        ctxE.fill();
+      });
+    }
+
+    // Draw a beautiful luminous star with radial gradient and surface shimmer
+    function drawLuminousStar(cx, cy, radius, surfaceTemp, time, shells, isCollapsing, collapseFrac) {
+      if (radius < 1) return;
+      const sc = evoStarColorObj(surfaceTemp);
+      const coreTemp = surfaceTemp * 3;
+      const cc = evoStarColorObj(Math.min(coreTemp, 60000));
+
+      // Outer atmospheric glow
+      const glowR = radius * 1.6;
+      const outerGlow = ctxE.createRadialGradient(cx, cy, radius * 0.8, cx, cy, glowR);
+      outerGlow.addColorStop(0, colorToCSS(sc, 0.3));
+      outerGlow.addColorStop(0.5, colorToCSS(sc, 0.1));
+      outerGlow.addColorStop(1, colorToCSS(sc, 0));
+      ctxE.fillStyle = outerGlow;
+      ctxE.beginPath(); ctxE.arc(cx, cy, glowR, 0, 2*Math.PI); ctxE.fill();
+
+      // Draw shell layers from outside in with gradient fills
+      if (shells && shells.length > 0) {
+        for (let i = shells.length - 1; i >= 0; i--) {
+          const sr = radius * shells[i].f;
+          if (sr < 0.5) continue;
+          const innerR = i > 0 ? radius * shells[Math.max(0,i-1)].f : 0;
+          const col = EC[shells[i].el] || '#888';
+
+          const hr = parseInt(col.slice(1,3),16);
+          const hg = parseInt(col.slice(3,5),16);
+          const hb = parseInt(col.slice(5,7),16);
+
+          const shellGrad = ctxE.createRadialGradient(cx, cy, innerR, cx, cy, sr);
+          shellGrad.addColorStop(0, `rgba(${hr},${hg},${hb},0.5)`);
+          shellGrad.addColorStop(0.7, `rgba(${hr},${hg},${hb},0.3)`);
+          shellGrad.addColorStop(1, `rgba(${hr},${hg},${hb},0.15)`);
+          ctxE.fillStyle = shellGrad;
+          ctxE.beginPath(); ctxE.arc(cx, cy, sr, 0, 2*Math.PI); ctxE.fill();
+
+          // Shell boundary
+          if (sr > 3) {
+            ctxE.strokeStyle = `rgba(${hr},${hg},${hb},0.6)`;
+            ctxE.lineWidth = 1.5;
+            ctxE.beginPath(); ctxE.arc(cx, cy, sr, 0, 2*Math.PI); ctxE.stroke();
+          }
+        }
+      }
+
+      // Core-to-surface luminous gradient overlay
+      const starGrad = ctxE.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      starGrad.addColorStop(0, colorToCSS({r:255,g:255,b:255}, 0.9));
+      starGrad.addColorStop(0.15, colorToCSS(cc, 0.7));
+      starGrad.addColorStop(0.5, colorToCSS(sc, 0.4));
+      starGrad.addColorStop(0.85, colorToCSS(sc, 0.25));
+      starGrad.addColorStop(1, colorToCSS(sc, 0.1));
+      ctxE.fillStyle = starGrad;
+      ctxE.beginPath(); ctxE.arc(cx, cy, radius, 0, 2*Math.PI); ctxE.fill();
+
+      // Surface shimmer / convection effect
+      if (radius > 8 && !isCollapsing) {
+        const numCells = Math.min(Math.floor(radius / 4), 30);
+        for (let i = 0; i < numCells; i++) {
+          const cellAngle = (i / numCells) * 2 * Math.PI + Math.sin(time * 0.8 + i * 1.7) * 0.3;
+          const cellR = radius * (0.75 + 0.2 * Math.sin(time * 1.2 + i * 2.3));
+          const cellX = cx + Math.cos(cellAngle) * cellR;
+          const cellY = cy + Math.sin(cellAngle) * cellR;
+          const cellSize = 2 + (radius / 30) * Math.abs(Math.sin(time * 1.5 + i * 3.1));
+          const cellAlpha = 0.15 + 0.1 * Math.sin(time * 2 + i * 4.7);
+          ctxE.fillStyle = colorToCSS({r:255,g:255,b:220}, cellAlpha);
+          ctxE.beginPath(); ctxE.arc(cellX, cellY, cellSize, 0, 2*Math.PI); ctxE.fill();
+        }
+      }
+
+      // Pulsing glow (subtle breathing)
+      if (radius > 3) {
+        const pulse = 1 + 0.03 * Math.sin(time * 1.5);
+        const pulseGrad = ctxE.createRadialGradient(cx, cy, radius * 0.9 * pulse, cx, cy, radius * 1.15 * pulse);
+        pulseGrad.addColorStop(0, colorToCSS(sc, 0));
+        pulseGrad.addColorStop(0.5, colorToCSS(sc, 0.15));
+        pulseGrad.addColorStop(1, colorToCSS(sc, 0));
+        ctxE.fillStyle = pulseGrad;
+        ctxE.beginPath(); ctxE.arc(cx, cy, radius * 1.15 * pulse, 0, 2*Math.PI); ctxE.fill();
+      }
+
+      // Collapsing vibration effect
+      if (isCollapsing && collapseFrac > 0.3) {
+        const shakeAmt = (collapseFrac - 0.3) * 15;
+        screenShake.intensity = shakeAmt;
+      }
+    }
+
+    // Draw surface sparks for active fusion
+    function drawSurfaceSparks(cx, cy, radius, time, dt) {
+      surfaceSparks = surfaceSparks.filter(s => s.age < s.life);
+      surfaceSparks.forEach(s => {
+        s.age += dt;
+        s.r += s.vr * dt * 60;
+        const x = cx + Math.cos(s.angle) * s.r;
+        const y = cy + Math.sin(s.angle) * s.r;
+        const alpha = Math.max(0, 1 - s.age / s.life);
+        ctxE.fillStyle = `hsla(${s.hue}, 100%, 80%, ${alpha})`;
+        ctxE.beginPath(); ctxE.arc(x, y, s.size * alpha, 0, 2*Math.PI); ctxE.fill();
+      });
+    }
+
+    // Format temperature for display
+    function formatTemp(T) {
+      if (T >= 1e9) return (T / 1e9).toFixed(1) + ' GK';
+      if (T >= 1e6) return (T / 1e6).toFixed(0) + ' MK';
+      return Math.round(T).toLocaleString() + ' K';
+    }
+
+    // Format radius for display
+    function formatRadius(R) {
+      if (R < 0.01) return '~10 km';
+      if (R < 0.1) return (R * 696340).toFixed(0) + ' km';
+      return R.toFixed(2) + ' R\u2609';
+    }
+
     function drawEvo() {
+      const now = performance.now() / 1000;
+      const time = now;
+
       clearCanvas(ctxE, WE, HE);
+
+      // Apply screen shake
+      ctxE.save();
+      if (screenShake.intensity > 0) {
+        const sx = (Math.random() - 0.5) * screenShake.intensity * 2;
+        const sy = (Math.random() - 0.5) * screenShake.intensity * 2;
+        ctxE.translate(sx, sy);
+        screenShake.intensity *= 0.95;
+        if (screenShake.intensity < 0.1) screenShake.intensity = 0;
+      }
+
+      // Deep space background
       ctxE.fillStyle = '#060a10';
-      ctxE.fillRect(0, 0, WE, HE);
+      ctxE.fillRect(-5, -5, WE + 10, HE + 10);
+
+      // Star field
+      drawStarField(time);
 
       const {idx, frac} = getCurrentStage();
       const stage = evoStages[idx];
       const prevStage = idx > 0 ? evoStages[idx-1] : stage;
-      const tFrac = Math.min(frac * 3, 1); // transition in first 1/3 of stage
+      const tFrac = easeInOut(Math.min(frac * 2.5, 1)); // smooth transition
 
-      // Interpolated radius (in canvas pixels)
+      // Interpolated values
       const maxPixR = 150;
       const curR = stage.special === 'supernova' ? 0 : stage.R;
       const prevR = prevStage.special === 'supernova' ? 0 : prevStage.R;
       const maxRval = Math.max(...evoStages.map(s => s.special ? 0 : s.R), 1);
+
       let drawRadius;
       if (stage.special === 'collapse') {
-        // Collapse: star shrinks rapidly at end of stage
-        const collFrac = Math.pow(frac, 0.3); // quick at start
+        const collFrac = Math.pow(frac, 2.5);
         const baseR = prevR / maxRval * maxPixR;
-        drawRadius = baseR * (1 - collFrac * 0.95);
+        drawRadius = baseR * (1 - collFrac * 0.97);
       } else if (stage.special === 'supernova') {
         drawRadius = 0;
       } else {
@@ -12331,209 +12540,538 @@ function initCh15Vis() {
       }
       drawRadius = Math.max(drawRadius, 2);
 
-      const cx = WE * 0.35, cy = HE * 0.42;
+      // Interpolated temperatures
+      const prevTs = prevStage.Ts || stage.Ts;
+      const prevTc = prevStage.Tc || stage.Tc;
+      let curTs, curTc, curRdisp;
+      if (stage.special === 'collapse') {
+        curTs = lerp(prevTs, 50000, Math.pow(frac, 2));
+        curTc = lerp(prevTc, 10e9, frac);
+        curRdisp = lerp(prevStage.R, 0.001, Math.pow(frac, 2.5));
+      } else if (stage.special === 'supernova') {
+        curTs = 50000;
+        curTc = 50e9;
+        curRdisp = 0;
+      } else {
+        curTs = lerp(prevTs, stage.Ts, tFrac);
+        curTc = lerp(prevTc, stage.Tc, tFrac);
+        curRdisp = lerp(prevStage.R || stage.R, stage.R, tFrac);
+      }
 
-      // Draw nebula rings if planetary nebula stage
+      const cx = WE * 0.32, cy = HE * 0.40;
+
+      // ---- PLANETARY NEBULA ----
       if (stage.special === 'nebula') {
-        for (let ring = 0; ring < 3; ring++) {
-          const ringR = drawRadius + (30 + ring * 35) * frac;
-          const alpha = 0.3 * (1 - frac * 0.7) * (1 - ring * 0.25);
-          const colors = ['#4fc3f7','#66bb6a','#ab47bc'];
-          ctxE.strokeStyle = colors[ring];
-          ctxE.globalAlpha = alpha;
-          ctxE.lineWidth = 8 - ring * 2;
-          ctxE.beginPath(); ctxE.arc(cx, cy, ringR, 0, 2*Math.PI); ctxE.stroke();
+        const nebPhase = easeOut(frac);
+        for (let ring = 0; ring < 5; ring++) {
+          const ringDelay = ring * 0.12;
+          const ringFrac = Math.max(0, (frac - ringDelay) / (1 - ringDelay));
+          if (ringFrac <= 0) continue;
+          const ringR = drawRadius + (25 + ring * 30) * easeOut(ringFrac);
+          const alpha = 0.4 * (1 - ringFrac * 0.6) * (1 - ring * 0.15);
+          const colors = ['#4fc3f7','#66bb6a','#ab47bc','#26c6da','#ec407a'];
+          const col = colors[ring % colors.length];
+          const hr = parseInt(col.slice(1,3),16);
+          const hg = parseInt(col.slice(3,5),16);
+          const hb = parseInt(col.slice(5,7),16);
+
+          const ringWidth = (10 - ring) * (1 + ringFrac * 2);
+          const nebGrad = ctxE.createRadialGradient(cx, cy, Math.max(0, ringR - ringWidth), cx, cy, ringR + ringWidth);
+          nebGrad.addColorStop(0, `rgba(${hr},${hg},${hb},0)`);
+          nebGrad.addColorStop(0.3, `rgba(${hr},${hg},${hb},${alpha * 0.5})`);
+          nebGrad.addColorStop(0.5, `rgba(${hr},${hg},${hb},${alpha})`);
+          nebGrad.addColorStop(0.7, `rgba(${hr},${hg},${hb},${alpha * 0.5})`);
+          nebGrad.addColorStop(1, `rgba(${hr},${hg},${hb},0)`);
+          ctxE.fillStyle = nebGrad;
+          ctxE.beginPath(); ctxE.arc(cx, cy, ringR + ringWidth, 0, 2*Math.PI); ctxE.fill();
+
+          // Wispy irregular shape overlay
+          ctxE.globalAlpha = alpha * 0.3;
+          ctxE.strokeStyle = col;
+          ctxE.lineWidth = 2;
+          ctxE.beginPath();
+          for (let a = 0; a <= 2*Math.PI; a += 0.1) {
+            const wobble = 1 + 0.08 * Math.sin(a * 5 + ring * 2 + time * 0.3);
+            const px = cx + Math.cos(a) * ringR * wobble;
+            const py = cy + Math.sin(a) * ringR * wobble;
+            if (a === 0) ctxE.moveTo(px, py); else ctxE.lineTo(px, py);
+          }
+          ctxE.closePath(); ctxE.stroke();
           ctxE.globalAlpha = 1;
         }
       }
 
-      // Draw supernova particles
+      // ---- SUPERNOVA ----
       if (stage.special === 'supernova') {
         if (snParticles.length === 0) initSNParticles();
-        // Flash at beginning
-        if (frac < 0.15) {
-          const flashAlpha = (1 - frac/0.15) * 0.7;
-          ctxE.fillStyle = `rgba(255,255,220,${flashAlpha})`;
-          ctxE.fillRect(0, 0, WE, HE);
+
+        // Bright flash
+        if (frac < 0.2) {
+          const flashFrac = frac / 0.2;
+          const flashAlpha = (1 - flashFrac) * 0.95;
+          const flashGrad = ctxE.createRadialGradient(cx, cy, 0, cx, cy, WE * (0.3 + flashFrac * 0.7));
+          flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
+          flashGrad.addColorStop(0.3, `rgba(255,255,200,${flashAlpha * 0.8})`);
+          flashGrad.addColorStop(0.7, `rgba(255,200,100,${flashAlpha * 0.4})`);
+          flashGrad.addColorStop(1, `rgba(255,100,50,0)`);
+          ctxE.fillStyle = flashGrad;
+          ctxE.fillRect(-5, -5, WE+10, HE+10);
+          screenShake.intensity = (1 - flashFrac) * 12;
         }
+
+        // Expanding shockwave ring
+        if (frac > 0.05) {
+          const swFrac = (frac - 0.05) / 0.95;
+          const swRadius = swFrac * Math.max(WE, HE) * 0.8;
+          const swAlpha = Math.max(0, 0.8 * (1 - swFrac));
+          const swWidth = 3 + swFrac * 15;
+          const swGrad = ctxE.createRadialGradient(cx, cy, Math.max(0, swRadius - swWidth*2), cx, cy, swRadius + swWidth);
+          swGrad.addColorStop(0, `rgba(255,200,100,0)`);
+          swGrad.addColorStop(0.5, `rgba(255,255,200,${swAlpha * 0.6})`);
+          swGrad.addColorStop(0.7, `rgba(255,200,100,${swAlpha})`);
+          swGrad.addColorStop(1, `rgba(255,100,50,0)`);
+          ctxE.fillStyle = swGrad;
+          ctxE.beginPath(); ctxE.arc(cx, cy, swRadius + swWidth, 0, 2*Math.PI); ctxE.fill();
+        }
+
+        // Debris particles
         snParticles.forEach(p => {
-          const px = cx + p.x + p.vx * frac * 80;
-          const py = cy + p.y + p.vy * frac * 80;
-          const alpha = Math.max(0, p.life - frac * 0.8);
+          const pFrac = Math.max(0, frac - p.delay) / (1 - p.delay);
+          if (pFrac <= 0) return;
+          const easedFrac = easeOut(pFrac);
+          const dist = easedFrac * 250;
+          const px = cx + p.vx * dist;
+          const py = cy + p.vy * dist;
+          const alpha = Math.max(0, p.life - pFrac * 0.7);
+          if (alpha <= 0) return;
+
+          if (p.trail && pFrac > 0.05) {
+            const prevDist = easeOut(Math.max(0, pFrac - 0.05)) * 250;
+            const ppx = cx + p.vx * prevDist;
+            const ppy = cy + p.vy * prevDist;
+            ctxE.strokeStyle = p.color;
+            ctxE.globalAlpha = alpha * 0.4;
+            ctxE.lineWidth = p.size * 0.5;
+            ctxE.beginPath(); ctxE.moveTo(ppx, ppy); ctxE.lineTo(px, py); ctxE.stroke();
+          }
+
           ctxE.fillStyle = p.color;
           ctxE.globalAlpha = alpha;
-          ctxE.beginPath(); ctxE.arc(px, py, p.size * (0.5 + frac), 0, 2*Math.PI); ctxE.fill();
+          const pSize = p.size * (0.5 + pFrac * 0.8);
+          ctxE.beginPath(); ctxE.arc(px, py, pSize, 0, 2*Math.PI); ctxE.fill();
+
+          if (p.size > 2 && alpha > 0.3) {
+            ctxE.globalAlpha = alpha * 0.2;
+            ctxE.beginPath(); ctxE.arc(px, py, pSize * 3, 0, 2*Math.PI); ctxE.fill();
+          }
         });
         ctxE.globalAlpha = 1;
-        // Label "BOOM"
-        if (frac < 0.5) {
-          ctxE.fillStyle = `rgba(255,255,200,${1-frac*2})`;
-          ctxE.font = 'bold 28px Inter, system-ui, sans-serif';
+
+        // SUPERNOVA label
+        if (frac < 0.4) {
+          const labelAlpha = frac < 0.1 ? frac / 0.1 : 1 - (frac - 0.1) / 0.3;
+          ctxE.fillStyle = `rgba(255,255,220,${Math.max(0, labelAlpha)})`;
+          ctxE.font = 'bold 32px Inter, system-ui, sans-serif';
           ctxE.textAlign = 'center';
-          ctxE.fillText('SUPERNOVA', cx, cy - 20);
+          ctxE.fillText('SUPERNOVA', cx, cy - 30);
+          ctxE.font = FONT;
+          ctxE.fillText('10\u2074\u2076 J released in seconds', cx, cy);
         }
       }
 
-      // Black hole
+      // ---- BLACK HOLE ----
       if (stage.special === 'blackhole') {
-        // Accretion disk glow
-        const grd = ctxE.createRadialGradient(cx, cy, 2, cx, cy, 40);
-        grd.addColorStop(0, 'rgba(0,0,0,1)');
-        grd.addColorStop(0.3, 'rgba(80,0,120,0.6)');
-        grd.addColorStop(0.6, 'rgba(255,140,0,0.3)');
-        grd.addColorStop(1, 'rgba(255,140,0,0)');
-        ctxE.fillStyle = grd;
-        ctxE.beginPath(); ctxE.arc(cx, cy, 40, 0, 2*Math.PI); ctxE.fill();
-        // Black center
-        ctxE.fillStyle = '#000';
-        ctxE.beginPath(); ctxE.arc(cx, cy, 6, 0, 2*Math.PI); ctxE.fill();
-        ctxE.strokeStyle = 'rgba(255,140,0,0.5)'; ctxE.lineWidth = 1;
-        ctxE.beginPath(); ctxE.arc(cx, cy, 6, 0, 2*Math.PI); ctxE.stroke();
-      }
+        const bhFrac = easeOut(Math.min(frac * 2, 1));
+        const diskR = 20 + bhFrac * 50;
+        const ehR = 6 + bhFrac * 4;
 
-      // Draw star cross-section (not for supernova/blackhole)
-      if (!stage.special || stage.special === 'nebula' || stage.special === 'collapse' || stage.special === 'neutronstar') {
-        const curShells = stage.shells;
-        // Draw from outside in
-        for (let i = curShells.length - 1; i >= 0; i--) {
-          const sr = drawRadius * curShells[i].f;
-          if (sr < 0.5) continue;
-          const col = EC[curShells[i].el] || '#888';
-          // Filled shell
-          ctxE.beginPath(); ctxE.arc(cx, cy, sr, 0, 2*Math.PI);
-          ctxE.fillStyle = col + '35';
-          ctxE.fill();
-          ctxE.strokeStyle = col + 'aa';
-          ctxE.lineWidth = 1.2;
+        ctxE.save();
+        ctxE.translate(cx, cy);
+
+        const diskAngle = time * 0.8;
+        for (let layer = 0; layer < 20; layer++) {
+          const layerR = ehR + (diskR - ehR) * (layer / 20);
+          const layerAngle = diskAngle + layer * 0.15;
+          const layerAlpha = 0.15 * (1 - layer / 20) * bhFrac;
+          const hue = lerp(30, 280, layer / 20);
+          const lum = lerp(80, 40, layer / 20);
+
+          ctxE.globalAlpha = layerAlpha;
+          ctxE.strokeStyle = `hsl(${hue}, 100%, ${lum}%)`;
+          ctxE.lineWidth = 3;
+          ctxE.beginPath();
+          ctxE.ellipse(0, 0, layerR, layerR * 0.35, layerAngle, 0, 2*Math.PI);
           ctxE.stroke();
         }
 
-        // Surface glow
-        if (drawRadius > 3) {
-          const Ts = stage.special === 'collapse' ? lerp(prevStage.Ts || 3600, 50000, frac) : lerp(prevStage.Ts || stage.Ts, stage.Ts, tFrac);
-          const sc = evoStarColor(Ts);
-          const grd = ctxE.createRadialGradient(cx, cy, drawRadius * 0.7, cx, cy, drawRadius * 1.3);
-          grd.addColorStop(0, sc + '00');
-          grd.addColorStop(0.7, sc + '40');
-          grd.addColorStop(1, sc + '00');
-          ctxE.fillStyle = grd;
-          ctxE.beginPath(); ctxE.arc(cx, cy, drawRadius * 1.3, 0, 2*Math.PI); ctxE.fill();
+        // Photon sphere
+        ctxE.globalAlpha = 0.6 * bhFrac;
+        ctxE.strokeStyle = '#fff';
+        ctxE.lineWidth = 1.5;
+        ctxE.beginPath(); ctxE.arc(0, 0, ehR * 1.5, 0, 2*Math.PI); ctxE.stroke();
+
+        // Inner accretion glow
+        const innerGlow = ctxE.createRadialGradient(0, 0, ehR, 0, 0, ehR * 3);
+        innerGlow.addColorStop(0, `rgba(255,200,100,0)`);
+        innerGlow.addColorStop(0.3, `rgba(255,180,80,${0.4 * bhFrac})`);
+        innerGlow.addColorStop(0.6, `rgba(200,100,255,${0.2 * bhFrac})`);
+        innerGlow.addColorStop(1, 'rgba(100,0,200,0)');
+        ctxE.globalAlpha = 1;
+        ctxE.fillStyle = innerGlow;
+        ctxE.beginPath(); ctxE.arc(0, 0, ehR * 3, 0, 2*Math.PI); ctxE.fill();
+
+        // Event horizon
+        ctxE.fillStyle = '#000';
+        ctxE.globalAlpha = 1;
+        ctxE.beginPath(); ctxE.arc(0, 0, ehR, 0, 2*Math.PI); ctxE.fill();
+        ctxE.strokeStyle = `rgba(255,200,150,${0.5 * bhFrac})`;
+        ctxE.lineWidth = 1;
+        ctxE.beginPath(); ctxE.arc(0, 0, ehR, 0, 2*Math.PI); ctxE.stroke();
+
+        ctxE.restore();
+      }
+
+      // ---- NEUTRON STAR with pulsar beams ----
+      if (stage.special === 'neutronstar') {
+        const nsFrac = easeOut(Math.min(frac * 2, 1));
+        const nsR = 14 * nsFrac;
+        pulsarAngle += 0.04;
+
+        // Magnetosphere glow
+        const magGrad = ctxE.createRadialGradient(cx, cy, nsR, cx, cy, nsR * 5);
+        magGrad.addColorStop(0, `rgba(100,200,255,${0.3 * nsFrac})`);
+        magGrad.addColorStop(0.5, `rgba(100,200,255,${0.1 * nsFrac})`);
+        magGrad.addColorStop(1, 'rgba(100,200,255,0)');
+        ctxE.fillStyle = magGrad;
+        ctxE.beginPath(); ctxE.arc(cx, cy, nsR * 5, 0, 2*Math.PI); ctxE.fill();
+
+        // Pulsar beams
+        for (let beam = 0; beam < 2; beam++) {
+          const beamAngle = pulsarAngle + beam * Math.PI;
+          const beamLen = 120 * nsFrac;
+          const beamWidth = 15;
+
+          ctxE.save();
+          ctxE.translate(cx, cy);
+          ctxE.rotate(beamAngle);
+
+          const beamGrad = ctxE.createLinearGradient(0, 0, beamLen, 0);
+          beamGrad.addColorStop(0, `rgba(100,200,255,${0.7 * nsFrac})`);
+          beamGrad.addColorStop(0.3, `rgba(150,220,255,${0.4 * nsFrac})`);
+          beamGrad.addColorStop(1, 'rgba(100,200,255,0)');
+
+          ctxE.fillStyle = beamGrad;
+          ctxE.beginPath();
+          ctxE.moveTo(nsR, -beamWidth * 0.3);
+          ctxE.lineTo(beamLen, -beamWidth);
+          ctxE.lineTo(beamLen, beamWidth);
+          ctxE.lineTo(nsR, beamWidth * 0.3);
+          ctxE.closePath();
+          ctxE.fill();
+
+          const coreGrad = ctxE.createLinearGradient(0, 0, beamLen * 0.6, 0);
+          coreGrad.addColorStop(0, `rgba(220,240,255,${0.5 * nsFrac})`);
+          coreGrad.addColorStop(1, 'rgba(220,240,255,0)');
+          ctxE.fillStyle = coreGrad;
+          ctxE.beginPath();
+          ctxE.moveTo(nsR, -beamWidth * 0.1);
+          ctxE.lineTo(beamLen * 0.6, -beamWidth * 0.3);
+          ctxE.lineTo(beamLen * 0.6, beamWidth * 0.3);
+          ctxE.lineTo(nsR, beamWidth * 0.1);
+          ctxE.closePath();
+          ctxE.fill();
+
+          ctxE.restore();
         }
 
-        // Shell labels (right side of star)
+        // Neutron star body
+        const nsGrad = ctxE.createRadialGradient(cx, cy, 0, cx, cy, nsR);
+        nsGrad.addColorStop(0, `rgba(220,240,255,${0.95 * nsFrac})`);
+        nsGrad.addColorStop(0.5, `rgba(150,200,255,${0.8 * nsFrac})`);
+        nsGrad.addColorStop(0.85, `rgba(100,160,220,${0.7 * nsFrac})`);
+        nsGrad.addColorStop(1, `rgba(80,130,200,${0.5 * nsFrac})`);
+        ctxE.fillStyle = nsGrad;
+        ctxE.beginPath(); ctxE.arc(cx, cy, nsR, 0, 2*Math.PI); ctxE.fill();
+
+        ctxE.strokeStyle = `rgba(180,220,255,${0.6 * nsFrac})`;
+        ctxE.lineWidth = 1.5;
+        ctxE.beginPath(); ctxE.arc(cx, cy, nsR, 0, 2*Math.PI); ctxE.stroke();
+
+        // Magnetic field lines
+        ctxE.globalAlpha = 0.2 * nsFrac;
+        ctxE.strokeStyle = '#6ec6ff';
+        ctxE.lineWidth = 0.8;
+        for (let a = 0; a < 6; a++) {
+          const fieldAngle = pulsarAngle * 0.5 + a * Math.PI / 3;
+          ctxE.beginPath();
+          ctxE.ellipse(cx, cy, 35, 14, fieldAngle, 0, 2*Math.PI);
+          ctxE.stroke();
+        }
+        ctxE.globalAlpha = 1;
+      }
+
+      // ---- NORMAL STAR ----
+      if (!stage.special || stage.special === 'nebula' || stage.special === 'collapse') {
+        const isCollapsing = stage.special === 'collapse';
+        drawLuminousStar(cx, cy, drawRadius, curTs, time, stage.shells, isCollapsing, frac);
+
+        // Surface sparks during active fusion
+        if (!isCollapsing && drawRadius > 10) {
+          if (Math.random() < 0.15) initSurfaceSparks(cx, cy, drawRadius);
+          drawSurfaceSparks(cx, cy, drawRadius, time, 1/60);
+        }
+
+        // Shell labels
         if (drawRadius > 15) {
           ctxE.textAlign = 'left'; ctxE.font = FONT_SM;
           const labeled = new Set();
+          const curShells = stage.shells;
           for (let i = 0; i < curShells.length; i++) {
             const sr = drawRadius * curShells[i].f;
             if (sr < 5 || labeled.has(curShells[i].el)) continue;
             labeled.add(curShells[i].el);
-            const ly = cy - sr + 8 + i * 2;
-            const lx = cx + drawRadius + 15;
-            ctxE.strokeStyle = EC[curShells[i].el] + '60'; ctxE.lineWidth = 0.8;
-            ctxE.beginPath(); ctxE.moveTo(cx + sr*0.7, ly); ctxE.lineTo(lx - 3, ly); ctxE.stroke();
-            ctxE.fillStyle = EC[curShells[i].el];
-            ctxE.fillText(curShells[i].el, lx, ly + 4);
-          }
-        }
 
-        // Neutron star special markings
-        if (stage.special === 'neutronstar') {
-          ctxE.fillStyle = '#90a4ae';
-          ctxE.beginPath(); ctxE.arc(cx, cy, 12, 0, 2*Math.PI); ctxE.fill();
-          ctxE.strokeStyle = '#b0bec5'; ctxE.lineWidth = 1;
-          ctxE.beginPath(); ctxE.arc(cx, cy, 12, 0, 2*Math.PI); ctxE.stroke();
-          // Magnetic field lines
-          ctxE.strokeStyle = 'rgba(100,200,255,0.3)'; ctxE.lineWidth = 1;
-          for (let a = 0; a < 4; a++) {
-            const angle = a * Math.PI / 2 + evoTime * 0.2;
-            ctxE.beginPath();
-            ctxE.ellipse(cx, cy, 30, 12, angle, 0, 2*Math.PI);
-            ctxE.stroke();
+            let labelAlpha = 1;
+            if (stage.name === 'Supergiant (Onion Shells)') {
+              const shellAppearTime = (i / curShells.length) * 0.6;
+              labelAlpha = Math.max(0, Math.min(1, (frac - shellAppearTime) / 0.15));
+            }
+            if (labelAlpha <= 0) continue;
+
+            const ly = cy - sr + 8 + i * 2;
+            const lx = cx + drawRadius + 18;
+
+            ctxE.globalAlpha = labelAlpha * 0.5;
+            ctxE.strokeStyle = EC[curShells[i].el]; ctxE.lineWidth = 0.8;
+            ctxE.setLineDash([3, 3]);
+            ctxE.beginPath(); ctxE.moveTo(cx + sr*0.7, ly); ctxE.lineTo(lx - 3, ly); ctxE.stroke();
+            ctxE.setLineDash([]);
+
+            ctxE.globalAlpha = labelAlpha;
+            ctxE.fillStyle = EC[curShells[i].el];
+            const elName = ELEMENT_NAMES[curShells[i].el] || curShells[i].el;
+            ctxE.fillText(curShells[i].el + ' \u2014 ' + elName, lx, ly + 4);
           }
+          ctxE.globalAlpha = 1;
         }
       }
 
-      // --- Timeline bar ---
-      const tlX = 30, tlY = HE - 45, tlW = WE - 60, tlH = 14;
+      // White dwarf cooling glow
+      if (stage.name === 'White Dwarf') {
+        const coolFrac = frac;
+        const dimming = 1 - coolFrac * 0.4;
+        const wdGlow = ctxE.createRadialGradient(cx, cy, drawRadius, cx, cy, drawRadius * 4);
+        wdGlow.addColorStop(0, `rgba(200,220,255,${0.3 * dimming})`);
+        wdGlow.addColorStop(0.5, `rgba(180,200,240,${0.1 * dimming})`);
+        wdGlow.addColorStop(1, 'rgba(150,170,220,0)');
+        ctxE.fillStyle = wdGlow;
+        ctxE.beginPath(); ctxE.arc(cx, cy, drawRadius * 4, 0, 2*Math.PI); ctxE.fill();
+      }
+
+      // ---- TIMELINE BAR ----
+      const tlX = 30, tlY = HE - 48, tlW = WE - 60, tlH = 12;
       const totalDur = evoTotalDur();
+
+      // Background track
+      ctxE.fillStyle = 'rgba(255,255,255,0.04)';
+      const tlR = 6;
+      ctxE.beginPath();
+      ctxE.moveTo(tlX + tlR, tlY);
+      ctxE.lineTo(tlX + tlW - tlR, tlY);
+      ctxE.quadraticCurveTo(tlX + tlW, tlY, tlX + tlW, tlY + tlR);
+      ctxE.lineTo(tlX + tlW, tlY + tlH - tlR);
+      ctxE.quadraticCurveTo(tlX + tlW, tlY + tlH, tlX + tlW - tlR, tlY + tlH);
+      ctxE.lineTo(tlX + tlR, tlY + tlH);
+      ctxE.quadraticCurveTo(tlX, tlY + tlH, tlX, tlY + tlH - tlR);
+      ctxE.lineTo(tlX, tlY + tlR);
+      ctxE.quadraticCurveTo(tlX, tlY, tlX + tlR, tlY);
+      ctxE.closePath();
+      ctxE.fill();
+
+      // Colored stage segments
       let tAccum = 0;
       for (let i = 0; i < evoStages.length; i++) {
         const x0 = tlX + (tAccum / totalDur) * tlW;
         const w = (evoStages[i].dur / totalDur) * tlW;
         tAccum += evoStages[i].dur;
         const isCurrent = i === idx;
-        // Bar segment
-        const segColor = isCurrent ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)';
-        ctxE.fillStyle = segColor;
+        const isPast = i < idx;
+
+        const segCol = STAGE_COLORS[evoStages[i].name] || '#888';
+        const hr = parseInt(segCol.slice(1,3),16);
+        const hg = parseInt(segCol.slice(3,5),16);
+        const hb = parseInt(segCol.slice(5,7),16);
+
+        if (isPast) {
+          ctxE.fillStyle = `rgba(${hr},${hg},${hb},0.35)`;
+        } else if (isCurrent) {
+          const stageProgress = frac;
+          ctxE.fillStyle = `rgba(${hr},${hg},${hb},0.15)`;
+          ctxE.fillRect(x0, tlY, w, tlH);
+          ctxE.fillStyle = `rgba(${hr},${hg},${hb},0.45)`;
+          ctxE.fillRect(x0, tlY, w * stageProgress, tlH);
+          if (i > 0) {
+            ctxE.strokeStyle = 'rgba(255,255,255,0.15)'; ctxE.lineWidth = 1;
+            ctxE.beginPath(); ctxE.moveTo(x0, tlY); ctxE.lineTo(x0, tlY + tlH); ctxE.stroke();
+          }
+          continue;
+        } else {
+          ctxE.fillStyle = `rgba(${hr},${hg},${hb},0.1)`;
+        }
         ctxE.fillRect(x0, tlY, w, tlH);
-        ctxE.strokeStyle = 'rgba(255,255,255,0.15)'; ctxE.lineWidth = 1;
-        ctxE.strokeRect(x0, tlY, w, tlH);
-        // Stage name below
-        ctxE.fillStyle = isCurrent ? COLORS.text : COLORS.textDim;
-        ctxE.font = '9px Inter, system-ui, sans-serif'; ctxE.textAlign = 'center';
-        const label = evoStages[i].name.length > 12 ? evoStages[i].name.substring(0,11)+'…' : evoStages[i].name;
-        ctxE.fillText(label, x0 + w/2, tlY + tlH + 12);
+
+        if (i > 0) {
+          ctxE.strokeStyle = 'rgba(255,255,255,0.15)'; ctxE.lineWidth = 1;
+          ctxE.beginPath(); ctxE.moveTo(x0, tlY); ctxE.lineTo(x0, tlY + tlH); ctxE.stroke();
+        }
       }
+
+      // Stage labels below timeline
+      tAccum = 0;
+      for (let i = 0; i < evoStages.length; i++) {
+        const x0 = tlX + (tAccum / totalDur) * tlW;
+        const w = (evoStages[i].dur / totalDur) * tlW;
+        tAccum += evoStages[i].dur;
+        const isCurrent = i === idx;
+        ctxE.fillStyle = isCurrent ? COLORS.text : COLORS.textDim;
+        ctxE.font = '8px Inter, system-ui, sans-serif'; ctxE.textAlign = 'center';
+        let label = evoStages[i].name;
+        if (w < 50) label = label.length > 8 ? label.substring(0,7)+'\u2026' : label;
+        else if (w < 80) label = label.length > 12 ? label.substring(0,11)+'\u2026' : label;
+        ctxE.fillText(label, x0 + w/2, tlY + tlH + 11);
+      }
+
       // Progress marker
       const progX = tlX + (evoTime / totalDur) * tlW;
+      const progGlow = ctxE.createRadialGradient(progX, tlY + tlH/2, 0, progX, tlY + tlH/2, 8);
+      progGlow.addColorStop(0, 'rgba(255,255,255,0.8)');
+      progGlow.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+      progGlow.addColorStop(1, 'rgba(255,255,255,0)');
+      ctxE.fillStyle = progGlow;
+      ctxE.fillRect(progX - 8, tlY + tlH/2 - 8, 16, 16);
       ctxE.fillStyle = '#fff';
-      ctxE.beginPath(); ctxE.moveTo(progX, tlY); ctxE.lineTo(progX-4, tlY-6); ctxE.lineTo(progX+4, tlY-6); ctxE.closePath(); ctxE.fill();
+      ctxE.beginPath(); ctxE.arc(progX, tlY + tlH/2, 3, 0, 2*Math.PI); ctxE.fill();
+      ctxE.beginPath(); ctxE.moveTo(progX, tlY - 1); ctxE.lineTo(progX-4, tlY-7); ctxE.lineTo(progX+4, tlY-7); ctxE.closePath(); ctxE.fill();
 
-      // --- Info panel (top right) ---
-      const ipX = WE * 0.62, ipY = 25;
+      // ---- INFO PANEL ----
+      const ipX = WE * 0.58, ipY = 20;
+
       ctxE.textAlign = 'left';
-      ctxE.fillStyle = COLORS.text; ctxE.font = '16px Inter, system-ui, sans-serif';
-      ctxE.fillText(stage.name, ipX, ipY);
-      ctxE.fillStyle = COLORS.textDim; ctxE.font = FONT;
-      ctxE.fillText(stage.desc, ipX, ipY + 22);
+      ctxE.fillStyle = COLORS.text;
+      ctxE.font = 'bold 18px Inter, system-ui, sans-serif';
+      ctxE.fillText(stage.name, ipX, ipY + 5);
 
-      // Legend
+      ctxE.fillStyle = COLORS.textDim;
+      ctxE.font = FONT_SM;
+      const descWords = stage.desc.split(' ');
+      let descLine = '';
+      let descY = ipY + 24;
+      descWords.forEach(word => {
+        const testLine = descLine + (descLine ? ' ' : '') + word;
+        if (ctxE.measureText(testLine).width > WE - ipX - 15) {
+          ctxE.fillText(descLine, ipX, descY);
+          descLine = word;
+          descY += 14;
+        } else {
+          descLine = testLine;
+        }
+      });
+      if (descLine) { ctxE.fillText(descLine, ipX, descY); descY += 14; }
+
+      // Physical parameters
+      descY += 6;
+      ctxE.fillStyle = 'rgba(255,255,255,0.3)';
+      ctxE.fillRect(ipX, descY, WE - ipX - 20, 1);
+      descY += 12;
+
+      if (!stage.special || stage.special === 'nebula' || stage.special === 'collapse') {
+        ctxE.font = FONT_SM;
+        ctxE.fillStyle = COLORS.yellow;
+        ctxE.fillText('Surface: ', ipX, descY);
+        ctxE.fillStyle = COLORS.text;
+        ctxE.fillText(formatTemp(curTs), ipX + 52, descY);
+        descY += 16;
+
+        ctxE.fillStyle = COLORS.orange;
+        ctxE.fillText('Core: ', ipX, descY);
+        ctxE.fillStyle = COLORS.text;
+        ctxE.fillText(formatTemp(curTc), ipX + 52, descY);
+        descY += 16;
+
+        ctxE.fillStyle = COLORS.cyan;
+        ctxE.fillText('Radius: ', ipX, descY);
+        ctxE.fillStyle = COLORS.text;
+        ctxE.fillText(formatRadius(curRdisp), ipX + 52, descY);
+        descY += 20;
+      }
+
+      // Composition legend
       const legendEls = [...new Set(stage.shells.map(s => s.el))];
       if (legendEls.length > 0) {
         ctxE.fillStyle = 'rgba(255,255,255,0.5)'; ctxE.font = FONT_SM;
-        ctxE.fillText('Composition:', ipX, ipY + 50);
-        legendEls.forEach((el, i) => {
-          const ly = ipY + 68 + i * 18;
-          ctxE.fillStyle = EC[el]; ctxE.fillRect(ipX, ly, 10, 10);
+        ctxE.fillText('Composition:', ipX, descY);
+        descY += 16;
+        legendEls.forEach((el) => {
+          const col = EC[el];
+          ctxE.fillStyle = col;
+          ctxE.beginPath(); ctxE.arc(ipX + 5, descY - 3, 4, 0, 2*Math.PI); ctxE.fill();
           ctxE.fillStyle = COLORS.text; ctxE.font = FONT_SM;
-          const names = {H:'Hydrogen', He:'Helium', C:'Carbon/Oxygen', Ne:'Neon', O:'Oxygen', Si:'Silicon', Fe:'Iron', n:'Neutrons'};
-          ctxE.fillText(names[el] || el, ipX + 15, ly + 9);
+          ctxE.fillText(ELEMENT_NAMES[el] || el, ipX + 14, descY);
+          descY += 15;
         });
       }
 
-      // Special info
+      // Special info for remnants
       if (stage.special === 'blackhole') {
-        ctxE.fillStyle = '#ab47bc'; ctxE.font = FONT;
-        ctxE.fillText('Event horizon radius:', ipX, ipY + 55);
+        ctxE.fillStyle = '#ce93d8'; ctxE.font = FONT;
+        ctxE.fillText('Event horizon:', ipX, descY);
+        descY += 16;
         const M = parseFloat(evoMassSlider?.value || 1);
         const rSch = (2 * 6.674e-11 * M * 2e30 / 9e16 / 1000).toFixed(1);
-        ctxE.fillText('r_s ≈ ' + rSch + ' km', ipX, ipY + 73);
+        ctxE.fillStyle = COLORS.text;
+        ctxE.fillText('r\u209B \u2248 ' + rSch + ' km', ipX, descY);
+        descY += 16;
+        ctxE.fillStyle = COLORS.textDim; ctxE.font = FONT_SM;
+        ctxE.fillText('No light escapes', ipX, descY);
       }
       if (stage.special === 'neutronstar') {
         ctxE.fillStyle = '#4fc3f7'; ctxE.font = FONT;
-        ctxE.fillText('Radius ≈ 10 km', ipX, ipY + 55);
-        ctxE.fillText('Density ≈ 4×10¹⁷ kg/m³', ipX, ipY + 73);
+        ctxE.fillText('Radius \u2248 10 km', ipX, descY);
+        descY += 16;
+        ctxE.fillText('Density \u2248 4\u00D710\u00B9\u2077 kg/m\u00B3', ipX, descY);
+        descY += 16;
+        ctxE.fillStyle = COLORS.textDim; ctxE.font = FONT_SM;
+        ctxE.fillText('Spin: ~700 rev/s', ipX, descY);
       }
 
-      // Update label
       if (evoStageLabel) evoStageLabel.textContent = stage.name;
+
+      ctxE.restore();
     }
 
-    function evoAnimate() {
+    let lastRafTime = 0;
+    function evoAnimate(rafTime) {
       if (!evoPlaying) return;
-      evoTime += 0.025;
-      if (evoTime >= evoTotalDur()) { evoTime = evoTotalDur() - 0.001; evoPlaying = false; evoPlayBtn.textContent = '▶ Play'; }
+      if (lastRafTime === 0) lastRafTime = rafTime;
+      const dt = Math.min((rafTime - lastRafTime) / 1000, 0.1);
+      lastRafTime = rafTime;
+      evoTime += dt;
+      if (evoTime >= evoTotalDur()) {
+        evoTime = evoTotalDur() - 0.001;
+        evoPlaying = false;
+        evoPlayBtn.textContent = '\u25B6 Play';
+      }
       drawEvo();
       if (evoPlaying) activeAnimations['stellar-evo'] = requestAnimationFrame(evoAnimate);
     }
 
     evoPlayBtn?.addEventListener('click', () => {
       evoPlaying = !evoPlaying;
-      evoPlayBtn.textContent = evoPlaying ? '⏸ Pause' : '▶ Play';
+      evoPlayBtn.textContent = evoPlaying ? '\u23F8 Pause' : '\u25B6 Play';
       if (evoPlaying) {
-        if (evoTime >= evoTotalDur() - 0.01) { evoTime = 0; snParticles = []; }
-        evoAnimate();
+        if (evoTime >= evoTotalDur() - 0.01) { evoTime = 0; snParticles = []; surfaceSparks = []; }
+        lastRafTime = 0;
+        activeAnimations['stellar-evo'] = requestAnimationFrame(evoAnimate);
       } else if (activeAnimations['stellar-evo']) {
         cancelAnimationFrame(activeAnimations['stellar-evo']);
       }
@@ -12541,9 +13079,10 @@ function initCh15Vis() {
 
     evoResetBtn?.addEventListener('click', () => {
       evoPlaying = false;
-      evoPlayBtn.textContent = '▶ Play';
+      evoPlayBtn.textContent = '\u25B6 Play';
       if (activeAnimations['stellar-evo']) cancelAnimationFrame(activeAnimations['stellar-evo']);
-      evoTime = 0; snParticles = [];
+      evoTime = 0; snParticles = []; surfaceSparks = [];
+      screenShake.intensity = 0; pulsarAngle = 0;
       drawEvo();
     });
 
@@ -12551,8 +13090,9 @@ function initCh15Vis() {
       const M = parseFloat(evoMassSlider.value);
       document.getElementById('evo-mass-val')?.replaceChildren(document.createTextNode(M.toFixed(1)));
       evoStages = getStages(M);
-      evoTime = 0; snParticles = []; evoPlaying = false;
-      evoPlayBtn.textContent = '▶ Play';
+      evoTime = 0; snParticles = []; surfaceSparks = []; evoPlaying = false;
+      evoPlayBtn.textContent = '\u25B6 Play';
+      screenShake.intensity = 0; pulsarAngle = 0;
       if (activeAnimations['stellar-evo']) cancelAnimationFrame(activeAnimations['stellar-evo']);
       drawEvo();
     });
@@ -12569,7 +13109,6 @@ function initCh15Vis() {
     const zoomSlider = document.getElementById('size-zoom');
     const zoomLabel = document.getElementById('size-zoom-label');
 
-    // Real stellar radii in solar radii
     const stars = [
       {name:'UY Scuti',   R:1708, T:3365, type:'M4Ia',   cat:'Hypergiant'},
       {name:'Betelgeuse', R:887,  T:3600, type:'M1Ia',   cat:'Supergiant'},
@@ -12583,220 +13122,423 @@ function initCh15Vis() {
       {name:'α Cen B',    R:0.86, T:5260, type:'K1V',    cat:'Main Seq.'},
       {name:'Proxima Cen',R:0.15, T:3042, type:'M5V',    cat:'Red Dwarf'},
     ];
-    const earthR = 0.009; // R_earth / R_sun
+    const earthR = 0.009;
 
-    function sizeStarColor(T) {
-      if (T > 20000) return [0.62,0.72,1.0];
-      if (T > 10000) return [0.79,0.84,1.0];
-      if (T > 7500) return [0.97,0.97,1.0];
-      if (T > 6000) return [1.0,0.96,0.91];
-      if (T > 5000) return [1.0,0.87,0.68];
-      if (T > 4000) return [1.0,0.73,0.44];
-      if (T > 3300) return [1.0,0.60,0.30];
-      return [1.0,0.45,0.20];
+    // --- Star color from temperature ---
+    function tempToRGB(T) {
+      let r, g, b;
+      if (T >= 30000) { r = 0.58; g = 0.68; b = 1.0; }
+      else if (T >= 20000) { const t = (T-20000)/10000; r = 0.58+0.14*(1-t); g = 0.68+0.10*(1-t); b = 1.0; }
+      else if (T >= 10000) { const t = (T-10000)/10000; r = 0.72+0.25*(1-t); g = 0.78+0.17*(1-t); b = 1.0; }
+      else if (T >= 7500)  { const t = (T-7500)/2500;  r = 0.97-0.12*t; g = 0.95-0.05*t; b = 1.0; }
+      else if (T >= 6000)  { const t = (T-6000)/1500;  r = 1.0; g = 0.97-0.02*(1-t); b = 1.0-0.10*(1-t); }
+      else if (T >= 5000)  { const t = (T-5000)/1000;  r = 1.0; g = 0.87+0.10*t; b = 0.72+0.18*t; }
+      else if (T >= 4000)  { const t = (T-4000)/1000;  r = 1.0; g = 0.72+0.15*t; b = 0.42+0.30*t; }
+      else if (T >= 3000)  { const t = (T-3000)/1000;  r = 1.0; g = 0.55+0.17*t; b = 0.22+0.20*t; }
+      else { r = 1.0; g = 0.45; b = 0.18; }
+      return [r, g, b];
     }
 
-    // Zoom: logarithmic scale from showing UY Scuti to showing Earth
-    // At zoom=0: UY Scuti fills ~60% of canvas height → scale = 0.6*HS/(2*1708) ≈ 0.084 px/Rsun
-    // At zoom=100: Proxima Cen is ~30px → scale = 30/0.15 = 200 px/Rsun
-    const scaleMin = 0.6 * HS / (2 * 1708);
-    const scaleMax = 200;
+    // --- Camera system ---
+    // Scale = pixels per solar radius. Logarithmic zoom.
+    // At zoom=0: UY Scuti radius ~ 0.14 * HS → see its full disc
+    const scaleMin = (HS * 0.14) / 1708;
+    // At zoom=100: Earth ~ 4px radius
+    const scaleMax = 4.0 / earthR;
 
     function getScale(z) {
       return Math.exp(Math.log(scaleMin) + (z / 100) * (Math.log(scaleMax) - Math.log(scaleMin)));
     }
 
-    let hoverIdx = -1;
-
-    cSizes.addEventListener('mousemove', e => {
-      const rect = cSizes.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) * (WS / rect.width);
-      const my = (e.clientY - rect.top) * (HS / rect.height);
-      const z = parseFloat(zoomSlider?.value || 30);
-      const scale = getScale(z);
-      const baseline = HS * 0.88;
-
-      let closest = -1, minD = 30;
-      stars.forEach((s, i) => {
-        const rPx = s.R * scale;
-        if (rPx < 0.3) return;
-        const sx = getStarX(i, scale);
-        const sy = baseline - rPx;
-        const d = Math.hypot(mx - sx, my - Math.min(sy, baseline));
-        if (d < Math.max(rPx, 20) && d < minD + rPx) { closest = i; minD = d; }
-      });
-      if (closest !== hoverIdx) { hoverIdx = closest; drawSizes(); }
-      cSizes.style.cursor = closest >= 0 ? 'pointer' : 'default';
-    });
-
-    cSizes.addEventListener('mouseleave', () => { hoverIdx = -1; drawSizes(); });
-
-    // Scroll wheel zoom
-    cSizes.addEventListener('wheel', e => {
-      e.preventDefault();
-      let z = parseFloat(zoomSlider?.value || 30);
-      z -= e.deltaY * 0.08;
-      z = Math.max(0, Math.min(100, z));
-      if (zoomSlider) zoomSlider.value = z;
-      drawSizes();
-    }, {passive: false});
-
-    function getStarX(i, scale) {
-      // Distribute stars evenly across the canvas width
-      const margin = 40;
-      // Only show stars that are at least barely visible
-      const visible = stars.filter(s => s.R * scale >= 0.3);
-      const vi = visible.indexOf(stars[i]);
-      if (vi < 0) return -1000;
-      const spacing = (WS - 2 * margin) / (visible.length);
-      return margin + spacing * (vi + 0.5);
+    // Place stars along a horizontal line in world-space (units: R_sun).
+    // Each star's center x = cumulative spacing so they don't overlap at any zoom.
+    // We space them so centers are separated by sum of radii * 1.3 for breathing room.
+    const worldX = [];
+    const worldY = 0; // all stars at y=0 in world space (center of canvas)
+    {
+      let cx = 0;
+      for (let i = 0; i < stars.length; i++) {
+        if (i === 0) { cx = 0; }
+        else { cx += (stars[i-1].R + stars[i].R) * 1.4; }
+        worldX.push(cx);
+      }
     }
 
+    // Camera tracks: as zoom changes, auto-pan to the most interesting region.
+    // We define "focus targets" — the star index that should be centered at various zoom levels.
+    function getCameraX(z, scale) {
+      // Find the star whose pixel radius is closest to the "sweet spot" (20-40% of canvas height)
+      const sweet = HS * 0.30;
+      let bestIdx = 0, bestDist = Infinity;
+      for (let i = 0; i < stars.length; i++) {
+        const rPx = stars[i].R * scale;
+        const d = Math.abs(Math.log(rPx) - Math.log(sweet));
+        if (d < bestDist) { bestDist = d; bestIdx = i; }
+      }
+      // Also blend toward the next star for smooth panning
+      let blendIdx = bestIdx;
+      if (bestIdx < stars.length - 1) {
+        const rCur = stars[bestIdx].R * scale;
+        const rNext = stars[bestIdx+1].R * scale;
+        if (rCur > sweet && rNext < sweet) {
+          const t = (Math.log(rCur) - Math.log(sweet)) / (Math.log(rCur) - Math.log(rNext));
+          return worldX[bestIdx] * (1 - t) + worldX[bestIdx + 1] * t;
+        }
+      }
+      return worldX[bestIdx];
+    }
+
+    // --- Background star field (static random) ---
+    const bgStars = [];
+    {
+      const rng = (s) => { s = Math.sin(s) * 43758.5453; return s - Math.floor(s); };
+      for (let i = 0; i < 200; i++) {
+        bgStars.push({
+          x: rng(i * 7.3 + 1.1) * WS,
+          y: rng(i * 13.7 + 3.3) * HS,
+          brightness: 0.15 + rng(i * 3.1 + 9.9) * 0.55,
+          size: 0.5 + rng(i * 5.7 + 2.2) * 1.0
+        });
+      }
+    }
+
+    let hoverStar = -1;
+    let mouseX = -1, mouseY = -1;
+
+    // --- Convert world coordinate to screen coordinate ---
+    function worldToScreen(wx, wy, camX, scale) {
+      const sx = WS / 2 + (wx - camX) * scale;
+      const sy = HS / 2 - wy * scale;
+      return [sx, sy];
+    }
+
+    // --- Draw a luminous star sphere ---
+    function drawStar(s, sx, sy, rPx, isHover) {
+      const [cr, cg, cb] = tempToRGB(s.T);
+      const r255 = Math.round(cr * 255), g255 = Math.round(cg * 255), b255 = Math.round(cb * 255);
+
+      // Outer glow
+      const glowR = Math.min(rPx * 2.5, rPx + 60);
+      if (glowR > 2) {
+        const glow = ctxS.createRadialGradient(sx, sy, rPx * 0.3, sx, sy, glowR);
+        glow.addColorStop(0, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.30)');
+        glow.addColorStop(0.4, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.10)');
+        glow.addColorStop(1, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0)');
+        ctxS.fillStyle = glow;
+        ctxS.beginPath(); ctxS.arc(sx, sy, glowR, 0, 2 * Math.PI); ctxS.fill();
+      }
+
+      // Star body with radial gradient (bright center → colored limb)
+      const bodyR = Math.max(rPx, 1.2);
+      const grad = ctxS.createRadialGradient(sx - bodyR * 0.25, sy - bodyR * 0.25, bodyR * 0.05, sx, sy, bodyR);
+      grad.addColorStop(0, 'rgba(255,255,255,0.97)');
+      grad.addColorStop(0.25, 'rgba(' + Math.min(255, r255 + 40) + ',' + Math.min(255, g255 + 40) + ',' + Math.min(255, b255 + 40) + ',0.95)');
+      grad.addColorStop(0.75, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.90)');
+      // Limb darkening
+      const dr = Math.max(0, r255 - 50), dg = Math.max(0, g255 - 50), db = Math.max(0, b255 - 50);
+      grad.addColorStop(1, 'rgba(' + dr + ',' + dg + ',' + db + ',0.85)');
+      ctxS.fillStyle = grad;
+      ctxS.beginPath(); ctxS.arc(sx, sy, bodyR, 0, 2 * Math.PI); ctxS.fill();
+
+      // Highlight for 3D effect
+      if (bodyR > 5) {
+        const hlGrad = ctxS.createRadialGradient(sx - bodyR * 0.3, sy - bodyR * 0.3, 0, sx - bodyR * 0.3, sy - bodyR * 0.3, bodyR * 0.6);
+        hlGrad.addColorStop(0, 'rgba(255,255,255,0.20)');
+        hlGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctxS.fillStyle = hlGrad;
+        ctxS.beginPath(); ctxS.arc(sx, sy, bodyR, 0, 2 * Math.PI); ctxS.fill();
+      }
+
+      // Hover ring
+      if (isHover && bodyR > 2) {
+        ctxS.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctxS.lineWidth = 1.5;
+        ctxS.beginPath(); ctxS.arc(sx, sy, bodyR + 4, 0, 2 * Math.PI); ctxS.stroke();
+      }
+    }
+
+    // --- Draw a star as a curved horizon (when it's too huge to fit) ---
+    function drawHorizon(s, sx, sy, rPx, camX, scale) {
+      const [cr, cg, cb] = tempToRGB(s.T);
+      const r255 = Math.round(cr * 255), g255 = Math.round(cg * 255), b255 = Math.round(cb * 255);
+
+      // The star center is at (sx, sy). rPx is the radius in pixels.
+      // We draw the visible arc of its upper edge.
+      // Compute the angular extent visible on screen.
+      const dy = sy - 0; // distance from star center to top of canvas
+      const halfAngle = Math.asin(Math.min(1, (WS / 2 + 100) / rPx));
+
+      // Surface glow gradient from bottom
+      const gradH = HS * 0.6;
+      const surfY = sy - rPx; // top of star in screen coords
+      const visibleSurfY = Math.max(surfY, -100);
+      const glowGrad = ctxS.createLinearGradient(0, HS, 0, Math.max(visibleSurfY, 0));
+      glowGrad.addColorStop(0, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.12)');
+      glowGrad.addColorStop(0.5, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.06)');
+      glowGrad.addColorStop(1, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0)');
+      ctxS.fillStyle = glowGrad;
+      ctxS.fillRect(0, Math.max(visibleSurfY, 0), WS, HS - Math.max(visibleSurfY, 0));
+
+      // Draw the arc of the star's surface
+      // The center is at (sx, sy), we draw a clipped arc
+      ctxS.save();
+      ctxS.beginPath();
+      ctxS.rect(0, 0, WS, HS);
+      ctxS.clip();
+
+      // Radial gradient for the star body
+      const bodyGrad = ctxS.createRadialGradient(sx, sy, rPx * 0.85, sx, sy, rPx * 1.02);
+      bodyGrad.addColorStop(0, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.15)');
+      bodyGrad.addColorStop(0.6, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.25)');
+      bodyGrad.addColorStop(0.9, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.50)');
+      bodyGrad.addColorStop(1, 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0)');
+      ctxS.fillStyle = bodyGrad;
+      ctxS.beginPath(); ctxS.arc(sx, sy, rPx * 1.02, 0, 2 * Math.PI); ctxS.fill();
+
+      // Bright limb line
+      ctxS.strokeStyle = 'rgba(' + r255 + ',' + g255 + ',' + b255 + ',0.7)';
+      ctxS.lineWidth = 2;
+      ctxS.beginPath(); ctxS.arc(sx, sy, rPx, 0, 2 * Math.PI); ctxS.stroke();
+
+      ctxS.restore();
+    }
+
+    // --- Draw Earth ---
+    function drawEarth(sx, sy, rPx) {
+      const er = Math.max(rPx, 1.2);
+      // Blue body
+      const eg = ctxS.createRadialGradient(sx - er * 0.2, sy - er * 0.2, er * 0.1, sx, sy, er);
+      eg.addColorStop(0, '#7ec8e3');
+      eg.addColorStop(0.5, '#4a90d9');
+      eg.addColorStop(1, '#2c5f8a');
+      ctxS.fillStyle = eg;
+      ctxS.beginPath(); ctxS.arc(sx, sy, er, 0, 2 * Math.PI); ctxS.fill();
+      // Green patches
+      if (er > 4) {
+        ctxS.fillStyle = 'rgba(92,184,92,0.5)';
+        ctxS.beginPath(); ctxS.arc(sx - er * 0.25, sy - er * 0.15, er * 0.35, 0, 2 * Math.PI); ctxS.fill();
+        ctxS.beginPath(); ctxS.arc(sx + er * 0.30, sy + er * 0.10, er * 0.25, 0, 2 * Math.PI); ctxS.fill();
+      }
+    }
+
+    // --- Main draw ---
     function drawSizes() {
+      const z = parseFloat(zoomSlider?.value || 30);
+      const scale = getScale(z);
+      const camX = getCameraX(z, scale);
+
+      // Background
       ctxS.fillStyle = '#060a10';
       ctxS.fillRect(0, 0, WS, HS);
 
-      const z = parseFloat(zoomSlider?.value || 30);
-      const scale = getScale(z);
-      const baseline = HS * 0.88;
+      // Background star field
+      for (const bs of bgStars) {
+        ctxS.fillStyle = 'rgba(255,255,255,' + (bs.brightness * 0.7) + ')';
+        ctxS.fillRect(bs.x, bs.y, bs.size, bs.size);
+      }
 
-      // Baseline
-      ctxS.strokeStyle = 'rgba(255,255,255,0.1)'; ctxS.lineWidth = 1;
-      ctxS.beginPath(); ctxS.moveTo(0, baseline); ctxS.lineTo(WS, baseline); ctxS.stroke();
+      // Determine which stars are horizon-scale, visible, or too small
+      const horizonStars = [];
+      const visibleStars = [];
+      const tinyStars = [];
 
-      // Scale bar
-      let scaleBarR = 1; // 1 R_sun
-      let scaleBarLabel = '1 R☉';
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+        const rPx = s.R * scale;
+        const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
+
+        if (rPx > HS * 1.2) {
+          horizonStars.push({s, i, sx, sy, rPx});
+        } else if (rPx >= 0.8) {
+          visibleStars.push({s, i, sx, sy, rPx});
+        } else {
+          tinyStars.push({s, i, sx, sy, rPx});
+        }
+      }
+
+      // Draw horizon stars (back to front = largest first)
+      horizonStars.sort((a, b) => b.rPx - a.rPx);
+      for (const h of horizonStars) {
+        drawHorizon(h.s, h.sx, h.sy, h.rPx, camX, scale);
+        // Label near the visible surface
+        const [cr, cg, cb] = tempToRGB(h.s.T);
+        const col = 'rgb(' + Math.round(cr*255) + ',' + Math.round(cg*255) + ',' + Math.round(cb*255) + ')';
+        const surfaceY = h.sy - h.rPx;
+        const labelY = Math.max(surfaceY + 25, 30);
+        if (labelY < HS - 20) {
+          ctxS.fillStyle = col; ctxS.font = FONT; ctxS.textAlign = 'center';
+          ctxS.fillText(h.s.name + ' (surface)', Math.max(80, Math.min(WS - 80, h.sx)), labelY);
+          ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
+          ctxS.fillText(h.s.R + ' R\u2609 \u00b7 ' + h.s.type + ' \u00b7 ' + h.s.cat, Math.max(80, Math.min(WS - 80, h.sx)), labelY + 16);
+        }
+      }
+
+      // Draw visible stars (back to front = largest first so small ones draw on top)
+      visibleStars.sort((a, b) => b.rPx - a.rPx);
+      for (const v of visibleStars) {
+        // Skip if way off screen
+        if (v.sx + v.rPx < -50 || v.sx - v.rPx > WS + 50) continue;
+        if (v.sy + v.rPx < -50 || v.sy - v.rPx > HS + 50) continue;
+
+        const isHover = hoverStar === v.i;
+        drawStar(v.s, v.sx, v.sy, v.rPx, isHover);
+
+        // Labels
+        const labelAbove = v.sy - v.rPx - 10;
+        if (labelAbove > 8 && v.sx > -30 && v.sx < WS + 30) {
+          ctxS.textAlign = 'center';
+          ctxS.fillStyle = isHover ? '#fff' : 'rgba(255,255,255,0.82)';
+          ctxS.font = (isHover || v.rPx > 15) ? FONT : FONT_SM;
+          ctxS.fillText(v.s.name, v.sx, labelAbove);
+          if (v.rPx > 6 || isHover) {
+            ctxS.fillStyle = COLORS.textDim; ctxS.font = '10px Inter, system-ui, sans-serif';
+            ctxS.fillText(v.s.R + ' R\u2609 \u00b7 ' + v.s.type, v.sx, labelAbove + 13);
+          }
+        }
+      }
+
+      // Draw Earth next to Sun if Sun is big enough
+      const sunIdx = stars.findIndex(s => s.name === 'Sun');
+      const sunRPx = stars[sunIdx].R * scale;
+      if (sunRPx > 6) {
+        const [sunSX, sunSY] = worldToScreen(worldX[sunIdx], worldY, camX, scale);
+        const earthPx = earthR * scale;
+        const esx = sunSX + sunRPx + Math.max(earthPx, 2) + 5;
+        const esy = sunSY;
+        if (esx > 0 && esx < WS + 20) {
+          drawEarth(esx, esy, earthPx);
+          ctxS.fillStyle = '#7ec8e3'; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
+          const eLabelY = esy - Math.max(earthPx, 2) - 5;
+          if (eLabelY > 8) ctxS.fillText('Earth', esx, eLabelY);
+        }
+      }
+
+      // --- Scale bar ---
+      let scaleBarR = 1, scaleBarLabel = '1 R\u2609';
       let scaleBarPx = scale;
-      if (scaleBarPx > WS * 0.4) { scaleBarR = 0.01; scaleBarLabel = '0.01 R☉ (≈ R⊕)'; scaleBarPx = 0.01 * scale; }
-      else if (scaleBarPx > WS * 0.15) { scaleBarR = 0.1; scaleBarLabel = '0.1 R☉'; scaleBarPx = 0.1 * scale; }
-      else if (scaleBarPx < 3) { scaleBarR = 100; scaleBarLabel = '100 R☉'; scaleBarPx = 100 * scale; }
-      else if (scaleBarPx < 15) { scaleBarR = 10; scaleBarLabel = '10 R☉'; scaleBarPx = 10 * scale; }
-      if (scaleBarPx > 1 && scaleBarPx < WS * 0.5) {
-        const sbY = 18;
+      if (scaleBarPx > WS * 0.35) { scaleBarR = 0.01; scaleBarLabel = '0.01 R\u2609 (\u2248 R\u2295)'; scaleBarPx = 0.01 * scale; }
+      else if (scaleBarPx > WS * 0.12) { scaleBarR = 0.1; scaleBarLabel = '0.1 R\u2609'; scaleBarPx = 0.1 * scale; }
+      else if (scaleBarPx < 2) { scaleBarR = 100; scaleBarLabel = '100 R\u2609'; scaleBarPx = 100 * scale; }
+      else if (scaleBarPx < 10) { scaleBarR = 10; scaleBarLabel = '10 R\u2609'; scaleBarPx = 10 * scale; }
+      if (scaleBarPx > 1 && scaleBarPx < WS * 0.45) {
+        const sbY = HS - 18;
         const sbX = WS - 20 - scaleBarPx;
         ctxS.strokeStyle = 'rgba(255,255,255,0.4)'; ctxS.lineWidth = 1.5;
         ctxS.beginPath(); ctxS.moveTo(sbX, sbY); ctxS.lineTo(sbX + scaleBarPx, sbY); ctxS.stroke();
-        ctxS.beginPath(); ctxS.moveTo(sbX, sbY-4); ctxS.lineTo(sbX, sbY+4); ctxS.stroke();
-        ctxS.beginPath(); ctxS.moveTo(sbX+scaleBarPx, sbY-4); ctxS.lineTo(sbX+scaleBarPx, sbY+4); ctxS.stroke();
+        ctxS.beginPath(); ctxS.moveTo(sbX, sbY - 4); ctxS.lineTo(sbX, sbY + 4); ctxS.stroke();
+        ctxS.beginPath(); ctxS.moveTo(sbX + scaleBarPx, sbY - 4); ctxS.lineTo(sbX + scaleBarPx, sbY + 4); ctxS.stroke();
         ctxS.fillStyle = 'rgba(255,255,255,0.5)'; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
-        ctxS.fillText(scaleBarLabel, sbX + scaleBarPx/2, sbY + 14);
+        ctxS.fillText(scaleBarLabel, sbX + scaleBarPx / 2, sbY - 8);
       }
 
-      // Draw stars
-      const visible = stars.filter(s => s.R * scale >= 0.3);
-      stars.forEach((s, i) => {
-        const rPx = s.R * scale;
-        if (rPx < 0.3) return;
-        const sx = getStarX(i, scale);
-        if (sx < -500) return;
-
-        const [cr, cg, cb] = sizeStarColor(s.T);
-        const col = `rgb(${Math.round(cr*255)},${Math.round(cg*255)},${Math.round(cb*255)})`;
-
-        if (rPx > HS * 2) {
-          // Too big: draw as a curved horizon at bottom
-          const curvature = WS * WS / (8 * rPx) + baseline;
-          ctxS.fillStyle = col + '15';
-          ctxS.beginPath();
-          ctxS.moveTo(0, HS);
-          // Approximate arc with quadratic curve
-          ctxS.quadraticCurveTo(WS/2, baseline - WS*WS/(8*rPx), WS, HS);
-          ctxS.fill();
-          ctxS.strokeStyle = col; ctxS.lineWidth = 2;
-          ctxS.beginPath();
-          ctxS.quadraticCurveTo(WS/2, baseline - WS*WS/(8*rPx), WS, HS);
-          ctxS.stroke();
-          // Label
-          ctxS.fillStyle = col; ctxS.font = '13px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
-          ctxS.fillText(s.name + ' (surface)', WS/2, baseline - WS*WS/(16*rPx));
-          ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
-          ctxS.fillText(s.R + ' R☉', WS/2, baseline - WS*WS/(16*rPx) + 16);
-        } else {
-          // Draw as circle
-          const drawR = Math.max(rPx, 1.5);
-          const cy = baseline - rPx;
-
-          // Glow
-          if (drawR > 3) {
-            const grd = ctxS.createRadialGradient(sx, cy, drawR*0.5, sx, cy, drawR*1.5);
-            grd.addColorStop(0, `rgba(${Math.round(cr*255)},${Math.round(cg*255)},${Math.round(cb*255)},0.25)`);
-            grd.addColorStop(1, `rgba(${Math.round(cr*255)},${Math.round(cg*255)},${Math.round(cb*255)},0)`);
-            ctxS.fillStyle = grd;
-            ctxS.beginPath(); ctxS.arc(sx, cy, drawR*1.5, 0, 2*Math.PI); ctxS.fill();
-          }
-
-          // Star body
-          ctxS.fillStyle = col;
-          ctxS.beginPath(); ctxS.arc(sx, cy, drawR, 0, 2*Math.PI); ctxS.fill();
-
-          // Label
-          const isHover = hoverIdx === i;
-          const labelY = cy - drawR - 8;
-          ctxS.fillStyle = isHover ? '#fff' : 'rgba(255,255,255,0.75)';
-          ctxS.font = isHover ? '12px Inter, system-ui, sans-serif' : '10px Inter, system-ui, sans-serif';
-          ctxS.textAlign = 'center';
-          if (labelY > 10) {
-            ctxS.fillText(s.name, sx, labelY);
-            if (drawR > 5 || isHover) {
-              ctxS.fillStyle = COLORS.textDim; ctxS.font = '9px Inter, system-ui, sans-serif';
-              ctxS.fillText(s.R + ' R☉  ' + s.type, sx, labelY + 13);
-            }
-          }
-        }
-      });
-
-      // Earth (only if Sun is visible and big enough)
-      const sunStar = stars.find(s => s.name === 'Sun');
-      const sunPx = sunStar.R * scale;
-      if (sunPx > 8) {
-        const earthPx = Math.max(earthR * scale, 1.2);
-        const sunIdx = stars.indexOf(sunStar);
-        const sunX = getStarX(sunIdx, scale);
-        const earthX = sunX + sunPx + earthPx + 6;
-        const earthY = baseline - earthPx;
-        // Earth
-        ctxS.fillStyle = '#4a90d9';
-        ctxS.beginPath(); ctxS.arc(earthX, earthY, earthPx, 0, 2*Math.PI); ctxS.fill();
-        // Green landmass hint
-        if (earthPx > 3) {
-          ctxS.fillStyle = '#5cb85c';
-          ctxS.beginPath(); ctxS.arc(earthX - earthPx*0.2, earthY - earthPx*0.1, earthPx*0.4, 0, 2*Math.PI); ctxS.fill();
-        }
-        ctxS.fillStyle = 'rgba(255,255,255,0.6)'; ctxS.font = '9px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
-        ctxS.fillText('Earth', earthX, earthY - earthPx - 5);
+      // --- "Too small" indicators ---
+      const tooSmallNames = tinyStars.map(t => t.s.name);
+      if (tooSmallNames.length > 0 && tooSmallNames.length < stars.length) {
+        ctxS.fillStyle = 'rgba(255,255,255,0.30)'; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'left';
+        ctxS.fillText('Zoom in to see: ' + tooSmallNames.join(', '), 10, HS - 8);
       }
 
-      // Hover tooltip
-      if (hoverIdx >= 0) {
-        const s = stars[hoverIdx];
-        const info = `${s.name}  |  ${s.R} R☉  |  T = ${s.T} K  |  ${s.type} (${s.cat})`;
-        ctxS.font = '11px Inter, system-ui, sans-serif';
-        const tw = ctxS.measureText(info).width + 16;
-        const tx = Math.max(5, Math.min(WS - tw - 5, WS/2 - tw/2));
-        const ty = 35;
+      // --- "Off screen" arrows for stars that are visible-sized but outside viewport ---
+      for (const v of visibleStars) {
+        if (v.sx >= -50 && v.sx <= WS + 50) continue;
+        const arrowY = Math.max(30, Math.min(HS - 30, v.sy));
+        const isLeft = v.sx < 0;
+        const ax = isLeft ? 14 : WS - 14;
+        ctxS.fillStyle = 'rgba(255,255,255,0.4)'; ctxS.font = '10px Inter, system-ui, sans-serif';
+        ctxS.textAlign = isLeft ? 'left' : 'right';
+        const arrow = isLeft ? '\u2190 ' : '';
+        const arrowR = isLeft ? '' : ' \u2192';
+        ctxS.fillText(arrow + v.s.name + arrowR, ax, arrowY);
+      }
+
+      // --- Hover tooltip ---
+      if (hoverStar >= 0) {
+        const s = stars[hoverStar];
+        const rKm = Math.round(s.R * 696340);
+        const info = s.name + '  |  ' + s.R + ' R\u2609 (' + rKm.toLocaleString() + ' km)  |  T = ' + s.T + ' K  |  ' + s.type + ' (' + s.cat + ')';
+        ctxS.font = FONT_SM;
+        const tw = ctxS.measureText(info).width + 20;
+        const tx = Math.max(4, Math.min(WS - tw - 4, WS / 2 - tw / 2));
+        const ty = 8;
         ctxS.fillStyle = 'rgba(0,0,0,0.85)';
-        ctxS.fillRect(tx, ty, tw, 22);
-        ctxS.strokeStyle = 'rgba(255,255,255,0.3)'; ctxS.lineWidth = 1;
-        ctxS.strokeRect(tx, ty, tw, 22);
+        const bh = 24;
+        ctxS.beginPath();
+        const br = 4;
+        ctxS.moveTo(tx + br, ty); ctxS.lineTo(tx + tw - br, ty); ctxS.arcTo(tx + tw, ty, tx + tw, ty + br, br);
+        ctxS.lineTo(tx + tw, ty + bh - br); ctxS.arcTo(tx + tw, ty + bh, tx + tw - br, ty + bh, br);
+        ctxS.lineTo(tx + br, ty + bh); ctxS.arcTo(tx, ty + bh, tx, ty + bh - br, br);
+        ctxS.lineTo(tx, ty + br); ctxS.arcTo(tx, ty, tx + br, ty, br);
+        ctxS.fill();
+        ctxS.strokeStyle = 'rgba(255,255,255,0.2)'; ctxS.lineWidth = 1;
+        ctxS.beginPath();
+        ctxS.moveTo(tx + br, ty); ctxS.lineTo(tx + tw - br, ty); ctxS.arcTo(tx + tw, ty, tx + tw, ty + br, br);
+        ctxS.lineTo(tx + tw, ty + bh - br); ctxS.arcTo(tx + tw, ty + bh, tx + tw - br, ty + bh, br);
+        ctxS.lineTo(tx + br, ty + bh); ctxS.arcTo(tx, ty + bh, tx, ty + bh - br, br);
+        ctxS.lineTo(tx, ty + br); ctxS.arcTo(tx, ty, tx + br, ty, br);
+        ctxS.stroke();
         ctxS.fillStyle = '#fff'; ctxS.textAlign = 'left';
-        ctxS.fillText(info, tx + 8, ty + 15);
-      }
-
-      // "Not visible at this zoom" for invisible stars
-      const invisible = stars.filter(s => s.R * scale < 0.3);
-      if (invisible.length > 0 && invisible.length < stars.length) {
-        ctxS.fillStyle = 'rgba(255,255,255,0.3)'; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'left';
-        const names = invisible.map(s => s.name).join(', ');
-        ctxS.fillText('Too small to see: ' + names + '  (zoom in →)', 10, HS - 8);
+        ctxS.fillText(info, tx + 10, ty + 16);
       }
 
       // Zoom label
       if (zoomLabel) {
-        const rPerPx = (1/scale).toFixed(scale > 1 ? 3 : 1);
-        zoomLabel.textContent = '';
+        if (scale >= 1) {
+          zoomLabel.textContent = '1 px = ' + (1 / scale).toFixed(3) + ' R\u2609';
+        } else {
+          zoomLabel.textContent = '1 px = ' + (1 / scale).toFixed(1) + ' R\u2609';
+        }
       }
     }
+
+    // --- Hit testing ---
+    function hitTest(mx, my) {
+      const z = parseFloat(zoomSlider?.value || 30);
+      const scale = getScale(z);
+      const camX = getCameraX(z, scale);
+      let closest = -1, closestDist = Infinity;
+      for (let i = 0; i < stars.length; i++) {
+        const rPx = stars[i].R * scale;
+        if (rPx < 0.8) continue;
+        const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
+        const d = Math.hypot(mx - sx, my - sy);
+        const hitR = Math.max(rPx, 12);
+        if (d < hitR && d < closestDist) {
+          closestDist = d; closest = i;
+        }
+      }
+      // Also check horizon stars — hit if mouse is within the arc area
+      for (let i = 0; i < stars.length; i++) {
+        const rPx = stars[i].R * scale;
+        if (rPx <= HS * 1.2) continue;
+        const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
+        const d = Math.hypot(mx - sx, my - sy);
+        if (d < rPx && my > sy - rPx) { closest = i; break; }
+      }
+      return closest;
+    }
+
+    // --- Events ---
+    cSizes.addEventListener('mousemove', e => {
+      const rect = cSizes.getBoundingClientRect();
+      mouseX = (e.clientX - rect.left) * (WS / rect.width);
+      mouseY = (e.clientY - rect.top) * (HS / rect.height);
+      const newHover = hitTest(mouseX, mouseY);
+      if (newHover !== hoverStar) { hoverStar = newHover; drawSizes(); }
+      cSizes.style.cursor = newHover >= 0 ? 'pointer' : 'default';
+    });
+
+    cSizes.addEventListener('mouseleave', () => {
+      hoverStar = -1; mouseX = -1; mouseY = -1; drawSizes();
+    });
+
+    cSizes.addEventListener('wheel', e => {
+      e.preventDefault();
+      let z = parseFloat(zoomSlider?.value || 30);
+      z -= e.deltaY * 0.1;
+      z = Math.max(0, Math.min(100, z));
+      if (zoomSlider) zoomSlider.value = z;
+      drawSizes();
+    }, {passive: false});
 
     zoomSlider?.addEventListener('input', drawSizes);
     drawSizes();
