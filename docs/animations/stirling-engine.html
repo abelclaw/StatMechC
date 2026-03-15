@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Low-Temperature Differential Stirling Engine</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a1a1e;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;min-height:100vh;font-family:'Georgia',serif;color:#ccc;overflow:hidden}
+  canvas{border-radius:4px}
+  .ctrls{margin-top:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .ctrls button{background:#444;color:#ddd;border:1px solid #666;padding:5px 16px;
+                border-radius:4px;cursor:pointer;font-family:inherit;font-size:.85em}
+  .ctrls button:hover{background:#555}
+  .ctrls label{font-size:.8em;color:#999}
+  .ctrls input[type=range]{width:110px;accent-color:#e90}
+  .info{margin-top:6px;font-size:.72em;color:#666;max-width:640px;text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+<canvas id="c" width="900" height="800"></canvas>
+<div class="ctrls">
+  <button id="btn">Pause</button>
+  <label>Speed: <input type="range" id="spd" min=".1" max="2" step=".05" value=".4"></label>
+  <span id="rpm" style="font-size:.8em;color:#888">48 RPM</span>
+  <button id="cut">Toggle Cutaway</button>
+</div>
+<div class="info">
+  A low-temperature differential (LTD) Stirling engine runs on temperature differences as
+  small as 5&#8239;&#176;C. The large, thin displacer shuttles air between the warm bottom plate
+  (heated by coffee) and the cool top plate (exposed to room air). The resulting pressure
+  oscillation drives the small power piston, which turns the flywheel. The engine sits
+  directly on the rim of the cup.
+</div>
+<script>
+const C=document.getElementById('c'), X=C.getContext('2d');
+let run=true, spd=0.4, cut=true, ang=0;
+document.getElementById('btn').onclick=function(){run=!run;this.textContent=run?'Pause':'Play'};
+document.getElementById('spd').oninput=function(){
+  spd=+this.value;
+  document.getElementById('rpm').textContent=Math.round(120*spd)+' RPM';
+};
+document.getElementById('cut').onclick=()=>{cut=!cut};
+
+/* ─── GEOMETRY ─── */
+// The engine physically sits ON the coffee cup rim.
+// Coffee cup is large and centered at bottom of canvas.
+// Engine is a wide flat cylinder that rests on the cup rim.
+
+const CUP={
+  cx:450,
+  rimY:465,       // top rim of cup
+  botY:720,       // bottom of cup
+  rimR:165,       // rim radius
+  botR:125,       // bottom radius
+};
+
+// Engine sits ON the cup rim
+const ENG={
+  cx:450,
+  botY:CUP.rimY,            // hot plate = cup rim level
+  topY:CUP.rimY-130,        // cool top plate
+  r:CUP.rimR-15,            // slightly smaller than cup rim
+  plateH:10,
+  dispH:16,                 // thin foam displacer
+  dispGap:5,
+};
+
+// Power piston: small cylinder attached to the top plate, slightly off-center
+const PP={
+  cx:ENG.cx+ENG.r-15,
+  cylW:24,
+  cylH:50,
+};
+
+// Flywheel: mounted on a frame above the top plate
+const FW={x:450, y:CUP.rimY-260, r:70};
+const CRANK=22;
+const PHASE=Math.PI/2; // displacer leads power piston by 90°
+
+// Support posts from top plate up to flywheel frame
+const POSTS=[ENG.cx-ENG.r+20, ENG.cx-40, ENG.cx+40, ENG.cx+ENG.r-20];
+
+let steamP=[];
+
+/* ─── HELPERS ─── */
+function rr(x,y,w,h,r,f,s){
+  X.beginPath();X.moveTo(x+r,y);X.lineTo(x+w-r,y);X.quadraticCurveTo(x+w,y,x+w,y+r);
+  X.lineTo(x+w,y+h-r);X.quadraticCurveTo(x+w,y+h,x+w-r,y+h);X.lineTo(x+r,y+h);
+  X.quadraticCurveTo(x,y+h,x,y+h-r);X.lineTo(x,y+r);X.quadraticCurveTo(x,y,x+r,y);
+  X.closePath();if(f)X.fill();if(s)X.stroke();
+}
+
+function displacerY(a){
+  const top=ENG.topY+ENG.plateH+ENG.dispGap;
+  const bot=ENG.botY-ENG.dispGap-ENG.dispH;
+  const mid=(top+bot)/2;
+  const travel=(bot-top)/2;
+  return mid+Math.sin(a+PHASE)*travel;
+}
+
+function powerPistonY(a){
+  const mid=ENG.topY-PP.cylH/2+5;
+  return mid+Math.sin(a)*18;
+}
+
+/* ─── COFFEE CUP ─── */
+function drawCup(){
+  // Table surface
+  X.fillStyle='#3a3530';
+  X.fillRect(0,CUP.botY+12,900,80);
+  X.fillStyle='#332e28';
+  X.fillRect(0,CUP.botY+15,900,2);
+
+  // Saucer
+  X.fillStyle='#e8e2d8';
+  X.beginPath();X.ellipse(CUP.cx,CUP.botY+10,CUP.botR+55,14,0,0,Math.PI*2);X.fill();
+  X.strokeStyle='#c8c0b5';X.lineWidth=1;X.stroke();
+  // Saucer inner ring
+  X.strokeStyle='#d5cfc5';X.lineWidth=.5;
+  X.beginPath();X.ellipse(CUP.cx,CUP.botY+10,CUP.botR+20,8,0,0,Math.PI*2);X.stroke();
+
+  // Cup body (trapezoid)
+  const g=X.createLinearGradient(CUP.cx-CUP.rimR,0,CUP.cx+CUP.rimR,0);
+  g.addColorStop(0,'#e0d8cc');g.addColorStop(.12,'#f8f4ee');
+  g.addColorStop(.5,'#fff');g.addColorStop(.88,'#f0ece2');g.addColorStop(1,'#ccc5b8');
+  X.fillStyle=g;
+  X.beginPath();
+  X.moveTo(CUP.cx-CUP.rimR,CUP.rimY);
+  X.lineTo(CUP.cx-CUP.botR,CUP.botY);
+  X.lineTo(CUP.cx+CUP.botR,CUP.botY);
+  X.lineTo(CUP.cx+CUP.rimR,CUP.rimY);
+  X.closePath();X.fill();
+  X.strokeStyle='#bbb5a8';X.lineWidth=1.5;X.stroke();
+
+  // Cup bottom
+  X.fillStyle='#e5e0d5';
+  X.beginPath();X.ellipse(CUP.cx,CUP.botY,CUP.botR,8,0,0,Math.PI);X.fill();
+
+  // Coffee inside
+  const coffY=CUP.rimY+10;
+  const coffR=CUP.rimR-6;
+  // Dark coffee
+  X.fillStyle='#2a1508';
+  X.beginPath();X.ellipse(CUP.cx,coffY,coffR,14,0,0,Math.PI*2);X.fill();
+  // Surface shine
+  X.fillStyle='rgba(60,35,12,.4)';
+  X.beginPath();X.ellipse(CUP.cx-35,coffY-4,50,6,-.2,0,Math.PI*2);X.fill();
+  // Slight ripple
+  const t=Date.now()/1000;
+  X.strokeStyle='rgba(80,50,20,.2)';X.lineWidth=.5;
+  X.beginPath();
+  for(let x=CUP.cx-coffR+10;x<CUP.cx+coffR-10;x+=3){
+    const y=coffY+Math.sin(x*.04+t*1.5)*1.5;
+    x===CUP.cx-coffR+10?X.moveTo(x,y):X.lineTo(x,y);
+  }X.stroke();
+
+  // Handle
+  X.strokeStyle='#ece5d8';X.lineWidth=14;X.lineCap='round';
+  X.beginPath();X.arc(CUP.cx+CUP.rimR+22,(CUP.rimY+CUP.botY)/2-15,35,-.65,1.05);X.stroke();
+  X.strokeStyle='#d8d0c0';X.lineWidth=8;
+  X.beginPath();X.arc(CUP.cx+CUP.rimR+22,(CUP.rimY+CUP.botY)/2-15,35,-.65,1.05);X.stroke();
+
+  // Cup rim (the engine sits on this)
+  X.fillStyle='#f0ece5';
+  X.beginPath();X.ellipse(CUP.cx,CUP.rimY,CUP.rimR+3,10,0,0,Math.PI*2);X.fill();
+  X.strokeStyle='#ccc5b8';X.lineWidth=1;X.stroke();
+  // Inner rim
+  X.strokeStyle='#ddd5c8';X.lineWidth=.5;
+  X.beginPath();X.ellipse(CUP.cx,CUP.rimY,CUP.rimR-8,7,0,0,Math.PI*2);X.stroke();
+}
+
+/* ─── ENGINE COMPONENTS ─── */
+function drawBottomPlate(){
+  // Hot plate (copper/brass) - sits directly on cup rim
+  const g=X.createRadialGradient(ENG.cx,ENG.botY,20,ENG.cx,ENG.botY,ENG.r+20);
+  g.addColorStop(0,'#c89060');g.addColorStop(.7,'#b08050');g.addColorStop(1,'#907040');
+  X.fillStyle=g;
+  X.beginPath();X.ellipse(ENG.cx,ENG.botY-ENG.plateH/2,ENG.r+10,ENG.plateH,0,0,Math.PI*2);X.fill();
+  X.strokeStyle='#7a5a30';X.lineWidth=1;X.stroke();
+
+  // Heat glow
+  const gl=X.createRadialGradient(ENG.cx,ENG.botY,30,ENG.cx,ENG.botY,ENG.r+15);
+  gl.addColorStop(0,'rgba(255,90,20,.06)');gl.addColorStop(1,'rgba(255,50,0,0)');
+  X.fillStyle=gl;
+  X.fillRect(ENG.cx-ENG.r-20,ENG.botY-15,(ENG.r+20)*2,20);
+}
+
+function drawTopPlate(){
+  const g=X.createRadialGradient(ENG.cx,ENG.topY,20,ENG.cx,ENG.topY,ENG.r+20);
+  g.addColorStop(0,'#c0c5cc');g.addColorStop(.7,'#a8b0b8');g.addColorStop(1,'#909aa2');
+  X.fillStyle=g;
+  X.beginPath();X.ellipse(ENG.cx,ENG.topY+ENG.plateH/2,ENG.r+10,ENG.plateH,0,0,Math.PI*2);X.fill();
+  X.strokeStyle='#808890';X.lineWidth=1;X.stroke();
+
+  // Power piston port
+  X.fillStyle='#555';
+  X.beginPath();X.ellipse(PP.cx,ENG.topY+ENG.plateH/2,PP.cylW/2+2,4,0,0,Math.PI*2);X.fill();
+}
+
+function drawCylinderWall(){
+  if(cut){
+    X.fillStyle='rgba(100,110,120,.06)';
+    X.fillRect(ENG.cx-ENG.r,ENG.topY+ENG.plateH,ENG.r*2,ENG.botY-ENG.topY-ENG.plateH*2);
+    X.strokeStyle='rgba(140,150,160,.3)';X.lineWidth=2;X.setLineDash([10,6]);
+    X.beginPath();X.moveTo(ENG.cx-ENG.r,ENG.topY+ENG.plateH);X.lineTo(ENG.cx-ENG.r,ENG.botY-ENG.plateH);X.stroke();
+    X.beginPath();X.moveTo(ENG.cx+ENG.r,ENG.topY+ENG.plateH);X.lineTo(ENG.cx+ENG.r,ENG.botY-ENG.plateH);X.stroke();
+    X.setLineDash([]);
+  } else {
+    // Acrylic/transparent plastic wall
+    const g=X.createLinearGradient(ENG.cx-ENG.r,0,ENG.cx+ENG.r,0);
+    g.addColorStop(0,'rgba(140,160,180,.3)');g.addColorStop(.1,'rgba(180,200,220,.15)');
+    g.addColorStop(.9,'rgba(180,200,220,.15)');g.addColorStop(1,'rgba(140,160,180,.3)');
+    X.fillStyle=g;
+    X.fillRect(ENG.cx-ENG.r,ENG.topY+ENG.plateH,ENG.r*2,ENG.botY-ENG.topY-ENG.plateH*2);
+    X.strokeStyle='rgba(160,180,200,.4)';X.lineWidth=1.5;
+    X.strokeRect(ENG.cx-ENG.r,ENG.topY+ENG.plateH,ENG.r*2,ENG.botY-ENG.topY-ENG.plateH*2);
+  }
+}
+
+function drawDisplacer(a){
+  const dy=displacerY(a);
+  const dw=ENG.r*2-ENG.dispGap*2;
+  const dx=ENG.cx-dw/2;
+  const sinV=Math.sin(a+PHASE);
+
+  // Air temperature zones
+  if(cut){
+    // Warm air below displacer → close to bottom plate
+    const wTop=dy+ENG.dispH, wBot=ENG.botY-ENG.plateH;
+    if(wBot>wTop+2){
+      const warmFrac=Math.max(0,(wBot-wTop)/(ENG.botY-ENG.topY-ENG.plateH*2-ENG.dispH));
+      const al=warmFrac*.2+.03;
+      const gw=X.createLinearGradient(0,wTop,0,wBot);
+      gw.addColorStop(0,`rgba(255,90,20,${al*.4})`);
+      gw.addColorStop(1,`rgba(255,90,20,${al})`);
+      X.fillStyle=gw;
+      X.fillRect(ENG.cx-ENG.r+3,wTop,ENG.r*2-6,wBot-wTop);
+    }
+    // Cool air above displacer → close to top plate
+    const cTop=ENG.topY+ENG.plateH, cBot=dy;
+    if(cBot>cTop+2){
+      const coolFrac=Math.max(0,(cBot-cTop)/(ENG.botY-ENG.topY-ENG.plateH*2-ENG.dispH));
+      const al=coolFrac*.15+.02;
+      const gc=X.createLinearGradient(0,cTop,0,cBot);
+      gc.addColorStop(0,`rgba(50,100,230,${al})`);
+      gc.addColorStop(1,`rgba(50,100,230,${al*.3})`);
+      X.fillStyle=gc;
+      X.fillRect(ENG.cx-ENG.r+3,cTop,ENG.r*2-6,cBot-cTop);
+    }
+
+    // Temperature particles
+    const nP=12;
+    // Below displacer (warm)
+    if(wBot>wTop+5){
+      for(let i=0;i<nP;i++){
+        const px=ENG.cx-ENG.r+10+Math.random()*(ENG.r*2-20);
+        const py=wTop+3+Math.random()*(wBot-wTop-6);
+        const warmFrac=(py-wTop)/(wBot-wTop);
+        X.fillStyle=`rgba(255,${100+Math.random()*40|0},${20+Math.random()*30|0},${.08+warmFrac*.12})`;
+        X.beginPath();X.arc(px,py,1+Math.random()*1.5,0,Math.PI*2);X.fill();
+      }
+    }
+    // Above displacer (cool)
+    if(cBot>cTop+5){
+      for(let i=0;i<nP;i++){
+        const px=ENG.cx-ENG.r+10+Math.random()*(ENG.r*2-20);
+        const py=cTop+3+Math.random()*(cBot-cTop-6);
+        const coolFrac=1-(py-cTop)/(cBot-cTop);
+        X.fillStyle=`rgba(${80+Math.random()*30|0},${110+Math.random()*30|0},${200+Math.random()*40|0},${.06+coolFrac*.1})`;
+        X.beginPath();X.arc(px,py,1+Math.random()*1.5,0,Math.PI*2);X.fill();
+      }
+    }
+  }
+
+  // Displacer body (lightweight foam disc)
+  const g=X.createLinearGradient(dx,dy,dx+dw,dy);
+  g.addColorStop(0,'#ccc4a8');g.addColorStop(.5,'#e0d8bc');g.addColorStop(1,'#ccc4a8');
+  X.fillStyle=g;
+  rr(dx,dy,dw,ENG.dispH,8,true,false);
+  X.strokeStyle='#b0a880';X.lineWidth=1;
+  rr(dx,dy,dw,ENG.dispH,8,false,true);
+  // Foam dots
+  X.fillStyle='rgba(160,152,130,.25)';
+  for(let i=0;i<25;i++){
+    X.beginPath();X.arc(dx+6+Math.random()*(dw-12),dy+3+Math.random()*(ENG.dispH-6),1,0,Math.PI*2);X.fill();
+  }
+
+  // Displacer rod (thin wire, goes up through top plate)
+  X.strokeStyle='#bbb';X.lineWidth=2;
+  X.beginPath();X.moveTo(ENG.cx,dy);X.lineTo(ENG.cx,ENG.topY-8);X.stroke();
+
+  // Label
+  if(cut){
+    X.fillStyle='#bbb';X.font='11px Georgia';X.textAlign='left';
+    X.fillText('Displacer (foam)',ENG.cx-ENG.r-110,dy+ENG.dispH/2+4);
+    X.strokeStyle='#888';X.lineWidth=1;
+    X.beginPath();X.moveTo(ENG.cx-ENG.r-5,dy+ENG.dispH/2);X.lineTo(dx+5,dy+ENG.dispH/2);X.stroke();
+    // Arrowhead
+    X.fillStyle='#888';X.beginPath();
+    X.moveTo(dx+5,dy+ENG.dispH/2);X.lineTo(dx-3,dy+ENG.dispH/2-3);X.lineTo(dx-3,dy+ENG.dispH/2+3);X.closePath();X.fill();
+  }
+}
+
+function drawPowerPiston(a){
+  const ppy=powerPistonY(a);
+  const pcx=PP.cx-PP.cylW/2, pcTop=ENG.topY-PP.cylH-8, pcBot=ENG.topY-2;
+
+  // Connecting tube (shows air passage from main cylinder to power piston)
+  X.fillStyle='rgba(80,90,100,.2)';
+  X.fillRect(PP.cx-PP.cylW/2-3,ENG.topY+2,PP.cylW+6,15);
+  if(cut){
+    X.strokeStyle='#888';X.lineWidth=1;
+    X.strokeRect(PP.cx-PP.cylW/2-3,ENG.topY+2,PP.cylW+6,15);
+  }
+
+  // Small vertical cylinder
+  if(cut){
+    X.fillStyle='rgba(100,110,120,.1)';
+    X.fillRect(pcx,pcTop,PP.cylW,pcBot-pcTop);
+    X.strokeStyle='rgba(140,150,160,.4)';X.lineWidth=1.5;
+    X.strokeRect(pcx,pcTop,PP.cylW,pcBot-pcTop);
+  } else {
+    const g=X.createLinearGradient(pcx,0,pcx+PP.cylW,0);
+    g.addColorStop(0,'#707880');g.addColorStop(.5,'#909aa0');g.addColorStop(1,'#707880');
+    X.fillStyle=g;
+    X.fillRect(pcx,pcTop,PP.cylW,pcBot-pcTop);
+    X.strokeStyle='#888';X.lineWidth=1;
+    X.strokeRect(pcx,pcTop,PP.cylW,pcBot-pcTop);
+  }
+
+  // Piston
+  const pg=X.createLinearGradient(pcx+2,0,pcx+PP.cylW-2,0);
+  pg.addColorStop(0,'#999');pg.addColorStop(.5,'#ccc');pg.addColorStop(1,'#999');
+  X.fillStyle=pg;
+  X.fillRect(pcx+2,ppy-6,PP.cylW-4,12);
+  X.strokeStyle='#bbb';X.lineWidth=.8;
+  X.strokeRect(pcx+2,ppy-6,PP.cylW-4,12);
+
+  // Piston rod going up
+  X.strokeStyle='#bbb';X.lineWidth=2.5;
+  X.beginPath();X.moveTo(PP.cx,ppy-6);X.lineTo(PP.cx,FW.y+FW.r+8);X.stroke();
+
+  // Label
+  X.fillStyle='#bbb';X.font='10px Georgia';X.textAlign='left';
+  X.fillText('Power piston',PP.cx+PP.cylW/2+8,ppy+3);
+}
+
+function drawSupports(){
+  // Thin metal rods from top plate up to flywheel frame
+  POSTS.forEach(px=>{
+    X.strokeStyle='#505558';X.lineWidth=3;
+    X.beginPath();X.moveTo(px,ENG.topY);X.lineTo(px,FW.y+FW.r+18);X.stroke();
+    // Small screws at top plate
+    X.fillStyle='#888';X.beginPath();X.arc(px,ENG.topY,3,0,Math.PI*2);X.fill();
+  });
+
+  // Horizontal frame at flywheel level
+  X.strokeStyle='#505558';X.lineWidth=4;
+  X.beginPath();
+  X.moveTo(POSTS[0],FW.y+FW.r+18);
+  X.lineTo(POSTS[POSTS.length-1],FW.y+FW.r+18);
+  X.stroke();
+
+  // Bearing mounts
+  X.fillStyle='#555';
+  rr(FW.x-10,FW.y-4,20,8,2,true,false);
+}
+
+function drawFlywheel(a){
+  const cx=FW.x,cy=FW.y,r=FW.r;
+  X.beginPath();X.arc(cx+2,cy+2,r+4,0,Math.PI*2);
+  X.fillStyle='rgba(0,0,0,.15)';X.fill();
+  X.beginPath();X.arc(cx,cy,r,0,Math.PI*2);
+  X.lineWidth=10;X.strokeStyle='#6a6a6a';X.stroke();
+  X.lineWidth=6;X.strokeStyle='#888';X.stroke();
+  // Rim highlight
+  X.lineWidth=2;X.strokeStyle='rgba(170,170,170,.2)';
+  X.beginPath();X.arc(cx,cy,r-1,-.6,.6);X.stroke();
+
+  for(let i=0;i<5;i++){
+    const sa=a+(i*Math.PI*2)/5;
+    X.beginPath();
+    X.moveTo(cx+12*Math.cos(sa),cy+12*Math.sin(sa));
+    X.lineTo(cx+(r-12)*Math.cos(sa),cy+(r-12)*Math.sin(sa));
+    X.lineWidth=4;X.strokeStyle='#6a6a6a';X.stroke();
+    X.lineWidth=1.5;X.strokeStyle='#999';X.stroke();
+  }
+  X.beginPath();X.arc(cx,cy,12,0,Math.PI*2);
+  let hg=X.createRadialGradient(cx-2,cy-2,2,cx,cy,12);
+  hg.addColorStop(0,'#ccc');hg.addColorStop(1,'#666');
+  X.fillStyle=hg;X.fill();X.strokeStyle='#999';X.lineWidth=1.5;X.stroke();
+  // Crank pin
+  const cpx=cx+CRANK*Math.cos(a),cpy=cy+CRANK*Math.sin(a);
+  X.beginPath();X.arc(cpx,cpy,3.5,0,Math.PI*2);X.fillStyle='#ddd';X.fill();
+  X.fillStyle='#bbb';X.font='12px Georgia';X.textAlign='center';
+  X.fillText('Flywheel',cx,cy-r-12);
+  return{cpx,cpy};
+}
+
+function drawLinkages(a,cp){
+  const dRodTop={x:ENG.cx,y:ENG.topY-8};
+  const ppRodTop={x:PP.cx,y:FW.y+FW.r+8};
+
+  // Rocker pivot for displacer (on the left support)
+  const rockerPivot={x:ENG.cx-55,y:FW.y+FW.r};
+
+  // Crank → rocker
+  X.strokeStyle='#888';X.lineWidth=3;
+  X.beginPath();X.moveTo(cp.cpx,cp.cpy);X.lineTo(rockerPivot.x,rockerPivot.y);X.stroke();
+
+  // Rocker → displacer rod
+  X.beginPath();X.moveTo(rockerPivot.x,rockerPivot.y);X.lineTo(dRodTop.x,dRodTop.y);X.stroke();
+
+  // Pivot
+  X.beginPath();X.arc(rockerPivot.x,rockerPivot.y,4,0,Math.PI*2);
+  X.fillStyle='#bbb';X.fill();
+
+  // Crank → power piston (direct)
+  X.strokeStyle='#888';X.lineWidth=3;
+  X.beginPath();X.moveTo(cp.cpx,cp.cpy);X.lineTo(ppRodTop.x,ppRodTop.y);X.stroke();
+
+  // Pins
+  [dRodTop,ppRodTop].forEach(p=>{
+    X.beginPath();X.arc(p.x,p.y,3,0,Math.PI*2);X.fillStyle='#ccc';X.fill();
+  });
+}
+
+function drawHeatArrows(){
+  const t=Date.now()/1000;
+  // Warm arrows from coffee up into bottom plate
+  for(let i=-3;i<=3;i++){
+    const x=ENG.cx+i*32;
+    const a=.2+.15*Math.sin(t*1.8+i*.7);
+    X.strokeStyle=X.fillStyle=`rgba(255,80,15,${a})`;X.lineWidth=1.5;
+    const yb=ENG.botY+8,yt=ENG.botY-ENG.plateH-3;
+    X.beginPath();X.moveTo(x,yb);X.lineTo(x,yt);X.stroke();
+    X.beginPath();X.moveTo(x,yt);X.lineTo(x-3,yt+6);X.lineTo(x+3,yt+6);X.closePath();X.fill();
+  }
+  // Cool arrows from top plate
+  for(let i=-3;i<=3;i++){
+    const x=ENG.cx+i*32;
+    const a=.15+.1*Math.sin(t*1.5+i*.5);
+    X.strokeStyle=X.fillStyle=`rgba(60,110,255,${a})`;X.lineWidth=1.5;
+    const yb=ENG.topY+5,yt=ENG.topY-10;
+    X.beginPath();X.moveTo(x,yb);X.lineTo(x,yt);X.stroke();
+    X.beginPath();X.moveTo(x,yt);X.lineTo(x-3,yt+6);X.lineTo(x+3,yt+6);X.closePath();X.fill();
+  }
+  X.fillStyle='#c77';X.font='10px Georgia';X.textAlign='right';
+  X.fillText('warm',ENG.cx-ENG.r-20,ENG.botY);
+  X.fillStyle='#77a';
+  X.fillText('cool',ENG.cx-ENG.r-20,ENG.topY+8);
+}
+
+function drawPV(a){
+  const ox=25,oy=45,w=120,h=90;
+  X.fillStyle='rgba(25,25,30,.85)';rr(ox-8,oy-22,w+38,h+46,5,true,false);
+  X.strokeStyle='#444';X.lineWidth=1;rr(ox-8,oy-22,w+38,h+46,5,false,true);
+
+  X.strokeStyle='#555';X.lineWidth=1;
+  X.beginPath();X.moveTo(ox,oy+h);X.lineTo(ox+w,oy+h);X.stroke();
+  X.beginPath();X.moveTo(ox,oy+h);X.lineTo(ox,oy);X.stroke();
+  X.fillStyle='#888';X.font='10px Georgia';X.textAlign='center';
+  X.fillText('V',ox+w/2,oy+h+14);
+  X.save();X.translate(ox-12,oy+h/2);X.rotate(-Math.PI/2);X.fillText('P',0,0);X.restore();
+  X.fillStyle='#999';X.font='11px Georgia';X.fillText('Stirling Cycle',ox+w/2+10,oy-8);
+
+  // Cycle
+  X.strokeStyle='rgba(110,170,110,.5)';X.lineWidth=1.5;
+  X.beginPath();
+  for(let i=0;i<=100;i++){
+    const t=i/100*Math.PI*2;
+    const px=ox+w*.12+w*.76*(.5+.42*Math.cos(t));
+    const py=oy+h*.08+h*.84*(.5-.38*Math.sin(t));
+    i===0?X.moveTo(px,py):X.lineTo(px,py);
+  }X.closePath();X.stroke();
+  X.fillStyle='rgba(80,150,80,.05)';X.fill();
+
+  // Process labels
+  X.font='8px Georgia';
+  X.fillStyle='#c77';X.textAlign='center';
+  X.fillText('heating',ox+w*.85,oy+h*.75);
+  X.fillStyle='#77a';
+  X.fillText('cooling',ox+w*.15,oy+h*.25);
+  X.fillStyle='#998';
+  X.fillText('expansion',ox+w*.5,oy+5);
+  X.fillText('compression',ox+w*.5,oy+h-2);
+
+  // Current state
+  const sx=ox+w*.12+w*.76*(.5+.42*Math.cos(a));
+  const sy=oy+h*.08+h*.84*(.5-.38*Math.sin(a));
+  X.beginPath();X.arc(sx,sy,4.5,0,Math.PI*2);X.fillStyle='#f80';X.fill();
+  X.strokeStyle='rgba(255,255,255,.5)';X.lineWidth=1;X.stroke();
+}
+
+function drawCoffeeSteam(dt){
+  // Only from exposed coffee surface (around the engine, not under it)
+  if(run&&Math.random()<.08){
+    const side=Math.random()>.5?1:-1;
+    steamP.push({
+      x:CUP.cx+side*(ENG.r+10+Math.random()*40),
+      y:CUP.rimY+5,
+      vx:(Math.random()-.5)*6,vy:-(5+Math.random()*12),
+      life:1.2+Math.random()*1.5,ml:1.2+Math.random()*1.5,sz:1.5+Math.random()*2.5
+    });
+  }
+  steamP.forEach(p=>{
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx+=(Math.random()-.5)*2*dt;
+    p.life-=dt;p.sz+=dt*2;
+    const al=Math.max(0,p.life/p.ml)*.12;
+    X.beginPath();X.arc(p.x,p.y,p.sz,0,Math.PI*2);
+    X.fillStyle=`rgba(170,160,145,${al})`;X.fill();
+  });
+  steamP=steamP.filter(p=>p.life>0);
+}
+
+/* ─── MAIN LOOP ─── */
+let lt=performance.now();
+function frame(now){
+  const dt=Math.min((now-lt)/1000,.05);lt=now;
+  if(run) ang+=dt*Math.PI*2*2*spd; // slower default
+
+  const g=X.createLinearGradient(0,0,0,800);
+  g.addColorStop(0,'#222228');g.addColorStop(1,'#181820');
+  X.fillStyle=g;X.fillRect(0,0,900,800);
+
+  drawCup();
+  drawCoffeeSteam(dt);
+  drawBottomPlate();
+  drawCylinderWall();
+  drawDisplacer(ang);
+  drawTopPlate();
+  drawHeatArrows();
+  drawSupports();
+  drawPowerPiston(ang);
+  const cp=drawFlywheel(ang);
+  drawLinkages(ang,cp);
+  drawPV(ang);
+
+  X.fillStyle='#e0d8c8';X.font='bold 15px Georgia';X.textAlign='center';
+  X.fillText('Low-Temperature Differential Stirling Engine',450,22);
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>James Watt Steam Engine (1788)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#2a2a2e;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;min-height:100vh;font-family:'Georgia',serif;color:#ccc;overflow:hidden}
+  canvas{border-radius:4px}
+  .controls{margin-top:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .controls button{background:#444;color:#ddd;border:1px solid #666;padding:5px 16px;
+                   border-radius:4px;cursor:pointer;font-family:inherit;font-size:.85em}
+  .controls button:hover{background:#555}
+  .controls label{font-size:.8em;color:#999}
+  .controls input[type=range]{width:120px;accent-color:#c44}
+  .legend{margin-top:6px;display:flex;gap:18px;font-size:.73em;color:#888;flex-wrap:wrap;justify-content:center}
+  .legend span{display:flex;align-items:center;gap:4px}
+  .legend .sw{width:12px;height:12px;border-radius:2px;display:inline-block}
+</style>
+</head>
+<body>
+<canvas id="c" width="1100" height="820"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>Speed: <input type="range" id="spd" min="0.05" max="1.5" step="0.05" value="0.25"></label>
+  <span id="rpm" style="font-size:.8em;color:#888">15 RPM</span>
+</div>
+<div class="legend">
+  <span><i class="sw" style="background:rgba(230,70,20,.8)"></i> Live steam (high pressure)</span>
+  <span><i class="sw" style="background:rgba(90,110,160,.7)"></i> Spent steam (exhaust)</span>
+</div>
+<script>
+const C=document.getElementById('c'),X=C.getContext('2d');
+let run=true,spd=0.25,ang=0;
+document.getElementById('btn').onclick=function(){run=!run;this.textContent=run?'Pause':'Play'};
+document.getElementById('spd').oninput=function(){
+  spd=+this.value;document.getElementById('rpm').textContent=Math.round(60*spd)+' RPM';
+};
+
+/*
+  ╔══════════════════════════════════════════════════╗
+  ║          PHYSICAL STRUCTURE                      ║
+  ║                                                  ║
+  ║  Boiler ──pipe──► VALVE BOX (steam chest)        ║
+  ║                   ┌────────────────────┐         ║
+  ║                   │ Steam fills this   │→exhaust ║
+  ║                   │ ┌──D-VALVE──┐      │  pipe   ║
+  ║                   │ │land|cav|land│    │  up to  ║
+  ║                   └─┤─┬──┤──┬──┤──┘───┘  chimney║
+  ║                     │ LP│EX│RP│                  ║
+  ║                   ┌─┘/ └──┘ \└─┐  Pipes angle   ║
+  ║                  ┌┘/           \└┐ inward to     ║
+  ║                  │/             \│ converge at   ║
+  ║  ┌───────────────┤───────────────┤──────────┐    ║
+  ║  │ Left chamber  │    PISTON     │  Right   │    ║
+  ║  │   (clearance) │ ████████████  │  chamber ├──► ║
+  ║  │               │              │          │rod  ║
+  ║  └───────────────┴───────────────┴──────────┘    ║
+  ║                    CYLINDER              Flywheel║
+  ╚══════════════════════════════════════════════════╝
+*/
+
+// ─── GEOMETRY (all carefully computed) ───
+
+// Boiler + Furnace
+const BLR={x:30,y:210,w:155,h:200};
+const FRN={x:30,y:420,w:155,h:135};
+
+// Cylinder
+const CYL={x:230,y:440,w:280,h:110};
+const WALL=12; // wall thickness
+const BORE={x:CYL.x+WALL,y:CYL.y+WALL,w:CYL.w-2*WALL,h:CYL.h-2*WALL};
+// bore: 242 to 498, 452 to 538, center at (370, 495)
+
+// Piston
+const PW=24; // piston width
+
+// Flywheel
+const FW={cx:870,cy:495,r:115};
+const CR=50; // crank radius
+const CONROD=300; // connecting rod length
+
+// Crosshead → piston connection
+const PISTON_ROD=225; // length from crosshead pin to piston left face
+
+// Verify piston stays in bore:
+// crossheadX: min=FW.cx-CR-CONROD=870-50-300=520, max=870+50-300=620
+// pistonFace: min=520-225=295, max=620-225=395
+// pistonBack: min=295+24=319, max=395+24=419
+// bore: 242 to 498 → piston 295..419 is inside 242..498 ✓
+
+// Cylinder ports (where pipes exit the cylinder top)
+// Left port near left end, right port near right end
+// Piston never reaches these (295 > 283, 419 < 462)
+const CYLPORT_L={cx:275,w:16}; // center x, width → 267..283
+const CYLPORT_R={cx:470,w:16}; // center x, width → 462..478
+
+// Valve box
+const VB={x:265,y:275,w:232,h:82};
+// VB bottom (valve face) at y=357
+
+// The pipes converge from cylinder ports to closer valve face openings
+// Left pipe: from (275,440) to (330,357) — angled inward
+// Right pipe: from (470,440) to (430,357) — angled inward
+const VPIPE_L={botCx:275,topCx:330,w:18};
+const VPIPE_R={botCx:470,topCx:430,w:18};
+
+// Valve face openings (at VB bottom, y=357)
+// These are where the converging pipes connect, plus the exhaust port between them
+const FACE_L={cx:330,w:12};  // 324..336
+const FACE_EX={cx:381,w:12}; // 375..387
+const FACE_R={cx:430,w:12};  // 424..436
+
+// D-slide valve
+// Two lands (solid, cover ports when centered) + cavity between (connects to exhaust)
+const LAND_W=30;
+const CAVITY_W=82;
+const DVALVE_W=LAND_W+CAVITY_W+LAND_W; // 142
+const DVALVE_H=30;
+const DVALVE_CX=381; // centered on exhaust
+const VALVE_TRAVEL=35; // ±35px
+
+// Verify D-valve covers ports when centered:
+// Left land: 381-71=310 to 340 → covers left face 324-336 ✓
+// Right land: 381+41=422 to 452 → covers right face 424-436 ✓
+// Shifted right 35: left land 345-375, left port 324-336 → 345>336 → UNCOVERED ✓
+//   cavity 375-457, exhaust 375-387 ✓, right port 424-436 ✓ → bridged ✓
+// Shifted left 35: right land 387-417, right port 424-436 → 417<424 → UNCOVERED ✓
+//   cavity 305-387, left port 324-336 ✓, exhaust 375-387 → 387=387 ✓ → bridged ✓
+
+function crankPin(a){return{x:FW.cx+CR*Math.cos(a),y:FW.cy+CR*Math.sin(a)}}
+
+function crossheadX(a){
+  const cp=crankPin(a);
+  const dy=495-cp.y; // 495 = bore center Y
+  return cp.x-Math.sqrt(Math.max(0,CONROD*CONROD-dy*dy));
+}
+
+function pistonFaceX(a){return crossheadX(a)-PISTON_ROD;}
+
+function valveOffset(a){return Math.sin(a+Math.PI*0.5)*VALVE_TRAVEL;}
+
+// ─── PARTICLES ───
+let steamP=[],fireP=[];
+
+// ─── MOLECULE SWARMS ───
+// Molecules flow along paths showing steam/exhaust movement
+let molecules=[];
+const MAX_MOLECULES=200;
+
+function spawnMolecule(path,col,speed){
+  // path = array of {x,y} waypoints
+  if(molecules.length>=MAX_MOLECULES) return;
+  molecules.push({
+    path,col,speed:speed||80,
+    t:0, // progress along path 0..1
+    size:1.5+Math.random()*2,
+    wobbleX:(Math.random()-.5)*8,
+    wobbleY:(Math.random()-.5)*8,
+    wobbleSpeed:2+Math.random()*4
+  });
+}
+
+function updateAndDrawMolecules(dt){
+  molecules.forEach(m=>{
+    m.t+=dt*m.speed/totalPathLen(m.path);
+    if(m.t>1) m.t=-1; // mark for removal
+    if(m.t<0) return;
+    const pos=pathPos(m.path,m.t);
+    const t=Date.now()/1000;
+    const wx=Math.sin(t*m.wobbleSpeed+m.t*10)*m.wobbleX;
+    const wy=Math.cos(t*m.wobbleSpeed+m.t*10)*m.wobbleY;
+    const alpha=Math.min(1,Math.min(m.t*5,(1-m.t)*5))*0.7;
+    X.globalAlpha=alpha;
+    X.fillStyle=m.col;
+    X.beginPath();X.arc(pos.x+wx,pos.y+wy,m.size,0,Math.PI*2);X.fill();
+    X.globalAlpha=1;
+  });
+  molecules=molecules.filter(m=>m.t>=0);
+}
+
+function totalPathLen(path){
+  let len=0;
+  for(let i=1;i<path.length;i++){
+    const dx=path[i].x-path[i-1].x,dy=path[i].y-path[i-1].y;
+    len+=Math.sqrt(dx*dx+dy*dy);
+  }
+  return len||1;
+}
+
+function pathPos(path,t){
+  const total=totalPathLen(path);
+  let target=t*total,accum=0;
+  for(let i=1;i<path.length;i++){
+    const dx=path[i].x-path[i-1].x,dy=path[i].y-path[i-1].y;
+    const segLen=Math.sqrt(dx*dx+dy*dy);
+    if(accum+segLen>=target){
+      const frac=(target-accum)/segLen;
+      return{x:path[i-1].x+dx*frac, y:path[i-1].y+dy*frac};
+    }
+    accum+=segLen;
+  }
+  return path[path.length-1];
+}
+
+// ─── HELPERS ───
+function rr(x,y,w,h,r,f,s){
+  X.beginPath();X.moveTo(x+r,y);X.lineTo(x+w-r,y);X.quadraticCurveTo(x+w,y,x+w,y+r);
+  X.lineTo(x+w,y+h-r);X.quadraticCurveTo(x+w,y+h,x+w-r,y+h);X.lineTo(x+r,y+h);
+  X.quadraticCurveTo(x,y+h,x,y+h-r);X.lineTo(x,y+r);X.quadraticCurveTo(x,y,x+r,y);
+  X.closePath();if(f)X.fill();if(s)X.stroke();
+}
+function mGrad(x1,x2,d,l){const g=X.createLinearGradient(x1,0,x2,0);g.addColorStop(0,d);g.addColorStop(.35,l);g.addColorStop(.65,l);g.addColorStop(1,d);return g;}
+function rivet(x,y){X.beginPath();X.arc(x,y,3,0,Math.PI*2);X.fillStyle='#aaa';X.fill();X.strokeStyle='#666';X.lineWidth=.5;X.stroke();}
+function label(t,x,y,sz,c){X.fillStyle=c||'#bbb';X.font=(sz||12)+'px Georgia';X.textAlign='center';X.fillText(t,x,y);}
+
+const HOT='rgb(230,70,20)',COLD='rgb(90,110,160)';
+
+// ─── DRAW FUNCTIONS ───
+
+function drawBG(){
+  const g=X.createLinearGradient(0,0,0,820);g.addColorStop(0,'#333338');g.addColorStop(1,'#222226');
+  X.fillStyle=g;X.fillRect(0,0,1100,820);
+  X.fillStyle='#353535';X.fillRect(0,640,1100,180);
+}
+
+function drawFurnace(){
+  X.fillStyle=mGrad(FRN.x,FRN.x+FRN.w,'#555','#666');X.strokeStyle='#777';X.lineWidth=2;
+  rr(FRN.x,FRN.y,FRN.w,FRN.h,5,true,true);
+  X.fillStyle='#1a1a1a';X.fillRect(FRN.x+8,FRN.y+14,FRN.w-16,FRN.h-18);
+  for(let i=0;i<40;i++){
+    const cx=FRN.x+15+Math.random()*(FRN.w-30),cy=FRN.y+24+Math.random()*(FRN.h-36);
+    X.fillStyle=`rgb(${28+Math.random()*25|0},${22+Math.random()*18|0},${22+Math.random()*18|0})`;
+    X.beginPath();X.ellipse(cx,cy,3+Math.random()*7,(3+Math.random()*7)*.6,Math.random()*3,0,Math.PI*2);X.fill();
+  }
+  const gl=X.createRadialGradient(FRN.x+FRN.w/2,FRN.y+10,5,FRN.x+FRN.w/2,FRN.y+10,100);
+  gl.addColorStop(0,'rgba(255,110,20,.35)');gl.addColorStop(1,'rgba(255,50,0,0)');
+  X.fillStyle=gl;X.fillRect(FRN.x-10,FRN.y-30,FRN.w+20,FRN.h+10);
+  label('Furnace',FRN.x+FRN.w/2,FRN.y+FRN.h+18,13);
+}
+
+function drawBoiler(){
+  X.fillStyle=mGrad(BLR.x,BLR.x+BLR.w,'#5a5a5a','#7e7e7e');X.strokeStyle='#999';X.lineWidth=2;
+  rr(BLR.x,BLR.y,BLR.w,BLR.h,6,true,true);
+  const wT=BLR.y+BLR.h*.35;
+  X.fillStyle='rgba(50,85,145,.55)';X.fillRect(BLR.x+4,wT,BLR.w-8,BLR.y+BLR.h-wT-4);
+  const t=Date.now()/1000;
+  X.strokeStyle='rgba(80,130,200,.3)';X.lineWidth=1;X.beginPath();
+  for(let xx=BLR.x+6;xx<BLR.x+BLR.w-6;xx+=2){const yy=wT+Math.sin(xx*.06+t*2.5)*2.5;xx===BLR.x+6?X.moveTo(xx,yy):X.lineTo(xx,yy);}
+  X.stroke();
+  X.fillStyle='rgba(170,170,180,.1)';X.fillRect(BLR.x+4,BLR.y+4,BLR.w-8,wT-BLR.y-4);
+  for(let yy=BLR.y+18;yy<BLR.y+BLR.h;yy+=30){rivet(BLR.x+10,yy);rivet(BLR.x+BLR.w-10,yy);}
+  label('Boiler',BLR.x+BLR.w/2,BLR.y-12,14);
+  // thermometer
+  const tx=BLR.x-18,ty=BLR.y+25,th=BLR.h-50;
+  X.fillStyle='#555';X.fillRect(tx-3,ty,8,th);
+  const tg=X.createLinearGradient(0,ty+th,0,ty);tg.addColorStop(0,'#c33');tg.addColorStop(.5,'#c6c');tg.addColorStop(1,'#33c');
+  X.fillStyle=tg;X.fillRect(tx-1,ty+2,4,th-4);
+  X.beginPath();X.arc(tx+1,ty+th+6,6,0,Math.PI*2);X.fillStyle='#c33';X.fill();
+  X.beginPath();X.arc(tx+1,ty-4,5,0,Math.PI*2);X.fillStyle='#33c';X.fill();
+}
+
+function drawHeatArrows(){
+  const t=Date.now()/1000;
+  for(let i=0;i<3;i++){const x=FRN.x+25+i*45,a=.3+.2*Math.sin(t*2+i);
+    X.fillStyle=X.strokeStyle=`rgba(255,70,20,${a})`;X.lineWidth=2;
+    X.beginPath();X.moveTo(x,FRN.y-5);X.lineTo(x,BLR.y+BLR.h+5);X.stroke();
+    X.beginPath();X.moveTo(x,FRN.y-5);X.lineTo(x-5,FRN.y+5);X.lineTo(x+5,FRN.y+5);X.closePath();X.fill();}
+}
+
+function drawExternalPipes(){
+  // Steam: boiler → valve box left side
+  X.strokeStyle='#6a6a6a';X.lineWidth=16;X.lineCap='round';X.lineJoin='round';
+  X.beginPath();X.moveTo(BLR.x+BLR.w/2+10,BLR.y);X.lineTo(BLR.x+BLR.w/2+10,BLR.y-50);
+  X.lineTo(VB.x-3,BLR.y-50);X.lineTo(VB.x-3,VB.y+VB.h/2);X.stroke();
+  X.strokeStyle='#888';X.lineWidth=8;
+  X.beginPath();X.moveTo(BLR.x+BLR.w/2+10,BLR.y);X.lineTo(BLR.x+BLR.w/2+10,BLR.y-50);
+  X.lineTo(VB.x-3,BLR.y-50);X.lineTo(VB.x-3,VB.y+VB.h/2);X.stroke();
+  // animated flow
+  const ft=Date.now()/400;
+  X.setLineDash([6,8]);X.lineDashOffset=-ft*8;X.strokeStyle='rgba(230,90,30,.18)';X.lineWidth=4;
+  X.beginPath();X.moveTo(BLR.x+BLR.w/2+10,BLR.y);X.lineTo(BLR.x+BLR.w/2+10,BLR.y-50);
+  X.lineTo(VB.x-3,BLR.y-50);X.lineTo(VB.x-3,VB.y+VB.h/2);X.stroke();X.setLineDash([]);
+  // safety valve
+  const svx=(BLR.x+BLR.w/2+10+VB.x)/2,svy=BLR.y-50;
+  X.fillStyle='#888';X.beginPath();X.arc(svx,svy,11,0,Math.PI*2);X.fill();
+  X.strokeStyle='#aaa';X.lineWidth=1;X.stroke();
+  X.fillStyle='#c44';X.beginPath();X.arc(svx,svy,5,0,Math.PI*2);X.fill();
+  label('Safety valve',svx,svy-16,11);
+  // Exhaust: valve box top → chimney
+  const exX=VB.x+VB.w-25;
+  X.strokeStyle='#6a6a6a';X.lineWidth=18;X.lineCap='round';X.lineJoin='round';
+  X.beginPath();X.moveTo(exX,VB.y);X.lineTo(exX,120);X.lineTo(exX-12,60);X.stroke();
+  X.strokeStyle='#888';X.lineWidth=9;
+  X.beginPath();X.moveTo(exX,VB.y);X.lineTo(exX,120);X.lineTo(exX-12,60);X.stroke();
+  X.setLineDash([6,8]);X.lineDashOffset=ft*6;X.strokeStyle='rgba(90,110,160,.15)';X.lineWidth=4;
+  X.beginPath();X.moveTo(exX,VB.y);X.lineTo(exX,120);X.lineTo(exX-12,60);X.stroke();X.setLineDash([]);
+  X.fillStyle='#666';rr(exX-28,44,38,20,3,true,false);X.strokeStyle='#888';X.lineWidth=1;rr(exX-28,44,38,20,3,false,true);
+  // Condensate return
+  X.strokeStyle='#555';X.lineWidth=10;X.lineCap='round';X.lineJoin='round';
+  X.beginPath();X.moveTo(CYL.x+30,CYL.y+CYL.h);X.lineTo(CYL.x+30,CYL.y+CYL.h+22);
+  X.lineTo(BLR.x+BLR.w-10,CYL.y+CYL.h+22);X.lineTo(BLR.x+BLR.w-10,BLR.y+BLR.h);X.stroke();
+  label('steam in',VB.x-15,VB.y+VB.h/2-14,9,'#c66');
+  label('exhaust',exX,VB.y-18,9,'#88a');
+}
+
+// ═══════════════════════════════════════
+// THE ENGINE ASSEMBLY
+// Everything physically connected
+// ═══════════════════════════════════════
+function drawEngine(a){
+  const vo=valveOffset(a);
+  const pf=pistonFaceX(a); // piston left face x
+  const chX=crossheadX(a);
+  const faceY=VB.y+VB.h; // valve face Y = bottom of valve box = 357
+
+  // Valve state from angle
+  const leftOpen=vo>10, rightOpen=vo<-10;
+  const leftExh=vo<-10, rightExh=vo>10;
+
+  // ─── 1. CYLINDER BODY ───
+  X.fillStyle=mGrad(CYL.x,CYL.x+CYL.w,'#555','#727272');
+  X.strokeStyle='#999';X.lineWidth=2.5;
+  rr(CYL.x,CYL.y,CYL.w,CYL.h,6,true,true);
+
+  // ─── 2. ANGLED PIPES from cylinder to valve box ───
+  // Left pipe: bottom at (275, 440), top at (330, 357)
+  const pw=VPIPE_L.w;
+  // Left pipe outer
+  X.fillStyle='#666';
+  X.beginPath();
+  X.moveTo(VPIPE_L.botCx-pw/2, CYL.y);
+  X.lineTo(VPIPE_L.topCx-pw/2, faceY);
+  X.lineTo(VPIPE_L.topCx+pw/2, faceY);
+  X.lineTo(VPIPE_L.botCx+pw/2, CYL.y);
+  X.closePath();X.fill();
+  X.strokeStyle='#999';X.lineWidth=1.5;X.stroke();
+  // Left pipe bore (hollow)
+  X.fillStyle='#2a2a2a';
+  X.beginPath();
+  X.moveTo(VPIPE_L.botCx-pw/2+4, CYL.y);
+  X.lineTo(VPIPE_L.topCx-pw/2+4, faceY+2);
+  X.lineTo(VPIPE_L.topCx+pw/2-4, faceY+2);
+  X.lineTo(VPIPE_L.botCx+pw/2-4, CYL.y);
+  X.closePath();X.fill();
+
+  // Right pipe outer
+  X.fillStyle='#666';
+  X.beginPath();
+  X.moveTo(VPIPE_R.botCx-pw/2, CYL.y);
+  X.lineTo(VPIPE_R.topCx-pw/2, faceY);
+  X.lineTo(VPIPE_R.topCx+pw/2, faceY);
+  X.lineTo(VPIPE_R.botCx+pw/2, CYL.y);
+  X.closePath();X.fill();
+  X.strokeStyle='#999';X.lineWidth=1.5;X.stroke();
+  // Right pipe bore
+  X.fillStyle='#2a2a2a';
+  X.beginPath();
+  X.moveTo(VPIPE_R.botCx-pw/2+4, CYL.y);
+  X.lineTo(VPIPE_R.topCx-pw/2+4, faceY+2);
+  X.lineTo(VPIPE_R.topCx+pw/2-4, faceY+2);
+  X.lineTo(VPIPE_R.botCx+pw/2-4, CYL.y);
+  X.closePath();X.fill();
+
+  // Color pipe interiors based on flow
+  if(leftOpen){
+    X.fillStyle='rgba(230,70,20,.22)';
+    X.beginPath();X.moveTo(VPIPE_L.botCx-pw/2+5,CYL.y);X.lineTo(VPIPE_L.topCx-pw/2+5,faceY+3);
+    X.lineTo(VPIPE_L.topCx+pw/2-5,faceY+3);X.lineTo(VPIPE_L.botCx+pw/2-5,CYL.y);X.closePath();X.fill();
+  }
+  if(leftExh){
+    X.fillStyle='rgba(90,110,160,.18)';
+    X.beginPath();X.moveTo(VPIPE_L.botCx-pw/2+5,CYL.y);X.lineTo(VPIPE_L.topCx-pw/2+5,faceY+3);
+    X.lineTo(VPIPE_L.topCx+pw/2-5,faceY+3);X.lineTo(VPIPE_L.botCx+pw/2-5,CYL.y);X.closePath();X.fill();
+  }
+  if(rightOpen){
+    X.fillStyle='rgba(230,70,20,.22)';
+    X.beginPath();X.moveTo(VPIPE_R.botCx-pw/2+5,CYL.y);X.lineTo(VPIPE_R.topCx-pw/2+5,faceY+3);
+    X.lineTo(VPIPE_R.topCx+pw/2-5,faceY+3);X.lineTo(VPIPE_R.botCx+pw/2-5,CYL.y);X.closePath();X.fill();
+  }
+  if(rightExh){
+    X.fillStyle='rgba(90,110,160,.18)';
+    X.beginPath();X.moveTo(VPIPE_R.botCx-pw/2+5,CYL.y);X.lineTo(VPIPE_R.topCx-pw/2+5,faceY+3);
+    X.lineTo(VPIPE_R.topCx+pw/2-5,faceY+3);X.lineTo(VPIPE_R.botCx+pw/2-5,CYL.y);X.closePath();X.fill();
+  }
+
+  // ─── 3. VALVE BOX (steam chest) on top of pipes ───
+  X.fillStyle=mGrad(VB.x,VB.x+VB.w,'#555','#727272');
+  X.strokeStyle='#999';X.lineWidth=2;
+  rr(VB.x,VB.y,VB.w,VB.h,5,true,true);
+  // Interior (filled with live steam at all times)
+  X.fillStyle='#2e2e2e';X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
+  X.fillStyle='rgba(230,70,20,.06)';X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
+  // Faint steam particles in chest
+  for(let i=0;i<5;i++){
+    X.fillStyle=`rgba(230,80,25,${.02+Math.random()*.03})`;
+    X.beginPath();X.arc(VB.x+15+Math.random()*(VB.w-30),VB.y+10+Math.random()*(VB.h-25),2+Math.random()*3,0,Math.PI*2);X.fill();
+  }
+  // Steam inlet opening on left wall
+  X.fillStyle='rgba(230,70,20,.2)';X.fillRect(VB.x,VB.y+VB.h/2-8,6,16);
+
+  // ─── 4. VALVE FACE (bottom plate of valve box) ───
+  const fH=8;
+  X.fillStyle='#5a5a5a';X.fillRect(VB.x+3,faceY-fH,VB.w-6,fH);
+  // Three openings
+  X.fillStyle='#2a2a2a';
+  X.fillRect(FACE_L.cx-FACE_L.w/2, faceY-fH, FACE_L.w, fH);
+  X.fillRect(FACE_EX.cx-FACE_EX.w/2, faceY-fH, FACE_EX.w, fH);
+  X.fillRect(FACE_R.cx-FACE_R.w/2, faceY-fH, FACE_R.w, fH);
+
+  // ─── 5. D-SLIDE VALVE ───
+  const dCx=DVALVE_CX+vo;
+  const dLeft=dCx-DVALVE_W/2;
+  const dTop=faceY-fH-DVALVE_H;
+  const landL_left=dLeft;
+  const landL_right=dLeft+LAND_W;
+  const cav_left=landL_right;
+  const cav_right=cav_left+CAVITY_W;
+  const landR_left=cav_right;
+  const landR_right=cav_right+LAND_W;
+
+  // Draw lands (solid metal)
+  const vGrad=mGrad(dLeft,dLeft+DVALVE_W,'#606060','#8a8a8a');
+  // Left land (extends down to seal against face)
+  X.fillStyle=vGrad;
+  X.fillRect(landL_left,dTop,LAND_W,DVALVE_H+fH+2);
+  X.strokeStyle='#aaa';X.lineWidth=1;
+  X.strokeRect(landL_left,dTop,LAND_W,DVALVE_H+fH+2);
+  // Right land
+  X.fillStyle=vGrad;
+  X.fillRect(landR_left,dTop,LAND_W,DVALVE_H+fH+2);
+  X.strokeStyle='#aaa';X.lineWidth=1;
+  X.strokeRect(landR_left,dTop,LAND_W,DVALVE_H+fH+2);
+  // Top bridge connecting lands
+  X.fillStyle=vGrad;
+  X.fillRect(dLeft,dTop,DVALVE_W,DVALVE_H*0.35);
+  X.strokeStyle='#aaa';X.lineWidth=1;
+  X.beginPath();X.moveTo(dLeft,dTop);X.lineTo(dLeft+DVALVE_W,dTop);X.stroke();
+
+  // Cavity (the open space between lands — connects to exhaust)
+  X.fillStyle='rgba(90,110,160,.06)';
+  X.fillRect(cav_left,dTop+DVALVE_H*.35,CAVITY_W,DVALVE_H*.65+fH+2);
+  X.strokeStyle='rgba(150,150,170,.3)';X.lineWidth=.5;
+  X.strokeRect(cav_left,dTop+DVALVE_H*.35,CAVITY_W,DVALVE_H*.65+fH+2);
+
+  // Valve rod
+  X.strokeStyle='#999';X.lineWidth=4;
+  X.beginPath();X.moveTo(dCx,dTop);X.lineTo(dCx,VB.y-8);X.stroke();
+
+  // ─── 6. CYLINDER BORE + GAS + PISTON ───
+  X.fillStyle='#2a2a2a';X.fillRect(BORE.x,BORE.y,BORE.w,BORE.h);
+  // Port holes in cylinder top wall
+  X.fillStyle='#2a2a2a';
+  X.fillRect(CYLPORT_L.cx-CYLPORT_L.w/2,CYL.y,CYLPORT_L.w,WALL);
+  X.fillRect(CYLPORT_R.cx-CYLPORT_R.w/2,CYL.y,CYLPORT_R.w,WALL);
+
+  // Left chamber gas
+  const lW=pf-BORE.x;
+  if(lW>2){
+    const temp=leftOpen?.85:leftExh?.18:.48;
+    if(temp>.5){
+      const g=X.createLinearGradient(BORE.x,0,pf,0);
+      g.addColorStop(0,`rgba(230,70,20,${temp*.06})`);g.addColorStop(1,`rgba(230,70,20,${temp*.2})`);
+      X.fillStyle=g;
+    } else {
+      const c=1-temp;
+      const g=X.createLinearGradient(BORE.x,0,pf,0);
+      g.addColorStop(0,`rgba(90,110,160,${c*.12})`);g.addColorStop(1,`rgba(90,110,160,${c*.04})`);
+      X.fillStyle=g;
+    }
+    X.fillRect(BORE.x,BORE.y,lW,BORE.h);
+    const np=Math.max(3,lW/12|0);
+    for(let i=0;i<np;i++){
+      const gx=BORE.x+3+Math.random()*(lW-6),gy=BORE.y+3+Math.random()*(BORE.h-6);
+      X.fillStyle=temp>.5?`rgba(255,${85+Math.random()*50|0},${15+Math.random()*30|0},${.05+temp*.1})`
+        :`rgba(${80+Math.random()*25|0},${100+Math.random()*25|0},${145+Math.random()*25|0},${.03+(1-temp)*.05})`;
+      X.beginPath();X.arc(gx,gy,1+Math.random()*1.8,0,Math.PI*2);X.fill();
+    }
+  }
+  // Right chamber gas
+  const rStart=pf+PW,rW=BORE.x+BORE.w-rStart;
+  if(rW>2){
+    const temp=rightOpen?.85:rightExh?.18:.48;
+    if(temp>.5){
+      const g=X.createLinearGradient(rStart,0,BORE.x+BORE.w,0);
+      g.addColorStop(0,`rgba(230,70,20,${temp*.2})`);g.addColorStop(1,`rgba(230,70,20,${temp*.06})`);
+      X.fillStyle=g;
+    } else {
+      const c=1-temp;
+      const g=X.createLinearGradient(rStart,0,BORE.x+BORE.w,0);
+      g.addColorStop(0,`rgba(90,110,160,${c*.04})`);g.addColorStop(1,`rgba(90,110,160,${c*.12})`);
+      X.fillStyle=g;
+    }
+    X.fillRect(rStart,BORE.y,rW,BORE.h);
+    const np=Math.max(3,rW/12|0);
+    for(let i=0;i<np;i++){
+      const gx=rStart+3+Math.random()*(rW-6),gy=BORE.y+3+Math.random()*(BORE.h-6);
+      X.fillStyle=temp>.5?`rgba(255,${85+Math.random()*50|0},${15+Math.random()*30|0},${.05+temp*.1})`
+        :`rgba(${80+Math.random()*25|0},${100+Math.random()*25|0},${145+Math.random()*25|0},${.03+(1-temp)*.05})`;
+      X.beginPath();X.arc(gx,gy,1+Math.random()*1.8,0,Math.PI*2);X.fill();
+    }
+  }
+
+  // Piston
+  let pg=X.createLinearGradient(pf,BORE.y,pf,BORE.y+BORE.h);
+  pg.addColorStop(0,'#aaa');pg.addColorStop(.35,'#ccc');pg.addColorStop(.65,'#ccc');pg.addColorStop(1,'#aaa');
+  X.fillStyle=pg;X.fillRect(pf,BORE.y,PW,BORE.h);
+  X.strokeStyle='#ddd';X.lineWidth=1;X.strokeRect(pf,BORE.y,PW,BORE.h);
+  X.strokeStyle='#888';X.lineWidth=1.5;
+  X.beginPath();X.moveTo(pf+3,BORE.y);X.lineTo(pf+3,BORE.y+BORE.h);X.stroke();
+  X.beginPath();X.moveTo(pf+PW-3,BORE.y);X.lineTo(pf+PW-3,BORE.y+BORE.h);X.stroke();
+
+  // Piston rod: from piston right face through cylinder right wall to crosshead
+  const rodY=495;
+  X.strokeStyle='#bbb';X.lineWidth=8;
+  X.beginPath();X.moveTo(pf+PW,rodY);X.lineTo(chX,rodY);X.stroke();
+  X.strokeStyle='#d5d5d5';X.lineWidth=2;
+  X.beginPath();X.moveTo(pf+PW,rodY-3);X.lineTo(chX,rodY-3);X.stroke();
+
+  // Stuffing box where rod exits cylinder right wall
+  X.fillStyle='#6a6a6a';X.fillRect(CYL.x+CYL.w-5,rodY-16,14,32);
+  X.strokeStyle='#888';X.lineWidth=1;X.strokeRect(CYL.x+CYL.w-5,rodY-16,14,32);
+
+  // ─── 7. MOLECULE SWARMS — steam/exhaust flowing through the paths ───
+  const pipeMidLY=(faceY+CYL.y)/2;
+  const pipeMidLX=(VPIPE_L.topCx+VPIPE_L.botCx)/2;
+  const pipeMidRY=(faceY+CYL.y)/2;
+  const pipeMidRX=(VPIPE_R.topCx+VPIPE_R.botCx)/2;
+  const exX=VB.x+VB.w-25;
+
+  if(leftOpen && run && Math.random()<.4){
+    // Hot steam: chest → face → left pipe → cylinder left chamber
+    spawnMolecule([
+      {x:FACE_L.cx,y:VB.y+VB.h*.3},
+      {x:FACE_L.cx,y:faceY},
+      {x:VPIPE_L.topCx,y:faceY+5},
+      {x:pipeMidLX,y:pipeMidLY},
+      {x:VPIPE_L.botCx,y:CYL.y},
+      {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
+    ],HOT,90);
+  }
+  if(leftExh && run && Math.random()<.35){
+    // Spent steam: left chamber → up left pipe → cavity → exhaust
+    spawnMolecule([
+      {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2},
+      {x:CYLPORT_L.cx,y:CYL.y},
+      {x:VPIPE_L.botCx,y:CYL.y},
+      {x:pipeMidLX,y:pipeMidLY},
+      {x:VPIPE_L.topCx,y:faceY+5},
+      {x:FACE_L.cx,y:faceY-fH},
+      {x:FACE_EX.cx,y:VB.y+VB.h*.5},
+      {x:exX,y:VB.y+VB.h*.3},
+      {x:exX,y:VB.y}
+    ],COLD,80);
+  }
+  if(rightOpen && run && Math.random()<.4){
+    spawnMolecule([
+      {x:FACE_R.cx,y:VB.y+VB.h*.3},
+      {x:FACE_R.cx,y:faceY},
+      {x:VPIPE_R.topCx,y:faceY+5},
+      {x:pipeMidRX,y:pipeMidRY},
+      {x:VPIPE_R.botCx,y:CYL.y},
+      {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
+    ],HOT,90);
+  }
+  if(rightExh && run && Math.random()<.35){
+    spawnMolecule([
+      {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2},
+      {x:CYLPORT_R.cx,y:CYL.y},
+      {x:VPIPE_R.botCx,y:CYL.y},
+      {x:pipeMidRX,y:pipeMidRY},
+      {x:VPIPE_R.topCx,y:faceY+5},
+      {x:FACE_R.cx,y:faceY-fH},
+      {x:FACE_EX.cx,y:VB.y+VB.h*.5},
+      {x:exX,y:VB.y+VB.h*.3},
+      {x:exX,y:VB.y}
+    ],COLD,80);
+  }
+
+  // ─── 8. LABELS ───
+  label('Sliding valve',VB.x+VB.w/2,VB.y-14,12);
+  X.fillStyle='#aaa';X.font='9px Georgia';X.textAlign='left';
+  X.fillText('D-valve',landR_right+6,dTop+DVALVE_H/2+3);
+  label('Piston',pf+PW/2,CYL.y+CYL.h+18,12);
+  // chamber labels
+  if(lW>45){
+    X.fillStyle=leftOpen?'rgba(230,100,40,.5)':'rgba(90,110,160,.4)';
+    X.font='10px Georgia';X.textAlign='center';
+    X.fillText(leftOpen?'INTAKE':leftExh?'EXHAUST':'...',(BORE.x+pf)/2,rodY+4);
+  }
+  if(rW>45){
+    X.fillStyle=rightOpen?'rgba(230,100,40,.5)':'rgba(90,110,160,.4)';
+    X.font='10px Georgia';X.textAlign='center';
+    X.fillText(rightOpen?'INTAKE':rightExh?'EXHAUST':'...',(rStart+BORE.x+BORE.w)/2,rodY+4);
+  }
+  // Port labels on cylinder
+  X.fillStyle='#999';X.font='9px Georgia';X.textAlign='center';
+  X.fillText('left port',CYLPORT_L.cx,CYL.y+CYL.h+18);
+  X.fillText('right port',CYLPORT_R.cx,CYL.y+CYL.h+18);
+  // Rivets
+  for(let yy=CYL.y+15;yy<CYL.y+CYL.h;yy+=22){rivet(CYL.x+6,yy);rivet(CYL.x+CYL.w-6,yy);}
+
+  return chX;
+}
+
+// ─── CROSSHEAD + CONNECTING ROD + FLYWHEEL ───
+function drawMechanics(chX){
+  const rodY=495;
+  // Crosshead
+  X.fillStyle='#555';X.fillRect(chX-5,rodY-20,45,5);X.fillRect(chX-5,rodY+15,45,5);
+  X.fillStyle='#999';rr(chX,rodY-14,18,28,3,true,false);
+  X.strokeStyle='#bbb';X.lineWidth=1;rr(chX,rodY-14,18,28,3,false,true);
+  X.beginPath();X.arc(chX+9,rodY,5,0,Math.PI*2);X.fillStyle='#ccc';X.fill();
+  // Connecting rod
+  const cp=crankPin(ang);
+  X.strokeStyle='#8a8a8a';X.lineWidth=9;X.beginPath();X.moveTo(chX+9,rodY);X.lineTo(cp.x,cp.y);X.stroke();
+  X.strokeStyle='#aaa';X.lineWidth=3;X.beginPath();X.moveTo(chX+9,rodY-3);X.lineTo(cp.x,cp.y-3);X.stroke();
+  X.beginPath();X.arc(cp.x,cp.y,7,0,Math.PI*2);X.fillStyle='#999';X.fill();X.strokeStyle='#bbb';X.lineWidth=1;X.stroke();
+}
+
+function drawFlywheel(){
+  const cx=FW.cx,cy=FW.cy,r=FW.r;
+  X.beginPath();X.arc(cx+4,cy+4,r+8,0,Math.PI*2);X.fillStyle='rgba(0,0,0,.25)';X.fill();
+  X.beginPath();X.arc(cx,cy,r,0,Math.PI*2);X.lineWidth=18;X.strokeStyle='#6a6a6a';X.stroke();
+  X.lineWidth=12;X.strokeStyle='#888';X.stroke();
+  X.beginPath();X.arc(cx,cy,r-18,0,Math.PI*2);X.lineWidth=2;X.strokeStyle='#555';X.stroke();
+  for(let i=0;i<8;i++){
+    const sa=ang+(i*Math.PI*2)/8;
+    X.beginPath();X.moveTo(cx+20*Math.cos(sa),cy+20*Math.sin(sa));X.lineTo(cx+(r-22)*Math.cos(sa),cy+(r-22)*Math.sin(sa));
+    X.lineWidth=6;X.strokeStyle='#777';X.stroke();X.lineWidth=2;X.strokeStyle='#999';X.stroke();
+  }
+  X.beginPath();X.arc(cx,cy,20,0,Math.PI*2);
+  let hg=X.createRadialGradient(cx-4,cy-4,2,cx,cy,20);hg.addColorStop(0,'#bbb');hg.addColorStop(1,'#666');
+  X.fillStyle=hg;X.fill();X.strokeStyle='#999';X.lineWidth=2;X.stroke();
+  const cp=crankPin(ang);
+  X.beginPath();X.arc(cp.x,cp.y,6,0,Math.PI*2);X.fillStyle='#ccc';X.fill();
+  label('Flywheel',cx,cy+r+28,14);
+}
+
+function drawGovernor(){
+  const gx=800,gy=145,sp=.5+spd*.25;
+  X.fillStyle='#666';X.fillRect(gx-4,gy+5,8,95);
+  X.strokeStyle='rgba(100,100,100,.4)';X.lineWidth=2;X.setLineDash([5,5]);
+  X.beginPath();X.moveTo(gx,gy+95);X.lineTo(FW.cx,FW.cy-FW.r+15);X.stroke();X.setLineDash([]);
+  for(let s=-1;s<=1;s+=2){
+    X.save();X.translate(gx,gy+12);
+    X.strokeStyle='#999';X.lineWidth=3;X.beginPath();X.moveTo(0,0);X.lineTo(s*25*sp,35);X.stroke();
+    X.beginPath();X.moveTo(s*25*sp,35);X.lineTo(s*10,55);X.stroke();
+    let bg=X.createRadialGradient(s*25*sp-2,33,1,s*25*sp,35,8);bg.addColorStop(0,'#ddd');bg.addColorStop(1,'#777');
+    X.beginPath();X.arc(s*25*sp,35,8,0,Math.PI*2);X.fillStyle=bg;X.fill();
+    X.restore();
+  }
+  X.beginPath();X.arc(gx,gy+8,7,0,Math.PI*2);X.fillStyle='#aaa';X.fill();
+  label('Centrifugal',gx,gy-16,11);label('governor',gx,gy-3,11);
+}
+
+function drawParticles(dt){
+  const exX=VB.x+VB.w-25;
+  if(run&&Math.random()<.25){steamP.push({x:exX-12+(Math.random()-.5)*18,y:52,vx:(Math.random()-.5)*18,vy:-(30+Math.random()*40),life:2+Math.random()*2,ml:2+Math.random()*2,sz:2+Math.random()*5});}
+  if(run&&Math.random()<.45){fireP.push({x:FRN.x+FRN.w/2+(Math.random()-.5)*80,y:FRN.y+5,vx:(Math.random()-.5)*12,vy:-(25+Math.random()*50),life:.3+Math.random()*.5,ml:.3+Math.random()*.5,sz:2+Math.random()*5});}
+  steamP.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.995;p.vy*=.995;p.life-=dt;p.sz+=dt*4;
+    X.beginPath();X.arc(p.x,p.y,p.sz,0,Math.PI*2);X.fillStyle=`rgba(190,190,200,${Math.max(0,p.life/p.ml)*.3})`;X.fill();});
+  steamP=steamP.filter(p=>p.life>0);
+  fireP.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;p.sz*=.99;const t2=1-p.life/p.ml;
+    X.beginPath();X.arc(p.x,p.y,p.sz,0,Math.PI*2);X.fillStyle=`rgba(${255-t2*60|0},${170-t2*140|0},${40-t2*30|0},${Math.max(0,p.life/p.ml)*.75})`;X.fill();});
+  fireP=fireP.filter(p=>p.life>0);
+}
+
+function drawStatus(){
+  const vo=valveOffset(ang);
+  const bx=15,by=670,bw=280,bh=100;
+  X.fillStyle='rgba(25,25,30,.85)';rr(bx,by,bw,bh,5,true,false);
+  X.strokeStyle='#444';X.lineWidth=1;rr(bx,by,bw,bh,5,false,true);
+  X.fillStyle='#ccc';X.font='bold 11px Georgia';X.textAlign='left';
+  X.fillText('Cycle Status',bx+10,by+18);X.font='10px Georgia';
+  const lO=vo>10,rO=vo<-10,lE=vo<-10,rE=vo>10;
+  X.fillStyle=lO?'#e84':lE?'#88b':'#888';
+  X.fillText('Left:  '+(lO?'INTAKE \u2193 hot steam':lE?'EXHAUST \u2191 spent steam':'transitioning'),bx+10,by+38);
+  X.fillStyle=rO?'#e84':rE?'#88b':'#888';
+  X.fillText('Right: '+(rO?'INTAKE \u2193 hot steam':rE?'EXHAUST \u2191 spent steam':'transitioning'),bx+10,by+56);
+  X.fillStyle='#999';X.fillText('Valve:',bx+10,by+78);
+  const barX=bx+55,barW=100;
+  X.fillStyle='#333';X.fillRect(barX,by+71,barW,8);
+  X.fillStyle='#ccc';X.fillRect(barX+barW/2+vo/VALVE_TRAVEL*barW/2-10,by+70,20,10);
+  const deg=((ang*180/Math.PI)%360+360)%360;
+  X.fillStyle='#777';X.fillText(`Crank: ${deg.toFixed(0)}\u00B0`,bx+10,by+95);
+}
+
+function drawTitle(){
+  X.fillStyle='#e0d8c8';X.font='bold 18px Georgia';X.textAlign='center';
+  X.fillText('James Watt Steam Engine (1788)',520,30);
+  X.font='12px Georgia';X.fillStyle='#888';
+  X.fillText('Cross-section: D-slide valve routes steam to alternate sides of piston',520,50);
+}
+
+// ─── MAIN LOOP ───
+let lt=performance.now();
+function frame(now){
+  const dt=Math.min((now-lt)/1000,.05);lt=now;
+  if(run)ang+=dt*Math.PI*2*spd;
+  drawBG();
+  drawFurnace();
+  drawBoiler();
+  drawHeatArrows();
+  drawExternalPipes();
+  const chX=drawEngine(ang);
+  drawMechanics(chX);
+  drawFlywheel();
+  drawGovernor();
+  drawParticles(dt);
+  updateAndDrawMolecules(dt);
+  drawStatus();
+  drawTitle();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
