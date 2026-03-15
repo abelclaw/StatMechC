@@ -10,11 +10,6 @@
 
 <p>With temperature and luminosity data, we can make a scatter plot of stars in the galaxy to see if there are any patterns. This was done by Hertzsprung and Russell first around 1910:</p>
 
-<figure>
-<img src="images/15-Stars_p1_img0.png" alt="HR diagram (early)">
-<img src="images/15-Stars_p1_img1.png" alt="HR diagram (Gaia)">
-<figcaption>Figure 1. Hertzsprung-Russell diagram of luminosity and surface temperature. Left is an early estimate. Right is more recent from the Gaia experiment.</figcaption>
-</figure>
 
 <p>We see from the <span class="tooltip-trigger">Hertzsprung-Russell (HR) diagram<span class="tooltip-content">A scatter plot of stars' luminosity vs. surface temperature. Stars cluster along specific sequences (main sequence, giant branch, white dwarfs) depending on their evolutionary stage.</span></span> that most stars fall in two swaths: a diagonal swath, known as the <span class="tooltip-trigger">main sequence<span class="tooltip-content">The band in the HR diagram containing about 90% of all stars, including our sun. Main sequence stars are burning hydrogen in their cores.</span></span> (90% of stars), which includes stars like our sun, and a horizontal swath with luminosities around 100 times brighter than our sun called the horizontal branch (labeled "Red giants" or "giant branch" in the figure). A first question from this data is "why do stars fall along swaths rather than being distributed throughout the $L/T$ plane?" The basic answer is the <span class="tooltip-trigger">Vogt-Russell theorem<span class="tooltip-content">All stars with the same chemical composition and mass are the same. This means that mass alone indexes a one-parameter family of stars, explaining why they fall on curves in the HR diagram.</span></span>: all stars with the same chemical composition and mass are the same. In particular, if the chemical composition is the same, then the mass indexes a one-parameter family of points in any plot, including a HR diagram. The main sequence swath describes stars with hydrogen-burning cores, like our sun. The red giants composing the horizontal branch are burning helium. There is another region heading upwards from the horizontal branch known as the <strong>asymptotic giant branch</strong>. It contains supergiants which burn heavy elements. Finally, the stars in the lower left are called <strong>white dwarfs</strong>.</p>
 
@@ -48,9 +43,9 @@
 <p>In the red giant phase the star continues to burn the remaining hydrogen, expanding and cooling, and fuses helium in the core. This stage is relatively fast, and less than 0.5% of stars are red giants. Eventually all the helium in the core is used up and core nuclear fusion stops. Then, once again, the thermal pressure stops and the star's core can contract under its own weight and heat up, allowing helium fusion to continue in shells around it. It has entered the asymptotic giant branch. There is a lot of convection in this phase, causing the heavy elements to be dredged up from the core in a series of bursts. The result is the formation of a set of shells of matter called a <span class="tooltip-trigger">planetary nebula<span class="tooltip-content">Shells of gas expelled from an aging star. Despite the name, they have nothing to do with planets -- the name is a historical misnomer.</span></span>:</p>
 
 <figure>
-<img src="images/15-Stars_p3_img0.png" alt="Ring nebula">
-<img src="images/15-Stars_p3_img1.png" alt="Cat's Eye nebula">
-<figcaption>Figure 2. The Ring Nebula (left) and Cat's Eye Nebula (right) are planetary nebulae. The dot in the middle of each is a white dwarf. Planetary nebulae have nothing to do with planets.</figcaption>
+<img src="images/ring_nebula_jwst.jpg" alt="Ring Nebula (M57)" style="max-width:48%; display:inline-block; vertical-align:top;">
+<img src="images/cats_eye_nebula_hubble.jpg" alt="Cat's Eye Nebula (NGC 6543)" style="max-width:48%; display:inline-block; vertical-align:top;">
+<figcaption>Figure 2. The Ring Nebula (left) and Cat's Eye Nebula (right) are planetary nebulae. The dot in the middle of each is a white dwarf. Planetary nebulae have nothing to do with planets. (Ring Nebula: NASA/ESA/CSA/STScI, JWST NIRCam. Cat's Eye Nebula: NASA/ESA/J.P. Harrington &amp; K.J. Borkowski, Hubble Space Telescope.)</figcaption>
 </figure>
 
 <p>Planetary nebulae are colorful because UV radiation from the core ionizes the atoms in the gas. This makes them some of the most beautiful objects in the sky. They have nothing to do with planets ("planetary" is a historical misnomer -- at low resolution, they look a bit like round, green or blue planets).</p>
@@ -104,12 +99,7 @@ $$L = \text{surface area} \times \text{flux} = 4\pi R^2 \sigma T_s^4$$
 <span class="eq-number">(3)</span>
 </div>
 
-<p>with $\sigma = 5.6 \times 10^{-8}\;\frac{\text{W}}{\text{m}^2\text{K}^4}$ is Stefan's constant. So stars with the same $R$ should fall along diagonal lines in the log-log HR diagram.</p>
-
-<figure>
-<img src="images/15-Stars_p5_img0.png" alt="HR diagram with constant-radius lines">
-<figcaption>HR diagram with lines of constant radius overlaid. Most main sequence stars have radii within two orders of magnitude of the sun.</figcaption>
-</figure>
+<p>with $\sigma = 5.6 \times 10^{-8}\;\frac{\text{W}}{\text{m}^2\text{K}^4}$ is Stefan's constant. So stars with the same $R$ should fall along diagonal lines in the log-log HR diagram, as shown by the dashed constant-radius lines in the interactive HR diagram above.</p>
 
 <p>We see that most of the main sequence stars have radii $R$ within two orders of magnitude of the sun: $0.1 R_\odot < R < 10 R_\odot$. Red giants are bigger, and the white dwarfs are smaller, hence their names.</p>
 
@@ -600,8 +590,8 @@ $$\rho_{\text{NS}} \approx \frac{M_\odot}{\frac{4}{3}\pi R_{\text{NS}}^3} = 3 \t
 <p>In July, 1054 AD, a Chinese astronomer observed a new "guest star", brighter than any other star in the sky. It lasted for about a month and then faded. Arab astronomers observed the same object, and perhaps Native American astronomers as well. We now know that this was a core-collapse supernova. 1000 years later, the supernova remnants are visible as the <span class="tooltip-trigger">Crab Nebula<span class="tooltip-content">A supernova remnant in the constellation Taurus, about 10 light-years across. It was created by a supernova observed by Chinese astronomers in 1054 AD. It contains a pulsar in its center.</span></span>, in the constellation Taurus. There is a neutron star in the middle of the Crab Nebula called the Crab Pulsar. The pulsar has a mass of $1.4\,M_\odot$ and period of 0.3s.</p>
 
 <figure>
-<img src="images/15-Stars_p20_img0.png" alt="Crab Nebula">
-<figcaption>Figure 7. The Crab Nebula is around 10 light years across. In its center is a neutron star pulsar. The neutron star cannot be seen in the optical spectrum, but is clearly visible in the radio and x-ray bands.</figcaption>
+<img src="images/crab_nebula_hubble.jpg" alt="Crab Nebula (M1)">
+<figcaption>Figure 7. The Crab Nebula is around 10 light years across. In its center is a neutron star pulsar. The neutron star cannot be seen in the optical spectrum, but is clearly visible in the radio and x-ray bands. (NASA/ESA/J. Hester &amp; A. Loll, Hubble Space Telescope.)</figcaption>
 </figure>
 
 <p>In 2017, a binary neutron star system was discovered through its gravitational wave signal as the neutron stars merged. The neutron stars had masses around $1.5\,M_\odot$. One interesting mystery that such mergers might explain is where all the gold in the universe came from. It turns out it is very difficult to explain how gold might have come from supernovae. However, the nuclear physics of neutron star mergers seems like it gives a better explanation. This science is all very recent, and while early results seem promising, more data and more careful calculations and simulations are needed to draw any definite conclusions.</p>
