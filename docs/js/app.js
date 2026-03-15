@@ -12601,7 +12601,7 @@ function initCh15Vis() {
       ];
     }
 
-    let evoPlaying = false, evoTime = 0, evoStages = getStages(1.0);
+    let evoPlaying = false, evoTime = 0, evoStages = getStages(10);
     let snParticles = [], nebulaRings = [];
     let lastFrameTime = 0;
     let surfaceSparks = [];
@@ -12884,6 +12884,14 @@ function initCh15Vis() {
         const r0 = (prevStage.special === 'collapse' || prevStage.special === 'supernova') ? 0.02/maxRval*maxPixR : prevR/maxRval*maxPixR;
         const r1 = curR / maxRval * maxPixR;
         drawRadius = lerp(r0, r1, tFrac);
+      }
+      // Ensure star is always visible and radiating - use sqrt scaling
+      // so small stars aren't invisible compared to giants
+      if (drawRadius > 0 && stage.special !== 'supernova') {
+        drawRadius = Math.max(drawRadius, 8);
+        // Apply sqrt compression so giants don't dominate too much
+        // but small stars are still clearly visible
+        drawRadius = 8 + (drawRadius - 8) * (drawRadius < 20 ? 1 : 0.5 + 0.5 * Math.sqrt(drawRadius / maxPixR));
       }
       drawRadius = Math.max(drawRadius, 2);
 
@@ -13185,8 +13193,8 @@ function initCh15Vis() {
         drawLuminousStar(cx, cy, drawRadius, curTs, time, stage.shells, isCollapsing, frac);
 
         // Surface sparks during active fusion
-        if (!isCollapsing && drawRadius > 10) {
-          if (Math.random() < 0.15) initSurfaceSparks(cx, cy, drawRadius);
+        if (!isCollapsing && drawRadius > 3) {
+          if (Math.random() < 0.2) initSurfaceSparks(cx, cy, drawRadius);
           drawSurfaceSparks(cx, cy, drawRadius, time, 1/60);
         }
 
