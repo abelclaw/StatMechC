@@ -13523,10 +13523,10 @@ function initCh15Vis() {
 
     // --- Camera system ---
     // Scale = pixels per solar radius. Logarithmic zoom.
-    // At zoom=0: UY Scuti radius ~ 0.14 * HS → see its full disc
-    const scaleMin = (HS * 0.14) / 1708;
-    // At zoom=100: Earth ~ 8px radius
-    const scaleMax = 8.0 / earthR;
+    // At zoom=0: UY Scuti fills ~40% of canvas height
+    const scaleMin = (HS * 0.4) / (2 * 1708);
+    // At zoom=100: Proxima Cen is ~50px radius
+    const scaleMax = 50 / 0.15;
 
     function getScale(z) {
       return Math.exp(Math.log(scaleMin) + (z / 100) * (Math.log(scaleMax) - Math.log(scaleMin)));
@@ -13727,7 +13727,7 @@ function initCh15Vis() {
         const rPx = s.R * scale;
         const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
 
-        if (rPx > HS * 1.2) {
+        if (rPx > HS * 2) {
           horizonStars.push({s, i, sx, sy, rPx});
         } else if (rPx >= 0.8) {
           visibleStars.push({s, i, sx, sy, rPx});
@@ -13777,36 +13777,36 @@ function initCh15Vis() {
         }
 
         // Diameter marker <-> with size in km
-        if (v.rPx > 12 && v.sx > 0 && v.sx < WS) {
+        if (v.rPx > 15 && v.sx > 0 && v.sx < WS) {
           const dKm = v.s.R * 2 * 696340; // diameter in km
           const exp = Math.floor(Math.log10(dKm));
-          const mantissa = dKm / Math.pow(10, exp);
-          const sizeStr = mantissa < 1.05 ? '10' + superscript(exp) + ' km'
-            : mantissa.toFixed(1) + '\u00d710' + superscript(exp) + ' km';
-          const markerY = v.sy + v.rPx * 0.35; // below center so it's not on brightest part
-          const mLeft = v.sx - v.rPx + 3;
-          const mRight = v.sx + v.rPx - 3;
-          // Lines and arrows
-          ctxS.strokeStyle = 'rgba(0,0,0,0.6)';
-          ctxS.lineWidth = 2.5;
+          const sizeStr = '10' + superscript(exp) + ' km';
+          const markerY = v.sy + v.rPx * 0.3;
+          const mLeft = v.sx - v.rPx + 4;
+          const mRight = v.sx + v.rPx - 4;
+          // Dark outline then bright line
+          ctxS.strokeStyle = 'rgba(0,0,0,0.5)';
+          ctxS.lineWidth = 3;
           ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mRight, markerY); ctxS.stroke();
-          ctxS.strokeStyle = 'rgba(255,255,200,0.7)';
-          ctxS.lineWidth = 1;
+          ctxS.strokeStyle = 'rgba(255,255,200,0.8)';
+          ctxS.lineWidth = 1.5;
           ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mRight, markerY); ctxS.stroke();
-          // Left arrow
-          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + 6, markerY - 3); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + 6, markerY + 3); ctxS.stroke();
-          // Right arrow
-          ctxS.beginPath(); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - 6, markerY - 3); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - 6, markerY + 3); ctxS.stroke();
-          // Size label with dark background pill
-          ctxS.font = '10px Inter, system-ui, sans-serif';
+          // Arrows
+          const aw = Math.min(8, v.rPx * 0.15);
+          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + aw, markerY - aw/2); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + aw, markerY + aw/2); ctxS.stroke();
+          ctxS.beginPath(); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - aw, markerY - aw/2); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - aw, markerY + aw/2); ctxS.stroke();
+          // Size label — large font with dark pill background
+          const fontSize = Math.max(13, Math.min(18, v.rPx * 0.15));
+          ctxS.font = fontSize + 'px Inter, system-ui, sans-serif';
           ctxS.textAlign = 'center';
-          const tw = ctxS.measureText(sizeStr).width + 8;
-          ctxS.fillStyle = 'rgba(0,0,0,0.7)';
+          const tw = ctxS.measureText(sizeStr).width + 12;
+          const th = fontSize + 6;
+          ctxS.fillStyle = 'rgba(0,0,0,0.75)';
           ctxS.beginPath();
-          ctxS.roundRect(v.sx - tw/2, markerY - 14, tw, 13, 3);
+          ctxS.roundRect(v.sx - tw/2, markerY - th - 2, tw, th, 4);
           ctxS.fill();
-          ctxS.fillStyle = 'rgba(255,255,200,0.9)';
-          ctxS.fillText(sizeStr, v.sx, markerY - 4);
+          ctxS.fillStyle = 'rgba(255,255,200,0.95)';
+          ctxS.fillText(sizeStr, v.sx, markerY - 6);
         }
       }
 
@@ -13922,7 +13922,7 @@ function initCh15Vis() {
       // Also check horizon stars — hit if mouse is within the arc area
       for (let i = 0; i < stars.length; i++) {
         const rPx = stars[i].R * scale;
-        if (rPx <= HS * 1.2) continue;
+        if (rPx <= HS * 2) continue;
         const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
         const d = Math.hypot(mx - sx, my - sy);
         if (d < rPx && my > sy - rPx) { closest = i; break; }
