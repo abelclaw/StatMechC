@@ -148,18 +148,19 @@ let steamP=[],fireP=[];
 // ─── MOLECULE SWARMS ───
 // Molecules flow along paths showing steam/exhaust movement
 let molecules=[];
-const MAX_MOLECULES=200;
+const MAX_MOLECULES=500;
 
-function spawnMolecule(path,col,speed){
+function spawnMolecule(path,col,speed,hot){
   // path = array of {x,y} waypoints
   if(molecules.length>=MAX_MOLECULES) return;
   molecules.push({
     path,col,speed:speed||80,
     t:0, // progress along path 0..1
-    size:1.5+Math.random()*2,
-    wobbleX:(Math.random()-.5)*8,
-    wobbleY:(Math.random()-.5)*8,
-    wobbleSpeed:2+Math.random()*4
+    size: hot ? 2+Math.random()*2.5 : 1.5+Math.random()*2,
+    wobbleX:(Math.random()-.5)*(hot?14:6),
+    wobbleY:(Math.random()-.5)*(hot?14:6),
+    wobbleSpeed: hot ? 5+Math.random()*8 : 2+Math.random()*4,
+    hot: !!hot
   });
 }
 
@@ -171,9 +172,15 @@ function updateAndDrawMolecules(dt){
     const pos=pathPos(m.path,m.t);
     const t=Date.now()/1000;
     const wx=Math.sin(t*m.wobbleSpeed+m.t*10)*m.wobbleX;
-    const wy=Math.cos(t*m.wobbleSpeed+m.t*10)*m.wobbleY;
-    const alpha=Math.min(1,Math.min(m.t*5,(1-m.t)*5))*0.7;
+    const wy=Math.cos(t*m.wobbleSpeed*1.3+m.t*7)*m.wobbleY;
+    const alpha=Math.min(1,Math.min(m.t*5,(1-m.t)*5))*(m.hot?0.85:0.6);
     X.globalAlpha=alpha;
+    if(m.hot){
+      // Hot molecules glow
+      X.fillStyle=m.col;
+      X.beginPath();X.arc(pos.x+wx,pos.y+wy,m.size+1.5,0,Math.PI*2);
+      X.fillStyle=`rgba(255,120,30,${alpha*0.2})`;X.fill();
+    }
     X.fillStyle=m.col;
     X.beginPath();X.arc(pos.x+wx,pos.y+wy,m.size,0,Math.PI*2);X.fill();
     X.globalAlpha=1;
@@ -530,53 +537,98 @@ function drawEngine(a){
   const pipeMidRX=(VPIPE_R.topCx+VPIPE_R.botCx)/2;
   const exX=VB.x+VB.w-25;
 
-  if(leftOpen && run && Math.random()<.4){
-    // Hot steam: chest → face → left pipe → cylinder left chamber
-    spawnMolecule([
-      {x:FACE_L.cx,y:VB.y+VB.h*.3},
-      {x:FACE_L.cx,y:faceY},
-      {x:VPIPE_L.topCx,y:faceY+5},
-      {x:pipeMidLX,y:pipeMidLY},
-      {x:VPIPE_L.botCx,y:CYL.y},
-      {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
-    ],HOT,90);
+  // Supply pipe waypoints: boiler top → across → down into valve box left wall
+  const supplyPath=[
+    {x:BLR.x+BLR.w/2+10, y:BLR.y},
+    {x:BLR.x+BLR.w/2+10, y:BLR.y-50},
+    {x:VB.x-3, y:BLR.y-50},
+    {x:VB.x-3, y:VB.y+VB.h/2},
+    {x:VB.x+15, y:VB.y+VB.h/2}
+  ];
+
+  // Constantly spawn hot molecules in the supply pipe (boiler always making steam)
+  if(run && Math.random()<.6){
+    spawnMolecule(supplyPath, HOT, 130, true);
   }
+
+  if(leftOpen && run && Math.random()<.7){
+    // Hot steam: from boiler → supply pipe → valve box → left pipe → left chamber
+    // Full path from boiler through entire system
+    spawnMolecule([
+      ...supplyPath,
+      {x:FACE_L.cx, y:VB.y+VB.h*.4},
+      {x:FACE_L.cx, y:faceY},
+      {x:VPIPE_L.topCx, y:faceY+5},
+      {x:pipeMidLX, y:pipeMidLY},
+      {x:VPIPE_L.botCx, y:CYL.y},
+      {x:CYLPORT_L.cx, y:BORE.y+BORE.h/2}
+    ], HOT, 140, true);
+  }
+  // Extra hot molecules just in the pipe+cylinder portion for density
+  if(leftOpen && run && Math.random()<.5){
+    spawnMolecule([
+      {x:FACE_L.cx, y:VB.y+VB.h*.3},
+      {x:FACE_L.cx, y:faceY},
+      {x:VPIPE_L.topCx, y:faceY+5},
+      {x:pipeMidLX, y:pipeMidLY},
+      {x:VPIPE_L.botCx, y:CYL.y},
+      {x:CYLPORT_L.cx, y:BORE.y+BORE.h/2}
+    ], HOT, 120, true);
+  }
+
   if(leftExh && run && Math.random()<.35){
-    // Spent steam: left chamber → up left pipe → cavity → exhaust
+    // Spent steam: left chamber → up left pipe → cavity → exhaust → chimney
     spawnMolecule([
-      {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2},
-      {x:CYLPORT_L.cx,y:CYL.y},
-      {x:VPIPE_L.botCx,y:CYL.y},
-      {x:pipeMidLX,y:pipeMidLY},
-      {x:VPIPE_L.topCx,y:faceY+5},
-      {x:FACE_L.cx,y:faceY-fH},
-      {x:FACE_EX.cx,y:VB.y+VB.h*.5},
-      {x:exX,y:VB.y+VB.h*.3},
-      {x:exX,y:VB.y}
-    ],COLD,80);
+      {x:CYLPORT_L.cx, y:BORE.y+BORE.h/2},
+      {x:CYLPORT_L.cx, y:CYL.y},
+      {x:VPIPE_L.botCx, y:CYL.y},
+      {x:pipeMidLX, y:pipeMidLY},
+      {x:VPIPE_L.topCx, y:faceY+5},
+      {x:FACE_L.cx, y:faceY-fH},
+      {x:FACE_EX.cx, y:VB.y+VB.h*.5},
+      {x:exX, y:VB.y+VB.h*.3},
+      {x:exX, y:VB.y},
+      {x:exX, y:120},
+      {x:exX-12, y:60}
+    ], COLD, 70, false);
   }
-  if(rightOpen && run && Math.random()<.4){
+
+  if(rightOpen && run && Math.random()<.7){
     spawnMolecule([
-      {x:FACE_R.cx,y:VB.y+VB.h*.3},
-      {x:FACE_R.cx,y:faceY},
-      {x:VPIPE_R.topCx,y:faceY+5},
-      {x:pipeMidRX,y:pipeMidRY},
-      {x:VPIPE_R.botCx,y:CYL.y},
-      {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
-    ],HOT,90);
+      ...supplyPath,
+      {x:FACE_R.cx, y:VB.y+VB.h*.4},
+      {x:FACE_R.cx, y:faceY},
+      {x:VPIPE_R.topCx, y:faceY+5},
+      {x:pipeMidRX, y:pipeMidRY},
+      {x:VPIPE_R.botCx, y:CYL.y},
+      {x:CYLPORT_R.cx, y:BORE.y+BORE.h/2}
+    ], HOT, 140, true);
   }
+  if(rightOpen && run && Math.random()<.5){
+    spawnMolecule([
+      {x:FACE_R.cx, y:VB.y+VB.h*.3},
+      {x:FACE_R.cx, y:faceY},
+      {x:VPIPE_R.topCx, y:faceY+5},
+      {x:pipeMidRX, y:pipeMidRY},
+      {x:VPIPE_R.botCx, y:CYL.y},
+      {x:CYLPORT_R.cx, y:BORE.y+BORE.h/2}
+    ], HOT, 120, true);
+  }
+
   if(rightExh && run && Math.random()<.35){
     spawnMolecule([
-      {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2},
-      {x:CYLPORT_R.cx,y:CYL.y},
-      {x:VPIPE_R.botCx,y:CYL.y},
-      {x:pipeMidRX,y:pipeMidRY},
-      {x:VPIPE_R.topCx,y:faceY+5},
-      {x:FACE_R.cx,y:faceY-fH},
-      {x:FACE_EX.cx,y:VB.y+VB.h*.5},
-      {x:exX,y:VB.y+VB.h*.3},
-      {x:exX,y:VB.y}
-    ],COLD,80);
+      {x:CYLPORT_R.cx, y:BORE.y+BORE.h/2},
+      {x:CYLPORT_R.cx, y:CYL.y},
+      {x:VPIPE_R.botCx, y:CYL.y},
+      {x:pipeMidRX, y:pipeMidRY},
+      {x:VPIPE_R.topCx, y:faceY+5},
+      {x:FACE_R.cx, y:faceY-fH},
+      {x:FACE_EX.cx, y:VB.y+VB.h*.5},
+      {x:exX, y:VB.y+VB.h*.3},
+      {x:exX, y:VB.y},
+      {x:exX, y:120},
+      {x:exX-12, y:60}
+    ], COLD, 70, false);
   }
 
   // ─── 8. LABELS ───
