@@ -119,7 +119,7 @@ const PORT_R_CX=430;   // right cylinder pipe enters here
 const PORT_W=14;        // width of each opening
 
 // The exhaust chimney pipe (separate, comes down from above into center opening)
-const EX_PIPE_X=VB.x+VB.w-30; // where exhaust exits at top of canvas
+const EX_PIPE_X=CYL.x+CYL.w+40; // exhaust chimney well to the right, separate from everything
 
 // Slider: a bridge piece connecting one port to the exhaust center
 // It slides left-right. When left: bridges LEFT port to EXHAUST center.
@@ -258,7 +258,33 @@ function drawBoiler(){
   X.strokeStyle='rgba(80,130,200,.3)';X.lineWidth=1;X.beginPath();
   for(let xx=BLR.x+6;xx<BLR.x+BLR.w-6;xx+=2){const yy=wT+Math.sin(xx*.06+t*2.5)*2.5;xx===BLR.x+6?X.moveTo(xx,yy):X.lineTo(xx,yy);}
   X.stroke();
-  X.fillStyle='rgba(170,170,180,.1)';X.fillRect(BLR.x+4,BLR.y+4,BLR.w-8,wT-BLR.y-4);
+  // Hot steam/air above the water (red/orange, not just gray)
+  const steamGrad=X.createLinearGradient(0,BLR.y+4,0,wT);
+  steamGrad.addColorStop(0,'rgba(230,80,25,.12)');
+  steamGrad.addColorStop(1,'rgba(230,80,25,.03)');
+  X.fillStyle=steamGrad;
+  X.fillRect(BLR.x+4,BLR.y+4,BLR.w-8,wT-BLR.y-4);
+  // Hot steam particles above water
+  for(let i=0;i<6;i++){
+    const sx=BLR.x+10+Math.random()*(BLR.w-20);
+    const sy=BLR.y+8+Math.random()*(wT-BLR.y-14);
+    X.fillStyle=`rgba(230,80,25,${.04+Math.random()*.06})`;
+    X.beginPath();X.arc(sx,sy,2+Math.random()*3,0,Math.PI*2);X.fill();
+  }
+  // Bubbles rising in the water (boiling)
+  for(let i=0;i<8;i++){
+    const bx=BLR.x+15+Math.random()*(BLR.w-30);
+    const by=wT+8+Math.random()*(BLR.y+BLR.h-wT-16);
+    const br=1.5+Math.random()*3.5;
+    const ba=.08+.12*Math.sin(t*4+i*1.7);
+    X.beginPath();X.arc(bx,by+Math.sin(t*3+i*2)*4,br,0,Math.PI*2);
+    X.strokeStyle=`rgba(120,170,230,${ba})`;X.lineWidth=1;X.stroke();
+    // Some bubbles near surface are larger
+    if(by<wT+20){
+      X.beginPath();X.arc(bx,wT+3+Math.sin(t*2.5+i)*3,br+1,0,Math.PI*2);
+      X.strokeStyle=`rgba(150,190,240,${ba*1.5})`;X.stroke();
+    }
+  }
   for(let yy=BLR.y+18;yy<BLR.y+BLR.h;yy+=30){rivet(BLR.x+10,yy);rivet(BLR.x+BLR.w-10,yy);}
   label('Boiler',BLR.x+BLR.w/2,BLR.y-12,14);
   // thermometer
@@ -405,9 +431,9 @@ function drawEngine(a){
   //
   // Path: center floor hole → down → right → up to chimney
 
-  // Vertical drop from floor
+  // Vertical drop from floor — goes down far enough to clear the cylinder pipes
   const exhDropTop = VB_BOT;        // starts at floor of sliding compartment
-  const exhDropBot = VB_BOT + 35;   // goes down 35px
+  const exhDropBot = CYL.y + CYL.h + 30; // goes well below the cylinder
   // Outer walls of vertical drop
   X.fillStyle='#484c50';
   X.fillRect(PORT_EX_CX-exhPW/2-3, exhDropTop, exhPW+6, exhDropBot-exhDropTop);
@@ -434,17 +460,19 @@ function drawEngine(a){
     X.fillRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-3, exhRunRight-PORT_EX_CX-exhPW/2, exhPW);
   }
 
-  // Vertical rise up to where the external chimney pipe takes over
-  // (this joins the existing exhaust pipe drawn in drawExternalPipes)
+  // Vertical rise on the far right — goes from bottom run up to chimney
+  // This is well to the right of the cylinder, clearly separate
+  const riseTop = VB.y - 10; // up to where external chimney pipe starts
+  const riseBot = exhDropBot - exhPW - 3; // bottom of horizontal run
   X.fillStyle='#484c50';
-  X.fillRect(exX_out-exhPW/2-3, VB.y-10, exhPW+6, exhDropBot-VB.y+10-exhPW);
+  X.fillRect(exX_out-exhPW/2-3, riseTop, exhPW+6, riseBot-riseTop);
   X.strokeStyle='#666';X.lineWidth=1;
-  X.strokeRect(exX_out-exhPW/2-3, VB.y-10, exhPW+6, exhDropBot-VB.y+10-exhPW);
+  X.strokeRect(exX_out-exhPW/2-3, riseTop, exhPW+6, riseBot-riseTop);
   X.fillStyle='#1e1e24';
-  X.fillRect(exX_out-exhPW/2, VB.y-8, exhPW, exhDropBot-VB.y+8-exhPW);
+  X.fillRect(exX_out-exhPW/2, riseTop+2, exhPW, riseBot-riseTop-2);
   if(leftExh||rightExh){
     X.fillStyle='rgba(90,110,160,.06)';
-    X.fillRect(exX_out-exhPW/2, VB.y-8, exhPW, exhDropBot-VB.y+8-exhPW);
+    X.fillRect(exX_out-exhPW/2, riseTop+2, exhPW, riseBot-riseTop-2);
   }
 
   // Label
@@ -664,7 +692,7 @@ function drawEngine(a){
   ];
 
   // Constant hot molecules in supply pipe
-  if(run&&Math.random()<.6) spawnMolecule(supplyPath,HOT,130,true);
+  if(run&&Math.random()<.6) spawnMolecule(supplyPath,HOT,100,true);
 
   // Hot intake: boiler → steam chest → open port hole → down pipe → cylinder
   if(leftOpen&&run&&Math.random()<.7){
@@ -672,28 +700,28 @@ function drawEngine(a){
       {x:PORT_L_CX,y:VB.y+VB.h*.5},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
-    ],HOT,140,true);
+    ],HOT,100,true);
   }
   if(leftOpen&&run&&Math.random()<.5){
     spawnMolecule([
       {x:PORT_L_CX,y:VB.y+VB.h*.4},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
-    ],HOT,120,true);
+    ],HOT,100,true);
   }
   if(rightOpen&&run&&Math.random()<.7){
     spawnMolecule([...supplyPath,
       {x:PORT_R_CX,y:VB.y+VB.h*.5},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
-    ],HOT,140,true);
+    ],HOT,100,true);
   }
   if(rightOpen&&run&&Math.random()<.5){
     spawnMolecule([
       {x:PORT_R_CX,y:VB.y+VB.h*.4},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
-    ],HOT,120,true);
+    ],HOT,100,true);
   }
 
   // Exhaust: cylinder → pipe → slider → exhaust U-tube → chimney (SEPARATE path)
@@ -715,7 +743,7 @@ function drawEngine(a){
       {x:exX_out,y:exhDropBot-exhPW},    // right along horizontal run
       {x:exX_out,y:VB.y-5},              // up the vertical rise
       {x:exX_out,y:120},{x:exX_out-12,y:60}
-    ],COLD,70,false);
+    ],COLD,100,false);
   }
   if(rightExh&&run&&Math.random()<.35){
     spawnMolecule([
@@ -732,7 +760,7 @@ function drawEngine(a){
       {x:exX_out,y:exhDropBot-exhPW},
       {x:exX_out,y:VB.y-5},
       {x:exX_out,y:120},{x:exX_out-12,y:60}
-    ],COLD,70,false);
+    ],COLD,100,false);
   }
 
   // ─── 8. LABELS ───
