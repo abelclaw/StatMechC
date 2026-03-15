@@ -258,31 +258,45 @@ function drawBoiler(){
   X.strokeStyle='rgba(80,130,200,.3)';X.lineWidth=1;X.beginPath();
   for(let xx=BLR.x+6;xx<BLR.x+BLR.w-6;xx+=2){const yy=wT+Math.sin(xx*.06+t*2.5)*2.5;xx===BLR.x+6?X.moveTo(xx,yy):X.lineTo(xx,yy);}
   X.stroke();
-  // Hot steam/air above the water (red/orange, not just gray)
+  // Hot steam/air above the water (red/orange, clearly visible)
   const steamGrad=X.createLinearGradient(0,BLR.y+4,0,wT);
-  steamGrad.addColorStop(0,'rgba(230,80,25,.12)');
-  steamGrad.addColorStop(1,'rgba(230,80,25,.03)');
+  steamGrad.addColorStop(0,'rgba(230,70,20,.2)');
+  steamGrad.addColorStop(1,'rgba(230,70,20,.06)');
   X.fillStyle=steamGrad;
   X.fillRect(BLR.x+4,BLR.y+4,BLR.w-8,wT-BLR.y-4);
-  // Hot steam particles above water
-  for(let i=0;i<6;i++){
+  // Red/orange dots above water showing hot gas
+  for(let i=0;i<15;i++){
     const sx=BLR.x+10+Math.random()*(BLR.w-20);
     const sy=BLR.y+8+Math.random()*(wT-BLR.y-14);
-    X.fillStyle=`rgba(230,80,25,${.04+Math.random()*.06})`;
-    X.beginPath();X.arc(sx,sy,2+Math.random()*3,0,Math.PI*2);X.fill();
+    const sr=2+Math.random()*3;
+    X.fillStyle=`rgba(230,${60+Math.random()*40|0},${15+Math.random()*20|0},${.08+Math.random()*.12})`;
+    X.beginPath();X.arc(sx,sy,sr,0,Math.PI*2);X.fill();
+    // Glow
+    X.fillStyle=`rgba(255,100,30,${.03+Math.random()*.04})`;
+    X.beginPath();X.arc(sx,sy,sr+3,0,Math.PI*2);X.fill();
   }
-  // Bubbles rising in the water (boiling)
-  for(let i=0;i<8;i++){
+  // Violently boiling water — large bubbles bursting at surface
+  for(let i=0;i<15;i++){
+    const bx=BLR.x+12+Math.random()*(BLR.w-24);
+    const by=wT+5+Math.random()*(BLR.y+BLR.h-wT-14);
+    const br=2+Math.random()*5;
+    const ba=.12+.18*Math.sin(t*5+i*1.3);
+    X.beginPath();X.arc(bx,by+Math.sin(t*4+i*2.3)*5,br,0,Math.PI*2);
+    X.strokeStyle=`rgba(120,170,230,${ba})`;X.lineWidth=1.5;X.stroke();
+  }
+  // Bursting bubbles at the water surface
+  for(let i=0;i<6;i++){
     const bx=BLR.x+15+Math.random()*(BLR.w-30);
-    const by=wT+8+Math.random()*(BLR.y+BLR.h-wT-16);
-    const br=1.5+Math.random()*3.5;
-    const ba=.08+.12*Math.sin(t*4+i*1.7);
-    X.beginPath();X.arc(bx,by+Math.sin(t*3+i*2)*4,br,0,Math.PI*2);
-    X.strokeStyle=`rgba(120,170,230,${ba})`;X.lineWidth=1;X.stroke();
-    // Some bubbles near surface are larger
-    if(by<wT+20){
-      X.beginPath();X.arc(bx,wT+3+Math.sin(t*2.5+i)*3,br+1,0,Math.PI*2);
-      X.strokeStyle=`rgba(150,190,240,${ba*1.5})`;X.stroke();
+    const br=3+Math.random()*5;
+    const phase=Math.sin(t*3+i*1.7);
+    const ba=Math.max(0,phase)*.3;
+    X.beginPath();X.arc(bx,wT+Math.sin(t*2.5+i)*2,br,0,Math.PI*2);
+    X.strokeStyle=`rgba(180,210,250,${ba})`;X.lineWidth=1.5;X.stroke();
+    // Splash effect
+    if(phase>0.7){
+      X.fillStyle=`rgba(160,200,240,${(phase-.7)*0.4})`;
+      X.beginPath();X.arc(bx-3,wT-2,1.5,0,Math.PI*2);X.fill();
+      X.beginPath();X.arc(bx+4,wT-3,1,0,Math.PI*2);X.fill();
     }
   }
   for(let yy=BLR.y+18;yy<BLR.y+BLR.h;yy+=30){rivet(BLR.x+10,yy);rivet(BLR.x+BLR.w-10,yy);}
@@ -323,21 +337,12 @@ function drawExternalPipes(){
   X.strokeStyle='#aaa';X.lineWidth=1;X.stroke();
   X.fillStyle='#c44';X.beginPath();X.arc(svx,svy,5,0,Math.PI*2);X.fill();
   label('Safety valve',svx,svy-16,11);
-  // Exhaust: valve box top → chimney
-  const exX=VB.x+VB.w-25;
-  X.strokeStyle='#6a6a6a';X.lineWidth=18;X.lineCap='round';X.lineJoin='round';
-  X.beginPath();X.moveTo(exX,VB.y);X.lineTo(exX,120);X.lineTo(exX-12,60);X.stroke();
-  X.strokeStyle='#888';X.lineWidth=9;
-  X.beginPath();X.moveTo(exX,VB.y);X.lineTo(exX,120);X.lineTo(exX-12,60);X.stroke();
-  X.setLineDash([6,8]);X.lineDashOffset=ft*6;X.strokeStyle='rgba(90,110,160,.15)';X.lineWidth=4;
-  X.beginPath();X.moveTo(exX,VB.y);X.lineTo(exX,120);X.lineTo(exX-12,60);X.stroke();X.setLineDash([]);
-  X.fillStyle='#666';rr(exX-28,44,38,20,3,true,false);X.strokeStyle='#888';X.lineWidth=1;rr(exX-28,44,38,20,3,false,true);
+  // (Exhaust chimney is now drawn as part of the engine assembly, not here)
   // Condensate return
   X.strokeStyle='#555';X.lineWidth=10;X.lineCap='round';X.lineJoin='round';
   X.beginPath();X.moveTo(CYL.x+30,CYL.y+CYL.h);X.lineTo(CYL.x+30,CYL.y+CYL.h+22);
   X.lineTo(BLR.x+BLR.w-10,CYL.y+CYL.h+22);X.lineTo(BLR.x+BLR.w-10,BLR.y+BLR.h);X.stroke();
   label('steam in',VB.x-15,VB.y+VB.h/2-14,9,'#c66');
-  label('exhaust',exX,VB.y-18,9,'#88a');
 }
 
 // ═══════════════════════════════════════
@@ -423,47 +428,32 @@ function drawEngine(a){
   const exX_out=EX_PIPE_X;
   const exhPW=16;
 
-  // ── A. EXHAUST PIPE (separate, connects to BOTTOM of sliding compartment) ──
-  // The exhaust connects to the center hole in the FLOOR of the sliding
-  // compartment. From there it goes DOWN, then routes to the side and
-  // UP to the chimney. This way the slider's U-tube can bridge a port
-  // hole to the exhaust hole — everything is in the floor.
+  // ── A. EXHAUST PIPE (separate, exits to the SIDE from between compartments) ──
+  // From the center floor hole, a horizontal connector goes RIGHT,
+  // in the gap between the sliding compartment and the cylinder pipes.
+  // Then a vertical pipe goes UP to the chimney.
+  // The exhaust never passes through the cylinder.
   //
-  // Path: center floor hole → down → right → up to chimney
+  // Path: center floor hole → right (horizontal) → up to chimney
 
-  // Vertical drop from floor — goes down far enough to clear the cylinder pipes
-  const exhDropTop = VB_BOT;        // starts at floor of sliding compartment
-  const exhDropBot = CYL.y + CYL.h + 30; // goes well below the cylinder
-  // Outer walls of vertical drop
+  const exhConnY = VB_BOT; // Y level of horizontal connector (floor of sliding compartment)
+
+  // Horizontal connector: from center hole going RIGHT to the exhaust chimney
   X.fillStyle='#484c50';
-  X.fillRect(PORT_EX_CX-exhPW/2-3, exhDropTop, exhPW+6, exhDropBot-exhDropTop);
+  X.fillRect(PORT_EX_CX-exhPW/2-3, exhConnY, exX_out-PORT_EX_CX+exhPW, exhPW+6);
   X.strokeStyle='#666';X.lineWidth=1;
-  X.strokeRect(PORT_EX_CX-exhPW/2-3, exhDropTop, exhPW+6, exhDropBot-exhDropTop);
+  X.strokeRect(PORT_EX_CX-exhPW/2-3, exhConnY, exX_out-PORT_EX_CX+exhPW, exhPW+6);
   // Inner bore
   X.fillStyle='#1e1e24';
-  X.fillRect(PORT_EX_CX-exhPW/2, exhDropTop+2, exhPW, exhDropBot-exhDropTop-2);
+  X.fillRect(PORT_EX_CX-exhPW/2, exhConnY+3, exX_out-PORT_EX_CX+exhPW/2, exhPW);
   if(leftExh||rightExh){
-    X.fillStyle='rgba(90,110,160,.08)';
-    X.fillRect(PORT_EX_CX-exhPW/2, exhDropTop+2, exhPW, exhDropBot-exhDropTop-2);
+    X.fillStyle='rgba(90,110,160,.07)';
+    X.fillRect(PORT_EX_CX-exhPW/2, exhConnY+3, exX_out-PORT_EX_CX+exhPW/2, exhPW);
   }
 
-  // Horizontal run to the right (between cylinder pipes, behind them)
-  const exhRunRight = exX_out; // goes to where chimney pipe is
-  X.fillStyle='#484c50';
-  X.fillRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-6, exhRunRight-PORT_EX_CX-exhPW/2, exhPW+6);
-  X.strokeStyle='#666';X.lineWidth=1;
-  X.strokeRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-6, exhRunRight-PORT_EX_CX-exhPW/2, exhPW+6);
-  X.fillStyle='#1e1e24';
-  X.fillRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-3, exhRunRight-PORT_EX_CX-exhPW/2, exhPW);
-  if(leftExh||rightExh){
-    X.fillStyle='rgba(90,110,160,.06)';
-    X.fillRect(PORT_EX_CX+exhPW/2, exhDropBot-exhPW-3, exhRunRight-PORT_EX_CX-exhPW/2, exhPW);
-  }
-
-  // Vertical rise on the far right — goes from bottom run up to chimney
-  // This is well to the right of the cylinder, clearly separate
-  const riseTop = VB.y - 10; // up to where external chimney pipe starts
-  const riseBot = exhDropBot - exhPW - 3; // bottom of horizontal run
+  // Vertical chimney pipe: goes UP from the connector to the chimney
+  const riseBot = exhConnY + exhPW + 3; // bottom = where horizontal connector is
+  const riseTop = 60; // up to chimney top
   X.fillStyle='#484c50';
   X.fillRect(exX_out-exhPW/2-3, riseTop, exhPW+6, riseBot-riseTop);
   X.strokeStyle='#666';X.lineWidth=1;
@@ -474,10 +464,13 @@ function drawEngine(a){
     X.fillStyle='rgba(90,110,160,.06)';
     X.fillRect(exX_out-exhPW/2, riseTop+2, exhPW, riseBot-riseTop-2);
   }
+  // Chimney cap
+  X.fillStyle='#555';rr(exX_out-exhPW/2-6,riseTop-4,exhPW+12,8,2,true,false);
+  X.strokeStyle='#777';X.lineWidth=1;rr(exX_out-exhPW/2-6,riseTop-4,exhPW+12,8,2,false,true);
 
   // Label
-  X.fillStyle='rgba(90,110,160,.5)';X.font='8px Georgia';X.textAlign='center';
-  X.fillText('EXHAUST',(PORT_EX_CX+exX_out)/2,exhDropBot-5);
+  X.fillStyle='rgba(90,110,160,.5)';X.font='9px Georgia';X.textAlign='center';
+  X.fillText('EXHAUST',exX_out,riseTop+25);
 
   // ── B. SLIDING COMPARTMENT (middle box — filled with hot steam) ──
   // This is where the slider lives. Hot steam from the boiler fills this.
@@ -738,11 +731,9 @@ function drawEngine(a){
       {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2}, // across top
       {x:uRightCx,y:uTopY+uW/2},        // to right leg
       {x:uRightCx,y:uBotY},             // down right leg
-      {x:PORT_EX_CX,y:VB_BOT+5},        // down through center floor hole
-      {x:PORT_EX_CX,y:exhDropBot-exhPW}, // down to bottom of exhaust drop
-      {x:exX_out,y:exhDropBot-exhPW},    // right along horizontal run
-      {x:exX_out,y:VB.y-5},              // up the vertical rise
-      {x:exX_out,y:120},{x:exX_out-12,y:60}
+      {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},  // into horizontal connector
+      {x:exX_out,y:exhConnY+exhPW/2+3},     // right to chimney base
+      {x:exX_out,y:120},{x:exX_out,y:60}
     ],COLD,100,false);
   }
   if(rightExh&&run&&Math.random()<.35){
@@ -755,11 +746,9 @@ function drawEngine(a){
       {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2},
       {x:uLeftCx,y:uTopY+uW/2},
       {x:uLeftCx,y:uBotY},
-      {x:PORT_EX_CX,y:VB_BOT+5},
-      {x:PORT_EX_CX,y:exhDropBot-exhPW},
-      {x:exX_out,y:exhDropBot-exhPW},
-      {x:exX_out,y:VB.y-5},
-      {x:exX_out,y:120},{x:exX_out-12,y:60}
+      {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},
+      {x:exX_out,y:exhConnY+exhPW/2+3},
+      {x:exX_out,y:120},{x:exX_out,y:60}
     ],COLD,100,false);
   }
 
