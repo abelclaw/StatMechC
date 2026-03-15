@@ -12605,26 +12605,35 @@ function initCh15Vis() {
       if (stage.special === 'supernova') {
         if (snParticles.length === 0) initSNParticles();
 
-        // Bright flash
-        if (frac < 0.2) {
-          const flashFrac = frac / 0.2;
-          const flashAlpha = (1 - flashFrac) * 0.95;
-          const flashGrad = ctxE.createRadialGradient(cx, cy, 0, cx, cy, WE * (0.3 + flashFrac * 0.7));
-          flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
-          flashGrad.addColorStop(0.3, `rgba(255,255,200,${flashAlpha * 0.8})`);
-          flashGrad.addColorStop(0.7, `rgba(255,200,100,${flashAlpha * 0.4})`);
-          flashGrad.addColorStop(1, `rgba(255,100,50,0)`);
-          ctxE.fillStyle = flashGrad;
-          ctxE.fillRect(-5, -5, WE+10, HE+10);
-          screenShake.intensity = (1 - flashFrac) * 12;
+        // Bright flash - massive white-out that fills entire screen
+        if (frac < 0.35) {
+          const flashFrac = frac / 0.35;
+          // Hard initial punch: stays near full brightness longer
+          const flashAlpha = flashFrac < 0.15 ? 1.0 : Math.pow(1 - (flashFrac - 0.15) / 0.85, 0.6);
+          // Flash fills ENTIRE canvas as solid white initially, then fades to radial
+          if (flashFrac < 0.2) {
+            // Full white-out
+            ctxE.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+            ctxE.fillRect(-5, -5, WE+10, HE+10);
+          } else {
+            const flashGrad = ctxE.createRadialGradient(cx, cy, 0, cx, cy, WE * (0.5 + flashFrac * 0.8));
+            flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
+            flashGrad.addColorStop(0.2, `rgba(255,255,230,${flashAlpha * 0.9})`);
+            flashGrad.addColorStop(0.5, `rgba(255,220,150,${flashAlpha * 0.6})`);
+            flashGrad.addColorStop(0.8, `rgba(255,150,50,${flashAlpha * 0.3})`);
+            flashGrad.addColorStop(1, `rgba(255,80,20,0)`);
+            ctxE.fillStyle = flashGrad;
+            ctxE.fillRect(-5, -5, WE+10, HE+10);
+          }
+          screenShake.intensity = (1 - flashFrac) * 18;
         }
 
         // Expanding shockwave ring
-        if (frac > 0.05) {
-          const swFrac = (frac - 0.05) / 0.95;
-          const swRadius = swFrac * Math.max(WE, HE) * 0.8;
-          const swAlpha = Math.max(0, 0.8 * (1 - swFrac));
-          const swWidth = 3 + swFrac * 15;
+        if (frac > 0.03) {
+          const swFrac = (frac - 0.03) / 0.97;
+          const swRadius = swFrac * Math.max(WE, HE) * 0.9;
+          const swAlpha = Math.max(0, 1.0 * (1 - swFrac * 0.8));
+          const swWidth = 5 + swFrac * 20;
           const swGrad = ctxE.createRadialGradient(cx, cy, Math.max(0, swRadius - swWidth*2), cx, cy, swRadius + swWidth);
           swGrad.addColorStop(0, `rgba(255,200,100,0)`);
           swGrad.addColorStop(0.5, `rgba(255,255,200,${swAlpha * 0.6})`);
