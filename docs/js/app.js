@@ -13540,28 +13540,25 @@ function initCh15Vis() {
       }
     }
 
-    // Camera tracks: as zoom changes, auto-pan to the most interesting region.
-    // We define "focus targets" — the star index that should be centered at various zoom levels.
+    // Camera tracks smoothly: weighted average of all star positions,
+    // where each star's weight peaks when its pixel radius matches the
+    // "sweet spot" (~30% of canvas height). This gives a smooth, continuous
+    // pan as zoom changes — no discrete jumps between targets.
     function getCameraX(z, scale) {
-      // Find the star whose pixel radius is closest to the "sweet spot" (20-40% of canvas height)
       const sweet = HS * 0.30;
-      let bestIdx = 0, bestDist = Infinity;
+      const logSweet = Math.log(sweet);
+      let totalWeight = 0, weightedX = 0;
       for (let i = 0; i < stars.length; i++) {
         const rPx = stars[i].R * scale;
-        const d = Math.abs(Math.log(rPx) - Math.log(sweet));
-        if (d < bestDist) { bestDist = d; bestIdx = i; }
+        if (rPx < 0.01) continue;
+        // Gaussian weight in log-space: peaks when rPx == sweet
+        const logDist = Math.log(rPx) - logSweet;
+        const sigma = 1.2; // width of the Gaussian in log-space
+        const w = Math.exp(-0.5 * (logDist / sigma) * (logDist / sigma));
+        totalWeight += w;
+        weightedX += w * worldX[i];
       }
-      // Also blend toward the next star for smooth panning
-      let blendIdx = bestIdx;
-      if (bestIdx < stars.length - 1) {
-        const rCur = stars[bestIdx].R * scale;
-        const rNext = stars[bestIdx+1].R * scale;
-        if (rCur > sweet && rNext < sweet) {
-          const t = (Math.log(rCur) - Math.log(sweet)) / (Math.log(rCur) - Math.log(rNext));
-          return worldX[bestIdx] * (1 - t) + worldX[bestIdx + 1] * t;
-        }
-      }
-      return worldX[bestIdx];
+      return totalWeight > 0 ? weightedX / totalWeight : 0;
     }
 
     // --- Background star field (static random) ---
