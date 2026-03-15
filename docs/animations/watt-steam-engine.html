@@ -520,11 +520,25 @@ function drawEngine(a){
     X.closePath();X.fill();
   }
 
-  // Slider rod (driven by eccentric)
+  // Eccentric rod: connects slider tube to eccentric on flywheel shaft
+  // The eccentric is a small disc on the flywheel shaft, offset 90° from the crank pin.
+  // Its rotation drives the slider left-right.
+  const ECC_R=20; // eccentric offset radius
+  const eccX=FW.cx+ECC_R*Math.cos(a+Math.PI*0.5);
+  const eccY=FW.cy+ECC_R*Math.sin(a+Math.PI*0.5);
+  // Connection point on the slider tube
   const sliderMidX=(tubeBotCx+tubeTopCx)/2;
   const sliderMidY=(tubeBotY+tubeTopY)/2;
-  X.strokeStyle='#999';X.lineWidth=4;
-  X.beginPath();X.moveTo(sliderMidX,sliderMidY);X.lineTo(sliderMidX,VB.y-8);X.stroke();
+  // Eccentric rod from slider to eccentric
+  X.strokeStyle='#8a8a8a';X.lineWidth=5;
+  X.beginPath();X.moveTo(sliderMidX,sliderMidY);X.lineTo(eccX,eccY);X.stroke();
+  X.strokeStyle='#aaa';X.lineWidth=2;
+  X.beginPath();X.moveTo(sliderMidX,sliderMidY-2);X.lineTo(eccX,eccY-2);X.stroke();
+  // Pin at slider end
+  X.beginPath();X.arc(sliderMidX,sliderMidY,4,0,Math.PI*2);X.fillStyle='#bbb';X.fill();
+  // Eccentric disc on shaft (drawn in drawFlywheel, but mark position here)
+  X.beginPath();X.arc(eccX,eccY,6,0,Math.PI*2);X.fillStyle='#ccc';X.fill();
+  X.strokeStyle='#888';X.lineWidth=1;X.stroke();
 
   // Port glow
   if(leftOpen){
@@ -748,7 +762,19 @@ function drawFlywheel(){
   X.fillStyle=hg;X.fill();X.strokeStyle='#999';X.lineWidth=2;X.stroke();
   const cp=crankPin(ang);
   X.beginPath();X.arc(cp.x,cp.y,6,0,Math.PI*2);X.fillStyle='#ccc';X.fill();
+  // Eccentric disc (smaller circle, 90° offset from crank pin, drives the valve)
+  const eccR=20;
+  const eccPx=cx+eccR*Math.cos(ang+Math.PI*0.5);
+  const eccPy=cy+eccR*Math.sin(ang+Math.PI*0.5);
+  X.beginPath();X.arc(eccPx,eccPy,8,0,Math.PI*2);
+  X.fillStyle='#aa8844';X.fill();X.strokeStyle='#886633';X.lineWidth=1.5;X.stroke();
+  // Eccentric strap (ring around it)
+  X.beginPath();X.arc(eccPx,eccPy,11,0,Math.PI*2);
+  X.strokeStyle='#997744';X.lineWidth=2;X.stroke();
   label('Flywheel',cx,cy+r+28,14);
+  // Label eccentric
+  X.fillStyle='#aa8844';X.font='8px Georgia';X.textAlign='left';
+  X.fillText('eccentric',eccPx+14,eccPy+3);
 }
 
 function drawGovernor(){
