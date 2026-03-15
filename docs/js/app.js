@@ -13525,8 +13525,8 @@ function initCh15Vis() {
     // Scale = pixels per solar radius. Logarithmic zoom.
     // At zoom=0: UY Scuti radius ~ 0.14 * HS → see its full disc
     const scaleMin = (HS * 0.14) / 1708;
-    // At zoom=100: Earth ~ 4px radius
-    const scaleMax = 4.0 / earthR;
+    // At zoom=100: Earth ~ 8px radius
+    const scaleMax = 8.0 / earthR;
 
     function getScale(z) {
       return Math.exp(Math.log(scaleMin) + (z / 100) * (Math.log(scaleMax) - Math.log(scaleMin)));
@@ -13559,7 +13559,7 @@ function initCh15Vis() {
         if (rPx < 0.01) continue;
         // Gaussian weight in log-space: peaks when rPx == sweet
         const logDist = Math.log(rPx) - logSweet;
-        const sigma = 1.2; // width of the Gaussian in log-space
+        const sigma = 1.8; // width of the Gaussian in log-space (wider = smoother panning)
         const w = Math.exp(-0.5 * (logDist / sigma) * (logDist / sigma));
         totalWeight += w;
         weightedX += w * worldX[i];
@@ -13779,27 +13779,34 @@ function initCh15Vis() {
         // Diameter marker <-> with size in km
         if (v.rPx > 12 && v.sx > 0 && v.sx < WS) {
           const dKm = v.s.R * 2 * 696340; // diameter in km
-          // Format as 10^x: find exponent
           const exp = Math.floor(Math.log10(dKm));
           const mantissa = dKm / Math.pow(10, exp);
           const sizeStr = mantissa < 1.05 ? '10' + superscript(exp) + ' km'
             : mantissa.toFixed(1) + '\u00d710' + superscript(exp) + ' km';
-          const markerY = v.sy; // across center of star
-          const mLeft = v.sx - v.rPx;
-          const mRight = v.sx + v.rPx;
-          // Horizontal line with arrows
-          ctxS.strokeStyle = 'rgba(255,255,255,0.35)';
+          const markerY = v.sy + v.rPx * 0.35; // below center so it's not on brightest part
+          const mLeft = v.sx - v.rPx + 3;
+          const mRight = v.sx + v.rPx - 3;
+          // Lines and arrows
+          ctxS.strokeStyle = 'rgba(0,0,0,0.6)';
+          ctxS.lineWidth = 2.5;
+          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mRight, markerY); ctxS.stroke();
+          ctxS.strokeStyle = 'rgba(255,255,200,0.7)';
           ctxS.lineWidth = 1;
-          ctxS.beginPath(); ctxS.moveTo(mLeft + 2, markerY); ctxS.lineTo(mRight - 2, markerY); ctxS.stroke();
+          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mRight, markerY); ctxS.stroke();
           // Left arrow
-          ctxS.beginPath(); ctxS.moveTo(mLeft + 2, markerY); ctxS.lineTo(mLeft + 7, markerY - 3); ctxS.moveTo(mLeft + 2, markerY); ctxS.lineTo(mLeft + 7, markerY + 3); ctxS.stroke();
+          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + 6, markerY - 3); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + 6, markerY + 3); ctxS.stroke();
           // Right arrow
-          ctxS.beginPath(); ctxS.moveTo(mRight - 2, markerY); ctxS.lineTo(mRight - 7, markerY - 3); ctxS.moveTo(mRight - 2, markerY); ctxS.lineTo(mRight - 7, markerY + 3); ctxS.stroke();
-          // Size label
-          ctxS.fillStyle = 'rgba(255,255,255,0.5)';
+          ctxS.beginPath(); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - 6, markerY - 3); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - 6, markerY + 3); ctxS.stroke();
+          // Size label with dark background pill
           ctxS.font = '10px Inter, system-ui, sans-serif';
           ctxS.textAlign = 'center';
-          ctxS.fillText(sizeStr, v.sx, markerY - 5);
+          const tw = ctxS.measureText(sizeStr).width + 8;
+          ctxS.fillStyle = 'rgba(0,0,0,0.7)';
+          ctxS.beginPath();
+          ctxS.roundRect(v.sx - tw/2, markerY - 14, tw, 13, 3);
+          ctxS.fill();
+          ctxS.fillStyle = 'rgba(255,255,200,0.9)';
+          ctxS.fillText(sizeStr, v.sx, markerY - 4);
         }
       }
 
