@@ -13523,10 +13523,10 @@ function initCh15Vis() {
 
     // --- Camera system ---
     // Scale = pixels per solar radius. Logarithmic zoom.
-    // At zoom=0: UY Scuti fills ~40% of canvas height
-    const scaleMin = (HS * 0.4) / (2 * 1708);
-    // At zoom=100: Proxima Cen is ~50px radius
-    const scaleMax = 50 / 0.15;
+    // At zoom=0: UY Scuti radius ~ 35% of canvas height
+    const scaleMin = (HS * 0.35) / 1708;
+    // At zoom=100: Proxima Cen radius ~ 40px
+    const scaleMax = 40 / 0.15;
 
     function getScale(z) {
       return Math.exp(Math.log(scaleMin) + (z / 100) * (Math.log(scaleMax) - Math.log(scaleMin)));
@@ -13546,25 +13546,12 @@ function initCh15Vis() {
       }
     }
 
-    // Camera tracks smoothly: weighted average of all star positions,
-    // where each star's weight peaks when its pixel radius matches the
-    // "sweet spot" (~30% of canvas height). This gives a smooth, continuous
-    // pan as zoom changes — no discrete jumps between targets.
-    function getCameraX(z, scale) {
-      const sweet = HS * 0.30;
-      const logSweet = Math.log(sweet);
-      let totalWeight = 0, weightedX = 0;
-      for (let i = 0; i < stars.length; i++) {
-        const rPx = stars[i].R * scale;
-        if (rPx < 0.01) continue;
-        // Gaussian weight in log-space: peaks when rPx == sweet
-        const logDist = Math.log(rPx) - logSweet;
-        const sigma = 1.8; // width of the Gaussian in log-space (wider = smoother panning)
-        const w = Math.exp(-0.5 * (logDist / sigma) * (logDist / sigma));
-        totalWeight += w;
-        weightedX += w * worldX[i];
-      }
-      return totalWeight > 0 ? weightedX / totalWeight : 0;
+    // Camera: zoom slider directly controls both scale AND horizontal position.
+    // zoom=0 → centered on UY Scuti (leftmost), zoom=100 → centered on Proxima Cen (rightmost).
+    // Simple linear interpolation in world-space for smooth scrolling.
+    function getCameraX(z) {
+      const t = z / 100;
+      return worldX[0] * (1 - t) + worldX[worldX.length - 1] * t;
     }
 
     // --- Background star field (static random) ---
@@ -13705,7 +13692,7 @@ function initCh15Vis() {
     function drawSizes() {
       const z = parseFloat(zoomSlider?.value || 30);
       const scale = getScale(z);
-      const camX = getCameraX(z, scale);
+      const camX = getCameraX(z);
 
       // Background
       ctxS.fillStyle = '#060a10';
@@ -13907,7 +13894,7 @@ function initCh15Vis() {
     function hitTest(mx, my) {
       const z = parseFloat(zoomSlider?.value || 30);
       const scale = getScale(z);
-      const camX = getCameraX(z, scale);
+      const camX = getCameraX(z);
       let closest = -1, closestDist = Infinity;
       for (let i = 0; i < stars.length; i++) {
         const rPx = stars[i].R * scale;
