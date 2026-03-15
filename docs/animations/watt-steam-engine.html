@@ -109,7 +109,7 @@ const VPIPE_L={botCx:275,topCx:330,w:18};
 const VPIPE_R={botCx:470,topCx:430,w:18};
 
 // Valve box (steam chest)
-const VB={x:260,y:270,w:245,h:90};
+const VB={x:260,y:250,w:245,h:110};
 const VB_BOT=VB.y+VB.h; // =360, bottom of valve box
 
 // Three openings at the bottom of the valve box (where pipes enter)
@@ -143,7 +143,8 @@ function valveOffset(a){
   // Phase: -cos(a) so that steam enters the SMALL chamber to push the piston.
   // At a=0 (piston rightmost, right chamber small): vo<0 → right gets steam ✓
   // At a=PI (piston leftmost, left chamber small): vo>0 → left gets steam ✓
-  return Math.sin(a-Math.PI*0.5)*VALVE_TRAVEL;
+  // Lead the piston by ~120° for better admission timing
+  return Math.sin(a-Math.PI*0.65)*VALVE_TRAVEL;
 }
 
 // ─── PARTICLES ───
@@ -245,6 +246,15 @@ function drawFurnace(){
     const cx=FRN.x+15+Math.random()*(FRN.w-30),cy=FRN.y+24+Math.random()*(FRN.h-36);
     X.fillStyle=`rgb(${28+Math.random()*25|0},${22+Math.random()*18|0},${22+Math.random()*18|0})`;
     X.beginPath();X.ellipse(cx,cy,3+Math.random()*7,(3+Math.random()*7)*.6,Math.random()*3,0,Math.PI*2);X.fill();
+  }
+  // Glowing embers among the coal
+  const ft=Date.now()/1000;
+  for(let i=0;i<12;i++){
+    const ex=FRN.x+18+Math.random()*(FRN.w-36);
+    const ey=FRN.y+28+Math.random()*(FRN.h-44);
+    const ea=.15+.15*Math.sin(ft*3+i*2.1);
+    X.fillStyle=`rgba(255,${80+Math.random()*60|0},${10+Math.random()*20|0},${ea})`;
+    X.beginPath();X.arc(ex,ey,2+Math.random()*3,0,Math.PI*2);X.fill();
   }
   const gl=X.createRadialGradient(FRN.x+FRN.w/2,FRN.y+10,5,FRN.x+FRN.w/2,FRN.y+10,100);
   gl.addColorStop(0,'rgba(255,110,20,.35)');gl.addColorStop(1,'rgba(255,50,0,0)');
@@ -439,9 +449,18 @@ function drawEngine(a){
   //
   // Path: center floor hole → right (horizontal) → up to chimney
 
-  const exhConnY = VB_BOT; // Y level of horizontal connector (floor of sliding compartment)
+  // Exhaust connector is BELOW the sliding compartment, with a gap
+  const exhConnY = VB_BOT + 15; // pushed down, gap between compartment and pipe
 
-  // Horizontal connector: from center hole going RIGHT to the exhaust chimney
+  // Vertical stub from center floor hole down to the connector
+  X.fillStyle='#484c50';
+  X.fillRect(PORT_EX_CX-exhPW/2-3, VB_BOT, exhPW+6, exhConnY-VB_BOT);
+  X.strokeStyle='#666';X.lineWidth=1;
+  X.strokeRect(PORT_EX_CX-exhPW/2-3, VB_BOT, exhPW+6, exhConnY-VB_BOT);
+  X.fillStyle='#1e1e24';
+  X.fillRect(PORT_EX_CX-exhPW/2, VB_BOT+2, exhPW, exhConnY-VB_BOT-2);
+
+  // Horizontal connector: from stub going RIGHT to the exhaust chimney
   X.fillStyle='#484c50';
   X.fillRect(PORT_EX_CX-exhPW/2-3, exhConnY, exX_out-PORT_EX_CX+exhPW, exhPW+6);
   X.strokeStyle='#666';X.lineWidth=1;
@@ -455,8 +474,8 @@ function drawEngine(a){
   }
 
   // Vertical chimney pipe: goes UP from the connector to the chimney
-  const riseBot = exhConnY + exhPW + 3; // bottom = where horizontal connector is
-  const riseTop = 60; // up to chimney top
+  const riseBot = exhConnY + exhPW + 3;
+  const riseTop = 60;
   X.fillStyle='#484c50';
   X.fillRect(exX_out-exhPW/2-3, riseTop, exhPW+6, riseBot-riseTop);
   X.strokeStyle='#666';X.lineWidth=1;
@@ -519,11 +538,10 @@ function drawEngine(a){
   //   - OR U-tube connects RIGHT hole ↔ CENTER hole (right exhausts)
 
   const t01=(vo/VALVE_TRAVEL+1)/2; // 0=left, 1=right
-  // Slider block position
-  const sliderW=PORT_R_CX-PORT_L_CX+PORT_W+12;
-  const slH=30;
+  // Slider block — BIGGER, fills most of the compartment height
+  const sliderW=PORT_R_CX-PORT_L_CX+PORT_W+20;
+  const slH=45;
   const slY=VB_BOT-6-slH-2;
-  // Slider center X shifts with valve offset
   const slCx=PORT_EX_CX + vo*0.7;
   const sliderL=slCx-sliderW/2;
 
@@ -533,15 +551,12 @@ function drawEngine(a){
   X.strokeStyle='#aaa';X.lineWidth=1.5;
   rr(sliderL,slY,sliderW,slH,4,false,true);
 
-  // U-TUBE inside the slider (the key part!)
-  // The U-tube is fixed relative to the slider block.
-  // It has two downward-facing openings separated by the distance
-  // between one port hole and the center exhaust hole.
-  // The U connects them through a curved path inside the slider.
+  // U-TUBE inside the slider
+  // Openings match the port hole width (PORT_W)
   const uSpan=PORT_EX_CX-PORT_L_CX; // distance between LP and center
-  const uLeftCx=slCx-uSpan/2;  // left leg of U
-  const uRightCx=slCx+uSpan/2; // right leg of U (= center exhaust when aligned)
-  const uW=10; // leg width
+  const uLeftCx=slCx-uSpan/2;
+  const uRightCx=slCx+uSpan/2;
+  const uW=PORT_W; // same width as the port holes
   const uLegH=slH-8;
   const uBotY=slY+slH; // bottom of U legs (align with floor holes)
   const uTopY=slY+6;   // top of U curve
@@ -707,28 +722,28 @@ function drawEngine(a){
       {x:PORT_L_CX,y:VB.y+VB.h*.3},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
-    ],HOT,100,true);
+    ],HOT,160,true);
   }
-  if(leftOpen&&run&&Math.random()<.5){
+  if(leftOpen&&run&&Math.random()<.6){
     spawnMolecule([
       {x:PORT_L_CX+10,y:VB.y+VB.h*.5},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
-    ],HOT,100,true);
+    ],HOT,160,true);
   }
   if(rightOpen&&run&&Math.random()<.7){
     spawnMolecule([
       {x:PORT_R_CX,y:VB.y+VB.h*.3},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
-    ],HOT,100,true);
+    ],HOT,160,true);
   }
-  if(rightOpen&&run&&Math.random()<.5){
+  if(rightOpen&&run&&Math.random()<.6){
     spawnMolecule([
       {x:PORT_R_CX-10,y:VB.y+VB.h*.5},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
-    ],HOT,100,true);
+    ],HOT,160,true);
   }
 
   // Exhaust: cylinder → pipe → slider → exhaust U-tube → chimney (SEPARATE path)
