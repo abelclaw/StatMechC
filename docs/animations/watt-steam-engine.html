@@ -140,7 +140,10 @@ function pistonFaceX(a){return crossheadX(a)-PISTON_ROD;}
 
 function valveOffset(a){
   // Returns offset: negative=slider bridges LEFT port to exhaust, positive=bridges RIGHT
-  return Math.sin(a+Math.PI*0.5)*VALVE_TRAVEL;
+  // Phase: -cos(a) so that steam enters the SMALL chamber to push the piston.
+  // At a=0 (piston rightmost, right chamber small): vo<0 → right gets steam ✓
+  // At a=PI (piston leftmost, left chamber small): vo>0 → left gets steam ✓
+  return Math.sin(a-Math.PI*0.5)*VALVE_TRAVEL;
 }
 
 // ─── PARTICLES ───
@@ -684,34 +687,45 @@ function drawEngine(a){
     {x:VB.x+15,y:VB.y+VB.h/2}
   ];
 
-  // Constant hot molecules in supply pipe
-  if(run&&Math.random()<.6) spawnMolecule(supplyPath,HOT,100,true);
+  // Hot molecules in supply pipe (boiler → compartment)
+  if(run&&Math.random()<.5) spawnMolecule(supplyPath,HOT,100,true);
 
-  // Hot intake: boiler → steam chest → open port hole → down pipe → cylinder
+  // Hot molecules FILLING the sliding compartment — always present, bouncing around
+  // They represent the pressurized steam that fills the chamber at all times
+  if(run&&Math.random()<.8){
+    const rx=VB.x+15+Math.random()*(VB.w-30);
+    const ry=VB.y+10+Math.random()*(VB.h-30);
+    // Short random path within the compartment (bouncing molecule)
+    const rx2=VB.x+15+Math.random()*(VB.w-30);
+    const ry2=VB.y+10+Math.random()*(VB.h-30);
+    spawnMolecule([{x:rx,y:ry},{x:rx2,y:ry2}],HOT,40,true);
+  }
+
+  // Hot intake: molecules from the compartment flow down through the open port
   if(leftOpen&&run&&Math.random()<.7){
-    spawnMolecule([...supplyPath,
-      {x:PORT_L_CX,y:VB.y+VB.h*.5},{x:PORT_L_CX,y:VB_BOT},
+    spawnMolecule([
+      {x:PORT_L_CX,y:VB.y+VB.h*.3},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,100,true);
   }
   if(leftOpen&&run&&Math.random()<.5){
     spawnMolecule([
-      {x:PORT_L_CX,y:VB.y+VB.h*.4},{x:PORT_L_CX,y:VB_BOT},
+      {x:PORT_L_CX+10,y:VB.y+VB.h*.5},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,100,true);
   }
   if(rightOpen&&run&&Math.random()<.7){
-    spawnMolecule([...supplyPath,
-      {x:PORT_R_CX,y:VB.y+VB.h*.5},{x:PORT_R_CX,y:VB_BOT},
+    spawnMolecule([
+      {x:PORT_R_CX,y:VB.y+VB.h*.3},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
     ],HOT,100,true);
   }
   if(rightOpen&&run&&Math.random()<.5){
     spawnMolecule([
-      {x:PORT_R_CX,y:VB.y+VB.h*.4},{x:PORT_R_CX,y:VB_BOT},
+      {x:PORT_R_CX-10,y:VB.y+VB.h*.5},{x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
     ],HOT,100,true);
@@ -836,8 +850,8 @@ function drawGovernor(){
 }
 
 function drawParticles(dt){
-  const exX=VB.x+VB.w-25;
-  if(run&&Math.random()<.25){steamP.push({x:exX-12+(Math.random()-.5)*18,y:52,vx:(Math.random()-.5)*18,vy:-(30+Math.random()*40),life:2+Math.random()*2,ml:2+Math.random()*2,sz:2+Math.random()*5});}
+  // Chimney smoke from the exhaust pipe top
+  if(run&&Math.random()<.25){steamP.push({x:EX_PIPE_X+(Math.random()-.5)*14,y:56,vx:(Math.random()-.5)*18,vy:-(30+Math.random()*40),life:2+Math.random()*2,ml:2+Math.random()*2,sz:2+Math.random()*5});}
   if(run&&Math.random()<.45){fireP.push({x:FRN.x+FRN.w/2+(Math.random()-.5)*80,y:FRN.y+5,vx:(Math.random()-.5)*12,vy:-(25+Math.random()*50),life:.3+Math.random()*.5,ml:.3+Math.random()*.5,sz:2+Math.random()*5});}
   steamP.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.995;p.vy*=.995;p.life-=dt;p.sz+=dt*4;
     X.beginPath();X.arc(p.x,p.y,p.sz,0,Math.PI*2);X.fillStyle=`rgba(190,190,200,${Math.max(0,p.life/p.ml)*.3})`;X.fill();});
