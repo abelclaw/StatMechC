@@ -78,8 +78,8 @@ function buildChapterTOC(container) {
   const headings = container.querySelectorAll('h2');
   if (headings.length < 2) return; // not worth a TOC for 1 section
 
-  const intro = container.querySelector('.chapter-intro');
-  if (!intro) return;
+  const title = container.querySelector('.chapter-title');
+  if (!title) return;
 
   // Auto-assign IDs to headings that lack them
   let autoId = 0;
@@ -115,7 +115,7 @@ function buildChapterTOC(container) {
   });
 
   details.appendChild(list);
-  intro.insertAdjacentElement('afterend', details);
+  title.insertAdjacentElement('afterend', details);
 }
 
 // ===== DERIVATIONS =====
