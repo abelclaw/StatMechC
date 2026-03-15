@@ -12836,13 +12836,39 @@ function initCh15Vis() {
       // Star field
       drawStarField(time);
 
+      // Draw evolution track: faint dotted path showing the star's trajectory
+      const M_evo = parseFloat(evoMassSlider?.value || 1);
+      const logM_evo = Math.log10(Math.max(M_evo, 0.05));
+      const logMin_evo = Math.log10(0.05), logMax_evo = Math.log10(40);
+      const yFrac_evo = 1 - (logM_evo - logMin_evo) / (logMax_evo - logMin_evo);
+      const trackY = 60 + yFrac_evo * (HE * 0.62 - 60);
+      const trackXStart = 80, trackXEnd = WE * 0.55;
+      // Dashed track line
+      ctxE.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctxE.lineWidth = 1;
+      ctxE.setLineDash([4, 6]);
+      ctxE.beginPath(); ctxE.moveTo(trackXStart, trackY); ctxE.lineTo(trackXEnd, trackY); ctxE.stroke();
+      ctxE.setLineDash([]);
+      // Arrow at end
+      ctxE.fillStyle = 'rgba(255,255,255,0.08)';
+      ctxE.beginPath();
+      ctxE.moveTo(trackXEnd, trackY);
+      ctxE.lineTo(trackXEnd - 6, trackY - 4);
+      ctxE.lineTo(trackXEnd - 6, trackY + 4);
+      ctxE.closePath(); ctxE.fill();
+      // "TIME →" label
+      ctxE.fillStyle = 'rgba(255,255,255,0.12)';
+      ctxE.font = '9px Inter, system-ui, sans-serif';
+      ctxE.textAlign = 'center';
+      ctxE.fillText('time \u2192', (trackXStart + trackXEnd) / 2, trackY + 14);
+
       const {idx, frac} = getCurrentStage();
       const stage = evoStages[idx];
       const prevStage = idx > 0 ? evoStages[idx-1] : stage;
       const tFrac = easeInOut(Math.min(frac * 2.5, 1)); // smooth transition
 
       // Interpolated values
-      const maxPixR = 150;
+      const maxPixR = 120;
       const curR = stage.special === 'supernova' ? 0 : stage.R;
       const prevR = prevStage.special === 'supernova' ? 0 : prevStage.R;
       const maxRval = Math.max(...evoStages.map(s => s.special ? 0 : s.R), 1);
@@ -12879,7 +12905,20 @@ function initCh15Vis() {
         curRdisp = lerp(prevStage.R || stage.R, stage.R, tFrac);
       }
 
-      const cx = WE * 0.32, cy = HE * 0.40;
+      // Star position: mass sets vertical row (top = massive, bottom = low mass)
+      // Time progression moves star left → right
+      const M = parseFloat(evoMassSlider?.value || 1);
+      const totalDur = evoTotalDur();
+      const overallProgress = evoTime / totalDur; // 0 to 1
+      // Vertical: map mass logarithmically. >25 at top, <0.08 at bottom
+      const logM = Math.log10(Math.max(M, 0.05));
+      const logMin = Math.log10(0.05), logMax = Math.log10(40);
+      const yFrac = 1 - (logM - logMin) / (logMax - logMin); // 0=top (massive), 1=bottom (low mass)
+      const cyMin = 60, cyMax = HE * 0.62;
+      const cy = cyMin + yFrac * (cyMax - cyMin);
+      // Horizontal: moves right as animation progresses
+      const cxMin = 80, cxMax = WE * 0.55;
+      const cx = cxMin + overallProgress * (cxMax - cxMin);
 
       // ---- PLANETARY NEBULA ----
       if (stage.special === 'nebula') {
@@ -13200,7 +13239,6 @@ function initCh15Vis() {
 
       // ---- TIMELINE BAR ----
       const tlX = 30, tlY = HE - 48, tlW = WE - 60, tlH = 12;
-      const totalDur = evoTotalDur();
 
       // Background track
       ctxE.fillStyle = 'rgba(255,255,255,0.04)';
