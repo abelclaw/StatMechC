@@ -83,6 +83,27 @@ $$p^+ + e^- \to n + \nu$$
 <figcaption>The fate of a star depends on its initial mass. Drag the slider to explore the different evolutionary paths and endpoints.</figcaption>
 </div>
 
+<div class="interactive-wrapper">
+<h4>Interactive: Stellar Lifecycle Animation</h4>
+<canvas id="vis-stellar-evo" width="700" height="480"></canvas>
+<div class="controls">
+<label>Initial mass (M☉): <input type="range" id="evo-mass" min="0.5" max="40" step="0.1" value="1.0"><span id="evo-mass-val">1.0</span></label>
+<button id="evo-play">&#9654; Play</button>
+<button id="evo-reset">Reset</button>
+<span id="evo-stage-label" style="margin-left:12px; color: rgba(255,255,255,0.6);"></span>
+</div>
+<figcaption>Watch a star evolve through its entire life. The cross-section shows internal composition at each phase. Change the initial mass to see how different stars live and die.</figcaption>
+</div>
+
+<div class="interactive-wrapper">
+<h4>Interactive: Star Size Comparison</h4>
+<canvas id="vis-star-sizes" width="700" height="480"></canvas>
+<div class="controls">
+<label>Zoom: <input type="range" id="size-zoom" min="0" max="100" step="0.5" value="30"><span id="size-zoom-label"></span></label>
+</div>
+<figcaption>Stars span an enormous range of sizes. Use the slider or scroll wheel to zoom in and reveal progressively smaller stars. At full zoom-out, the Sun is invisible; at full zoom-in, you can see the Earth for scale.</figcaption>
+</div>
+
 <p>During a supernova, elements heavier than iron can be produced. Although the production of these elements by fusion is not energetically favorable, there is so much energy around in a supernova that it can still happen -- like thermal motion pushing a ball up a hill. It is not clear if enough heavy elements can be produced this way to explain their abundances. In particular, it seems hard to get enough gold. Interestingly, the discovery of neutron star mergers through gravitational waves suggests that neutron star mergers may be another important source of gold, potentially resolving this deficit (see Section 6).</p>
 
 <p>After the supernova the explosion remnants are expelled off into the galaxy. Eventually they coalesce along with more primordial hydrogen to form a new generation of stars. These new stars, called <span class="tooltip-trigger">population I stars<span class="tooltip-content">Stars formed from the remnants of previous stellar generations plus primordial hydrogen. They have higher metallicity. Our sun is a population I (third generation) star.</span></span>, include our sun. Our sun is believed to be a third generation star. About 2% of stars are population I. Population I stars have higher metallicities than first generation (population II) stars (yes, the notation is backwards) and are often surrounded by other objects with high metallicity, such as planets. Thus astronomers searching for exosolar planets focus on population I stars. Even population II stars have some heavy elements. Astronomers believe there should exist stars with only hydrogen and helium. They call these population III (generation zero?).</p>

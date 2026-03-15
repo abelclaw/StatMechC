@@ -12179,4 +12179,626 @@ function initCh15Vis() {
     nSliderWD?.addEventListener('input', drawWDDensity);
     drawWDDensity();
   }
+
+  // =================================================================
+  // Stellar Lifecycle Animation
+  // =================================================================
+  const cEvo = document.getElementById('vis-stellar-evo');
+  if (cEvo) {
+    const {ctx: ctxE, W: WE, H: HE} = setupCanvas(cEvo);
+    const evoMassSlider = document.getElementById('evo-mass');
+    const evoPlayBtn = document.getElementById('evo-play');
+    const evoResetBtn = document.getElementById('evo-reset');
+    const evoStageLabel = document.getElementById('evo-stage-label');
+
+    // Shell colors by element
+    const EC = {
+      H: '#4fc3f7', He: '#66bb6a', C: '#ffa726', Ne: '#ef5350',
+      O: '#ab47bc', Si: '#ffee58', Fe: '#e0e0e0', n: '#90a4ae'
+    };
+
+    // Build stage list depending on mass
+    function getStages(M) {
+      if (M < 0.08) return [
+        {name:'Brown Dwarf', desc:'Too little mass for fusion', dur:3,
+         R:0.12, Ts:2500, shells:[{el:'H',f:1}]},
+      ];
+      if (M < 0.5) return [
+        {name:'Main Sequence (Red Dwarf)', desc:'Slow H → He burning (trillions of years)', dur:4,
+         R:0.2+0.5*M, Ts:3000+2000*M, shells:[{el:'He',f:0.25},{el:'H',f:1}]},
+        {name:'Cooling', desc:'Hydrogen exhausted, star slowly cools', dur:2,
+         R:0.15+0.3*M, Ts:2500+1000*M, shells:[{el:'He',f:0.8},{el:'H',f:1}]},
+      ];
+      if (M < 8) return [
+        {name:'Main Sequence', desc:'Core H → He fusion', dur:4,
+         R:0.8*Math.pow(M,0.57), Ts:5772*Math.pow(M,0.18),
+         shells:[{el:'He',f:0.25},{el:'H',f:1}]},
+        {name:'Subgiant', desc:'H exhausted in core, shell H burning begins', dur:1.5,
+         R:1.5*Math.pow(M,0.57), Ts:5200*Math.pow(M,0.1),
+         shells:[{el:'He',f:0.35},{el:'H',f:0.7},{el:'H',f:1}]},
+        {name:'Red Giant', desc:'He burning in core, H burning in shell', dur:2,
+         R:5+15*(M/8), Ts:3800+400*(M/8),
+         shells:[{el:'C',f:0.1},{el:'He',f:0.3},{el:'H',f:1}]},
+        {name:'Planetary Nebula', desc:'Outer layers expelled, core exposed', dur:2,
+         R:0.02, Ts:25000+20000*(M/8), special:'nebula',
+         shells:[{el:'C',f:0.6},{el:'He',f:1}]},
+        {name:'White Dwarf', desc:'C/O core supported by electron degeneracy pressure', dur:2,
+         R:0.015, Ts:15000, shells:[{el:'C',f:0.7},{el:'He',f:1}]},
+      ];
+      // Massive star (≥ 8 Msun)
+      const stages = [
+        {name:'Main Sequence', desc:'Core H → He fusion', dur:3,
+         R:3*Math.pow(M/10,0.57), Ts:15000+10000*(M/40),
+         shells:[{el:'He',f:0.25},{el:'H',f:1}]},
+        {name:'Red Supergiant', desc:'Multiple shell burning stages', dur:2,
+         R:30+20*(M/40), Ts:3500+300*(M/40),
+         shells:[{el:'He',f:0.15},{el:'H',f:1}]},
+        {name:'Supergiant (Onion Shells)', desc:'Sequential fusion up to iron', dur:2.5,
+         R:25+20*(M/40), Ts:3600+200*(M/40),
+         shells:[
+           {el:'Fe',f:0.03},{el:'Si',f:0.06},{el:'O',f:0.10},
+           {el:'Ne',f:0.14},{el:'C',f:0.20},{el:'He',f:0.35},{el:'H',f:1}
+         ]},
+        {name:'Core Collapse', desc:'Iron core collapses at ¼ speed of light', dur:1.5,
+         R:25+20*(M/40), Ts:3600, special:'collapse',
+         shells:[
+           {el:'Fe',f:0.03},{el:'Si',f:0.06},{el:'O',f:0.10},
+           {el:'Ne',f:0.14},{el:'C',f:0.20},{el:'He',f:0.35},{el:'H',f:1}
+         ]},
+        {name:'Supernova!', desc:'Shock wave blows star apart', dur:2.5,
+         R:0, Ts:50000, special:'supernova',
+         shells:[]},
+      ];
+      if (M >= 25) {
+        stages.push({name:'Black Hole', desc:'Core too massive — collapses to a singularity', dur:2,
+          R:0.005, Ts:0, special:'blackhole', shells:[]});
+      } else {
+        stages.push({name:'Neutron Star', desc:'Neutron-degenerate core, radius ~10 km', dur:2,
+          R:0.008, Ts:600000, special:'neutronstar', shells:[{el:'n',f:1}]});
+      }
+      return stages;
+    }
+
+    let evoPlaying = false, evoTime = 0, evoStages = getStages(1.0);
+    let snParticles = [], nebulaRings = [];
+
+    function evoTotalDur() { return evoStages.reduce((s,st) => s + st.dur, 0); }
+
+    function getCurrentStage() {
+      let t = evoTime;
+      for (let i = 0; i < evoStages.length; i++) {
+        if (t < evoStages[i].dur) return {idx: i, frac: t / evoStages[i].dur};
+        t -= evoStages[i].dur;
+      }
+      return {idx: evoStages.length - 1, frac: 1};
+    }
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function evoStarColor(T) {
+      if (T > 30000) return '#aabfff';
+      if (T > 15000) return '#cce0ff';
+      if (T > 10000) return '#e8eeff';
+      if (T > 7000) return '#fff8f0';
+      if (T > 5500) return '#fff0d0';
+      if (T > 4500) return '#ffd080';
+      if (T > 3500) return '#ffaa55';
+      return '#ff7733';
+    }
+
+    function initSNParticles() {
+      snParticles = [];
+      for (let i = 0; i < 120; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 1.5 + Math.random() * 4;
+        const hue = Math.random() < 0.3 ? 40 + Math.random()*30 : (Math.random() < 0.5 ? 15 + Math.random()*20 : 50+Math.random()*10);
+        snParticles.push({
+          x: 0, y: 0, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+          life: 0.5 + Math.random()*0.5,
+          size: 1 + Math.random()*3,
+          color: `hsl(${hue}, 100%, ${60+Math.random()*30}%)`
+        });
+      }
+    }
+
+    function drawEvo() {
+      clearCanvas(ctxE, WE, HE);
+      ctxE.fillStyle = '#060a10';
+      ctxE.fillRect(0, 0, WE, HE);
+
+      const {idx, frac} = getCurrentStage();
+      const stage = evoStages[idx];
+      const prevStage = idx > 0 ? evoStages[idx-1] : stage;
+      const tFrac = Math.min(frac * 3, 1); // transition in first 1/3 of stage
+
+      // Interpolated radius (in canvas pixels)
+      const maxPixR = 150;
+      const curR = stage.special === 'supernova' ? 0 : stage.R;
+      const prevR = prevStage.special === 'supernova' ? 0 : prevStage.R;
+      const maxRval = Math.max(...evoStages.map(s => s.special ? 0 : s.R), 1);
+      let drawRadius;
+      if (stage.special === 'collapse') {
+        // Collapse: star shrinks rapidly at end of stage
+        const collFrac = Math.pow(frac, 0.3); // quick at start
+        const baseR = prevR / maxRval * maxPixR;
+        drawRadius = baseR * (1 - collFrac * 0.95);
+      } else if (stage.special === 'supernova') {
+        drawRadius = 0;
+      } else {
+        const r0 = (prevStage.special === 'collapse' || prevStage.special === 'supernova') ? 0.02/maxRval*maxPixR : prevR/maxRval*maxPixR;
+        const r1 = curR / maxRval * maxPixR;
+        drawRadius = lerp(r0, r1, tFrac);
+      }
+      drawRadius = Math.max(drawRadius, 2);
+
+      const cx = WE * 0.35, cy = HE * 0.42;
+
+      // Draw nebula rings if planetary nebula stage
+      if (stage.special === 'nebula') {
+        for (let ring = 0; ring < 3; ring++) {
+          const ringR = drawRadius + (30 + ring * 35) * frac;
+          const alpha = 0.3 * (1 - frac * 0.7) * (1 - ring * 0.25);
+          const colors = ['#4fc3f7','#66bb6a','#ab47bc'];
+          ctxE.strokeStyle = colors[ring];
+          ctxE.globalAlpha = alpha;
+          ctxE.lineWidth = 8 - ring * 2;
+          ctxE.beginPath(); ctxE.arc(cx, cy, ringR, 0, 2*Math.PI); ctxE.stroke();
+          ctxE.globalAlpha = 1;
+        }
+      }
+
+      // Draw supernova particles
+      if (stage.special === 'supernova') {
+        if (snParticles.length === 0) initSNParticles();
+        // Flash at beginning
+        if (frac < 0.15) {
+          const flashAlpha = (1 - frac/0.15) * 0.7;
+          ctxE.fillStyle = `rgba(255,255,220,${flashAlpha})`;
+          ctxE.fillRect(0, 0, WE, HE);
+        }
+        snParticles.forEach(p => {
+          const px = cx + p.x + p.vx * frac * 80;
+          const py = cy + p.y + p.vy * frac * 80;
+          const alpha = Math.max(0, p.life - frac * 0.8);
+          ctxE.fillStyle = p.color;
+          ctxE.globalAlpha = alpha;
+          ctxE.beginPath(); ctxE.arc(px, py, p.size * (0.5 + frac), 0, 2*Math.PI); ctxE.fill();
+        });
+        ctxE.globalAlpha = 1;
+        // Label "BOOM"
+        if (frac < 0.5) {
+          ctxE.fillStyle = `rgba(255,255,200,${1-frac*2})`;
+          ctxE.font = 'bold 28px Inter, system-ui, sans-serif';
+          ctxE.textAlign = 'center';
+          ctxE.fillText('SUPERNOVA', cx, cy - 20);
+        }
+      }
+
+      // Black hole
+      if (stage.special === 'blackhole') {
+        // Accretion disk glow
+        const grd = ctxE.createRadialGradient(cx, cy, 2, cx, cy, 40);
+        grd.addColorStop(0, 'rgba(0,0,0,1)');
+        grd.addColorStop(0.3, 'rgba(80,0,120,0.6)');
+        grd.addColorStop(0.6, 'rgba(255,140,0,0.3)');
+        grd.addColorStop(1, 'rgba(255,140,0,0)');
+        ctxE.fillStyle = grd;
+        ctxE.beginPath(); ctxE.arc(cx, cy, 40, 0, 2*Math.PI); ctxE.fill();
+        // Black center
+        ctxE.fillStyle = '#000';
+        ctxE.beginPath(); ctxE.arc(cx, cy, 6, 0, 2*Math.PI); ctxE.fill();
+        ctxE.strokeStyle = 'rgba(255,140,0,0.5)'; ctxE.lineWidth = 1;
+        ctxE.beginPath(); ctxE.arc(cx, cy, 6, 0, 2*Math.PI); ctxE.stroke();
+      }
+
+      // Draw star cross-section (not for supernova/blackhole)
+      if (!stage.special || stage.special === 'nebula' || stage.special === 'collapse' || stage.special === 'neutronstar') {
+        const curShells = stage.shells;
+        // Draw from outside in
+        for (let i = curShells.length - 1; i >= 0; i--) {
+          const sr = drawRadius * curShells[i].f;
+          if (sr < 0.5) continue;
+          const col = EC[curShells[i].el] || '#888';
+          // Filled shell
+          ctxE.beginPath(); ctxE.arc(cx, cy, sr, 0, 2*Math.PI);
+          ctxE.fillStyle = col + '35';
+          ctxE.fill();
+          ctxE.strokeStyle = col + 'aa';
+          ctxE.lineWidth = 1.2;
+          ctxE.stroke();
+        }
+
+        // Surface glow
+        if (drawRadius > 3) {
+          const Ts = stage.special === 'collapse' ? lerp(prevStage.Ts || 3600, 50000, frac) : lerp(prevStage.Ts || stage.Ts, stage.Ts, tFrac);
+          const sc = evoStarColor(Ts);
+          const grd = ctxE.createRadialGradient(cx, cy, drawRadius * 0.7, cx, cy, drawRadius * 1.3);
+          grd.addColorStop(0, sc + '00');
+          grd.addColorStop(0.7, sc + '40');
+          grd.addColorStop(1, sc + '00');
+          ctxE.fillStyle = grd;
+          ctxE.beginPath(); ctxE.arc(cx, cy, drawRadius * 1.3, 0, 2*Math.PI); ctxE.fill();
+        }
+
+        // Shell labels (right side of star)
+        if (drawRadius > 15) {
+          ctxE.textAlign = 'left'; ctxE.font = FONT_SM;
+          const labeled = new Set();
+          for (let i = 0; i < curShells.length; i++) {
+            const sr = drawRadius * curShells[i].f;
+            if (sr < 5 || labeled.has(curShells[i].el)) continue;
+            labeled.add(curShells[i].el);
+            const ly = cy - sr + 8 + i * 2;
+            const lx = cx + drawRadius + 15;
+            ctxE.strokeStyle = EC[curShells[i].el] + '60'; ctxE.lineWidth = 0.8;
+            ctxE.beginPath(); ctxE.moveTo(cx + sr*0.7, ly); ctxE.lineTo(lx - 3, ly); ctxE.stroke();
+            ctxE.fillStyle = EC[curShells[i].el];
+            ctxE.fillText(curShells[i].el, lx, ly + 4);
+          }
+        }
+
+        // Neutron star special markings
+        if (stage.special === 'neutronstar') {
+          ctxE.fillStyle = '#90a4ae';
+          ctxE.beginPath(); ctxE.arc(cx, cy, 12, 0, 2*Math.PI); ctxE.fill();
+          ctxE.strokeStyle = '#b0bec5'; ctxE.lineWidth = 1;
+          ctxE.beginPath(); ctxE.arc(cx, cy, 12, 0, 2*Math.PI); ctxE.stroke();
+          // Magnetic field lines
+          ctxE.strokeStyle = 'rgba(100,200,255,0.3)'; ctxE.lineWidth = 1;
+          for (let a = 0; a < 4; a++) {
+            const angle = a * Math.PI / 2 + evoTime * 0.2;
+            ctxE.beginPath();
+            ctxE.ellipse(cx, cy, 30, 12, angle, 0, 2*Math.PI);
+            ctxE.stroke();
+          }
+        }
+      }
+
+      // --- Timeline bar ---
+      const tlX = 30, tlY = HE - 45, tlW = WE - 60, tlH = 14;
+      const totalDur = evoTotalDur();
+      let tAccum = 0;
+      for (let i = 0; i < evoStages.length; i++) {
+        const x0 = tlX + (tAccum / totalDur) * tlW;
+        const w = (evoStages[i].dur / totalDur) * tlW;
+        tAccum += evoStages[i].dur;
+        const isCurrent = i === idx;
+        // Bar segment
+        const segColor = isCurrent ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)';
+        ctxE.fillStyle = segColor;
+        ctxE.fillRect(x0, tlY, w, tlH);
+        ctxE.strokeStyle = 'rgba(255,255,255,0.15)'; ctxE.lineWidth = 1;
+        ctxE.strokeRect(x0, tlY, w, tlH);
+        // Stage name below
+        ctxE.fillStyle = isCurrent ? COLORS.text : COLORS.textDim;
+        ctxE.font = '9px Inter, system-ui, sans-serif'; ctxE.textAlign = 'center';
+        const label = evoStages[i].name.length > 12 ? evoStages[i].name.substring(0,11)+'…' : evoStages[i].name;
+        ctxE.fillText(label, x0 + w/2, tlY + tlH + 12);
+      }
+      // Progress marker
+      const progX = tlX + (evoTime / totalDur) * tlW;
+      ctxE.fillStyle = '#fff';
+      ctxE.beginPath(); ctxE.moveTo(progX, tlY); ctxE.lineTo(progX-4, tlY-6); ctxE.lineTo(progX+4, tlY-6); ctxE.closePath(); ctxE.fill();
+
+      // --- Info panel (top right) ---
+      const ipX = WE * 0.62, ipY = 25;
+      ctxE.textAlign = 'left';
+      ctxE.fillStyle = COLORS.text; ctxE.font = '16px Inter, system-ui, sans-serif';
+      ctxE.fillText(stage.name, ipX, ipY);
+      ctxE.fillStyle = COLORS.textDim; ctxE.font = FONT;
+      ctxE.fillText(stage.desc, ipX, ipY + 22);
+
+      // Legend
+      const legendEls = [...new Set(stage.shells.map(s => s.el))];
+      if (legendEls.length > 0) {
+        ctxE.fillStyle = 'rgba(255,255,255,0.5)'; ctxE.font = FONT_SM;
+        ctxE.fillText('Composition:', ipX, ipY + 50);
+        legendEls.forEach((el, i) => {
+          const ly = ipY + 68 + i * 18;
+          ctxE.fillStyle = EC[el]; ctxE.fillRect(ipX, ly, 10, 10);
+          ctxE.fillStyle = COLORS.text; ctxE.font = FONT_SM;
+          const names = {H:'Hydrogen', He:'Helium', C:'Carbon/Oxygen', Ne:'Neon', O:'Oxygen', Si:'Silicon', Fe:'Iron', n:'Neutrons'};
+          ctxE.fillText(names[el] || el, ipX + 15, ly + 9);
+        });
+      }
+
+      // Special info
+      if (stage.special === 'blackhole') {
+        ctxE.fillStyle = '#ab47bc'; ctxE.font = FONT;
+        ctxE.fillText('Event horizon radius:', ipX, ipY + 55);
+        const M = parseFloat(evoMassSlider?.value || 1);
+        const rSch = (2 * 6.674e-11 * M * 2e30 / 9e16 / 1000).toFixed(1);
+        ctxE.fillText('r_s ≈ ' + rSch + ' km', ipX, ipY + 73);
+      }
+      if (stage.special === 'neutronstar') {
+        ctxE.fillStyle = '#4fc3f7'; ctxE.font = FONT;
+        ctxE.fillText('Radius ≈ 10 km', ipX, ipY + 55);
+        ctxE.fillText('Density ≈ 4×10¹⁷ kg/m³', ipX, ipY + 73);
+      }
+
+      // Update label
+      if (evoStageLabel) evoStageLabel.textContent = stage.name;
+    }
+
+    function evoAnimate() {
+      if (!evoPlaying) return;
+      evoTime += 0.025;
+      if (evoTime >= evoTotalDur()) { evoTime = evoTotalDur() - 0.001; evoPlaying = false; evoPlayBtn.textContent = '▶ Play'; }
+      drawEvo();
+      if (evoPlaying) activeAnimations['stellar-evo'] = requestAnimationFrame(evoAnimate);
+    }
+
+    evoPlayBtn?.addEventListener('click', () => {
+      evoPlaying = !evoPlaying;
+      evoPlayBtn.textContent = evoPlaying ? '⏸ Pause' : '▶ Play';
+      if (evoPlaying) {
+        if (evoTime >= evoTotalDur() - 0.01) { evoTime = 0; snParticles = []; }
+        evoAnimate();
+      } else if (activeAnimations['stellar-evo']) {
+        cancelAnimationFrame(activeAnimations['stellar-evo']);
+      }
+    });
+
+    evoResetBtn?.addEventListener('click', () => {
+      evoPlaying = false;
+      evoPlayBtn.textContent = '▶ Play';
+      if (activeAnimations['stellar-evo']) cancelAnimationFrame(activeAnimations['stellar-evo']);
+      evoTime = 0; snParticles = [];
+      drawEvo();
+    });
+
+    evoMassSlider?.addEventListener('input', () => {
+      const M = parseFloat(evoMassSlider.value);
+      document.getElementById('evo-mass-val')?.replaceChildren(document.createTextNode(M.toFixed(1)));
+      evoStages = getStages(M);
+      evoTime = 0; snParticles = []; evoPlaying = false;
+      evoPlayBtn.textContent = '▶ Play';
+      if (activeAnimations['stellar-evo']) cancelAnimationFrame(activeAnimations['stellar-evo']);
+      drawEvo();
+    });
+
+    drawEvo();
+  }
+
+  // =================================================================
+  // Star Size Comparison
+  // =================================================================
+  const cSizes = document.getElementById('vis-star-sizes');
+  if (cSizes) {
+    const {ctx: ctxS, W: WS, H: HS} = setupCanvas(cSizes);
+    const zoomSlider = document.getElementById('size-zoom');
+    const zoomLabel = document.getElementById('size-zoom-label');
+
+    // Real stellar radii in solar radii
+    const stars = [
+      {name:'UY Scuti',   R:1708, T:3365, type:'M4Ia',   cat:'Hypergiant'},
+      {name:'Betelgeuse', R:887,  T:3600, type:'M1Ia',   cat:'Supergiant'},
+      {name:'Antares',    R:680,  T:3660, type:'M1Ib',   cat:'Supergiant'},
+      {name:'Rigel',      R:79,   T:12100,type:'B8Ia',   cat:'Supergiant'},
+      {name:'Aldebaran',  R:44,   T:3910, type:'K5III',  cat:'Giant'},
+      {name:'Arcturus',   R:25,   T:4286, type:'K1III',  cat:'Giant'},
+      {name:'Pollux',     R:9.1,  T:4666, type:'K0III',  cat:'Giant'},
+      {name:'Sirius A',   R:1.71, T:9940, type:'A1V',    cat:'Main Seq.'},
+      {name:'Sun',        R:1.0,  T:5772, type:'G2V',    cat:'Main Seq.'},
+      {name:'α Cen B',    R:0.86, T:5260, type:'K1V',    cat:'Main Seq.'},
+      {name:'Proxima Cen',R:0.15, T:3042, type:'M5V',    cat:'Red Dwarf'},
+    ];
+    const earthR = 0.009; // R_earth / R_sun
+
+    function sizeStarColor(T) {
+      if (T > 20000) return [0.62,0.72,1.0];
+      if (T > 10000) return [0.79,0.84,1.0];
+      if (T > 7500) return [0.97,0.97,1.0];
+      if (T > 6000) return [1.0,0.96,0.91];
+      if (T > 5000) return [1.0,0.87,0.68];
+      if (T > 4000) return [1.0,0.73,0.44];
+      if (T > 3300) return [1.0,0.60,0.30];
+      return [1.0,0.45,0.20];
+    }
+
+    // Zoom: logarithmic scale from showing UY Scuti to showing Earth
+    // At zoom=0: UY Scuti fills ~60% of canvas height → scale = 0.6*HS/(2*1708) ≈ 0.084 px/Rsun
+    // At zoom=100: Proxima Cen is ~30px → scale = 30/0.15 = 200 px/Rsun
+    const scaleMin = 0.6 * HS / (2 * 1708);
+    const scaleMax = 200;
+
+    function getScale(z) {
+      return Math.exp(Math.log(scaleMin) + (z / 100) * (Math.log(scaleMax) - Math.log(scaleMin)));
+    }
+
+    let hoverIdx = -1;
+
+    cSizes.addEventListener('mousemove', e => {
+      const rect = cSizes.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (WS / rect.width);
+      const my = (e.clientY - rect.top) * (HS / rect.height);
+      const z = parseFloat(zoomSlider?.value || 30);
+      const scale = getScale(z);
+      const baseline = HS * 0.88;
+
+      let closest = -1, minD = 30;
+      stars.forEach((s, i) => {
+        const rPx = s.R * scale;
+        if (rPx < 0.3) return;
+        const sx = getStarX(i, scale);
+        const sy = baseline - rPx;
+        const d = Math.hypot(mx - sx, my - Math.min(sy, baseline));
+        if (d < Math.max(rPx, 20) && d < minD + rPx) { closest = i; minD = d; }
+      });
+      if (closest !== hoverIdx) { hoverIdx = closest; drawSizes(); }
+      cSizes.style.cursor = closest >= 0 ? 'pointer' : 'default';
+    });
+
+    cSizes.addEventListener('mouseleave', () => { hoverIdx = -1; drawSizes(); });
+
+    // Scroll wheel zoom
+    cSizes.addEventListener('wheel', e => {
+      e.preventDefault();
+      let z = parseFloat(zoomSlider?.value || 30);
+      z -= e.deltaY * 0.08;
+      z = Math.max(0, Math.min(100, z));
+      if (zoomSlider) zoomSlider.value = z;
+      drawSizes();
+    }, {passive: false});
+
+    function getStarX(i, scale) {
+      // Distribute stars evenly across the canvas width
+      const margin = 40;
+      // Only show stars that are at least barely visible
+      const visible = stars.filter(s => s.R * scale >= 0.3);
+      const vi = visible.indexOf(stars[i]);
+      if (vi < 0) return -1000;
+      const spacing = (WS - 2 * margin) / (visible.length);
+      return margin + spacing * (vi + 0.5);
+    }
+
+    function drawSizes() {
+      ctxS.fillStyle = '#060a10';
+      ctxS.fillRect(0, 0, WS, HS);
+
+      const z = parseFloat(zoomSlider?.value || 30);
+      const scale = getScale(z);
+      const baseline = HS * 0.88;
+
+      // Baseline
+      ctxS.strokeStyle = 'rgba(255,255,255,0.1)'; ctxS.lineWidth = 1;
+      ctxS.beginPath(); ctxS.moveTo(0, baseline); ctxS.lineTo(WS, baseline); ctxS.stroke();
+
+      // Scale bar
+      let scaleBarR = 1; // 1 R_sun
+      let scaleBarLabel = '1 R☉';
+      let scaleBarPx = scale;
+      if (scaleBarPx > WS * 0.4) { scaleBarR = 0.01; scaleBarLabel = '0.01 R☉ (≈ R⊕)'; scaleBarPx = 0.01 * scale; }
+      else if (scaleBarPx > WS * 0.15) { scaleBarR = 0.1; scaleBarLabel = '0.1 R☉'; scaleBarPx = 0.1 * scale; }
+      else if (scaleBarPx < 3) { scaleBarR = 100; scaleBarLabel = '100 R☉'; scaleBarPx = 100 * scale; }
+      else if (scaleBarPx < 15) { scaleBarR = 10; scaleBarLabel = '10 R☉'; scaleBarPx = 10 * scale; }
+      if (scaleBarPx > 1 && scaleBarPx < WS * 0.5) {
+        const sbY = 18;
+        const sbX = WS - 20 - scaleBarPx;
+        ctxS.strokeStyle = 'rgba(255,255,255,0.4)'; ctxS.lineWidth = 1.5;
+        ctxS.beginPath(); ctxS.moveTo(sbX, sbY); ctxS.lineTo(sbX + scaleBarPx, sbY); ctxS.stroke();
+        ctxS.beginPath(); ctxS.moveTo(sbX, sbY-4); ctxS.lineTo(sbX, sbY+4); ctxS.stroke();
+        ctxS.beginPath(); ctxS.moveTo(sbX+scaleBarPx, sbY-4); ctxS.lineTo(sbX+scaleBarPx, sbY+4); ctxS.stroke();
+        ctxS.fillStyle = 'rgba(255,255,255,0.5)'; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
+        ctxS.fillText(scaleBarLabel, sbX + scaleBarPx/2, sbY + 14);
+      }
+
+      // Draw stars
+      const visible = stars.filter(s => s.R * scale >= 0.3);
+      stars.forEach((s, i) => {
+        const rPx = s.R * scale;
+        if (rPx < 0.3) return;
+        const sx = getStarX(i, scale);
+        if (sx < -500) return;
+
+        const [cr, cg, cb] = sizeStarColor(s.T);
+        const col = `rgb(${Math.round(cr*255)},${Math.round(cg*255)},${Math.round(cb*255)})`;
+
+        if (rPx > HS * 2) {
+          // Too big: draw as a curved horizon at bottom
+          const curvature = WS * WS / (8 * rPx) + baseline;
+          ctxS.fillStyle = col + '15';
+          ctxS.beginPath();
+          ctxS.moveTo(0, HS);
+          // Approximate arc with quadratic curve
+          ctxS.quadraticCurveTo(WS/2, baseline - WS*WS/(8*rPx), WS, HS);
+          ctxS.fill();
+          ctxS.strokeStyle = col; ctxS.lineWidth = 2;
+          ctxS.beginPath();
+          ctxS.quadraticCurveTo(WS/2, baseline - WS*WS/(8*rPx), WS, HS);
+          ctxS.stroke();
+          // Label
+          ctxS.fillStyle = col; ctxS.font = '13px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
+          ctxS.fillText(s.name + ' (surface)', WS/2, baseline - WS*WS/(16*rPx));
+          ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
+          ctxS.fillText(s.R + ' R☉', WS/2, baseline - WS*WS/(16*rPx) + 16);
+        } else {
+          // Draw as circle
+          const drawR = Math.max(rPx, 1.5);
+          const cy = baseline - rPx;
+
+          // Glow
+          if (drawR > 3) {
+            const grd = ctxS.createRadialGradient(sx, cy, drawR*0.5, sx, cy, drawR*1.5);
+            grd.addColorStop(0, `rgba(${Math.round(cr*255)},${Math.round(cg*255)},${Math.round(cb*255)},0.25)`);
+            grd.addColorStop(1, `rgba(${Math.round(cr*255)},${Math.round(cg*255)},${Math.round(cb*255)},0)`);
+            ctxS.fillStyle = grd;
+            ctxS.beginPath(); ctxS.arc(sx, cy, drawR*1.5, 0, 2*Math.PI); ctxS.fill();
+          }
+
+          // Star body
+          ctxS.fillStyle = col;
+          ctxS.beginPath(); ctxS.arc(sx, cy, drawR, 0, 2*Math.PI); ctxS.fill();
+
+          // Label
+          const isHover = hoverIdx === i;
+          const labelY = cy - drawR - 8;
+          ctxS.fillStyle = isHover ? '#fff' : 'rgba(255,255,255,0.75)';
+          ctxS.font = isHover ? '12px Inter, system-ui, sans-serif' : '10px Inter, system-ui, sans-serif';
+          ctxS.textAlign = 'center';
+          if (labelY > 10) {
+            ctxS.fillText(s.name, sx, labelY);
+            if (drawR > 5 || isHover) {
+              ctxS.fillStyle = COLORS.textDim; ctxS.font = '9px Inter, system-ui, sans-serif';
+              ctxS.fillText(s.R + ' R☉  ' + s.type, sx, labelY + 13);
+            }
+          }
+        }
+      });
+
+      // Earth (only if Sun is visible and big enough)
+      const sunStar = stars.find(s => s.name === 'Sun');
+      const sunPx = sunStar.R * scale;
+      if (sunPx > 8) {
+        const earthPx = Math.max(earthR * scale, 1.2);
+        const sunIdx = stars.indexOf(sunStar);
+        const sunX = getStarX(sunIdx, scale);
+        const earthX = sunX + sunPx + earthPx + 6;
+        const earthY = baseline - earthPx;
+        // Earth
+        ctxS.fillStyle = '#4a90d9';
+        ctxS.beginPath(); ctxS.arc(earthX, earthY, earthPx, 0, 2*Math.PI); ctxS.fill();
+        // Green landmass hint
+        if (earthPx > 3) {
+          ctxS.fillStyle = '#5cb85c';
+          ctxS.beginPath(); ctxS.arc(earthX - earthPx*0.2, earthY - earthPx*0.1, earthPx*0.4, 0, 2*Math.PI); ctxS.fill();
+        }
+        ctxS.fillStyle = 'rgba(255,255,255,0.6)'; ctxS.font = '9px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
+        ctxS.fillText('Earth', earthX, earthY - earthPx - 5);
+      }
+
+      // Hover tooltip
+      if (hoverIdx >= 0) {
+        const s = stars[hoverIdx];
+        const info = `${s.name}  |  ${s.R} R☉  |  T = ${s.T} K  |  ${s.type} (${s.cat})`;
+        ctxS.font = '11px Inter, system-ui, sans-serif';
+        const tw = ctxS.measureText(info).width + 16;
+        const tx = Math.max(5, Math.min(WS - tw - 5, WS/2 - tw/2));
+        const ty = 35;
+        ctxS.fillStyle = 'rgba(0,0,0,0.85)';
+        ctxS.fillRect(tx, ty, tw, 22);
+        ctxS.strokeStyle = 'rgba(255,255,255,0.3)'; ctxS.lineWidth = 1;
+        ctxS.strokeRect(tx, ty, tw, 22);
+        ctxS.fillStyle = '#fff'; ctxS.textAlign = 'left';
+        ctxS.fillText(info, tx + 8, ty + 15);
+      }
+
+      // "Not visible at this zoom" for invisible stars
+      const invisible = stars.filter(s => s.R * scale < 0.3);
+      if (invisible.length > 0 && invisible.length < stars.length) {
+        ctxS.fillStyle = 'rgba(255,255,255,0.3)'; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'left';
+        const names = invisible.map(s => s.name).join(', ');
+        ctxS.fillText('Too small to see: ' + names + '  (zoom in →)', 10, HS - 8);
+      }
+
+      // Zoom label
+      if (zoomLabel) {
+        const rPerPx = (1/scale).toFixed(scale > 1 ? 3 : 1);
+        zoomLabel.textContent = '';
+      }
+    }
+
+    zoomSlider?.addEventListener('input', drawSizes);
+    drawSizes();
+  }
 }
