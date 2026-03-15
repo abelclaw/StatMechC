@@ -32,6 +32,17 @@
 
 <p>After the big bang, the universe cooled into around 75% hydrogen and 25% helium, with trace amounts of lithium. Some patches of the universe started out denser and hotter than others (we think this is due to primordial quantum density fluctuations during inflation), and the denser patches became more dense over time due to gravitational attraction. When a region of gas becomes dense enough, the density increase accelerates rapidly, a process called a <span class="tooltip-trigger">Jeans instability<span class="tooltip-content">A gravitational instability that occurs when a region of gas is dense enough that self-gravity overwhelms thermal pressure, causing runaway collapse.</span></span>. After the instability is reached the gas continues to compress until stars form, and if the temperature gets high enough, hydrogen fusion begins.</p>
 
+<div class="interactive-wrapper">
+<h4>Interactive: Jeans Instability &mdash; Star Formation from Gas</h4>
+<canvas id="vis-jeans" width="700" height="420"></canvas>
+<div class="controls">
+<button id="jeans-play">&#9654; Play</button>
+<button id="jeans-reset">Reset</button>
+<label style="margin-left:12px;">Temperature: <input type="range" id="jeans-temp" min="0" max="100" step="1" value="30"><span id="jeans-temp-val"></span></label>
+</div>
+<figcaption>A cloud of hydrogen gas with small density fluctuations. When a dense region exceeds the Jeans mass, gravity overwhelms thermal pressure and runaway collapse begins, eventually forming protostars. Higher temperature increases thermal pressure, resisting collapse.</figcaption>
+</div>
+
 <p>Hydrogen fusion in stars refers to a collection of processes whose net effect is to turn hydrogen H into ${}^4\text{He}$. This fusion generates thermal pressure, keeping the stars from collapsing further under their own gravity. Thus for most of its lifetime, a star is in <span class="tooltip-trigger">hydrostatic equilibrium<span class="tooltip-content">The balance between the inward gravitational force and the outward pressure (thermal, radiation, or degeneracy) in a star.</span></span> and equilibrium statistical mechanics can be used.</p>
 
 <p>High temperatures and densities are required for fusion. If the amount of matter that coalesced to form a star is not greater than around $0.08\,M_\odot$, the star will not burn and instead is just a ball of hydrogen, like Jupiter. These failed stars are called <span class="tooltip-trigger">brown dwarfs<span class="tooltip-content">Failed stars with mass below $\sim 0.08 M_\odot$, not massive enough to sustain hydrogen fusion.</span></span>. The main difference between a brown dwarf and a planet is how they formed: planets form from supernova remnants while brown dwarfs form from collapse of interstellar gas.</p>

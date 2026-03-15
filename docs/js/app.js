@@ -11155,6 +11155,267 @@ function initCh14Vis() {
 // CH15: Stars - HR Diagram
 // =============================================================================
 function initCh15Vis() {
+
+  // =================================================================
+  // Jeans Instability - Star Formation Simulation
+  // =================================================================
+  const cJ = document.getElementById('vis-jeans');
+  if (cJ) {
+    const {ctx: ctxJ, W: WJ, H: HJ} = setupCanvas(cJ);
+    const jeansPlayBtn = document.getElementById('jeans-play');
+    const jeansResetBtn = document.getElementById('jeans-reset');
+    const jeansTempSlider = document.getElementById('jeans-temp');
+
+    // Particles representing gas
+    const N = 600;
+    let particles = [];
+    let jeansPlaying = false, jeansTime = 0;
+    let protostars = []; // collapsed clumps become glowing protostars
+
+    function initParticles() {
+      particles = [];
+      protostars = [];
+      jeansTime = 0;
+      // Seed several density perturbations (overdense regions)
+      const seeds = [];
+      const rng = mulberry32(17);
+      const nSeeds = 3 + Math.floor(rng() * 3);
+      for (let i = 0; i < nSeeds; i++) {
+        seeds.push({
+          x: 80 + rng() * (WJ - 160),
+          y: 60 + rng() * (HJ - 140),
+          strength: 0.3 + rng() * 0.5
+        });
+      }
+      for (let i = 0; i < N; i++) {
+        let x, y;
+        // 40% of particles clustered near seeds, 60% uniform
+        if (rng() < 0.4 && seeds.length > 0) {
+          const s = seeds[Math.floor(rng() * seeds.length)];
+          x = s.x + (rng() - 0.5) * 120 * (1 - s.strength);
+          y = s.y + (rng() - 0.5) * 120 * (1 - s.strength);
+        } else {
+          x = 20 + rng() * (WJ - 40);
+          y = 20 + rng() * (HJ - 60);
+        }
+        particles.push({
+          x, y,
+          vx: (rng() - 0.5) * 0.3,
+          vy: (rng() - 0.5) * 0.3,
+          mass: 0.8 + rng() * 0.4
+        });
+      }
+    }
+
+    // Seeded RNG (same as in HR diagram)
+    function mulberry32(a) {
+      return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    initParticles();
+
+    function stepJeans(dt) {
+      const temp = parseFloat(jeansTempSlider?.value || 30);
+      const thermalPressure = 0.008 + temp * 0.003; // thermal velocity kicks
+      const gravity = 0.12; // gravitational coupling
+
+      // Build grid for neighbor finding (spatial hash)
+      const cellSize = 40;
+      const grid = {};
+      particles.forEach((p, i) => {
+        const gx = Math.floor(p.x / cellSize);
+        const gy = Math.floor(p.y / cellSize);
+        const key = gx + ',' + gy;
+        if (!grid[key]) grid[key] = [];
+        grid[key].push(i);
+      });
+
+      // Compute forces
+      particles.forEach((p, i) => {
+        let fx = 0, fy = 0;
+        // Gravity from nearby particles
+        const gx = Math.floor(p.x / cellSize);
+        const gy = Math.floor(p.y / cellSize);
+        for (let dx = -2; dx <= 2; dx++) {
+          for (let dy = -2; dy <= 2; dy++) {
+            const key = (gx+dx) + ',' + (gy+dy);
+            const cell = grid[key];
+            if (!cell) continue;
+            cell.forEach(j => {
+              if (j === i) return;
+              const q = particles[j];
+              const ddx = q.x - p.x, ddy = q.y - p.y;
+              const r2 = ddx*ddx + ddy*ddy + 25; // softening
+              const r = Math.sqrt(r2);
+              // Gravity (attractive) with short-range repulsion (pressure)
+              const fGrav = gravity * p.mass * q.mass / r2;
+              const fPressure = r < 8 ? thermalPressure * 5 / (r + 1) : 0;
+              const fNet = (fGrav - fPressure) / r;
+              fx += ddx * fNet;
+              fy += ddy * fNet;
+            });
+          }
+        }
+
+        // Thermal random kicks
+        fx += (Math.random() - 0.5) * thermalPressure * 2;
+        fy += (Math.random() - 0.5) * thermalPressure * 2;
+
+        // Damping
+        p.vx = p.vx * 0.995 + fx * dt;
+        p.vy = p.vy * 0.995 + fy * dt;
+
+        // Clamp velocity
+        const speed = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+        if (speed > 3) { p.vx *= 3/speed; p.vy *= 3/speed; }
+      });
+
+      // Move
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        // Soft boundary
+        if (p.x < 10) { p.x = 10; p.vx *= -0.5; }
+        if (p.x > WJ - 10) { p.x = WJ - 10; p.vx *= -0.5; }
+        if (p.y < 10) { p.y = 10; p.vy *= -0.5; }
+        if (p.y > HJ - 30) { p.y = HJ - 30; p.vy *= -0.5; }
+      });
+
+      // Detect collapsed clumps: if many particles are very close, form a protostar
+      jeansTime += dt;
+      if (jeansTime > 2 && Math.random() < 0.05) {
+        // Find densest point
+        let maxDensity = 0, maxX = 0, maxY = 0;
+        particles.forEach(p => {
+          let density = 0;
+          particles.forEach(q => {
+            const d2 = (p.x-q.x)*(p.x-q.x) + (p.y-q.y)*(p.y-q.y);
+            if (d2 < 400) density += q.mass;
+          });
+          if (density > maxDensity) { maxDensity = density; maxX = p.x; maxY = p.y; }
+        });
+        // If dense enough and not near existing protostar, form one
+        const nearExisting = protostars.some(ps => Math.hypot(ps.x - maxX, ps.y - maxY) < 50);
+        if (maxDensity > 15 && !nearExisting) {
+          protostars.push({x: maxX, y: maxY, birth: jeansTime, mass: maxDensity, R: 3 + maxDensity * 0.3});
+          // Absorb nearby particles
+          particles = particles.filter(p => {
+            const d = Math.hypot(p.x - maxX, p.y - maxY);
+            return d > 15;
+          });
+        }
+      }
+
+      // Protostars attract remaining particles
+      protostars.forEach(ps => {
+        particles.forEach(p => {
+          const ddx = ps.x - p.x, ddy = ps.y - p.y;
+          const r2 = ddx*ddx + ddy*ddy + 100;
+          const r = Math.sqrt(r2);
+          const f = ps.mass * 0.05 / r2;
+          p.vx += ddx * f;
+          p.vy += ddy * f;
+          // Absorb if very close
+          if (r < ps.R + 5) {
+            ps.mass += p.mass * 0.1;
+            ps.R = 3 + ps.mass * 0.3;
+            p.x = -100; // remove
+          }
+        });
+      });
+      particles = particles.filter(p => p.x > -50);
+    }
+
+    function drawJeans() {
+      ctxJ.fillStyle = '#060a10';
+      ctxJ.fillRect(0, 0, WJ, HJ);
+
+      // Gas particles
+      particles.forEach(p => {
+        // Color by local density (approximate)
+        const alpha = 0.4 + Math.min(0.5, Math.abs(p.vx) + Math.abs(p.vy));
+        ctxJ.fillStyle = `rgba(180,140,200,${alpha.toFixed(2)})`;
+        ctxJ.beginPath(); ctxJ.arc(p.x, p.y, 2.2, 0, 2*Math.PI); ctxJ.fill();
+        // Glow for dense feeling
+        ctxJ.fillStyle = `rgba(150,120,180,${(alpha*0.15).toFixed(2)})`;
+        ctxJ.beginPath(); ctxJ.arc(p.x, p.y, 6, 0, 2*Math.PI); ctxJ.fill();
+      });
+
+      // Protostars
+      protostars.forEach(ps => {
+        const age = jeansTime - ps.birth;
+        const glow = Math.min(1, age * 0.5);
+        const r = Math.min(ps.R, 20);
+
+        // Outer glow
+        const grd = ctxJ.createRadialGradient(ps.x, ps.y, 0, ps.x, ps.y, r * 3);
+        grd.addColorStop(0, `rgba(255,200,100,${(0.4*glow).toFixed(2)})`);
+        grd.addColorStop(0.5, `rgba(255,150,50,${(0.15*glow).toFixed(2)})`);
+        grd.addColorStop(1, 'rgba(255,100,30,0)');
+        ctxJ.fillStyle = grd;
+        ctxJ.beginPath(); ctxJ.arc(ps.x, ps.y, r * 3, 0, 2*Math.PI); ctxJ.fill();
+
+        // Core
+        const coreGrd = ctxJ.createRadialGradient(ps.x, ps.y, 0, ps.x, ps.y, r);
+        coreGrd.addColorStop(0, `rgba(255,255,230,${(0.9*glow).toFixed(2)})`);
+        coreGrd.addColorStop(0.5, `rgba(255,200,100,${(0.7*glow).toFixed(2)})`);
+        coreGrd.addColorStop(1, `rgba(200,100,50,${(0.3*glow).toFixed(2)})`);
+        ctxJ.fillStyle = coreGrd;
+        ctxJ.beginPath(); ctxJ.arc(ps.x, ps.y, r, 0, 2*Math.PI); ctxJ.fill();
+
+        // Label
+        if (glow > 0.5) {
+          ctxJ.fillStyle = `rgba(255,255,255,${(glow*0.7).toFixed(2)})`;
+          ctxJ.font = '10px Inter, system-ui, sans-serif';
+          ctxJ.textAlign = 'center';
+          ctxJ.fillText('protostar', ps.x, ps.y - r - 6);
+        }
+      });
+
+      // Info
+      ctxJ.fillStyle = COLORS.textDim; ctxJ.font = FONT_SM; ctxJ.textAlign = 'left';
+      ctxJ.fillText('Particles: ' + particles.length + '   Protostars: ' + protostars.length, 10, HJ - 8);
+      const temp = parseFloat(jeansTempSlider?.value || 30);
+      ctxJ.textAlign = 'right';
+      ctxJ.fillText('T ~ ' + (temp < 30 ? 'low (easy collapse)' : temp < 70 ? 'moderate' : 'high (resists collapse)'), WJ - 10, HJ - 8);
+    }
+
+    function jeansAnimate() {
+      if (!jeansPlaying) return;
+      stepJeans(1);
+      drawJeans();
+      activeAnimations['jeans'] = requestAnimationFrame(jeansAnimate);
+    }
+
+    jeansPlayBtn?.addEventListener('click', () => {
+      jeansPlaying = !jeansPlaying;
+      jeansPlayBtn.textContent = jeansPlaying ? '⏸ Pause' : '▶ Play';
+      if (jeansPlaying) jeansAnimate();
+      else if (activeAnimations['jeans']) cancelAnimationFrame(activeAnimations['jeans']);
+    });
+
+    jeansResetBtn?.addEventListener('click', () => {
+      jeansPlaying = false;
+      jeansPlayBtn.textContent = '▶ Play';
+      if (activeAnimations['jeans']) cancelAnimationFrame(activeAnimations['jeans']);
+      initParticles();
+      drawJeans();
+    });
+
+    jeansTempSlider?.addEventListener('input', () => {
+      const t = parseFloat(jeansTempSlider.value);
+      const label = document.getElementById('jeans-temp-val');
+      if (label) label.textContent = '';
+    });
+
+    drawJeans();
+  }
+
   const c = document.getElementById('vis-hr');
   if (c) {
   const { ctx, W, H } = setupCanvas(c);
