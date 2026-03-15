@@ -12840,7 +12840,7 @@ function initCh15Vis() {
       const M_evo = parseFloat(evoMassSlider?.value || 1);
       const logM_evo = Math.log10(Math.max(M_evo, 0.05));
       const logMin_evo = Math.log10(0.05), logMax_evo = Math.log10(40);
-      const yFrac_evo = 1 - (logM_evo - logMin_evo) / (logMax_evo - logMin_evo);
+      const yFrac_evo = (logM_evo - logMin_evo) / (logMax_evo - logMin_evo);
       const trackY = 60 + yFrac_evo * (HE * 0.62 - 60);
       const trackXStart = 80, trackXEnd = WE * 0.55;
       // Dashed track line
@@ -12913,7 +12913,7 @@ function initCh15Vis() {
       // Vertical: map mass logarithmically. >25 at top, <0.08 at bottom
       const logM = Math.log10(Math.max(M, 0.05));
       const logMin = Math.log10(0.05), logMax = Math.log10(40);
-      const yFrac = 1 - (logM - logMin) / (logMax - logMin); // 0=top (massive), 1=bottom (low mass)
+      const yFrac = (logM - logMin) / (logMax - logMin); // 0=top (low mass), 1=bottom (massive)
       const cyMin = 60, cyMax = HE * 0.62;
       const cy = cyMin + yFrac * (cyMax - cyMin);
       // Horizontal: moves right as animation progresses
