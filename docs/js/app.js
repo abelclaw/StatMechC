@@ -7838,14 +7838,10 @@ function initCh7Vis() {
       // The total system energy E_sys = sum of KE of all inner particles.
       // For N particles in 2D, E_sys follows a chi-squared distribution with
       // k = 2*N_INNER degrees of freedom: P(E) ~ E^(k/2 - 1) * exp(-E / kT)
-      // where kT is measured from the reservoir.
 
-      // Measure kT from reservoir (average KE per DOF = kT/2, so per particle in 2D = kT)
-      let resKE = 0;
-      for (const p of hrParticles) {
-        if (!p.inside) resKE += 0.5 * (p.vx * p.vx + p.vy * p.vy);
-      }
-      const kT = resKE / N_OUTER; // <KE per particle> = kT for 2D
+      // kT from slider temperature (so the curve responds instantly to slider)
+      // tempToSpeed(T)^2 = 900*T is the mean v^2; KE = 0.5*v^2 so kT = 0.5*900*T = 450*T
+      const kT = 0.5 * tempToSpeed(T) * tempToSpeed(T);
 
       // System energy
       let sysE = 0;
