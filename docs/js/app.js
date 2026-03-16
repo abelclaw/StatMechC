@@ -7066,23 +7066,23 @@ function initCh7Vis() {
   }
 
   // ----- System + Heat Reservoir -----
-  // ----- System + Heat Reservoir (gas simulation + energy distribution) -----
+  // ----- System + Heat Reservoir (gas sim + per-particle energy distribution) -----
   const cRes = document.getElementById('vis-reservoir');
   if (cRes) {
     const {ctx: ctxHR, W: WHR, H: HHR} = setupCanvas(cRes);
     const hrResetBtn = document.getElementById('hres-reset');
-    const hrEnergyDisplay = document.getElementById('hres-energy-display');
+    const resTempSlider = document.getElementById('res-temp');
+    const resTempVal = document.getElementById('res-temp-val');
 
-    // Layout: gas sim on left, distribution plot on right
-    const simW = Math.floor(WHR * 0.52); // left portion for gas sim
-    const plotL = simW + 15; // right portion starts here
-    const plotW = WHR - plotL - 20;
-    const plotT = 40, plotH = HHR - 80;
+    // Layout: gas sim left ~52%, distribution plot right
+    const simW = Math.floor(WHR * 0.52);
+    const plotL = simW + 15, plotW = WHR - plotL - 20;
+    const plotT = 40, plotH = HHR - 85;
 
-    // Outer box for gas sim (left side)
-    const hrMargin = 12;
-    const outerL = hrMargin, outerR = simW - hrMargin, outerT = hrMargin, outerB = HHR - hrMargin;
-    // Inner box: centered within left side
+    // Outer box (left side)
+    const hrM = 12;
+    const outerL = hrM, outerR = simW - hrM, outerT = hrM, outerB = HHR - hrM;
+    // Inner box centered in left side
     const innerW = 100, innerH = 100;
     const innerL = (outerL + outerR - innerW) / 2;
     const innerR = innerL + innerW;
@@ -7090,30 +7090,33 @@ function initCh7Vis() {
     const innerB = innerT + innerH;
 
     const PR = 3;
-    const N_INNER = 10;
+    const N_INNER = 8;
     const N_OUTER = 40;
     let hrParticles = [];
     let wallDents = [];
-    let energyHistory = [];
-    const MAX_HISTORY = 800;
+
+    // Temperature in slider units; maps to speed scale
+    // At T=2.0 (default), mean speed ~ 60
+    function tempToSpeed(T) { return 30 * Math.sqrt(T); }
 
     function initHR() {
+      const T = parseFloat(resTempSlider?.value || 2.0);
       hrParticles = [];
       wallDents = [];
-      energyHistory = [];
+      const spdSys = tempToSpeed(T);
       for (let i = 0; i < N_INNER; i++) {
-        const speed = 40 + Math.random() * 80;
+        const speed = spdSys * (0.3 + Math.random() * 1.4);
         const angle = Math.random() * 2 * Math.PI;
         hrParticles.push({
           x: innerL + PR + Math.random() * (innerW - 2 * PR),
           y: innerT + PR + Math.random() * (innerH - 2 * PR),
-          vx: speed * Math.cos(angle),
-          vy: speed * Math.sin(angle),
+          vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
           inside: true
         });
       }
+      const spdRes = tempToSpeed(T);
       for (let i = 0; i < N_OUTER; i++) {
-        const speed = 40 + Math.random() * 80;
+        const speed = spdRes * (0.3 + Math.random() * 1.4);
         const angle = Math.random() * 2 * Math.PI;
         let x, y;
         do {
@@ -7121,16 +7124,27 @@ function initCh7Vis() {
           y = outerT + PR + Math.random() * (outerB - outerT - 2 * PR);
         } while (x > innerL - PR && x < innerR + PR && y > innerT - PR && y < innerB + PR);
         hrParticles.push({
-          x, y,
-          vx: speed * Math.cos(angle),
-          vy: speed * Math.sin(angle),
+          x, y, vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
           inside: false
         });
       }
     }
 
+    // When T slider changes, rescale reservoir speeds (not system!)
+    function rescaleReservoir(newT) {
+      const target = tempToSpeed(newT);
+      // Compute current reservoir RMS speed
+      let sumV2 = 0;
+      const resParts = hrParticles.filter(p => !p.inside);
+      for (const p of resParts) sumV2 += p.vx * p.vx + p.vy * p.vy;
+      const rms = Math.sqrt(sumV2 / resParts.length);
+      if (rms < 1) return;
+      const scale = target / rms;
+      for (const p of resParts) { p.vx *= scale; p.vy *= scale; }
+    }
+
     function addDent(x, y, side, strength, sign) {
-      wallDents.push({x, y, side, amount: Math.min(strength * 0.15, 8) * (sign || 1), life: 1.0});
+      wallDents.push({x, y, side, amount: Math.min(strength * 0.12, 7) * (sign || 1), life: 1.0});
     }
 
     function getDentOffset(pos, side) {
@@ -7139,9 +7153,7 @@ function initCh7Vis() {
         if (d.side !== side) continue;
         const dist = (side === 'left' || side === 'right') ? Math.abs(pos - d.y) : Math.abs(pos - d.x);
         const sigma = 14;
-        if (dist < sigma * 3) {
-          offset += d.amount * d.life * Math.exp(-dist * dist / (2 * sigma * sigma));
-        }
+        if (dist < sigma * 3) offset += d.amount * d.life * Math.exp(-dist * dist / (2 * sigma * sigma));
       }
       return offset;
     }
@@ -7156,13 +7168,9 @@ function initCh7Vis() {
       if (best) {
         const frac = 0.3;
         if (hitNormal === 'vx') {
-          const transfer = hitter.vx * frac;
-          hitter.vx -= transfer;
-          best.vx += transfer;
+          const tr = hitter.vx * frac; hitter.vx -= tr; best.vx += tr;
         } else {
-          const transfer = hitter.vy * frac;
-          hitter.vy -= transfer;
-          best.vy += transfer;
+          const tr = hitter.vy * frac; hitter.vy -= tr; best.vy += tr;
         }
       }
     }
@@ -7172,263 +7180,149 @@ function initCh7Vis() {
       for (const p of hrParticles) {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-
         if (p.inside) {
-          if (p.x < innerL + PR) {
-            p.x = innerL + PR; const ov = p.vx; p.vx = Math.abs(p.vx);
-            addDent(innerL, p.y, 'left', Math.abs(ov));
-            transferEnergy(p, innerL, p.y, 'vx');
-          }
-          if (p.x > innerR - PR) {
-            p.x = innerR - PR; const ov = p.vx; p.vx = -Math.abs(p.vx);
-            addDent(innerR, p.y, 'right', Math.abs(ov));
-            transferEnergy(p, innerR, p.y, 'vx');
-          }
-          if (p.y < innerT + PR) {
-            p.y = innerT + PR; const ov = p.vy; p.vy = Math.abs(p.vy);
-            addDent(p.x, innerT, 'top', Math.abs(ov));
-            transferEnergy(p, p.x, innerT, 'vy');
-          }
-          if (p.y > innerB - PR) {
-            p.y = innerB - PR; const ov = p.vy; p.vy = -Math.abs(p.vy);
-            addDent(p.x, innerB, 'bottom', Math.abs(ov));
-            transferEnergy(p, p.x, innerB, 'vy');
-          }
+          if (p.x < innerL + PR) { p.x = innerL + PR; const ov = p.vx; p.vx = Math.abs(p.vx); addDent(innerL, p.y, 'left', Math.abs(ov)); transferEnergy(p, innerL, p.y, 'vx'); }
+          if (p.x > innerR - PR) { p.x = innerR - PR; const ov = p.vx; p.vx = -Math.abs(p.vx); addDent(innerR, p.y, 'right', Math.abs(ov)); transferEnergy(p, innerR, p.y, 'vx'); }
+          if (p.y < innerT + PR) { p.y = innerT + PR; const ov = p.vy; p.vy = Math.abs(p.vy); addDent(p.x, innerT, 'top', Math.abs(ov)); transferEnergy(p, p.x, innerT, 'vy'); }
+          if (p.y > innerB - PR) { p.y = innerB - PR; const ov = p.vy; p.vy = -Math.abs(p.vy); addDent(p.x, innerB, 'bottom', Math.abs(ov)); transferEnergy(p, p.x, innerB, 'vy'); }
         } else {
           if (p.x < outerL + PR) { p.x = outerL + PR; p.vx = Math.abs(p.vx); }
           if (p.x > outerR - PR) { p.x = outerR - PR; p.vx = -Math.abs(p.vx); }
           if (p.y < outerT + PR) { p.y = outerT + PR; p.vy = Math.abs(p.vy); }
           if (p.y > outerB - PR) { p.y = outerB - PR; p.vy = -Math.abs(p.vy); }
-
-          if (p.x > innerL - PR && p.x < innerR + PR &&
-              p.y > innerT - PR && p.y < innerB + PR) {
-            const dL = p.x - (innerL - PR);
-            const dR = (innerR + PR) - p.x;
-            const dT = p.y - (innerT - PR);
-            const dB = (innerB + PR) - p.y;
+          if (p.x > innerL - PR && p.x < innerR + PR && p.y > innerT - PR && p.y < innerB + PR) {
+            const dL = p.x - (innerL - PR), dR = (innerR + PR) - p.x;
+            const dT = p.y - (innerT - PR), dB = (innerB + PR) - p.y;
             const minD = Math.min(dL, dR, dT, dB);
-            if (minD === dL) {
-              p.x = innerL - PR; const ov = p.vx; p.vx = -Math.abs(p.vx);
-              addDent(innerL, p.y, 'left', Math.abs(ov), -1);
-              transferEnergy(p, innerL, p.y, 'vx');
-            } else if (minD === dR) {
-              p.x = innerR + PR; const ov = p.vx; p.vx = Math.abs(p.vx);
-              addDent(innerR, p.y, 'right', Math.abs(ov), -1);
-              transferEnergy(p, innerR, p.y, 'vx');
-            } else if (minD === dT) {
-              p.y = innerT - PR; const ov = p.vy; p.vy = -Math.abs(p.vy);
-              addDent(p.x, innerT, 'top', Math.abs(ov), -1);
-              transferEnergy(p, p.x, innerT, 'vy');
-            } else {
-              p.y = innerB + PR; const ov = p.vy; p.vy = Math.abs(p.vy);
-              addDent(p.x, innerB, 'bottom', Math.abs(ov), -1);
-              transferEnergy(p, p.x, innerB, 'vy');
-            }
+            if (minD === dL) { p.x = innerL - PR; const ov = p.vx; p.vx = -Math.abs(p.vx); addDent(innerL, p.y, 'left', Math.abs(ov), -1); transferEnergy(p, innerL, p.y, 'vx'); }
+            else if (minD === dR) { p.x = innerR + PR; const ov = p.vx; p.vx = Math.abs(p.vx); addDent(innerR, p.y, 'right', Math.abs(ov), -1); transferEnergy(p, innerR, p.y, 'vx'); }
+            else if (minD === dT) { p.y = innerT - PR; const ov = p.vy; p.vy = -Math.abs(p.vy); addDent(p.x, innerT, 'top', Math.abs(ov), -1); transferEnergy(p, p.x, innerT, 'vy'); }
+            else { p.y = innerB + PR; const ov = p.vy; p.vy = Math.abs(p.vy); addDent(p.x, innerB, 'bottom', Math.abs(ov), -1); transferEnergy(p, p.x, innerB, 'vy'); }
           }
         }
       }
-
       for (let i = wallDents.length - 1; i >= 0; i--) {
         wallDents[i].life -= 0.04;
         if (wallDents[i].life <= 0) wallDents.splice(i, 1);
       }
-
-      // Record system energy
-      let eInner = 0;
-      for (const p of hrParticles) {
-        if (p.inside) eInner += 0.5 * (p.vx * p.vx + p.vy * p.vy);
-      }
-      energyHistory.push(eInner);
-      if (energyHistory.length > MAX_HISTORY) energyHistory.shift();
     }
 
     function drawHR() {
       clearCanvas(ctxHR, WHR, HHR);
+      const T = parseFloat(resTempSlider?.value || 2.0);
 
       // === LEFT: Gas simulation ===
-      // Clip to left side
       ctxHR.save();
-      ctxHR.beginPath();
-      ctxHR.rect(0, 0, simW, HHR);
-      ctxHR.clip();
+      ctxHR.beginPath(); ctxHR.rect(0, 0, simW, HHR); ctxHR.clip();
 
-      // Outer box
-      ctxHR.strokeStyle = COLORS.axis;
-      ctxHR.lineWidth = 2;
+      ctxHR.strokeStyle = COLORS.axis; ctxHR.lineWidth = 2;
       ctxHR.strokeRect(outerL, outerT, outerR - outerL, outerB - outerT);
 
       // Inner box with dent deformations
-      ctxHR.strokeStyle = COLORS.orange;
-      ctxHR.lineWidth = 2.5;
+      ctxHR.strokeStyle = COLORS.orange; ctxHR.lineWidth = 2.5;
       ctxHR.beginPath();
       const steps = 30;
-      for (let i = 0; i <= steps; i++) {
-        const x = innerL + (innerR - innerL) * i / steps;
-        const y = innerT - getDentOffset(x, 'top');
-        if (i === 0) ctxHR.moveTo(x, y); else ctxHR.lineTo(x, y);
-      }
-      for (let i = 0; i <= steps; i++) {
-        const y = innerT + (innerB - innerT) * i / steps;
-        ctxHR.lineTo(innerR + getDentOffset(y, 'right'), y);
-      }
-      for (let i = steps; i >= 0; i--) {
-        const x = innerL + (innerR - innerL) * i / steps;
-        ctxHR.lineTo(x, innerB + getDentOffset(x, 'bottom'));
-      }
-      for (let i = steps; i >= 0; i--) {
-        const y = innerT + (innerB - innerT) * i / steps;
-        ctxHR.lineTo(innerL - getDentOffset(y, 'left'), y);
-      }
-      ctxHR.closePath();
-      ctxHR.stroke();
+      for (let i = 0; i <= steps; i++) { const x = innerL + (innerR - innerL) * i / steps; const y = innerT - getDentOffset(x, 'top'); if (i === 0) ctxHR.moveTo(x, y); else ctxHR.lineTo(x, y); }
+      for (let i = 0; i <= steps; i++) { const y = innerT + (innerB - innerT) * i / steps; ctxHR.lineTo(innerR + getDentOffset(y, 'right'), y); }
+      for (let i = steps; i >= 0; i--) { const x = innerL + (innerR - innerL) * i / steps; ctxHR.lineTo(x, innerB + getDentOffset(x, 'bottom')); }
+      for (let i = steps; i >= 0; i--) { const y = innerT + (innerB - innerT) * i / steps; ctxHR.lineTo(innerL - getDentOffset(y, 'left'), y); }
+      ctxHR.closePath(); ctxHR.stroke();
 
-      // Glow on impacts
       for (const d of wallDents) {
         if (d.life > 0.5) {
-          ctxHR.save();
-          ctxHR.globalAlpha = (d.life - 0.5) * 2 * 0.6;
+          ctxHR.save(); ctxHR.globalAlpha = (d.life - 0.5) * 2 * 0.6;
           ctxHR.fillStyle = COLORS.yellow;
-          ctxHR.beginPath();
-          ctxHR.arc(d.x, d.y, 5, 0, 2 * Math.PI);
-          ctxHR.fill();
+          ctxHR.beginPath(); ctxHR.arc(d.x, d.y, 5, 0, 2 * Math.PI); ctxHR.fill();
           ctxHR.restore();
         }
       }
 
-      // Particles
       for (const p of hrParticles) {
-        ctxHR.beginPath();
-        ctxHR.arc(p.x, p.y, PR, 0, 2 * Math.PI);
-        ctxHR.fillStyle = p.inside ? COLORS.blue : COLORS.red;
-        ctxHR.fill();
+        ctxHR.beginPath(); ctxHR.arc(p.x, p.y, PR, 0, 2 * Math.PI);
+        ctxHR.fillStyle = p.inside ? COLORS.blue : COLORS.red; ctxHR.fill();
       }
 
-      // Labels
-      ctxHR.fillStyle = COLORS.text;
-      ctxHR.font = FONT;
-      ctxHR.textAlign = 'center';
+      ctxHR.fillStyle = COLORS.text; ctxHR.font = FONT; ctxHR.textAlign = 'center';
       ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 15);
-      ctxHR.fillStyle = COLORS.textDim;
-      ctxHR.font = FONT_SM;
-      ctxHR.fillText('Heat Reservoir', (outerL + outerR) / 2, outerB + 12);
+      ctxHR.fillStyle = COLORS.textDim; ctxHR.font = FONT_SM;
+      ctxHR.fillText('Reservoir (T = ' + T.toFixed(1) + ')', (outerL + outerR) / 2, outerB + 12);
+      ctxHR.restore();
 
-      ctxHR.restore(); // end clip
-
-      // === RIGHT: Energy distribution ===
-      const currentE = energyHistory.length > 0 ? energyHistory[energyHistory.length - 1] : 0;
-
-      // Determine energy scale from data
-      let Emax = 1;
-      if (energyHistory.length > 10) {
-        Emax = Math.max(...energyHistory) * 1.3;
+      // === RIGHT: Per-particle energy distribution ===
+      // Compute per-particle energies for system particles
+      const sysEnergies = [];
+      for (const p of hrParticles) {
+        if (p.inside) sysEnergies.push(0.5 * (p.vx * p.vx + p.vy * p.vy));
       }
-      Emax = Math.max(Emax, currentE * 1.5, 5000);
+      const meanE = sysEnergies.reduce((a, b) => a + b, 0) / sysEnergies.length;
+
+      // Energy scale: based on slider T so the curve doesn't jump around
+      // kT in velocity^2 units: <0.5*v^2> = kT for 2D, so kT ~ tempToSpeed(T)^2
+      const kT = tempToSpeed(T) * tempToSpeed(T); // = 900*T
+      const Emax = kT * 6; // show up to ~6 kT
 
       // Axes
-      drawAxes(ctxHR, plotL, plotT, plotW, plotH, {xLabel: 'E_sys', yLabel: 'P(E)', yLabelOffset: 20});
+      drawAxes(ctxHR, plotL, plotT, plotW, plotH, {xLabel: '\u03B5 (particle energy)', yLabel: 'P(\u03B5)', yLabelOffset: 20});
 
-      // Title
-      ctxHR.fillStyle = COLORS.text;
-      ctxHR.font = FONT;
-      ctxHR.textAlign = 'left';
-      ctxHR.fillText('P(E) \u221d e^{\u2212E/kT}', plotL + 5, plotT - 10);
+      // Label
+      ctxHR.fillStyle = COLORS.text; ctxHR.font = FONT; ctxHR.textAlign = 'left';
+      ctxHR.fillText('P(\u03B5) \u221d e^{\u2212\u03B5/kT}', plotL + 5, plotT - 10);
 
-      // Histogram of energy history
-      if (energyHistory.length > 20) {
-        const nBins = 25;
-        const bins = Array(nBins).fill(0);
-        for (const e of energyHistory) {
-          const bi = Math.min(Math.floor(e / Emax * nBins), nBins - 1);
-          if (bi >= 0) bins[bi]++;
-        }
-        const maxBin = Math.max(...bins);
-        if (maxBin > 0) {
-          const binW = plotW / nBins;
-          for (let i = 0; i < nBins; i++) {
-            const bH = (bins[i] / maxBin) * plotH * 0.85;
-            ctxHR.fillStyle = 'rgba(79,195,247,0.25)';
-            ctxHR.fillRect(plotL + i * binW, plotT + plotH - bH, binW - 1, bH);
-          }
-        }
+      // Boltzmann curve: P(eps) ~ exp(-eps/kT) for single-particle energy in 2D
+      // In 2D the single-particle KE distribution is P(eps) = (1/kT) * exp(-eps/kT)
+      ctxHR.strokeStyle = COLORS.orange; ctxHR.lineWidth = 2;
+      ctxHR.beginPath();
+      let started = false;
+      for (let i = 0; i <= 200; i++) {
+        const eps = (i / 200) * Emax;
+        const P = Math.exp(-eps / kT) / kT; // normalized exponential
+        const maxP = 1 / kT; // value at eps=0
+        const px = plotL + (eps / Emax) * plotW;
+        const py = plotT + plotH * (1 - (P / maxP) * 0.9);
+        if (py > plotT + plotH) continue;
+        if (!started) { ctxHR.moveTo(px, py); started = true; }
+        else ctxHR.lineTo(px, py);
       }
+      ctxHR.stroke();
 
-      // Boltzmann curve: fit effective temperature from reservoir KE
-      let eRes = 0;
-      for (const p of hrParticles) {
-        if (!p.inside) eRes += 0.5 * (p.vx * p.vx + p.vy * p.vy);
-      }
-      const kT = eRes / N_OUTER; // average KE per reservoir particle ~ kT
-      if (kT > 0) {
-        // For total system energy E_sys = sum of N_INNER particle KEs,
-        // the distribution is chi-squared-like: P(E) ~ E^(n-1) * exp(-E/kT)
-        // with n = N_INNER degrees of freedom (simplified to 2D: 2*N_INNER/2 = N_INNER)
-        const n = N_INNER;
-        // Find normalization peak for display scaling
-        const peakE = (n - 1) * kT;
-        const logPeakVal = (n - 1) * Math.log(Math.max(peakE, 1)) - peakE / kT;
-
-        ctxHR.strokeStyle = COLORS.orange;
-        ctxHR.lineWidth = 2;
+      // Individual particle energies as blue ticks along x-axis
+      for (const eps of sysEnergies) {
+        const px = plotL + (eps / Emax) * plotW;
+        if (px < plotL || px > plotL + plotW) continue;
+        // Tick mark from bottom axis upward
+        ctxHR.strokeStyle = COLORS.blue; ctxHR.lineWidth = 2;
         ctxHR.beginPath();
-        let started = false;
-        for (let i = 0; i <= 200; i++) {
-          const E = (i / 200) * Emax;
-          if (E <= 0) continue;
-          const logP = (n - 1) * Math.log(E) - E / kT - logPeakVal;
-          const P = Math.exp(logP);
-          const px = plotL + (E / Emax) * plotW;
-          const py = plotT + plotH * (1 - P * 0.85);
-          if (py > plotT + plotH || py < plotT) continue;
-          if (!started) { ctxHR.moveTo(px, py); started = true; }
-          else ctxHR.lineTo(px, py);
-        }
+        ctxHR.moveTo(px, plotT + plotH);
+        ctxHR.lineTo(px, plotT + plotH - 14);
         ctxHR.stroke();
+        // Small circle at top of tick
+        ctxHR.fillStyle = COLORS.blue;
+        ctxHR.beginPath(); ctxHR.arc(px, plotT + plotH - 16, 3, 0, 2 * Math.PI); ctxHR.fill();
       }
 
-      // Current energy marker (green vertical line)
-      const ex = plotL + (currentE / Emax) * plotW;
-      if (ex >= plotL && ex <= plotL + plotW) {
-        ctxHR.strokeStyle = COLORS.green;
-        ctxHR.lineWidth = 2;
-        ctxHR.beginPath();
-        ctxHR.moveTo(ex, plotT);
-        ctxHR.lineTo(ex, plotT + plotH);
-        ctxHR.stroke();
+      // Mean energy as green dot on the curve
+      const meanPx = plotL + (meanE / Emax) * plotW;
+      if (meanPx >= plotL && meanPx <= plotL + plotW) {
+        // Position on the Boltzmann curve
+        const meanP = Math.exp(-meanE / kT) / kT;
+        const maxP = 1 / kT;
+        const meanPy = plotT + plotH * (1 - (meanP / maxP) * 0.9);
 
-        // Label current energy
+        // Green dot on curve
         ctxHR.fillStyle = COLORS.green;
-        ctxHR.font = FONT_SM;
-        ctxHR.textAlign = 'center';
-        ctxHR.fillText('E = ' + currentE.toFixed(0), ex, plotT + plotH + 25);
-      }
+        ctxHR.beginPath(); ctxHR.arc(meanPx, meanPy, 5, 0, 2 * Math.PI); ctxHR.fill();
+        ctxHR.strokeStyle = '#fff'; ctxHR.lineWidth = 1.5;
+        ctxHR.beginPath(); ctxHR.arc(meanPx, meanPy, 5, 0, 2 * Math.PI); ctxHR.stroke();
 
-      // Mean energy marker (dashed white line)
-      if (energyHistory.length > 20) {
-        const meanE = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
-        const mx = plotL + (meanE / Emax) * plotW;
-        if (mx >= plotL && mx <= plotL + plotW) {
-          ctxHR.strokeStyle = COLORS.textDim;
-          ctxHR.lineWidth = 1;
-          ctxHR.setLineDash([4, 4]);
-          ctxHR.beginPath();
-          ctxHR.moveTo(mx, plotT);
-          ctxHR.lineTo(mx, plotT + plotH);
-          ctxHR.stroke();
-          ctxHR.setLineDash([]);
+        // Dashed vertical line from dot to axis
+        ctxHR.strokeStyle = COLORS.green; ctxHR.lineWidth = 1;
+        ctxHR.setLineDash([3, 3]);
+        ctxHR.beginPath(); ctxHR.moveTo(meanPx, meanPy); ctxHR.lineTo(meanPx, plotT + plotH); ctxHR.stroke();
+        ctxHR.setLineDash([]);
 
-          ctxHR.fillStyle = COLORS.textDim;
-          ctxHR.font = FONT_SM;
-          ctxHR.textAlign = 'center';
-          ctxHR.fillText('\u27E8E\u27E9', mx, plotT - 3);
-        }
-      }
-
-      // Energy readout
-      if (hrEnergyDisplay) {
-        const meanE = energyHistory.length > 20
-          ? (energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length).toFixed(0)
-          : '...';
-        hrEnergyDisplay.textContent = 'E_sys = ' + currentE.toFixed(0) + '  |  \u27E8E\u27E9 = ' + meanE;
+        // Label
+        ctxHR.fillStyle = COLORS.green; ctxHR.font = FONT_SM; ctxHR.textAlign = 'center';
+        ctxHR.fillText('\u27E8\u03B5\u27E9', meanPx, plotT + plotH + 15);
       }
     }
 
@@ -7438,9 +7332,13 @@ function initCh7Vis() {
       activeAnimations['reservoir'] = requestAnimationFrame(animateHR);
     }
 
-    hrResetBtn?.addEventListener('click', () => {
-      initHR();
+    resTempSlider?.addEventListener('input', () => {
+      const T = parseFloat(resTempSlider.value);
+      if (resTempVal) resTempVal.textContent = T.toFixed(1);
+      rescaleReservoir(T);
     });
+
+    hrResetBtn?.addEventListener('click', () => { initHR(); });
 
     initHR();
     animateHR();
