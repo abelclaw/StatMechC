@@ -119,6 +119,17 @@ $$Z = \int g(E) \, dE \, e^{-\beta E}$$
 
 <p>where $g(E)$ is called the <span class="tooltip-trigger">density of states<span class="tooltip-content">$g(E)dE$ gives the number of states with energies between $E$ and $E + dE$. The set of energies along with the density of states is called the spectrum of a theory.</span></span>: $g(E)dE$ gives the number of states with energies between $E$ and $E + dE$. The set of energies of a system along with the density of states is called the spectrum of a theory.</p>
 
+<h3>Interactive: Boltzmann Distribution</h3>
+<div class="interactive-container">
+<canvas id="vis-boltzmann" width="600" height="450"></canvas>
+<div class="slider-container">
+<label for="boltz-temp">Temperature $k_BT/\varepsilon$:</label>
+<input type="range" id="boltz-temp" min="0.2" max="5" step="0.05" value="1">
+<span class="slider-value" id="boltz-temp-val">1.00</span>
+</div>
+<p class="vis-caption">80 particles occupy discrete energy levels $\varepsilon_i = i\,\varepsilon$ and stochastically hop between them. The live histogram (right) tracks the fraction of particles at each level, compared to the theoretical Boltzmann prediction $P_i = e^{-\beta \varepsilon_i}/Z$ (white dots). At low temperature, nearly all particles crowd into the ground state. At high temperature, particles spread across many levels.</p>
+</div>
+
 <h3>Thermodynamic quantities from $Z$</h3>
 
 <p>The partition function is an amazingly powerful object. If we know it exactly, we can calculate any thermodynamic property of the system. For example,</p>
@@ -553,18 +564,6 @@ $$n = \frac{1}{\lambda^3} \exp\left(\frac{\mu}{k_BT}\right)$$
 
 <p>This says that the number density is related exponentially to the chemical potential. As the system gets denser and denser, the chemical potential rises towards 0. When the chemical potential is negative, the gas is not too crowded and can be considered dilute.</p>
 
-<!-- INTERACTIVE: Dissociation Equilibrium -->
-<div class="visualization">
-  <div class="vis-header"><span class="vis-icon">⚗️</span> Interactive: Dissociation Equilibrium</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-chempot" width="600" height="400"></canvas></div>
-  <div class="vis-controls">
-    <label>Temperature $T$: <input type="range" id="chempot-temp" min="0.3" max="4.0" step="0.05" value="1.5"> <span class="slider-value" id="chempot-temp-val">1.5</span></label>
-    <label>Binding energy $\varepsilon$: <input type="range" id="chempot-eps" min="0.5" max="6.0" step="0.1" value="3.0"> <span class="slider-value" id="chempot-eps-val">3.0</span></label>
-    <button id="chempot-reset">Reset</button>
-    <span style="color:var(--text-muted)">At equilibrium, $2\mu_A = \mu_{A_2}$. Raise $T$ to break bonds; raise $\varepsilon$ to form them.</span>
-  </div>
-</div>
-
 <h3>7.7.2 Ground-State Energy</h3>
 
 <p>There is not a unique way to define the ground state energy; it depends on what we include. For example, we could include chemical bond energy, the rest mass $mc^2$, or the gravitational potential energy. However, once we define the ground-state energy for one thing, we can talk without ambiguity about the ground-state energy of everything.</p>
@@ -609,6 +608,19 @@ $$\frac{[\text{NH}_3]^2}{[\text{H}_2]^3[\text{N}_2]} \approx \frac{\lambda_{\tex
 
 <p>This is a special case (for monatomic ideal gases) of the <span class="tooltip-trigger">law of mass action<span class="tooltip-content">The relative concentrations of reacting molecules in equilibrium are determined by the Boltzmann factor dependent on the change in energy associated with the reaction.</span></span>. It says that the relative concentrations of reacting molecules in equilibrium are determined by the Boltzmann factor dependent on the change in energy associated with the reaction.</p>
 
+<p>The simulation below illustrates the simplest case: $\text{A} + \text{A} \rightleftharpoons \text{A}_2$, where two atoms can bind into a dimer with binding energy $\varepsilon$. The equilibrium condition is $2\mu_A = \mu_{A_2}$. Here $\mu_A = k_BT\ln n_A\lambda^3$ measures how costly it is to add one more free atom to the gas (more negative = dilute, easy to add; less negative = crowded). The panel on the right tracks both sides of the equilibrium condition. Try raising $T$ to break dimers apart, or raising $\varepsilon$ to favor binding, and watch the system re-equilibrate.</p>
+
+<!-- INTERACTIVE: Dissociation Equilibrium -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">⚗️</span> Interactive: Dissociation Equilibrium</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-chempot" width="600" height="400"></canvas></div>
+  <div class="vis-controls">
+    <label>Temperature $T$: <input type="range" id="chempot-temp" min="0.3" max="4.0" step="0.05" value="1.5"> <span class="slider-value" id="chempot-temp-val">1.5</span></label>
+    <label>Binding energy $\varepsilon$: <input type="range" id="chempot-eps" min="0.5" max="6.0" step="0.1" value="3.0"> <span class="slider-value" id="chempot-eps-val">3.0</span></label>
+    <button id="chempot-reset">Reset</button>
+  </div>
+</div>
+
 <h3>7.7.4 Example: Matter-Antimatter Asymmetry (optional)</h3>
 
 <p>For another example, consider proton-antiproton annihilation. Protons and anti-protons can annihilate into photons:</p>
@@ -651,14 +663,3 @@ $$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h}\right)^{3/2} e^{-m_pc^2/k_BT} = 
 </ul>
 </div>
 
-<!-- Interactive Visualization -->
-<h3>Interactive: Boltzmann Distribution</h3>
-<div class="interactive-container">
-<canvas id="vis-boltzmann" width="600" height="450"></canvas>
-<div class="slider-container">
-<label for="boltz-temp">Temperature $k_BT/\varepsilon$:</label>
-<input type="range" id="boltz-temp" min="0.2" max="5" step="0.05" value="1">
-<span class="slider-value" id="boltz-temp-val">1.00</span>
-</div>
-<p class="vis-caption">80 particles occupy discrete energy levels $\varepsilon_i = i\,\varepsilon$ and stochastically hop between them. The live histogram (right) tracks the fraction of particles at each level, compared to the theoretical Boltzmann prediction $P_i = e^{-\beta \varepsilon_i}/Z$ (white dots). At low temperature, nearly all particles crowd into the ground state. At high temperature, particles spread across many levels.</p>
-</div>

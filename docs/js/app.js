@@ -6790,13 +6790,13 @@ function initCh7Vis() {
       lastBeta = beta;
     }
 
-    // Run Metropolis steps (many per frame for fast mixing)
-    const stepsPerFrame = nParticles * 3;
+    // Run Metropolis steps
+    const stepsPerFrame = nParticles;
     for (let s = 0; s < stepsPerFrame; s++) metropolisStep(beta);
     recomputeCounts();
 
     // Update smoothed fractions
-    const alpha = 0.08;
+    const alpha = 0.03;
     for (let l = 0; l < nLevels; l++) {
       smoothFrac[l] += alpha * (counts[l] / nParticles - smoothFrac[l]);
     }
@@ -7540,7 +7540,6 @@ function initCh7Vis() {
       ctxCP.fillText('A + A \u21CC A\u2082', panCx, 22);
 
       // Compute chemical potentials (in units where kB=1)
-      // \u03BC_A = T ln(n_A), \u03BC_{A2} = T ln(n_{A2}) - \u03B5
       var boxArea = (cpBoxR - cpBoxL) * (cpBoxB - cpBoxT);
       var densA = Math.max(nFree, 0.5) / boxArea;
       var densA2 = Math.max(nDim, 0.5) / boxArea;
@@ -7553,59 +7552,52 @@ function initCh7Vis() {
       cpSmoothMuA = cpSmoothMuA * (1 - ema) + twoMuA * ema;
       cpSmoothMuA2 = cpSmoothMuA2 * (1 - ema) + muA2 * ema;
 
-      // --- \u03BC meter ---
-      var mY = 55;
-      var mL = panL + 8, mR = panR - 8, mW = mR - mL;
-      var maxMu = Math.max(Math.abs(cpSmoothMuA), Math.abs(cpSmoothMuA2), 2) * 1.4;
-      function muX(mu) { return panCx + (mu / maxMu) * (mW / 2) * 0.85; }
+      // --- Equilibrium condition: horizontal bar comparison ---
+      var eqY = 38;
+      ctxCP.font = FONT_SM; ctxCP.textAlign = 'left';
 
-      // Scale line
-      ctxCP.strokeStyle = COLORS.axis; ctxCP.lineWidth = 1;
-      ctxCP.beginPath(); ctxCP.moveTo(mL, mY + 40); ctxCP.lineTo(mR, mY + 40); ctxCP.stroke();
+      // Normalize both values to a bar length
+      var barL = panL + 12, barR = panR - 12, barW = barR - barL;
+      var maxVal = Math.max(Math.abs(cpSmoothMuA), Math.abs(cpSmoothMuA2), 1) * 1.2;
 
-      // Zero tick
-      var zx = muX(0);
-      ctxCP.strokeStyle = COLORS.textDim;
-      ctxCP.beginPath(); ctxCP.moveTo(zx, mY + 34); ctxCP.lineTo(zx, mY + 46); ctxCP.stroke();
-      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
-      ctxCP.fillText('0', zx, mY + 57);
+      // 2μ_A bar
+      var bw1 = Math.abs(cpSmoothMuA / maxVal) * barW * 0.45;
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.textAlign = 'left';
+      ctxCP.fillText('2\u03BC\u2090', barL, eqY - 3);
+      ctxCP.fillStyle = COLORS.blue; ctxCP.globalAlpha = 0.7;
+      ctxCP.fillRect(barL, eqY + 2, bw1, 12);
+      ctxCP.globalAlpha = 1.0;
+      ctxCP.fillStyle = COLORS.text; ctxCP.textAlign = 'left';
+      ctxCP.fillText(cpSmoothMuA.toFixed(1), barL + bw1 + 4, eqY + 12);
 
-      // Labels for scale ends
-      ctxCP.fillText('low \u03BC', mL + 15, mY + 57);
-      ctxCP.fillText('high \u03BC', mR - 15, mY + 57);
+      // μ_{A₂} bar
+      var row2Y = eqY + 26;
+      var bw2 = Math.abs(cpSmoothMuA2 / maxVal) * barW * 0.45;
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.textAlign = 'left';
+      ctxCP.fillText('\u03BC_A\u2082', barL, row2Y - 3);
+      ctxCP.fillStyle = COLORS.orange; ctxCP.globalAlpha = 0.7;
+      ctxCP.fillRect(barL, row2Y + 2, bw2, 12);
+      ctxCP.globalAlpha = 1.0;
+      ctxCP.fillStyle = COLORS.text; ctxCP.textAlign = 'left';
+      ctxCP.fillText(cpSmoothMuA2.toFixed(1), barL + bw2 + 4, row2Y + 12);
 
-      // 2\u03BC_A marker (triangle pointing down from above)
-      var xA = Math.max(mL + 4, Math.min(mR - 4, muX(cpSmoothMuA)));
-      ctxCP.fillStyle = COLORS.blue;
-      ctxCP.beginPath();
-      ctxCP.moveTo(xA, mY + 30); ctxCP.lineTo(xA - 7, mY + 18); ctxCP.lineTo(xA + 7, mY + 18);
-      ctxCP.closePath(); ctxCP.fill();
-      ctxCP.font = FONT_SM; ctxCP.fillText('2\u03BC\u2090', xA, mY + 12);
-
-      // \u03BC_{A\u2082} marker (triangle pointing up from below)
-      var xD = Math.max(mL + 4, Math.min(mR - 4, muX(cpSmoothMuA2)));
-      ctxCP.fillStyle = COLORS.orange;
-      ctxCP.beginPath();
-      ctxCP.moveTo(xD, mY + 50); ctxCP.lineTo(xD - 7, mY + 62); ctxCP.lineTo(xD + 7, mY + 62);
-      ctxCP.closePath(); ctxCP.fill();
-      ctxCP.font = FONT_SM; ctxCP.fillText('\u03BC_A\u2082', xD, mY + 75);
-
-      // Status text
+      // Equilibrium condition label
       var imb = cpSmoothMuA - cpSmoothMuA2;
-      ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
+      var statusY = row2Y + 30;
+      ctxCP.textAlign = 'center';
       if (Math.abs(imb) < 0.4) {
         ctxCP.fillStyle = COLORS.green;
-        ctxCP.fillText('Equilibrium: 2\u03BC\u2090 \u2248 \u03BC_A\u2082', panCx, mY + 92);
+        ctxCP.fillText('2\u03BC\u2090 \u2248 \u03BC_A\u2082  \u2714 equilibrium', panCx, statusY);
       } else if (imb > 0) {
         ctxCP.fillStyle = COLORS.textDim;
-        ctxCP.fillText('2\u03BC\u2090 > \u03BC_A\u2082 \u2192 forming bonds', panCx, mY + 92);
+        ctxCP.fillText('2\u03BC\u2090 > \u03BC_A\u2082 \u2192 forming dimers', panCx, statusY);
       } else {
         ctxCP.fillStyle = COLORS.textDim;
-        ctxCP.fillText('2\u03BC\u2090 < \u03BC_A\u2082 \u2192 breaking bonds', panCx, mY + 92);
+        ctxCP.fillText('2\u03BC\u2090 < \u03BC_A\u2082 \u2192 breaking dimers', panCx, statusY);
       }
 
       // --- Bar chart ---
-      var cTop = mY + 108, cBot = HCP - 40, cH = cBot - cTop;
+      var cTop = statusY + 18, cBot = HCP - 40, cH = cBot - cTop;
       var bW = (panR - panL) * 0.25, bGap = (panR - panL) * 0.08;
       var fX = panL + bGap, bX = panCx + bGap * 0.5;
 
@@ -7616,7 +7608,7 @@ function initCh7Vis() {
       ctxCP.strokeStyle = 'rgba(79,195,247,0.4)'; ctxCP.lineWidth = 1;
       ctxCP.strokeRect(fX, cBot - fH, bW, fH);
 
-      // Bound bar
+      // Bound bar (count atoms in dimers, not number of dimers)
       var bH = (nDim * 2 / cpNTotal) * cH;
       ctxCP.fillStyle = COLORS.orange;
       ctxCP.fillRect(bX, cBot - bH, bW, bH);
@@ -7625,10 +7617,10 @@ function initCh7Vis() {
 
       // Labels
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
-      ctxCP.fillText('Free', fX + bW / 2, cBot + 13);
+      ctxCP.fillText('Free A', fX + bW / 2, cBot + 13);
       ctxCP.fillText(nFree + ' atoms', fX + bW / 2, cBot + 25);
-      ctxCP.fillText('Bound', bX + bW / 2, cBot + 13);
-      ctxCP.fillText(nDim + ' pairs', bX + bW / 2, cBot + 25);
+      ctxCP.fillText('Bound A\u2082', bX + bW / 2, cBot + 13);
+      ctxCP.fillText(nDim + ' dimers', bX + bW / 2, cBot + 25);
     }
 
     cpTempSlider?.addEventListener('input', function() {
