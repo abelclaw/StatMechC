@@ -8,7 +8,8 @@
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#2a2a2e;display:flex;flex-direction:column;align-items:center;
        justify-content:center;min-height:100vh;font-family:'Georgia',serif;color:#ccc;overflow:hidden}
-  canvas{border-radius:4px}
+  #wrapper{transform-origin:top center;}
+  canvas{border-radius:4px;display:block;}
   .controls{margin-top:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
   .controls button{background:#444;color:#ddd;border:1px solid #666;padding:5px 16px;
                    border-radius:4px;cursor:pointer;font-family:inherit;font-size:.85em}
@@ -21,6 +22,7 @@
 </style>
 </head>
 <body>
+<div id="wrapper">
 <canvas id="c" width="1100" height="820"></canvas>
 <div class="controls">
   <button id="btn">Pause</button>
@@ -31,7 +33,17 @@
   <span><i class="sw" style="background:rgba(230,70,20,.8)"></i> Live steam (high pressure)</span>
   <span><i class="sw" style="background:rgba(90,110,160,.7)"></i> Spent steam (exhaust)</span>
 </div>
+</div>
 <script>
+// Scale wrapper to fit viewport width
+function scaleToFit(){
+  const w=document.getElementById('wrapper');
+  const s=Math.min(1, window.innerWidth/1120);
+  w.style.transform='scale('+s+')';
+  document.body.style.height=(w.offsetHeight*s)+'px';
+}
+window.addEventListener('resize',scaleToFit);
+scaleToFit();
 const C=document.getElementById('c'),X=C.getContext('2d');
 let run=true,spd=0.25,ang=0;
 document.getElementById('btn').onclick=function(){run=!run;this.textContent=run?'Pause':'Play'};

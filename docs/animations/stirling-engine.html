@@ -8,7 +8,8 @@
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#1a1a1e;display:flex;flex-direction:column;align-items:center;
        justify-content:center;min-height:100vh;font-family:'Georgia',serif;color:#ccc;overflow:hidden}
-  canvas{border-radius:4px}
+  #wrapper{transform-origin:top center;}
+  canvas{border-radius:4px;display:block;}
   .ctrls{margin-top:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
   .ctrls button{background:#444;color:#ddd;border:1px solid #666;padding:5px 16px;
                 border-radius:4px;cursor:pointer;font-family:inherit;font-size:.85em}
@@ -19,6 +20,7 @@
 </style>
 </head>
 <body>
+<div id="wrapper">
 <canvas id="c" width="900" height="800"></canvas>
 <div class="ctrls">
   <button id="btn">Pause</button>
@@ -33,7 +35,16 @@
   oscillation drives the small power piston, which turns the flywheel. The engine sits
   directly on the rim of the cup.
 </div>
+</div>
 <script>
+function scaleToFit(){
+  const w=document.getElementById('wrapper');
+  const s=Math.min(1, window.innerWidth/920);
+  w.style.transform='scale('+s+')';
+  document.body.style.height=(w.offsetHeight*s)+'px';
+}
+window.addEventListener('resize',scaleToFit);
+scaleToFit();
 const C=document.getElementById('c'), X=C.getContext('2d');
 let run=true, spd=0.4, cut=true, ang=0;
 document.getElementById('btn').onclick=function(){run=!run;this.textContent=run?'Pause':'Play'};
