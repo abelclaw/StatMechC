@@ -154,6 +154,10 @@ let steamP=[],fireP=[];
 // Molecules flow along paths showing steam/exhaust movement
 let molecules=[];
 const MAX_MOLECULES=500;
+// Current slider bounds — updated each frame so molecules can be culled
+let curSliderL=0, curSliderR=0, curSliderTop=0, curSliderBot=0;
+// Current U-tube leg positions
+let curULeftCx=0, curURightCx=0, curUW=0;
 
 function spawnMolecule(path,col,speed,hot){
   // path = array of {x,y} waypoints
@@ -175,13 +179,27 @@ function updateAndDrawMolecules(dt){
     if(m.t>1) m.t=-1; // mark for removal
     if(m.t<0) return;
     const pos=pathPos(m.path,m.t);
+
+    // Kill molecules that are inside the slider body but NOT inside the U-tube.
+    // This prevents molecules from floating through the slider when it moves.
+    const px=pos.x, py=pos.y;
+    if(px>curSliderL && px<curSliderR && py>curSliderTop && py<curSliderBot){
+      // Inside slider bounds — check if inside U-tube
+      const inLeftLeg = Math.abs(px-curULeftCx)<curUW/2+3;
+      const inRightLeg = Math.abs(px-curURightCx)<curUW/2+3;
+      const inTopBar = py<curSliderTop+20 && px>curULeftCx-curUW/2-3 && px<curURightCx+curUW/2+3;
+      if(!inLeftLeg && !inRightLeg && !inTopBar){
+        m.t=-1; // kill — it's in the solid part of the slider
+        return;
+      }
+    }
+
     const t=Date.now()/1000;
     const wx=Math.sin(t*m.wobbleSpeed+m.t*10)*m.wobbleX;
     const wy=Math.cos(t*m.wobbleSpeed*1.3+m.t*7)*m.wobbleY;
     const alpha=Math.min(1,Math.min(m.t*5,(1-m.t)*5))*(m.hot?0.85:0.6);
     X.globalAlpha=alpha;
     if(m.hot){
-      // Hot molecules glow
       X.fillStyle=m.col;
       X.beginPath();X.arc(pos.x+wx,pos.y+wy,m.size+1.5,0,Math.PI*2);
       X.fillStyle=`rgba(255,120,30,${alpha*0.2})`;X.fill();
@@ -587,6 +605,11 @@ function drawEngine(a){
   const uBotY=slY+slH; // bottom of U legs (align with floor holes)
   const uTopY=slY+6;   // top of U curve
 
+  // Update global slider bounds for molecule culling
+  curSliderL=sliderL; curSliderR=sliderL+sliderW;
+  curSliderTop=slY; curSliderBot=slY+slH;
+  curULeftCx=uLeftCx; curURightCx=uRightCx; curUW=uW;
+
   // Draw U-tube: two vertical legs + horizontal connector at top
   // Left leg
   X.fillStyle='rgba(90,110,160,.2)';
@@ -862,7 +885,7 @@ function drawEngine(a){
     ],COLD,180,false);
   }
 
-  // Rivets only, no text labels
+  label('Piston',pf+PW/2,CYL.y+CYL.h+18,12);
   for(let yy=CYL.y+15;yy<CYL.y+CYL.h;yy+=22){rivet(CYL.x+6,yy);rivet(CYL.x+CYL.w-6,yy);}
 
   return chX;
@@ -908,27 +931,9 @@ function drawFlywheel(){
   // Eccentric strap (ring around it)
   X.beginPath();X.arc(eccPx,eccPy,11,0,Math.PI*2);
   X.strokeStyle='#997744';X.lineWidth=2;X.stroke();
-  label('Flywheel',cx,cy+r+28,14);
   // Label eccentric
   X.fillStyle='#aa8844';X.font='8px Georgia';X.textAlign='left';
   X.fillText('eccentric',eccPx+14,eccPy+3);
-}
-
-function drawGovernor(){
-  const gx=800,gy=145,sp=.5+spd*.25;
-  X.fillStyle='#666';X.fillRect(gx-4,gy+5,8,95);
-  X.strokeStyle='rgba(100,100,100,.4)';X.lineWidth=2;X.setLineDash([5,5]);
-  X.beginPath();X.moveTo(gx,gy+95);X.lineTo(FW.cx,FW.cy-FW.r+15);X.stroke();X.setLineDash([]);
-  for(let s=-1;s<=1;s+=2){
-    X.save();X.translate(gx,gy+12);
-    X.strokeStyle='#999';X.lineWidth=3;X.beginPath();X.moveTo(0,0);X.lineTo(s*25*sp,35);X.stroke();
-    X.beginPath();X.moveTo(s*25*sp,35);X.lineTo(s*10,55);X.stroke();
-    let bg=X.createRadialGradient(s*25*sp-2,33,1,s*25*sp,35,8);bg.addColorStop(0,'#ddd');bg.addColorStop(1,'#777');
-    X.beginPath();X.arc(s*25*sp,35,8,0,Math.PI*2);X.fillStyle=bg;X.fill();
-    X.restore();
-  }
-  X.beginPath();X.arc(gx,gy+8,7,0,Math.PI*2);X.fillStyle='#aaa';X.fill();
-  label('Centrifugal',gx,gy-16,11);label('governor',gx,gy-3,11);
 }
 
 function drawParticles(dt){
@@ -983,7 +988,6 @@ function frame(now){
   const chX=drawEngine(ang);
   drawMechanics(chX);
   drawFlywheel();
-  drawGovernor();
   drawParticles(dt);
   updateAndDrawMolecules(dt);
   drawStatus();
