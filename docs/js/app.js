@@ -4574,8 +4574,12 @@ function initCh5Vis() {
       return (Math.random() - 0.5) * amplitude;
     }
 
-    // Pawl pivot offset from ratchet center (upper-right)
-    const pawlPivotOffX = 32, pawlPivotOffY = -45;
+    // Pawl: flexible metal strip anchored to chamber wall
+    // Anchor point at top-right of ratchet chamber, strip bends down toward teeth
+    const pawlAnchorX = ratchetBox.x + ratchetBox.w - 12;
+    const pawlAnchorY = ratchetBox.y + 18;
+    // Rest tip position: where the strip tip touches the ratchet when unbent
+    const pawlRestAngle = Math.atan2(cy0 - pawlAnchorY, rcx0 - pawlAnchorX);
 
     function toothSurfaceRadius(labAngle) {
       let frameAngle = labAngle - ratchetAngle;
@@ -4630,61 +4634,52 @@ function initCh5Vis() {
       ctxBR.beginPath(); ctxBR.arc(0, 0, 5, 0, 2 * Math.PI); ctxBR.fill();
       ctxBR.restore();
 
-      // Pawl: tip rides on the ratchet tooth surface
+      // === PAWL: flexible metal strip anchored to chamber wall ===
       const pawlVibX = thermalVibration(T2) * 0.5;
       const pawlVibY = thermalVibration(T2) * 0.5;
-      const pivX = rcx + pawlPivotOffX + pawlVibX;
-      const pivY = rcy + pawlPivotOffY + pawlVibY;
-      const centerToPivotAngle = Math.atan2(pivY - rcy, pivX - rcx);
-      const surfR = toothSurfaceRadius(centerToPivotAngle);
-      const tipLabX = rcx + surfR * Math.cos(centerToPivotAngle);
-      const tipLabY = rcy + surfR * Math.sin(centerToPivotAngle);
+      // Anchor point (fixed to wall)
+      const ancX = pawlAnchorX + vibX + pawlVibX;
+      const ancY = pawlAnchorY + vibY + pawlVibY;
+      // Direction from anchor toward ratchet center
+      const toRcAngle = Math.atan2(rcy - ancY, rcx - ancX);
+      const ancToCenterDist = Math.sqrt((rcx - ancX) * (rcx - ancX) + (rcy - ancY) * (rcy - ancY));
+      // Where the strip tip would rest (on the tooth surface)
+      const surfR = toothSurfaceRadius(toRcAngle);
+      const tipDist = ancToCenterDist - surfR; // strip length to tooth contact
+      const tipX = ancX + tipDist * Math.cos(toRcAngle);
+      const tipY = ancY + tipDist * Math.sin(toRcAngle);
+      // Deflection: how far the tooth pushes the tip outward
+      // surfR ranges from rr (valley) to rr+10 (peak)
+      // When on peak, tip is pushed back; when in valley, tip rests deeper
+      const deflection = (surfR - rr) / 10; // 0 = valley, 1 = peak
+      // Perpendicular direction (outward from center)
+      const perpAngle = toRcAngle + Math.PI / 2;
+      const bendAmount = deflection * 12; // pixels of bend at midpoint
+      // Control point for the quadratic bezier (midpoint of strip, bent outward)
+      const midFrac = 0.5;
+      const cpX = ancX + tipDist * midFrac * Math.cos(toRcAngle) + bendAmount * Math.cos(perpAngle);
+      const cpY = ancY + tipDist * midFrac * Math.sin(toRcAngle) + bendAmount * Math.sin(perpAngle);
 
-      // Bracket anchor: top-right of ratchet chamber
-      const bracketAnchorX = ratchetBox.x + ratchetBox.w - 8;
-      const bracketAnchorY = ratchetBox.y + 6;
-      ctxBR.strokeStyle = 'rgba(255,255,255,0.2)'; ctxBR.lineWidth = 2;
+      // Draw the flexible strip as a thick curved line
+      ctxBR.strokeStyle = '#8aaa8e'; ctxBR.lineWidth = 4;
+      ctxBR.lineCap = 'round';
       ctxBR.beginPath();
-      ctxBR.moveTo(bracketAnchorX, bracketAnchorY);
-      ctxBR.lineTo(pivX, pivY);
+      ctxBR.moveTo(ancX, ancY);
+      ctxBR.quadraticCurveTo(cpX, cpY, tipX, tipY);
       ctxBR.stroke();
-
-      // Pivot dot
-      ctxBR.fillStyle = COLORS.green;
-      ctxBR.beginPath(); ctxBR.arc(pivX, pivY, 4, 0, 2 * Math.PI); ctxBR.fill();
-
-      // Pawl lever from pivot to tip on tooth
-      ctxBR.strokeStyle = COLORS.green; ctxBR.lineWidth = 2.5;
-      ctxBR.beginPath(); ctxBR.moveTo(pivX, pivY); ctxBR.lineTo(tipLabX, tipLabY); ctxBR.stroke();
-
-      // Pawl tip triangle
-      const tipAngle = Math.atan2(rcy - pivY, rcx - pivX);
-      const triSize = 5;
-      ctxBR.fillStyle = COLORS.green;
+      // Metallic highlight
+      ctxBR.strokeStyle = 'rgba(180,220,180,0.4)'; ctxBR.lineWidth = 1.5;
       ctxBR.beginPath();
-      ctxBR.moveTo(tipLabX + triSize * Math.cos(tipAngle), tipLabY + triSize * Math.sin(tipAngle));
-      ctxBR.lineTo(tipLabX + triSize * Math.cos(tipAngle + 2.3), tipLabY + triSize * Math.sin(tipAngle + 2.3));
-      ctxBR.lineTo(tipLabX + triSize * Math.cos(tipAngle - 2.3), tipLabY + triSize * Math.sin(tipAngle - 2.3));
-      ctxBR.closePath(); ctxBR.fill();
-
-      // Spring zigzag from pivot toward bracket
-      ctxBR.strokeStyle = 'rgba(102,187,106,0.5)'; ctxBR.lineWidth = 1.5;
-      const sDx = bracketAnchorX - pivX, sDy = bracketAnchorY - pivY;
-      const sDist = Math.sqrt(sDx * sDx + sDy * sDy);
-      const sUx = sDx / sDist, sUy = sDy / sDist;
-      const sPx = -sUy, sPy = sUx;
-      const nCoils = 5;
-      ctxBR.beginPath();
-      ctxBR.moveTo(pivX, pivY);
-      for (let i = 1; i < nCoils; i++) {
-        const t = i / nCoils;
-        const bx = pivX + sDx * t;
-        const by = pivY + sDy * t;
-        const offset = (i % 2 === 0 ? 1 : -1) * 5;
-        ctxBR.lineTo(bx + sPx * offset, by + sPy * offset);
-      }
-      ctxBR.lineTo(bracketAnchorX, bracketAnchorY);
+      ctxBR.moveTo(ancX, ancY);
+      ctxBR.quadraticCurveTo(cpX - Math.cos(perpAngle), cpY - Math.sin(perpAngle), tipX, tipY);
       ctxBR.stroke();
+      ctxBR.lineCap = 'butt';
+      // Anchor mount (small rectangle bolted to wall)
+      ctxBR.fillStyle = '#8aaa8e';
+      ctxBR.fillRect(ancX - 2, ancY - 5, 6, 10);
+      ctxBR.fillStyle = 'rgba(255,255,255,0.3)';
+      ctxBR.beginPath(); ctxBR.arc(ancX + 1, ancY - 2, 1.5, 0, 2 * Math.PI); ctxBR.fill();
+      ctxBR.beginPath(); ctxBR.arc(ancX + 1, ancY + 2, 1.5, 0, 2 * Math.PI); ctxBR.fill();
 
       // === AXLE: connects ratchet hub to vane hub ===
       const vcx = vcx0 + vibX, vcy = cy0 + vibY;
@@ -4693,12 +4688,36 @@ function initCh5Vis() {
       ctxBR.moveTo(rcx, rcy);
       ctxBR.lineTo(vcx, vcy);
       ctxBR.stroke();
-      // Thin highlight to make it look like a rod
       ctxBR.strokeStyle = 'rgba(255,255,255,0.15)'; ctxBR.lineWidth = 1;
       ctxBR.beginPath();
       ctxBR.moveTo(rcx, rcy - 1);
       ctxBR.lineTo(vcx, vcy - 1);
       ctxBR.stroke();
+
+      // === WEIGHT: hangs between the two chambers from the axle ===
+      const gapMidX = (ratchetBox.x + ratchetBox.w + vaneBox.x) / 2 + vibX;
+      const axleY = cy0 + vibY;
+      // Spool on axle
+      ctxBR.fillStyle = COLORS.textDim;
+      ctxBR.fillRect(gapMidX - 4, axleY - 5, 8, 10);
+      ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1;
+      ctxBR.strokeRect(gapMidX - 5, axleY - 7, 10, 3);
+      ctxBR.strokeRect(gapMidX - 5, axleY + 4, 10, 3);
+      // Weight Y: goes up as netRotation increases, clamped to not go above axle+12
+      const weightBottom = HBR - 18;
+      const weightTop = axleY + 14;
+      const weightY = Math.max(weightTop, Math.min(weightBottom, axleY + 60 - netRotation * 8));
+      // Thread from spool to weight
+      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1;
+      ctxBR.beginPath();
+      ctxBR.moveTo(gapMidX, axleY + 7);
+      ctxBR.lineTo(gapMidX, weightY);
+      ctxBR.stroke();
+      // Weight block
+      ctxBR.fillStyle = COLORS.purple;
+      ctxBR.fillRect(gapMidX - 10, weightY, 20, 16);
+      ctxBR.fillStyle = COLORS.text; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
+      ctxBR.fillText('m', gapMidX, weightY + 12);
 
       // === MIDDLE: Vane chamber (T₁) ===
       const bgV = tempToColor(T1);
@@ -4725,53 +4744,22 @@ function initCh5Vis() {
       ctxBR.beginPath(); ctxBR.arc(0, 0, 6, 0, 2 * Math.PI); ctxBR.fill();
       ctxBR.restore();
 
-      // === RIGHT: Weight on thread from axle ===
-      // Thread exits vane chamber right wall, goes to pulley, then down
-      const pulleyX = 420, pulleyY = cy0 - 10;
-      const pulleyR = 6;
-      const weightY = Math.max(pulleyY + 25, Math.min(HBR - 30, cy0 + 40 - netRotation * 5));
-
-      // Thread from vane axle to pulley
-      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1;
-      ctxBR.beginPath();
-      ctxBR.moveTo(vcx, vcy);
-      ctxBR.lineTo(pulleyX, pulleyY);
-      ctxBR.stroke();
-      // Pulley wheel
-      ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1.5;
-      ctxBR.beginPath(); ctxBR.arc(pulleyX, pulleyY, pulleyR, 0, 2 * Math.PI); ctxBR.stroke();
-      ctxBR.fillStyle = COLORS.bg;
-      ctxBR.beginPath(); ctxBR.arc(pulleyX, pulleyY, pulleyR - 1, 0, 2 * Math.PI); ctxBR.fill();
-      ctxBR.fillStyle = COLORS.textDim;
-      ctxBR.beginPath(); ctxBR.arc(pulleyX, pulleyY, 2, 0, 2 * Math.PI); ctxBR.fill();
-      // Thread from pulley down to weight
-      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1;
-      ctxBR.beginPath();
-      ctxBR.moveTo(pulleyX, pulleyY + pulleyR);
-      ctxBR.lineTo(pulleyX, weightY);
-      ctxBR.stroke();
-      // Weight block
-      ctxBR.fillStyle = COLORS.purple;
-      ctxBR.fillRect(pulleyX - 12, weightY, 24, 18);
-      ctxBR.fillStyle = COLORS.text; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
-      ctxBR.fillText('m', pulleyX, weightY + 13);
-
       // === Status text (upper right) ===
       const balanced = Math.abs(T1 - T2) < 15;
       ctxBR.fillStyle = balanced ? COLORS.red : COLORS.green;
       ctxBR.font = FONT; ctxBR.textAlign = 'left';
       if (balanced) {
-        ctxBR.fillText('T₁ ≈ T₂: No net work', 445, 35);
+        ctxBR.fillText('T₁ ≈ T₂: No net work', 400, 35);
       } else if (T1 > T2) {
-        ctxBR.fillText('T₁ > T₂: Lifts weight', 445, 35);
+        ctxBR.fillText('T₁ > T₂: Lifts weight', 400, 35);
       } else {
-        ctxBR.fillText('T₁ < T₂: Drops weight', 445, 35);
+        ctxBR.fillText('T₁ < T₂: Drops weight', 400, 35);
       }
       ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM;
-      ctxBR.fillText('Net: ' + netRotation.toFixed(1) + ' rad', 445, 53);
+      ctxBR.fillText('Net: ' + netRotation.toFixed(1) + ' rad', 400, 53);
       if (!balanced) {
         const eta = Math.abs(T1 - T2) / Math.max(T1, T2);
-        ctxBR.fillText('η = ' + (eta * 100).toFixed(0) + '%', 445, 68);
+        ctxBR.fillText('η = ' + (eta * 100).toFixed(0) + '%', 400, 68);
       }
 
       document.getElementById('ratchet-t1-val')?.replaceChildren(document.createTextNode(T1));
