@@ -5376,6 +5376,9 @@ function initCh6Vis() {
   }
 
   // ----- Szilard Engine -----
+  // Physics: single molecule in a box. Insert partition, measure which side
+  // molecule is on, slide piston in from the EMPTY side (free — no gas there),
+  // remove partition, molecule's thermal motion pushes piston back out → work.
   const cSz = document.getElementById('vis-szilard');
   if (cSz) {
     const {ctx: ctxSz, W: WSz, H: HSz} = setupCanvas(cSz);
@@ -5383,53 +5386,67 @@ function initCh6Vis() {
     const resetBtnSz = document.getElementById('szilard-reset');
 
     const BALL_R = 14;
-    // 0: free, 1: partition in, 2: measured (highlight side), 3: piston placed on empty side, 4: partition removed – ball pushes piston
+    const PISTON_H = 10;
+    // Steps: 0=free, 1=partition inserted, 2=measured, 3=piston slides to center, 4=partition removed (ball pushes piston back)
     let szStep = 0;
-    let moleculeSide; // 'top' or 'bottom'
+    let moleculeSide; // 'top' or 'bottom' — set when partition inserted
     let molX, molY, molVx, molVy;
-    let pistonPos;   // distance piston has been pushed from its starting wall
-    let pistonVel;   // piston velocity (from ball hits)
-    let workDone;    // accumulated work
-    let flashTimer;  // flash on collision
+    let pistonFaceY;  // y-coord of the piston face (side facing molecule)
+    let pistonVel;    // piston velocity from ball hits (step 4 only)
+    let pistonSliding; // true while piston animates sliding to center in step 3
+    let flashTimer;
     let szAnim = false;
 
     // Box geometry
     const boxL = 40, boxT = 30;
-    const boxW = 180, boxH_fn = () => HSz - 60;
-    function boxB() { return boxT + boxH_fn(); }
-    function boxCy() { return HSz / 2; }
+    const boxW = 180;
+    function boxH() { return HSz - 60; }
+    function boxB() { return boxT + boxH(); }
+    function boxCy() { return boxT + boxH() / 2; }
 
     function initSzilard() {
       szStep = 0;
-      moleculeSide = null; // determined when partition is inserted
-      const bH = boxH_fn();
-      // Place ball randomly in the full box
+      moleculeSide = null;
+      const bH = boxH();
       molX = boxL + BALL_R + 10 + Math.random() * (boxW - 2 * BALL_R - 20);
       molY = boxT + BALL_R + 10 + Math.random() * (bH - 2 * BALL_R - 20);
-      const speed = 120;
+      const speed = 130;
       const angle = Math.random() * 2 * Math.PI;
       molVx = speed * Math.cos(angle);
       molVy = speed * Math.sin(angle);
-      pistonPos = 0;
+      pistonFaceY = 0;
       pistonVel = 0;
-      workDone = 0;
+      pistonSliding = false;
       flashTimer = 0;
     }
 
-    function pistonYPos() {
-      // Returns the y-coordinate of the piston face (the side the ball hits)
+    // Where the piston starts (the far wall of the empty side)
+    function pistonHomeY() {
+      if (moleculeSide === 'top') return boxB(); // piston comes from bottom
+      return boxT; // piston comes from top
+    }
+
+    // The target: piston slides to the partition line (center)
+    function pistonTargetY() {
+      return boxCy();
+    }
+
+    // How far the piston has traveled from center back toward its home wall
+    // (used for work meter in step 4)
+    function pistonWorkTravel() {
       if (moleculeSide === 'top') {
-        // Piston on bottom side, starts at boxB and moves up
-        return boxB() - pistonPos;
-      } else {
-        // Piston on top side, starts at boxT and moves down
-        return boxT + pistonPos;
+        return pistonFaceY - boxCy(); // positive = moved toward boxB (back toward home)
       }
+      return boxCy() - pistonFaceY; // positive = moved toward boxT (back toward home)
+    }
+
+    function maxPistonTravel() {
+      return boxH() / 2 - 4; // nearly back to the wall
     }
 
     function drawSzilard() {
       clearCanvas(ctxSz, WSz, HSz);
-      const bH = boxH_fn();
+      const bH = boxH();
       const cy = boxCy();
       const bB = boxB();
 
@@ -5437,18 +5454,17 @@ function initCh6Vis() {
       ctxSz.strokeStyle = COLORS.axis; ctxSz.lineWidth = 2;
       ctxSz.strokeRect(boxL, boxT, boxW, bH);
 
-      // Partition (steps 1-3, removed at step 4)
+      // Partition (steps 1–3, removed at step 4)
       if (szStep >= 1 && szStep <= 3) {
         ctxSz.save();
         ctxSz.strokeStyle = COLORS.orange; ctxSz.lineWidth = 3;
-        ctxSz.setLineDash(szStep >= 2 ? [] : [6, 4]);
         ctxSz.beginPath(); ctxSz.moveTo(boxL, cy); ctxSz.lineTo(boxL + boxW, cy); ctxSz.stroke();
         ctxSz.restore();
       }
 
       // Measurement highlight (step 2): shade the molecule's half
       if (szStep === 2) {
-        ctxSz.fillStyle = 'rgba(102, 187, 106, 0.08)';
+        ctxSz.fillStyle = 'rgba(102, 187, 106, 0.10)';
         if (moleculeSide === 'top') {
           ctxSz.fillRect(boxL + 1, boxT + 1, boxW - 2, bH / 2 - 1);
         } else {
@@ -5458,30 +5474,40 @@ function initCh6Vis() {
 
       // Piston (step >= 3)
       if (szStep >= 3) {
-        const py = pistonYPos();
-        const pistonH = 10;
-        // Piston body
-        const flash = flashTimer > 0 ? Math.min(1, flashTimer / 6) : 0;
-        const r = Math.round(171 + flash * 84);
-        const g = Math.round(71 + flash * 100);
-        const b = Math.round(188 + flash * 67);
-        ctxSz.fillStyle = `rgb(${r},${g},${b})`;
+        const py = pistonFaceY;
+        const flash = flashTimer > 0 ? Math.min(1, flashTimer / 8) : 0;
+        const cr = Math.round(171 + flash * 84);
+        const cg = Math.round(71 + flash * 140);
+        const cb = Math.round(188 + flash * 67);
+        ctxSz.fillStyle = `rgb(${cr},${cg},${cb})`;
+
         if (moleculeSide === 'top') {
-          // piston face at py, body extends down
-          ctxSz.fillRect(boxL + 2, py, boxW - 4, pistonH);
-          // Rod extending down from piston
-          ctxSz.fillStyle = COLORS.axis;
-          ctxSz.fillRect(boxL + boxW / 2 - 3, py + pistonH, 6, bB - py - pistonH);
+          // Piston came from bottom. Face is at py, body extends DOWN to boxB.
+          // Face (the thick bar the ball hits)
+          ctxSz.fillRect(boxL + 2, py, boxW - 4, PISTON_H);
+          // Rod/body extending to wall
+          ctxSz.fillStyle = 'rgba(171,71,188,0.4)';
+          ctxSz.fillRect(boxL + boxW / 2 - 4, py + PISTON_H, 8, bB - py - PISTON_H);
         } else {
-          // piston face at py, body extends up
-          ctxSz.fillRect(boxL + 2, py - pistonH, boxW - 4, pistonH);
-          // Rod extending up
-          ctxSz.fillStyle = COLORS.axis;
-          ctxSz.fillRect(boxL + boxW / 2 - 3, boxT, 6, py - pistonH - boxT);
+          // Piston came from top. Face is at py, body extends UP to boxT.
+          ctxSz.fillRect(boxL + 2, py - PISTON_H, boxW - 4, PISTON_H);
+          ctxSz.fillStyle = 'rgba(171,71,188,0.4)';
+          ctxSz.fillRect(boxL + boxW / 2 - 4, boxT, 8, py - PISTON_H - boxT);
         }
+
         // Piston label
         ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
         ctxSz.fillText('Piston', boxL + boxW + 8, py + 4);
+
+        // Arrow showing piston direction in step 3
+        if (szStep === 3 && pistonSliding) {
+          ctxSz.fillStyle = COLORS.purple; ctxSz.font = FONT_LG; ctxSz.textAlign = 'center';
+          if (moleculeSide === 'top') {
+            ctxSz.fillText('\u25B2', boxL + boxW + 20, py - 8); // up arrow — wait, piston moving up from bottom toward center
+          } else {
+            ctxSz.fillText('\u25BC', boxL + boxW + 20, py + 18);
+          }
+        }
       }
 
       // Partition label
@@ -5494,33 +5520,32 @@ function initCh6Vis() {
       ctxSz.save();
       if (flashTimer > 0) {
         ctxSz.shadowColor = COLORS.yellow;
-        ctxSz.shadowBlur = 15;
+        ctxSz.shadowBlur = 18;
       }
       ctxSz.beginPath(); ctxSz.arc(molX, molY, BALL_R, 0, 2 * Math.PI);
       ctxSz.fillStyle = COLORS.green; ctxSz.fill();
       ctxSz.restore();
-      // Ball highlight
+      // Specular highlight
       ctxSz.beginPath(); ctxSz.arc(molX - 4, molY - 4, 4, 0, 2 * Math.PI);
       ctxSz.fillStyle = 'rgba(255,255,255,0.3)'; ctxSz.fill();
 
-      // Side labels on box
-      if (szStep >= 1 && szStep <= 3) {
+      // Side labels
+      if (szStep >= 1 && szStep <= 2) {
         ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'center';
-        ctxSz.fillText('Top', boxL + boxW / 2, boxT + 16);
-        ctxSz.fillText('Bottom', boxL + boxW / 2, bB - 6);
+        ctxSz.fillText('Top half', boxL + boxW / 2, boxT + 16);
+        ctxSz.fillText('Bottom half', boxL + boxW / 2, bB - 6);
       }
 
       // Right panel: step descriptions
       const tx = boxL + boxW + 50, ty = 38;
-      const sideLabel = moleculeSide ? moleculeSide.charAt(0).toUpperCase() + moleculeSide.slice(1) : '?';
-      const emptySide = moleculeSide === 'top' ? 'bottom' : 'top';
-      const emptySideLabel = emptySide.charAt(0).toUpperCase() + emptySide.slice(1);
+      const sideLabel = moleculeSide ? (moleculeSide === 'top' ? 'Top' : 'Bottom') : '?';
+      const emptyLabel = moleculeSide === 'top' ? 'bottom' : 'top';
       const steps = [
-        'Molecule bounces freely',
-        'Insert partition',
-        'Measure: molecule is ' + sideLabel,
-        'Place piston on ' + emptySideLabel + ' side',
-        'Remove partition \u2014 molecule pushes piston!'
+        'Molecule bounces freely in box',
+        'Insert partition at midpoint',
+        'Measure: molecule is in ' + sideLabel + ' half',
+        'Slide piston in from empty ' + emptyLabel + ' (free!)',
+        'Remove partition \u2014 ball pushes piston back!'
       ];
       ctxSz.textAlign = 'left';
       for (let i = 0; i < steps.length; i++) {
@@ -5535,8 +5560,8 @@ function initCh6Vis() {
       if (szStep >= 4) {
         const meterX = tx, meterY = ty + 160;
         const meterW = 180, meterH = 18;
-        const maxWork = bH / 2 - BALL_R - 10; // max piston travel
-        const frac = Math.min(1, pistonPos / maxWork);
+        const travel = pistonWorkTravel();
+        const frac = Math.min(1, Math.max(0, travel / maxPistonTravel()));
 
         ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
         ctxSz.fillText('Work extracted:', meterX, meterY - 6);
@@ -5545,23 +5570,23 @@ function initCh6Vis() {
         ctxSz.fillStyle = 'rgba(255,255,255,0.08)';
         ctxSz.fillRect(meterX, meterY, meterW, meterH);
         // Bar fill
-        const grad = ctxSz.createLinearGradient(meterX, 0, meterX + meterW * frac, 0);
-        grad.addColorStop(0, COLORS.green);
-        grad.addColorStop(1, COLORS.yellow);
-        ctxSz.fillStyle = grad;
-        ctxSz.fillRect(meterX, meterY, meterW * frac, meterH);
-        // Border
+        if (frac > 0.005) {
+          const grad = ctxSz.createLinearGradient(meterX, 0, meterX + meterW * frac, 0);
+          grad.addColorStop(0, COLORS.green);
+          grad.addColorStop(1, COLORS.yellow);
+          ctxSz.fillStyle = grad;
+          ctxSz.fillRect(meterX, meterY, meterW * frac, meterH);
+        }
         ctxSz.strokeStyle = COLORS.axis; ctxSz.lineWidth = 1;
         ctxSz.strokeRect(meterX, meterY, meterW, meterH);
 
-        // Label
         ctxSz.fillStyle = COLORS.text; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
-        const label = frac >= 0.95 ? 'W = k_BT ln 2' : (frac * 100).toFixed(0) + '%';
+        const label = frac >= 0.90 ? 'W = k\u0082T ln 2' : (frac * 100).toFixed(0) + '%';
         ctxSz.fillText(label, meterX + meterW + 8, meterY + 13);
 
-        if (frac >= 0.95) {
+        if (frac >= 0.90) {
           ctxSz.fillStyle = COLORS.green; ctxSz.font = 'bold ' + FONT_LG; ctxSz.textAlign = 'left';
-          ctxSz.fillText('1 bit of information \u2192 k_BT ln 2 of work', meterX, meterY + 40);
+          ctxSz.fillText('1 bit \u2192 k_BT ln 2 of work', meterX, meterY + 40);
         }
       }
 
@@ -5573,19 +5598,23 @@ function initCh6Vis() {
     function animateSzilard() {
       if (!szAnim) return;
       const dt = 1 / 60;
-      const bH = boxH_fn();
+      const bH = boxH();
       const cy = boxCy();
       const bB = boxB();
       const r = BALL_R;
 
-      // Thermal kicks: add small random velocity to simulate thermal bath
-      if (szStep >= 4) {
-        molVx += (Math.random() - 0.5) * 300 * dt;
-        molVy += (Math.random() - 0.5) * 300 * dt;
-        // Clamp speed so it doesn't go crazy
-        const spd = Math.sqrt(molVx * molVx + molVy * molVy);
-        const maxSpd = 200;
-        if (spd > maxSpd) { molVx *= maxSpd / spd; molVy *= maxSpd / spd; }
+      // --- Thermal bath: small random kicks to keep molecule energetic ---
+      const thermalStrength = 400;
+      molVx += (Math.random() - 0.5) * thermalStrength * dt;
+      molVy += (Math.random() - 0.5) * thermalStrength * dt;
+      const spd = Math.sqrt(molVx * molVx + molVy * molVy);
+      const targetSpd = 140;
+      const maxSpd = 220;
+      // Gently steer toward target speed (thermostat)
+      if (spd > maxSpd) { molVx *= maxSpd / spd; molVy *= maxSpd / spd; }
+      else if (spd < targetSpd * 0.5 && spd > 0) {
+        const boost = 1 + 2 * dt;
+        molVx *= boost; molVy *= boost;
       }
 
       molX += molVx * dt;
@@ -5597,64 +5626,68 @@ function initCh6Vis() {
       if (molY < boxT + r) { molY = boxT + r; molVy = Math.abs(molVy); }
       if (molY > bB - r) { molY = bB - r; molVy = -Math.abs(molVy); }
 
-      // Partition bounce (steps 1-3)
+      // Partition bounce (steps 1–3)
       if (szStep >= 1 && szStep <= 3) {
         if (moleculeSide === 'top' && molY + r > cy) { molY = cy - r; molVy = -Math.abs(molVy); }
         if (moleculeSide === 'bottom' && molY - r < cy) { molY = cy + r; molVy = Math.abs(molVy); }
       }
 
-      // Piston interaction (step 3: piston is wall; step 4: ball pushes piston)
-      if (szStep >= 3) {
-        const py = pistonYPos();
+      // Step 3: animate piston sliding from home wall to center
+      if (szStep === 3 && pistonSliding) {
+        const slideSpeed = 120; // px/sec
         if (moleculeSide === 'top') {
-          // Ball is in top half, piston below at py, ball hits piston going down
-          if (szStep === 3) {
-            // Partition still in: piston is just on the other side, no interaction with ball
-          } else {
-            // Step 4: partition removed, ball can reach piston
-            if (molY + r > py) {
-              molY = py - r;
-              // Transfer momentum to piston: ball bounces, piston gets a kick
-              const impactV = Math.abs(molVy);
-              molVy = -impactV * 0.7; // ball bounces back (loses some energy to piston)
-              pistonVel += impactV * 0.5; // piston gets pushed
-              flashTimer = 10;
-            }
-            // Also bounce off top wall (already handled above)
-          }
+          // Piston face moves from boxB up toward cy
+          pistonFaceY -= slideSpeed * dt;
+          if (pistonFaceY <= cy) { pistonFaceY = cy; pistonSliding = false; }
         } else {
-          // Ball is in bottom half, piston above at py, ball hits piston going up
-          if (szStep === 3) {
-            // no interaction
-          } else {
-            if (molY - r < py) {
-              molY = py + r;
-              const impactV = Math.abs(molVy);
-              molVy = impactV * 0.7;
-              pistonVel += impactV * 0.5;
-              flashTimer = 10;
-            }
-          }
+          // Piston face moves from boxT down toward cy
+          pistonFaceY += slideSpeed * dt;
+          if (pistonFaceY >= cy) { pistonFaceY = cy; pistonSliding = false; }
         }
       }
 
-      // Piston dynamics (step 4): move piston, apply friction
-      if (szStep >= 4) {
-        const maxTravel = bH / 2 - BALL_R - 10;
-        pistonPos += pistonVel * dt;
-        pistonVel *= 0.97; // light damping (work extracted against load)
-        if (pistonPos > maxTravel) {
-          pistonPos = maxTravel;
-          pistonVel = 0;
-        }
-        if (pistonPos < 0) { pistonPos = 0; pistonVel = 0; }
-
-        // Keep ball in bounds relative to piston
-        const py = pistonYPos();
+      // Step 4: ball–piston collision
+      if (szStep === 4) {
         if (moleculeSide === 'top') {
-          if (molY + r > py) { molY = py - r; molVy = -Math.abs(molVy); }
+          // Ball in top, piston face below ball. Ball hits piston going down.
+          // Piston moves DOWN (away from ball, toward boxB = home)
+          if (molY + r > pistonFaceY) {
+            molY = pistonFaceY - r;
+            const impactV = Math.abs(molVy);
+            molVy = -impactV * 0.6;
+            pistonVel += impactV * 0.6;
+            flashTimer = 10;
+          }
         } else {
-          if (molY - r < py) { molY = py + r; molVy = Math.abs(molVy); }
+          // Ball in bottom, piston face above ball. Ball hits piston going up.
+          // Piston moves UP (away from ball, toward boxT = home)
+          if (molY - r < pistonFaceY) {
+            molY = pistonFaceY + r;
+            const impactV = Math.abs(molVy);
+            molVy = impactV * 0.6;
+            pistonVel += impactV * 0.6;
+            flashTimer = 10;
+          }
+        }
+
+        // Move piston from collisions
+        if (moleculeSide === 'top') {
+          pistonFaceY += pistonVel * dt; // moves down toward boxB
+          if (pistonFaceY > bB - 4) { pistonFaceY = bB - 4; pistonVel = 0; }
+          if (pistonFaceY < cy) { pistonFaceY = cy; pistonVel = 0; } // can't go above center
+        } else {
+          pistonFaceY -= pistonVel * dt; // moves up toward boxT
+          if (pistonFaceY < boxT + 4) { pistonFaceY = boxT + 4; pistonVel = 0; }
+          if (pistonFaceY > cy) { pistonFaceY = cy; pistonVel = 0; }
+        }
+        pistonVel *= 0.96; // damping = work extracted against load
+
+        // Keep ball in bounds: between its home wall and the piston face
+        if (moleculeSide === 'top') {
+          if (molY + r > pistonFaceY) { molY = pistonFaceY - r; molVy = -Math.abs(molVy); }
+          // top wall already handled
+        } else {
+          if (molY - r < pistonFaceY) { molY = pistonFaceY + r; molVy = Math.abs(molVy); }
         }
       }
 
@@ -5668,12 +5701,20 @@ function initCh6Vis() {
       if (szStep < 4) {
         szStep++;
         if (szStep === 1) {
-          // Partition inserted: determine which side the ball is on
+          // Partition inserted — which side is the ball on?
           moleculeSide = molY < boxCy() ? 'top' : 'bottom';
         }
         if (szStep === 3) {
-          pistonPos = 0;
+          // Start piston at the far wall of the empty side
+          pistonFaceY = pistonHomeY();
           pistonVel = 0;
+          pistonSliding = true; // animate slide to center
+        }
+        if (szStep === 4) {
+          // Partition removed. Piston should be at center now.
+          pistonFaceY = boxCy();
+          pistonVel = 0;
+          pistonSliding = false;
         }
       }
       if (!szAnim) { szAnim = true; animateSzilard(); }
@@ -5930,6 +5971,7 @@ function initCh6Vis() {
     function lbReset() {
       kBall.x = -1; uBall.x = Math.random() < 0.5 ? -1 : 1;
       hidden = true; kBar = 1; kTi = 0; uBar = 1; uTi = 0;
+      if (lbURv) lbURv.textContent = 'Reveal';
       lbHeat = 0; lbParts = []; kProto = null; uProto = null;
       kFlip = null; uFlip = null; lbBz = false; flashT = 0;
       lbMsg = 'Left: you can see the bit. Right: it\u2019s hidden.';
@@ -5997,10 +6039,11 @@ function initCh6Vis() {
       lbMC = COLORS.green;
     });
 
-    // Reveal is a toggle
+    // Reveal/Hide toggle
     lbURv?.addEventListener('click', () => {
       if (lbBz) return;
       hidden = !hidden;
+      if (lbURv) lbURv.textContent = hidden ? 'Reveal' : 'Hide';
       if (!hidden) {
         lbMsg = 'Revealed: bit = ' + (uBall.x < 0 ? '0' : '1') + '. Now you can set it for free!';
         lbMC = COLORS.cyan;
