@@ -115,12 +115,13 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <div class="interactive-wrapper">
 <h4>Interactive: Na⁺/K⁺ ATPase Pump</h4>
-<canvas id="vis-nak-pump" width="600" height="400"></canvas>
-<div class="controls">
-<button id="nak-playpause">Pause</button>
-<label>Speed: <input type="range" id="nak-speed" min="0.3" max="3" step="0.1" value="1"></label>
+<canvas id="vis-nak-pump" width="600" height="450"></canvas>
+<div class="controls" style="flex-wrap: wrap; gap: 8px;">
+<button id="nak-pump-btn" style="font-weight:bold;">Pump! (costs 1 ATP)</button>
+<button id="nak-reset">Reset</button>
+<span id="nak-atp-display" style="color:#ffee58; font-size:13px;">ATP: 10 / 10</span>
 </div>
-<figcaption>The sodium-potassium pump, present in practically every cell of every living thing. It uses one ATP to pump 3 Na⁺ out and 2 K⁺ in, maintaining the concentration gradients essential for nerve signaling and cell function. This active transport fights the entropy of mixing.</figcaption>
+<figcaption>Click <strong>Pump!</strong> to fire the Na⁺/K⁺ ATPase. Each pump cycle uses one ATP to move 3 Na⁺ out and 2 K⁺ in. With enough pumping you can establish a concentration gradient &mdash; the low-entropy state that cells fight to maintain against the entropy of mixing. When you run out of ATP, the gradient slowly dissipates by diffusion.</figcaption>
 </div>
 
 <p>Another familiar effect due to entropy of mixing is how salt is able to melt ice. The salt draws water out of the ice (i.e. melts it) because saltwater has higher entropy than salt and ice separately.</p>

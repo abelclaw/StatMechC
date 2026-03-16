@@ -5717,33 +5717,38 @@ function initCh6Vis() {
       const indY = barY + 28;
       ctxLB.fillStyle = COLORS.textDim; ctxLB.font = FONT_SM; ctxLB.textAlign = 'center';
       ctxLB.fillText('Barrier: ' + (lbBarrier * 100).toFixed(0) + '%', WLB * 0.3, indY);
-      const ts = lbTilt > 0.05 ? '\u2190 push left' : lbTilt < -0.05 ? 'push right \u2192' : 'none';
+      const ts = lbTilt > 0.05 ? 'push right \u2192' : lbTilt < -0.05 ? '\u2190 push left' : 'none';
       ctxLB.fillText('Tilt: ' + ts, WLB * 0.7, indY);
     }
 
     // Protocol definitions
     const ERASE_PROTO = [
-      {b: 1, t: 0,   dur: 70,  lbl: 'Unknown bit: could be 0 or 1'},
-      {b: 0, t: 0,   dur: 110, lbl: 'Step 1: Lower the barrier (merge wells)'},
-      {b: 0, t: 1.8, dur: 110, lbl: 'Step 2: Tilt left (push toward 0)'},
-      {b: 1, t: 1.8, dur: 110, lbl: 'Step 3: Raise the barrier'},
-      {b: 1, t: 0,   dur: 110, lbl: 'Step 4: Remove tilt \u2014 both bits are 0!'},
-      {b: 1, t: 0,   dur: 130, lbl: 'Erasure complete! Heat \u2265 k\u0299T ln 2 was dissipated'},
-    ];
-    const FLIP_PROTO = [
-      {b: 1, t: 0,    dur: 70,  lbl: 'Known bit = 0 (both copies identical)'},
-      {b: 0, t: 0,    dur: 110, lbl: 'Step 1: Lower the barrier'},
-      {b: 0, t: -1.8, dur: 110, lbl: 'Step 2: Tilt right (push toward 1)'},
+      {b: 1, t: 0,    dur: 70,  lbl: 'Unknown bit: could be 0 or 1'},
+      {b: 0, t: 0,    dur: 110, lbl: 'Step 1: Lower the barrier (merge wells)'},
+      {b: 0, t: -1.8, dur: 110, lbl: 'Step 2: Tilt left (push toward 0)'},
       {b: 1, t: -1.8, dur: 110, lbl: 'Step 3: Raise the barrier'},
-      {b: 1, t: 0,    dur: 110, lbl: 'Step 4: Remove tilt \u2014 bit flipped to 1!'},
-      {b: 1, t: 0,    dur: 130, lbl: 'Flip complete! No heat needed (reversible)'},
+      {b: 1, t: 0,    dur: 110, lbl: 'Step 4: Remove tilt \u2014 both bits are 0!'},
+      {b: 1, t: 0,    dur: 130, lbl: 'Erasure complete! Heat \u2265 k\u0299T ln 2 was dissipated'},
     ];
+    function makeFlipProto(fromZero) {
+      const dir = fromZero ? 1 : -1;
+      const tVal = dir * 1.8;
+      const fromBit = fromZero ? '0' : '1', toBit = fromZero ? '1' : '0';
+      const tiltDir = fromZero ? 'right' : 'left';
+      return [
+        {b: 1, t: 0,    dur: 70,  lbl: 'Known bit = ' + fromBit + ' (both copies identical)'},
+        {b: 0, t: 0,    dur: 110, lbl: 'Step 1: Lower the barrier'},
+        {b: 0, t: tVal, dur: 110, lbl: 'Step 2: Tilt ' + tiltDir + ' (push toward ' + toBit + ')'},
+        {b: 1, t: tVal, dur: 110, lbl: 'Step 3: Raise the barrier'},
+        {b: 1, t: 0,    dur: 110, lbl: 'Step 4: Remove tilt \u2014 bit flipped to ' + toBit + '!'},
+        {b: 1, t: 0,    dur: 130, lbl: 'Flip complete! No heat needed (reversible)'},
+      ];
+    }
 
-    function lbStartProto(steps, mode) {
+    function lbStartProto(steps, mode, startX0, startX1) {
       lbMode = mode; lbProto = steps; lbProtoIdx = 0; lbProtoT = 0;
       lbHeat = 0; lbParticles = [];
-      if (mode === 'erase') { lbBalls[0].x = -1; lbBalls[1].x = 1; }
-      else { lbBalls[0].x = -1; lbBalls[1].x = -1; }
+      lbBalls[0].x = startX0; lbBalls[1].x = startX1;
       lbBalls[0].v = 0; lbBalls[1].v = 0;
       lbBarrier = steps[0].b; lbTilt = steps[0].t;
       lbPrevB = lbBarrier; lbPrevTi = lbTilt;
@@ -5814,8 +5819,13 @@ function initCh6Vis() {
       if (tiltSlider) tiltSlider.value = 0;
     }
 
-    eraseBtn?.addEventListener('click', () => lbStartProto(ERASE_PROTO, 'erase'));
-    flipBtn?.addEventListener('click', () => lbStartProto(FLIP_PROTO, 'flip'));
+    eraseBtn?.addEventListener('click', () => lbStartProto(ERASE_PROTO, 'erase', -1, 1));
+    flipBtn?.addEventListener('click', () => {
+      // Detect current state and flip to the other
+      const atZero = lbBalls[0].x < 0;
+      const startX = atZero ? -1 : 1;
+      lbStartProto(makeFlipProto(atZero), 'flip', startX, startX);
+    });
     resetBtnLB?.addEventListener('click', () => { lbReset(); drawLB(); });
     barrierSlider?.addEventListener('input', () => {
       if (!lbProto) { lbBarrier = barrierSlider.value / 100; lbLabel = 'Manual control'; }
@@ -5829,384 +5839,463 @@ function initCh6Vis() {
     animateLB();
   }
 
-  // ----- Na+/K+ Pump -----
+  // ----- Na+/K+ Pump (game-style) -----
   const cNaK = document.getElementById('vis-nak-pump');
   if (cNaK) {
     const { ctx: ctxNaK, W: WNaK, H: HNaK } = setupCanvas(cNaK);
-    const playPauseBtn = document.getElementById('nak-playpause');
-    const speedSlider  = document.getElementById('nak-speed');
+    const pumpBtn     = document.getElementById('nak-pump-btn');
+    const resetBtnNaK = document.getElementById('nak-reset');
+    const atpDisp     = document.getElementById('nak-atp-display');
 
-    // ---- Layout constants ----
-    const MEM_CY   = HNaK * 0.47;   // membrane centre y
-    const MEM_HALF = 40;             // half-thickness of membrane band
+    // ---- Layout ----
+    const MEM_CY   = HNaK * 0.46;
+    const MEM_HALF = 40;
     const MEM_TOP  = MEM_CY - MEM_HALF;
     const MEM_BOT  = MEM_CY + MEM_HALF;
-    const PUMP_CX  = WNaK / 2;      // pump centre x
+    const PUMP_CX  = WNaK / 2;
+    const PUMP_HW  = 30;
+    const PUMP_HH  = MEM_HALF + 6;
 
-    // ---- Cycle timing ----
-    const PHASE_DUR_BASE = 2200;     // ms per phase at speed=1
-    let nakPlaying = true;
-    let nakPhase   = 0;              // 0-5
-    let nakT       = 0;              // ms elapsed in current phase
-    let nakLastTS  = null;
+    // ---- Ion pool ----
+    const TOTAL_NA = 12, TOTAL_K = 12;
+    let naIons = [], kIons = [];
+    let atp = 10, ATP_MAX = 10;
 
-    // ---- Floating background ions ----
-    const BG_NA_OUT = [], BG_K_OUT = [], BG_NA_IN = [], BG_K_IN = [];
-    const N_BG = 7;
+    // ---- Pump animation state ----
+    let pumpPhase = null, pumpT = 0, pumpLastTS = null;
+    const PHASE_DUR = 650;
+    let pumpNaIons = [], pumpKIons = [];
 
-    function randBgIon(xMin, xMax, yMin, yMax) {
+    // ---- Diffusion leak ----
+    let leakTimer = 0;
+    const LEAK_INTERVAL = 3500;
+
+    function randIon(side) {
+      const m = 14;
+      const yMin = side === 'out' ? 30 : MEM_BOT + m;
+      const yMax = side === 'out' ? MEM_TOP - m : HNaK - 50;
       return {
-        x:  xMin + Math.random() * (xMax - xMin),
-        y:  yMin + Math.random() * (yMax - yMin),
-        vx: (Math.random() - 0.5) * 18,
-        vy: (Math.random() - 0.5) * 18,
+        x: 20 + Math.random() * (WNaK - 100),
+        y: yMin + Math.random() * Math.max(10, yMax - yMin),
+        vx: (Math.random() - 0.5) * 6,
+        vy: (Math.random() - 0.5) * 6,
+        side: side
       };
     }
 
-    function initBgIons() {
-      BG_NA_OUT.length = 0; BG_K_OUT.length = 0;
-      BG_NA_IN.length  = 0; BG_K_IN.length  = 0;
-      // Outside (top): fewer Na+, more K+  (physiological extracellular)
-      for (let i = 0; i < N_BG - 3; i++) BG_NA_OUT.push(randBgIon(20, WNaK - 20, 22, MEM_TOP - 10));
-      for (let i = 0; i < N_BG;     i++) BG_K_OUT.push( randBgIon(20, WNaK - 20, 22, MEM_TOP - 10));
-      // Inside (bottom): more Na+, fewer K+  (physiological intracellular)
-      for (let i = 0; i < N_BG;     i++) BG_NA_IN.push( randBgIon(20, WNaK - 20, MEM_BOT + 10, HNaK - 42));
-      for (let i = 0; i < N_BG - 3; i++) BG_K_IN.push(  randBgIon(20, WNaK - 20, MEM_BOT + 10, HNaK - 42));
+    function initState() {
+      naIons = []; kIons = [];
+      for (let i = 0; i < TOTAL_NA; i++) naIons.push(randIon(i < TOTAL_NA / 2 ? 'in' : 'out'));
+      for (let i = 0; i < TOTAL_K;  i++) kIons.push(randIon(i < TOTAL_K / 2 ? 'in' : 'out'));
+      atp = ATP_MAX;
+      pumpPhase = null; pumpT = 0;
+      pumpNaIons = []; pumpKIons = [];
+      leakTimer = 0;
+      updateAtpDisp();
     }
-    initBgIons();
 
-    function updateBgIon(ion, xMin, xMax, yMin, yMax) {
-      ion.x += ion.vx * 0.9;
-      ion.y += ion.vy * 0.9;
-      if (ion.x < xMin + 8)  { ion.vx =  Math.abs(ion.vx); }
-      if (ion.x > xMax - 8)  { ion.vx = -Math.abs(ion.vx); }
-      if (ion.y < yMin + 8)  { ion.vy =  Math.abs(ion.vy); }
-      if (ion.y > yMax - 8)  { ion.vy = -Math.abs(ion.vy); }
-      if (Math.random() < 0.015) { ion.vx += (Math.random() - 0.5) * 6; }
-      if (Math.random() < 0.015) { ion.vy += (Math.random() - 0.5) * 6; }
+    function updateAtpDisp() {
+      if (atpDisp) atpDisp.textContent = 'ATP: ' + atp + ' / ' + ATP_MAX;
+      if (pumpBtn) pumpBtn.disabled = (atp <= 0 || pumpPhase !== null);
+    }
+
+    // ---- Gentle Brownian drift ----
+    function driftIon(ion) {
+      const m = 14;
+      const yMin = ion.side === 'out' ? 30 : MEM_BOT + m;
+      const yMax = ion.side === 'out' ? MEM_TOP - m : HNaK - 50;
+      const xMin = 16, xMax = WNaK - 80;
+      if (Math.random() < 0.02) ion.vx += (Math.random() - 0.5) * 2;
+      if (Math.random() < 0.02) ion.vy += (Math.random() - 0.5) * 2;
+      ion.vx *= 0.97; ion.vy *= 0.97;
       const spd = Math.hypot(ion.vx, ion.vy);
-      if (spd > 25) { ion.vx *= 25 / spd; ion.vy *= 25 / spd; }
+      if (spd > 8) { ion.vx *= 8 / spd; ion.vy *= 8 / spd; }
+      ion.x += ion.vx; ion.y += ion.vy;
+      if (ion.x < xMin) { ion.x = xMin; ion.vx = Math.abs(ion.vx); }
+      if (ion.x > xMax) { ion.x = xMax; ion.vx = -Math.abs(ion.vx); }
+      if (ion.y < yMin) { ion.y = yMin; ion.vy = Math.abs(ion.vy); }
+      if (ion.y > yMax) { ion.y = yMax; ion.vy = -Math.abs(ion.vy); }
     }
 
-    // ---- Ion drawing helper ----
-    function drawIon(x, y, r, label, color, alpha) {
-      alpha = (alpha === undefined) ? 1 : alpha;
-      ctxNaK.save();
-      ctxNaK.globalAlpha = alpha;
-      const grd = ctxNaK.createRadialGradient(x, y, 0, x, y, r * 2.0);
-      grd.addColorStop(0, color + 'bb');
-      grd.addColorStop(1, color + '00');
+    // ---- Drawing helpers ----
+    function drawIonCircle(x, y, r, label, color, alpha) {
+      if (alpha === undefined) alpha = 1;
+      ctxNaK.save(); ctxNaK.globalAlpha = alpha;
+      const grd = ctxNaK.createRadialGradient(x, y, 0, x, y, r * 1.8);
+      grd.addColorStop(0, color + '88'); grd.addColorStop(1, color + '00');
       ctxNaK.fillStyle = grd;
-      ctxNaK.beginPath(); ctxNaK.arc(x, y, r * 2.0, 0, Math.PI * 2); ctxNaK.fill();
+      ctxNaK.beginPath(); ctxNaK.arc(x, y, r * 1.8, 0, Math.PI * 2); ctxNaK.fill();
       ctxNaK.fillStyle = color;
       ctxNaK.beginPath(); ctxNaK.arc(x, y, r, 0, Math.PI * 2); ctxNaK.fill();
       ctxNaK.fillStyle = '#fff';
-      ctxNaK.font = 'bold 8px Inter, system-ui, sans-serif';
-      ctxNaK.textAlign = 'center';
-      ctxNaK.textBaseline = 'middle';
-      ctxNaK.fillText(label, x, y);
+      ctxNaK.font = 'bold ' + Math.max(7, r - 1) + 'px Inter, system-ui, sans-serif';
+      ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'middle';
+      ctxNaK.fillText(label, x, y + 0.5);
       ctxNaK.restore();
     }
 
-    // ---- Membrane drawing ----
-    function drawMembrane() {
-      const lipidR = 7, headGap = 4;
-      const cols = Math.ceil(WNaK / (lipidR * 2 + 3)) + 1;
-
-      // bilayer fill
+    // ---- Membrane ----
+    function drawMembraneNaK() {
+      const lipidR = 6, step = lipidR * 2 + 3;
+      const cols = Math.ceil(WNaK / step) + 1;
       const grd = ctxNaK.createLinearGradient(0, MEM_TOP, 0, MEM_BOT);
-      grd.addColorStop(0,   'rgba(100,160,100,0.18)');
-      grd.addColorStop(0.5, 'rgba(80,130,80,0.28)');
-      grd.addColorStop(1,   'rgba(100,160,100,0.18)');
+      grd.addColorStop(0, 'rgba(100,160,100,0.15)');
+      grd.addColorStop(0.5, 'rgba(80,130,80,0.25)');
+      grd.addColorStop(1, 'rgba(100,160,100,0.15)');
       ctxNaK.fillStyle = grd;
       ctxNaK.fillRect(0, MEM_TOP, WNaK, MEM_HALF * 2);
-
       for (let i = 0; i < cols; i++) {
-        const lx = i * (lipidR * 2 + 3) + lipidR;
-        if (Math.abs(lx - PUMP_CX) < 32) continue;
-
-        // top leaflet: head near MEM_TOP, tail toward centre
-        ctxNaK.beginPath();
-        ctxNaK.arc(lx, MEM_TOP + lipidR + headGap, lipidR, 0, Math.PI * 2);
-        ctxNaK.fillStyle = 'rgba(102,187,106,0.62)'; ctxNaK.fill();
-        ctxNaK.strokeStyle = 'rgba(102,187,106,0.28)'; ctxNaK.lineWidth = 0.5; ctxNaK.stroke();
-        ctxNaK.beginPath();
-        ctxNaK.moveTo(lx, MEM_TOP + lipidR * 2 + headGap);
-        ctxNaK.lineTo(lx, MEM_CY - 4);
-        ctxNaK.strokeStyle = 'rgba(102,187,106,0.32)'; ctxNaK.lineWidth = 1.5; ctxNaK.stroke();
-
-        // bottom leaflet: head near MEM_BOT, tail toward centre
-        ctxNaK.beginPath();
-        ctxNaK.arc(lx, MEM_BOT - lipidR - headGap, lipidR, 0, Math.PI * 2);
-        ctxNaK.fillStyle = 'rgba(102,187,106,0.62)'; ctxNaK.fill();
-        ctxNaK.strokeStyle = 'rgba(102,187,106,0.28)'; ctxNaK.lineWidth = 0.5; ctxNaK.stroke();
-        ctxNaK.beginPath();
-        ctxNaK.moveTo(lx, MEM_BOT - lipidR * 2 - headGap);
-        ctxNaK.lineTo(lx, MEM_CY + 4);
-        ctxNaK.strokeStyle = 'rgba(102,187,106,0.32)'; ctxNaK.lineWidth = 1.5; ctxNaK.stroke();
+        const lx = i * step + lipidR;
+        if (Math.abs(lx - PUMP_CX) < PUMP_HW + 6) continue;
+        ctxNaK.beginPath(); ctxNaK.arc(lx, MEM_TOP + lipidR + 3, lipidR, 0, Math.PI * 2);
+        ctxNaK.fillStyle = 'rgba(102,187,106,0.55)'; ctxNaK.fill();
+        ctxNaK.beginPath(); ctxNaK.moveTo(lx, MEM_TOP + lipidR * 2 + 3); ctxNaK.lineTo(lx, MEM_CY - 3);
+        ctxNaK.strokeStyle = 'rgba(102,187,106,0.28)'; ctxNaK.lineWidth = 1.5; ctxNaK.stroke();
+        ctxNaK.beginPath(); ctxNaK.arc(lx, MEM_BOT - lipidR - 3, lipidR, 0, Math.PI * 2);
+        ctxNaK.fillStyle = 'rgba(102,187,106,0.55)'; ctxNaK.fill();
+        ctxNaK.beginPath(); ctxNaK.moveTo(lx, MEM_BOT - lipidR * 2 - 3); ctxNaK.lineTo(lx, MEM_CY + 3);
+        ctxNaK.strokeStyle = 'rgba(102,187,106,0.28)'; ctxNaK.lineWidth = 1.5; ctxNaK.stroke();
       }
     }
 
-    // ---- Pump protein drawing ----
-    // conf: 0=inward-open, 0.5=occluded/closed, 1=outward-open
-    function drawPump(conf, phase) {
+    // ---- Pump protein (two subunits that open/close) ----
+    function drawPumpProtein(conf, phosphorylated) {
       const cx = PUMP_CX, cy = MEM_CY;
-      const pW = 28, pH = MEM_HALF - 2;  // half-width, half-height
-
-      const phos = (phase === 1 || phase === 2 || phase === 3);
-      const bodyColor = phos ? 'rgba(255,167,38,0.82)' : 'rgba(79,195,247,0.82)';
-      const edgeColor = phos ? '#ffa726' : '#4fc3f7';
-
+      const hw = PUMP_HW, hh = PUMP_HH;
+      const bodyColor = phosphorylated ? 'rgba(255,167,38,0.80)' : 'rgba(79,195,247,0.75)';
+      const edgeColor = phosphorylated ? '#ffa726' : '#4fc3f7';
       ctxNaK.save();
-
-      // Main protein body
+      const openAmt = 14;
+      const inOpen  = Math.max(0, 1 - conf * 2.5);
+      const outOpen = Math.max(0, (conf - 0.6) * 2.5);
+      // Left subunit
       ctxNaK.beginPath();
-      ctxNaK.roundRect(cx - pW, cy - pH, pW * 2, pH * 2, 8);
-      ctxNaK.fillStyle = bodyColor;
-      ctxNaK.fill();
-      ctxNaK.strokeStyle = edgeColor;
-      ctxNaK.lineWidth = 2;
-      ctxNaK.stroke();
-
-      // Pore opening: notch carved from the body
-      // inward-open: conf close to 0; outward-open: conf close to 1
-      const inwardOpen  = Math.max(0, 1 - conf * 2.2);    // 1 at conf=0, fades by ~0.45
-      const outwardOpen = Math.max(0, (conf - 0.55) * 2.2); // starts at conf~0.55, 1 at conf=1
-      const notchW = 11, notchDepth = 17;
-
+      ctxNaK.moveTo(cx - hw - outOpen * openAmt * 0.5, cy - hh);
+      ctxNaK.lineTo(cx - 3, cy - hh);
+      ctxNaK.lineTo(cx - 3, cy + hh);
+      ctxNaK.lineTo(cx - hw - inOpen * openAmt * 0.5, cy + hh);
+      ctxNaK.closePath();
+      ctxNaK.fillStyle = bodyColor; ctxNaK.fill();
+      ctxNaK.strokeStyle = edgeColor; ctxNaK.lineWidth = 2; ctxNaK.stroke();
+      // Right subunit
+      ctxNaK.beginPath();
+      ctxNaK.moveTo(cx + hw + outOpen * openAmt * 0.5, cy - hh);
+      ctxNaK.lineTo(cx + 3, cy - hh);
+      ctxNaK.lineTo(cx + 3, cy + hh);
+      ctxNaK.lineTo(cx + hw + inOpen * openAmt * 0.5, cy + hh);
+      ctxNaK.closePath();
+      ctxNaK.fillStyle = bodyColor; ctxNaK.fill();
+      ctxNaK.strokeStyle = edgeColor; ctxNaK.lineWidth = 2; ctxNaK.stroke();
+      // Channel gap when open
+      const gapTop = outOpen > 0.1 ? 6 + outOpen * 12 : 0;
+      const gapBot = inOpen > 0.1 ? 6 + inOpen * 12 : 0;
       ctxNaK.fillStyle = COLORS.bg;
-      if (inwardOpen > 0.05) {
-        const nd = notchDepth * inwardOpen;
+      if (gapTop > 2) {
         ctxNaK.beginPath();
-        ctxNaK.moveTo(cx - notchW * inwardOpen, cy + pH);
-        ctxNaK.lineTo(cx, cy + pH - nd);
-        ctxNaK.lineTo(cx + notchW * inwardOpen, cy + pH);
-        ctxNaK.closePath();
-        ctxNaK.fill();
-        ctxNaK.strokeStyle = edgeColor; ctxNaK.lineWidth = 1.5; ctxNaK.stroke();
+        ctxNaK.moveTo(cx - gapTop / 2, cy - hh);
+        ctxNaK.lineTo(cx + gapTop / 2, cy - hh);
+        ctxNaK.lineTo(cx + 2, cy - hh + gapTop * 1.5);
+        ctxNaK.lineTo(cx - 2, cy - hh + gapTop * 1.5);
+        ctxNaK.closePath(); ctxNaK.fill();
       }
-      if (outwardOpen > 0.05) {
-        const nd = notchDepth * outwardOpen;
+      if (gapBot > 2) {
         ctxNaK.beginPath();
-        ctxNaK.moveTo(cx - notchW * outwardOpen, cy - pH);
-        ctxNaK.lineTo(cx, cy - pH + nd);
-        ctxNaK.lineTo(cx + notchW * outwardOpen, cy - pH);
-        ctxNaK.closePath();
-        ctxNaK.fill();
-        ctxNaK.strokeStyle = edgeColor; ctxNaK.lineWidth = 1.5; ctxNaK.stroke();
+        ctxNaK.moveTo(cx - gapBot / 2, cy + hh);
+        ctxNaK.lineTo(cx + gapBot / 2, cy + hh);
+        ctxNaK.lineTo(cx + 2, cy + hh - gapBot * 1.5);
+        ctxNaK.lineTo(cx - 2, cy + hh - gapBot * 1.5);
+        ctxNaK.closePath(); ctxNaK.fill();
       }
-
+      // Binding sites when occluded
+      if (conf > 0.15 && conf < 0.85) {
+        ctxNaK.fillStyle = 'rgba(255,255,255,0.08)';
+        for (let i = -1; i <= 1; i++) {
+          ctxNaK.beginPath(); ctxNaK.arc(cx, cy + i * 14, 6, 0, Math.PI * 2); ctxNaK.fill();
+        }
+      }
       // Phosphorylation badge
-      if (phos) {
-        ctxNaK.beginPath(); ctxNaK.arc(cx + pW - 7, cy - pH + 8, 7, 0, Math.PI * 2);
+      if (phosphorylated) {
+        ctxNaK.beginPath(); ctxNaK.arc(cx + hw + 2, cy - hh + 10, 8, 0, Math.PI * 2);
         ctxNaK.fillStyle = COLORS.yellow; ctxNaK.fill();
-        ctxNaK.fillStyle = '#222';
-        ctxNaK.font = 'bold 8px Inter, system-ui, sans-serif';
+        ctxNaK.fillStyle = '#222'; ctxNaK.font = 'bold 9px Inter, system-ui, sans-serif';
         ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'middle';
-        ctxNaK.fillText('P', cx + pW - 7, cy - pH + 8);
+        ctxNaK.fillText('P', cx + hw + 2, cy - hh + 10);
       }
-
       ctxNaK.restore();
     }
 
-    // ---- ATP/ADP annotation ----
-    function drawAtpLabel(phase, t) {
-      const ax = PUMP_CX + 58, ay = MEM_CY;
-      ctxNaK.font = '11px Inter, system-ui, sans-serif';
-      ctxNaK.textBaseline = 'middle';
-      ctxNaK.textAlign = 'center';
+    // ---- Gradient bars (right side) ----
+    function drawGradientBars() {
+      const naIn  = naIons.filter(i => i.side === 'in').length + pumpNaIons.length;
+      const naOut = TOTAL_NA - naIn;
+      const kIn   = kIons.filter(i => i.side === 'in').length + pumpKIons.length;
+      const kOut  = TOTAL_K - kIn;
+      const bx = WNaK - 58, bw = 12, bh = 44;
+      // Outside
+      const oy = 30;
+      ctxNaK.fillStyle = COLORS.textDim; ctxNaK.font = '9px Inter, system-ui, sans-serif';
+      ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'bottom';
+      ctxNaK.fillText('out', bx + bw + 8, oy - 1);
+      // Na out
+      ctxNaK.fillStyle = 'rgba(255,167,38,0.18)'; ctxNaK.fillRect(bx, oy, bw, bh);
+      ctxNaK.fillStyle = COLORS.orange;
+      ctxNaK.fillRect(bx, oy + bh * (1 - naOut / TOTAL_NA), bw, bh * (naOut / TOTAL_NA));
+      ctxNaK.strokeStyle = COLORS.axis; ctxNaK.lineWidth = 1; ctxNaK.strokeRect(bx, oy, bw, bh);
+      ctxNaK.fillStyle = '#fff'; ctxNaK.font = '8px Inter, system-ui, sans-serif';
+      ctxNaK.textBaseline = 'top'; ctxNaK.fillText(naOut + ' Na\u207A', bx + bw / 2, oy + bh + 2);
+      // K out
+      const kbx = bx + bw + 8;
+      ctxNaK.fillStyle = 'rgba(79,195,247,0.18)'; ctxNaK.fillRect(kbx, oy, bw, bh);
+      ctxNaK.fillStyle = COLORS.blue;
+      ctxNaK.fillRect(kbx, oy + bh * (1 - kOut / TOTAL_K), bw, bh * (kOut / TOTAL_K));
+      ctxNaK.strokeStyle = COLORS.axis; ctxNaK.lineWidth = 1; ctxNaK.strokeRect(kbx, oy, bw, bh);
+      ctxNaK.fillStyle = '#fff'; ctxNaK.fillText(kOut + ' K\u207A', kbx + bw / 2, oy + bh + 2);
+      // Inside
+      const iy = MEM_BOT + 12;
+      ctxNaK.fillStyle = COLORS.textDim; ctxNaK.font = '9px Inter, system-ui, sans-serif';
+      ctxNaK.textBaseline = 'bottom'; ctxNaK.fillText('in', bx + bw + 8, iy - 1);
+      // Na in
+      ctxNaK.fillStyle = 'rgba(255,167,38,0.18)'; ctxNaK.fillRect(bx, iy, bw, bh);
+      ctxNaK.fillStyle = COLORS.orange;
+      ctxNaK.fillRect(bx, iy + bh * (1 - naIn / TOTAL_NA), bw, bh * (naIn / TOTAL_NA));
+      ctxNaK.strokeStyle = COLORS.axis; ctxNaK.lineWidth = 1; ctxNaK.strokeRect(bx, iy, bw, bh);
+      ctxNaK.fillStyle = '#fff'; ctxNaK.font = '8px Inter, system-ui, sans-serif';
+      ctxNaK.textBaseline = 'top'; ctxNaK.fillText(naIn + ' Na\u207A', bx + bw / 2, iy + bh + 2);
+      // K in
+      ctxNaK.fillStyle = 'rgba(79,195,247,0.18)'; ctxNaK.fillRect(kbx, iy, bw, bh);
+      ctxNaK.fillStyle = COLORS.blue;
+      ctxNaK.fillRect(kbx, iy + bh * (1 - kIn / TOTAL_K), bw, bh * (kIn / TOTAL_K));
+      ctxNaK.strokeStyle = COLORS.axis; ctxNaK.lineWidth = 1; ctxNaK.strokeRect(kbx, iy, bw, bh);
+      ctxNaK.fillStyle = '#fff'; ctxNaK.fillText(kIn + ' K\u207A', kbx + bw / 2, iy + bh + 2);
+    }
 
-      if (phase === 1) {
-        // first half: ATP approaching; second half: ADP+Pi
-        if (t < 0.5) {
-          const alpha = Math.min(1, t * 3);
-          ctxNaK.save(); ctxNaK.globalAlpha = alpha;
-          ctxNaK.fillStyle = COLORS.yellow;
-          ctxNaK.fillText('ATP', ax, ay - 12);
-          ctxNaK.fillStyle = COLORS.textDim;
-          ctxNaK.fillText('\u2193', ax, ay - 2);
-          ctxNaK.restore();
-        } else {
-          const alpha = Math.min(1, (t - 0.5) * 3);
-          ctxNaK.save(); ctxNaK.globalAlpha = alpha;
-          ctxNaK.fillStyle = COLORS.orange;
-          ctxNaK.fillText('ADP + P\u1D62', ax, ay - 8);
-          ctxNaK.restore();
-        }
-      } else if (phase === 4) {
-        // Pi drifting away as pump dephosphorylates
-        const alpha = t < 0.7 ? Math.min(1, t * 2.5) : (1 - t) * 3.3;
-        const piY = ay + 8 + t * 22;
-        ctxNaK.save(); ctxNaK.globalAlpha = Math.max(0, alpha);
-        ctxNaK.fillStyle = COLORS.green;
-        ctxNaK.fillText('P\u1D62 released', ax, piY);
-        ctxNaK.restore();
+    // ---- ATP meter ----
+    function drawAtpMeter() {
+      const ax = 12, ay = 18, cellW = 16, cellH = 10, gap = 3;
+      ctxNaK.fillStyle = COLORS.yellow; ctxNaK.font = 'bold 11px Inter, system-ui, sans-serif';
+      ctxNaK.textAlign = 'left'; ctxNaK.textBaseline = 'middle';
+      ctxNaK.fillText('ATP', ax, ay);
+      for (let i = 0; i < ATP_MAX; i++) {
+        const x = ax + 30 + i * (cellW + gap);
+        ctxNaK.fillStyle = i < atp ? COLORS.yellow : 'rgba(255,255,255,0.08)';
+        ctxNaK.beginPath(); ctxNaK.roundRect(x, ay - cellH / 2, cellW, cellH, 3); ctxNaK.fill();
       }
     }
 
-    // Phase label strings
+    // ---- Phase labels ----
     const PHASE_LABELS = [
-      'Step 1: 3 Na\u207A bind inside',
-      'Step 2: ATP binds \u2192 phosphorylation',
-      'Step 3: 3 Na\u207A released outside',
-      'Step 4: 2 K\u207A bind outside',
-      'Step 5: Dephosphorylation (P\u1D62 released)',
-      'Step 6: 2 K\u207A released inside',
+      '3 Na\u207A enter pump from inside cell',
+      'ATP \u2192 ADP + P\u1D62 : pump closes, phosphorylates',
+      'Pump opens outward \u2014 releases 3 Na\u207A outside',
+      '2 K\u207A enter pump from outside cell',
+      'P\u1D62 released \u2014 pump closes, dephosphorylates',
+      'Pump opens inward \u2014 releases 2 K\u207A inside',
     ];
 
-    // ---- Main render ----
-    function drawNaK(tMs, phaseDur) {
+    function ease(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
+
+    // ---- Main draw ----
+    function drawNaK() {
       const W = WNaK, H = HNaK;
       clearCanvas(ctxNaK, W, H);
 
-      const t  = Math.min(1, tMs / phaseDur);  // 0..1 within phase
-      function ease(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
-      const et = ease(t);
+      // Labels
+      ctxNaK.fillStyle = COLORS.textDim; ctxNaK.font = FONT_SM;
+      ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'alphabetic';
+      ctxNaK.fillText('Outside cell', W / 2, MEM_TOP - 6);
+      ctxNaK.fillText('Inside cell', W / 2, MEM_BOT + 14);
 
-      // Exterior region labels
-      ctxNaK.fillStyle = COLORS.textDim;
-      ctxNaK.font = FONT_SM;
-      ctxNaK.textAlign = 'center';
-      ctxNaK.textBaseline = 'alphabetic';
-      ctxNaK.fillText('Extracellular (outside cell)  \u2014  high K\u207A, low Na\u207A', W / 2, 15);
-      ctxNaK.fillText('Intracellular (inside cell)  \u2014  high Na\u207A, low K\u207A', W / 2, H - 28);
+      // Drift free ions
+      for (const ion of naIons) driftIon(ion);
+      for (const ion of kIons)  driftIon(ion);
+      // Draw free ions
+      for (const ion of naIons) drawIonCircle(ion.x, ion.y, 8, 'Na\u207A', COLORS.orange, 0.8);
+      for (const ion of kIons)  drawIonCircle(ion.x, ion.y, 8, 'K\u207A',  COLORS.blue,   0.8);
 
-      // ---- Background floating ions ----
-      // exclude a strip near pump so they don't clutter the action
-      const excL = PUMP_CX - 50, excR = PUMP_CX + 50;
-      function drawBgGroup(arr, label, color, xMin, xMax, yMin, yMax) {
-        arr.forEach(ion => {
-          updateBgIon(ion, xMin, xMax, yMin, yMax);
-          if (ion.x > excL && ion.x < excR) return;
-          drawIon(ion.x, ion.y, 6, label, color, 0.48);
-        });
-      }
-      drawBgGroup(BG_NA_OUT, 'Na\u207A', COLORS.orange, 20, W - 20, 22, MEM_TOP - 10);
-      drawBgGroup(BG_K_OUT,  'K\u207A',  COLORS.blue,   20, W - 20, 22, MEM_TOP - 10);
-      drawBgGroup(BG_NA_IN,  'Na\u207A', COLORS.orange, 20, W - 20, MEM_BOT + 10, H - 42);
-      drawBgGroup(BG_K_IN,   'K\u207A',  COLORS.blue,   20, W - 20, MEM_BOT + 10, H - 42);
+      // Membrane
+      drawMembraneNaK();
 
-      // ---- Membrane ----
-      drawMembrane();
-
-      // ---- Pump conformation ----
-      // 0=inward-open, 0.5=occluded, 1=outward-open
-      let conf;
-      if      (nakPhase === 0) conf = 0;
-      else if (nakPhase === 1) conf = et * 0.5;
-      else if (nakPhase === 2) conf = 0.5 + et * 0.5;
-      else if (nakPhase === 3) conf = 1;
-      else if (nakPhase === 4) conf = 1 - et * 0.5;
-      else                     conf = 0.5 - et * 0.5;
-
-      drawPump(conf, nakPhase);
-
-      // ---- Pump ions ----
-      const pumpTopY = MEM_CY - MEM_HALF - 14;
-      const pumpBotY = MEM_CY + MEM_HALF + 14;
-      const pumpMidY = MEM_CY;
-      const naSpread = 15, kSpread = 17;
-
-      // Na+ (phases 0-2)
-      if (nakPhase === 0) {
-        // Binding: 3 Na+ glide up from below membrane into pump
-        for (let i = 0; i < 3; i++) {
-          const ox = PUMP_CX + (i - 1) * naSpread;
-          const iy = (pumpBotY + 28) + ((pumpMidY + (i - 1) * 5) - (pumpBotY + 28)) * et;
-          drawIon(ox, iy, 8, 'Na\u207A', COLORS.orange, 0.35 + et * 0.65);
-        }
-      } else if (nakPhase === 1) {
-        // Occluded: Na+ sit inside, pump closing
-        for (let i = 0; i < 3; i++) {
-          drawIon(PUMP_CX + (i - 1) * naSpread, pumpMidY + (i - 1) * 5, 8, 'Na\u207A', COLORS.orange);
-        }
-      } else if (nakPhase === 2) {
-        // Release: Na+ glide from pump up and out above membrane
-        for (let i = 0; i < 3; i++) {
-          const ox = PUMP_CX + (i - 1) * naSpread;
-          const startY = pumpMidY + (i - 1) * 5;
-          const endY   = pumpTopY - 22 + (i - 1) * 8;
-          const iy = startY + (endY - startY) * et;
-          drawIon(ox, iy, 8, 'Na\u207A', COLORS.orange, 1 - et * 0.45);
-        }
-      }
-
-      // K+ (phases 3-5)
-      const kOffsets = [-kSpread / 2, kSpread / 2];
-      const kMidY    = [pumpMidY - 6, pumpMidY + 6];
-      if (nakPhase === 3) {
-        // Binding: 2 K+ glide down from outside
-        for (let i = 0; i < 2; i++) {
-          const ox = PUMP_CX + kOffsets[i];
-          const iy = (pumpTopY - 26) + (kMidY[i] - (pumpTopY - 26)) * et;
-          drawIon(ox, iy, 8, 'K\u207A', COLORS.blue, 0.35 + et * 0.65);
-        }
-      } else if (nakPhase === 4) {
-        // Occluded: K+ sit inside
-        for (let i = 0; i < 2; i++) {
-          drawIon(PUMP_CX + kOffsets[i], kMidY[i], 8, 'K\u207A', COLORS.blue);
-        }
-      } else if (nakPhase === 5) {
-        // Release: K+ glide down into cytoplasm
-        for (let i = 0; i < 2; i++) {
-          const ox = PUMP_CX + kOffsets[i];
-          const iy = kMidY[i] + ((pumpBotY + 26) - kMidY[i]) * et;
-          drawIon(ox, iy, 8, 'K\u207A', COLORS.blue, 1 - et * 0.45);
+      // ---- Pump animation ----
+      let conf = 0, phos = false;
+      if (pumpPhase !== null) {
+        const t = Math.min(1, pumpT / PHASE_DUR);
+        const et = ease(t);
+        switch (pumpPhase) {
+          case 0: // Na+ glide into pump from below
+            conf = 0;
+            for (const ion of pumpNaIons) {
+              ion.x += (PUMP_CX - ion.x) * 0.06;
+              ion.y += (MEM_CY - ion.y) * 0.06;
+              drawIonCircle(ion.x, ion.y, 8, 'Na\u207A', COLORS.orange, 0.5 + et * 0.5);
+            }
+            break;
+          case 1: // ATP, pump closes
+            conf = et * 0.5; phos = et > 0.4;
+            for (const ion of pumpNaIons) {
+              ion.x += (PUMP_CX - ion.x) * 0.12;
+              drawIonCircle(ion.x, ion.y, 8, 'Na\u207A', COLORS.orange);
+            }
+            ctxNaK.save();
+            ctxNaK.globalAlpha = et < 0.5 ? et * 2 : 1;
+            ctxNaK.fillStyle = et < 0.5 ? COLORS.yellow : COLORS.orange;
+            ctxNaK.font = '11px Inter, system-ui, sans-serif';
+            ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'middle';
+            ctxNaK.fillText(et < 0.5 ? 'ATP \u2192' : 'ADP + P\u1D62', PUMP_CX + 58, MEM_CY - 10);
+            ctxNaK.restore();
+            break;
+          case 2: // Opens outward, Na released
+            conf = 0.5 + et * 0.5; phos = true;
+            for (let i = 0; i < pumpNaIons.length; i++) {
+              const ion = pumpNaIons[i];
+              const ty = MEM_TOP - 20 - i * 14;
+              const tx = PUMP_CX + (i - 1) * 20;
+              ion.x += (tx - ion.x) * 0.05; ion.y += (ty - ion.y) * 0.05;
+              drawIonCircle(ion.x, ion.y, 8, 'Na\u207A', COLORS.orange, 1 - et * 0.3);
+            }
+            break;
+          case 3: // K+ enter from outside
+            conf = 1; phos = true;
+            for (const ion of pumpKIons) {
+              ion.x += (PUMP_CX - ion.x) * 0.06;
+              ion.y += (MEM_CY - ion.y) * 0.06;
+              drawIonCircle(ion.x, ion.y, 8, 'K\u207A', COLORS.blue, 0.5 + et * 0.5);
+            }
+            break;
+          case 4: // Dephosphorylation
+            conf = 1 - et * 0.5; phos = et < 0.6;
+            for (const ion of pumpKIons) {
+              ion.x += (PUMP_CX - ion.x) * 0.12;
+              drawIonCircle(ion.x, ion.y, 8, 'K\u207A', COLORS.blue);
+            }
+            if (et > 0.3) {
+              ctxNaK.save(); ctxNaK.globalAlpha = Math.min(1, (et - 0.3) * 2);
+              ctxNaK.fillStyle = COLORS.green; ctxNaK.font = '11px Inter, system-ui, sans-serif';
+              ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'middle';
+              ctxNaK.fillText('P\u1D62 \u2192', PUMP_CX + 50, MEM_CY + 12);
+              ctxNaK.restore();
+            }
+            break;
+          case 5: // Opens inward, K released
+            conf = 0.5 - et * 0.5;
+            for (let i = 0; i < pumpKIons.length; i++) {
+              const ion = pumpKIons[i];
+              const ty = MEM_BOT + 20 + i * 14;
+              const tx = PUMP_CX + (i === 0 ? -16 : 16);
+              ion.x += (tx - ion.x) * 0.05; ion.y += (ty - ion.y) * 0.05;
+              drawIonCircle(ion.x, ion.y, 8, 'K\u207A', COLORS.blue, 1 - et * 0.3);
+            }
+            break;
         }
       }
 
-      // ATP / ADP labels
-      drawAtpLabel(nakPhase, t);
+      drawPumpProtein(conf, phos);
+      drawGradientBars();
+      drawAtpMeter();
 
-      // ---- Step indicator bar ----
-      const barY  = H - 18;
-      const barX0 = 10, barTotalW = W - 20;
-      const segW  = barTotalW / 6;
-      for (let i = 0; i < 6; i++) {
-        ctxNaK.fillStyle = (i === nakPhase) ? COLORS.cyan : 'rgba(255,255,255,0.10)';
-        ctxNaK.beginPath();
-        ctxNaK.roundRect(barX0 + i * segW + 2, barY - 4, segW - 4, 8, 3);
-        ctxNaK.fill();
+      // Phase label / hint
+      if (pumpPhase !== null) {
+        const barY = H - 20, barX0 = 10, barTotalW = W - 80, segW = barTotalW / 6;
+        for (let i = 0; i < 6; i++) {
+          ctxNaK.fillStyle = i === pumpPhase ? COLORS.cyan : 'rgba(255,255,255,0.08)';
+          ctxNaK.beginPath(); ctxNaK.roundRect(barX0 + i * segW + 1, barY, segW - 2, 6, 2); ctxNaK.fill();
+        }
+        ctxNaK.fillStyle = COLORS.text; ctxNaK.font = FONT_SM;
+        ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'alphabetic';
+        ctxNaK.fillText(PHASE_LABELS[pumpPhase], W / 2 - 30, barY - 4);
+      } else {
+        ctxNaK.fillStyle = COLORS.textDim; ctxNaK.font = FONT_SM;
+        ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'alphabetic';
+        const hint = atp > 0
+          ? 'Click "Pump!" to fire the Na\u207A/K\u207A ATPase'
+          : 'Out of ATP! Gradient dissipates by diffusion (entropy of mixing).';
+        ctxNaK.fillText(hint, W / 2, H - 18);
       }
-      ctxNaK.fillStyle = COLORS.text;
-      ctxNaK.font = FONT_SM;
-      ctxNaK.textAlign = 'center';
-      ctxNaK.textBaseline = 'alphabetic';
-      ctxNaK.fillText(PHASE_LABELS[nakPhase], W / 2, barY - 7);
     }
 
     // ---- Animation loop ----
     function animateNaK(ts) {
-      if (!nakPlaying) { nakLastTS = null; return; }
-      if (nakLastTS === null) nakLastTS = ts;
-      const rawDt = ts - nakLastTS;
-      nakLastTS = ts;
+      if (pumpLastTS === null) pumpLastTS = ts;
+      const dt = ts - pumpLastTS;
+      pumpLastTS = ts;
 
-      const speed    = parseFloat(speedSlider?.value || 1);
-      const phaseDur = PHASE_DUR_BASE / speed;
-
-      nakT += rawDt;
-      if (nakT >= phaseDur) {
-        nakT -= phaseDur;
-        nakPhase = (nakPhase + 1) % 6;
+      if (pumpPhase !== null) {
+        pumpT += dt;
+        if (pumpT >= PHASE_DUR) {
+          pumpT = 0;
+          if (pumpPhase === 2) {
+            for (const ion of pumpNaIons) { ion.side = 'out'; ion.y = MEM_TOP - 20; naIons.push(ion); }
+            pumpNaIons = [];
+          } else if (pumpPhase === 5) {
+            for (const ion of pumpKIons) { ion.side = 'in'; ion.y = MEM_BOT + 20; kIons.push(ion); }
+            pumpKIons = [];
+          }
+          pumpPhase++;
+          if (pumpPhase > 5) { pumpPhase = null; updateAtpDisp(); }
+        }
       }
 
-      drawNaK(nakT, phaseDur);
+      // Diffusion leak
+      leakTimer += dt;
+      if (leakTimer >= LEAK_INTERVAL && pumpPhase === null) {
+        leakTimer -= LEAK_INTERVAL;
+        const naIn = naIons.filter(i => i.side === 'in');
+        const naOut = naIons.filter(i => i.side === 'out');
+        const kIn  = kIons.filter(i => i.side === 'in');
+        const kOut = kIons.filter(i => i.side === 'out');
+        if (Math.random() < 0.5) {
+          if (naOut.length > naIn.length && naOut.length > 0) {
+            const ion = naOut[Math.floor(Math.random() * naOut.length)];
+            ion.side = 'in'; ion.y = MEM_BOT + 16; ion.vy = 2;
+          } else if (naIn.length > naOut.length && naIn.length > 0) {
+            const ion = naIn[Math.floor(Math.random() * naIn.length)];
+            ion.side = 'out'; ion.y = MEM_TOP - 10; ion.vy = -2;
+          }
+        } else {
+          if (kIn.length > kOut.length && kIn.length > 0) {
+            const ion = kIn[Math.floor(Math.random() * kIn.length)];
+            ion.side = 'out'; ion.y = MEM_TOP - 10; ion.vy = -2;
+          } else if (kOut.length > kIn.length && kOut.length > 0) {
+            const ion = kOut[Math.floor(Math.random() * kOut.length)];
+            ion.side = 'in'; ion.y = MEM_BOT + 16; ion.vy = 2;
+          }
+        }
+      }
+
+      drawNaK();
       activeAnimations['nak-pump'] = requestAnimationFrame(animateNaK);
     }
 
-    // ---- Controls ----
-    playPauseBtn?.addEventListener('click', () => {
-      nakPlaying = !nakPlaying;
-      if (playPauseBtn) playPauseBtn.textContent = nakPlaying ? 'Pause' : 'Play';
-      if (nakPlaying) {
-        nakLastTS = null;
-        activeAnimations['nak-pump'] = requestAnimationFrame(animateNaK);
+    // ---- Pump button ----
+    function startPump() {
+      if (atp <= 0 || pumpPhase !== null) return;
+      const naInside = naIons.filter(i => i.side === 'in')
+        .sort((a, b) => Math.abs(a.x - PUMP_CX) - Math.abs(b.x - PUMP_CX));
+      pumpNaIons = [];
+      for (let i = 0; i < Math.min(3, naInside.length); i++) {
+        const ion = naInside[i];
+        naIons.splice(naIons.indexOf(ion), 1);
+        pumpNaIons.push(ion);
       }
+      const kOutside = kIons.filter(i => i.side === 'out')
+        .sort((a, b) => Math.abs(a.x - PUMP_CX) - Math.abs(b.x - PUMP_CX));
+      pumpKIons = [];
+      for (let i = 0; i < Math.min(2, kOutside.length); i++) {
+        const ion = kOutside[i];
+        kIons.splice(kIons.indexOf(ion), 1);
+        pumpKIons.push(ion);
+      }
+      atp--; pumpPhase = 0; pumpT = 0;
+      updateAtpDisp();
+    }
+
+    pumpBtn?.addEventListener('click', startPump);
+    resetBtnNaK?.addEventListener('click', () => {
+      if (activeAnimations['nak-pump']) cancelAnimationFrame(activeAnimations['nak-pump']);
+      initState(); pumpLastTS = null;
+      activeAnimations['nak-pump'] = requestAnimationFrame(animateNaK);
     });
 
-    // Kick off
-    nakLastTS = null;
+    initState(); pumpLastTS = null;
     activeAnimations['nak-pump'] = requestAnimationFrame(animateNaK);
   }
 }
