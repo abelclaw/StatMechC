@@ -507,15 +507,18 @@ function drawEngine(a){
   X.fillStyle=mGrad(VB.x,VB.x+VB.w,'#555','#727272');
   X.strokeStyle='#999';X.lineWidth=2;
   rr(VB.x,VB.y,VB.w,VB.h,5,true,true);
-  // Hot steam interior
+  // Interior background
   X.fillStyle='#2e2e2e';
   X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
-  X.fillStyle='rgba(230,70,20,.07)';
-  X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
+  // Hot orange haze ONLY in the upper part (above where the slider sits)
+  // SLIDER_Y is a constant so we can use it here
+  const hazeBot=SLIDER_Y-2;
+  X.fillStyle='rgba(230,70,20,.09)';
+  X.fillRect(VB.x+5,VB.y+5,VB.w-10,hazeBot-VB.y-5);
   for(let i=0;i<7;i++){
     const sx=VB.x+12+Math.random()*(VB.w-24);
-    const sy=VB.y+8+Math.random()*(VB.h-20);
-    X.fillStyle=`rgba(230,80,25,${.02+Math.random()*.04})`;
+    const sy=VB.y+8+Math.random()*(hazeBot-VB.y-12);
+    X.fillStyle=`rgba(230,80,25,${.03+Math.random()*.05})`;
     X.beginPath();X.arc(sx,sy,2+Math.random()*3,0,Math.PI*2);X.fill();
   }
   // Steam inlet on left wall (from boiler)
@@ -712,14 +715,13 @@ function drawEngine(a){
   // Hot molecules in supply pipe (boiler → compartment)
   if(run&&Math.random()<.5) spawnMolecule(supplyPath,HOT,100,true);
 
-  // Hot molecules FILLING the sliding compartment — always present, bouncing around
-  // They represent the pressurized steam that fills the chamber at all times
+  // Hot molecules FILLING the compartment ABOVE the slider only
+  // (the space between compartment ceiling and slider top)
   if(run&&Math.random()<.8){
     const rx=VB.x+15+Math.random()*(VB.w-30);
-    const ry=VB.y+10+Math.random()*(VB.h-30);
-    // Short random path within the compartment (bouncing molecule)
+    const ry=VB.y+10+Math.random()*(slY-VB.y-15);
     const rx2=VB.x+15+Math.random()*(VB.w-30);
-    const ry2=VB.y+10+Math.random()*(VB.h-30);
+    const ry2=VB.y+10+Math.random()*(slY-VB.y-15);
     spawnMolecule([{x:rx,y:ry},{x:rx2,y:ry2}],HOT,40,true);
   }
 
