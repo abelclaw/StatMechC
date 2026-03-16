@@ -6645,282 +6645,6 @@ function initCh6Vis() {
     activeAnimations['nak-pump'] = requestAnimationFrame(animateNaK);
   }
 
-  // ----- System + Heat Reservoir -----
-  const cHR = document.getElementById('vis-heat-reservoir');
-  if (cHR) {
-    const {ctx: ctxHR, W: WHR, H: HHR} = setupCanvas(cHR);
-    const hrResetBtn = document.getElementById('hres-reset');
-    const hrEnergyDisplay = document.getElementById('hres-energy-display');
-
-    // Outer box = full canvas with margin; inner box = system
-    const margin = 20;
-    const outerL = margin, outerR = WHR - margin, outerT = margin, outerB = HHR - margin;
-    // Inner box: centered, smaller
-    const innerW = 160, innerH = 140;
-    const innerL = (WHR - innerW) / 2;
-    const innerR = innerL + innerW;
-    const innerT = (HHR - innerH) / 2;
-    const innerB = innerT + innerH;
-
-    const PR = 3; // particle radius
-    const N_INNER = 12;
-    const N_OUTER = 50;
-    let hrParticles = [];
-
-    // Wall deformations: {x, y, side, amount, decay}
-    let wallDents = [];
-
-    function initHR() {
-      hrParticles = [];
-      wallDents = [];
-      // Inner particles (system)
-      for (let i = 0; i < N_INNER; i++) {
-        const speed = 40 + Math.random() * 80;
-        const angle = Math.random() * 2 * Math.PI;
-        hrParticles.push({
-          x: innerL + PR + Math.random() * (innerW - 2 * PR),
-          y: innerT + PR + Math.random() * (innerH - 2 * PR),
-          vx: speed * Math.cos(angle),
-          vy: speed * Math.sin(angle),
-          inside: true
-        });
-      }
-      // Outer particles (reservoir)
-      for (let i = 0; i < N_OUTER; i++) {
-        const speed = 40 + Math.random() * 80;
-        const angle = Math.random() * 2 * Math.PI;
-        let x, y;
-        do {
-          x = outerL + PR + Math.random() * (outerR - outerL - 2 * PR);
-          y = outerT + PR + Math.random() * (outerB - outerT - 2 * PR);
-        } while (x > innerL - PR && x < innerR + PR && y > innerT - PR && y < innerB + PR);
-        hrParticles.push({
-          x, y,
-          vx: speed * Math.cos(angle),
-          vy: speed * Math.sin(angle),
-          inside: false
-        });
-      }
-    }
-
-    // sign: +1 = outward (hit from inside), -1 = inward (hit from outside)
-    function addDent(x, y, side, strength, sign) {
-      wallDents.push({x, y, side, amount: Math.min(strength * 0.15, 8) * (sign || 1), life: 1.0});
-    }
-
-    function getDentOffset(pos, side) {
-      // Sum up all dent contributions for a position along a given side
-      let offset = 0;
-      for (const d of wallDents) {
-        if (d.side !== side) continue;
-        let dist;
-        if (side === 'left' || side === 'right') {
-          dist = Math.abs(pos - d.y);
-        } else {
-          dist = Math.abs(pos - d.x);
-        }
-        const sigma = 18;
-        if (dist < sigma * 3) {
-          offset += d.amount * d.life * Math.exp(-dist * dist / (2 * sigma * sigma));
-        }
-      }
-      return offset;
-    }
-
-    // Find nearest particle on the other side near a wall hit point
-    function transferEnergy(hitter, wallX, wallY, hitNormal) {
-      // hitNormal: 'vx' or 'vy' — which velocity component was involved
-      const others = hrParticles.filter(q => q.inside !== hitter.inside);
-      let best = null, bestDist = 60; // search radius
-      for (const q of others) {
-        const d = Math.hypot(q.x - wallX, q.y - wallY);
-        if (d < bestDist) { bestDist = d; best = q; }
-      }
-      if (best) {
-        // Transfer fraction of the normal velocity component
-        const frac = 0.3;
-        if (hitNormal === 'vx') {
-          const transfer = hitter.vx * frac;
-          hitter.vx -= transfer;
-          best.vx += transfer;
-        } else {
-          const transfer = hitter.vy * frac;
-          hitter.vy -= transfer;
-          best.vy += transfer;
-        }
-      }
-    }
-
-    function stepHR() {
-      const dt = 0.016;
-      for (const p of hrParticles) {
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-
-        if (p.inside) {
-          // Bounce off inner walls
-          if (p.x < innerL + PR) {
-            p.x = innerL + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
-            addDent(innerL, p.y, 'left', Math.abs(oldVx));
-            transferEnergy(p, innerL, p.y, 'vx');
-          }
-          if (p.x > innerR - PR) {
-            p.x = innerR - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
-            addDent(innerR, p.y, 'right', Math.abs(oldVx));
-            transferEnergy(p, innerR, p.y, 'vx');
-          }
-          if (p.y < innerT + PR) {
-            p.y = innerT + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
-            addDent(p.x, innerT, 'top', Math.abs(oldVy));
-            transferEnergy(p, p.x, innerT, 'vy');
-          }
-          if (p.y > innerB - PR) {
-            p.y = innerB - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
-            addDent(p.x, innerB, 'bottom', Math.abs(oldVy));
-            transferEnergy(p, p.x, innerB, 'vy');
-          }
-        } else {
-          // Bounce off outer walls
-          if (p.x < outerL + PR) { p.x = outerL + PR; p.vx = Math.abs(p.vx); }
-          if (p.x > outerR - PR) { p.x = outerR - PR; p.vx = -Math.abs(p.vx); }
-          if (p.y < outerT + PR) { p.y = outerT + PR; p.vy = Math.abs(p.vy); }
-          if (p.y > outerB - PR) { p.y = outerB - PR; p.vy = -Math.abs(p.vy); }
-
-          // Bounce off inner box exterior
-          if (p.x > innerL - PR && p.x < innerR + PR &&
-              p.y > innerT - PR && p.y < innerB + PR) {
-            const dL = p.x - (innerL - PR);
-            const dR = (innerR + PR) - p.x;
-            const dT = p.y - (innerT - PR);
-            const dB = (innerB + PR) - p.y;
-            const minD = Math.min(dL, dR, dT, dB);
-            if (minD === dL) {
-              p.x = innerL - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
-              addDent(innerL, p.y, 'left', Math.abs(oldVx), -1);
-              transferEnergy(p, innerL, p.y, 'vx');
-            } else if (minD === dR) {
-              p.x = innerR + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
-              addDent(innerR, p.y, 'right', Math.abs(oldVx), -1);
-              transferEnergy(p, innerR, p.y, 'vx');
-            } else if (minD === dT) {
-              p.y = innerT - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
-              addDent(p.x, innerT, 'top', Math.abs(oldVy), -1);
-              transferEnergy(p, p.x, innerT, 'vy');
-            } else {
-              p.y = innerB + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
-              addDent(p.x, innerB, 'bottom', Math.abs(oldVy), -1);
-              transferEnergy(p, p.x, innerB, 'vy');
-            }
-          }
-        }
-      }
-
-      // Decay dents
-      for (let i = wallDents.length - 1; i >= 0; i--) {
-        wallDents[i].life -= 0.04;
-        if (wallDents[i].life <= 0) wallDents.splice(i, 1);
-      }
-    }
-
-    function drawHR() {
-      clearCanvas(ctxHR, WHR, HHR);
-
-      // Outer box
-      ctxHR.strokeStyle = COLORS.axis;
-      ctxHR.lineWidth = 2;
-      ctxHR.strokeRect(outerL, outerT, outerR - outerL, outerB - outerT);
-
-      // Inner box with dent deformations
-      ctxHR.strokeStyle = COLORS.orange;
-      ctxHR.lineWidth = 2.5;
-      ctxHR.beginPath();
-
-      // Top side (left to right)
-      const steps = 40;
-      for (let i = 0; i <= steps; i++) {
-        const x = innerL + (innerR - innerL) * i / steps;
-        const offset = getDentOffset(x, 'top');
-        const y = innerT - offset; // dent pushes outward (up)
-        if (i === 0) ctxHR.moveTo(x, y); else ctxHR.lineTo(x, y);
-      }
-      // Right side (top to bottom)
-      for (let i = 0; i <= steps; i++) {
-        const y = innerT + (innerB - innerT) * i / steps;
-        const offset = getDentOffset(y, 'right');
-        const x = innerR + offset; // dent pushes outward (right)
-        ctxHR.lineTo(x, y);
-      }
-      // Bottom side (right to left)
-      for (let i = steps; i >= 0; i--) {
-        const x = innerL + (innerR - innerL) * i / steps;
-        const offset = getDentOffset(x, 'bottom');
-        const y = innerB + offset; // dent pushes outward (down)
-        ctxHR.lineTo(x, y);
-      }
-      // Left side (bottom to top)
-      for (let i = steps; i >= 0; i--) {
-        const y = innerT + (innerB - innerT) * i / steps;
-        const offset = getDentOffset(y, 'left');
-        const x = innerL - offset; // dent pushes outward (left)
-        ctxHR.lineTo(x, y);
-      }
-      ctxHR.closePath();
-      ctxHR.stroke();
-
-      // Glow on active dents
-      for (const d of wallDents) {
-        if (d.life > 0.5) {
-          ctxHR.save();
-          ctxHR.globalAlpha = (d.life - 0.5) * 2 * 0.6;
-          ctxHR.fillStyle = COLORS.yellow;
-          ctxHR.beginPath();
-          ctxHR.arc(d.x || innerL, d.y || innerT, 6, 0, 2 * Math.PI);
-          ctxHR.fill();
-          ctxHR.restore();
-        }
-      }
-
-      // Draw particles
-      for (const p of hrParticles) {
-        ctxHR.beginPath();
-        ctxHR.arc(p.x, p.y, PR, 0, 2 * Math.PI);
-        ctxHR.fillStyle = p.inside ? COLORS.blue : COLORS.red;
-        ctxHR.fill();
-      }
-
-      // Labels
-      ctxHR.fillStyle = COLORS.text;
-      ctxHR.font = FONT_LG;
-      ctxHR.textAlign = 'center';
-      ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 18);
-      ctxHR.fillStyle = COLORS.textDim;
-      ctxHR.font = FONT_SM;
-      ctxHR.fillText('Heat Reservoir', WHR / 2, outerT + 14);
-
-      // Energy display
-      let eInner = 0, eOuter = 0;
-      for (const p of hrParticles) {
-        const ke = 0.5 * (p.vx * p.vx + p.vy * p.vy);
-        if (p.inside) eInner += ke; else eOuter += ke;
-      }
-      if (hrEnergyDisplay) {
-        hrEnergyDisplay.textContent = 'E_sys = ' + (eInner / N_INNER).toFixed(0) + '  |  E_res = ' + (eOuter / N_OUTER).toFixed(0);
-      }
-    }
-
-    function animateHR() {
-      stepHR();
-      drawHR();
-      activeAnimations['heat-reservoir'] = requestAnimationFrame(animateHR);
-    }
-
-    hrResetBtn?.addEventListener('click', () => {
-      initHR();
-    });
-
-    initHR();
-    animateHR();
-  }
 }
 
 
@@ -7287,118 +7011,273 @@ function initCh7Vis() {
   }
 
   // ----- System + Heat Reservoir -----
+  // ----- System + Heat Reservoir (gas simulation) -----
   const cRes = document.getElementById('vis-reservoir');
   if (cRes) {
-    const {ctx: ctxR, W: WR, H: HR} = setupCanvas(cRes);
-    const resTempSlider = document.getElementById('res-temp');
+    const {ctx: ctxHR, W: WHR, H: HHR} = setupCanvas(cRes);
+    const hrResetBtn = document.getElementById('hres-reset');
+    const hrEnergyDisplay = document.getElementById('hres-energy-display');
 
-    let energyHistory = [];
-    let resAnim = false;
-    let currentE = 2.0;
+    // Outer box = full canvas with margin; inner box = system
+    const hrMargin = 20;
+    const outerL = hrMargin, outerR = WHR - hrMargin, outerT = hrMargin, outerB = HHR - hrMargin;
+    // Inner box: centered, smaller
+    const innerW = 160, innerH = 140;
+    const innerL = (WHR - innerW) / 2;
+    const innerR = innerL + innerW;
+    const innerT = (HHR - innerH) / 2;
+    const innerB = innerT + innerH;
 
-    function drawReservoir() {
-      clearCanvas(ctxR, WR, HR);
-      const T = parseFloat(resTempSlider?.value || 2.0);
+    const PR = 3; // particle radius
+    const N_INNER = 12;
+    const N_OUTER = 50;
+    let hrParticles = [];
 
-      // Left: physical picture
-      // Reservoir (large box)
-      ctxR.fillStyle = 'rgba(220,80,40,0.1)';
-      ctxR.fillRect(20, 20, 200, HR - 40);
-      ctxR.strokeStyle = COLORS.axis; ctxR.lineWidth = 2;
-      ctxR.strokeRect(20, 20, 200, HR - 40);
-      ctxR.fillStyle = COLORS.orange; ctxR.font = FONT; ctxR.textAlign = 'center';
-      ctxR.fillText('Reservoir (T = ' + T.toFixed(1) + ')', 120, HR - 10);
+    // Wall deformations: {x, y, side, amount, life}
+    let wallDents = [];
 
-      // System (small box inside)
-      const sysW = 70, sysH = 60;
-      const sx = 85, sy = HR / 2 - sysH / 2;
-      ctxR.fillStyle = 'rgba(79,195,247,0.25)';
-      ctxR.fillRect(sx, sy, sysW, sysH);
-      ctxR.strokeStyle = COLORS.blue; ctxR.lineWidth = 2;
-      ctxR.strokeRect(sx, sy, sysW, sysH);
-      ctxR.fillStyle = COLORS.blue; ctxR.font = FONT; ctxR.textAlign = 'center';
-      ctxR.fillText('System', sx + sysW / 2, sy + sysH / 2 + 5);
-      ctxR.fillStyle = COLORS.text; ctxR.font = FONT_SM;
-      ctxR.fillText('E = ' + currentE.toFixed(1), sx + sysW / 2, sy + sysH / 2 + 20);
-
-      // Energy exchange arrows
-      ctxR.strokeStyle = COLORS.yellow; ctxR.lineWidth = 1.5;
-      drawArrow(ctxR, sx - 15, sy + sysH / 2 - 8, sx - 3, sy + sysH / 2 - 8, 5);
-      drawArrow(ctxR, sx + sysW + 3, sy + sysH / 2 + 8, sx + sysW + 15, sy + sysH / 2 + 8, 5);
-      ctxR.fillStyle = COLORS.yellow; ctxR.font = '10px Inter, system-ui, sans-serif'; ctxR.textAlign = 'center';
-      ctxR.fillText('Q', sx - 10, sy + sysH / 2 - 15);
-
-      // Right: energy distribution
-      const ox = 260, oy = 30, pw = WR - ox - 30, ph = HR - 70;
-      drawAxes(ctxR, ox, oy, pw, ph, {xLabel: 'Energy E', yLabel: 'P(E)'});
-
-      // Boltzmann distribution
-      const Emax = 10;
-      ctxR.strokeStyle = COLORS.blue; ctxR.lineWidth = 2;
-      ctxR.beginPath();
-      for (let i = 0; i <= 200; i++) {
-        const E = (i / 200) * Emax;
-        const P = Math.exp(-E / T) / T; // normalized for continuous
-        const px = ox + (E / Emax) * pw;
-        const py = oy + ph * (1 - P * T);
-        if (py > oy + ph) continue;
-        if (i === 0) ctxR.moveTo(px, py); else ctxR.lineTo(px, py);
+    function initHR() {
+      hrParticles = [];
+      wallDents = [];
+      // Inner particles (system)
+      for (let i = 0; i < N_INNER; i++) {
+        const speed = 40 + Math.random() * 80;
+        const angle = Math.random() * 2 * Math.PI;
+        hrParticles.push({
+          x: innerL + PR + Math.random() * (innerW - 2 * PR),
+          y: innerT + PR + Math.random() * (innerH - 2 * PR),
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle),
+          inside: true
+        });
       }
-      ctxR.stroke();
-
-      // Energy histogram from history
-      if (energyHistory.length > 10) {
-        const nBins = 20;
-        const bins = Array(nBins).fill(0);
-        for (const e of energyHistory) {
-          const bi = Math.min(Math.floor(e / Emax * nBins), nBins - 1);
-          if (bi >= 0) bins[bi]++;
-        }
-        const maxBin = Math.max(...bins);
-        const binW = pw / nBins;
-        for (let i = 0; i < nBins; i++) {
-          const bH = (bins[i] / maxBin) * ph * 0.8;
-          ctxR.fillStyle = 'rgba(79,195,247,0.3)';
-          ctxR.fillRect(ox + i * binW, oy + ph - bH, binW - 1, bH);
-        }
+      // Outer particles (reservoir)
+      for (let i = 0; i < N_OUTER; i++) {
+        const speed = 40 + Math.random() * 80;
+        const angle = Math.random() * 2 * Math.PI;
+        let x, y;
+        do {
+          x = outerL + PR + Math.random() * (outerR - outerL - 2 * PR);
+          y = outerT + PR + Math.random() * (outerB - outerT - 2 * PR);
+        } while (x > innerL - PR && x < innerR + PR && y > innerT - PR && y < innerB + PR);
+        hrParticles.push({
+          x, y,
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle),
+          inside: false
+        });
       }
-
-      // Current energy marker
-      const ex = ox + (currentE / Emax) * pw;
-      ctxR.strokeStyle = COLORS.green; ctxR.lineWidth = 2;
-      ctxR.beginPath(); ctxR.moveTo(ex, oy); ctxR.lineTo(ex, oy + ph); ctxR.stroke();
-
-      ctxR.fillStyle = COLORS.text; ctxR.font = FONT_LG; ctxR.textAlign = 'left';
-      ctxR.fillText('Energy Distribution P(E) ∝ e^{−E/kT}', ox + 5, oy - 8);
-
-      document.getElementById('res-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(1)));
     }
 
-    function animateReservoir() {
-      if (!resAnim) return;
-      const T = parseFloat(resTempSlider?.value || 2.0);
-      // Metropolis-like updates
-      const dE = (Math.random() - 0.5) * T * 2;
-      const newE = currentE + dE;
-      if (newE > 0) {
-        if (dE < 0 || Math.random() < Math.exp(-dE / T)) {
-          currentE = newE;
-        }
-      }
-      energyHistory.push(currentE);
-      if (energyHistory.length > 500) energyHistory.shift();
-      drawReservoir();
-      activeAnimations['reservoir'] = requestAnimationFrame(animateReservoir);
+    // sign: +1 = outward (hit from inside), -1 = inward (hit from outside)
+    function addDent(x, y, side, strength, sign) {
+      wallDents.push({x, y, side, amount: Math.min(strength * 0.15, 8) * (sign || 1), life: 1.0});
     }
 
-    resTempSlider?.addEventListener('input', () => {
-      energyHistory = [];
-      drawReservoir();
+    function getDentOffset(pos, side) {
+      let offset = 0;
+      for (const d of wallDents) {
+        if (d.side !== side) continue;
+        let dist;
+        if (side === 'left' || side === 'right') {
+          dist = Math.abs(pos - d.y);
+        } else {
+          dist = Math.abs(pos - d.x);
+        }
+        const sigma = 18;
+        if (dist < sigma * 3) {
+          offset += d.amount * d.life * Math.exp(-dist * dist / (2 * sigma * sigma));
+        }
+      }
+      return offset;
+    }
+
+    // Find nearest particle on the other side and transfer energy through wall
+    function transferEnergy(hitter, wallX, wallY, hitNormal) {
+      const others = hrParticles.filter(q => q.inside !== hitter.inside);
+      let best = null, bestDist = 60;
+      for (const q of others) {
+        const d = Math.hypot(q.x - wallX, q.y - wallY);
+        if (d < bestDist) { bestDist = d; best = q; }
+      }
+      if (best) {
+        const frac = 0.3;
+        if (hitNormal === 'vx') {
+          const transfer = hitter.vx * frac;
+          hitter.vx -= transfer;
+          best.vx += transfer;
+        } else {
+          const transfer = hitter.vy * frac;
+          hitter.vy -= transfer;
+          best.vy += transfer;
+        }
+      }
+    }
+
+    function stepHR() {
+      const dt = 0.016;
+      for (const p of hrParticles) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        if (p.inside) {
+          if (p.x < innerL + PR) {
+            p.x = innerL + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
+            addDent(innerL, p.y, 'left', Math.abs(oldVx));
+            transferEnergy(p, innerL, p.y, 'vx');
+          }
+          if (p.x > innerR - PR) {
+            p.x = innerR - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
+            addDent(innerR, p.y, 'right', Math.abs(oldVx));
+            transferEnergy(p, innerR, p.y, 'vx');
+          }
+          if (p.y < innerT + PR) {
+            p.y = innerT + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
+            addDent(p.x, innerT, 'top', Math.abs(oldVy));
+            transferEnergy(p, p.x, innerT, 'vy');
+          }
+          if (p.y > innerB - PR) {
+            p.y = innerB - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
+            addDent(p.x, innerB, 'bottom', Math.abs(oldVy));
+            transferEnergy(p, p.x, innerB, 'vy');
+          }
+        } else {
+          if (p.x < outerL + PR) { p.x = outerL + PR; p.vx = Math.abs(p.vx); }
+          if (p.x > outerR - PR) { p.x = outerR - PR; p.vx = -Math.abs(p.vx); }
+          if (p.y < outerT + PR) { p.y = outerT + PR; p.vy = Math.abs(p.vy); }
+          if (p.y > outerB - PR) { p.y = outerB - PR; p.vy = -Math.abs(p.vy); }
+
+          // Bounce off inner box exterior
+          if (p.x > innerL - PR && p.x < innerR + PR &&
+              p.y > innerT - PR && p.y < innerB + PR) {
+            const dL = p.x - (innerL - PR);
+            const dR = (innerR + PR) - p.x;
+            const dT = p.y - (innerT - PR);
+            const dB = (innerB + PR) - p.y;
+            const minD = Math.min(dL, dR, dT, dB);
+            if (minD === dL) {
+              p.x = innerL - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
+              addDent(innerL, p.y, 'left', Math.abs(oldVx), -1);
+              transferEnergy(p, innerL, p.y, 'vx');
+            } else if (minD === dR) {
+              p.x = innerR + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
+              addDent(innerR, p.y, 'right', Math.abs(oldVx), -1);
+              transferEnergy(p, innerR, p.y, 'vx');
+            } else if (minD === dT) {
+              p.y = innerT - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
+              addDent(p.x, innerT, 'top', Math.abs(oldVy), -1);
+              transferEnergy(p, p.x, innerT, 'vy');
+            } else {
+              p.y = innerB + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
+              addDent(p.x, innerB, 'bottom', Math.abs(oldVy), -1);
+              transferEnergy(p, p.x, innerB, 'vy');
+            }
+          }
+        }
+      }
+
+      // Decay dents
+      for (let i = wallDents.length - 1; i >= 0; i--) {
+        wallDents[i].life -= 0.04;
+        if (wallDents[i].life <= 0) wallDents.splice(i, 1);
+      }
+    }
+
+    function drawHR() {
+      clearCanvas(ctxHR, WHR, HHR);
+
+      // Outer box
+      ctxHR.strokeStyle = COLORS.axis;
+      ctxHR.lineWidth = 2;
+      ctxHR.strokeRect(outerL, outerT, outerR - outerL, outerB - outerT);
+
+      // Inner box with dent deformations
+      ctxHR.strokeStyle = COLORS.orange;
+      ctxHR.lineWidth = 2.5;
+      ctxHR.beginPath();
+
+      const steps = 40;
+      // Top side
+      for (let i = 0; i <= steps; i++) {
+        const x = innerL + (innerR - innerL) * i / steps;
+        const offset = getDentOffset(x, 'top');
+        const y = innerT - offset;
+        if (i === 0) ctxHR.moveTo(x, y); else ctxHR.lineTo(x, y);
+      }
+      // Right side
+      for (let i = 0; i <= steps; i++) {
+        const y = innerT + (innerB - innerT) * i / steps;
+        const offset = getDentOffset(y, 'right');
+        ctxHR.lineTo(innerR + offset, y);
+      }
+      // Bottom side
+      for (let i = steps; i >= 0; i--) {
+        const x = innerL + (innerR - innerL) * i / steps;
+        const offset = getDentOffset(x, 'bottom');
+        ctxHR.lineTo(x, innerB + offset);
+      }
+      // Left side
+      for (let i = steps; i >= 0; i--) {
+        const y = innerT + (innerB - innerT) * i / steps;
+        const offset = getDentOffset(y, 'left');
+        ctxHR.lineTo(innerL - offset, y);
+      }
+      ctxHR.closePath();
+      ctxHR.stroke();
+
+      // Glow on active dents
+      for (const d of wallDents) {
+        if (d.life > 0.5) {
+          ctxHR.save();
+          ctxHR.globalAlpha = (d.life - 0.5) * 2 * 0.6;
+          ctxHR.fillStyle = COLORS.yellow;
+          ctxHR.beginPath();
+          ctxHR.arc(d.x, d.y, 6, 0, 2 * Math.PI);
+          ctxHR.fill();
+          ctxHR.restore();
+        }
+      }
+
+      // Draw particles
+      for (const p of hrParticles) {
+        ctxHR.beginPath();
+        ctxHR.arc(p.x, p.y, PR, 0, 2 * Math.PI);
+        ctxHR.fillStyle = p.inside ? COLORS.blue : COLORS.red;
+        ctxHR.fill();
+      }
+
+      // Labels
+      ctxHR.fillStyle = COLORS.text;
+      ctxHR.font = FONT_LG;
+      ctxHR.textAlign = 'center';
+      ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 18);
+      ctxHR.fillStyle = COLORS.textDim;
+      ctxHR.font = FONT_SM;
+      ctxHR.fillText('Heat Reservoir', WHR / 2, outerT + 14);
+
+      // Energy display
+      let eInner = 0, eOuter = 0;
+      for (const p of hrParticles) {
+        const ke = 0.5 * (p.vx * p.vx + p.vy * p.vy);
+        if (p.inside) eInner += ke; else eOuter += ke;
+      }
+      if (hrEnergyDisplay) {
+        hrEnergyDisplay.textContent = 'E_sys = ' + (eInner / N_INNER).toFixed(0) + '  |  E_res = ' + (eOuter / N_OUTER).toFixed(0);
+      }
+    }
+
+    function animateHR() {
+      stepHR();
+      drawHR();
+      activeAnimations['reservoir'] = requestAnimationFrame(animateHR);
+    }
+
+    hrResetBtn?.addEventListener('click', () => {
+      initHR();
     });
 
-    energyHistory = [];
-    resAnim = true;
-    animateReservoir();
+    initHR();
+    animateHR();
   }
 
   // ----- Volume Exchange (Gibbs Ensemble) -----
