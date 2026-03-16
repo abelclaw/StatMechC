@@ -21,6 +21,16 @@
 
 <div class="equation key-result">$$\Delta S_{\text{system}} = \int_{\text{rev.}} \frac{dQ_{\text{in}}}{T} \qquad \text{(Clausius entropy)}$$<span class="eq-number">(2)</span></div>
 
+<div class="interactive-wrapper">
+<h4>Interactive: System + Heat Reservoir</h4>
+<canvas id="vis-heat-reservoir" width="600" height="380"></canvas>
+<div class="controls">
+<button id="hres-reset">Reset</button>
+<span id="hres-energy-display" style="color:#ffee58; font-size:13px;"></span>
+</div>
+<figcaption>A small system (inner box) exchanges energy with a large heat reservoir (outer region). When a particle hits the shared wall, the wall deforms briefly at the impact point &mdash; energy flows in or out. Watch the system energy fluctuate around its average while the reservoir stays nearly constant.</figcaption>
+</div>
+
 <p>In statistical mechanics, we can define the entropy as</p>
 
 <div class="equation key-result">$$S = k_B \ln \Omega \qquad \text{(Boltzmann entropy)}$$<span class="eq-number">(3)</span></div>
@@ -345,14 +355,14 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <p>The connection was pushed further by Charles Bennett in the 1980s. Bennett considered a digital tape where information is stored in the position of gas molecules: molecule in the bottom half is 0, top half is 1.</p>
 
-<div class="interactive-wrapper">
-<h4>Interactive: Szilard Engine</h4>
-<canvas id="vis-szilard" width="600" height="350"></canvas>
-<div class="controls">
+<div class="visualization">
+<div class="vis-header"><span class="vis-icon">⚙</span> Interactive: Szilard Engine</div>
+<div class="vis-canvas-wrap"><canvas id="vis-szilard" width="600" height="350"></canvas></div>
+<div class="vis-controls">
 <button id="szilard-step">Next Step</button>
 <button id="szilard-reset">Reset</button>
+<span style="color:var(--text-muted)">Click through each step — watch the molecule push the piston</span>
 </div>
-<figcaption>Szilard's engine: insert a partition, measure which half the molecule is in, then let isothermal expansion extract work W = k<sub>B</sub>T ln 2. Click through each step.</figcaption>
 </div>
 
 <p>For an individual cell, if we know whether it's 0 or 1, we can use that information to do work. Bennett proposed putting pistons on both the top and bottom. If the molecule is on the bottom, lower the top piston to isolate it, then remove the dividing membrane and let the thermal motion push the piston up, drawing heat from the bath and doing useful work. This is known as <span class="tooltip-trigger">Szilard's engine<span class="tooltip-content">A thought experiment showing that one bit of information about a molecule's position can be converted into $k_BT\ln 2$ of work.</span></span>.</p>

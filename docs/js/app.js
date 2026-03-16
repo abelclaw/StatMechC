@@ -5382,134 +5382,300 @@ function initCh6Vis() {
     const stepBtn = document.getElementById('szilard-step');
     const resetBtnSz = document.getElementById('szilard-reset');
 
-    let szStep = 0; // 0: free molecule, 1: partition inserted, 2: measured, 3: piston lowered, 4: expansion done
-    let moleculeSide = Math.random() < 0.5 ? 'top' : 'bottom';
+    const BALL_R = 14;
+    // 0: free, 1: partition in, 2: measured (highlight side), 3: piston placed on empty side, 4: partition removed – ball pushes piston
+    let szStep = 0;
+    let moleculeSide; // 'top' or 'bottom'
     let molX, molY, molVx, molVy;
-    let pistonY = 0; // 0 = retracted, grows during expansion
+    let pistonPos;   // distance piston has been pushed from its starting wall
+    let pistonVel;   // piston velocity (from ball hits)
+    let workDone;    // accumulated work
+    let flashTimer;  // flash on collision
     let szAnim = false;
+
+    // Box geometry
+    const boxL = 40, boxT = 30;
+    const boxW = 180, boxH_fn = () => HSz - 60;
+    function boxB() { return boxT + boxH_fn(); }
+    function boxCy() { return HSz / 2; }
 
     function initSzilard() {
       szStep = 0;
-      moleculeSide = Math.random() < 0.5 ? 'top' : 'bottom';
-      const cy = HSz / 2;
+      moleculeSide = null; // determined when partition is inserted
+      const bH = boxH_fn();
+      // Place ball randomly in the full box
+      molX = boxL + BALL_R + 10 + Math.random() * (boxW - 2 * BALL_R - 20);
+      molY = boxT + BALL_R + 10 + Math.random() * (bH - 2 * BALL_R - 20);
+      const speed = 120;
+      const angle = Math.random() * 2 * Math.PI;
+      molVx = speed * Math.cos(angle);
+      molVy = speed * Math.sin(angle);
+      pistonPos = 0;
+      pistonVel = 0;
+      workDone = 0;
+      flashTimer = 0;
+    }
+
+    function pistonYPos() {
+      // Returns the y-coordinate of the piston face (the side the ball hits)
       if (moleculeSide === 'top') {
-        molX = 80 + Math.random() * 100;
-        molY = 50 + Math.random() * (cy - 70);
+        // Piston on bottom side, starts at boxB and moves up
+        return boxB() - pistonPos;
       } else {
-        molX = 80 + Math.random() * 100;
-        molY = cy + 20 + Math.random() * (cy - 70);
+        // Piston on top side, starts at boxT and moves down
+        return boxT + pistonPos;
       }
-      molVx = (Math.random() - 0.5) * 100;
-      molVy = (Math.random() - 0.5) * 100;
-      pistonY = 0;
     }
 
     function drawSzilard() {
       clearCanvas(ctxSz, WSz, HSz);
-      const cx = 140, cy = HSz / 2;
-      const boxW = 160, boxH = HSz - 60;
-      const boxL = cx - boxW / 2, boxT = 30, boxB = boxT + boxH;
+      const bH = boxH_fn();
+      const cy = boxCy();
+      const bB = boxB();
 
       // Box
       ctxSz.strokeStyle = COLORS.axis; ctxSz.lineWidth = 2;
-      ctxSz.strokeRect(boxL, boxT, boxW, boxH);
+      ctxSz.strokeRect(boxL, boxT, boxW, bH);
 
-      // Partition (step >= 1)
-      if (szStep >= 1 && szStep < 4) {
+      // Partition (steps 1-3, removed at step 4)
+      if (szStep >= 1 && szStep <= 3) {
+        ctxSz.save();
         ctxSz.strokeStyle = COLORS.orange; ctxSz.lineWidth = 3;
+        ctxSz.setLineDash(szStep >= 2 ? [] : [6, 4]);
         ctxSz.beginPath(); ctxSz.moveTo(boxL, cy); ctxSz.lineTo(boxL + boxW, cy); ctxSz.stroke();
-        ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
-        ctxSz.fillText('Partition', boxL + boxW + 5, cy + 4);
+        ctxSz.restore();
+      }
+
+      // Measurement highlight (step 2): shade the molecule's half
+      if (szStep === 2) {
+        ctxSz.fillStyle = 'rgba(102, 187, 106, 0.08)';
+        if (moleculeSide === 'top') {
+          ctxSz.fillRect(boxL + 1, boxT + 1, boxW - 2, bH / 2 - 1);
+        } else {
+          ctxSz.fillRect(boxL + 1, cy + 1, boxW - 2, bH / 2 - 2);
+        }
       }
 
       // Piston (step >= 3)
       if (szStep >= 3) {
-        const pistonSide = moleculeSide === 'top' ? 'bottom' : 'top';
-        let py;
-        if (pistonSide === 'top') {
-          py = boxT + pistonY;
+        const py = pistonYPos();
+        const pistonH = 10;
+        // Piston body
+        const flash = flashTimer > 0 ? Math.min(1, flashTimer / 6) : 0;
+        const r = Math.round(171 + flash * 84);
+        const g = Math.round(71 + flash * 100);
+        const b = Math.round(188 + flash * 67);
+        ctxSz.fillStyle = `rgb(${r},${g},${b})`;
+        if (moleculeSide === 'top') {
+          // piston face at py, body extends down
+          ctxSz.fillRect(boxL + 2, py, boxW - 4, pistonH);
+          // Rod extending down from piston
+          ctxSz.fillStyle = COLORS.axis;
+          ctxSz.fillRect(boxL + boxW / 2 - 3, py + pistonH, 6, bB - py - pistonH);
         } else {
-          py = boxB - pistonY;
+          // piston face at py, body extends up
+          ctxSz.fillRect(boxL + 2, py - pistonH, boxW - 4, pistonH);
+          // Rod extending up
+          ctxSz.fillStyle = COLORS.axis;
+          ctxSz.fillRect(boxL + boxW / 2 - 3, boxT, 6, py - pistonH - boxT);
         }
-        ctxSz.fillStyle = COLORS.purple;
-        ctxSz.fillRect(boxL + 2, py - 4, boxW - 4, 8);
+        // Piston label
         ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
-        ctxSz.fillText('Piston', boxL + boxW + 5, py + 4);
+        ctxSz.fillText('Piston', boxL + boxW + 8, py + 4);
       }
 
-      // Molecule
-      ctxSz.beginPath(); ctxSz.arc(molX, molY, 6, 0, 2 * Math.PI);
+      // Partition label
+      if (szStep >= 1 && szStep <= 3) {
+        ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
+        ctxSz.fillText('Partition', boxL + boxW + 8, cy + 4);
+      }
+
+      // Ball (with glow on collision)
+      ctxSz.save();
+      if (flashTimer > 0) {
+        ctxSz.shadowColor = COLORS.yellow;
+        ctxSz.shadowBlur = 15;
+      }
+      ctxSz.beginPath(); ctxSz.arc(molX, molY, BALL_R, 0, 2 * Math.PI);
       ctxSz.fillStyle = COLORS.green; ctxSz.fill();
+      ctxSz.restore();
+      // Ball highlight
+      ctxSz.beginPath(); ctxSz.arc(molX - 4, molY - 4, 4, 0, 2 * Math.PI);
+      ctxSz.fillStyle = 'rgba(255,255,255,0.3)'; ctxSz.fill();
 
-      // Step descriptions (right panel)
-      const tx = 300, ty = 40;
-      const steps = [
-        '1. Molecule bounces freely in box',
-        '2. Insert partition (no work done)',
-        '3. Measure: molecule is on ' + moleculeSide + ' side',
-        '4. Lower piston on empty side',
-        '5. Remove partition → molecule pushes piston!'
-      ];
-      for (let i = 0; i < steps.length; i++) {
-        ctxSz.fillStyle = i === szStep ? COLORS.yellow : COLORS.textDim;
-        ctxSz.font = i === szStep ? FONT : FONT_SM;
-        ctxSz.textAlign = 'left';
-        ctxSz.fillText(steps[i], tx, ty + i * 28);
+      // Side labels on box
+      if (szStep >= 1 && szStep <= 3) {
+        ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'center';
+        ctxSz.fillText('Top', boxL + boxW / 2, boxT + 16);
+        ctxSz.fillText('Bottom', boxL + boxW / 2, bB - 6);
       }
 
-      // Work extracted
+      // Right panel: step descriptions
+      const tx = boxL + boxW + 50, ty = 38;
+      const sideLabel = moleculeSide ? moleculeSide.charAt(0).toUpperCase() + moleculeSide.slice(1) : '?';
+      const emptySide = moleculeSide === 'top' ? 'bottom' : 'top';
+      const emptySideLabel = emptySide.charAt(0).toUpperCase() + emptySide.slice(1);
+      const steps = [
+        'Molecule bounces freely',
+        'Insert partition',
+        'Measure: molecule is ' + sideLabel,
+        'Place piston on ' + emptySideLabel + ' side',
+        'Remove partition \u2014 molecule pushes piston!'
+      ];
+      ctxSz.textAlign = 'left';
+      for (let i = 0; i < steps.length; i++) {
+        const active = i === szStep;
+        ctxSz.fillStyle = active ? COLORS.yellow : (i < szStep ? COLORS.green : COLORS.textDim);
+        ctxSz.font = active ? 'bold ' + FONT : FONT_SM;
+        const marker = i < szStep ? '\u2713 ' : (i === szStep ? '\u25B6 ' : '  ');
+        ctxSz.fillText(marker + (i + 1) + '. ' + steps[i], tx, ty + i * 26);
+      }
+
+      // Work meter (step 4)
       if (szStep >= 4) {
-        ctxSz.fillStyle = COLORS.green; ctxSz.font = FONT_LG; ctxSz.textAlign = 'left';
-        ctxSz.fillText('Work extracted: W = k_BT ln 2', tx, ty + 170);
-        ctxSz.fillStyle = COLORS.red; ctxSz.font = FONT;
-        ctxSz.fillText('1 bit of information → k_BT ln 2 of work', tx, ty + 195);
+        const meterX = tx, meterY = ty + 160;
+        const meterW = 180, meterH = 18;
+        const maxWork = bH / 2 - BALL_R - 10; // max piston travel
+        const frac = Math.min(1, pistonPos / maxWork);
+
+        ctxSz.fillStyle = COLORS.textDim; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
+        ctxSz.fillText('Work extracted:', meterX, meterY - 6);
+
+        // Bar background
+        ctxSz.fillStyle = 'rgba(255,255,255,0.08)';
+        ctxSz.fillRect(meterX, meterY, meterW, meterH);
+        // Bar fill
+        const grad = ctxSz.createLinearGradient(meterX, 0, meterX + meterW * frac, 0);
+        grad.addColorStop(0, COLORS.green);
+        grad.addColorStop(1, COLORS.yellow);
+        ctxSz.fillStyle = grad;
+        ctxSz.fillRect(meterX, meterY, meterW * frac, meterH);
+        // Border
+        ctxSz.strokeStyle = COLORS.axis; ctxSz.lineWidth = 1;
+        ctxSz.strokeRect(meterX, meterY, meterW, meterH);
+
+        // Label
+        ctxSz.fillStyle = COLORS.text; ctxSz.font = FONT_SM; ctxSz.textAlign = 'left';
+        const label = frac >= 0.95 ? 'W = k_BT ln 2' : (frac * 100).toFixed(0) + '%';
+        ctxSz.fillText(label, meterX + meterW + 8, meterY + 13);
+
+        if (frac >= 0.95) {
+          ctxSz.fillStyle = COLORS.green; ctxSz.font = 'bold ' + FONT_LG; ctxSz.textAlign = 'left';
+          ctxSz.fillText('1 bit of information \u2192 k_BT ln 2 of work', meterX, meterY + 40);
+        }
       }
 
       // Title
       ctxSz.fillStyle = COLORS.text; ctxSz.font = FONT_LG; ctxSz.textAlign = 'left';
-      ctxSz.fillText("Szilard's Engine", tx, 22);
+      ctxSz.fillText("Szilard's Engine", tx, 16);
     }
 
     function animateSzilard() {
       if (!szAnim) return;
-      const dt = 0.016;
-      const cx = 140, cy = HSz / 2;
-      const boxW = 160, boxH = HSz - 60;
-      const boxL = cx - boxW / 2, boxT = 30, boxB = boxT + boxH;
+      const dt = 1 / 60;
+      const bH = boxH_fn();
+      const cy = boxCy();
+      const bB = boxB();
+      const r = BALL_R;
+
+      // Thermal kicks: add small random velocity to simulate thermal bath
+      if (szStep >= 4) {
+        molVx += (Math.random() - 0.5) * 300 * dt;
+        molVy += (Math.random() - 0.5) * 300 * dt;
+        // Clamp speed so it doesn't go crazy
+        const spd = Math.sqrt(molVx * molVx + molVy * molVy);
+        const maxSpd = 200;
+        if (spd > maxSpd) { molVx *= maxSpd / spd; molVy *= maxSpd / spd; }
+      }
 
       molX += molVx * dt;
       molY += molVy * dt;
 
       // Wall bounces
-      if (molX < boxL + 8) { molX = boxL + 8; molVx = Math.abs(molVx); }
-      if (molX > boxL + boxW - 8) { molX = boxL + boxW - 8; molVx = -Math.abs(molVx); }
-      if (molY < boxT + 8) { molY = boxT + 8; molVy = Math.abs(molVy); }
-      if (molY > boxB - 8) { molY = boxB - 8; molVy = -Math.abs(molVy); }
+      if (molX < boxL + r) { molX = boxL + r; molVx = Math.abs(molVx); }
+      if (molX > boxL + boxW - r) { molX = boxL + boxW - r; molVx = -Math.abs(molVx); }
+      if (molY < boxT + r) { molY = boxT + r; molVy = Math.abs(molVy); }
+      if (molY > bB - r) { molY = bB - r; molVy = -Math.abs(molVy); }
 
-      // Partition bounce
-      if (szStep >= 1 && szStep < 4) {
-        if (moleculeSide === 'top' && molY > cy - 8) { molY = cy - 8; molVy = -Math.abs(molVy); }
-        if (moleculeSide === 'bottom' && molY < cy + 8) { molY = cy + 8; molVy = Math.abs(molVy); }
+      // Partition bounce (steps 1-3)
+      if (szStep >= 1 && szStep <= 3) {
+        if (moleculeSide === 'top' && molY + r > cy) { molY = cy - r; molVy = -Math.abs(molVy); }
+        if (moleculeSide === 'bottom' && molY - r < cy) { molY = cy + r; molVy = Math.abs(molVy); }
       }
 
-      // Piston expansion (step 4)
-      if (szStep >= 4 && pistonY < boxH / 2 - 10) {
-        pistonY += 40 * dt;
-        // Molecule pushes against piston
-        const pistonSide = moleculeSide === 'top' ? 'bottom' : 'top';
-        if (pistonSide === 'top') {
-          if (molY < boxT + pistonY + 8) { molY = boxT + pistonY + 8; molVy = Math.abs(molVy); }
+      // Piston interaction (step 3: piston is wall; step 4: ball pushes piston)
+      if (szStep >= 3) {
+        const py = pistonYPos();
+        if (moleculeSide === 'top') {
+          // Ball is in top half, piston below at py, ball hits piston going down
+          if (szStep === 3) {
+            // Partition still in: piston is just on the other side, no interaction with ball
+          } else {
+            // Step 4: partition removed, ball can reach piston
+            if (molY + r > py) {
+              molY = py - r;
+              // Transfer momentum to piston: ball bounces, piston gets a kick
+              const impactV = Math.abs(molVy);
+              molVy = -impactV * 0.7; // ball bounces back (loses some energy to piston)
+              pistonVel += impactV * 0.5; // piston gets pushed
+              flashTimer = 10;
+            }
+            // Also bounce off top wall (already handled above)
+          }
         } else {
-          if (molY > boxB - pistonY - 8) { molY = boxB - pistonY - 8; molVy = -Math.abs(molVy); }
+          // Ball is in bottom half, piston above at py, ball hits piston going up
+          if (szStep === 3) {
+            // no interaction
+          } else {
+            if (molY - r < py) {
+              molY = py + r;
+              const impactV = Math.abs(molVy);
+              molVy = impactV * 0.7;
+              pistonVel += impactV * 0.5;
+              flashTimer = 10;
+            }
+          }
         }
       }
+
+      // Piston dynamics (step 4): move piston, apply friction
+      if (szStep >= 4) {
+        const maxTravel = bH / 2 - BALL_R - 10;
+        pistonPos += pistonVel * dt;
+        pistonVel *= 0.97; // light damping (work extracted against load)
+        if (pistonPos > maxTravel) {
+          pistonPos = maxTravel;
+          pistonVel = 0;
+        }
+        if (pistonPos < 0) { pistonPos = 0; pistonVel = 0; }
+
+        // Keep ball in bounds relative to piston
+        const py = pistonYPos();
+        if (moleculeSide === 'top') {
+          if (molY + r > py) { molY = py - r; molVy = -Math.abs(molVy); }
+        } else {
+          if (molY - r < py) { molY = py + r; molVy = Math.abs(molVy); }
+        }
+      }
+
+      if (flashTimer > 0) flashTimer--;
 
       drawSzilard();
       activeAnimations['szilard'] = requestAnimationFrame(animateSzilard);
     }
 
     stepBtn?.addEventListener('click', () => {
-      if (szStep < 4) szStep++;
+      if (szStep < 4) {
+        szStep++;
+        if (szStep === 1) {
+          // Partition inserted: determine which side the ball is on
+          moleculeSide = molY < boxCy() ? 'top' : 'bottom';
+        }
+        if (szStep === 3) {
+          pistonPos = 0;
+          pistonVel = 0;
+        }
+      }
       if (!szAnim) { szAnim = true; animateSzilard(); }
       drawSzilard();
     });
@@ -6477,6 +6643,283 @@ function initCh6Vis() {
 
     initState(); pumpLastTS = null;
     activeAnimations['nak-pump'] = requestAnimationFrame(animateNaK);
+  }
+
+  // ----- System + Heat Reservoir -----
+  const cHR = document.getElementById('vis-heat-reservoir');
+  if (cHR) {
+    const {ctx: ctxHR, W: WHR, H: HHR} = setupCanvas(cHR);
+    const hrResetBtn = document.getElementById('hres-reset');
+    const hrEnergyDisplay = document.getElementById('hres-energy-display');
+
+    // Outer box = full canvas with margin; inner box = system
+    const margin = 20;
+    const outerL = margin, outerR = WHR - margin, outerT = margin, outerB = HHR - margin;
+    // Inner box: centered, smaller
+    const innerW = 160, innerH = 140;
+    const innerL = (WHR - innerW) / 2;
+    const innerR = innerL + innerW;
+    const innerT = (HHR - innerH) / 2;
+    const innerB = innerT + innerH;
+
+    const PR = 3; // particle radius
+    const N_INNER = 12;
+    const N_OUTER = 50;
+    let hrParticles = [];
+
+    // Wall deformations: {x, y, side, amount, decay}
+    let wallDents = [];
+
+    function initHR() {
+      hrParticles = [];
+      wallDents = [];
+      // Inner particles (system)
+      for (let i = 0; i < N_INNER; i++) {
+        const speed = 40 + Math.random() * 80;
+        const angle = Math.random() * 2 * Math.PI;
+        hrParticles.push({
+          x: innerL + PR + Math.random() * (innerW - 2 * PR),
+          y: innerT + PR + Math.random() * (innerH - 2 * PR),
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle),
+          inside: true
+        });
+      }
+      // Outer particles (reservoir)
+      for (let i = 0; i < N_OUTER; i++) {
+        const speed = 40 + Math.random() * 80;
+        const angle = Math.random() * 2 * Math.PI;
+        let x, y;
+        do {
+          x = outerL + PR + Math.random() * (outerR - outerL - 2 * PR);
+          y = outerT + PR + Math.random() * (outerB - outerT - 2 * PR);
+        } while (x > innerL - PR && x < innerR + PR && y > innerT - PR && y < innerB + PR);
+        hrParticles.push({
+          x, y,
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle),
+          inside: false
+        });
+      }
+    }
+
+    // sign: +1 = outward (hit from inside), -1 = inward (hit from outside)
+    function addDent(x, y, side, strength, sign) {
+      wallDents.push({x, y, side, amount: Math.min(strength * 0.15, 8) * (sign || 1), life: 1.0});
+    }
+
+    function getDentOffset(pos, side) {
+      // Sum up all dent contributions for a position along a given side
+      let offset = 0;
+      for (const d of wallDents) {
+        if (d.side !== side) continue;
+        let dist;
+        if (side === 'left' || side === 'right') {
+          dist = Math.abs(pos - d.y);
+        } else {
+          dist = Math.abs(pos - d.x);
+        }
+        const sigma = 18;
+        if (dist < sigma * 3) {
+          offset += d.amount * d.life * Math.exp(-dist * dist / (2 * sigma * sigma));
+        }
+      }
+      return offset;
+    }
+
+    // Find nearest particle on the other side near a wall hit point
+    function transferEnergy(hitter, wallX, wallY, hitNormal) {
+      // hitNormal: 'vx' or 'vy' — which velocity component was involved
+      const others = hrParticles.filter(q => q.inside !== hitter.inside);
+      let best = null, bestDist = 60; // search radius
+      for (const q of others) {
+        const d = Math.hypot(q.x - wallX, q.y - wallY);
+        if (d < bestDist) { bestDist = d; best = q; }
+      }
+      if (best) {
+        // Transfer fraction of the normal velocity component
+        const frac = 0.3;
+        if (hitNormal === 'vx') {
+          const transfer = hitter.vx * frac;
+          hitter.vx -= transfer;
+          best.vx += transfer;
+        } else {
+          const transfer = hitter.vy * frac;
+          hitter.vy -= transfer;
+          best.vy += transfer;
+        }
+      }
+    }
+
+    function stepHR() {
+      const dt = 0.016;
+      for (const p of hrParticles) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        if (p.inside) {
+          // Bounce off inner walls
+          if (p.x < innerL + PR) {
+            p.x = innerL + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
+            addDent(innerL, p.y, 'left', Math.abs(oldVx));
+            transferEnergy(p, innerL, p.y, 'vx');
+          }
+          if (p.x > innerR - PR) {
+            p.x = innerR - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
+            addDent(innerR, p.y, 'right', Math.abs(oldVx));
+            transferEnergy(p, innerR, p.y, 'vx');
+          }
+          if (p.y < innerT + PR) {
+            p.y = innerT + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
+            addDent(p.x, innerT, 'top', Math.abs(oldVy));
+            transferEnergy(p, p.x, innerT, 'vy');
+          }
+          if (p.y > innerB - PR) {
+            p.y = innerB - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
+            addDent(p.x, innerB, 'bottom', Math.abs(oldVy));
+            transferEnergy(p, p.x, innerB, 'vy');
+          }
+        } else {
+          // Bounce off outer walls
+          if (p.x < outerL + PR) { p.x = outerL + PR; p.vx = Math.abs(p.vx); }
+          if (p.x > outerR - PR) { p.x = outerR - PR; p.vx = -Math.abs(p.vx); }
+          if (p.y < outerT + PR) { p.y = outerT + PR; p.vy = Math.abs(p.vy); }
+          if (p.y > outerB - PR) { p.y = outerB - PR; p.vy = -Math.abs(p.vy); }
+
+          // Bounce off inner box exterior
+          if (p.x > innerL - PR && p.x < innerR + PR &&
+              p.y > innerT - PR && p.y < innerB + PR) {
+            const dL = p.x - (innerL - PR);
+            const dR = (innerR + PR) - p.x;
+            const dT = p.y - (innerT - PR);
+            const dB = (innerB + PR) - p.y;
+            const minD = Math.min(dL, dR, dT, dB);
+            if (minD === dL) {
+              p.x = innerL - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
+              addDent(innerL, p.y, 'left', Math.abs(oldVx), -1);
+              transferEnergy(p, innerL, p.y, 'vx');
+            } else if (minD === dR) {
+              p.x = innerR + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
+              addDent(innerR, p.y, 'right', Math.abs(oldVx), -1);
+              transferEnergy(p, innerR, p.y, 'vx');
+            } else if (minD === dT) {
+              p.y = innerT - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
+              addDent(p.x, innerT, 'top', Math.abs(oldVy), -1);
+              transferEnergy(p, p.x, innerT, 'vy');
+            } else {
+              p.y = innerB + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
+              addDent(p.x, innerB, 'bottom', Math.abs(oldVy), -1);
+              transferEnergy(p, p.x, innerB, 'vy');
+            }
+          }
+        }
+      }
+
+      // Decay dents
+      for (let i = wallDents.length - 1; i >= 0; i--) {
+        wallDents[i].life -= 0.04;
+        if (wallDents[i].life <= 0) wallDents.splice(i, 1);
+      }
+    }
+
+    function drawHR() {
+      clearCanvas(ctxHR, WHR, HHR);
+
+      // Outer box
+      ctxHR.strokeStyle = COLORS.axis;
+      ctxHR.lineWidth = 2;
+      ctxHR.strokeRect(outerL, outerT, outerR - outerL, outerB - outerT);
+
+      // Inner box with dent deformations
+      ctxHR.strokeStyle = COLORS.orange;
+      ctxHR.lineWidth = 2.5;
+      ctxHR.beginPath();
+
+      // Top side (left to right)
+      const steps = 40;
+      for (let i = 0; i <= steps; i++) {
+        const x = innerL + (innerR - innerL) * i / steps;
+        const offset = getDentOffset(x, 'top');
+        const y = innerT - offset; // dent pushes outward (up)
+        if (i === 0) ctxHR.moveTo(x, y); else ctxHR.lineTo(x, y);
+      }
+      // Right side (top to bottom)
+      for (let i = 0; i <= steps; i++) {
+        const y = innerT + (innerB - innerT) * i / steps;
+        const offset = getDentOffset(y, 'right');
+        const x = innerR + offset; // dent pushes outward (right)
+        ctxHR.lineTo(x, y);
+      }
+      // Bottom side (right to left)
+      for (let i = steps; i >= 0; i--) {
+        const x = innerL + (innerR - innerL) * i / steps;
+        const offset = getDentOffset(x, 'bottom');
+        const y = innerB + offset; // dent pushes outward (down)
+        ctxHR.lineTo(x, y);
+      }
+      // Left side (bottom to top)
+      for (let i = steps; i >= 0; i--) {
+        const y = innerT + (innerB - innerT) * i / steps;
+        const offset = getDentOffset(y, 'left');
+        const x = innerL - offset; // dent pushes outward (left)
+        ctxHR.lineTo(x, y);
+      }
+      ctxHR.closePath();
+      ctxHR.stroke();
+
+      // Glow on active dents
+      for (const d of wallDents) {
+        if (d.life > 0.5) {
+          ctxHR.save();
+          ctxHR.globalAlpha = (d.life - 0.5) * 2 * 0.6;
+          ctxHR.fillStyle = COLORS.yellow;
+          ctxHR.beginPath();
+          ctxHR.arc(d.x || innerL, d.y || innerT, 6, 0, 2 * Math.PI);
+          ctxHR.fill();
+          ctxHR.restore();
+        }
+      }
+
+      // Draw particles
+      for (const p of hrParticles) {
+        ctxHR.beginPath();
+        ctxHR.arc(p.x, p.y, PR, 0, 2 * Math.PI);
+        ctxHR.fillStyle = p.inside ? COLORS.blue : COLORS.red;
+        ctxHR.fill();
+      }
+
+      // Labels
+      ctxHR.fillStyle = COLORS.text;
+      ctxHR.font = FONT_LG;
+      ctxHR.textAlign = 'center';
+      ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 18);
+      ctxHR.fillStyle = COLORS.textDim;
+      ctxHR.font = FONT_SM;
+      ctxHR.fillText('Heat Reservoir', WHR / 2, outerT + 14);
+
+      // Energy display
+      let eInner = 0, eOuter = 0;
+      for (const p of hrParticles) {
+        const ke = 0.5 * (p.vx * p.vx + p.vy * p.vy);
+        if (p.inside) eInner += ke; else eOuter += ke;
+      }
+      if (hrEnergyDisplay) {
+        hrEnergyDisplay.textContent = 'E_sys = ' + (eInner / N_INNER).toFixed(0) + '  |  E_res = ' + (eOuter / N_OUTER).toFixed(0);
+      }
+    }
+
+    function animateHR() {
+      stepHR();
+      drawHR();
+      activeAnimations['heat-reservoir'] = requestAnimationFrame(animateHR);
+    }
+
+    hrResetBtn?.addEventListener('click', () => {
+      initHR();
+    });
+
+    initHR();
+    animateHR();
   }
 }
 
