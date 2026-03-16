@@ -752,27 +752,38 @@ function drawEngine(a){
   // Hot molecules in supply pipe (boiler → compartment)
   if(run&&Math.random()<.5) spawnMolecule(supplyPath,HOT,100,true);
 
-  // Hot molecules FILLING the compartment ABOVE the slider only
-  // (the space between compartment ceiling and slider top)
+  // Hot molecules FILLING the compartment — only in areas not blocked by slider
   if(run&&Math.random()<.8){
-    const rx=VB.x+15+Math.random()*(VB.w-30);
+    // Spawn above the slider (safe area)
     const ry=VB.y+10+Math.random()*(slY-VB.y-15);
-    const rx2=VB.x+15+Math.random()*(VB.w-30);
     const ry2=VB.y+10+Math.random()*(slY-VB.y-15);
+    // X: avoid the slider's horizontal range
+    let rx,rx2;
+    if(Math.random()<.5){
+      // Left of slider
+      rx=VB.x+10+Math.random()*Math.max(5,sliderL-VB.x-15);
+      rx2=VB.x+10+Math.random()*Math.max(5,sliderL-VB.x-15);
+    } else {
+      // Right of slider
+      const sr=sliderL+sliderW;
+      rx=sr+5+Math.random()*Math.max(5,VB.x+VB.w-sr-15);
+      rx2=sr+5+Math.random()*Math.max(5,VB.x+VB.w-sr-15);
+    }
     spawnMolecule([{x:rx,y:ry},{x:rx2,y:ry2}],HOT,40,true);
   }
 
-  // Hot intake: molecules start at the port hole and rush DOWN immediately.
-  // Short path = fast arrival. High spawn rate = lots of gas entering at once.
-  // Also spawn some that start from the compartment side for visual variety.
-  if(leftOpen&&run){
-    // Fast molecules: start right at the port, rush down the pipe
+  // Hot intake: only spawn molecules when the port is OUTSIDE the slider body.
+  // Check that the port X is not between sliderL and sliderL+sliderW.
+  const sliderRight = sliderL + sliderW;
+  const leftPortClear = PORT_L_CX < sliderL || PORT_L_CX > sliderRight;
+  const rightPortClear = PORT_R_CX < sliderL || PORT_R_CX > sliderRight;
+
+  if(leftOpen && leftPortClear && run){
     if(Math.random()<.8) spawnMolecule([
       {x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,250,true);
-    // Slower ones from the side for visual context
     if(Math.random()<.3) spawnMolecule([
       {x:VB.x+20,y:VB.y+20},{x:PORT_L_CX,y:slY+slH+2},
       {x:PORT_L_CX,y:VB_BOT},
@@ -780,7 +791,7 @@ function drawEngine(a){
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,150,true);
   }
-  if(rightOpen&&run){
+  if(rightOpen && rightPortClear && run){
     if(Math.random()<.8) spawnMolecule([
       {x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
