@@ -242,11 +242,32 @@ function drawFurnace(){
   X.fillStyle=mGrad(FRN.x,FRN.x+FRN.w,'#555','#666');X.strokeStyle='#777';X.lineWidth=2;
   rr(FRN.x,FRN.y,FRN.w,FRN.h,5,true,true);
   X.fillStyle='#1a1a1a';X.fillRect(FRN.x+8,FRN.y+14,FRN.w-16,FRN.h-18);
-  for(let i=0;i<40;i++){
-    const cx=FRN.x+15+Math.random()*(FRN.w-30),cy=FRN.y+24+Math.random()*(FRN.h-36);
-    X.fillStyle=`rgb(${28+Math.random()*25|0},${22+Math.random()*18|0},${22+Math.random()*18|0})`;
-    X.beginPath();X.ellipse(cx,cy,3+Math.random()*7,(3+Math.random()*7)*.6,Math.random()*3,0,Math.PI*2);X.fill();
-  }
+  // Coal briquettes — rectangular blocks piled up
+  const coalColors=['#222','#1e1e1e','#252520','#2a2525','#201e1e'];
+  const briquettes=[
+    // Bottom row
+    {x:12,y:85,w:28,h:18},{x:42,y:88,w:25,h:16},{x:70,y:84,w:30,h:20},
+    {x:102,y:86,w:26,h:18},{x:130,y:88,w:22,h:16},
+    // Middle row
+    {x:18,y:62,w:24,h:20},{x:45,y:65,w:30,h:18},{x:78,y:60,w:26,h:22},
+    {x:108,y:64,w:28,h:18},{x:138,y:66,w:16,h:16},
+    // Top row (fewer, some tumbled)
+    {x:28,y:42,w:22,h:16},{x:55,y:38,w:28,h:20},{x:88,y:40,w:24,h:18},
+    {x:118,y:44,w:20,h:14},
+    // A few small pieces on top
+    {x:42,y:26,w:18,h:12},{x:75,y:22,w:22,h:14},{x:110,y:28,w:16,h:12},
+  ];
+  briquettes.forEach((br,i)=>{
+    const bx=FRN.x+br.x,by=FRN.y+br.y;
+    X.fillStyle=coalColors[i%coalColors.length];
+    rr(bx,by,br.w,br.h,2,true,false);
+    // Highlight edge to show 3D shape
+    X.fillStyle='rgba(60,55,50,.3)';
+    X.fillRect(bx+1,by+1,br.w-2,3);
+    // Dark bottom edge
+    X.fillStyle='rgba(0,0,0,.3)';
+    X.fillRect(bx+1,by+br.h-3,br.w-2,2);
+  });
   // Glowing embers among the coal
   const ft=Date.now()/1000;
   for(let i=0;i<12;i++){
@@ -599,18 +620,45 @@ function drawEngine(a){
     X.fillRect(uRightCx-uW/2+2, uTopY+uW, uW-4, uBotY-uTopY-uW);
   }
 
-  // Eccentric rod from slider to flywheel
+  // ── Eccentric linkage (same principle as piston-flywheel connection) ──
+  // Eccentric pin on flywheel → rigid connecting rod → valve crosshead → rigid push rod → slider
+  // Two fixed-length rods with a hinge between them, so nothing stretches.
+
   const ECC_R=20;
   const eccX=FW.cx+ECC_R*Math.cos(a+Math.PI*0.5);
   const eccY=FW.cy+ECC_R*Math.sin(a+Math.PI*0.5);
-  const sliderMidX=slCx;
-  const sliderMidY=slY+slH/2;
+
+  // Valve crosshead: moves horizontally at a fixed Y between the slider and flywheel
+  const vchY = CYL.y + 20; // fixed Y for the valve crosshead (near cylinder top)
+  const ECC_ROD = 250; // connecting rod length (eccentric pin to valve crosshead)
+  // Compute crosshead X from eccentric pin (same math as piston crosshead)
+  const vchDy = eccY - vchY;
+  const vchX = eccX - Math.sqrt(Math.max(1, ECC_ROD*ECC_ROD - vchDy*vchDy));
+
+  // Push rod: from valve crosshead to slider (rigid, fixed length)
+  const sliderMidX = slCx;
+  const sliderMidY = slY + slH/2;
+
+  // Draw connecting rod: eccentric pin → valve crosshead
   X.strokeStyle='#8a8a8a';X.lineWidth=5;
-  X.beginPath();X.moveTo(sliderMidX,sliderMidY);X.lineTo(eccX,eccY);X.stroke();
+  X.beginPath();X.moveTo(eccX,eccY);X.lineTo(vchX,vchY);X.stroke();
   X.strokeStyle='#aaa';X.lineWidth=2;
-  X.beginPath();X.moveTo(sliderMidX,sliderMidY-2);X.lineTo(eccX,eccY-2);X.stroke();
+  X.beginPath();X.moveTo(eccX,eccY-2);X.lineTo(vchX,vchY-2);X.stroke();
+
+  // Valve crosshead pin
+  X.beginPath();X.arc(vchX,vchY,5,0,Math.PI*2);X.fillStyle='#bbb';X.fill();
+  X.strokeStyle='#888';X.lineWidth=1;X.stroke();
+
+  // Draw push rod: valve crosshead → slider
+  X.strokeStyle='#8a8a8a';X.lineWidth=4;
+  X.beginPath();X.moveTo(vchX,vchY);X.lineTo(sliderMidX,sliderMidY);X.stroke();
+  X.strokeStyle='#aaa';X.lineWidth=1.5;
+  X.beginPath();X.moveTo(vchX,vchY-1);X.lineTo(sliderMidX,sliderMidY-1);X.stroke();
+
+  // Pin at slider end
   X.beginPath();X.arc(sliderMidX,sliderMidY,4,0,Math.PI*2);X.fillStyle='#bbb';X.fill();
-  X.beginPath();X.arc(eccX,eccY,6,0,Math.PI*2);X.fillStyle='#ccc';X.fill();
+  // Eccentric pin
+  X.beginPath();X.arc(eccX,eccY,5,0,Math.PI*2);X.fillStyle='#ccc';X.fill();
   X.strokeStyle='#888';X.lineWidth=1;X.stroke();
 
   // Port glow
@@ -636,24 +684,30 @@ function drawEngine(a){
   const leftTemp=Math.max(0,Math.min(1,(voNorm+1)/2));   // 0 when vo=-35, 1 when vo=+35
   const rightTemp=1-leftTemp;                              // opposite
 
-  // Draw gas in each chamber — ALWAYS visible, color shifts smoothly
+  // Draw gas in each chamber — ALWAYS visible, never disappears
   function drawChamberGas(x,w,temp){
     if(w<3) return;
     // Blend between hot red and cold blue
-    const r=Math.round(90+140*temp);   // 90 (cold) to 230 (hot)
-    const g2=Math.round(110-40*temp);   // 110 (cold) to 70 (hot)
-    const b=Math.round(160-140*temp);  // 160 (cold) to 20 (hot)
-    const alpha=0.15+temp*0.1;         // stronger when hot
+    const r=Math.round(90+140*temp);
+    const g2=Math.round(110-40*temp);
+    const b=Math.round(160-140*temp);
+    // Strong solid fill — always clearly visible
+    const alpha=0.2+temp*0.15;
     X.fillStyle=`rgba(${r},${g2},${b},${alpha})`;
     X.fillRect(x,BORE.y,w,BORE.h);
-    // Particles — color matches temperature
-    const np=Math.max(4,w/8|0);
+    // Second layer for more intensity
+    X.fillStyle=`rgba(${r},${g2},${b},${alpha*0.5})`;
+    X.fillRect(x+2,BORE.y+2,w-4,BORE.h-4);
+    // Dense particles — lots of them, always present
+    const np=Math.max(8,w/5|0);
     for(let i=0;i<np;i++){
       const gx=x+3+Math.random()*(w-6),gy=BORE.y+3+Math.random()*(BORE.h-6);
-      const pr=r+Math.random()*30|0, pg2=g2+Math.random()*20|0, pb=b+Math.random()*20|0;
-      const pa=0.06+temp*0.1+Math.random()*0.05;
-      X.fillStyle=`rgba(${Math.min(255,pr)},${pg2},${pb},${pa})`;
-      X.beginPath();X.arc(gx,gy,1.5+Math.random()*2,0,Math.PI*2);X.fill();
+      const pr=Math.min(255,r+Math.random()*30|0);
+      const pg2=Math.max(0,g2+Math.random()*20|0);
+      const pb=Math.max(0,b+Math.random()*20|0);
+      const pa=0.1+temp*0.12+Math.random()*0.06;
+      X.fillStyle=`rgba(${pr},${pg2},${pb},${pa})`;
+      X.beginPath();X.arc(gx,gy,1.5+Math.random()*2.5,0,Math.PI*2);X.fill();
     }
   }
 
