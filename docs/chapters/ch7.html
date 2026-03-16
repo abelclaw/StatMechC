@@ -564,6 +564,18 @@ $$n = \frac{1}{\lambda^3} \exp\left(\frac{\mu}{k_BT}\right)$$
 
 <p>This says that the number density is related exponentially to the chemical potential. As the system gets denser and denser, the chemical potential rises towards 0. When the chemical potential is negative, the gas is not too crowded and can be considered dilute.</p>
 
+<div class="interactive-wrapper">
+<h4>Interactive: Chemical Potential Equilibration</h4>
+<canvas id="vis-chem-equil" width="600" height="350"></canvas>
+<div class="controls">
+<label>N<sub>left</sub>: <input type="range" id="ceq-nleft" min="5" max="50" step="1" value="40"><span id="ceq-nleft-val">40</span></label>
+<label>N<sub>right</sub>: <input type="range" id="ceq-nright" min="5" max="50" step="1" value="10"><span id="ceq-nright-val">10</span></label>
+<button id="ceq-release">Release</button>
+<button id="ceq-reset">Reset</button>
+</div>
+<figcaption>Two bulbs connected by a narrow tube. Before release, each bulb is sealed with its own particles. After release, particles flow through the tube from high density to low density until the chemical potentials equilibrate: μ₁ ≈ μ₂, i.e. n₁ ≈ n₂.</figcaption>
+</div>
+
 <h3>7.7.2 Ground-State Energy</h3>
 
 <p>There is not a unique way to define the ground state energy; it depends on what we include. For example, we could include chemical bond energy, the rest mass $mc^2$, or the gravitational potential energy. However, once we define the ground-state energy for one thing, we can talk without ambiguity about the ground-state energy of everything.</p>

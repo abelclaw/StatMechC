@@ -8189,6 +8189,377 @@ function initCh7Vis() {
     initVE();
     animateVE();
   }
+
+  // ----- Chemical Potential Equilibration -----
+  const cCEQ = document.getElementById('vis-chem-equil');
+  if (cCEQ) {
+    const {ctx: ctxCEQ, W: WCEQ, H: HCEQ} = setupCanvas(cCEQ);
+    const ceqNLeftSlider = document.getElementById('ceq-nleft');
+    const ceqNRightSlider = document.getElementById('ceq-nright');
+    const ceqReleaseBtn = document.getElementById('ceq-release');
+    const ceqResetBtn = document.getElementById('ceq-reset');
+
+    const PR_CEQ = 4; // particle radius
+    const T_CEQ = 1.0;
+    const SPEED_CEQ = 30 * Math.sqrt(T_CEQ);
+
+    // Geometry: two bulbs + connecting tube
+    // Bulbs are rounded rectangles; tube is a narrow horizontal channel
+    const bulbW = 190, bulbH = 200;
+    const bulbY = 40;
+    const bulbLX = 20;  // left bulb left edge
+    const bulbRX = WCEQ - 20 - bulbW; // right bulb left edge
+    const bulbR = 16; // corner radius for rounded rect
+
+    const tubeH = 36; // tube height (narrow)
+    const tubeY = bulbY + (bulbH - tubeH) / 2; // vertically centered
+    const tubeL = bulbLX + bulbW; // tube left edge
+    const tubeR = bulbRX; // tube right edge
+    const tubeMid = (tubeL + tubeR) / 2;
+
+    // Volume of each bulb (in px^2, used for density calc)
+    const V_BULB = bulbW * bulbH;
+
+    let ceqParticles = [];
+    let ceqSealed = true;
+
+    function ceqCreateParticles(n, region) {
+      const parts = [];
+      for (let i = 0; i < n; i++) {
+        const speed = SPEED_CEQ * (0.3 + Math.random() * 1.4);
+        const angle = Math.random() * 2 * Math.PI;
+        let x, y;
+        if (region === 'left') {
+          x = bulbLX + PR_CEQ + Math.random() * (bulbW - 2 * PR_CEQ);
+          y = bulbY + PR_CEQ + Math.random() * (bulbH - 2 * PR_CEQ);
+        } else {
+          x = bulbRX + PR_CEQ + Math.random() * (bulbW - 2 * PR_CEQ);
+          y = bulbY + PR_CEQ + Math.random() * (bulbH - 2 * PR_CEQ);
+        }
+        parts.push({
+          x, y,
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle)
+        });
+      }
+      return parts;
+    }
+
+    function ceqInit() {
+      ceqSealed = true;
+      const nL = parseInt(ceqNLeftSlider?.value || 40);
+      const nR = parseInt(ceqNRightSlider?.value || 10);
+      ceqParticles = [
+        ...ceqCreateParticles(nL, 'left'),
+        ...ceqCreateParticles(nR, 'right')
+      ];
+      ceqReleaseBtn.disabled = false;
+      ceqNLeftSlider.disabled = false;
+      ceqNRightSlider.disabled = false;
+    }
+
+    function ceqIsInLeftBulb(x, y) {
+      return x >= bulbLX && x <= bulbLX + bulbW && y >= bulbY && y <= bulbY + bulbH;
+    }
+    function ceqIsInRightBulb(x, y) {
+      return x >= bulbRX && x <= bulbRX + bulbW && y >= bulbY && y <= bulbY + bulbH;
+    }
+    function ceqIsInTube(x, y) {
+      return x >= tubeL && x <= tubeR && y >= tubeY && y <= tubeY + tubeH;
+    }
+
+    function ceqSide(p) {
+      // Which side of the midpoint is the particle on?
+      return p.x < tubeMid ? 'left' : 'right';
+    }
+
+    function ceqCountSides() {
+      let nL = 0, nR = 0;
+      for (const p of ceqParticles) {
+        if (ceqSide(p) === 'left') nL++; else nR++;
+      }
+      return {nL, nR};
+    }
+
+    function ceqStep() {
+      const SUBSTEPS = 4;
+      const dt = 0.016 / SUBSTEPS;
+
+      for (let sub = 0; sub < SUBSTEPS; sub++) {
+        for (const p of ceqParticles) {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          const side = ceqSide(p);
+          const inLeftBulb = ceqIsInLeftBulb(p.x, p.y);
+          const inRightBulb = ceqIsInRightBulb(p.x, p.y);
+          const inTube = ceqIsInTube(p.x, p.y);
+
+          if (!ceqSealed) {
+            // Open: particles can be in bulbs or tube
+            // The valid region is the union of left bulb, right bulb, and tube
+            // We need to constrain particles to stay in this combined region
+
+            // Check if particle is outside all valid regions
+            if (!inLeftBulb && !inRightBulb && !inTube) {
+              // Push particle back into the nearest valid region
+              // Determine where it was likely trying to go
+
+              // Left bulb boundaries
+              if (p.x < tubeL && side === 'left') {
+                // In left bulb zone
+                if (p.x < bulbLX + PR_CEQ) { p.x = bulbLX + PR_CEQ; p.vx = Math.abs(p.vx); }
+                if (p.x > bulbLX + bulbW - PR_CEQ) { p.x = bulbLX + bulbW - PR_CEQ; p.vx = -Math.abs(p.vx); }
+                if (p.y < bulbY + PR_CEQ) { p.y = bulbY + PR_CEQ; p.vy = Math.abs(p.vy); }
+                if (p.y > bulbY + bulbH - PR_CEQ) { p.y = bulbY + bulbH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+              } else if (p.x > tubeR && side === 'right') {
+                // In right bulb zone
+                if (p.x < bulbRX + PR_CEQ) { p.x = bulbRX + PR_CEQ; p.vx = Math.abs(p.vx); }
+                if (p.x > bulbRX + bulbW - PR_CEQ) { p.x = bulbRX + bulbW - PR_CEQ; p.vx = -Math.abs(p.vx); }
+                if (p.y < bulbY + PR_CEQ) { p.y = bulbY + PR_CEQ; p.vy = Math.abs(p.vy); }
+                if (p.y > bulbY + bulbH - PR_CEQ) { p.y = bulbY + bulbH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+              } else {
+                // In the tube X-range but outside tube Y-range
+                // Bounce off tube walls (top/bottom)
+                if (p.y < tubeY + PR_CEQ) { p.y = tubeY + PR_CEQ; p.vy = Math.abs(p.vy); }
+                if (p.y > tubeY + tubeH - PR_CEQ) { p.y = tubeY + tubeH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+                // Also clamp x to tube
+                if (p.x < tubeL + PR_CEQ) { p.x = tubeL + PR_CEQ; p.vx = Math.abs(p.vx); }
+                if (p.x > tubeR - PR_CEQ) { p.x = tubeR - PR_CEQ; p.vx = -Math.abs(p.vx); }
+              }
+            } else {
+              // Inside valid region, but enforce outer walls
+              // Left bulb outer walls
+              if (inLeftBulb) {
+                if (p.x < bulbLX + PR_CEQ) { p.x = bulbLX + PR_CEQ; p.vx = Math.abs(p.vx); }
+                if (p.y < bulbY + PR_CEQ) { p.y = bulbY + PR_CEQ; p.vy = Math.abs(p.vy); }
+                if (p.y > bulbY + bulbH - PR_CEQ) { p.y = bulbY + bulbH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+                // Right edge of left bulb: only bounce if not entering tube
+                if (p.x > bulbLX + bulbW - PR_CEQ && !(p.y >= tubeY && p.y <= tubeY + tubeH)) {
+                  p.x = bulbLX + bulbW - PR_CEQ; p.vx = -Math.abs(p.vx);
+                }
+              }
+              // Right bulb outer walls
+              if (inRightBulb) {
+                if (p.x > bulbRX + bulbW - PR_CEQ) { p.x = bulbRX + bulbW - PR_CEQ; p.vx = -Math.abs(p.vx); }
+                if (p.y < bulbY + PR_CEQ) { p.y = bulbY + PR_CEQ; p.vy = Math.abs(p.vy); }
+                if (p.y > bulbY + bulbH - PR_CEQ) { p.y = bulbY + bulbH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+                // Left edge of right bulb: only bounce if not entering tube
+                if (p.x < bulbRX + PR_CEQ && !(p.y >= tubeY && p.y <= tubeY + tubeH)) {
+                  p.x = bulbRX + PR_CEQ; p.vx = Math.abs(p.vx);
+                }
+              }
+              // Tube walls
+              if (inTube) {
+                if (p.y < tubeY + PR_CEQ) { p.y = tubeY + PR_CEQ; p.vy = Math.abs(p.vy); }
+                if (p.y > tubeY + tubeH - PR_CEQ) { p.y = tubeY + tubeH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+              }
+            }
+          } else {
+            // Sealed: particles stay in their own bulb
+            if (side === 'left') {
+              if (p.x < bulbLX + PR_CEQ) { p.x = bulbLX + PR_CEQ; p.vx = Math.abs(p.vx); }
+              if (p.x > bulbLX + bulbW - PR_CEQ) { p.x = bulbLX + bulbW - PR_CEQ; p.vx = -Math.abs(p.vx); }
+              if (p.y < bulbY + PR_CEQ) { p.y = bulbY + PR_CEQ; p.vy = Math.abs(p.vy); }
+              if (p.y > bulbY + bulbH - PR_CEQ) { p.y = bulbY + bulbH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+            } else {
+              if (p.x < bulbRX + PR_CEQ) { p.x = bulbRX + PR_CEQ; p.vx = Math.abs(p.vx); }
+              if (p.x > bulbRX + bulbW - PR_CEQ) { p.x = bulbRX + bulbW - PR_CEQ; p.vx = -Math.abs(p.vx); }
+              if (p.y < bulbY + PR_CEQ) { p.y = bulbY + PR_CEQ; p.vy = Math.abs(p.vy); }
+              if (p.y > bulbY + bulbH - PR_CEQ) { p.y = bulbY + bulbH - PR_CEQ; p.vy = -Math.abs(p.vy); }
+            }
+          }
+        }
+
+        // Particle-particle collisions
+        for (let i = 0; i < ceqParticles.length; i++) {
+          for (let j = i + 1; j < ceqParticles.length; j++) {
+            const a = ceqParticles[i], b = ceqParticles[j];
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const minD = PR_CEQ * 2;
+            if (dist < minD && dist > 0) {
+              const nx = dx / dist, ny = dy / dist;
+              const dvn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+              if (dvn > 0) {
+                a.vx -= dvn * nx; a.vy -= dvn * ny;
+                b.vx += dvn * nx; b.vy += dvn * ny;
+              }
+              const overlap = minD - dist;
+              a.x -= nx * overlap * 0.5; a.y -= ny * overlap * 0.5;
+              b.x += nx * overlap * 0.5; b.y += ny * overlap * 0.5;
+            }
+          }
+        }
+      } // end substeps
+    }
+
+    function ceqDrawRoundedRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function ceqDraw() {
+      clearCanvas(ctxCEQ, WCEQ, HCEQ);
+
+      // Draw bulb backgrounds
+      ctxCEQ.fillStyle = 'rgba(79,195,247,0.07)';
+      ceqDrawRoundedRect(ctxCEQ, bulbLX, bulbY, bulbW, bulbH, bulbR);
+      ctxCEQ.fill();
+
+      ctxCEQ.fillStyle = 'rgba(102,187,106,0.07)';
+      ceqDrawRoundedRect(ctxCEQ, bulbRX, bulbY, bulbW, bulbH, bulbR);
+      ctxCEQ.fill();
+
+      // Draw tube background
+      ctxCEQ.fillStyle = 'rgba(255,255,255,0.03)';
+      ctxCEQ.fillRect(tubeL, tubeY, tubeR - tubeL, tubeH);
+
+      // Draw bulb outlines with gaps where tube connects
+      ctxCEQ.strokeStyle = COLORS.axis; ctxCEQ.lineWidth = 2;
+      // Left bulb: gap on right side where tube connects
+      ctxCEQ.beginPath();
+      ctxCEQ.moveTo(bulbLX + bulbW, tubeY);
+      ctxCEQ.lineTo(bulbLX + bulbW, bulbY + bulbR);
+      ctxCEQ.quadraticCurveTo(bulbLX + bulbW, bulbY, bulbLX + bulbW - bulbR, bulbY);
+      ctxCEQ.lineTo(bulbLX + bulbR, bulbY);
+      ctxCEQ.quadraticCurveTo(bulbLX, bulbY, bulbLX, bulbY + bulbR);
+      ctxCEQ.lineTo(bulbLX, bulbY + bulbH - bulbR);
+      ctxCEQ.quadraticCurveTo(bulbLX, bulbY + bulbH, bulbLX + bulbR, bulbY + bulbH);
+      ctxCEQ.lineTo(bulbLX + bulbW - bulbR, bulbY + bulbH);
+      ctxCEQ.quadraticCurveTo(bulbLX + bulbW, bulbY + bulbH, bulbLX + bulbW, bulbY + bulbH - bulbR);
+      ctxCEQ.lineTo(bulbLX + bulbW, tubeY + tubeH);
+      ctxCEQ.stroke();
+      // Right bulb: gap on left side where tube connects
+      ctxCEQ.beginPath();
+      ctxCEQ.moveTo(bulbRX, tubeY + tubeH);
+      ctxCEQ.lineTo(bulbRX, bulbY + bulbH - bulbR);
+      ctxCEQ.quadraticCurveTo(bulbRX, bulbY + bulbH, bulbRX + bulbR, bulbY + bulbH);
+      ctxCEQ.lineTo(bulbRX + bulbW - bulbR, bulbY + bulbH);
+      ctxCEQ.quadraticCurveTo(bulbRX + bulbW, bulbY + bulbH, bulbRX + bulbW, bulbY + bulbH - bulbR);
+      ctxCEQ.lineTo(bulbRX + bulbW, bulbY + bulbR);
+      ctxCEQ.quadraticCurveTo(bulbRX + bulbW, bulbY, bulbRX + bulbW - bulbR, bulbY);
+      ctxCEQ.lineTo(bulbRX + bulbR, bulbY);
+      ctxCEQ.quadraticCurveTo(bulbRX, bulbY, bulbRX, bulbY + bulbR);
+      ctxCEQ.lineTo(bulbRX, tubeY);
+      ctxCEQ.stroke();
+
+      // Draw tube walls (top and bottom lines)
+      ctxCEQ.strokeStyle = COLORS.axis; ctxCEQ.lineWidth = 2;
+      ctxCEQ.beginPath();
+      ctxCEQ.moveTo(tubeL, tubeY); ctxCEQ.lineTo(tubeR, tubeY);
+      ctxCEQ.stroke();
+      ctxCEQ.beginPath();
+      ctxCEQ.moveTo(tubeL, tubeY + tubeH); ctxCEQ.lineTo(tubeR, tubeY + tubeH);
+      ctxCEQ.stroke();
+
+      // Draw seal/barrier in the middle of the tube
+      if (ceqSealed) {
+        ctxCEQ.fillStyle = COLORS.orange;
+        ctxCEQ.fillRect(tubeMid - 3, tubeY - 2, 6, tubeH + 4);
+        // Hatch marks on seal
+        ctxCEQ.strokeStyle = COLORS.bg; ctxCEQ.lineWidth = 1;
+        for (let yy = tubeY + 4; yy < tubeY + tubeH; yy += 6) {
+          ctxCEQ.beginPath();
+          ctxCEQ.moveTo(tubeMid - 2, yy); ctxCEQ.lineTo(tubeMid + 2, yy + 3);
+          ctxCEQ.stroke();
+        }
+      }
+
+      // Draw particles
+      for (const p of ceqParticles) {
+        const s = ceqSide(p);
+        ctxCEQ.beginPath();
+        ctxCEQ.arc(p.x, p.y, PR_CEQ, 0, 2 * Math.PI);
+        ctxCEQ.fillStyle = s === 'left' ? COLORS.blue : COLORS.green;
+        ctxCEQ.fill();
+      }
+
+      // Compute and display chemical potentials
+      const {nL, nR} = ceqCountSides();
+      const densL = nL / V_BULB;
+      const densR = nR / V_BULB;
+      // mu/kT = ln(n) with a constant offset to make values nicer
+      // We use mu/kT = ln(N/V_BULB) + const. Set const so typical values are around -2 to 0
+      // ln(N / V_BULB) for N=25, V=190*200=38000 => ln(25/38000) = ln(0.000658) = -7.33
+      // Add offset of +5 so we get values around -2.3 to -1.3
+      const MU_OFFSET = 5.0;
+      const muL = nL > 0 ? Math.log(nL / V_BULB) + MU_OFFSET : -99;
+      const muR = nR > 0 ? Math.log(nR / V_BULB) + MU_OFFSET : -99;
+
+      // Info text below bulbs
+      const leftCx = bulbLX + bulbW / 2;
+      const rightCx = bulbRX + bulbW / 2;
+      const infoY1 = bulbY + bulbH + 18;
+      const infoY2 = bulbY + bulbH + 34;
+
+      ctxCEQ.font = FONT; ctxCEQ.textAlign = 'center';
+      ctxCEQ.fillStyle = COLORS.blue;
+      ctxCEQ.fillText('N₁ = ' + nL, leftCx, infoY1);
+      ctxCEQ.fillStyle = COLORS.blue; ctxCEQ.font = FONT_SM;
+      ctxCEQ.fillText('μ₁/kT = ' + muL.toFixed(2), leftCx, infoY2);
+
+      ctxCEQ.font = FONT; ctxCEQ.textAlign = 'center';
+      ctxCEQ.fillStyle = COLORS.green;
+      ctxCEQ.fillText('N₂ = ' + nR, rightCx, infoY1);
+      ctxCEQ.fillStyle = COLORS.green; ctxCEQ.font = FONT_SM;
+      ctxCEQ.fillText('μ₂/kT = ' + muR.toFixed(2), rightCx, infoY2);
+
+      // Equilibrium indicator (centered, top of canvas)
+      const isEq = !ceqSealed && nL > 0 && nR > 0 && Math.abs(muL - muR) < 0.15;
+      ctxCEQ.font = FONT_SM; ctxCEQ.textAlign = 'center';
+      if (ceqSealed) {
+        ctxCEQ.fillStyle = COLORS.textDim;
+        ctxCEQ.fillText('Sealed — adjust N and press Release', WCEQ / 2, bulbY - 10);
+      } else {
+        ctxCEQ.fillStyle = isEq ? COLORS.green : COLORS.textDim;
+        ctxCEQ.fillText(isEq ? '✓ μ₁ ≈ μ₂  (equilibrium)' : 'μ₁ ≠ μ₂  …equilibrating', WCEQ / 2, bulbY - 10);
+      }
+
+      // Update slider readouts
+      document.getElementById('ceq-nleft-val')?.replaceChildren(document.createTextNode(ceqNLeftSlider?.value || '40'));
+      document.getElementById('ceq-nright-val')?.replaceChildren(document.createTextNode(ceqNRightSlider?.value || '10'));
+    }
+
+    function ceqAnimate() {
+      ceqStep();
+      ceqDraw();
+      activeAnimations['chem-equil'] = requestAnimationFrame(ceqAnimate);
+    }
+
+    ceqNLeftSlider?.addEventListener('input', () => {
+      if (!ceqSealed) return;
+      const nL = parseInt(ceqNLeftSlider.value);
+      // Rebuild only left-side particles, keep right
+      const rightParticles = ceqParticles.filter(p => ceqSide(p) === 'right');
+      ceqParticles = [...ceqCreateParticles(nL, 'left'), ...rightParticles];
+    });
+    ceqNRightSlider?.addEventListener('input', () => {
+      if (!ceqSealed) return;
+      const nR = parseInt(ceqNRightSlider.value);
+      const leftParticles = ceqParticles.filter(p => ceqSide(p) === 'left');
+      ceqParticles = [...leftParticles, ...ceqCreateParticles(nR, 'right')];
+    });
+    ceqReleaseBtn?.addEventListener('click', () => {
+      ceqSealed = false;
+      ceqReleaseBtn.disabled = true;
+      ceqNLeftSlider.disabled = true;
+      ceqNRightSlider.disabled = true;
+    });
+    ceqResetBtn?.addEventListener('click', () => { ceqInit(); });
+
+    ceqInit();
+    ceqAnimate();
+  }
 }
 
 
