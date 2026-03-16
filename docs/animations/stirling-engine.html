@@ -7,9 +7,14 @@
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#1a1a1e;display:flex;flex-direction:column;align-items:center;
-       justify-content:center;min-height:100vh;font-family:'Georgia',serif;color:#ccc;overflow:hidden}
-  #wrapper{transform-origin:top center;}
-  canvas{border-radius:4px;display:block;}
+       font-family:'Georgia',serif;color:#ccc;overflow:hidden}
+  #wrapper{transform-origin:top left;position:relative;}
+  canvas{border-radius:4px;display:block;cursor:pointer;}
+  #overlay{position:absolute;top:0;left:0;width:900px;height:800px;display:flex;
+           align-items:center;justify-content:center;background:rgba(0,0,0,.4);
+           cursor:pointer;z-index:10;border-radius:4px;}
+  #overlay span{font-size:22px;color:#fff;background:rgba(0,0,0,.5);padding:12px 30px;
+                border-radius:8px;letter-spacing:2px;}
   .ctrls{margin-top:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
   .ctrls button{background:#444;color:#ddd;border:1px solid #666;padding:5px 16px;
                 border-radius:4px;cursor:pointer;font-family:inherit;font-size:.85em}
@@ -22,8 +27,9 @@
 <body>
 <div id="wrapper">
 <canvas id="c" width="900" height="800"></canvas>
+<div id="overlay" onclick="startEngine()"><span>&#9654; Click to start</span></div>
 <div class="ctrls">
-  <button id="btn">Pause</button>
+  <button id="btn">Play</button>
   <label>Speed: <input type="range" id="spd" min=".1" max="2" step=".05" value=".4"></label>
   <span id="rpm" style="font-size:.8em;color:#888">48 RPM</span>
   <button id="cut">Toggle Cutaway</button>
@@ -39,14 +45,19 @@
 <script>
 function scaleToFit(){
   const w=document.getElementById('wrapper');
-  const s=Math.min(1, window.innerWidth/920);
+  const s=Math.min(1, document.body.clientWidth/900);
   w.style.transform='scale('+s+')';
-  document.body.style.height=(w.offsetHeight*s)+'px';
+  document.body.style.height=Math.ceil(w.scrollHeight*s)+'px';
 }
 window.addEventListener('resize',scaleToFit);
-scaleToFit();
+setTimeout(scaleToFit,50);
+function startEngine(){
+  run=true;
+  document.getElementById('btn').textContent='Pause';
+  document.getElementById('overlay').style.display='none';
+}
 const C=document.getElementById('c'), X=C.getContext('2d');
-let run=true, spd=0.4, cut=true, ang=0;
+let run=false, spd=0.4, cut=true, ang=0;
 document.getElementById('btn').onclick=function(){run=!run;this.textContent=run?'Pause':'Play'};
 document.getElementById('spd').oninput=function(){
   spd=+this.value;
