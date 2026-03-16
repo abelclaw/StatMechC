@@ -57,12 +57,12 @@ $$\mathcal{Z} = \sum_{\substack{\text{microstates } k \\ \text{with same } V}} e
 
 <div class="interactive-wrapper">
 <h4>Interactive: System + Heat Reservoir</h4>
-<canvas id="vis-reservoir" width="600" height="380"></canvas>
+<canvas id="vis-reservoir" width="600" height="400"></canvas>
 <div class="controls">
 <button id="hres-reset">Reset</button>
 <span id="hres-energy-display" style="color:#ffee58; font-size:13px;"></span>
 </div>
-<figcaption>A small system (inner box) exchanges energy with a large heat reservoir (outer region). When a particle hits the shared wall, it deforms briefly &mdash; energy flows between system and reservoir. The system energy fluctuates while the reservoir stays nearly constant.</figcaption>
+<figcaption>A small system (inner box) exchanges energy with a large heat reservoir. The wall deforms on impact as energy flows in or out. The right panel shows the distribution of system energy over time &mdash; it follows the Boltzmann distribution P(E) &prop; e<sup>&minus;E/kT</sup>. The green line marks the current energy.</figcaption>
 </div>
 
 <p>We do not allow particles to go from the system to the reservoir, only energy. The number of particles in the system can be small -- we can have a single atom even -- it won't matter. This is important because the canonical ensemble will allow us to discuss systems with a limited number of quantum states, in contrast to the microcanonical ensemble where we really did need to expand at large $N$ to make progress. Although the system can be small, the reservoir must be large, so that it has much much more energy than the system. But this is not a constraint, just a conceptual trick, since the reservoir does not actually need to exist. As we will see, the actual computation of the partition function for the canonical ensemble does not involve the reservoir at all.</p>

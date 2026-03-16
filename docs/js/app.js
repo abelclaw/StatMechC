@@ -7054,35 +7054,41 @@ function initCh7Vis() {
   }
 
   // ----- System + Heat Reservoir -----
-  // ----- System + Heat Reservoir (gas simulation) -----
+  // ----- System + Heat Reservoir (gas simulation + energy distribution) -----
   const cRes = document.getElementById('vis-reservoir');
   if (cRes) {
     const {ctx: ctxHR, W: WHR, H: HHR} = setupCanvas(cRes);
     const hrResetBtn = document.getElementById('hres-reset');
     const hrEnergyDisplay = document.getElementById('hres-energy-display');
 
-    // Outer box = full canvas with margin; inner box = system
-    const hrMargin = 20;
-    const outerL = hrMargin, outerR = WHR - hrMargin, outerT = hrMargin, outerB = HHR - hrMargin;
-    // Inner box: centered, smaller
-    const innerW = 160, innerH = 140;
-    const innerL = (WHR - innerW) / 2;
+    // Layout: gas sim on left, distribution plot on right
+    const simW = Math.floor(WHR * 0.52); // left portion for gas sim
+    const plotL = simW + 15; // right portion starts here
+    const plotW = WHR - plotL - 20;
+    const plotT = 40, plotH = HHR - 80;
+
+    // Outer box for gas sim (left side)
+    const hrMargin = 12;
+    const outerL = hrMargin, outerR = simW - hrMargin, outerT = hrMargin, outerB = HHR - hrMargin;
+    // Inner box: centered within left side
+    const innerW = 100, innerH = 100;
+    const innerL = (outerL + outerR - innerW) / 2;
     const innerR = innerL + innerW;
-    const innerT = (HHR - innerH) / 2;
+    const innerT = (outerT + outerB - innerH) / 2;
     const innerB = innerT + innerH;
 
-    const PR = 3; // particle radius
-    const N_INNER = 12;
-    const N_OUTER = 50;
+    const PR = 3;
+    const N_INNER = 10;
+    const N_OUTER = 40;
     let hrParticles = [];
-
-    // Wall deformations: {x, y, side, amount, life}
     let wallDents = [];
+    let energyHistory = [];
+    const MAX_HISTORY = 800;
 
     function initHR() {
       hrParticles = [];
       wallDents = [];
-      // Inner particles (system)
+      energyHistory = [];
       for (let i = 0; i < N_INNER; i++) {
         const speed = 40 + Math.random() * 80;
         const angle = Math.random() * 2 * Math.PI;
@@ -7094,7 +7100,6 @@ function initCh7Vis() {
           inside: true
         });
       }
-      // Outer particles (reservoir)
       for (let i = 0; i < N_OUTER; i++) {
         const speed = 40 + Math.random() * 80;
         const angle = Math.random() * 2 * Math.PI;
@@ -7112,7 +7117,6 @@ function initCh7Vis() {
       }
     }
 
-    // sign: +1 = outward (hit from inside), -1 = inward (hit from outside)
     function addDent(x, y, side, strength, sign) {
       wallDents.push({x, y, side, amount: Math.min(strength * 0.15, 8) * (sign || 1), life: 1.0});
     }
@@ -7121,13 +7125,8 @@ function initCh7Vis() {
       let offset = 0;
       for (const d of wallDents) {
         if (d.side !== side) continue;
-        let dist;
-        if (side === 'left' || side === 'right') {
-          dist = Math.abs(pos - d.y);
-        } else {
-          dist = Math.abs(pos - d.x);
-        }
-        const sigma = 18;
+        const dist = (side === 'left' || side === 'right') ? Math.abs(pos - d.y) : Math.abs(pos - d.x);
+        const sigma = 14;
         if (dist < sigma * 3) {
           offset += d.amount * d.life * Math.exp(-dist * dist / (2 * sigma * sigma));
         }
@@ -7135,10 +7134,9 @@ function initCh7Vis() {
       return offset;
     }
 
-    // Find nearest particle on the other side and transfer energy through wall
     function transferEnergy(hitter, wallX, wallY, hitNormal) {
       const others = hrParticles.filter(q => q.inside !== hitter.inside);
-      let best = null, bestDist = 60;
+      let best = null, bestDist = 50;
       for (const q of others) {
         const d = Math.hypot(q.x - wallX, q.y - wallY);
         if (d < bestDist) { bestDist = d; best = q; }
@@ -7165,23 +7163,23 @@ function initCh7Vis() {
 
         if (p.inside) {
           if (p.x < innerL + PR) {
-            p.x = innerL + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
-            addDent(innerL, p.y, 'left', Math.abs(oldVx));
+            p.x = innerL + PR; const ov = p.vx; p.vx = Math.abs(p.vx);
+            addDent(innerL, p.y, 'left', Math.abs(ov));
             transferEnergy(p, innerL, p.y, 'vx');
           }
           if (p.x > innerR - PR) {
-            p.x = innerR - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
-            addDent(innerR, p.y, 'right', Math.abs(oldVx));
+            p.x = innerR - PR; const ov = p.vx; p.vx = -Math.abs(p.vx);
+            addDent(innerR, p.y, 'right', Math.abs(ov));
             transferEnergy(p, innerR, p.y, 'vx');
           }
           if (p.y < innerT + PR) {
-            p.y = innerT + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
-            addDent(p.x, innerT, 'top', Math.abs(oldVy));
+            p.y = innerT + PR; const ov = p.vy; p.vy = Math.abs(p.vy);
+            addDent(p.x, innerT, 'top', Math.abs(ov));
             transferEnergy(p, p.x, innerT, 'vy');
           }
           if (p.y > innerB - PR) {
-            p.y = innerB - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
-            addDent(p.x, innerB, 'bottom', Math.abs(oldVy));
+            p.y = innerB - PR; const ov = p.vy; p.vy = -Math.abs(p.vy);
+            addDent(p.x, innerB, 'bottom', Math.abs(ov));
             transferEnergy(p, p.x, innerB, 'vy');
           }
         } else {
@@ -7190,7 +7188,6 @@ function initCh7Vis() {
           if (p.y < outerT + PR) { p.y = outerT + PR; p.vy = Math.abs(p.vy); }
           if (p.y > outerB - PR) { p.y = outerB - PR; p.vy = -Math.abs(p.vy); }
 
-          // Bounce off inner box exterior
           if (p.x > innerL - PR && p.x < innerR + PR &&
               p.y > innerT - PR && p.y < innerB + PR) {
             const dL = p.x - (innerL - PR);
@@ -7199,35 +7196,49 @@ function initCh7Vis() {
             const dB = (innerB + PR) - p.y;
             const minD = Math.min(dL, dR, dT, dB);
             if (minD === dL) {
-              p.x = innerL - PR; const oldVx = p.vx; p.vx = -Math.abs(p.vx);
-              addDent(innerL, p.y, 'left', Math.abs(oldVx), -1);
+              p.x = innerL - PR; const ov = p.vx; p.vx = -Math.abs(p.vx);
+              addDent(innerL, p.y, 'left', Math.abs(ov), -1);
               transferEnergy(p, innerL, p.y, 'vx');
             } else if (minD === dR) {
-              p.x = innerR + PR; const oldVx = p.vx; p.vx = Math.abs(p.vx);
-              addDent(innerR, p.y, 'right', Math.abs(oldVx), -1);
+              p.x = innerR + PR; const ov = p.vx; p.vx = Math.abs(p.vx);
+              addDent(innerR, p.y, 'right', Math.abs(ov), -1);
               transferEnergy(p, innerR, p.y, 'vx');
             } else if (minD === dT) {
-              p.y = innerT - PR; const oldVy = p.vy; p.vy = -Math.abs(p.vy);
-              addDent(p.x, innerT, 'top', Math.abs(oldVy), -1);
+              p.y = innerT - PR; const ov = p.vy; p.vy = -Math.abs(p.vy);
+              addDent(p.x, innerT, 'top', Math.abs(ov), -1);
               transferEnergy(p, p.x, innerT, 'vy');
             } else {
-              p.y = innerB + PR; const oldVy = p.vy; p.vy = Math.abs(p.vy);
-              addDent(p.x, innerB, 'bottom', Math.abs(oldVy), -1);
+              p.y = innerB + PR; const ov = p.vy; p.vy = Math.abs(p.vy);
+              addDent(p.x, innerB, 'bottom', Math.abs(ov), -1);
               transferEnergy(p, p.x, innerB, 'vy');
             }
           }
         }
       }
 
-      // Decay dents
       for (let i = wallDents.length - 1; i >= 0; i--) {
         wallDents[i].life -= 0.04;
         if (wallDents[i].life <= 0) wallDents.splice(i, 1);
       }
+
+      // Record system energy
+      let eInner = 0;
+      for (const p of hrParticles) {
+        if (p.inside) eInner += 0.5 * (p.vx * p.vx + p.vy * p.vy);
+      }
+      energyHistory.push(eInner);
+      if (energyHistory.length > MAX_HISTORY) energyHistory.shift();
     }
 
     function drawHR() {
       clearCanvas(ctxHR, WHR, HHR);
+
+      // === LEFT: Gas simulation ===
+      // Clip to left side
+      ctxHR.save();
+      ctxHR.beginPath();
+      ctxHR.rect(0, 0, simW, HHR);
+      ctxHR.clip();
 
       // Outer box
       ctxHR.strokeStyle = COLORS.axis;
@@ -7238,50 +7249,41 @@ function initCh7Vis() {
       ctxHR.strokeStyle = COLORS.orange;
       ctxHR.lineWidth = 2.5;
       ctxHR.beginPath();
-
-      const steps = 40;
-      // Top side
+      const steps = 30;
       for (let i = 0; i <= steps; i++) {
         const x = innerL + (innerR - innerL) * i / steps;
-        const offset = getDentOffset(x, 'top');
-        const y = innerT - offset;
+        const y = innerT - getDentOffset(x, 'top');
         if (i === 0) ctxHR.moveTo(x, y); else ctxHR.lineTo(x, y);
       }
-      // Right side
       for (let i = 0; i <= steps; i++) {
         const y = innerT + (innerB - innerT) * i / steps;
-        const offset = getDentOffset(y, 'right');
-        ctxHR.lineTo(innerR + offset, y);
+        ctxHR.lineTo(innerR + getDentOffset(y, 'right'), y);
       }
-      // Bottom side
       for (let i = steps; i >= 0; i--) {
         const x = innerL + (innerR - innerL) * i / steps;
-        const offset = getDentOffset(x, 'bottom');
-        ctxHR.lineTo(x, innerB + offset);
+        ctxHR.lineTo(x, innerB + getDentOffset(x, 'bottom'));
       }
-      // Left side
       for (let i = steps; i >= 0; i--) {
         const y = innerT + (innerB - innerT) * i / steps;
-        const offset = getDentOffset(y, 'left');
-        ctxHR.lineTo(innerL - offset, y);
+        ctxHR.lineTo(innerL - getDentOffset(y, 'left'), y);
       }
       ctxHR.closePath();
       ctxHR.stroke();
 
-      // Glow on active dents
+      // Glow on impacts
       for (const d of wallDents) {
         if (d.life > 0.5) {
           ctxHR.save();
           ctxHR.globalAlpha = (d.life - 0.5) * 2 * 0.6;
           ctxHR.fillStyle = COLORS.yellow;
           ctxHR.beginPath();
-          ctxHR.arc(d.x, d.y, 6, 0, 2 * Math.PI);
+          ctxHR.arc(d.x, d.y, 5, 0, 2 * Math.PI);
           ctxHR.fill();
           ctxHR.restore();
         }
       }
 
-      // Draw particles
+      // Particles
       for (const p of hrParticles) {
         ctxHR.beginPath();
         ctxHR.arc(p.x, p.y, PR, 0, 2 * Math.PI);
@@ -7291,21 +7293,130 @@ function initCh7Vis() {
 
       // Labels
       ctxHR.fillStyle = COLORS.text;
-      ctxHR.font = FONT_LG;
+      ctxHR.font = FONT;
       ctxHR.textAlign = 'center';
-      ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 18);
+      ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 15);
       ctxHR.fillStyle = COLORS.textDim;
       ctxHR.font = FONT_SM;
-      ctxHR.fillText('Heat Reservoir', WHR / 2, outerT + 14);
+      ctxHR.fillText('Heat Reservoir', (outerL + outerR) / 2, outerB + 12);
 
-      // Energy display
-      let eInner = 0, eOuter = 0;
-      for (const p of hrParticles) {
-        const ke = 0.5 * (p.vx * p.vx + p.vy * p.vy);
-        if (p.inside) eInner += ke; else eOuter += ke;
+      ctxHR.restore(); // end clip
+
+      // === RIGHT: Energy distribution ===
+      const currentE = energyHistory.length > 0 ? energyHistory[energyHistory.length - 1] : 0;
+
+      // Determine energy scale from data
+      let Emax = 1;
+      if (energyHistory.length > 10) {
+        Emax = Math.max(...energyHistory) * 1.3;
       }
+      Emax = Math.max(Emax, currentE * 1.5, 5000);
+
+      // Axes
+      drawAxes(ctxHR, plotL, plotT, plotW, plotH, {xLabel: 'E_sys', yLabel: 'P(E)', yLabelOffset: 20});
+
+      // Title
+      ctxHR.fillStyle = COLORS.text;
+      ctxHR.font = FONT;
+      ctxHR.textAlign = 'left';
+      ctxHR.fillText('P(E) \u221d e^{\u2212E/kT}', plotL + 5, plotT - 10);
+
+      // Histogram of energy history
+      if (energyHistory.length > 20) {
+        const nBins = 25;
+        const bins = Array(nBins).fill(0);
+        for (const e of energyHistory) {
+          const bi = Math.min(Math.floor(e / Emax * nBins), nBins - 1);
+          if (bi >= 0) bins[bi]++;
+        }
+        const maxBin = Math.max(...bins);
+        if (maxBin > 0) {
+          const binW = plotW / nBins;
+          for (let i = 0; i < nBins; i++) {
+            const bH = (bins[i] / maxBin) * plotH * 0.85;
+            ctxHR.fillStyle = 'rgba(79,195,247,0.25)';
+            ctxHR.fillRect(plotL + i * binW, plotT + plotH - bH, binW - 1, bH);
+          }
+        }
+      }
+
+      // Boltzmann curve: fit effective temperature from reservoir KE
+      let eRes = 0;
+      for (const p of hrParticles) {
+        if (!p.inside) eRes += 0.5 * (p.vx * p.vx + p.vy * p.vy);
+      }
+      const kT = eRes / N_OUTER; // average KE per reservoir particle ~ kT
+      if (kT > 0) {
+        // For total system energy E_sys = sum of N_INNER particle KEs,
+        // the distribution is chi-squared-like: P(E) ~ E^(n-1) * exp(-E/kT)
+        // with n = N_INNER degrees of freedom (simplified to 2D: 2*N_INNER/2 = N_INNER)
+        const n = N_INNER;
+        // Find normalization peak for display scaling
+        const peakE = (n - 1) * kT;
+        const logPeakVal = (n - 1) * Math.log(Math.max(peakE, 1)) - peakE / kT;
+
+        ctxHR.strokeStyle = COLORS.orange;
+        ctxHR.lineWidth = 2;
+        ctxHR.beginPath();
+        let started = false;
+        for (let i = 0; i <= 200; i++) {
+          const E = (i / 200) * Emax;
+          if (E <= 0) continue;
+          const logP = (n - 1) * Math.log(E) - E / kT - logPeakVal;
+          const P = Math.exp(logP);
+          const px = plotL + (E / Emax) * plotW;
+          const py = plotT + plotH * (1 - P * 0.85);
+          if (py > plotT + plotH || py < plotT) continue;
+          if (!started) { ctxHR.moveTo(px, py); started = true; }
+          else ctxHR.lineTo(px, py);
+        }
+        ctxHR.stroke();
+      }
+
+      // Current energy marker (green vertical line)
+      const ex = plotL + (currentE / Emax) * plotW;
+      if (ex >= plotL && ex <= plotL + plotW) {
+        ctxHR.strokeStyle = COLORS.green;
+        ctxHR.lineWidth = 2;
+        ctxHR.beginPath();
+        ctxHR.moveTo(ex, plotT);
+        ctxHR.lineTo(ex, plotT + plotH);
+        ctxHR.stroke();
+
+        // Label current energy
+        ctxHR.fillStyle = COLORS.green;
+        ctxHR.font = FONT_SM;
+        ctxHR.textAlign = 'center';
+        ctxHR.fillText('E = ' + currentE.toFixed(0), ex, plotT + plotH + 25);
+      }
+
+      // Mean energy marker (dashed white line)
+      if (energyHistory.length > 20) {
+        const meanE = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
+        const mx = plotL + (meanE / Emax) * plotW;
+        if (mx >= plotL && mx <= plotL + plotW) {
+          ctxHR.strokeStyle = COLORS.textDim;
+          ctxHR.lineWidth = 1;
+          ctxHR.setLineDash([4, 4]);
+          ctxHR.beginPath();
+          ctxHR.moveTo(mx, plotT);
+          ctxHR.lineTo(mx, plotT + plotH);
+          ctxHR.stroke();
+          ctxHR.setLineDash([]);
+
+          ctxHR.fillStyle = COLORS.textDim;
+          ctxHR.font = FONT_SM;
+          ctxHR.textAlign = 'center';
+          ctxHR.fillText('\u27E8E\u27E9', mx, plotT - 3);
+        }
+      }
+
+      // Energy readout
       if (hrEnergyDisplay) {
-        hrEnergyDisplay.textContent = 'E_sys = ' + (eInner / N_INNER).toFixed(0) + '  |  E_res = ' + (eOuter / N_OUTER).toFixed(0);
+        const meanE = energyHistory.length > 20
+          ? (energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length).toFixed(0)
+          : '...';
+        hrEnergyDisplay.textContent = 'E_sys = ' + currentE.toFixed(0) + '  |  \u27E8E\u27E9 = ' + meanE;
       }
     }
 
