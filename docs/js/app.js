@@ -7684,7 +7684,7 @@ function initCh7Vis() {
     let wallDents = [];
 
     // Temperature units: slider T maps to RMS speed
-    function tempToSpeed(T) { return 7 * Math.sqrt(T); }
+    function tempToSpeed(T) { return 30 * Math.sqrt(T); }
 
     function initHR() {
       const T = parseFloat(resTempSlider?.value || 2.0);
