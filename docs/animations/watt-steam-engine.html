@@ -708,45 +708,32 @@ function drawEngine(a){
     spawnMolecule([{x:rx,y:ry},{x:rx2,y:ry2}],HOT,40,true);
   }
 
-  // Hot intake: molecules go AROUND the slider (not through it) to the open port.
-  // When left is open, slider is on the right → molecules approach from the LEFT side.
-  // When right is open, slider is on the left → molecules approach from the RIGHT side.
-  // They go: compartment top → down the open side → under/beside slider → into port hole
-  if(leftOpen&&run&&Math.random()<.7){
-    // Slider is on right side; left port is open. Molecules come down the left edge.
-    spawnMolecule([
-      {x:VB.x+20,y:VB.y+15},               // start at top-left of compartment
-      {x:VB.x+20,y:slY+slH/2},             // down the left side (outside slider)
-      {x:PORT_L_CX,y:slY+slH+2},           // under the slider to the port
-      {x:PORT_L_CX,y:VB_BOT},              // through the floor hole
+  // Hot intake: molecules start at the port hole and rush DOWN immediately.
+  // Short path = fast arrival. High spawn rate = lots of gas entering at once.
+  // Also spawn some that start from the compartment side for visual variety.
+  if(leftOpen&&run){
+    // Fast molecules: start right at the port, rush down the pipe
+    if(Math.random()<.8) spawnMolecule([
+      {x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
-    ],HOT,150,true);
-  }
-  if(leftOpen&&run&&Math.random()<.5){
-    spawnMolecule([
-      {x:VB.x+35,y:VB.y+25},
-      {x:PORT_L_CX-5,y:slY+slH+2},
+    ],HOT,250,true);
+    // Slower ones from the side for visual context
+    if(Math.random()<.3) spawnMolecule([
+      {x:VB.x+20,y:VB.y+20},{x:PORT_L_CX,y:slY+slH+2},
       {x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,150,true);
   }
-  if(rightOpen&&run&&Math.random()<.7){
-    // Slider is on left side; right port is open. Molecules come down the right edge.
-    spawnMolecule([
-      {x:VB.x+VB.w-20,y:VB.y+15},
-      {x:VB.x+VB.w-20,y:slY+slH/2},
-      {x:PORT_R_CX,y:slY+slH+2},
+  if(rightOpen&&run){
+    if(Math.random()<.8) spawnMolecule([
       {x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
-    ],HOT,150,true);
-  }
-  if(rightOpen&&run&&Math.random()<.5){
-    spawnMolecule([
-      {x:VB.x+VB.w-35,y:VB.y+25},
-      {x:PORT_R_CX+5,y:slY+slH+2},
+    ],HOT,250,true);
+    if(Math.random()<.3) spawnMolecule([
+      {x:VB.x+VB.w-20,y:VB.y+20},{x:PORT_R_CX,y:slY+slH+2},
       {x:PORT_R_CX,y:VB_BOT},
       {x:VPIPE_R.topCx,y:VB_BOT+5},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.botCx,y:CYL.y},{x:CYLPORT_R.cx,y:BORE.y+BORE.h/2}
