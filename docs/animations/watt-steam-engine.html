@@ -598,37 +598,32 @@ function drawEngine(a){
   curSliderTop=slY; curSliderBot=slY+slH;
   curULeftCx=uLeftCx; curURightCx=uRightCx; curUW=uW;
 
-  // Draw U-tube: two vertical legs + horizontal connector at top
-  // Left leg
-  X.fillStyle='rgba(90,110,160,.2)';
-  X.fillRect(uLeftCx-uW/2, uTopY+uW/2, uW, uBotY-uTopY-uW/2);
-  // Right leg
-  X.fillRect(uRightCx-uW/2, uTopY+uW/2, uW, uBotY-uTopY-uW/2);
-  // Horizontal connector at top
-  X.fillRect(uLeftCx-uW/2, uTopY, uRightCx-uLeftCx+uW, uW);
-  // U-tube walls (outline)
-  X.strokeStyle='rgba(140,155,180,.6)';X.lineWidth=1.5;
-  X.beginPath();
-  // Outer path of U
-  X.moveTo(uLeftCx-uW/2, uBotY);
-  X.lineTo(uLeftCx-uW/2, uTopY);
-  X.lineTo(uRightCx+uW/2, uTopY);
-  X.lineTo(uRightCx+uW/2, uBotY);
-  X.stroke();
-  // Inner path of U
-  X.beginPath();
-  X.moveTo(uLeftCx+uW/2, uBotY);
-  X.lineTo(uLeftCx+uW/2, uTopY+uW);
-  X.lineTo(uRightCx-uW/2, uTopY+uW);
-  X.lineTo(uRightCx-uW/2, uBotY);
-  X.stroke();
+  // Draw U-tube IN FOREGROUND (on top of slider body)
+  // Outer walls of the U (thick, visible pipe walls)
+  const uWallT=3;
+  X.fillStyle='#4a4e52';
+  // Left leg outer
+  X.fillRect(uLeftCx-uW/2-uWallT, uTopY-uWallT, uW+2*uWallT, uBotY-uTopY+uWallT);
+  // Right leg outer
+  X.fillRect(uRightCx-uW/2-uWallT, uTopY-uWallT, uW+2*uWallT, uBotY-uTopY+uWallT);
+  // Top bar outer
+  X.fillRect(uLeftCx-uW/2-uWallT, uTopY-uWallT, uRightCx-uLeftCx+uW+2*uWallT, uW+2*uWallT);
 
-  // Color U-tube bore when exhaust flowing
+  // Inner bore (dark, visible passage — drawn on top to cover wall joints)
+  X.fillStyle='#1a1a22';
+  // Left leg bore
+  X.fillRect(uLeftCx-uW/2, uTopY, uW, uBotY-uTopY);
+  // Right leg bore
+  X.fillRect(uRightCx-uW/2, uTopY, uW, uBotY-uTopY);
+  // Top bar bore (connects the two legs)
+  X.fillRect(uLeftCx-uW/2, uTopY, uRightCx-uLeftCx+uW, uW);
+
+  // Exhaust flow color inside the bore
   if(leftExh||rightExh){
-    X.fillStyle='rgba(90,110,160,.12)';
-    X.fillRect(uLeftCx-uW/2+2, uTopY+2, uRightCx-uLeftCx+uW-4, uW-2);
-    X.fillRect(uLeftCx-uW/2+2, uTopY+uW, uW-4, uBotY-uTopY-uW);
-    X.fillRect(uRightCx-uW/2+2, uTopY+uW, uW-4, uBotY-uTopY-uW);
+    X.fillStyle='rgba(90,110,160,.15)';
+    X.fillRect(uLeftCx-uW/2, uTopY, uW, uBotY-uTopY);
+    X.fillRect(uRightCx-uW/2, uTopY, uW, uBotY-uTopY);
+    X.fillRect(uLeftCx-uW/2, uTopY, uRightCx-uLeftCx+uW, uW);
   }
 
   // ── Eccentric linkage (same principle as piston-flywheel connection) ──
