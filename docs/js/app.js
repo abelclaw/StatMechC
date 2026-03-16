@@ -4478,11 +4478,12 @@ function initCh5Vis() {
     const nGasParticles = 30;
 
     // Layout: [Ratchet+Pawl T₂] --- axle --- [Vane T₁] --- thread --- [Weight]
-    const ratchetBox = { x: 15, y: 25, w: 135, h: HBR - 50 };
-    const vaneBox = { x: 230, y: 25, w: 200, h: HBR - 50 };
+    const boxW = 170, boxH = HBR - 50;
+    const ratchetBox = { x: 15, y: 25, w: boxW, h: boxH };
+    const vaneBox = { x: 275, y: 25, w: boxW, h: boxH };
     const rr = 35; // ratchet inner radius
-    const rcx0 = 82;  // ratchet center x (no vibration)
-    const vcx0 = 330;  // vane center x
+    const rcx0 = ratchetBox.x + boxW / 2;  // ratchet center x
+    const vcx0 = vaneBox.x + boxW / 2;  // vane center x
     const cy0 = HBR / 2; // shared center y
 
     function tempToColor(T) {
