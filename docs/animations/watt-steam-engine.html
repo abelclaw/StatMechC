@@ -351,11 +351,6 @@ function drawExternalPipes(){
   X.fillStyle='#c44';X.beginPath();X.arc(svx,svy,5,0,Math.PI*2);X.fill();
   label('Safety valve',svx,svy-16,11);
   // (Exhaust chimney is now drawn as part of the engine assembly, not here)
-  // Condensate return
-  X.strokeStyle='#555';X.lineWidth=10;X.lineCap='round';X.lineJoin='round';
-  X.beginPath();X.moveTo(CYL.x+30,CYL.y+CYL.h);X.lineTo(CYL.x+30,CYL.y+CYL.h+22);
-  X.lineTo(BLR.x+BLR.w-10,CYL.y+CYL.h+22);X.lineTo(BLR.x+BLR.w-10,BLR.y+BLR.h);X.stroke();
-  label('steam in',VB.x-15,VB.y+VB.h/2-14,9,'#c66');
 }
 
 // ═══════════════════════════════════════
@@ -626,58 +621,46 @@ function drawEngine(a){
 
   label('Sliding valve',sliderMidX,slY-6,10);
 
-  // ─── 6. CYLINDER BORE + GAS + PISTON ───
+  // ─── 6. CYLINDER BORE + GAS (always present, color transitions smoothly) ───
   X.fillStyle='#2a2a2a';X.fillRect(BORE.x,BORE.y,BORE.w,BORE.h);
   X.fillStyle='#2a2a2a';
   X.fillRect(CYLPORT_L.cx-CYLPORT_L.w/2,CYL.y,CYLPORT_L.w,WALL);
   X.fillRect(CYLPORT_R.cx-CYLPORT_R.w/2,CYL.y,CYLPORT_R.w,WALL);
 
-  // Left chamber gas
+  // Gas temperature for each side: smooth 0..1 (0=cold/blue, 1=hot/red)
+  // Uses the valve offset normalized to 0..1
+  // When leftOpen (vo>0): left is hot, right is cold
+  // When rightOpen (vo<0): right is hot, left is cold
+  // Smooth transition through the cycle
+  const voNorm=Math.max(-1,Math.min(1,vo/VALVE_TRAVEL)); // -1 to +1
+  const leftTemp=Math.max(0,Math.min(1,(voNorm+1)/2));   // 0 when vo=-35, 1 when vo=+35
+  const rightTemp=1-leftTemp;                              // opposite
+
+  // Draw gas in each chamber — ALWAYS visible, color shifts smoothly
+  function drawChamberGas(x,w,temp){
+    if(w<3) return;
+    // Blend between hot red and cold blue
+    const r=Math.round(90+140*temp);   // 90 (cold) to 230 (hot)
+    const g2=Math.round(110-40*temp);   // 110 (cold) to 70 (hot)
+    const b=Math.round(160-140*temp);  // 160 (cold) to 20 (hot)
+    const alpha=0.15+temp*0.1;         // stronger when hot
+    X.fillStyle=`rgba(${r},${g2},${b},${alpha})`;
+    X.fillRect(x,BORE.y,w,BORE.h);
+    // Particles — color matches temperature
+    const np=Math.max(4,w/8|0);
+    for(let i=0;i<np;i++){
+      const gx=x+3+Math.random()*(w-6),gy=BORE.y+3+Math.random()*(BORE.h-6);
+      const pr=r+Math.random()*30|0, pg2=g2+Math.random()*20|0, pb=b+Math.random()*20|0;
+      const pa=0.06+temp*0.1+Math.random()*0.05;
+      X.fillStyle=`rgba(${Math.min(255,pr)},${pg2},${pb},${pa})`;
+      X.beginPath();X.arc(gx,gy,1.5+Math.random()*2,0,Math.PI*2);X.fill();
+    }
+  }
+
   const lW=pf-BORE.x;
-  if(lW>2){
-    const temp=leftOpen?.85:leftExh?.18:.48;
-    if(temp>.5){
-      const g=X.createLinearGradient(BORE.x,0,pf,0);
-      g.addColorStop(0,`rgba(230,70,20,${temp*.06})`);g.addColorStop(1,`rgba(230,70,20,${temp*.2})`);
-      X.fillStyle=g;
-    } else {
-      const c=1-temp;
-      const g=X.createLinearGradient(BORE.x,0,pf,0);
-      g.addColorStop(0,`rgba(90,110,160,${c*.12})`);g.addColorStop(1,`rgba(90,110,160,${c*.04})`);
-      X.fillStyle=g;
-    }
-    X.fillRect(BORE.x,BORE.y,lW,BORE.h);
-    const np=Math.max(3,lW/12|0);
-    for(let i=0;i<np;i++){
-      const gx=BORE.x+3+Math.random()*(lW-6),gy=BORE.y+3+Math.random()*(BORE.h-6);
-      X.fillStyle=temp>.5?`rgba(255,${85+Math.random()*50|0},${15+Math.random()*30|0},${.05+temp*.1})`
-        :`rgba(${80+Math.random()*25|0},${100+Math.random()*25|0},${145+Math.random()*25|0},${.03+(1-temp)*.05})`;
-      X.beginPath();X.arc(gx,gy,1+Math.random()*1.8,0,Math.PI*2);X.fill();
-    }
-  }
-  // Right chamber gas
-  const rStart=pf+PW,rW=BORE.x+BORE.w-rStart;
-  if(rW>2){
-    const temp=rightOpen?.85:rightExh?.18:.48;
-    if(temp>.5){
-      const g=X.createLinearGradient(rStart,0,BORE.x+BORE.w,0);
-      g.addColorStop(0,`rgba(230,70,20,${temp*.2})`);g.addColorStop(1,`rgba(230,70,20,${temp*.06})`);
-      X.fillStyle=g;
-    } else {
-      const c=1-temp;
-      const g=X.createLinearGradient(rStart,0,BORE.x+BORE.w,0);
-      g.addColorStop(0,`rgba(90,110,160,${c*.04})`);g.addColorStop(1,`rgba(90,110,160,${c*.12})`);
-      X.fillStyle=g;
-    }
-    X.fillRect(rStart,BORE.y,rW,BORE.h);
-    const np=Math.max(3,rW/12|0);
-    for(let i=0;i<np;i++){
-      const gx=rStart+3+Math.random()*(rW-6),gy=BORE.y+3+Math.random()*(BORE.h-6);
-      X.fillStyle=temp>.5?`rgba(255,${85+Math.random()*50|0},${15+Math.random()*30|0},${.05+temp*.1})`
-        :`rgba(${80+Math.random()*25|0},${100+Math.random()*25|0},${145+Math.random()*25|0},${.03+(1-temp)*.05})`;
-      X.beginPath();X.arc(gx,gy,1+Math.random()*1.8,0,Math.PI*2);X.fill();
-    }
-  }
+  const rStart=pf+PW, rW=BORE.x+BORE.w-rStart;
+  drawChamberGas(BORE.x, lW, leftTemp);
+  drawChamberGas(rStart, rW, rightTemp);
 
   // Piston
   let pg=X.createLinearGradient(pf,BORE.y,pf,BORE.y+BORE.h);
@@ -812,21 +795,7 @@ function drawEngine(a){
     ],COLD,140,false);
   }
 
-  // ─── 8. LABELS ───
-  label('Piston',pf+PW/2,CYL.y+CYL.h+18,12);
-  if(lW>45){
-    X.fillStyle=leftOpen?'rgba(230,100,40,.5)':'rgba(90,110,160,.4)';
-    X.font='10px Georgia';X.textAlign='center';
-    X.fillText(leftOpen?'INTAKE':leftExh?'EXHAUST':'...',(BORE.x+pf)/2,rodY+4);
-  }
-  if(rW>45){
-    X.fillStyle=rightOpen?'rgba(230,100,40,.5)':'rgba(90,110,160,.4)';
-    X.font='10px Georgia';X.textAlign='center';
-    X.fillText(rightOpen?'INTAKE':rightExh?'EXHAUST':'...',(rStart+BORE.x+BORE.w)/2,rodY+4);
-  }
-  X.fillStyle='#999';X.font='9px Georgia';X.textAlign='center';
-  X.fillText('left port',CYLPORT_L.cx,CYL.y+CYL.h+18);
-  X.fillText('right port',CYLPORT_R.cx,CYL.y+CYL.h+18);
+  // Rivets only, no text labels
   for(let yy=CYL.y+15;yy<CYL.y+CYL.h;yy+=22){rivet(CYL.x+6,yy);rivet(CYL.x+CYL.w-6,yy);}
 
   return chX;
