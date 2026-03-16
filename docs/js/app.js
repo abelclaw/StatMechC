@@ -5937,10 +5937,17 @@ function initCh6Vis() {
         lbPhys(uBall, uBar, uTi);
         if (!running) {
           uBar = 1; uTi = 0;
-          if (uProto.heat) {
+          if (uProto.erase) {
             hidden = false;
-            lbMsg = 'Erased! Heat \u2265 kT ln 2 dissipated.';
-            lbMC = COLORS.red;
+            if (lbURv) lbURv.textContent = 'Hide';
+            if (uProto.changed) {
+              lbMsg = 'Was ' + uProto.wasBit + ' \u2014 had to change. Heat = kT ln 2.';
+              lbMC = COLORS.red;
+            } else {
+              lbHeat = 0;
+              lbMsg = 'Was already ' + uProto.tgtBit + '! No heat needed.';
+              lbMC = COLORS.green;
+            }
           }
           uProto = null; lbBz = false;
         }
@@ -6014,10 +6021,15 @@ function initCh6Vis() {
         lbMsg = 'Revealed \u2014 just a flip. No heat.';
         lbMC = COLORS.green; return;
       }
-      // Hidden — must erase (costs heat)
+      // Hidden — run erasure protocol; heat only if bit actually changes
       lbBz = true; lbHeat = 0;
-      uProto = makeProto(tgt < 0 ? -1.5 : 1.5, true);
-      lbMsg = 'Erasing unknown bit to ' + (tgt < 0 ? '0' : '1') + '...';
+      const needsChange = (uBall.x > 0 && tgt < 0) || (uBall.x < 0 && tgt > 0);
+      uProto = makeProto(tgt < 0 ? -1.5 : 1.5, needsChange);
+      uProto.erase = true;
+      uProto.changed = needsChange;
+      uProto.tgtBit = tgt < 0 ? '0' : '1';
+      uProto.wasBit = uBall.x < 0 ? '0' : '1';
+      lbMsg = 'Setting unknown bit to ' + (tgt < 0 ? '0' : '1') + '...';
       lbMC = COLORS.orange;
     }
     lbUS0?.addEventListener('click', () => uSet(-1));
