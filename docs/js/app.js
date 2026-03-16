@@ -7391,54 +7391,48 @@ function initCh7Vis() {
 
       // Atom-atom collisions → possible binding
       const bindDist = 2.5 * PR;
-      for (let i = atoms.length - 1; i >= 0; i--) {
-        for (let j = i - 1; j >= 0; j--) {
-          const dx = atoms[i].x - atoms[j].x;
-          const dy = atoms[i].y - atoms[j].y;
+      const toRemove = new Set();
+      for (let i = 0; i < atoms.length; i++) {
+        if (toRemove.has(i)) continue;
+        for (let j = i + 1; j < atoms.length; j++) {
+          if (toRemove.has(j)) continue;
+          const ai = atoms[i], aj = atoms[j];
+          const dx = ai.x - aj.x, dy = ai.y - aj.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < bindDist) {
-            // Relative kinetic energy (in CM frame)
-            const dvx = atoms[i].vx - atoms[j].vx;
-            const dvy = atoms[i].vy - atoms[j].vy;
-            const relKE = 0.25 * (dvx * dvx + dvy * dvy); // reduced mass = m/2
-            // Bind if relative KE < binding energy (they're slow enough to capture)
-            // Scale eps so it's in "speed²" units comparable to relKE
+            const dvx = ai.vx - aj.vx, dvy = ai.vy - aj.vy;
+            const relKE = 0.25 * (dvx * dvx + dvy * dvy);
             const epsScaled = eps * speedScale(T) * speedScale(T) * 0.08;
             if (relKE < epsScaled) {
-              // Form dimer
-              const cmx = (atoms[i].x + atoms[j].x) / 2;
-              const cmy = (atoms[i].y + atoms[j].y) / 2;
-              const cmvx = (atoms[i].vx + atoms[j].vx) / 2;
-              const cmvy = (atoms[i].vy + atoms[j].vy) / 2;
               const angle = Math.atan2(dy, dx);
-              // Angular velocity from relative tangential velocity
               const tx = -dy / (dist || 1), ty = dx / (dist || 1);
               const omega = (dvx * tx + dvy * ty) / (dist || 1);
-              dimers.push({ x: cmx, y: cmy, vx: cmvx, vy: cmvy, angle, omega });
-              atoms.splice(i, 1);
-              atoms.splice(j, 1);
-              break; // atom i is gone
+              dimers.push({
+                x: (ai.x + aj.x) / 2, y: (ai.y + aj.y) / 2,
+                vx: (ai.vx + aj.vx) / 2, vy: (ai.vy + aj.vy) / 2,
+                angle, omega
+              });
+              toRemove.add(i);
+              toRemove.add(j);
+              break;
             } else {
-              // Elastic collision (bounce off)
               const nx = dx / (dist || 1), ny = dy / (dist || 1);
               const dvn = dvx * nx + dvy * ny;
-              if (dvn < 0) { // approaching
-                atoms[i].vx -= dvn * nx;
-                atoms[i].vy -= dvn * ny;
-                atoms[j].vx += dvn * nx;
-                atoms[j].vy += dvn * ny;
-                // Separate
+              if (dvn < 0) {
+                ai.vx -= dvn * nx; ai.vy -= dvn * ny;
+                aj.vx += dvn * nx; aj.vy += dvn * ny;
                 const overlap = bindDist - dist;
                 if (overlap > 0) {
-                  atoms[i].x += nx * overlap * 0.5;
-                  atoms[i].y += ny * overlap * 0.5;
-                  atoms[j].x -= nx * overlap * 0.5;
-                  atoms[j].y -= ny * overlap * 0.5;
+                  ai.x += nx * overlap * 0.5; ai.y += ny * overlap * 0.5;
+                  aj.x -= nx * overlap * 0.5; aj.y -= ny * overlap * 0.5;
                 }
               }
             }
           }
         }
+      }
+      if (toRemove.size > 0) {
+        atoms = atoms.filter((_, idx) => !toRemove.has(idx));
       }
 
       // Dimer-atom collisions
@@ -7963,10 +7957,10 @@ function initCh7Vis() {
     const veM = 12;
     const boxL = veM, boxR = WVE - veM, boxT = 30, boxB = HVE - 50;
     const boxW = boxR - boxL, boxH = boxB - boxT;
-    const PR_VE = 2;
+    const PR_VE = 5;
     const N_LEFT = 30, N_RIGHT = 30;
     const WALL_HALF = 3;
-    const WALL_MASS = 3; // wall inertia relative to particles
+    const WALL_MASS = 1.5; // wall inertia relative to particles
 
     let wallX = (boxL + boxR) / 2; // moveable wall position
     let wallVx = 0; // wall velocity
@@ -8072,6 +8066,34 @@ function initCh7Vis() {
             const impulse = 2 * vRel / (1 + 1 / WALL_MASS);
             p.vx -= impulse;
             wallVx += impulse / WALL_MASS;
+          }
+        }
+      }
+
+      // Particle-particle collisions (elastic, equal mass)
+      for (let i = 0; i < veParticles.length; i++) {
+        for (let j = i + 1; j < veParticles.length; j++) {
+          if (veParticles[i].side !== veParticles[j].side) continue;
+          const a = veParticles[i], b = veParticles[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minD = PR_VE * 2;
+          if (dist < minD && dist > 0) {
+            const nx = dx / dist, ny = dy / dist;
+            const dvx = a.vx - b.vx, dvy = a.vy - b.vy;
+            const dvn = dvx * nx + dvy * ny;
+            if (dvn > 0) { // approaching
+              a.vx -= dvn * nx;
+              a.vy -= dvn * ny;
+              b.vx += dvn * nx;
+              b.vy += dvn * ny;
+            }
+            // Separate overlap
+            const overlap = minD - dist;
+            a.x -= nx * overlap * 0.5;
+            a.y -= ny * overlap * 0.5;
+            b.x += nx * overlap * 0.5;
+            b.y += ny * overlap * 0.5;
           }
         }
       }
