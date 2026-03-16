@@ -7309,119 +7309,114 @@ function initCh7Vis() {
   // ----- Dissociation Equilibrium: A + A ⇌ A₂ -----
   const cCP = document.getElementById('vis-chempot');
   if (cCP) {
-    const cp = setupCanvas(cCP);
-    const ctxCP = cp.ctx, WCP = cp.W, HCP = cp.H;
+    const cpSetup = setupCanvas(cCP);
+    const ctxCP = cpSetup.ctx, WCP = cpSetup.W, HCP = cpSetup.H;
 
-    const tempSlider = document.getElementById('chempot-temp');
-    const tempVal = document.getElementById('chempot-temp-val');
-    const epsSlider = document.getElementById('chempot-eps');
-    const epsVal = document.getElementById('chempot-eps-val');
+    const cpTempSlider = document.getElementById('chempot-temp');
+    const cpTempVal = document.getElementById('chempot-temp-val');
+    const cpEpsSlider = document.getElementById('chempot-eps');
+    const cpEpsVal = document.getElementById('chempot-eps-val');
 
-    // Layout: simulation box on left, bar chart on right
-    const simW = Math.floor(WCP * 0.6);
-    const M = 12; // margin
-    const boxL = M, boxR = simW - M, boxT = M, boxB = HCP - M;
+    // Layout: sim box left, μ panel + bars right
+    const cpSimW = Math.floor(WCP * 0.55);
+    const cpM = 10;
+    const cpBoxL = cpM, cpBoxR = cpSimW - cpM, cpBoxT = cpM, cpBoxB = HCP - cpM;
 
-    const PR = 5; // particle radius
-    const BOND_LEN = 14; // visual separation in dimer
-    const N_TOTAL = 40; // total atoms (free + 2*dimers)
+    const cpPR = 5;
+    const cpBondLen = 14;
+    const cpNTotal = 36;
 
-    let atoms = [];   // free atoms: {x, y, vx, vy}
-    let dimers = [];  // bound pairs: {x, y, vx, vy, angle, omega}
+    let cpAtoms = [];
+    let cpDimers = [];
+    let cpSmoothMuA = 0, cpSmoothMuA2 = 0;
 
-    function getT() { return parseFloat(tempSlider?.value || 1.5); }
-    function getEps() { return parseFloat(epsSlider?.value || 3.0); }
-    function speedScale(T) { return 25 * Math.sqrt(T); }
+    function cpGetT() { return parseFloat(cpTempSlider?.value || 1.5); }
+    function cpGetEps() { return parseFloat(cpEpsSlider?.value || 3.0); }
+    // T=0.3 → ~4.4, T=1.5 → ~9.8, T=4 → ~16
+    function cpSpdScale(T) { return 8 * Math.sqrt(T); }
 
-    function randomSpeed(T) {
-      // Rayleigh-distributed speed (2D Maxwell)
-      const s = speedScale(T);
+    function cpRandSpd(T) {
+      var s = cpSpdScale(T);
       return s * Math.sqrt(-2 * Math.log(1 - Math.random() * 0.999));
     }
 
-    function initCP() {
-      atoms = [];
-      dimers = [];
-      const T = getT();
-      for (let i = 0; i < N_TOTAL; i++) {
-        const speed = randomSpeed(T);
-        const angle = Math.random() * 2 * Math.PI;
-        atoms.push({
-          x: boxL + PR + Math.random() * (boxR - boxL - 2 * PR),
-          y: boxT + PR + Math.random() * (boxB - boxT - 2 * PR),
-          vx: speed * Math.cos(angle),
-          vy: speed * Math.sin(angle)
+    function cpInit() {
+      cpAtoms = []; cpDimers = [];
+      cpSmoothMuA = 0; cpSmoothMuA2 = 0;
+      var T = cpGetT();
+      for (var i = 0; i < cpNTotal; i++) {
+        var spd = cpRandSpd(T);
+        var ang = Math.random() * 2 * Math.PI;
+        cpAtoms.push({
+          x: cpBoxL + cpPR + Math.random() * (cpBoxR - cpBoxL - 2 * cpPR),
+          y: cpBoxT + cpPR + Math.random() * (cpBoxB - cpBoxT - 2 * cpPR),
+          vx: spd * Math.cos(ang), vy: spd * Math.sin(ang)
         });
       }
     }
 
-    // Thermostat: on wall bounce, resample speed component from Maxwell at T
-    function thermostat(v, T) {
-      const s = speedScale(T) * 0.7;
+    function cpThermo(T) {
+      var s = cpSpdScale(T) * 0.7;
       return s * Math.sqrt(-2 * Math.log(1 - Math.random() * 0.999));
     }
 
-    function stepCP() {
-      const T = getT();
-      const eps = getEps();
-      const dt = 0.6;
+    function cpStep() {
+      var T = cpGetT(), eps = cpGetEps(), dt = 1.0;
 
-      // Move free atoms
-      for (const a of atoms) {
-        a.x += a.vx * dt;
-        a.y += a.vy * dt;
-        // Wall bounces with thermostat
-        if (a.x < boxL + PR) { a.x = boxL + PR; a.vx = thermostat(a.vx, T); }
-        if (a.x > boxR - PR) { a.x = boxR - PR; a.vx = -thermostat(a.vx, T); }
-        if (a.y < boxT + PR) { a.y = boxT + PR; a.vy = thermostat(a.vy, T); }
-        if (a.y > boxB - PR) { a.y = boxB - PR; a.vy = -thermostat(a.vy, T); }
+      // Move atoms
+      for (var k = 0; k < cpAtoms.length; k++) {
+        var a = cpAtoms[k];
+        a.x += a.vx * dt; a.y += a.vy * dt;
+        if (a.x < cpBoxL + cpPR) { a.x = cpBoxL + cpPR; a.vx = cpThermo(T); }
+        if (a.x > cpBoxR - cpPR) { a.x = cpBoxR - cpPR; a.vx = -cpThermo(T); }
+        if (a.y < cpBoxT + cpPR) { a.y = cpBoxT + cpPR; a.vy = cpThermo(T); }
+        if (a.y > cpBoxB - cpPR) { a.y = cpBoxB - cpPR; a.vy = -cpThermo(T); }
       }
 
       // Move dimers
-      for (const d of dimers) {
-        d.x += d.vx * dt;
-        d.y += d.vy * dt;
+      for (var k = 0; k < cpDimers.length; k++) {
+        var d = cpDimers[k];
+        d.x += d.vx * dt; d.y += d.vy * dt;
         d.angle += d.omega * dt;
-        const R = BOND_LEN / 2 + PR;
-        if (d.x < boxL + R) { d.x = boxL + R; d.vx = thermostat(d.vx, T) * 0.7; }
-        if (d.x > boxR - R) { d.x = boxR - R; d.vx = -thermostat(d.vx, T) * 0.7; }
-        if (d.y < boxT + R) { d.y = boxT + R; d.vy = thermostat(d.vy, T) * 0.7; }
-        if (d.y > boxB - R) { d.y = boxB - R; d.vy = -thermostat(d.vy, T) * 0.7; }
+        var R = cpBondLen / 2 + cpPR;
+        if (d.x < cpBoxL + R) { d.x = cpBoxL + R; d.vx = cpThermo(T) * 0.5; }
+        if (d.x > cpBoxR - R) { d.x = cpBoxR - R; d.vx = -cpThermo(T) * 0.5; }
+        if (d.y < cpBoxT + R) { d.y = cpBoxT + R; d.vy = cpThermo(T) * 0.5; }
+        if (d.y > cpBoxB - R) { d.y = cpBoxB - R; d.vy = -cpThermo(T) * 0.5; }
       }
 
       // Atom-atom collisions → possible binding
-      const bindDist = 2.5 * PR;
-      const toRemove = new Set();
-      for (let i = 0; i < atoms.length; i++) {
+      var bindDist = 2.5 * cpPR;
+      var toRemove = new Set();
+      for (var i = 0; i < cpAtoms.length; i++) {
         if (toRemove.has(i)) continue;
-        for (let j = i + 1; j < atoms.length; j++) {
+        for (var j = i + 1; j < cpAtoms.length; j++) {
           if (toRemove.has(j)) continue;
-          const ai = atoms[i], aj = atoms[j];
-          const dx = ai.x - aj.x, dy = ai.y - aj.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          var ai = cpAtoms[i], aj = cpAtoms[j];
+          var dx = ai.x - aj.x, dy = ai.y - aj.y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < bindDist) {
-            const dvx = ai.vx - aj.vx, dvy = ai.vy - aj.vy;
-            const relKE = 0.25 * (dvx * dvx + dvy * dvy);
-            const epsScaled = eps * speedScale(T) * speedScale(T) * 0.08;
-            if (relKE < epsScaled) {
-              const angle = Math.atan2(dy, dx);
-              const tx = -dy / (dist || 1), ty = dx / (dist || 1);
-              const omega = (dvx * tx + dvy * ty) / (dist || 1);
-              dimers.push({
+            var dvx = ai.vx - aj.vx, dvy = ai.vy - aj.vy;
+            var relKE = 0.25 * (dvx * dvx + dvy * dvy);
+            var epsThresh = eps * cpSpdScale(T) * cpSpdScale(T) * 0.12;
+            if (relKE < epsThresh) {
+              var bAng = Math.atan2(dy, dx);
+              var tx = -dy / (dist || 1), ty = dx / (dist || 1);
+              var omega = (dvx * tx + dvy * ty) / (dist || 1);
+              cpDimers.push({
                 x: (ai.x + aj.x) / 2, y: (ai.y + aj.y) / 2,
                 vx: (ai.vx + aj.vx) / 2, vy: (ai.vy + aj.vy) / 2,
-                angle, omega
+                angle: bAng, omega: omega
               });
-              toRemove.add(i);
-              toRemove.add(j);
+              toRemove.add(i); toRemove.add(j);
               break;
             } else {
-              const nx = dx / (dist || 1), ny = dy / (dist || 1);
-              const dvn = dvx * nx + dvy * ny;
+              var nx = dx / (dist || 1), ny = dy / (dist || 1);
+              var dvn = dvx * nx + dvy * ny;
               if (dvn < 0) {
                 ai.vx -= dvn * nx; ai.vy -= dvn * ny;
                 aj.vx += dvn * nx; aj.vy += dvn * ny;
-                const overlap = bindDist - dist;
+                var overlap = bindDist - dist;
                 if (overlap > 0) {
                   ai.x += nx * overlap * 0.5; ai.y += ny * overlap * 0.5;
                   aj.x -= nx * overlap * 0.5; aj.y -= ny * overlap * 0.5;
@@ -7432,33 +7427,28 @@ function initCh7Vis() {
         }
       }
       if (toRemove.size > 0) {
-        atoms = atoms.filter((_, idx) => !toRemove.has(idx));
+        cpAtoms = cpAtoms.filter(function(_, idx) { return !toRemove.has(idx); });
       }
 
       // Dimer-atom collisions
-      for (const d of dimers) {
-        const ax1 = d.x + Math.cos(d.angle) * BOND_LEN / 2;
-        const ay1 = d.y + Math.sin(d.angle) * BOND_LEN / 2;
-        const ax2 = d.x - Math.cos(d.angle) * BOND_LEN / 2;
-        const ay2 = d.y - Math.sin(d.angle) * BOND_LEN / 2;
-        for (const a of atoms) {
-          // Check against both atoms of dimer
-          for (const [px, py] of [[ax1, ay1], [ax2, ay2]]) {
-            const dx = a.x - px, dy = a.y - py;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 2.2 * PR) {
-              const nx = dx / (dist || 1), ny = dy / (dist || 1);
-              const dvx = a.vx - d.vx, dvy = a.vy - d.vy;
-              const dvn = dvx * nx + dvy * ny;
+      for (var di = 0; di < cpDimers.length; di++) {
+        var dd = cpDimers[di];
+        var ca = Math.cos(dd.angle), sa = Math.sin(dd.angle);
+        var px1 = dd.x + ca * cpBondLen / 2, py1 = dd.y + sa * cpBondLen / 2;
+        var px2 = dd.x - ca * cpBondLen / 2, py2 = dd.y - sa * cpBondLen / 2;
+        for (var ai2 = 0; ai2 < cpAtoms.length; ai2++) {
+          var aa = cpAtoms[ai2];
+          var pts = [[px1, py1], [px2, py2]];
+          for (var pi = 0; pi < pts.length; pi++) {
+            var dx = aa.x - pts[pi][0], dy = aa.y - pts[pi][1];
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 2.2 * cpPR) {
+              var nx = dx / (dist || 1), ny = dy / (dist || 1);
+              var dvn = (aa.vx - dd.vx) * nx + (aa.vy - dd.vy) * ny;
               if (dvn < 0) {
-                // Transfer momentum (dimer is heavier)
-                a.vx -= dvn * nx * 0.8;
-                a.vy -= dvn * ny * 0.8;
-                d.vx += dvn * nx * 0.4;
-                d.vy += dvn * ny * 0.4;
-                // Spin up the dimer
-                const tx = -ny, ty = nx;
-                d.omega += (dvn * 0.3) / (BOND_LEN / 2);
+                aa.vx -= dvn * nx * 0.8; aa.vy -= dvn * ny * 0.8;
+                dd.vx += dvn * nx * 0.4; dd.vy += dvn * ny * 0.4;
+                dd.omega += (dvn * 0.3) / (cpBondLen / 2);
               }
             }
           }
@@ -7466,192 +7456,198 @@ function initCh7Vis() {
       }
 
       // Spontaneous dissociation: rate ~ exp(-eps/T)
-      const breakProb = 0.015 * Math.exp(-eps / T);
-      for (let i = dimers.length - 1; i >= 0; i--) {
+      var breakProb = 0.02 * Math.exp(-eps / T);
+      for (var i = cpDimers.length - 1; i >= 0; i--) {
         if (Math.random() < breakProb) {
-          const d = dimers[i];
-          const ca = Math.cos(d.angle), sa = Math.sin(d.angle);
-          const kickSpeed = speedScale(T) * 0.5;
-          atoms.push({
-            x: d.x + ca * BOND_LEN / 2,
-            y: d.y + sa * BOND_LEN / 2,
-            vx: d.vx + ca * kickSpeed + Math.random() * kickSpeed * 0.3,
-            vy: d.vy + sa * kickSpeed + Math.random() * kickSpeed * 0.3
+          var dd = cpDimers[i];
+          var ca = Math.cos(dd.angle), sa = Math.sin(dd.angle);
+          var kick = cpSpdScale(T) * 0.6;
+          cpAtoms.push({
+            x: dd.x + ca * cpBondLen / 2, y: dd.y + sa * cpBondLen / 2,
+            vx: dd.vx + ca * kick * (0.7 + Math.random() * 0.6),
+            vy: dd.vy + sa * kick * (0.7 + Math.random() * 0.6)
           });
-          atoms.push({
-            x: d.x - ca * BOND_LEN / 2,
-            y: d.y - sa * BOND_LEN / 2,
-            vx: d.vx - ca * kickSpeed - Math.random() * kickSpeed * 0.3,
-            vy: d.vy - sa * kickSpeed - Math.random() * kickSpeed * 0.3
+          cpAtoms.push({
+            x: dd.x - ca * cpBondLen / 2, y: dd.y - sa * cpBondLen / 2,
+            vx: dd.vx - ca * kick * (0.7 + Math.random() * 0.6),
+            vy: dd.vy - sa * kick * (0.7 + Math.random() * 0.6)
           });
-          dimers.splice(i, 1);
+          cpDimers.splice(i, 1);
         }
       }
 
-      // Dimer-dimer collisions (simple: treat as circles)
-      for (let i = 0; i < dimers.length; i++) {
-        for (let j = i + 1; j < dimers.length; j++) {
-          const dx = dimers[i].x - dimers[j].x;
-          const dy = dimers[i].y - dimers[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const minDist = BOND_LEN + 2 * PR;
-          if (dist < minDist && dist > 0) {
-            const nx = dx / dist, ny = dy / dist;
-            const dvx = dimers[i].vx - dimers[j].vx;
-            const dvy = dimers[i].vy - dimers[j].vy;
-            const dvn = dvx * nx + dvy * ny;
+      // Dimer-dimer collisions
+      for (var i = 0; i < cpDimers.length; i++) {
+        for (var j = i + 1; j < cpDimers.length; j++) {
+          var dx = cpDimers[i].x - cpDimers[j].x;
+          var dy = cpDimers[i].y - cpDimers[j].y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          var minD = cpBondLen + 2 * cpPR;
+          if (dist < minD && dist > 0) {
+            var nx = dx / dist, ny = dy / dist;
+            var dvn = (cpDimers[i].vx - cpDimers[j].vx) * nx + (cpDimers[i].vy - cpDimers[j].vy) * ny;
             if (dvn < 0) {
-              dimers[i].vx -= dvn * nx * 0.5;
-              dimers[i].vy -= dvn * ny * 0.5;
-              dimers[j].vx += dvn * nx * 0.5;
-              dimers[j].vy += dvn * ny * 0.5;
+              cpDimers[i].vx -= dvn * nx * 0.5; cpDimers[i].vy -= dvn * ny * 0.5;
+              cpDimers[j].vx += dvn * nx * 0.5; cpDimers[j].vy += dvn * ny * 0.5;
             }
-            const overlap = minDist - dist;
-            dimers[i].x += nx * overlap * 0.5;
-            dimers[i].y += ny * overlap * 0.5;
-            dimers[j].x -= nx * overlap * 0.5;
-            dimers[j].y -= ny * overlap * 0.5;
+            var overlap = minD - dist;
+            cpDimers[i].x += nx * overlap * 0.5; cpDimers[i].y += ny * overlap * 0.5;
+            cpDimers[j].x -= nx * overlap * 0.5; cpDimers[j].y -= ny * overlap * 0.5;
           }
         }
       }
     }
 
-    function drawCP() {
+    function cpDraw() {
       clearCanvas(ctxCP, WCP, HCP);
+      var T = cpGetT(), eps = cpGetEps();
+      var nFree = cpAtoms.length, nDim = cpDimers.length;
 
       // Draw box
-      ctxCP.strokeStyle = COLORS.axis;
-      ctxCP.lineWidth = 2;
-      ctxCP.strokeRect(boxL, boxT, boxR - boxL, boxB - boxT);
+      ctxCP.strokeStyle = COLORS.axis; ctxCP.lineWidth = 2;
+      ctxCP.strokeRect(cpBoxL, cpBoxT, cpBoxR - cpBoxL, cpBoxB - cpBoxT);
 
-      // Draw free atoms
-      for (const a of atoms) {
+      // Free atoms
+      for (var i = 0; i < cpAtoms.length; i++) {
+        var a = cpAtoms[i];
         ctxCP.fillStyle = COLORS.blue;
-        ctxCP.beginPath();
-        ctxCP.arc(a.x, a.y, PR, 0, 2 * Math.PI);
-        ctxCP.fill();
-        // Subtle glow
-        ctxCP.strokeStyle = 'rgba(79,195,247,0.3)';
-        ctxCP.lineWidth = 1;
-        ctxCP.stroke();
+        ctxCP.beginPath(); ctxCP.arc(a.x, a.y, cpPR, 0, 2 * Math.PI); ctxCP.fill();
+        ctxCP.strokeStyle = 'rgba(79,195,247,0.3)'; ctxCP.lineWidth = 1; ctxCP.stroke();
       }
 
-      // Draw dimers
-      for (const d of dimers) {
-        const ca = Math.cos(d.angle), sa = Math.sin(d.angle);
-        const x1 = d.x + ca * BOND_LEN / 2, y1 = d.y + sa * BOND_LEN / 2;
-        const x2 = d.x - ca * BOND_LEN / 2, y2 = d.y - sa * BOND_LEN / 2;
-
-        // Bond line
-        ctxCP.strokeStyle = COLORS.orange;
-        ctxCP.lineWidth = 2.5;
-        ctxCP.beginPath();
-        ctxCP.moveTo(x1, y1);
-        ctxCP.lineTo(x2, y2);
-        ctxCP.stroke();
-
-        // Atoms
+      // Dimers
+      for (var i = 0; i < cpDimers.length; i++) {
+        var d = cpDimers[i];
+        var ca = Math.cos(d.angle), sa = Math.sin(d.angle);
+        var x1 = d.x + ca * cpBondLen / 2, y1 = d.y + sa * cpBondLen / 2;
+        var x2 = d.x - ca * cpBondLen / 2, y2 = d.y - sa * cpBondLen / 2;
+        ctxCP.strokeStyle = COLORS.orange; ctxCP.lineWidth = 2.5;
+        ctxCP.beginPath(); ctxCP.moveTo(x1, y1); ctxCP.lineTo(x2, y2); ctxCP.stroke();
         ctxCP.fillStyle = COLORS.orange;
-        ctxCP.beginPath();
-        ctxCP.arc(x1, y1, PR, 0, 2 * Math.PI);
-        ctxCP.fill();
-        ctxCP.beginPath();
-        ctxCP.arc(x2, y2, PR, 0, 2 * Math.PI);
-        ctxCP.fill();
-
-        ctxCP.strokeStyle = 'rgba(255,167,38,0.3)';
-        ctxCP.lineWidth = 1;
-        ctxCP.beginPath();
-        ctxCP.arc(x1, y1, PR, 0, 2 * Math.PI);
-        ctxCP.stroke();
-        ctxCP.beginPath();
-        ctxCP.arc(x2, y2, PR, 0, 2 * Math.PI);
-        ctxCP.stroke();
+        ctxCP.beginPath(); ctxCP.arc(x1, y1, cpPR, 0, 2 * Math.PI); ctxCP.fill();
+        ctxCP.beginPath(); ctxCP.arc(x2, y2, cpPR, 0, 2 * Math.PI); ctxCP.fill();
+        ctxCP.strokeStyle = 'rgba(255,167,38,0.3)'; ctxCP.lineWidth = 1;
+        ctxCP.beginPath(); ctxCP.arc(x1, y1, cpPR, 0, 2 * Math.PI); ctxCP.stroke();
+        ctxCP.beginPath(); ctxCP.arc(x2, y2, cpPR, 0, 2 * Math.PI); ctxCP.stroke();
       }
 
-      // Right panel: bar chart of counts
-      const nFree = atoms.length;
-      const nDimer = dimers.length;
-      const nBound = nDimer * 2;
-      const chartL = simW + 20, chartR = WCP - 15;
-      const chartT = 45, chartB = HCP - 55;
-      const chartW = chartR - chartL;
-      const chartH = chartB - chartT;
+      // ---- Right panel ----
+      var panL = cpSimW + 8, panR = WCP - 8, panCx = (panL + panR) / 2;
 
       // Title
-      ctxCP.fillStyle = COLORS.text;
-      ctxCP.font = FONT;
+      ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT;
       ctxCP.textAlign = 'center';
-      ctxCP.fillText('A + A ⇌ A₂', (chartL + chartR) / 2, 22);
+      ctxCP.fillText('A + A \u21CC A\u2082', panCx, 22);
 
-      // Axis
-      ctxCP.strokeStyle = COLORS.axis;
-      ctxCP.lineWidth = 1;
-      ctxCP.beginPath();
-      ctxCP.moveTo(chartL, chartB);
-      ctxCP.lineTo(chartR, chartB);
-      ctxCP.stroke();
+      // Compute chemical potentials (in units where kB=1)
+      // \u03BC_A = T ln(n_A), \u03BC_{A2} = T ln(n_{A2}) - \u03B5
+      var boxArea = (cpBoxR - cpBoxL) * (cpBoxB - cpBoxT);
+      var densA = Math.max(nFree, 0.5) / boxArea;
+      var densA2 = Math.max(nDim, 0.5) / boxArea;
+      var muA = T * Math.log(densA * 1e4);
+      var muA2 = T * Math.log(densA2 * 1e4) - eps;
+      var twoMuA = 2 * muA;
 
-      // Scale: max bar = N_TOTAL atoms
-      const barW = chartW * 0.3;
-      const gap = chartW * 0.1;
-      const barMaxH = chartH;
+      // Smooth for display
+      var ema = 0.04;
+      cpSmoothMuA = cpSmoothMuA * (1 - ema) + twoMuA * ema;
+      cpSmoothMuA2 = cpSmoothMuA2 * (1 - ema) + muA2 * ema;
 
-      // Free atoms bar
-      const freeH = (nFree / N_TOTAL) * barMaxH;
-      const freeX = chartL + gap;
+      // --- \u03BC meter ---
+      var mY = 55;
+      var mL = panL + 8, mR = panR - 8, mW = mR - mL;
+      var maxMu = Math.max(Math.abs(cpSmoothMuA), Math.abs(cpSmoothMuA2), 2) * 1.4;
+      function muX(mu) { return panCx + (mu / maxMu) * (mW / 2) * 0.85; }
+
+      // Scale line
+      ctxCP.strokeStyle = COLORS.axis; ctxCP.lineWidth = 1;
+      ctxCP.beginPath(); ctxCP.moveTo(mL, mY + 40); ctxCP.lineTo(mR, mY + 40); ctxCP.stroke();
+
+      // Zero tick
+      var zx = muX(0);
+      ctxCP.strokeStyle = COLORS.textDim;
+      ctxCP.beginPath(); ctxCP.moveTo(zx, mY + 34); ctxCP.lineTo(zx, mY + 46); ctxCP.stroke();
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
+      ctxCP.fillText('0', zx, mY + 57);
+
+      // Labels for scale ends
+      ctxCP.fillText('low \u03BC', mL + 15, mY + 57);
+      ctxCP.fillText('high \u03BC', mR - 15, mY + 57);
+
+      // 2\u03BC_A marker (triangle pointing down from above)
+      var xA = Math.max(mL + 4, Math.min(mR - 4, muX(cpSmoothMuA)));
       ctxCP.fillStyle = COLORS.blue;
-      ctxCP.fillRect(freeX, chartB - freeH, barW, freeH);
-      ctxCP.strokeStyle = 'rgba(79,195,247,0.5)';
-      ctxCP.strokeRect(freeX, chartB - freeH, barW, freeH);
+      ctxCP.beginPath();
+      ctxCP.moveTo(xA, mY + 30); ctxCP.lineTo(xA - 7, mY + 18); ctxCP.lineTo(xA + 7, mY + 18);
+      ctxCP.closePath(); ctxCP.fill();
+      ctxCP.font = FONT_SM; ctxCP.fillText('2\u03BC\u2090', xA, mY + 12);
 
-      // Bound atoms bar
-      const boundH = (nBound / N_TOTAL) * barMaxH;
-      const boundX = chartL + gap + barW + gap;
+      // \u03BC_{A\u2082} marker (triangle pointing up from below)
+      var xD = Math.max(mL + 4, Math.min(mR - 4, muX(cpSmoothMuA2)));
       ctxCP.fillStyle = COLORS.orange;
-      ctxCP.fillRect(boundX, chartB - boundH, barW, boundH);
-      ctxCP.strokeStyle = 'rgba(255,167,38,0.5)';
-      ctxCP.strokeRect(boundX, chartB - boundH, barW, boundH);
+      ctxCP.beginPath();
+      ctxCP.moveTo(xD, mY + 50); ctxCP.lineTo(xD - 7, mY + 62); ctxCP.lineTo(xD + 7, mY + 62);
+      ctxCP.closePath(); ctxCP.fill();
+      ctxCP.font = FONT_SM; ctxCP.fillText('\u03BC_A\u2082', xD, mY + 75);
+
+      // Status text
+      var imb = cpSmoothMuA - cpSmoothMuA2;
+      ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
+      if (Math.abs(imb) < 0.4) {
+        ctxCP.fillStyle = COLORS.green;
+        ctxCP.fillText('Equilibrium: 2\u03BC\u2090 \u2248 \u03BC_A\u2082', panCx, mY + 92);
+      } else if (imb > 0) {
+        ctxCP.fillStyle = COLORS.textDim;
+        ctxCP.fillText('2\u03BC\u2090 > \u03BC_A\u2082 \u2192 forming bonds', panCx, mY + 92);
+      } else {
+        ctxCP.fillStyle = COLORS.textDim;
+        ctxCP.fillText('2\u03BC\u2090 < \u03BC_A\u2082 \u2192 breaking bonds', panCx, mY + 92);
+      }
+
+      // --- Bar chart ---
+      var cTop = mY + 108, cBot = HCP - 40, cH = cBot - cTop;
+      var bW = (panR - panL) * 0.25, bGap = (panR - panL) * 0.08;
+      var fX = panL + bGap, bX = panCx + bGap * 0.5;
+
+      // Free bar
+      var fH = (nFree / cpNTotal) * cH;
+      ctxCP.fillStyle = COLORS.blue;
+      ctxCP.fillRect(fX, cBot - fH, bW, fH);
+      ctxCP.strokeStyle = 'rgba(79,195,247,0.4)'; ctxCP.lineWidth = 1;
+      ctxCP.strokeRect(fX, cBot - fH, bW, fH);
+
+      // Bound bar
+      var bH = (nDim * 2 / cpNTotal) * cH;
+      ctxCP.fillStyle = COLORS.orange;
+      ctxCP.fillRect(bX, cBot - bH, bW, bH);
+      ctxCP.strokeStyle = 'rgba(255,167,38,0.4)'; ctxCP.lineWidth = 1;
+      ctxCP.strokeRect(bX, cBot - bH, bW, bH);
 
       // Labels
-      ctxCP.fillStyle = COLORS.text;
-      ctxCP.font = FONT_SM;
-      ctxCP.textAlign = 'center';
-      ctxCP.fillText('Free A', freeX + barW / 2, chartB + 14);
-      ctxCP.fillText(nFree + '', freeX + barW / 2, chartB + 27);
-      ctxCP.fillText('Bound A₂', boundX + barW / 2, chartB + 14);
-      ctxCP.fillText(nDimer + ' pairs', boundX + barW / 2, chartB + 27);
-
-      // Info text
-      ctxCP.fillStyle = COLORS.textDim;
-      ctxCP.font = FONT_SM;
-      ctxCP.textAlign = 'center';
-      const pct = N_TOTAL > 0 ? Math.round(100 * nBound / N_TOTAL) : 0;
-      ctxCP.fillText(pct + '% bound', (chartL + chartR) / 2, 38);
+      ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
+      ctxCP.fillText('Free', fX + bW / 2, cBot + 13);
+      ctxCP.fillText(nFree + ' atoms', fX + bW / 2, cBot + 25);
+      ctxCP.fillText('Bound', bX + bW / 2, cBot + 13);
+      ctxCP.fillText(nDim + ' pairs', bX + bW / 2, cBot + 25);
     }
 
-    // Sliders
-    tempSlider?.addEventListener('input', () => {
-      if (tempVal) tempVal.textContent = parseFloat(tempSlider.value).toFixed(1);
+    cpTempSlider?.addEventListener('input', function() {
+      if (cpTempVal) cpTempVal.textContent = parseFloat(cpTempSlider.value).toFixed(1);
     });
-    epsSlider?.addEventListener('input', () => {
-      if (epsVal) epsVal.textContent = parseFloat(epsSlider.value).toFixed(1);
+    cpEpsSlider?.addEventListener('input', function() {
+      if (cpEpsVal) cpEpsVal.textContent = parseFloat(cpEpsSlider.value).toFixed(1);
     });
-
-    document.getElementById('chempot-reset')?.addEventListener('click', () => {
-      initCP();
-      drawCP();
+    document.getElementById('chempot-reset')?.addEventListener('click', function() {
+      cpInit(); cpDraw();
     });
 
-    // Always running
-    function animateCP() {
-      stepCP();
-      drawCP();
-      activeAnimations['chempot'] = requestAnimationFrame(animateCP);
+    function cpAnimate() {
+      cpStep(); cpDraw();
+      activeAnimations['chempot'] = requestAnimationFrame(cpAnimate);
     }
 
-    initCP();
-    animateCP();
+    cpInit();
+    cpAnimate();
   }
 
   // ----- System + Heat Reservoir (gas sim + energy distribution) -----
@@ -8096,6 +8092,23 @@ function initCh7Vis() {
             b.y += ny * overlap * 0.5;
           }
         }
+      }
+
+      // Thermostat: gently rescale each side's speeds toward slider temperature
+      // This keeps kinetic temperature = slider T so that P = NT/V is accurate
+      const TL = parseFloat(vexTLeftSlider?.value || 2.0);
+      const TR = parseFloat(vexTRightSlider?.value || 2.0);
+      const thermoRate = 0.05; // blend toward target each frame
+      for (const side of ['left', 'right']) {
+        const targetSpd = veTempToSpeed(side === 'left' ? TL : TR);
+        const parts = veParticles.filter(p => p.side === side);
+        if (parts.length === 0) continue;
+        let sumV2 = 0;
+        for (const p of parts) sumV2 += p.vx * p.vx + p.vy * p.vy;
+        const rms = Math.sqrt(sumV2 / parts.length);
+        if (rms < 0.1) continue;
+        const scale = 1 + thermoRate * (targetSpd / rms - 1);
+        for (const p of parts) { p.vx *= scale; p.vy *= scale; }
       }
     }
 
