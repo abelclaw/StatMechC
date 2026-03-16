@@ -4494,7 +4494,8 @@ function initCh5Vis() {
     }
 
     function tempToSpeed(T) {
-      return 0.5 + Math.sqrt(T / 200) * 1.5;
+      // Near-stopped at 200K (~0.15), very fast at 600K (~3.0)
+      return 0.15 + Math.pow((T - 200) / 400, 1.3) * 2.85;
     }
 
     function initGasParticles(arr, box) {
@@ -4574,12 +4575,9 @@ function initCh5Vis() {
       return (Math.random() - 0.5) * amplitude;
     }
 
-    // Pawl: flexible metal strip anchored to chamber wall
-    // Anchor point at top-right of ratchet chamber, strip bends down toward teeth
-    const pawlAnchorX = ratchetBox.x + ratchetBox.w - 12;
-    const pawlAnchorY = ratchetBox.y + 18;
-    // Rest tip position: where the strip tip touches the ratchet when unbent
-    const pawlRestAngle = Math.atan2(cy0 - pawlAnchorY, rcx0 - pawlAnchorX);
+    // Pawl: long straight flexible metal strip bolted to top of right wall
+    const pawlAnchorX = ratchetBox.x + ratchetBox.w;
+    const pawlAnchorY = ratchetBox.y + 12;
 
     function toothSurfaceRadius(labAngle) {
       let frameAngle = labAngle - ratchetAngle;
@@ -4634,52 +4632,67 @@ function initCh5Vis() {
       ctxBR.beginPath(); ctxBR.arc(0, 0, 5, 0, 2 * Math.PI); ctxBR.fill();
       ctxBR.restore();
 
-      // === PAWL: flexible metal strip anchored to chamber wall ===
+      // === PAWL: long straight flexible metal strip bolted to wall ===
       const pawlVibX = thermalVibration(T2) * 0.5;
       const pawlVibY = thermalVibration(T2) * 0.5;
-      // Anchor point (fixed to wall)
-      const ancX = pawlAnchorX + vibX + pawlVibX;
-      const ancY = pawlAnchorY + vibY + pawlVibY;
+      // Anchor bolted to top of right wall
+      const ancX = pawlAnchorX + vibX;
+      const ancY = pawlAnchorY + vibY;
       // Direction from anchor toward ratchet center
-      const toRcAngle = Math.atan2(rcy - ancY, rcx - ancX);
-      const ancToCenterDist = Math.sqrt((rcx - ancX) * (rcx - ancX) + (rcy - ancY) * (rcy - ancY));
-      // Where the strip tip would rest (on the tooth surface)
+      const toRcDx = rcx - ancX, toRcDy = rcy - ancY;
+      const toRcAngle = Math.atan2(toRcDy, toRcDx);
+      const ancToCenterDist = Math.sqrt(toRcDx * toRcDx + toRcDy * toRcDy);
+      // Tooth surface radius at the angle where the strip meets the gear
       const surfR = toothSurfaceRadius(toRcAngle);
-      const tipDist = ancToCenterDist - surfR; // strip length to tooth contact
-      const tipX = ancX + tipDist * Math.cos(toRcAngle);
-      const tipY = ancY + tipDist * Math.sin(toRcAngle);
-      // Deflection: how far the tooth pushes the tip outward
-      // surfR ranges from rr (valley) to rr+10 (peak)
-      // When on peak, tip is pushed back; when in valley, tip rests deeper
-      const deflection = (surfR - rr) / 10; // 0 = valley, 1 = peak
-      // Perpendicular direction (outward from center)
-      const perpAngle = toRcAngle + Math.PI / 2;
-      const bendAmount = deflection * 12; // pixels of bend at midpoint
-      // Control point for the quadratic bezier (midpoint of strip, bent outward)
-      const midFrac = 0.5;
-      const cpX = ancX + tipDist * midFrac * Math.cos(toRcAngle) + bendAmount * Math.cos(perpAngle);
-      const cpY = ancY + tipDist * midFrac * Math.sin(toRcAngle) + bendAmount * Math.sin(perpAngle);
+      // Strip length: from anchor to the tooth surface
+      const stripLen = ancToCenterDist - surfR;
+      // Tip position when strip is straight (no deflection)
+      const straightTipX = ancX + stripLen * Math.cos(toRcAngle);
+      const straightTipY = ancY + stripLen * Math.sin(toRcAngle);
+      // Deflection amount: tooth pushes tip perpendicular to the strip
+      const deflection = (surfR - rr) / 10; // 0 at valley, 1 at peak
+      // Perpendicular to strip direction (pointing away from center)
+      const perpAngle = toRcAngle - Math.PI / 2;
+      // Tip deflects outward, cantilever-style: most bend near the tip
+      const tipDeflect = deflection * 14 + pawlVibX * 2;
+      const tipX = straightTipX + tipDeflect * Math.cos(perpAngle);
+      const tipY = straightTipY + tipDeflect * Math.sin(perpAngle);
+      // Cantilever bends mostly near tip: use cubic bezier
+      // cp1 near anchor (barely moves), cp2 near tip (deflects most)
+      const cp1X = ancX + stripLen * 0.35 * Math.cos(toRcAngle) + tipDeflect * 0.05 * Math.cos(perpAngle);
+      const cp1Y = ancY + stripLen * 0.35 * Math.sin(toRcAngle) + tipDeflect * 0.05 * Math.sin(perpAngle);
+      const cp2X = ancX + stripLen * 0.75 * Math.cos(toRcAngle) + tipDeflect * 0.6 * Math.cos(perpAngle);
+      const cp2Y = ancY + stripLen * 0.75 * Math.sin(toRcAngle) + tipDeflect * 0.6 * Math.sin(perpAngle);
 
-      // Draw the flexible strip as a thick curved line
-      ctxBR.strokeStyle = '#8aaa8e'; ctxBR.lineWidth = 4;
+      // Draw the metal strip
+      ctxBR.strokeStyle = '#9ab09c'; ctxBR.lineWidth = 4;
       ctxBR.lineCap = 'round';
       ctxBR.beginPath();
       ctxBR.moveTo(ancX, ancY);
-      ctxBR.quadraticCurveTo(cpX, cpY, tipX, tipY);
+      ctxBR.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, tipX, tipY);
       ctxBR.stroke();
-      // Metallic highlight
-      ctxBR.strokeStyle = 'rgba(180,220,180,0.4)'; ctxBR.lineWidth = 1.5;
+      // Metallic highlight along the strip
+      ctxBR.strokeStyle = 'rgba(200,230,200,0.35)'; ctxBR.lineWidth = 1.5;
       ctxBR.beginPath();
       ctxBR.moveTo(ancX, ancY);
-      ctxBR.quadraticCurveTo(cpX - Math.cos(perpAngle), cpY - Math.sin(perpAngle), tipX, tipY);
+      ctxBR.bezierCurveTo(
+        cp1X - Math.cos(perpAngle), cp1Y - Math.sin(perpAngle),
+        cp2X - Math.cos(perpAngle), cp2Y - Math.sin(perpAngle),
+        tipX, tipY);
       ctxBR.stroke();
       ctxBR.lineCap = 'butt';
-      // Anchor mount (small rectangle bolted to wall)
-      ctxBR.fillStyle = '#8aaa8e';
-      ctxBR.fillRect(ancX - 2, ancY - 5, 6, 10);
-      ctxBR.fillStyle = 'rgba(255,255,255,0.3)';
-      ctxBR.beginPath(); ctxBR.arc(ancX + 1, ancY - 2, 1.5, 0, 2 * Math.PI); ctxBR.fill();
-      ctxBR.beginPath(); ctxBR.arc(ancX + 1, ancY + 2, 1.5, 0, 2 * Math.PI); ctxBR.fill();
+      // Anchor mount: small bracket bolted to wall
+      ctxBR.fillStyle = '#8a9a8c';
+      const mountPerp = toRcAngle + Math.PI / 2;
+      ctxBR.save();
+      ctxBR.translate(ancX, ancY);
+      ctxBR.rotate(toRcAngle);
+      ctxBR.fillRect(-4, -6, 5, 12);
+      // Bolt dots
+      ctxBR.fillStyle = 'rgba(255,255,255,0.4)';
+      ctxBR.beginPath(); ctxBR.arc(-2, -3, 1.5, 0, 2 * Math.PI); ctxBR.fill();
+      ctxBR.beginPath(); ctxBR.arc(-2, 3, 1.5, 0, 2 * Math.PI); ctxBR.fill();
+      ctxBR.restore();
 
       // === AXLE: connects ratchet hub to vane hub ===
       const vcx = vcx0 + vibX, vcy = cy0 + vibY;
