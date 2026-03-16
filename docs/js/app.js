@@ -4479,10 +4479,10 @@ function initCh5Vis() {
 
     // Layout: [Ratchet+Pawl T₂] --- axle --- [Vane T₁] --- thread --- [Weight]
     const ratchetBox = { x: 15, y: 25, w: 135, h: HBR - 50 };
-    const vaneBox = { x: 200, y: 25, w: 175, h: HBR - 50 };
+    const vaneBox = { x: 230, y: 25, w: 200, h: HBR - 50 };
     const rr = 35; // ratchet inner radius
     const rcx0 = 82;  // ratchet center x (no vibration)
-    const vcx0 = 288;  // vane center x
+    const vcx0 = 330;  // vane center x
     const cy0 = HBR / 2; // shared center y
 
     function tempToColor(T) {
@@ -4708,7 +4708,7 @@ function initCh5Vis() {
       ctxBR.stroke();
 
       // === WEIGHT: hangs between the two chambers from the axle ===
-      const gapMidX = (ratchetBox.x + ratchetBox.w + vaneBox.x) / 2 + vibX;
+      const gapMidX = Math.round((ratchetBox.x + ratchetBox.w + vaneBox.x) / 2) + vibX;
       const axleY = cy0 + vibY;
       // Spool on axle
       ctxBR.fillStyle = COLORS.textDim;
@@ -4716,7 +4716,7 @@ function initCh5Vis() {
       ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1;
       ctxBR.strokeRect(gapMidX - 5, axleY - 7, 10, 3);
       ctxBR.strokeRect(gapMidX - 5, axleY + 4, 10, 3);
-      // Weight Y: goes up as netRotation increases, clamped to not go above axle+12
+      // Weight Y: goes up as netRotation increases, clamped to not go above axle+14
       const weightBottom = HBR - 18;
       const weightTop = axleY + 14;
       const weightY = Math.max(weightTop, Math.min(weightBottom, axleY + 60 - netRotation * 8));
@@ -4731,6 +4731,10 @@ function initCh5Vis() {
       ctxBR.fillRect(gapMidX - 10, weightY, 20, 16);
       ctxBR.fillStyle = COLORS.text; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
       ctxBR.fillText('m', gapMidX, weightY + 12);
+      // Label and counter above the weight
+      const labelY = Math.min(weightY - 6, axleY + 30);
+      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
+      ctxBR.fillText(netRotation.toFixed(1) + ' rad', gapMidX, labelY);
 
       // === MIDDLE: Vane chamber (T₁) ===
       const bgV = tempToColor(T1);
@@ -4757,22 +4761,17 @@ function initCh5Vis() {
       ctxBR.beginPath(); ctxBR.arc(0, 0, 6, 0, 2 * Math.PI); ctxBR.fill();
       ctxBR.restore();
 
-      // === Status text (upper right) ===
+      // === Status text (above gap, centered) ===
+      const gapCenterX = Math.round((ratchetBox.x + ratchetBox.w + vaneBox.x) / 2);
       const balanced = Math.abs(T1 - T2) < 15;
       ctxBR.fillStyle = balanced ? COLORS.red : COLORS.green;
-      ctxBR.font = FONT; ctxBR.textAlign = 'left';
+      ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
       if (balanced) {
-        ctxBR.fillText('T₁ ≈ T₂: No net work', 400, 35);
+        ctxBR.fillText('No net work', gapCenterX, ratchetBox.y + 14);
       } else if (T1 > T2) {
-        ctxBR.fillText('T₁ > T₂: Lifts weight', 400, 35);
+        ctxBR.fillText('Lifts weight', gapCenterX, ratchetBox.y + 14);
       } else {
-        ctxBR.fillText('T₁ < T₂: Drops weight', 400, 35);
-      }
-      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM;
-      ctxBR.fillText('Net: ' + netRotation.toFixed(1) + ' rad', 400, 53);
-      if (!balanced) {
-        const eta = Math.abs(T1 - T2) / Math.max(T1, T2);
-        ctxBR.fillText('η = ' + (eta * 100).toFixed(0) + '%', 400, 68);
+        ctxBR.fillText('Drops weight', gapCenterX, ratchetBox.y + 14);
       }
 
       document.getElementById('ratchet-t1-val')?.replaceChildren(document.createTextNode(T1));
