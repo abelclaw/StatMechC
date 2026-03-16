@@ -5110,22 +5110,26 @@ function initCh6Vis() {
   const cFE = document.getElementById('vis-free-expansion');
   if (cFE) {
     const {ctx: ctxFE, W: WFE, H: HFE} = setupCanvas(cFE);
-    const releaseBtn = document.getElementById('freeexp-release');
-    const resetBtnFE = document.getElementById('freeexp-reset');
+    const feToggleBtn = document.getElementById('freeexp-toggle');
 
     const NP = 60;
-    let particles = [];
-    let partitionRemoved = false;
-    let feRunning = false;
+    let feParticles = [];
+    let fePartitioned = true;
 
-    function initParticles() {
-      particles = [];
+    function initFE() {
+      fePartitioned = true;
+      if (feToggleBtn) feToggleBtn.textContent = 'Remove Partition';
+      feParticles = [];
+      const r = 3;
+      const xMin = 30 + r, yMin = 30 + r, yMax = HFE - 30 - r;
+      const midX = WFE / 2;
       for (let i = 0; i < NP; i++) {
-        particles.push({
-          x: 40 + Math.random() * (WFE / 2 - 60),
-          y: 40 + Math.random() * (HFE - 80),
+        feParticles.push({
+          x: xMin + Math.random() * (midX - r - xMin),
+          y: yMin + Math.random() * (yMax - yMin),
           vx: (Math.random() - 0.5) * 120,
-          vy: (Math.random() - 0.5) * 120
+          vy: (Math.random() - 0.5) * 120,
+          currentSide: 'left'
         });
       }
     }
@@ -5138,31 +5142,30 @@ function initCh6Vis() {
       ctxFE.strokeRect(30, 30, WFE - 60, HFE - 60);
 
       // Partition
-      if (!partitionRemoved) {
+      const midX = WFE / 2;
+      if (fePartitioned) {
         ctxFE.strokeStyle = COLORS.orange; ctxFE.lineWidth = 3;
-        ctxFE.beginPath(); ctxFE.moveTo(WFE / 2, 30); ctxFE.lineTo(WFE / 2, HFE - 30); ctxFE.stroke();
-        ctxFE.fillStyle = COLORS.textDim; ctxFE.font = FONT_SM; ctxFE.textAlign = 'center';
-        ctxFE.fillText('Partition', WFE / 2, 22);
-      }
-
-      // Labels
-      ctxFE.fillStyle = COLORS.textDim; ctxFE.font = FONT_SM; ctxFE.textAlign = 'center';
-      if (!partitionRemoved) {
-        ctxFE.fillText('Gas (V)', WFE / 4, HFE - 10);
-        ctxFE.fillText('Vacuum', 3 * WFE / 4, HFE - 10);
-      } else {
-        ctxFE.fillText('Gas expands to 2V', WFE / 2, HFE - 10);
+        ctxFE.beginPath(); ctxFE.moveTo(midX, 30); ctxFE.lineTo(midX, HFE - 30); ctxFE.stroke();
       }
 
       // Draw particles
-      for (const p of particles) {
+      for (const p of feParticles) {
         ctxFE.beginPath(); ctxFE.arc(p.x, p.y, 3, 0, 2 * Math.PI);
         ctxFE.fillStyle = COLORS.blue; ctxFE.fill();
       }
 
+      // Counts when partitioned
+      if (fePartitioned) {
+        const nLeft = feParticles.filter(p => p.currentSide === 'left').length;
+        const nRight = feParticles.filter(p => p.currentSide === 'right').length;
+        ctxFE.fillStyle = COLORS.textDim; ctxFE.font = FONT; ctxFE.textAlign = 'center';
+        ctxFE.fillText(nLeft, WFE / 4, HFE - 10);
+        ctxFE.fillText(nRight, 3 * WFE / 4, HFE - 10);
+      }
+
       // Entropy display
-      const Omega = partitionRemoved ? '2^N · Ω₀' : 'Ω₀';
-      const dS = partitionRemoved ? 'ΔS = Nk_B ln 2' : 'ΔS = 0';
+      const Omega = fePartitioned ? 'Ω₀' : '2^N · Ω₀';
+      const dS = fePartitioned ? 'ΔS = 0' : 'ΔS = Nk_B ln 2';
       ctxFE.fillStyle = COLORS.green; ctxFE.font = FONT; ctxFE.textAlign = 'left';
       ctxFE.fillText('Ω = ' + Omega + '   |   ' + dS, 40, 22);
 
@@ -5172,17 +5175,19 @@ function initCh6Vis() {
     }
 
     function animateFE() {
-      if (!feRunning) return;
       const dt = 0.016;
-      const xMin = 32, xMax = WFE - 32, yMin = 32, yMax = HFE - 32;
-      const wall = partitionRemoved ? xMax : WFE / 2 - 2;
-
-      for (const p of particles) {
+      const r = 3;
+      const xMin = 30 + r, xMax = WFE - 30 - r, yMin = 30 + r, yMax = HFE - 30 - r;
+      const midX = WFE / 2;
+      for (const p of feParticles) {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
         if (p.x < xMin) { p.x = xMin; p.vx = Math.abs(p.vx); }
         if (p.x > xMax) { p.x = xMax; p.vx = -Math.abs(p.vx); }
-        if (!partitionRemoved && p.x > WFE / 2 - 2) { p.x = WFE / 2 - 2; p.vx = -Math.abs(p.vx); }
+        if (fePartitioned) {
+          if (p.currentSide === 'left' && p.x > midX - r) { p.x = midX - r; p.vx = -Math.abs(p.vx); }
+          if (p.currentSide === 'right' && p.x < midX + r) { p.x = midX + r; p.vx = Math.abs(p.vx); }
+        }
         if (p.y < yMin) { p.y = yMin; p.vy = Math.abs(p.vy); }
         if (p.y > yMax) { p.y = yMax; p.vy = -Math.abs(p.vy); }
       }
@@ -5190,19 +5195,22 @@ function initCh6Vis() {
       activeAnimations['freeexp'] = requestAnimationFrame(animateFE);
     }
 
-    releaseBtn?.addEventListener('click', () => {
-      partitionRemoved = true;
-      if (!feRunning) { feRunning = true; animateFE(); }
+    feToggleBtn?.addEventListener('click', () => {
+      fePartitioned = !fePartitioned;
+      feToggleBtn.textContent = fePartitioned ? 'Remove Partition' : 'Insert Partition';
+      if (fePartitioned) {
+        const midX = WFE / 2;
+        const r = 3;
+        for (const p of feParticles) {
+          if (p.x >= midX - r && p.x <= midX + r) {
+            if (p.x <= midX) { p.x = midX - r - 1; p.vx = -Math.abs(p.vx); }
+            else { p.x = midX + r + 1; p.vx = Math.abs(p.vx); }
+          }
+          p.currentSide = p.x < midX ? 'left' : 'right';
+        }
+      }
     });
-    resetBtnFE?.addEventListener('click', () => {
-      feRunning = false;
-      if (activeAnimations['freeexp']) cancelAnimationFrame(activeAnimations['freeexp']);
-      partitionRemoved = false;
-      initParticles();
-      drawFreeExp();
-    });
-    initParticles();
-    feRunning = true;
+    initFE();
     animateFE();
   }
 
@@ -5217,10 +5225,10 @@ function initCh6Vis() {
     let particles = [];
     let partitioned = true;
 
-    // Generate distinct hues for distinguishable particles
-    function uniqueColor(index, total) {
-      const h = (index * 360 / total) % 360;
-      return 'hsl(' + h + ', 80%, 60%)';
+    // Generate distinct hues for distinguishable particles using golden angle
+    function uniqueColor(index) {
+      const h = (index * 137.508) % 360; // golden angle ensures no clustering
+      return 'hsl(' + h + ', 85%, 58%)';
     }
 
     function initMixing() {
@@ -5253,7 +5261,7 @@ function initCh6Vis() {
     function getParticleColor(p) {
       const mode = caseSelect?.value || 'distinguishable';
       if (mode === 'distinguishable') {
-        return uniqueColor(p.colorIndex, 2 * NM);
+        return uniqueColor(p.colorIndex);
       } else if (mode === 'identical') {
         return COLORS.green;
       } else {
