@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mercury Thermometer in Heat Bath</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#2a2a2e;display:flex;flex-direction:column;align-items:center;
+       font-family:'Georgia',serif;color:#ccc}
+  canvas{border-radius:4px;display:block;max-width:100%;cursor:pointer;}
+  #canvasWrap{position:relative;display:inline-block;}
+  .controls{margin-top:8px;display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .controls label{font-size:.85em;color:#999}
+  .controls input[type=range]{width:200px;accent-color:#c44}
+  .controls span{font-size:.9em;color:#ddd;min-width:80px}
+</style>
+</head>
+<body>
+<div id="canvasWrap">
+<canvas id="c" width="500" height="600"></canvas>
+</div>
+<div class="controls">
+  <label>Temperature: <input type="range" id="tempSlider" min="0" max="100" value="20"></label>
+  <span id="tempDisplay">20 °C</span>
+</div>
+<script>
+const C=document.getElementById('c'), X=C.getContext('2d');
+const slider=document.getElementById('tempSlider');
+const display=document.getElementById('tempDisplay');
+
+let targetTemp=20, currentTemp=20;
+
+slider.oninput=function(){
+  targetTemp=+this.value;
+  display.textContent=targetTemp+' °C';
+};
+
+function lerp(a,b,t){return a+(b-a)*t;}
+
+// Thermometer geometry
+const BULB={cx:250, cy:520, r:22};
+const TUBE={cx:250, w:12, top:100, bot:BULB.cy-BULB.r+5};
+const OUTER_W=20; // glass tube outer width
+
+// Heat bath (beaker)
+const BATH={x:120, y:340, w:260, h:220, waterTop:370};
+
+// Temperature dial
+const DIAL={cx:250, cy:70, r:55};
+
+function tempColor(t){
+  // 0=icy blue, 50=warm, 100=hot red
+  const f=t/100;
+  const r=Math.round(40+215*f);
+  const g=Math.round(80+80*Math.sin(f*Math.PI));
+  const b=Math.round(220-200*f);
+  return {r,g,b};
+}
+
+function drawBG(){
+  X.fillStyle='#2a2a2e';
+  X.fillRect(0,0,500,600);
+}
+
+function drawBath(temp){
+  const f=temp/100;
+  const col=tempColor(temp);
+
+  // Beaker body (glass)
+  X.fillStyle='rgba(180,200,220,.08)';
+  X.fillRect(BATH.x,BATH.y,BATH.w,BATH.h);
+  // Beaker walls
+  X.strokeStyle='rgba(150,180,210,.4)';
+  X.lineWidth=3;
+  X.beginPath();
+  X.moveTo(BATH.x,BATH.y);
+  X.lineTo(BATH.x,BATH.y+BATH.h);
+  X.lineTo(BATH.x+BATH.w,BATH.y+BATH.h);
+  X.lineTo(BATH.x+BATH.w,BATH.y);
+  X.stroke();
+  // Rim
+  X.strokeStyle='rgba(170,200,230,.5)';
+  X.lineWidth=2;
+  X.beginPath();
+  X.moveTo(BATH.x-5,BATH.y);X.lineTo(BATH.x+5,BATH.y);X.stroke();
+  X.beginPath();
+  X.moveTo(BATH.x+BATH.w-5,BATH.y);X.lineTo(BATH.x+BATH.w+5,BATH.y);X.stroke();
+
+  // Water
+  const waterGrad=X.createLinearGradient(0,BATH.waterTop,0,BATH.y+BATH.h);
+  waterGrad.addColorStop(0,`rgba(${col.r},${col.g},${col.b},.35)`);
+  waterGrad.addColorStop(1,`rgba(${col.r},${col.g},${col.b},.5)`);
+  X.fillStyle=waterGrad;
+  X.fillRect(BATH.x+3,BATH.waterTop,BATH.w-6,BATH.y+BATH.h-BATH.waterTop-3);
+
+  // Water surface ripple
+  const t=Date.now()/1000;
+  X.strokeStyle=`rgba(${Math.min(255,col.r+30)},${Math.min(255,col.g+30)},${Math.min(255,col.b+30)},.3)`;
+  X.lineWidth=1;
+  X.beginPath();
+  for(let x=BATH.x+5;x<BATH.x+BATH.w-5;x+=2){
+    const y=BATH.waterTop+Math.sin(x*.08+t*2)*2+Math.sin(x*.03+t*3)*1;
+    x===BATH.x+5?X.moveTo(x,y):X.lineTo(x,y);
+  }
+  X.stroke();
+
+  // Bubbles when hot
+  if(temp>40){
+    const bubbleCount=Math.floor((temp-40)/5);
+    for(let i=0;i<bubbleCount;i++){
+      const bx=BATH.x+20+Math.random()*(BATH.w-40);
+      const by=BATH.waterTop+10+Math.random()*(BATH.y+BATH.h-BATH.waterTop-20);
+      const br=1+Math.random()*3;
+      const ba=.05+.15*Math.sin(t*4+i*1.7);
+      X.beginPath();X.arc(bx,by+Math.sin(t*3+i)*4,br,0,Math.PI*2);
+      X.strokeStyle=`rgba(255,255,255,${ba})`;X.lineWidth=1;X.stroke();
+    }
+  }
+
+  // Steam when very hot
+  if(temp>70){
+    for(let i=0;i<Math.floor((temp-70)/4);i++){
+      const sx=BATH.x+30+Math.random()*(BATH.w-60);
+      const sy=BATH.waterTop-5-Math.random()*30;
+      const sa=.03+.06*Math.sin(t*2+i*1.3);
+      X.fillStyle=`rgba(200,200,210,${sa})`;
+      X.beginPath();X.arc(sx,sy,3+Math.random()*5,0,Math.PI*2);X.fill();
+    }
+  }
+
+  // Flame/heater underneath
+  X.fillStyle='#444';
+  X.fillRect(BATH.x+20,BATH.y+BATH.h+5,BATH.w-40,12);
+  X.strokeStyle='#666';X.lineWidth=1;
+  X.strokeRect(BATH.x+20,BATH.y+BATH.h+5,BATH.w-40,12);
+  // Flame
+  if(temp>5){
+    const flameH=5+f*20;
+    for(let i=0;i<8;i++){
+      const fx=BATH.x+40+i*25;
+      const fy=BATH.y+BATH.h+5;
+      const fa=.3+.3*f;
+      const fr=Math.sin(t*6+i*2)*2;
+      X.fillStyle=`rgba(${200+Math.round(55*f)},${100+Math.round(80*(1-f))},20,${fa})`;
+      X.beginPath();
+      X.moveTo(fx-4+fr,fy);
+      X.quadraticCurveTo(fx+fr,fy-flameH-Math.sin(t*8+i)*3,fx+4+fr,fy);
+      X.fill();
+    }
+  }
+
+  // Label
+  X.fillStyle='#888';X.font='11px Georgia';X.textAlign='center';
+  X.fillText('Heat bath',BATH.x+BATH.w/2,BATH.y+BATH.h+28);
+}
+
+function drawThermometer(temp){
+  const f=temp/100;
+  // Mercury height: from bulb to tube top based on temperature
+  const mercuryTop=TUBE.bot-f*(TUBE.bot-TUBE.top-20);
+
+  // Glass tube (outer)
+  X.fillStyle='rgba(200,210,220,.12)';
+  X.beginPath();
+  X.moveTo(TUBE.cx-OUTER_W/2,TUBE.top-10);
+  X.lineTo(TUBE.cx-OUTER_W/2,TUBE.bot);
+  X.lineTo(TUBE.cx+OUTER_W/2,TUBE.bot);
+  X.lineTo(TUBE.cx+OUTER_W/2,TUBE.top-10);
+  X.closePath();X.fill();
+  X.strokeStyle='rgba(180,200,220,.3)';X.lineWidth=1.5;X.stroke();
+
+  // Scale markings
+  for(let deg=0;deg<=100;deg+=10){
+    const y=TUBE.bot-(deg/100)*(TUBE.bot-TUBE.top-20);
+    const major=deg%20===0;
+    X.strokeStyle=major?'rgba(200,200,200,.5)':'rgba(200,200,200,.25)';
+    X.lineWidth=major?1.5:1;
+    X.beginPath();
+    X.moveTo(TUBE.cx+OUTER_W/2+2,y);
+    X.lineTo(TUBE.cx+OUTER_W/2+(major?18:10),y);
+    X.stroke();
+    if(major){
+      X.fillStyle='#aaa';X.font='11px Georgia';X.textAlign='left';
+      X.fillText(deg+'°',TUBE.cx+OUTER_W/2+22,y+4);
+    }
+  }
+
+  // Mercury column
+  const mercGrad=X.createLinearGradient(TUBE.cx-TUBE.w/2,0,TUBE.cx+TUBE.w/2,0);
+  mercGrad.addColorStop(0,'#888');
+  mercGrad.addColorStop(0.3,'#bbb');
+  mercGrad.addColorStop(0.5,'#ddd');
+  mercGrad.addColorStop(0.7,'#bbb');
+  mercGrad.addColorStop(1,'#888');
+  X.fillStyle=mercGrad;
+  X.fillRect(TUBE.cx-TUBE.w/2, mercuryTop, TUBE.w, TUBE.bot-mercuryTop);
+
+  // Mercury meniscus (curved top)
+  X.beginPath();
+  X.ellipse(TUBE.cx, mercuryTop, TUBE.w/2, 3, 0, 0, Math.PI*2);
+  X.fillStyle='#ccc';X.fill();
+
+  // Glass tube highlight (reflection)
+  X.fillStyle='rgba(255,255,255,.06)';
+  X.fillRect(TUBE.cx-OUTER_W/2+2,TUBE.top-8,3,TUBE.bot-TUBE.top+8);
+
+  // Bulb
+  X.beginPath();X.arc(BULB.cx,BULB.cy,BULB.r,0,Math.PI*2);
+  const bulbGrad=X.createRadialGradient(BULB.cx-5,BULB.cy-5,3,BULB.cx,BULB.cy,BULB.r);
+  bulbGrad.addColorStop(0,'#ccc');
+  bulbGrad.addColorStop(0.5,'#aaa');
+  bulbGrad.addColorStop(1,'#777');
+  X.fillStyle=bulbGrad;X.fill();
+  X.strokeStyle='rgba(150,150,160,.4)';X.lineWidth=1;X.stroke();
+
+  // Glass bulb enclosure
+  X.beginPath();X.arc(BULB.cx,BULB.cy,BULB.r+4,0,Math.PI*2);
+  X.strokeStyle='rgba(180,200,220,.3)';X.lineWidth=1.5;X.stroke();
+
+  // Top cap
+  X.fillStyle='#555';
+  X.beginPath();
+  X.ellipse(TUBE.cx,TUBE.top-10,OUTER_W/2+2,5,0,0,Math.PI*2);
+  X.fill();
+  X.strokeStyle='rgba(180,200,220,.3)';X.lineWidth=1;X.stroke();
+}
+
+function drawDial(temp){
+  const cx=DIAL.cx, cy=DIAL.cy, r=DIAL.r;
+
+  // Dial background
+  X.beginPath();X.arc(cx,cy,r,0,Math.PI*2);
+  const bg=X.createRadialGradient(cx,cy,r*0.7,cx,cy,r);
+  bg.addColorStop(0,'#333');bg.addColorStop(1,'#222');
+  X.fillStyle=bg;X.fill();
+  X.strokeStyle='#666';X.lineWidth=2;X.stroke();
+
+  // Outer ring
+  X.beginPath();X.arc(cx,cy,r+3,0,Math.PI*2);
+  X.strokeStyle='#555';X.lineWidth=3;X.stroke();
+
+  // Scale arc from -135° to +135° (270° sweep for 0-100°C)
+  const startAng=-Math.PI*0.75; // -135°
+  const endAng=Math.PI*0.75;    // +135°
+  const sweep=endAng-startAng;
+
+  // Color arc behind the scale
+  for(let i=0;i<100;i++){
+    const a1=startAng+(i/100)*sweep;
+    const a2=startAng+((i+1)/100)*sweep;
+    const col=tempColor(i);
+    X.beginPath();X.arc(cx,cy,r-6,a1,a2);
+    X.strokeStyle=`rgba(${col.r},${col.g},${col.b},.4)`;
+    X.lineWidth=4;X.stroke();
+  }
+
+  // Tick marks
+  for(let deg=0;deg<=100;deg+=5){
+    const a=startAng+(deg/100)*sweep;
+    const major=deg%20===0;
+    const inner=r-(major?18:14);
+    const outer=r-8;
+    X.strokeStyle=major?'#bbb':'#777';
+    X.lineWidth=major?1.5:1;
+    X.beginPath();
+    X.moveTo(cx+inner*Math.cos(a),cy+inner*Math.sin(a));
+    X.lineTo(cx+outer*Math.cos(a),cy+outer*Math.sin(a));
+    X.stroke();
+    if(major){
+      const tx=cx+(inner-12)*Math.cos(a);
+      const ty=cy+(inner-12)*Math.sin(a);
+      X.fillStyle='#aaa';X.font='10px Georgia';X.textAlign='center';X.textBaseline='middle';
+      X.fillText(deg+'°',tx,ty);
+    }
+  }
+
+  // Needle
+  const needleAng=startAng+(temp/100)*sweep;
+  X.strokeStyle='#c44';X.lineWidth=2;
+  X.beginPath();
+  X.moveTo(cx,cy);
+  X.lineTo(cx+(r-15)*Math.cos(needleAng),cy+(r-15)*Math.sin(needleAng));
+  X.stroke();
+
+  // Needle glow
+  X.strokeStyle='rgba(220,60,40,.3)';X.lineWidth=4;
+  X.beginPath();
+  X.moveTo(cx+10*Math.cos(needleAng),cy+10*Math.sin(needleAng));
+  X.lineTo(cx+(r-18)*Math.cos(needleAng),cy+(r-18)*Math.sin(needleAng));
+  X.stroke();
+
+  // Center pin
+  X.beginPath();X.arc(cx,cy,5,0,Math.PI*2);
+  X.fillStyle='#888';X.fill();
+  X.strokeStyle='#aaa';X.lineWidth=1;X.stroke();
+
+  // Label
+  X.fillStyle='#777';X.font='9px Georgia';X.textAlign='center';X.textBaseline='alphabetic';
+  X.fillText('°C',cx,cy+r+15);
+}
+
+function draw(){
+  // Smooth temperature transition
+  currentTemp+=(targetTemp-currentTemp)*0.05;
+
+  drawBG();
+  drawBath(currentTemp);
+  drawThermometer(currentTemp);
+  drawDial(currentTemp);
+
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
