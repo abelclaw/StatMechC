@@ -5236,7 +5236,7 @@ function initCh6Vis() {
           y: yMin + Math.random() * (yMax - yMin),
           vx: (Math.random() - 0.5) * 100,
           vy: (Math.random() - 0.5) * 100,
-          side: 'left', colorIndex: i
+          species: 'left', currentSide: 'left', colorIndex: i
         });
       }
       for (let i = 0; i < NM; i++) {
@@ -5245,7 +5245,7 @@ function initCh6Vis() {
           y: yMin + Math.random() * (yMax - yMin),
           vx: (Math.random() - 0.5) * 100,
           vy: (Math.random() - 0.5) * 100,
-          side: 'right', colorIndex: NM + i
+          species: 'right', currentSide: 'right', colorIndex: NM + i
         });
       }
     }
@@ -5257,7 +5257,7 @@ function initCh6Vis() {
       } else if (mode === 'identical') {
         return COLORS.green;
       } else {
-        return p.side === 'left' ? COLORS.cyan : COLORS.orange;
+        return p.species === 'left' ? COLORS.cyan : COLORS.orange;
       }
     }
 
@@ -5280,8 +5280,32 @@ function initCh6Vis() {
         ctxM.fillStyle = getParticleColor(p); ctxM.fill();
       }
 
-      // Info text
+      // Counts when partitioned
       const mode = caseSelect?.value || 'distinguishable';
+      const midX = WM / 2;
+      if (partitioned) {
+        const leftP = particles.filter(p => p.currentSide === 'left');
+        const rightP = particles.filter(p => p.currentSide === 'right');
+        ctxM.font = FONT; ctxM.textAlign = 'center';
+        if (mode === 'different') {
+          const leftHe = leftP.filter(p => p.species === 'left').length;
+          const leftXe = leftP.filter(p => p.species === 'right').length;
+          const rightHe = rightP.filter(p => p.species === 'left').length;
+          const rightXe = rightP.filter(p => p.species === 'right').length;
+          ctxM.fillStyle = COLORS.cyan;
+          ctxM.fillText('He: ' + leftHe, WM / 4, HM - 55);
+          ctxM.fillText('He: ' + rightHe, 3 * WM / 4, HM - 55);
+          ctxM.fillStyle = COLORS.orange;
+          ctxM.fillText('Xe: ' + leftXe, WM / 4, HM - 40);
+          ctxM.fillText('Xe: ' + rightXe, 3 * WM / 4, HM - 40);
+        } else {
+          ctxM.fillStyle = COLORS.textDim;
+          ctxM.fillText(leftP.length, WM / 4, HM - 48);
+          ctxM.fillText(rightP.length, 3 * WM / 4, HM - 48);
+        }
+      }
+
+      // Info text
       let dsText = '';
       if (mode === 'identical') {
         dsText = partitioned ? 'ΔS = 0 (partition in)' : 'ΔS = 0 — partition does nothing!';
@@ -5309,8 +5333,8 @@ function initCh6Vis() {
         if (p.x < xMin) { p.x = xMin; p.vx = Math.abs(p.vx); }
         if (p.x > xMax) { p.x = xMax; p.vx = -Math.abs(p.vx); }
         if (partitioned) {
-          if (p.side === 'left' && p.x > midX - r) { p.x = midX - r; p.vx = -Math.abs(p.vx); }
-          if (p.side === 'right' && p.x < midX + r) { p.x = midX + r; p.vx = Math.abs(p.vx); }
+          if (p.currentSide === 'left' && p.x > midX - r) { p.x = midX - r; p.vx = -Math.abs(p.vx); }
+          if (p.currentSide === 'right' && p.x < midX + r) { p.x = midX + r; p.vx = Math.abs(p.vx); }
         }
         if (p.y < yMin) { p.y = yMin; p.vy = Math.abs(p.vy); }
         if (p.y > yMax) { p.y = yMax; p.vy = -Math.abs(p.vy); }
@@ -5322,19 +5346,17 @@ function initCh6Vis() {
     toggleBtn?.addEventListener('click', () => {
       partitioned = !partitioned;
       toggleBtn.textContent = partitioned ? 'Remove Partition' : 'Insert Partition';
-      // When reinserting partition, push particles to their original side
       if (partitioned) {
         const midX = WM / 2;
         const r = 4;
+        // Assign side based on current position, nudge particles off the midline
         for (const p of particles) {
-          if (p.side === 'left' && p.x > midX - r) {
-            p.x = midX - r - Math.random() * 20;
-            p.vx = -Math.abs(p.vx);
+          if (p.x >= midX - r && p.x <= midX + r) {
+            // Particle is right on the partition — nudge to nearest side
+            if (p.x <= midX) { p.x = midX - r - 1; p.vx = -Math.abs(p.vx); }
+            else { p.x = midX + r + 1; p.vx = Math.abs(p.vx); }
           }
-          if (p.side === 'right' && p.x < midX + r) {
-            p.x = midX + r + Math.random() * 20;
-            p.vx = Math.abs(p.vx);
-          }
+          p.currentSide = p.x < midX ? 'left' : 'right';
         }
       }
     });
