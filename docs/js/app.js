@@ -7690,8 +7690,7 @@ function initCh7Vis() {
     let wallDents = [];
 
     // Temperature units: slider T maps to kT in velocity^2 units
-    // kT = 900 * T_slider, so at T=2 mean KE per particle ~ 1800
-    function tempToSpeed(T) { return 30 * Math.sqrt(T); }
+    function tempToSpeed(T) { return 15 * Math.sqrt(T); }
 
     function initHR() {
       const T = parseFloat(resTempSlider?.value || 2.0);
@@ -7964,10 +7963,10 @@ function initCh7Vis() {
     const veM = 12;
     const boxL = veM, boxR = WVE - veM, boxT = 30, boxB = HVE - 50;
     const boxW = boxR - boxL, boxH = boxB - boxT;
-    const PR_VE = 3;
-    const N_LEFT = 15, N_RIGHT = 15;
+    const PR_VE = 2;
+    const N_LEFT = 30, N_RIGHT = 30;
     const WALL_HALF = 3;
-    const WALL_MASS = 8; // wall inertia relative to particles
+    const WALL_MASS = 3; // wall inertia relative to particles
 
     let wallX = (boxL + boxR) / 2; // moveable wall position
     let wallVx = 0; // wall velocity
@@ -8037,7 +8036,7 @@ function initCh7Vis() {
       // Move wall
       wallX += wallVx * dt;
       // Wall friction/damping for stability
-      wallVx *= 0.999;
+      wallVx *= 0.998;
 
       // Clamp wall
       if (wallX < minWall) { wallX = minWall; wallVx = Math.abs(wallVx) * 0.5; }
@@ -8108,47 +8107,38 @@ function initCh7Vis() {
         ctxVE.fill();
       }
 
-      // Compute pressures from kinetic theory: P = N * m * <vx^2> / L_y
-      // (force per unit length of wall = rate of momentum transfer)
-      const leftParts = veParticles.filter(p => p.side === 'left');
-      const rightParts = veParticles.filter(p => p.side === 'right');
-      let sumVx2L = 0, sumVx2R = 0;
-      for (const p of leftParts) sumVx2L += p.vx * p.vx;
-      for (const p of rightParts) sumVx2R += p.vx * p.vx;
-      // Pressure ~ N<vx^2>/V, where V is proportional to width
+      // Compute P = NkT/V for each side (V proportional to width)
       const widthL = wallX - boxL;
       const widthR = boxR - wallX;
-      const PL = leftParts.length > 0 ? sumVx2L / leftParts.length : 0;
-      const PR_val = rightParts.length > 0 ? sumVx2R / rightParts.length : 0;
+      // Normalize V so that at equal split V = 0.5 each
+      const VL = widthL / boxW;
+      const VR = widthR / boxW;
+      const PL = N_LEFT * TL / (VL + 0.001);
+      const PR_val = N_RIGHT * TR / (VR + 0.001);
 
       // Info text below
       ctxVE.font = FONT; ctxVE.textAlign = 'center';
-      // Left side info
       const leftCx = boxL + widthL / 2;
-      ctxVE.fillStyle = COLORS.blue;
-      ctxVE.fillText('T₁ = ' + TL.toFixed(1), leftCx, boxB + 16);
-      ctxVE.fillStyle = COLORS.textDim; ctxVE.font = FONT_SM;
-      ctxVE.fillText('V₁ = ' + (widthL / boxW * 100).toFixed(0) + '%', leftCx, boxB + 32);
-
-      // Right side info
       const rightCx = wallX + widthR / 2;
-      ctxVE.fillStyle = COLORS.green; ctxVE.font = FONT;
-      ctxVE.fillText('T₂ = ' + TR.toFixed(1), rightCx, boxB + 16);
+
+      // Left side
+      ctxVE.fillStyle = COLORS.blue;
+      ctxVE.fillText('P₁ = NT/V = ' + PL.toFixed(1), leftCx, boxB + 16);
       ctxVE.fillStyle = COLORS.textDim; ctxVE.font = FONT_SM;
-      ctxVE.fillText('V₂ = ' + (widthR / boxW * 100).toFixed(0) + '%', rightCx, boxB + 32);
+      ctxVE.fillText('T₁=' + TL.toFixed(1) + '  V₁=' + (VL * 100).toFixed(0) + '%', leftCx, boxB + 32);
+
+      // Right side
+      ctxVE.fillStyle = COLORS.green; ctxVE.font = FONT;
+      ctxVE.fillText('P₂ = NT/V = ' + PR_val.toFixed(1), rightCx, boxB + 16);
+      ctxVE.fillStyle = COLORS.textDim; ctxVE.font = FONT_SM;
+      ctxVE.fillText('T₂=' + TR.toFixed(1) + '  V₂=' + (VR * 100).toFixed(0) + '%', rightCx, boxB + 32);
 
       // Equilibrium indicator
-      const pRatio = widthL > 5 && widthR > 5 ? Math.abs(PL / widthL - PR_val / widthR) / ((PL / widthL + PR_val / widthR) / 2 + 0.01) : 1;
-      const eq = pRatio < 0.15;
+      const pAvg = (PL + PR_val) / 2 + 0.01;
+      const eq = Math.abs(PL - PR_val) / pAvg < 0.12;
       ctxVE.font = FONT_SM; ctxVE.textAlign = 'center';
       ctxVE.fillStyle = eq ? COLORS.green : COLORS.textDim;
       ctxVE.fillText(eq ? '✓ P₁ ≈ P₂' : 'P₁ ≠ P₂  …equilibrating', (boxL + boxR) / 2, boxT - 6);
-
-      // Labels
-      ctxVE.fillStyle = COLORS.blue; ctxVE.font = FONT; ctxVE.textAlign = 'center';
-      ctxVE.fillText('Left', leftCx, boxT + 18);
-      ctxVE.fillStyle = COLORS.green;
-      ctxVE.fillText('Right', rightCx, boxT + 18);
 
       // Update slider readouts
       document.getElementById('vex-tleft-val')?.replaceChildren(document.createTextNode(TL.toFixed(1)));
