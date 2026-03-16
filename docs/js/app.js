@@ -5524,327 +5524,295 @@ function initCh6Vis() {
     animateSzilard();
   }
 
-  // ----- Landauer's Bit: Two-World Erasure Protocol -----
+  // ----- Landauer's Bit: Known vs Unknown -----
   const cLB = document.getElementById('vis-landauer');
   if (cLB) {
     const {ctx: ctxLB, W: WLB, H: HLB} = setupCanvas(cLB);
-    const eraseBtn = document.getElementById('landauer-erase');
-    const flipBtn = document.getElementById('landauer-flip');
-    const resetBtnLB = document.getElementById('landauer-reset');
-    const barrierSlider = document.getElementById('landauer-barrier');
-    const tiltSlider = document.getElementById('landauer-tilt');
+    const lbKS0 = document.getElementById('lb-k-set0');
+    const lbKS1 = document.getElementById('lb-k-set1');
+    const lbKFl = document.getElementById('lb-k-flip');
+    const lbUS0 = document.getElementById('lb-u-set0');
+    const lbUS1 = document.getElementById('lb-u-set1');
+    const lbUFl = document.getElementById('lb-u-flip');
+    const lbURv = document.getElementById('lb-u-reveal');
+    const lbRst = document.getElementById('lb-reset');
 
     // Physics
-    const LB_GAMMA = 6, LB_KT = 0.05, LB_DT = 0.016;
-    const LB_XMIN = -1.7, LB_XMAX = 1.7;
+    const LB_G = 1.0, LB_KT = 0.04, LB_DT = 0.016;
+    function lbRn() {
+      return Math.sqrt(-2 * Math.log(Math.random() + 1e-10)) * Math.cos(2 * Math.PI * Math.random());
+    }
+    function lbV(x, b, t) { return b * (x * x - 1) * (x * x - 1) - t * x; }
+    function lbF(x, b, t) {
+      const w = x > 1.5 ? -16 * (x - 1.5) : x < -1.5 ? -16 * (x + 1.5) : 0;
+      return -4 * b * x * (x * x - 1) + t + w;
+    }
+    function lbPhys(ball, b, t) {
+      ball.x += (lbF(ball.x, b, t) / LB_G) * LB_DT + Math.sqrt(2 * LB_KT * LB_DT / LB_G) * lbRn();
+      ball.x = Math.max(-1.7, Math.min(1.7, ball.x));
+    }
 
     // State
-    let lbBarrier = 1.0, lbTilt = 0.0;
-    let lbBalls = [{x: -1, v: 0}, {x: 1, v: 0}];
-    let lbRunning = false;
-    let lbProto = null, lbProtoIdx = 0, lbProtoT = 0;
-    let lbPrevB = 1, lbPrevTi = 0;
-    let lbLabel = 'Two possible starting states for an unknown bit';
-    let lbHeat = 0, lbMode = 'erase';
-    let lbParticles = [];
+    let kBall = {x: -1}, uBall = {x: 1};
+    let hidden = true, uBar = 1, uTi = 0;
+    let lbHeat = 0, lbMsg = '', lbMC = COLORS.textDim;
+    let lbOn = false, lbBz = false;
+    let lbParts = [], kAnim = null, uAnim = null, proto = null, flashT = 0;
 
-    function lbRandn() {
-      const u1 = Math.random(), u2 = Math.random();
-      return Math.sqrt(-2 * Math.log(u1 + 1e-10)) * Math.cos(2 * Math.PI * u2);
-    }
+    // Layout
+    const PW = (WLB - 36) / 2, PH = 150, PY = 30, P1 = 8, P2 = WLB / 2 + 10;
+    function xc(x, x0, w) { return x0 + (x + 1.7) / 3.4 * w; }
+    function vc(V, y0, h) { return Math.max(y0, Math.min(y0 + h, y0 + h - V / 2.0 * h * 0.6 - h * 0.1)); }
 
-    function lbV(x, b, t) {
-      // Double well + tilt + soft walls
-      const wall = x > 1.5 ? 8 * (x - 1.5) * (x - 1.5) : x < -1.5 ? 8 * (x + 1.5) * (x + 1.5) : 0;
-      return b * Math.pow(x * x - 1, 2) - t * x + wall;
-    }
-
-    function lbF(x, b, t) {
-      // -dV/dx
-      const wallF = x > 1.5 ? -16 * (x - 1.5) : x < -1.5 ? -16 * (x + 1.5) : 0;
-      return -4 * b * x * (x * x - 1) + t + wallF;
-    }
-
-    function lbStep(ball) {
-      const f = lbF(ball.x, lbBarrier, lbTilt);
-      const noise = Math.sqrt(2 * LB_KT * LB_DT / LB_GAMMA) * lbRandn();
-      ball.x += (f / LB_GAMMA) * LB_DT + noise;
-      if (ball.x < LB_XMIN) ball.x = LB_XMIN;
-      if (ball.x > LB_XMAX) ball.x = LB_XMAX;
-    }
-
-    // Coordinate transforms
-    function lbX2C(x, x0, w) { return x0 + (x - LB_XMIN) / (LB_XMAX - LB_XMIN) * w; }
-    function lbV2C(V, y0, h) {
-      const py = y0 + h - (V / 1.8) * (h * 0.7) - h * 0.12;
-      return Math.max(y0, Math.min(y0 + h, py));
-    }
-
-    function drawPanel(x0, y0, w, h, ball, title, color) {
-      // Panel outline
-      ctxLB.strokeStyle = 'rgba(255,255,255,0.07)';
-      ctxLB.lineWidth = 1;
+    function drawPanel(x0, y0, w, h, ball, br, ti, title, col, hid) {
+      ctxLB.strokeStyle = 'rgba(255,255,255,0.07)'; ctxLB.lineWidth = 1;
       ctxLB.strokeRect(x0 - 2, y0 - 18, w + 4, h + 32);
-
-      // Title
-      ctxLB.fillStyle = color; ctxLB.font = FONT; ctxLB.textAlign = 'center';
+      ctxLB.fillStyle = col; ctxLB.font = FONT; ctxLB.textAlign = 'center';
       ctxLB.fillText(title, x0 + w / 2, y0 - 5);
 
-      // Potential filled region
-      ctxLB.beginPath();
-      ctxLB.moveTo(x0, y0 + h);
+      // Potential fill
+      ctxLB.beginPath(); ctxLB.moveTo(x0, y0 + h);
       for (let i = 0; i <= 200; i++) {
-        const xv = LB_XMIN + (LB_XMAX - LB_XMIN) * i / 200;
-        ctxLB.lineTo(lbX2C(xv, x0, w), lbV2C(lbV(xv, lbBarrier, lbTilt), y0, h));
+        const xv = -1.7 + 3.4 * i / 200;
+        ctxLB.lineTo(xc(xv, x0, w), vc(lbV(xv, br, ti), y0, h));
       }
-      ctxLB.lineTo(x0 + w, y0 + h);
-      ctxLB.closePath();
-      ctxLB.fillStyle = 'rgba(255,255,255,0.025)';
-      ctxLB.fill();
+      ctxLB.lineTo(x0 + w, y0 + h); ctxLB.closePath();
+      ctxLB.fillStyle = 'rgba(255,255,255,0.025)'; ctxLB.fill();
 
       // Potential curve
       ctxLB.beginPath();
       for (let i = 0; i <= 200; i++) {
-        const xv = LB_XMIN + (LB_XMAX - LB_XMIN) * i / 200;
-        const px = lbX2C(xv, x0, w), py = lbV2C(lbV(xv, lbBarrier, lbTilt), y0, h);
+        const xv = -1.7 + 3.4 * i / 200;
+        const px = xc(xv, x0, w), py = vc(lbV(xv, br, ti), y0, h);
         if (i === 0) ctxLB.moveTo(px, py); else ctxLB.lineTo(px, py);
       }
       ctxLB.strokeStyle = 'rgba(255,255,255,0.3)'; ctxLB.lineWidth = 2; ctxLB.stroke();
 
       // Well labels
       ctxLB.fillStyle = COLORS.textDim; ctxLB.font = FONT_SM; ctxLB.textAlign = 'center';
-      ctxLB.fillText('0', lbX2C(-1, x0, w), y0 + h + 13);
-      ctxLB.fillText('1', lbX2C(1, x0, w), y0 + h + 13);
+      ctxLB.fillText('0', xc(-1, x0, w), y0 + h + 13);
+      ctxLB.fillText('1', xc(1, x0, w), y0 + h + 13);
 
-      // Ball glow
-      const bpx = lbX2C(ball.x, x0, w);
-      const bpy = Math.max(y0 + 8, Math.min(y0 + h - 8, lbV2C(lbV(ball.x, lbBarrier, lbTilt), y0, h)));
-      const grd = ctxLB.createRadialGradient(bpx, bpy, 0, bpx, bpy, 20);
-      grd.addColorStop(0, color.replace(/1\)$/, '0.35)'));
-      grd.addColorStop(1, 'transparent');
-      ctxLB.beginPath(); ctxLB.arc(bpx, bpy, 20, 0, 2 * Math.PI);
-      ctxLB.fillStyle = grd; ctxLB.fill();
-
-      // Ball
-      ctxLB.beginPath(); ctxLB.arc(bpx, bpy, 7, 0, 2 * Math.PI);
-      ctxLB.fillStyle = color; ctxLB.fill();
-      ctxLB.strokeStyle = 'rgba(255,255,255,0.5)'; ctxLB.lineWidth = 1.5; ctxLB.stroke();
-
-      // Bit value on ball
-      ctxLB.fillStyle = '#000'; ctxLB.font = '10px Inter, system-ui, sans-serif';
-      ctxLB.textAlign = 'center'; ctxLB.textBaseline = 'middle';
-      ctxLB.fillText(ball.x < 0 ? '0' : '1', bpx, bpy);
-      ctxLB.textBaseline = 'alphabetic';
+      if (hid) {
+        const a = flashT > 0 ? 0.9 : 0.5;
+        ctxLB.fillStyle = 'rgba(255,167,38,' + a + ')';
+        ctxLB.font = 'bold 40px Inter, system-ui, sans-serif';
+        ctxLB.textAlign = 'center'; ctxLB.textBaseline = 'middle';
+        ctxLB.fillText('?', x0 + w / 2, y0 + h * 0.45);
+        ctxLB.textBaseline = 'alphabetic';
+      } else {
+        const bx = xc(ball.x, x0, w);
+        const by = Math.max(y0 + 8, Math.min(y0 + h - 8, vc(lbV(ball.x, br, ti), y0, h)));
+        const g = ctxLB.createRadialGradient(bx, by, 0, bx, by, 20);
+        g.addColorStop(0, col.replace(/[\d.]+\)$/, '0.35)')); g.addColorStop(1, 'transparent');
+        ctxLB.beginPath(); ctxLB.arc(bx, by, 20, 0, 2 * Math.PI);
+        ctxLB.fillStyle = g; ctxLB.fill();
+        ctxLB.beginPath(); ctxLB.arc(bx, by, 7, 0, 2 * Math.PI);
+        ctxLB.fillStyle = col; ctxLB.fill();
+        ctxLB.strokeStyle = 'rgba(255,255,255,0.5)'; ctxLB.lineWidth = 1.5; ctxLB.stroke();
+        ctxLB.fillStyle = '#000'; ctxLB.font = '10px Inter, system-ui, sans-serif';
+        ctxLB.textAlign = 'center'; ctxLB.textBaseline = 'middle';
+        ctxLB.fillText(ball.x < 0 ? '0' : '1', bx, by);
+        ctxLB.textBaseline = 'alphabetic';
+      }
     }
 
     function drawLB() {
       clearCanvas(ctxLB, WLB, HLB);
-      const gap = 16, panelW = (WLB - gap - 20) / 2, panelH = 160, panelY = 30;
-      const colorA = 'rgba(79,195,247,1)', colorB = 'rgba(255,167,38,1)';
+      const cK = 'rgba(79,195,247,1)', cU = 'rgba(255,167,38,1)';
 
       // Divider
       ctxLB.save(); ctxLB.strokeStyle = 'rgba(255,255,255,0.08)'; ctxLB.setLineDash([4, 4]);
-      ctxLB.beginPath(); ctxLB.moveTo(WLB / 2, panelY - 18);
-      ctxLB.lineTo(WLB / 2, panelY + panelH + 16); ctxLB.stroke(); ctxLB.restore();
+      ctxLB.beginPath(); ctxLB.moveTo(WLB / 2, PY - 18); ctxLB.lineTo(WLB / 2, PY + PH + 16);
+      ctxLB.stroke(); ctxLB.restore();
 
-      // Panels
-      const titleA = lbMode === 'flip' ? 'Bit A (known = 0)' : 'If bit = 0';
-      const titleB = lbMode === 'flip' ? 'Bit B (known = 0)' : 'If bit = 1';
-      drawPanel(10, panelY, panelW, panelH, lbBalls[0], titleA, colorA);
-      drawPanel(WLB / 2 + gap / 2, panelY, panelW, panelH, lbBalls[1], titleB, colorB);
+      drawPanel(P1, PY, PW, PH, kBall, 1, 0,
+        'Known Bit = ' + (kBall.x < 0 ? '0' : '1'), cK, false);
+      drawPanel(P2, PY, PW, PH, uBall, uBar, uTi,
+        hidden ? 'Unknown Bit = ?' : 'Bit = ' + (uBall.x < 0 ? '0' : '1') + ' (now known)', cU, hidden);
 
       // Heat particles
-      for (const p of lbParticles) {
+      for (const p of lbParts) {
         ctxLB.beginPath(); ctxLB.arc(p.x, p.y, 2, 0, 2 * Math.PI);
-        ctxLB.fillStyle = 'rgba(239,83,80,' + (p.life * 0.7).toFixed(2) + ')';
-        ctxLB.fill();
+        ctxLB.fillStyle = 'rgba(239,83,80,' + (p.life * 0.7).toFixed(2) + ')'; ctxLB.fill();
       }
 
-      // --- Info area ---
-      const infoY = panelY + panelH + 35;
-
-      // Step label
-      ctxLB.fillStyle = COLORS.yellow; ctxLB.font = FONT_LG; ctxLB.textAlign = 'center';
-      ctxLB.fillText(lbLabel, WLB / 2, infoY);
-
-      // Phase space compression indicator
-      const psY = infoY + 20;
-      ctxLB.font = FONT_SM; ctxLB.textAlign = 'center';
-      ctxLB.fillStyle = COLORS.textDim;
-      ctxLB.fillText('Possible states:', WLB / 2 - 80, psY);
-      // Before circles
-      ctxLB.beginPath(); ctxLB.arc(WLB / 2 - 12, psY - 3, 5, 0, 2 * Math.PI);
-      ctxLB.fillStyle = colorA; ctxLB.fill();
-      ctxLB.beginPath(); ctxLB.arc(WLB / 2 + 2, psY - 3, 5, 0, 2 * Math.PI);
-      ctxLB.fillStyle = colorB; ctxLB.fill();
-      ctxLB.fillStyle = COLORS.textDim; ctxLB.fillText('\u2192', WLB / 2 + 20, psY);
-      // After: merged or separate
-      if (lbHeat > 0.4 && lbMode === 'erase') {
-        ctxLB.beginPath(); ctxLB.arc(WLB / 2 + 38, psY - 3, 6, 0, 2 * Math.PI);
-        ctxLB.fillStyle = COLORS.green; ctxLB.fill();
-        ctxLB.fillStyle = COLORS.textDim; ctxLB.fillText('(1 state)', WLB / 2 + 72, psY);
-      } else if (lbMode === 'flip') {
-        ctxLB.beginPath(); ctxLB.arc(WLB / 2 + 33, psY - 3, 5, 0, 2 * Math.PI);
-        ctxLB.fillStyle = colorA; ctxLB.fill();
-        ctxLB.beginPath(); ctxLB.arc(WLB / 2 + 47, psY - 3, 5, 0, 2 * Math.PI);
-        ctxLB.fillStyle = colorB; ctxLB.fill();
-        ctxLB.fillStyle = COLORS.textDim; ctxLB.fillText('(no compression)', WLB / 2 + 90, psY);
-      } else {
-        ctxLB.beginPath(); ctxLB.arc(WLB / 2 + 33, psY - 3, 5, 0, 2 * Math.PI);
-        ctxLB.fillStyle = colorA; ctxLB.fill();
-        ctxLB.beginPath(); ctxLB.arc(WLB / 2 + 47, psY - 3, 5, 0, 2 * Math.PI);
-        ctxLB.fillStyle = colorB; ctxLB.fill();
-        ctxLB.fillStyle = COLORS.textDim; ctxLB.fillText('(2 states)', WLB / 2 + 82, psY);
-      }
+      // Info area
+      const iy = PY + PH + 38;
+      ctxLB.fillStyle = lbMC; ctxLB.font = FONT_LG; ctxLB.textAlign = 'center';
+      ctxLB.fillText(lbMsg, WLB / 2, iy);
 
       // Heat bar
-      const barY = psY + 16, barX = 55, barW = WLB - 120, barH = 14;
+      const barY = iy + 18, barX = 55, barW = WLB - 120, barH = 14;
       ctxLB.fillStyle = COLORS.textDim; ctxLB.font = FONT_SM; ctxLB.textAlign = 'left';
       ctxLB.fillText('Heat:', 10, barY + 11);
-      // Background
       ctxLB.fillStyle = 'rgba(255,255,255,0.06)'; ctxLB.fillRect(barX, barY, barW, barH);
-      // kT ln 2 marker
-      const ln2Frac = 0.693 / 1.2;
-      const ln2X = barX + ln2Frac * barW;
+      const ln2X = barX + (0.693 / 1.2) * barW;
       ctxLB.strokeStyle = COLORS.yellow; ctxLB.lineWidth = 1.5;
       ctxLB.beginPath(); ctxLB.moveTo(ln2X, barY - 2); ctxLB.lineTo(ln2X, barY + barH + 2); ctxLB.stroke();
       ctxLB.fillStyle = COLORS.yellow; ctxLB.font = '10px Inter, system-ui, sans-serif';
-      ctxLB.textAlign = 'center'; ctxLB.fillText('k\u0299T ln 2', ln2X, barY + barH + 13);
-      // Heat fill
-      const heatFrac = Math.min(lbHeat / 1.2, 1);
-      if (heatFrac > 0) {
-        const hg = ctxLB.createLinearGradient(barX, 0, barX + heatFrac * barW, 0);
+      ctxLB.textAlign = 'center'; ctxLB.fillText('kT ln 2', ln2X, barY + barH + 13);
+      const hf = Math.min(lbHeat / 1.2, 1);
+      if (hf > 0) {
+        const hg = ctxLB.createLinearGradient(barX, 0, barX + hf * barW, 0);
         hg.addColorStop(0, 'rgba(239,83,80,0.5)'); hg.addColorStop(1, 'rgba(239,83,80,0.9)');
-        ctxLB.fillStyle = hg; ctxLB.fillRect(barX, barY, heatFrac * barW, barH);
+        ctxLB.fillStyle = hg; ctxLB.fillRect(barX, barY, hf * barW, barH);
       }
-      // Value
       ctxLB.fillStyle = COLORS.text; ctxLB.font = FONT_SM; ctxLB.textAlign = 'right';
-      ctxLB.fillText(lbHeat.toFixed(2) + ' k\u0299T', barX + barW + 38, barY + 11);
-
-      // Barrier / tilt readout
-      const indY = barY + 28;
-      ctxLB.fillStyle = COLORS.textDim; ctxLB.font = FONT_SM; ctxLB.textAlign = 'center';
-      ctxLB.fillText('Barrier: ' + (lbBarrier * 100).toFixed(0) + '%', WLB * 0.3, indY);
-      const ts = lbTilt > 0.05 ? 'push right \u2192' : lbTilt < -0.05 ? '\u2190 push left' : 'none';
-      ctxLB.fillText('Tilt: ' + ts, WLB * 0.7, indY);
+      ctxLB.fillText(lbHeat.toFixed(2) + ' kT', barX + barW + 38, barY + 11);
     }
 
-    // Protocol definitions
-    const ERASE_PROTO = [
-      {b: 1, t: 0,    dur: 70,  lbl: 'Unknown bit: could be 0 or 1'},
-      {b: 0, t: 0,    dur: 110, lbl: 'Step 1: Lower the barrier (merge wells)'},
-      {b: 0, t: -1.8, dur: 110, lbl: 'Step 2: Tilt left (push toward 0)'},
-      {b: 1, t: -1.8, dur: 110, lbl: 'Step 3: Raise the barrier'},
-      {b: 1, t: 0,    dur: 110, lbl: 'Step 4: Remove tilt \u2014 both bits are 0!'},
-      {b: 1, t: 0,    dur: 130, lbl: 'Erasure complete! Heat \u2265 k\u0299T ln 2 was dissipated'},
-    ];
-    function makeFlipProto(fromZero) {
-      const dir = fromZero ? 1 : -1;
-      const tVal = dir * 1.8;
-      const fromBit = fromZero ? '0' : '1', toBit = fromZero ? '1' : '0';
-      const tiltDir = fromZero ? 'right' : 'left';
-      return [
-        {b: 1, t: 0,    dur: 70,  lbl: 'Known bit = ' + fromBit + ' (both copies identical)'},
-        {b: 0, t: 0,    dur: 110, lbl: 'Step 1: Lower the barrier'},
-        {b: 0, t: tVal, dur: 110, lbl: 'Step 2: Tilt ' + tiltDir + ' (push toward ' + toBit + ')'},
-        {b: 1, t: tVal, dur: 110, lbl: 'Step 3: Raise the barrier'},
-        {b: 1, t: 0,    dur: 110, lbl: 'Step 4: Remove tilt \u2014 bit flipped to ' + toBit + '!'},
-        {b: 1, t: 0,    dur: 130, lbl: 'Flip complete! No heat needed (reversible)'},
-      ];
-    }
+    function animLB() {
+      if (!lbOn) return;
 
-    function lbStartProto(steps, mode, startX0, startX1) {
-      lbMode = mode; lbProto = steps; lbProtoIdx = 0; lbProtoT = 0;
-      lbHeat = 0; lbParticles = [];
-      lbBalls[0].x = startX0; lbBalls[1].x = startX1;
-      lbBalls[0].v = 0; lbBalls[1].v = 0;
-      lbBarrier = steps[0].b; lbTilt = steps[0].t;
-      lbPrevB = lbBarrier; lbPrevTi = lbTilt;
-      lbLabel = steps[0].lbl;
-      if (barrierSlider) barrierSlider.value = lbBarrier * 100;
-      if (tiltSlider) tiltSlider.value = lbTilt / 1.8 * 100;
-      if (!lbRunning) { lbRunning = true; animateLB(); }
-    }
-
-    function animateLB() {
-      if (!lbRunning) return;
-
-      // Protocol logic
-      if (lbProto) {
-        lbProtoT++;
-        const step = lbProto[lbProtoIdx];
-        if (lbProtoT >= step.dur) {
-          lbProtoIdx++; lbProtoT = 0;
-          if (lbProtoIdx < lbProto.length) {
-            lbPrevB = lbBarrier; lbPrevTi = lbTilt;
-            lbLabel = lbProto[lbProtoIdx].lbl;
-          } else { lbProto = null; }
-        }
-        if (lbProto && lbProtoIdx < lbProto.length) {
-          const s = lbProto[lbProtoIdx];
-          const frac = lbProtoT / s.dur;
-          const ease = frac * frac * (3 - 2 * frac); // smoothstep
-          lbBarrier = lbPrevB + (s.b - lbPrevB) * ease;
-          lbTilt = lbPrevTi + (s.t - lbPrevTi) * ease;
-          if (barrierSlider) barrierSlider.value = lbBarrier * 100;
-          if (tiltSlider) tiltSlider.value = lbTilt / 1.8 * 100;
-          // Heat ramp during erase steps 1-4
-          if (lbMode === 'erase' && lbProtoIdx >= 1 && lbProtoIdx <= 4) {
-            const totalF = ERASE_PROTO.slice(1, 5).reduce((acc, st) => acc + st.dur, 0);
-            lbHeat = Math.min(0.693, lbHeat + 0.693 / totalF);
-          }
-          // Heat particles during erasure
-          if (lbMode === 'erase' && lbProtoIdx >= 1 && lbProtoIdx <= 4 && Math.random() < 0.12) {
-            const gap = 16, pw = (WLB - gap - 20) / 2, ph = 160, py = 30;
-            const bi = Math.random() < 0.5 ? 0 : 1;
-            const bx = lbBalls[bi].x;
-            const cpx = bi === 0 ? lbX2C(bx, 10, pw) : lbX2C(bx, WLB / 2 + gap / 2, pw);
-            const cpy = bi === 0 ? lbV2C(lbV(bx, lbBarrier, lbTilt), py, ph) : lbV2C(lbV(bx, lbBarrier, lbTilt), py, ph);
-            const ang = Math.random() * Math.PI * 2;
-            const spd = 0.5 + Math.random() * 1.5;
-            lbParticles.push({x: cpx, y: Math.min(cpy, py + ph - 5), vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd - 0.3, life: 1});
-          }
-        }
+      // Known ball: smooth animation or thermal jiggle
+      if (kAnim) {
+        kAnim.t++;
+        const f = kAnim.t / kAnim.dur, e = f * f * (3 - 2 * f);
+        kBall.x = kAnim.from + (kAnim.to - kAnim.from) * e;
+        if (kAnim.t >= kAnim.dur) { kBall.x = kAnim.to; kAnim = null; lbBz = false; }
+      } else {
+        lbPhys(kBall, 1, 0);
       }
 
-      // Physics
-      for (const ball of lbBalls) lbStep(ball);
+      // Unknown ball: animation, protocol, or thermal jiggle
+      if (uAnim) {
+        uAnim.t++;
+        const f = uAnim.t / uAnim.dur, e = f * f * (3 - 2 * f);
+        uBall.x = uAnim.from + (uAnim.to - uAnim.from) * e;
+        if (uAnim.t >= uAnim.dur) { uBall.x = uAnim.to; uAnim = null; lbBz = false; }
+      } else if (proto) {
+        proto.t++;
+        const step = proto.steps[proto.i];
+        if (proto.t >= step.dur) {
+          proto.i++; proto.t = 0;
+          if (proto.i >= proto.steps.length) {
+            uBar = 1; uTi = 0; hidden = false;
+            lbMsg = 'Erased! Heat \u2265 kT ln 2 dissipated.';
+            lbMC = COLORS.red; proto = null; lbBz = false;
+          } else { proto.pB = uBar; proto.pT = uTi; }
+        }
+        if (proto) {
+          const s = proto.steps[proto.i];
+          const f = proto.t / s.dur, e = f * f * (3 - 2 * f);
+          uBar = proto.pB + (s.b - proto.pB) * e;
+          uTi = proto.pT + (s.t - proto.pT) * e;
+          if (proto.i >= 1) {
+            const tot = proto.steps.slice(1).reduce((a, st) => a + st.dur, 0);
+            lbHeat = Math.min(0.693, lbHeat + 0.693 / tot);
+          }
+          if (proto.i >= 1 && Math.random() < 0.1) {
+            const bpx = xc(uBall.x, P2, PW);
+            const bpy = vc(lbV(uBall.x, uBar, uTi), PY, PH);
+            const ang = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 1.5;
+            lbParts.push({x: bpx, y: Math.min(bpy, PY + PH - 5),
+              vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 0.3, life: 1});
+          }
+        }
+        lbPhys(uBall, uBar, uTi);
+      } else {
+        lbPhys(uBall, uBar, uTi);
+      }
 
-      // Particles
-      for (const p of lbParticles) { p.x += p.vx; p.y += p.vy; p.life -= 0.018; }
-      lbParticles = lbParticles.filter(p => p.life > 0);
+      if (flashT > 0) flashT--;
+      for (const p of lbParts) { p.x += p.vx; p.y += p.vy; p.life -= 0.018; }
+      lbParts = lbParts.filter(p => p.life > 0);
 
       drawLB();
-      activeAnimations['landauer'] = requestAnimationFrame(animateLB);
+      activeAnimations['landauer'] = requestAnimationFrame(animLB);
     }
 
     function lbReset() {
-      lbProto = null; lbBarrier = 1; lbTilt = 0; lbMode = 'erase';
-      lbBalls = [{x: -1, v: 0}, {x: 1, v: 0}];
-      lbHeat = 0; lbParticles = [];
-      lbLabel = 'Two possible starting states for an unknown bit';
-      if (barrierSlider) barrierSlider.value = 100;
-      if (tiltSlider) tiltSlider.value = 0;
+      kBall.x = -1; uBall.x = Math.random() < 0.5 ? -1 : 1;
+      hidden = true; uBar = 1; uTi = 0;
+      lbHeat = 0; lbParts = []; kAnim = null; uAnim = null; proto = null;
+      lbBz = false; flashT = 0;
+      lbMsg = 'Left: you can see the bit. Right: it\u2019s hidden.';
+      lbMC = COLORS.textDim;
     }
 
-    eraseBtn?.addEventListener('click', () => lbStartProto(ERASE_PROTO, 'erase', -1, 1));
-    flipBtn?.addEventListener('click', () => {
-      // Detect current state and flip to the other
-      const atZero = lbBalls[0].x < 0;
-      const startX = atZero ? -1 : 1;
-      lbStartProto(makeFlipProto(atZero), 'flip', startX, startX);
-    });
-    resetBtnLB?.addEventListener('click', () => { lbReset(); drawLB(); });
-    barrierSlider?.addEventListener('input', () => {
-      if (!lbProto) { lbBarrier = barrierSlider.value / 100; lbLabel = 'Manual control'; }
-    });
-    tiltSlider?.addEventListener('input', () => {
-      if (!lbProto) { lbTilt = (tiltSlider.value / 100) * 1.8; lbLabel = 'Manual control'; }
+    // Known panel buttons
+    function kSet(tgt) {
+      if (lbBz) return;
+      if (Math.abs(kBall.x - tgt) < 0.3) {
+        lbMsg = 'Already ' + (tgt < 0 ? '0' : '1') + '! No work needed.';
+        lbMC = COLORS.green; return;
+      }
+      lbBz = true;
+      kAnim = {from: kBall.x, to: tgt, t: 0, dur: 50};
+      lbMsg = 'Known \u2192 ' + (tgt < 0 ? '0' : '1') + '. Reversible \u2014 no heat.';
+      lbMC = COLORS.green;
+    }
+    lbKS0?.addEventListener('click', () => kSet(-1));
+    lbKS1?.addEventListener('click', () => kSet(1));
+    lbKFl?.addEventListener('click', () => {
+      if (lbBz) return;
+      lbBz = true;
+      kAnim = {from: kBall.x, to: kBall.x < 0 ? 1 : -1, t: 0, dur: 50};
+      lbMsg = 'Flip! Reversible \u2014 no heat.';
+      lbMC = COLORS.green;
     });
 
+    // Unknown panel buttons
+    function uSet(tgt) {
+      if (lbBz) return;
+      if (!hidden) {
+        // Already revealed — acts like known panel
+        if (Math.abs(uBall.x - tgt) < 0.3) {
+          lbMsg = 'Already ' + (tgt < 0 ? '0' : '1') + '! No heat.';
+          lbMC = COLORS.green; return;
+        }
+        lbBz = true;
+        uAnim = {from: uBall.x, to: tgt, t: 0, dur: 50};
+        lbMsg = 'Now known \u2014 set reversibly. No heat.';
+        lbMC = COLORS.green; return;
+      }
+      // Hidden — must erase (costs heat)
+      lbBz = true; lbHeat = 0;
+      const td = tgt < 0 ? -1.5 : 1.5;
+      proto = {
+        steps: [
+          {b: 1, t: 0, dur: 40},
+          {b: 0, t: 0, dur: 80},
+          {b: 0, t: td, dur: 80},
+          {b: 1, t: td, dur: 80},
+          {b: 1, t: 0, dur: 80},
+        ],
+        i: 0, t: 0, pB: 1, pT: 0
+      };
+      lbMsg = 'Erasing unknown bit to ' + (tgt < 0 ? '0' : '1') + '...';
+      lbMC = COLORS.orange;
+    }
+    lbUS0?.addEventListener('click', () => uSet(-1));
+    lbUS1?.addEventListener('click', () => uSet(1));
+
+    lbUFl?.addEventListener('click', () => {
+      if (lbBz) return;
+      if (!hidden) {
+        lbBz = true;
+        uAnim = {from: uBall.x, to: uBall.x < 0 ? 1 : -1, t: 0, dur: 50};
+        lbMsg = 'Flip! Reversible \u2014 no heat.';
+        lbMC = COLORS.green; return;
+      }
+      // Hidden flip — swap behind screen, no heat
+      uBall.x = -uBall.x;
+      flashT = 25;
+      lbMsg = 'Flipped! (still unknown) No heat \u2014 flip is always reversible.';
+      lbMC = COLORS.green;
+    });
+
+    lbURv?.addEventListener('click', () => {
+      if (lbBz || !hidden) return;
+      hidden = false;
+      lbMsg = 'Revealed: bit = ' + (uBall.x < 0 ? '0' : '1') + '. Now you can set it for free!';
+      lbMC = COLORS.cyan;
+    });
+
+    lbRst?.addEventListener('click', () => { lbReset(); drawLB(); });
+
     lbReset();
-    lbRunning = true;
-    animateLB();
+    lbOn = true;
+    animLB();
   }
 
   // ----- Na+/K+ Pump (game-style) -----
@@ -5852,6 +5820,7 @@ function initCh6Vis() {
   if (cNaK) {
     const { ctx: ctxNaK, W: WNaK, H: HNaK } = setupCanvas(cNaK);
     const pumpBtn     = document.getElementById('nak-pump-btn');
+    const fireBtn     = document.getElementById('nak-fire-btn');
     const resetBtnNaK = document.getElementById('nak-reset');
     const atpDisp     = document.getElementById('nak-atp-display');
 
@@ -5878,6 +5847,16 @@ function initCh6Vis() {
     let leakTimer = 0;
     const LEAK_INTERVAL = 3500;
 
+    // ---- Neuron firing state ----
+    let fireActive = false, fireT = 0;
+    const FIRE_DUR = 1200; // ms for full action potential
+    let fireNaIons = [];   // Na+ ions rushing in during firing
+    // Voltage trace: ring buffer of membrane potential values
+    const V_TRACE_LEN = 120;
+    let vTrace = [];
+    let vTraceIdx = 0;
+    let fireCount = 0;
+
     function randIon(side) {
       const m = 14;
       const yMin = side === 'out' ? 30 : MEM_BOT + m;
@@ -5899,12 +5878,20 @@ function initCh6Vis() {
       pumpPhase = null; pumpT = 0;
       pumpNaIons = []; pumpKIons = [];
       leakTimer = 0;
+      fireActive = false; fireT = 0; fireNaIons = []; fireCount = 0;
+      vTrace = new Array(V_TRACE_LEN).fill(-70); vTraceIdx = 0;
       updateAtpDisp();
     }
 
     function updateAtpDisp() {
       if (atpDisp) atpDisp.textContent = 'ATP: ' + atp + ' / ' + ATP_MAX;
-      if (pumpBtn) pumpBtn.disabled = (atp <= 0 || pumpPhase !== null);
+      const naIn  = naIons.filter(i => i.side === 'in').length;
+      const naOut = naIons.filter(i => i.side === 'out').length;
+      const kOut  = kIons.filter(i => i.side === 'out').length;
+      // Pump disabled if no ATP, already pumping, or nothing to pump
+      if (pumpBtn) pumpBtn.disabled = (atp <= 0 || pumpPhase !== null || (naIn === 0 && kOut === 0));
+      // Fire disabled if no gradient, already firing, or pump in progress
+      if (fireBtn) fireBtn.disabled = (fireActive || pumpPhase !== null || naOut <= naIn + 1);
     }
 
     // ---- Gentle Brownian drift ----
@@ -6090,6 +6077,51 @@ function initCh6Vis() {
       }
     }
 
+    // ---- Voltage trace ----
+    function drawVoltageTrace() {
+      const trW = WNaK - 20, trH = 52;
+      const trX = 10, trY = HNaK - trH - 8;
+      // Background
+      ctxNaK.fillStyle = 'rgba(0,0,0,0.35)';
+      ctxNaK.beginPath(); ctxNaK.roundRect(trX, trY, trW, trH, 4); ctxNaK.fill();
+      // Axes
+      ctxNaK.strokeStyle = 'rgba(255,255,255,0.15)'; ctxNaK.lineWidth = 1;
+      ctxNaK.beginPath(); ctxNaK.moveTo(trX + 28, trY + 4); ctxNaK.lineTo(trX + 28, trY + trH - 4); ctxNaK.stroke();
+      ctxNaK.beginPath(); ctxNaK.moveTo(trX + 28, trY + trH - 10); ctxNaK.lineTo(trX + trW - 4, trY + trH - 10); ctxNaK.stroke();
+      // Labels
+      ctxNaK.fillStyle = COLORS.textDim; ctxNaK.font = '8px Inter, system-ui, sans-serif';
+      ctxNaK.textAlign = 'right'; ctxNaK.textBaseline = 'middle';
+      ctxNaK.fillText('+40', trX + 25, trY + 8);
+      ctxNaK.fillText('-70', trX + 25, trY + trH - 10);
+      ctxNaK.textAlign = 'left'; ctxNaK.textBaseline = 'top';
+      ctxNaK.fillText('mV', trX + 2, trY + 2);
+      // Resting line
+      ctxNaK.strokeStyle = 'rgba(255,255,255,0.1)'; ctxNaK.setLineDash([3, 3]);
+      const restY = trY + trH - 10;
+      ctxNaK.beginPath(); ctxNaK.moveTo(trX + 29, restY); ctxNaK.lineTo(trX + trW - 4, restY); ctxNaK.stroke();
+      ctxNaK.setLineDash([]);
+      // Trace line
+      const plotW = trW - 36, plotH = trH - 16;
+      const plotX = trX + 30, plotY = trY + 4;
+      const vMin = -80, vMax = 50;
+      ctxNaK.strokeStyle = COLORS.green; ctxNaK.lineWidth = 1.5;
+      ctxNaK.beginPath();
+      for (let i = 0; i < V_TRACE_LEN; i++) {
+        const idx = (vTraceIdx + i) % V_TRACE_LEN;
+        const v = vTrace[idx];
+        const px = plotX + (i / (V_TRACE_LEN - 1)) * plotW;
+        const py = plotY + plotH - ((v - vMin) / (vMax - vMin)) * plotH;
+        if (i === 0) ctxNaK.moveTo(px, py); else ctxNaK.lineTo(px, py);
+      }
+      ctxNaK.stroke();
+      // Fire count
+      if (fireCount > 0) {
+        ctxNaK.fillStyle = COLORS.red; ctxNaK.font = 'bold 10px Inter, system-ui, sans-serif';
+        ctxNaK.textAlign = 'right'; ctxNaK.textBaseline = 'top';
+        ctxNaK.fillText(fireCount + ' spike' + (fireCount > 1 ? 's' : ''), trX + trW - 6, trY + 3);
+      }
+    }
+
     // ---- Phase labels ----
     const PHASE_LABELS = [
       '3 Na\u207A enter pump from inside cell',
@@ -6196,9 +6228,37 @@ function initCh6Vis() {
         }
       }
 
+      // ---- Firing animation: Na+ rushing through channel ----
+      if (fireActive) {
+        const ft = Math.min(1, fireT / FIRE_DUR);
+        // Draw a Na+ channel on the left side of the membrane
+        const chX = PUMP_CX - 120, chW = 8;
+        // Channel opening (green flash)
+        const chOpen = ft < 0.3 ? ft / 0.3 : ft < 0.7 ? 1 : (1 - ft) / 0.3;
+        ctxNaK.save();
+        ctxNaK.globalAlpha = Math.max(0, chOpen) * 0.7;
+        ctxNaK.fillStyle = COLORS.green;
+        ctxNaK.fillRect(chX - chW / 2, MEM_TOP, chW, MEM_HALF * 2);
+        ctxNaK.restore();
+        // "Na+ channel" label
+        if (ft < 0.8) {
+          ctxNaK.save(); ctxNaK.globalAlpha = Math.min(1, ft * 4) * (ft < 0.7 ? 1 : (0.8 - ft) * 10);
+          ctxNaK.fillStyle = COLORS.green; ctxNaK.font = '10px Inter, system-ui, sans-serif';
+          ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'bottom';
+          ctxNaK.fillText('Na\u207A channel', chX, MEM_TOP - 3);
+          ctxNaK.fillText('open!', chX, MEM_TOP - 14);
+          ctxNaK.restore();
+        }
+        // Draw the rushing ions
+        for (const ion of fireNaIons) {
+          drawIonCircle(ion.x, ion.y, 8, 'Na\u207A', COLORS.orange, 0.9);
+        }
+      }
+
       drawPumpProtein(conf, phos);
       drawGradientBars();
       drawAtpMeter();
+      drawVoltageTrace();
 
       // Phase label / hint
       if (pumpPhase !== null) {
@@ -6210,13 +6270,16 @@ function initCh6Vis() {
         ctxNaK.fillStyle = COLORS.text; ctxNaK.font = FONT_SM;
         ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'alphabetic';
         ctxNaK.fillText(PHASE_LABELS[pumpPhase], W / 2 - 30, barY - 4);
-      } else {
+      } else if (!fireActive) {
         ctxNaK.fillStyle = COLORS.textDim; ctxNaK.font = FONT_SM;
         ctxNaK.textAlign = 'center'; ctxNaK.textBaseline = 'alphabetic';
-        const hint = atp > 0
-          ? 'Click "Pump!" to fire the Na\u207A/K\u207A ATPase'
-          : 'Out of ATP! Gradient dissipates by diffusion (entropy of mixing).';
-        ctxNaK.fillText(hint, W / 2, H - 18);
+        const naOut = naIons.filter(i => i.side === 'out').length;
+        const naIn  = naIons.filter(i => i.side === 'in').length;
+        let hint;
+        if (naOut > naIn + 1) hint = 'Gradient ready! "Fire Neuron!" to use it, or keep pumping.';
+        else if (atp > 0)     hint = 'Pump to build a Na\u207A gradient, then fire a neuron.';
+        else                  hint = 'Out of ATP! Gradient dissipates by diffusion.';
+        ctxNaK.fillText(hint, W / 2, H - 68);
       }
     }
 
@@ -6242,9 +6305,59 @@ function initCh6Vis() {
         }
       }
 
+      // Neuron firing animation
+      if (fireActive) {
+        fireT += dt;
+        const ft = fireT / FIRE_DUR;
+        const chX = PUMP_CX - 120;
+        // Move ions through channel toward inside
+        for (const ion of fireNaIons) {
+          if (ft < 0.4) {
+            // Rush toward channel
+            ion.x += (chX - ion.x) * 0.08;
+            ion.y += (MEM_CY - ion.y) * 0.08;
+          } else {
+            // Exit below membrane
+            const ty = MEM_BOT + 20 + Math.random() * 0.5;
+            ion.x += (chX + (Math.random() - 0.5) * 40 - ion.x) * 0.04;
+            ion.y += (ty - ion.y) * 0.06;
+          }
+        }
+        // At halfway, transfer ions to inside pool
+        if (ft > 0.55 && fireNaIons.length > 0) {
+          for (const ion of fireNaIons) {
+            ion.side = 'in'; ion.y = MEM_BOT + 18;
+            naIons.push(ion);
+          }
+          fireNaIons = [];
+          updateAtpDisp();
+        }
+        if (fireT >= FIRE_DUR) {
+          fireActive = false; fireT = 0;
+          updateAtpDisp();
+        }
+      }
+
+      // Voltage trace update (every ~33ms = ~30fps for trace)
+      const vTickMs = 33;
+      // Compute current membrane voltage from Na+ gradient
+      // Simplified: V ~ -70 + 110 * (firing spike shape)
+      let vNow = -70;
+      if (fireActive) {
+        const ft = fireT / FIRE_DUR;
+        // Action potential shape: fast depolarization, overshoot, repolarization
+        if (ft < 0.15)      vNow = -70 + 110 * (ft / 0.15);        // rapid rise to +40
+        else if (ft < 0.25) vNow = 40;                               // peak
+        else if (ft < 0.5)  vNow = 40 - 120 * ((ft - 0.25) / 0.25); // repolarize to -80
+        else if (ft < 0.75) vNow = -80 + 10 * ((ft - 0.5) / 0.25);  // recovery to -70
+        else                vNow = -70;
+      }
+      vTrace[vTraceIdx] = vNow;
+      vTraceIdx = (vTraceIdx + 1) % V_TRACE_LEN;
+
       // Diffusion leak
       leakTimer += dt;
-      if (leakTimer >= LEAK_INTERVAL && pumpPhase === null) {
+      if (leakTimer >= LEAK_INTERVAL && pumpPhase === null && !fireActive) {
         leakTimer -= LEAK_INTERVAL;
         const naIn = naIons.filter(i => i.side === 'in');
         const naOut = naIons.filter(i => i.side === 'out');
@@ -6276,16 +6389,18 @@ function initCh6Vis() {
     // ---- Pump button ----
     function startPump() {
       if (atp <= 0 || pumpPhase !== null) return;
+      // Need at least 1 Na+ inside and 1 K+ outside to pump
       const naInside = naIons.filter(i => i.side === 'in')
         .sort((a, b) => Math.abs(a.x - PUMP_CX) - Math.abs(b.x - PUMP_CX));
+      const kOutside = kIons.filter(i => i.side === 'out')
+        .sort((a, b) => Math.abs(a.x - PUMP_CX) - Math.abs(b.x - PUMP_CX));
+      if (naInside.length === 0 && kOutside.length === 0) return;
       pumpNaIons = [];
       for (let i = 0; i < Math.min(3, naInside.length); i++) {
         const ion = naInside[i];
         naIons.splice(naIons.indexOf(ion), 1);
         pumpNaIons.push(ion);
       }
-      const kOutside = kIons.filter(i => i.side === 'out')
-        .sort((a, b) => Math.abs(a.x - PUMP_CX) - Math.abs(b.x - PUMP_CX));
       pumpKIons = [];
       for (let i = 0; i < Math.min(2, kOutside.length); i++) {
         const ion = kOutside[i];
@@ -6296,7 +6411,28 @@ function initCh6Vis() {
       updateAtpDisp();
     }
 
+    // ---- Fire neuron: Na+ rushes in through channel ----
+    function fireNeuron() {
+      if (fireActive || pumpPhase !== null) return;
+      const naOut = naIons.filter(i => i.side === 'out');
+      const naIn  = naIons.filter(i => i.side === 'in');
+      if (naOut.length <= naIn.length + 1) return; // not enough gradient
+      // Grab 2 Na+ from outside (simulating channel opening)
+      const grab = Math.min(2, naOut.length);
+      fireNaIons = [];
+      const sorted = naOut.sort((a, b) => Math.abs(a.x - (PUMP_CX - 120)) - Math.abs(b.x - (PUMP_CX - 120)));
+      for (let i = 0; i < grab; i++) {
+        const ion = sorted[i];
+        naIons.splice(naIons.indexOf(ion), 1);
+        fireNaIons.push(ion);
+      }
+      fireActive = true; fireT = 0;
+      fireCount++;
+      updateAtpDisp();
+    }
+
     pumpBtn?.addEventListener('click', startPump);
+    fireBtn?.addEventListener('click', fireNeuron);
     resetBtnNaK?.addEventListener('click', () => {
       if (activeAnimations['nak-pump']) cancelAnimationFrame(activeAnimations['nak-pump']);
       initState(); pumpLastTS = null;

@@ -114,13 +114,14 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <div class="interactive-wrapper">
 <h4>Interactive: Na⁺/K⁺ ATPase Pump</h4>
-<canvas id="vis-nak-pump" width="600" height="450"></canvas>
+<canvas id="vis-nak-pump" width="600" height="500"></canvas>
 <div class="controls" style="flex-wrap: wrap; gap: 8px;">
 <button id="nak-pump-btn" style="font-weight:bold;">Pump! (costs 1 ATP)</button>
+<button id="nak-fire-btn" style="font-weight:bold; color:#ef5350;">Fire Neuron!</button>
 <button id="nak-reset">Reset</button>
 <span id="nak-atp-display" style="color:#ffee58; font-size:13px;">ATP: 10 / 10</span>
 </div>
-<figcaption>Click <strong>Pump!</strong> to fire the Na⁺/K⁺ ATPase. Each pump cycle uses one ATP to move 3 Na⁺ out and 2 K⁺ in. With enough pumping you can establish a concentration gradient &mdash; the low-entropy state that cells fight to maintain against the entropy of mixing. When you run out of ATP, the gradient slowly dissipates by diffusion.</figcaption>
+<figcaption>First use <strong>Pump!</strong> to build a concentration gradient (low-entropy state) by spending ATP. Then click <strong>Fire Neuron!</strong> to open Na⁺ channels &mdash; Na⁺ rushes in down its gradient, producing a voltage spike (action potential). This is how the gradient does useful work. Each firing partially depletes the gradient; without pumping to restore it, the neuron cannot fire again. The voltage trace at bottom shows the membrane potential.</figcaption>
 </div>
 
 <p>Another familiar effect due to entropy of mixing is how salt is able to melt ice. The salt draws water out of the ice (i.e. melts it) because saltwater has higher entropy than salt and ice separately.</p>
@@ -313,14 +314,21 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <div class="interactive-wrapper">
 <h4>Interactive: Landauer's Erasure Protocol</h4>
 <canvas id="vis-landauer" width="600" height="360"></canvas>
-<div class="controls" style="flex-wrap: wrap; gap: 8px;">
-<button id="landauer-erase">Erase to 0 (Irreversible)</button>
-<button id="landauer-flip">Flip Bit (Reversible)</button>
-<button id="landauer-reset">Reset</button>
-<label>Barrier: <input type="range" id="landauer-barrier" min="0" max="100" value="100"></label>
-<label>Tilt: <input type="range" id="landauer-tilt" min="-100" max="100" value="0"></label>
+<div class="controls" style="flex-wrap: wrap; gap: 6px; align-items: center;">
+<span style="color:#4fc3f7;font-size:11px;font-weight:600;">Known bit:</span>
+<button id="lb-k-set0">Set 0</button>
+<button id="lb-k-set1">Set 1</button>
+<button id="lb-k-flip">Flip</button>
+<span style="border-left:1px solid rgba(255,255,255,0.15);height:18px;margin:0 4px;display:inline-block;vertical-align:middle;"></span>
+<span style="color:#ffa726;font-size:11px;font-weight:600;">Unknown bit:</span>
+<button id="lb-u-set0">Set 0</button>
+<button id="lb-u-set1">Set 1</button>
+<button id="lb-u-flip">Flip</button>
+<button id="lb-u-reveal" style="border-color:rgba(255,167,38,0.5);">Reveal</button>
+<span style="border-left:1px solid rgba(255,255,255,0.15);height:18px;margin:0 4px;display:inline-block;vertical-align:middle;"></span>
+<button id="lb-reset">Reset</button>
 </div>
-<figcaption>Two parallel worlds show the same protocol applied to a bit starting at 0 (blue) and 1 (orange). Erasure must force both to 0 regardless of starting state &mdash; this phase-space compression requires dissipating at least k<sub>B</sub>T ln 2 of heat. A reversible flip of a <em>known</em> bit costs nothing.</figcaption>
+<figcaption>Left: a bit whose value you can see. Right: a bit hidden behind a screen. Setting a <em>known</em> bit is always free (reversible). Setting an <em>unknown</em> bit requires at least k<sub>B</sub>T ln 2 of heat. Flipping is always free &mdash; it maps one state to one state, so no information is lost.</figcaption>
 </div>
 
 <p>But what if we don't know what state the bit is in? Can we build an automated "SetToZero" mechanism? The answer is <strong>no</strong> for any reversible (frictionless) mechanism. Since Newton's laws are time-reversible, the function $F$ acting on phase space must be invertible. We want $F(\vec{q}_0,\vec{p}_0) = (\vec{q}_0,\vec{p}_0)$ and $F(\vec{q}_1,\vec{p}_1) = (\vec{q}_0,\vec{p}_0)$. But this is impossible if $F$ is invertible. This argument holds even in quantum mechanics since the Schrodinger equation can also be run backwards.</p>
