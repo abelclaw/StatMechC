@@ -145,16 +145,10 @@
 
 <p><strong>Quasistatic isothermal expansion</strong> means letting a gas expand at fixed temperature.</p>
 
-<div class="interactive-wrapper">
-<h4>Interactive: Piston Expansion</h4>
-<canvas id="vis-piston-expansion" width="600" height="350"></canvas>
-<div class="controls">
-<label>Process: <select id="piston-mode"><option value="isothermal">Isothermal (constant T)</option><option value="adiabatic">Adiabatic (no heat transfer)</option></select></label>
-<button id="piston-expand">Expand</button>
-<button id="piston-reset">Reset</button>
-</div>
-<figcaption>Isothermal expansion: gas does work W = NkT ln(V₂/V₁), drawing heat from the reservoir. Adiabatic expansion: no heat transfer, so the gas cools as it expands.</figcaption>
-</div>
+<figure>
+<iframe src="animations/piston-expansion.html" style="border:none;border-radius:6px;width:100%;aspect-ratio:900/590;max-width:900px;"></iframe>
+<figcaption>Three types of gas expansion. <strong>Isothermal:</strong> heat flows in from the bath to keep T constant; gas does work W&nbsp;=&nbsp;NkT&nbsp;ln(V₂/V₁). <strong>Adiabatic:</strong> insulated, no heat transfer; gas cools as it does work. <strong>Free expansion:</strong> gas rushes into vacuum; no work done, entropy increases. The PV diagram on the left traces each process in real time.</figcaption>
+</figure>
 
 <p>Since $dW = P\,dV$ and $P = \frac{Nk_BT}{V}$:</p>
 
