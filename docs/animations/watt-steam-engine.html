@@ -486,9 +486,16 @@ function drawEngine(a){
     X.fillStyle='rgba(90,110,160,.06)';
     X.fillRect(exX_out-exhPW/2, riseTop+2, exhPW, riseBot-riseTop-2);
   }
-  // Chimney cap
-  X.fillStyle='#555';rr(exX_out-exhPW/2-6,riseTop-4,exhPW+12,8,2,true,false);
-  X.strokeStyle='#777';X.lineWidth=1;rr(exX_out-exhPW/2-6,riseTop-4,exhPW+12,8,2,false,true);
+  // Chimney cap (prominent)
+  X.fillStyle='#5a5a5a';
+  rr(exX_out-exhPW/2-10,riseTop-8,exhPW+20,12,3,true,false);
+  X.strokeStyle='#888';X.lineWidth=1.5;
+  rr(exX_out-exhPW/2-10,riseTop-8,exhPW+20,12,3,false,true);
+  // Wider base of cap
+  X.fillStyle='#505050';
+  X.fillRect(exX_out-exhPW/2-5,riseTop-2,exhPW+10,6);
+  X.strokeStyle='#777';X.lineWidth=1;
+  X.strokeRect(exX_out-exhPW/2-5,riseTop-2,exhPW+10,6);
 
   // Label
   X.fillStyle='rgba(90,110,160,.5)';X.font='9px Georgia';X.textAlign='center';
@@ -716,10 +723,11 @@ function drawEngine(a){
     spawnMolecule([{x:rx,y:ry},{x:rx2,y:ry2}],HOT,40,true);
   }
 
-  // Hot intake: molecules from the compartment flow down through the open port
+  // Hot intake: molecules from the compartment flow down through the OPEN port
+  // Only through ports that are NOT covered by the slider body
   if(leftOpen&&run&&Math.random()<.7){
     spawnMolecule([
-      {x:PORT_L_CX,y:VB.y+VB.h*.3},{x:PORT_L_CX,y:VB_BOT},
+      {x:PORT_L_CX,y:VB.y+VB.h*.25},{x:PORT_L_CX,y:VB_BOT},
       {x:VPIPE_L.topCx,y:VB_BOT+5},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.botCx,y:CYL.y},{x:CYLPORT_L.cx,y:BORE.y+BORE.h/2}
     ],HOT,160,true);
@@ -746,38 +754,41 @@ function drawEngine(a){
     ],HOT,160,true);
   }
 
-  // Exhaust: cylinder → pipe → slider → exhaust U-tube → chimney (SEPARATE path)
-  if(leftExh&&run&&Math.random()<.35){
-    // Exhaust: cylinder → pipe → left port hole → up left leg of U-tube →
-    // across top of U → down right leg → center floor hole →
-    // DOWN through exhaust pipe → right → UP to chimney
+  // Exhaust: cylinder → pipe → through U-tube → exhaust pipe → chimney
+  // Use FIXED port positions (not moving slider positions) so molecules
+  // don't drift through walls as the slider moves.
+  // The U-tube is aligned with these holes when exhaust is active.
+  const uMidY = slY + slH/2 - 5; // approximate middle height of U-tube
+  const uTopMidY = slY + 10; // top of U curve
+
+  if(leftExh&&run&&Math.random()<.4){
     spawnMolecule([
       {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_L.cx,y:CYL.y},
       {x:VPIPE_L.botCx,y:CYL.y},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.topCx,y:VB_BOT+5},
-      {x:uLeftCx,y:uBotY},              // into left leg of U
-      {x:uLeftCx,y:uTopY+uW/2},         // up left leg
-      {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2}, // across top
-      {x:uRightCx,y:uTopY+uW/2},        // to right leg
-      {x:uRightCx,y:uBotY},             // down right leg
-      {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},  // into horizontal connector
-      {x:exX_out,y:exhConnY+exhPW/2+3},     // right to chimney base
-      {x:exX_out,y:120},{x:exX_out,y:60}
+      {x:PORT_L_CX,y:VB_BOT},             // into left floor hole
+      {x:PORT_L_CX,y:uTopMidY},            // up through U left leg (fixed hole position)
+      {x:(PORT_L_CX+PORT_EX_CX)/2,y:uTopMidY}, // across U top
+      {x:PORT_EX_CX,y:uTopMidY},           // to right leg
+      {x:PORT_EX_CX,y:VB_BOT},             // down through center floor hole
+      {x:PORT_EX_CX,y:exhConnY+exhPW/2+3}, // into exhaust connector
+      {x:exX_out,y:exhConnY+exhPW/2+3},    // right to chimney
+      {x:exX_out,y:120},{x:exX_out,y:riseTop}
     ],COLD,100,false);
   }
-  if(rightExh&&run&&Math.random()<.35){
+  if(rightExh&&run&&Math.random()<.4){
     spawnMolecule([
       {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_R.cx,y:CYL.y},
       {x:VPIPE_R.botCx,y:CYL.y},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.topCx,y:VB_BOT+5},
-      {x:uRightCx,y:uBotY},
-      {x:uRightCx,y:uTopY+uW/2},
-      {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2},
-      {x:uLeftCx,y:uTopY+uW/2},
-      {x:uLeftCx,y:uBotY},
+      {x:PORT_R_CX,y:VB_BOT},             // into right floor hole
+      {x:PORT_R_CX,y:uTopMidY},            // up through U right leg
+      {x:(PORT_R_CX+PORT_EX_CX)/2,y:uTopMidY}, // across U top
+      {x:PORT_EX_CX,y:uTopMidY},           // to left leg
+      {x:PORT_EX_CX,y:VB_BOT},             // down through center floor hole
       {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:exhConnY+exhPW/2+3},
-      {x:exX_out,y:120},{x:exX_out,y:60}
+      {x:exX_out,y:120},{x:exX_out,y:riseTop}
     ],COLD,100,false);
   }
 
