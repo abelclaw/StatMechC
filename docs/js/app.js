@@ -7306,114 +7306,361 @@ function initCh7Vis() {
     drawH2();
   }
 
-  // ----- Chemical Potential and Particle Flow -----
+  // ----- Dissociation Equilibrium: A + A ⇌ A₂ -----
   const cCP = document.getElementById('vis-chempot');
   if (cCP) {
     const cp = setupCanvas(cCP);
     const ctxCP = cp.ctx, WCP = cp.W, HCP = cp.H;
-    let cpRunning = false;
 
-    // Two regions with different densities
-    let particles = [];
-    const barrier = WCP / 2;
-    function initParticles() {
-      particles = [];
-      // Left side: high density (high μ)
-      for (let i = 0; i < 60; i++) {
-        particles.push({ x: Math.random() * (barrier - 20) + 10, y: Math.random() * (HCP - 20) + 10, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3 });
-      }
-      // Right side: low density (low μ)
-      for (let i = 0; i < 15; i++) {
-        particles.push({ x: barrier + 20 + Math.random() * (WCP - barrier - 40), y: Math.random() * (HCP - 20) + 10, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3 });
+    const tempSlider = document.getElementById('chempot-temp');
+    const tempVal = document.getElementById('chempot-temp-val');
+    const epsSlider = document.getElementById('chempot-eps');
+    const epsVal = document.getElementById('chempot-eps-val');
+
+    // Layout: simulation box on left, bar chart on right
+    const simW = Math.floor(WCP * 0.6);
+    const M = 12; // margin
+    const boxL = M, boxR = simW - M, boxT = M, boxB = HCP - M;
+
+    const PR = 5; // particle radius
+    const BOND_LEN = 14; // visual separation in dimer
+    const N_TOTAL = 40; // total atoms (free + 2*dimers)
+
+    let atoms = [];   // free atoms: {x, y, vx, vy}
+    let dimers = [];  // bound pairs: {x, y, vx, vy, angle, omega}
+
+    function getT() { return parseFloat(tempSlider?.value || 1.5); }
+    function getEps() { return parseFloat(epsSlider?.value || 3.0); }
+    function speedScale(T) { return 25 * Math.sqrt(T); }
+
+    function randomSpeed(T) {
+      // Rayleigh-distributed speed (2D Maxwell)
+      const s = speedScale(T);
+      return s * Math.sqrt(-2 * Math.log(1 - Math.random() * 0.999));
+    }
+
+    function initCP() {
+      atoms = [];
+      dimers = [];
+      const T = getT();
+      for (let i = 0; i < N_TOTAL; i++) {
+        const speed = randomSpeed(T);
+        const angle = Math.random() * 2 * Math.PI;
+        atoms.push({
+          x: boxL + PR + Math.random() * (boxR - boxL - 2 * PR),
+          y: boxT + PR + Math.random() * (boxB - boxT - 2 * PR),
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle)
+        });
       }
     }
 
-    function drawChemPot() {
+    // Thermostat: on wall bounce, resample speed component from Maxwell at T
+    function thermostat(v, T) {
+      const s = speedScale(T) * 0.7;
+      return s * Math.sqrt(-2 * Math.log(1 - Math.random() * 0.999));
+    }
+
+    function stepCP() {
+      const T = getT();
+      const eps = getEps();
+      const dt = 0.6;
+
+      // Move free atoms
+      for (const a of atoms) {
+        a.x += a.vx * dt;
+        a.y += a.vy * dt;
+        // Wall bounces with thermostat
+        if (a.x < boxL + PR) { a.x = boxL + PR; a.vx = thermostat(a.vx, T); }
+        if (a.x > boxR - PR) { a.x = boxR - PR; a.vx = -thermostat(a.vx, T); }
+        if (a.y < boxT + PR) { a.y = boxT + PR; a.vy = thermostat(a.vy, T); }
+        if (a.y > boxB - PR) { a.y = boxB - PR; a.vy = -thermostat(a.vy, T); }
+      }
+
+      // Move dimers
+      for (const d of dimers) {
+        d.x += d.vx * dt;
+        d.y += d.vy * dt;
+        d.angle += d.omega * dt;
+        const R = BOND_LEN / 2 + PR;
+        if (d.x < boxL + R) { d.x = boxL + R; d.vx = thermostat(d.vx, T) * 0.7; }
+        if (d.x > boxR - R) { d.x = boxR - R; d.vx = -thermostat(d.vx, T) * 0.7; }
+        if (d.y < boxT + R) { d.y = boxT + R; d.vy = thermostat(d.vy, T) * 0.7; }
+        if (d.y > boxB - R) { d.y = boxB - R; d.vy = -thermostat(d.vy, T) * 0.7; }
+      }
+
+      // Atom-atom collisions → possible binding
+      const bindDist = 2.5 * PR;
+      for (let i = atoms.length - 1; i >= 0; i--) {
+        for (let j = i - 1; j >= 0; j--) {
+          const dx = atoms[i].x - atoms[j].x;
+          const dy = atoms[i].y - atoms[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < bindDist) {
+            // Relative kinetic energy (in CM frame)
+            const dvx = atoms[i].vx - atoms[j].vx;
+            const dvy = atoms[i].vy - atoms[j].vy;
+            const relKE = 0.25 * (dvx * dvx + dvy * dvy); // reduced mass = m/2
+            // Bind if relative KE < binding energy (they're slow enough to capture)
+            // Scale eps so it's in "speed²" units comparable to relKE
+            const epsScaled = eps * speedScale(T) * speedScale(T) * 0.08;
+            if (relKE < epsScaled) {
+              // Form dimer
+              const cmx = (atoms[i].x + atoms[j].x) / 2;
+              const cmy = (atoms[i].y + atoms[j].y) / 2;
+              const cmvx = (atoms[i].vx + atoms[j].vx) / 2;
+              const cmvy = (atoms[i].vy + atoms[j].vy) / 2;
+              const angle = Math.atan2(dy, dx);
+              // Angular velocity from relative tangential velocity
+              const tx = -dy / (dist || 1), ty = dx / (dist || 1);
+              const omega = (dvx * tx + dvy * ty) / (dist || 1);
+              dimers.push({ x: cmx, y: cmy, vx: cmvx, vy: cmvy, angle, omega });
+              atoms.splice(i, 1);
+              atoms.splice(j, 1);
+              break; // atom i is gone
+            } else {
+              // Elastic collision (bounce off)
+              const nx = dx / (dist || 1), ny = dy / (dist || 1);
+              const dvn = dvx * nx + dvy * ny;
+              if (dvn < 0) { // approaching
+                atoms[i].vx -= dvn * nx;
+                atoms[i].vy -= dvn * ny;
+                atoms[j].vx += dvn * nx;
+                atoms[j].vy += dvn * ny;
+                // Separate
+                const overlap = bindDist - dist;
+                if (overlap > 0) {
+                  atoms[i].x += nx * overlap * 0.5;
+                  atoms[i].y += ny * overlap * 0.5;
+                  atoms[j].x -= nx * overlap * 0.5;
+                  atoms[j].y -= ny * overlap * 0.5;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Dimer-atom collisions
+      for (const d of dimers) {
+        const ax1 = d.x + Math.cos(d.angle) * BOND_LEN / 2;
+        const ay1 = d.y + Math.sin(d.angle) * BOND_LEN / 2;
+        const ax2 = d.x - Math.cos(d.angle) * BOND_LEN / 2;
+        const ay2 = d.y - Math.sin(d.angle) * BOND_LEN / 2;
+        for (const a of atoms) {
+          // Check against both atoms of dimer
+          for (const [px, py] of [[ax1, ay1], [ax2, ay2]]) {
+            const dx = a.x - px, dy = a.y - py;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 2.2 * PR) {
+              const nx = dx / (dist || 1), ny = dy / (dist || 1);
+              const dvx = a.vx - d.vx, dvy = a.vy - d.vy;
+              const dvn = dvx * nx + dvy * ny;
+              if (dvn < 0) {
+                // Transfer momentum (dimer is heavier)
+                a.vx -= dvn * nx * 0.8;
+                a.vy -= dvn * ny * 0.8;
+                d.vx += dvn * nx * 0.4;
+                d.vy += dvn * ny * 0.4;
+                // Spin up the dimer
+                const tx = -ny, ty = nx;
+                d.omega += (dvn * 0.3) / (BOND_LEN / 2);
+              }
+            }
+          }
+        }
+      }
+
+      // Spontaneous dissociation: rate ~ exp(-eps/T)
+      const breakProb = 0.015 * Math.exp(-eps / T);
+      for (let i = dimers.length - 1; i >= 0; i--) {
+        if (Math.random() < breakProb) {
+          const d = dimers[i];
+          const ca = Math.cos(d.angle), sa = Math.sin(d.angle);
+          const kickSpeed = speedScale(T) * 0.5;
+          atoms.push({
+            x: d.x + ca * BOND_LEN / 2,
+            y: d.y + sa * BOND_LEN / 2,
+            vx: d.vx + ca * kickSpeed + Math.random() * kickSpeed * 0.3,
+            vy: d.vy + sa * kickSpeed + Math.random() * kickSpeed * 0.3
+          });
+          atoms.push({
+            x: d.x - ca * BOND_LEN / 2,
+            y: d.y - sa * BOND_LEN / 2,
+            vx: d.vx - ca * kickSpeed - Math.random() * kickSpeed * 0.3,
+            vy: d.vy - sa * kickSpeed - Math.random() * kickSpeed * 0.3
+          });
+          dimers.splice(i, 1);
+        }
+      }
+
+      // Dimer-dimer collisions (simple: treat as circles)
+      for (let i = 0; i < dimers.length; i++) {
+        for (let j = i + 1; j < dimers.length; j++) {
+          const dx = dimers[i].x - dimers[j].x;
+          const dy = dimers[i].y - dimers[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minDist = BOND_LEN + 2 * PR;
+          if (dist < minDist && dist > 0) {
+            const nx = dx / dist, ny = dy / dist;
+            const dvx = dimers[i].vx - dimers[j].vx;
+            const dvy = dimers[i].vy - dimers[j].vy;
+            const dvn = dvx * nx + dvy * ny;
+            if (dvn < 0) {
+              dimers[i].vx -= dvn * nx * 0.5;
+              dimers[i].vy -= dvn * ny * 0.5;
+              dimers[j].vx += dvn * nx * 0.5;
+              dimers[j].vy += dvn * ny * 0.5;
+            }
+            const overlap = minDist - dist;
+            dimers[i].x += nx * overlap * 0.5;
+            dimers[i].y += ny * overlap * 0.5;
+            dimers[j].x -= nx * overlap * 0.5;
+            dimers[j].y -= ny * overlap * 0.5;
+          }
+        }
+      }
+    }
+
+    function drawCP() {
       clearCanvas(ctxCP, WCP, HCP);
 
-      // Count particles on each side
-      let nL = 0, nR = 0;
-      particles.forEach(p => { if (p.x < barrier) nL++; else nR++; });
-
-      // Draw barrier (semi-permeable - dashed)
-      ctxCP.strokeStyle = COLORS.textDim;
+      // Draw box
+      ctxCP.strokeStyle = COLORS.axis;
       ctxCP.lineWidth = 2;
-      ctxCP.setLineDash([8, 6]);
-      ctxCP.beginPath();
-      ctxCP.moveTo(barrier, 0);
-      ctxCP.lineTo(barrier, HCP);
-      ctxCP.stroke();
-      ctxCP.setLineDash([]);
+      ctxCP.strokeRect(boxL, boxT, boxR - boxL, boxB - boxT);
 
-      // Draw particles
-      particles.forEach(p => {
-        ctxCP.fillStyle = p.x < barrier ? COLORS.blue : COLORS.cyan;
+      // Draw free atoms
+      for (const a of atoms) {
+        ctxCP.fillStyle = COLORS.blue;
         ctxCP.beginPath();
-        ctxCP.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+        ctxCP.arc(a.x, a.y, PR, 0, 2 * Math.PI);
         ctxCP.fill();
-      });
+        // Subtle glow
+        ctxCP.strokeStyle = 'rgba(79,195,247,0.3)';
+        ctxCP.lineWidth = 1;
+        ctxCP.stroke();
+      }
 
-      // Labels
+      // Draw dimers
+      for (const d of dimers) {
+        const ca = Math.cos(d.angle), sa = Math.sin(d.angle);
+        const x1 = d.x + ca * BOND_LEN / 2, y1 = d.y + sa * BOND_LEN / 2;
+        const x2 = d.x - ca * BOND_LEN / 2, y2 = d.y - sa * BOND_LEN / 2;
+
+        // Bond line
+        ctxCP.strokeStyle = COLORS.orange;
+        ctxCP.lineWidth = 2.5;
+        ctxCP.beginPath();
+        ctxCP.moveTo(x1, y1);
+        ctxCP.lineTo(x2, y2);
+        ctxCP.stroke();
+
+        // Atoms
+        ctxCP.fillStyle = COLORS.orange;
+        ctxCP.beginPath();
+        ctxCP.arc(x1, y1, PR, 0, 2 * Math.PI);
+        ctxCP.fill();
+        ctxCP.beginPath();
+        ctxCP.arc(x2, y2, PR, 0, 2 * Math.PI);
+        ctxCP.fill();
+
+        ctxCP.strokeStyle = 'rgba(255,167,38,0.3)';
+        ctxCP.lineWidth = 1;
+        ctxCP.beginPath();
+        ctxCP.arc(x1, y1, PR, 0, 2 * Math.PI);
+        ctxCP.stroke();
+        ctxCP.beginPath();
+        ctxCP.arc(x2, y2, PR, 0, 2 * Math.PI);
+        ctxCP.stroke();
+      }
+
+      // Right panel: bar chart of counts
+      const nFree = atoms.length;
+      const nDimer = dimers.length;
+      const nBound = nDimer * 2;
+      const chartL = simW + 20, chartR = WCP - 15;
+      const chartT = 45, chartB = HCP - 55;
+      const chartW = chartR - chartL;
+      const chartH = chartB - chartT;
+
+      // Title
       ctxCP.fillStyle = COLORS.text;
       ctxCP.font = FONT;
       ctxCP.textAlign = 'center';
-      ctxCP.fillText('n = ' + nL + ' (high μ)', barrier / 2, 20);
-      ctxCP.fillText('n = ' + nR + ' (low μ)', barrier + (WCP - barrier) / 2, 20);
+      ctxCP.fillText('A + A ⇌ A₂', (chartL + chartR) / 2, 22);
 
-      // Draw μ bars
-      const barH = 8;
-      const muL = nL / 40, muR = nR / 40;
+      // Axis
+      ctxCP.strokeStyle = COLORS.axis;
+      ctxCP.lineWidth = 1;
+      ctxCP.beginPath();
+      ctxCP.moveTo(chartL, chartB);
+      ctxCP.lineTo(chartR, chartB);
+      ctxCP.stroke();
+
+      // Scale: max bar = N_TOTAL atoms
+      const barW = chartW * 0.3;
+      const gap = chartW * 0.1;
+      const barMaxH = chartH;
+
+      // Free atoms bar
+      const freeH = (nFree / N_TOTAL) * barMaxH;
+      const freeX = chartL + gap;
       ctxCP.fillStyle = COLORS.blue;
-      ctxCP.fillRect(barrier / 2 - 40, HCP - 30, 80 * muL, barH);
-      ctxCP.fillStyle = COLORS.cyan;
-      ctxCP.fillRect(barrier + (WCP - barrier) / 2 - 40, HCP - 30, 80 * muR, barH);
+      ctxCP.fillRect(freeX, chartB - freeH, barW, freeH);
+      ctxCP.strokeStyle = 'rgba(79,195,247,0.5)';
+      ctxCP.strokeRect(freeX, chartB - freeH, barW, freeH);
+
+      // Bound atoms bar
+      const boundH = (nBound / N_TOTAL) * barMaxH;
+      const boundX = chartL + gap + barW + gap;
+      ctxCP.fillStyle = COLORS.orange;
+      ctxCP.fillRect(boundX, chartB - boundH, barW, boundH);
+      ctxCP.strokeStyle = 'rgba(255,167,38,0.5)';
+      ctxCP.strokeRect(boundX, chartB - boundH, barW, boundH);
+
+      // Labels
+      ctxCP.fillStyle = COLORS.text;
+      ctxCP.font = FONT_SM;
+      ctxCP.textAlign = 'center';
+      ctxCP.fillText('Free A', freeX + barW / 2, chartB + 14);
+      ctxCP.fillText(nFree + '', freeX + barW / 2, chartB + 27);
+      ctxCP.fillText('Bound A₂', boundX + barW / 2, chartB + 14);
+      ctxCP.fillText(nDimer + ' pairs', boundX + barW / 2, chartB + 27);
+
+      // Info text
       ctxCP.fillStyle = COLORS.textDim;
       ctxCP.font = FONT_SM;
-      ctxCP.fillText('μ', barrier / 2 - 50, HCP - 24);
-      ctxCP.fillText('μ', barrier + (WCP - barrier) / 2 - 50, HCP - 24);
+      ctxCP.textAlign = 'center';
+      const pct = N_TOTAL > 0 ? Math.round(100 * nBound / N_TOTAL) : 0;
+      ctxCP.fillText(pct + '% bound', (chartL + chartR) / 2, 38);
     }
 
-    function stepChemPot() {
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        // Bounce off walls
-        if (p.x < 5) { p.x = 5; p.vx = Math.abs(p.vx); }
-        if (p.x > WCP - 5) { p.x = WCP - 5; p.vx = -Math.abs(p.vx); }
-        if (p.y < 5) { p.y = 5; p.vy = Math.abs(p.vy); }
-        if (p.y > HCP - 5) { p.y = HCP - 5; p.vy = -Math.abs(p.vy); }
-        // Semi-permeable barrier: particles can pass through
-      });
-    }
-
-    function animateChemPot() {
-      if (!cpRunning) return;
-      stepChemPot();
-      drawChemPot();
-      activeAnimations['chempot'] = requestAnimationFrame(animateChemPot);
-    }
-
-    document.getElementById('chempot-start')?.addEventListener('click', () => {
-      cpRunning = !cpRunning;
-      const btn = document.getElementById('chempot-start');
-      if (btn) btn.textContent = cpRunning ? 'Pause' : 'Start';
-      if (cpRunning) animateChemPot();
+    // Sliders
+    tempSlider?.addEventListener('input', () => {
+      if (tempVal) tempVal.textContent = parseFloat(tempSlider.value).toFixed(1);
+    });
+    epsSlider?.addEventListener('input', () => {
+      if (epsVal) epsVal.textContent = parseFloat(epsSlider.value).toFixed(1);
     });
 
     document.getElementById('chempot-reset')?.addEventListener('click', () => {
-      cpRunning = false;
-      const btn = document.getElementById('chempot-start');
-      if (btn) btn.textContent = 'Start';
-      initParticles();
-      drawChemPot();
+      initCP();
+      drawCP();
     });
 
-    initParticles();
-    drawChemPot();
+    // Always running
+    function animateCP() {
+      stepCP();
+      drawCP();
+      activeAnimations['chempot'] = requestAnimationFrame(animateCP);
+    }
+
+    initCP();
+    animateCP();
   }
 
-  // ----- System + Heat Reservoir -----
-  // ----- System + Heat Reservoir (gas sim + per-particle energy distribution) -----
+  // ----- System + Heat Reservoir (gas sim + energy distribution) -----
   const cRes = document.getElementById('vis-reservoir');
   if (cRes) {
     const {ctx: ctxHR, W: WHR, H: HHR} = setupCanvas(cRes);
@@ -7421,38 +7668,38 @@ function initCh7Vis() {
     const resTempSlider = document.getElementById('res-temp');
     const resTempVal = document.getElementById('res-temp-val');
 
-    // Layout: gas sim left ~52%, distribution plot right
-    const simW = Math.floor(WHR * 0.52);
-    const plotL = simW + 15, plotW = WHR - plotL - 20;
+    // Layout: gas sim left, distribution plot right
+    const simW = Math.floor(WHR * 0.50);
+    const plotL = simW + 20, plotW = WHR - plotL - 15;
     const plotT = 40, plotH = HHR - 85;
 
     // Outer box (left side)
     const hrM = 12;
     const outerL = hrM, outerR = simW - hrM, outerT = hrM, outerB = HHR - hrM;
     // Inner box centered in left side
-    const innerW = 100, innerH = 100;
+    const innerW = 90, innerH = 90;
     const innerL = (outerL + outerR - innerW) / 2;
     const innerR = innerL + innerW;
     const innerT = (outerT + outerB - innerH) / 2;
     const innerB = innerT + innerH;
 
-    const PR = 3;
+    const PR = 2.5;
     const N_INNER = 8;
-    const N_OUTER = 40;
+    const N_OUTER = 80; // lots of reservoir particles for fast thermalization
     let hrParticles = [];
     let wallDents = [];
 
-    // Temperature in slider units; maps to speed scale
-    // At T=2.0 (default), mean speed ~ 60
+    // Temperature units: slider T maps to kT in velocity^2 units
+    // kT = 900 * T_slider, so at T=2 mean KE per particle ~ 1800
     function tempToSpeed(T) { return 30 * Math.sqrt(T); }
 
     function initHR() {
       const T = parseFloat(resTempSlider?.value || 2.0);
       hrParticles = [];
       wallDents = [];
-      const spdSys = tempToSpeed(T);
+      const spd = tempToSpeed(T);
       for (let i = 0; i < N_INNER; i++) {
-        const speed = spdSys * (0.3 + Math.random() * 1.4);
+        const speed = spd * (0.3 + Math.random() * 1.4);
         const angle = Math.random() * 2 * Math.PI;
         hrParticles.push({
           x: innerL + PR + Math.random() * (innerW - 2 * PR),
@@ -7461,9 +7708,8 @@ function initCh7Vis() {
           inside: true
         });
       }
-      const spdRes = tempToSpeed(T);
       for (let i = 0; i < N_OUTER; i++) {
-        const speed = spdRes * (0.3 + Math.random() * 1.4);
+        const speed = spd * (0.3 + Math.random() * 1.4);
         const angle = Math.random() * 2 * Math.PI;
         let x, y;
         do {
@@ -7477,17 +7723,19 @@ function initCh7Vis() {
       }
     }
 
-    // When T slider changes, rescale reservoir speeds (not system!)
+    // Rescale reservoir speeds when slider changes (system untouched)
     function rescaleReservoir(newT) {
       const target = tempToSpeed(newT);
-      // Compute current reservoir RMS speed
-      let sumV2 = 0;
-      const resParts = hrParticles.filter(p => !p.inside);
-      for (const p of resParts) sumV2 += p.vx * p.vx + p.vy * p.vy;
-      const rms = Math.sqrt(sumV2 / resParts.length);
+      let sumV2 = 0, n = 0;
+      for (const p of hrParticles) {
+        if (!p.inside) { sumV2 += p.vx * p.vx + p.vy * p.vy; n++; }
+      }
+      const rms = Math.sqrt(sumV2 / n);
       if (rms < 1) return;
       const scale = target / rms;
-      for (const p of resParts) { p.vx *= scale; p.vy *= scale; }
+      for (const p of hrParticles) {
+        if (!p.inside) { p.vx *= scale; p.vy *= scale; }
+      }
     }
 
     function addDent(x, y, side, strength, sign) {
@@ -7499,25 +7747,27 @@ function initCh7Vis() {
       for (const d of wallDents) {
         if (d.side !== side) continue;
         const dist = (side === 'left' || side === 'right') ? Math.abs(pos - d.y) : Math.abs(pos - d.x);
-        const sigma = 14;
+        const sigma = 12;
         if (dist < sigma * 3) offset += d.amount * d.life * Math.exp(-dist * dist / (2 * sigma * sigma));
       }
       return offset;
     }
 
+    // On wall hit: swap the normal velocity component with the nearest particle on the other side
+    // This is equivalent to an elastic collision through the wall
     function transferEnergy(hitter, wallX, wallY, hitNormal) {
-      const others = hrParticles.filter(q => q.inside !== hitter.inside);
-      let best = null, bestDist = 50;
-      for (const q of others) {
+      let best = null, bestDist = 40;
+      for (const q of hrParticles) {
+        if (q.inside === hitter.inside) continue;
         const d = Math.hypot(q.x - wallX, q.y - wallY);
         if (d < bestDist) { bestDist = d; best = q; }
       }
       if (best) {
-        const frac = 0.3;
+        // Swap the normal velocity component — like an elastic 1D collision of equal masses
         if (hitNormal === 'vx') {
-          const tr = hitter.vx * frac; hitter.vx -= tr; best.vx += tr;
+          const tmp = hitter.vx; hitter.vx = best.vx; best.vx = tmp;
         } else {
-          const tr = hitter.vy * frac; hitter.vy -= tr; best.vy += tr;
+          const tmp = hitter.vy; hitter.vy = best.vy; best.vy = tmp;
         }
       }
     }
@@ -7528,10 +7778,10 @@ function initCh7Vis() {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
         if (p.inside) {
-          if (p.x < innerL + PR) { p.x = innerL + PR; const ov = p.vx; p.vx = Math.abs(p.vx); addDent(innerL, p.y, 'left', Math.abs(ov)); transferEnergy(p, innerL, p.y, 'vx'); }
-          if (p.x > innerR - PR) { p.x = innerR - PR; const ov = p.vx; p.vx = -Math.abs(p.vx); addDent(innerR, p.y, 'right', Math.abs(ov)); transferEnergy(p, innerR, p.y, 'vx'); }
-          if (p.y < innerT + PR) { p.y = innerT + PR; const ov = p.vy; p.vy = Math.abs(p.vy); addDent(p.x, innerT, 'top', Math.abs(ov)); transferEnergy(p, p.x, innerT, 'vy'); }
-          if (p.y > innerB - PR) { p.y = innerB - PR; const ov = p.vy; p.vy = -Math.abs(p.vy); addDent(p.x, innerB, 'bottom', Math.abs(ov)); transferEnergy(p, p.x, innerB, 'vy'); }
+          if (p.x < innerL + PR) { p.x = innerL + PR; addDent(innerL, p.y, 'left', Math.abs(p.vx)); transferEnergy(p, innerL, p.y, 'vx'); if (p.vx < 0) p.vx = -p.vx; }
+          if (p.x > innerR - PR) { p.x = innerR - PR; addDent(innerR, p.y, 'right', Math.abs(p.vx)); transferEnergy(p, innerR, p.y, 'vx'); if (p.vx > 0) p.vx = -p.vx; }
+          if (p.y < innerT + PR) { p.y = innerT + PR; addDent(p.x, innerT, 'top', Math.abs(p.vy)); transferEnergy(p, p.x, innerT, 'vy'); if (p.vy < 0) p.vy = -p.vy; }
+          if (p.y > innerB - PR) { p.y = innerB - PR; addDent(p.x, innerB, 'bottom', Math.abs(p.vy)); transferEnergy(p, p.x, innerB, 'vy'); if (p.vy > 0) p.vy = -p.vy; }
         } else {
           if (p.x < outerL + PR) { p.x = outerL + PR; p.vx = Math.abs(p.vx); }
           if (p.x > outerR - PR) { p.x = outerR - PR; p.vx = -Math.abs(p.vx); }
@@ -7541,10 +7791,10 @@ function initCh7Vis() {
             const dL = p.x - (innerL - PR), dR = (innerR + PR) - p.x;
             const dT = p.y - (innerT - PR), dB = (innerB + PR) - p.y;
             const minD = Math.min(dL, dR, dT, dB);
-            if (minD === dL) { p.x = innerL - PR; const ov = p.vx; p.vx = -Math.abs(p.vx); addDent(innerL, p.y, 'left', Math.abs(ov), -1); transferEnergy(p, innerL, p.y, 'vx'); }
-            else if (minD === dR) { p.x = innerR + PR; const ov = p.vx; p.vx = Math.abs(p.vx); addDent(innerR, p.y, 'right', Math.abs(ov), -1); transferEnergy(p, innerR, p.y, 'vx'); }
-            else if (minD === dT) { p.y = innerT - PR; const ov = p.vy; p.vy = -Math.abs(p.vy); addDent(p.x, innerT, 'top', Math.abs(ov), -1); transferEnergy(p, p.x, innerT, 'vy'); }
-            else { p.y = innerB + PR; const ov = p.vy; p.vy = Math.abs(p.vy); addDent(p.x, innerB, 'bottom', Math.abs(ov), -1); transferEnergy(p, p.x, innerB, 'vy'); }
+            if (minD === dL) { p.x = innerL - PR; addDent(innerL, p.y, 'left', Math.abs(p.vx), -1); transferEnergy(p, innerL, p.y, 'vx'); if (p.vx > 0) p.vx = -p.vx; }
+            else if (minD === dR) { p.x = innerR + PR; addDent(innerR, p.y, 'right', Math.abs(p.vx), -1); transferEnergy(p, innerR, p.y, 'vx'); if (p.vx < 0) p.vx = -p.vx; }
+            else if (minD === dT) { p.y = innerT - PR; addDent(p.x, innerT, 'top', Math.abs(p.vy), -1); transferEnergy(p, p.x, innerT, 'vy'); if (p.vy > 0) p.vy = -p.vy; }
+            else { p.y = innerB + PR; addDent(p.x, innerB, 'bottom', Math.abs(p.vy), -1); transferEnergy(p, p.x, innerB, 'vy'); if (p.vy < 0) p.vy = -p.vy; }
           }
         }
       }
@@ -7590,86 +7840,97 @@ function initCh7Vis() {
       }
 
       ctxHR.fillStyle = COLORS.text; ctxHR.font = FONT; ctxHR.textAlign = 'center';
-      ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 15);
+      ctxHR.fillText('System', (innerL + innerR) / 2, innerT + 14);
       ctxHR.fillStyle = COLORS.textDim; ctxHR.font = FONT_SM;
       ctxHR.fillText('Reservoir (T = ' + T.toFixed(1) + ')', (outerL + outerR) / 2, outerB + 12);
       ctxHR.restore();
 
-      // === RIGHT: Per-particle energy distribution ===
-      // Compute per-particle energies for system particles
-      const sysEnergies = [];
-      for (const p of hrParticles) {
-        if (p.inside) sysEnergies.push(0.5 * (p.vx * p.vx + p.vy * p.vy));
-      }
-      const meanE = sysEnergies.reduce((a, b) => a + b, 0) / sysEnergies.length;
+      // === RIGHT: Energy distribution ===
+      // The total system energy E_sys = sum of KE of all inner particles.
+      // For N particles in 2D, E_sys follows a chi-squared distribution with
+      // k = 2*N_INNER degrees of freedom: P(E) ~ E^(k/2 - 1) * exp(-E / kT)
+      // where kT is measured from the reservoir.
 
-      // Energy scale: based on slider T so the curve doesn't jump around
-      // kT in velocity^2 units: <0.5*v^2> = kT for 2D, so kT ~ tempToSpeed(T)^2
-      const kT = tempToSpeed(T) * tempToSpeed(T); // = 900*T
-      const Emax = kT * 6; // show up to ~6 kT
+      // Measure kT from reservoir (average KE per DOF = kT/2, so per particle in 2D = kT)
+      let resKE = 0;
+      for (const p of hrParticles) {
+        if (!p.inside) resKE += 0.5 * (p.vx * p.vx + p.vy * p.vy);
+      }
+      const kT = resKE / N_OUTER; // <KE per particle> = kT for 2D
+
+      // System energy
+      let sysE = 0;
+      for (const p of hrParticles) {
+        if (p.inside) sysE += 0.5 * (p.vx * p.vx + p.vy * p.vy);
+      }
+
+      // Chi-squared distribution for total energy
+      const k = 2 * N_INNER; // degrees of freedom (2D: 2 per particle)
+      const peakE = Math.max((k / 2 - 1) * kT, kT); // mode of chi-sq
+      const Emax = peakE + 5 * Math.sqrt(k / 2) * kT; // extends well past peak
+      const meanTheory = (k / 2) * kT; // theoretical mean = N_INNER * kT
 
       // Axes
-      drawAxes(ctxHR, plotL, plotT, plotW, plotH, {xLabel: '\u03B5 (particle energy)', yLabel: 'P(\u03B5)', yLabelOffset: 20});
+      drawAxes(ctxHR, plotL, plotT, plotW, plotH, {xLabel: 'E (system energy)', yLabel: 'P(E)', yLabelOffset: 20});
 
-      // Label
+      // Title
       ctxHR.fillStyle = COLORS.text; ctxHR.font = FONT; ctxHR.textAlign = 'left';
-      ctxHR.fillText('P(\u03B5) \u221d e^{\u2212\u03B5/kT}', plotL + 5, plotT - 10);
+      ctxHR.fillText('P(E) \u221d E\u207F\u207B\u00B9 e^{\u2212E/kT}', plotL + 5, plotT - 10);
 
-      // Boltzmann curve: P(eps) ~ exp(-eps/kT) for single-particle energy in 2D
-      // In 2D the single-particle KE distribution is P(eps) = (1/kT) * exp(-eps/kT)
+      // Draw the theoretical distribution curve
+      // P(E) ~ E^(k/2 - 1) * exp(-E / kT), normalized so peak = 0.9 * plotH
+      const alpha = k / 2 - 1;
+      const logPeakVal = alpha * Math.log(Math.max(peakE, 1e-10)) - peakE / kT;
+
       ctxHR.strokeStyle = COLORS.orange; ctxHR.lineWidth = 2;
       ctxHR.beginPath();
-      let started = false;
-      for (let i = 0; i <= 200; i++) {
-        const eps = (i / 200) * Emax;
-        const P = Math.exp(-eps / kT) / kT; // normalized exponential
-        const maxP = 1 / kT; // value at eps=0
-        const px = plotL + (eps / Emax) * plotW;
-        const py = plotT + plotH * (1 - (P / maxP) * 0.9);
-        if (py > plotT + plotH) continue;
-        if (!started) { ctxHR.moveTo(px, py); started = true; }
+      let curveStarted = false;
+      for (let i = 1; i <= 200; i++) {
+        const E = (i / 200) * Emax;
+        const logP = alpha * Math.log(E) - E / kT - logPeakVal;
+        const P = Math.exp(logP);
+        const px = plotL + (E / Emax) * plotW;
+        const py = plotT + plotH * (1 - P * 0.85);
+        if (py > plotT + plotH || py < plotT - 5) continue;
+        if (!curveStarted) { ctxHR.moveTo(px, py); curveStarted = true; }
         else ctxHR.lineTo(px, py);
       }
       ctxHR.stroke();
 
-      // Individual particle energies as blue ticks along x-axis
-      for (const eps of sysEnergies) {
-        const px = plotL + (eps / Emax) * plotW;
-        if (px < plotL || px > plotL + plotW) continue;
-        // Tick mark from bottom axis upward
-        ctxHR.strokeStyle = COLORS.blue; ctxHR.lineWidth = 2;
-        ctxHR.beginPath();
-        ctxHR.moveTo(px, plotT + plotH);
-        ctxHR.lineTo(px, plotT + plotH - 14);
-        ctxHR.stroke();
-        // Small circle at top of tick
-        ctxHR.fillStyle = COLORS.blue;
-        ctxHR.beginPath(); ctxHR.arc(px, plotT + plotH - 16, 3, 0, 2 * Math.PI); ctxHR.fill();
+      // Theoretical mean ⟨E⟩ = N*kT — dashed line
+      const thMx = plotL + (meanTheory / Emax) * plotW;
+      if (thMx >= plotL && thMx <= plotL + plotW) {
+        ctxHR.strokeStyle = COLORS.textDim; ctxHR.lineWidth = 1;
+        ctxHR.setLineDash([4, 4]);
+        ctxHR.beginPath(); ctxHR.moveTo(thMx, plotT); ctxHR.lineTo(thMx, plotT + plotH); ctxHR.stroke();
+        ctxHR.setLineDash([]);
+        ctxHR.fillStyle = COLORS.textDim; ctxHR.font = FONT_SM; ctxHR.textAlign = 'center';
+        ctxHR.fillText('\u27E8E\u27E9 = NkT', thMx, plotT - 3);
       }
 
-      // Mean energy as green dot on the curve
-      const meanPx = plotL + (meanE / Emax) * plotW;
-      if (meanPx >= plotL && meanPx <= plotL + plotW) {
-        // Position on the Boltzmann curve
-        const meanP = Math.exp(-meanE / kT) / kT;
-        const maxP = 1 / kT;
-        const meanPy = plotT + plotH * (1 - (meanP / maxP) * 0.9);
+      // Current system energy — green marker on the curve
+      const ePx = plotL + (sysE / Emax) * plotW;
+      if (ePx >= plotL && ePx <= plotL + plotW && sysE > 0) {
+        // Height on the curve
+        const logP = alpha * Math.log(sysE) - sysE / kT - logPeakVal;
+        const P = Math.exp(logP);
+        const ePy = plotT + plotH * (1 - P * 0.85);
 
-        // Green dot on curve
+        // Dot on curve
         ctxHR.fillStyle = COLORS.green;
-        ctxHR.beginPath(); ctxHR.arc(meanPx, meanPy, 5, 0, 2 * Math.PI); ctxHR.fill();
+        ctxHR.beginPath(); ctxHR.arc(ePx, Math.max(ePy, plotT), 6, 0, 2 * Math.PI); ctxHR.fill();
         ctxHR.strokeStyle = '#fff'; ctxHR.lineWidth = 1.5;
-        ctxHR.beginPath(); ctxHR.arc(meanPx, meanPy, 5, 0, 2 * Math.PI); ctxHR.stroke();
+        ctxHR.beginPath(); ctxHR.arc(ePx, Math.max(ePy, plotT), 6, 0, 2 * Math.PI); ctxHR.stroke();
 
-        // Dashed vertical line from dot to axis
+        // Dashed drop line to axis
         ctxHR.strokeStyle = COLORS.green; ctxHR.lineWidth = 1;
         ctxHR.setLineDash([3, 3]);
-        ctxHR.beginPath(); ctxHR.moveTo(meanPx, meanPy); ctxHR.lineTo(meanPx, plotT + plotH); ctxHR.stroke();
+        ctxHR.beginPath(); ctxHR.moveTo(ePx, Math.max(ePy, plotT)); ctxHR.lineTo(ePx, plotT + plotH); ctxHR.stroke();
         ctxHR.setLineDash([]);
 
         // Label
         ctxHR.fillStyle = COLORS.green; ctxHR.font = FONT_SM; ctxHR.textAlign = 'center';
-        ctxHR.fillText('\u27E8\u03B5\u27E9', meanPx, plotT + plotH + 15);
+        ctxHR.fillText('E_sys', ePx, plotT + plotH + 15);
       }
     }
 

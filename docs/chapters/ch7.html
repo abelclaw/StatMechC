@@ -553,14 +553,15 @@ $$n = \frac{1}{\lambda^3} \exp\left(\frac{\mu}{k_BT}\right)$$
 
 <p>This says that the number density is related exponentially to the chemical potential. As the system gets denser and denser, the chemical potential rises towards 0. When the chemical potential is negative, the gas is not too crowded and can be considered dilute.</p>
 
-<!-- INTERACTIVE: Chemical Potential Gradient -->
+<!-- INTERACTIVE: Dissociation Equilibrium -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">⚗️</span> Interactive: Chemical Potential and Particle Flow</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-chempot" width="600" height="300"></canvas></div>
+  <div class="vis-header"><span class="vis-icon">⚗️</span> Interactive: Dissociation Equilibrium</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-chempot" width="600" height="350"></canvas></div>
   <div class="vis-controls">
-    <button id="chempot-start">Start</button>
+    <label>Temperature $T$: <input type="range" id="chempot-temp" min="0.3" max="4.0" step="0.05" value="1.5"> <span class="slider-value" id="chempot-temp-val">1.5</span></label>
+    <label>Binding energy $\varepsilon$: <input type="range" id="chempot-eps" min="0.5" max="6.0" step="0.1" value="3.0"> <span class="slider-value" id="chempot-eps-val">3.0</span></label>
     <button id="chempot-reset">Reset</button>
-    <span style="color:var(--text-muted)">Particles flow from high $\mu$ to low $\mu$ until equilibrium</span>
+    <span style="color:var(--text-muted)">At equilibrium, $2\mu_A = \mu_{A_2}$. Raise $T$ to break bonds; raise $\varepsilon$ to form them.</span>
   </div>
 </div>
 
