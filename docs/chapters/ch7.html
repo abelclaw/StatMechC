@@ -334,17 +334,17 @@ $$C_V = \frac{5}{2}Nk_B + Nk_B\left(\frac{T_{\text{vib}}}{T}\right)^2 \frac{e^{-
 <span class="eq-number">(38)</span>
 </div>
 
-<!-- INTERACTIVE: H2 Heat Capacity with Vibrational Mode -->
+<!-- INTERACTIVE: H2 Heat Capacity — Degrees of Freedom Unfreezing -->
 <div class="interactive-container">
-  <h3>H&#8322; Heat Capacity: Vibrational Freezeout</h3>
+  <h3>H&#8322; Heat Capacity: Unfreezing Degrees of Freedom</h3>
   <div class="vis-controls">
-    <label>&theta;<sub>vib</sub> (K): <input type="range" id="h2vib-tvib" min="1000" max="12000" value="6300" step="100"> <span class="slider-value" id="h2vib-tvib-val">6300</span></label>
+    <label>Temperature (K): <input type="range" id="h2vib-temp" min="10" max="10000" value="300" step="10"> <span class="slider-value" id="h2vib-temp-val">300</span></label>
   </div>
-  <canvas id="vis-h2vib" width="600" height="350"></canvas>
-  <p class="vis-caption">Adjust &theta;<sub>vib</sub> to see how vibrational freezeout temperature affects C<sub>V</sub>. Yellow dots: experimental data.</p>
+  <canvas id="vis-h2vib" width="600" height="420"></canvas>
+  <p class="vis-caption">Raise the temperature to unfreeze degrees of freedom one by one. Left: C<sub>V</sub> curve with experimental data. Right: contribution from each mode at the current temperature.</p>
 </div>
 
-<p>This shows how the heat capacity goes up as the vibrational mode starts to be excitable. Note that although the temperature for the vibrational mode is 6300 K, the vibrational mode starts to be excited well below that temperature. The dots are data. We see good agreement!</p>
+<p>Sweep the temperature from low to high. At $T \lesssim 50$ K only translation contributes and $C_V = \frac{3}{2}Nk_B$. Around $T \sim \theta_{\text{rot}} = 85$ K, rotation unfreezes and $C_V$ rises to $\frac{5}{2}Nk_B$. Vibration only kicks in at $T \sim \theta_{\text{vib}} = 6300$ K, pushing $C_V$ toward $\frac{7}{2}Nk_B$. Note that each mode starts contributing well below its characteristic temperature. The stacked bar shows the quantitative contribution of each mode at the selected temperature, matching the experimental data (dots) beautifully.</p>
 
 <p>We can also compute the partition function for a gas including both kinetic and vibrational motion. Since each momentum and each vibrational excitation is independent for the $N$ particles, we have</p>
 
@@ -376,12 +376,13 @@ $$0 = \frac{\partial S_1(E)}{\partial E} + \frac{\partial S_2(E_{\text{tot}} - E
 
 <div class="interactive-wrapper">
 <h4>Interactive: Volume Exchange (Gibbs Ensemble)</h4>
-<canvas id="vis-volume-exchange" width="600" height="280"></canvas>
+<canvas id="vis-volume-exchange" width="600" height="300"></canvas>
 <div class="controls">
-<label>Total volume: <input type="range" id="vex-vtot" min="2" max="10" step="0.1" value="6"><span id="vex-vtot-val">6.0</span></label>
-<label>Temperature T: <input type="range" id="vex-temp" min="0.5" max="5" step="0.1" value="2.0"><span id="vex-temp-val">2.0</span></label>
+<label>T<sub>left</sub>: <input type="range" id="vex-tleft" min="0.5" max="5" step="0.1" value="2.0"><span id="vex-tleft-val">2.0</span></label>
+<label>T<sub>right</sub>: <input type="range" id="vex-tright" min="0.5" max="5" step="0.1" value="2.0"><span id="vex-tright-val">2.0</span></label>
+<button id="vex-reset">Reset</button>
 </div>
-<figcaption>Two systems can exchange both energy and volume. Equilibrium requires equal temperatures (∂S/∂E) and equal pressures (∂S/∂V).</figcaption>
+<figcaption>Two gases separated by a moveable wall. Changing the temperature on one side increases the pressure, pushing the wall until pressures equilibrate. At equilibrium, P₁ = P₂ so that ∂S₁/∂V = ∂S₂/∂V.</figcaption>
 </div>
 
 <p>Now let's consider an ensemble that lets $V$ vary. In the Gibbs ensemble you have two systems in equilibrium that can exchange energy and volume. The total volume is conserved. The entropy is the sum of the entropy of the two sides, and the total volume is fixed: $V_1 + V_2 = V_{\text{tot}}$. Maximizing entropy gives that the temperature $\frac{1}{T} = \frac{\partial S}{\partial E}$ is the same on both sides, and that</p>
@@ -652,11 +653,11 @@ $$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h}\right)^{3/2} e^{-m_pc^2/k_BT} = 
 <!-- Interactive Visualization -->
 <h3>Interactive: Boltzmann Distribution</h3>
 <div class="interactive-container">
-<canvas id="vis-boltzmann" width="600" height="400"></canvas>
+<canvas id="vis-boltzmann" width="600" height="450"></canvas>
 <div class="slider-container">
-<label for="boltz-beta">Inverse Temperature $\beta$:</label>
-<input type="range" id="boltz-beta" min="0.1" max="5" step="0.1" value="1">
-<span class="slider-value" id="boltz-beta-val">1.0</span>
+<label for="boltz-temp">Temperature $k_BT/\varepsilon$:</label>
+<input type="range" id="boltz-temp" min="0.2" max="5" step="0.05" value="1">
+<span class="slider-value" id="boltz-temp-val">1.00</span>
 </div>
-<p class="vis-caption">Adjust $\beta = 1/k_BT$ to see how the Boltzmann distribution changes. At high temperature (low $\beta$), many energy levels are populated. At low temperature (high $\beta$), only the lowest energy states are occupied.</p>
+<p class="vis-caption">80 particles occupy discrete energy levels $\varepsilon_i = i\,\varepsilon$ and stochastically hop between them. The live histogram (right) tracks the fraction of particles at each level, compared to the theoretical Boltzmann prediction $P_i = e^{-\beta \varepsilon_i}/Z$ (white dots). At low temperature, nearly all particles crowd into the ground state. At high temperature, particles spread across many levels.</p>
 </div>
