@@ -5569,6 +5569,7 @@ function initCh6Vis() {
     let lbHeat = 0, lbMsg = '', lbMC = COLORS.textDim;
     let lbOn = false, lbBz = false;
     let lbParts = [], kProto = null, uProto = null, flashT = 0;
+    let kFlip = null, uFlip = null;  // flip animation: { from, t, dur }
 
     // Layout
     const PW = (WLB - 36) / 2, PH = 150, PY = 30, P1 = 8, P2 = WLB / 2 + 10;
@@ -5692,8 +5693,17 @@ function initCh6Vis() {
     function animLB() {
       if (!lbOn) return;
 
-      // --- Known panel: protocol or jiggle ---
-      if (kProto) {
+      // --- Known panel: flip, protocol, or jiggle ---
+      if (kFlip) {
+        kFlip.t++;
+        const f = kFlip.t / kFlip.dur;
+        const e = f * f * (3 - 2 * f);
+        kBall.x = kFlip.from * (1 - 2 * e);  // symmetric: from → -from
+        kBar = 1 - Math.sin(f * Math.PI);     // barrier dips to 0 at midpoint
+        if (kFlip.t >= kFlip.dur) {
+          kBall.x = -kFlip.from; kBar = 1; kFlip = null; lbBz = false;
+        }
+      } else if (kProto) {
         const running = stepProto(kProto,
           function(v) { if (v !== undefined) kBar = v; return kBar; },
           function(v) { if (v !== undefined) kTi = v; return kTi; });
@@ -5703,8 +5713,17 @@ function initCh6Vis() {
         lbPhys(kBall, 1, 0);
       }
 
-      // --- Unknown panel: protocol or jiggle ---
-      if (uProto) {
+      // --- Unknown panel: flip, protocol, or jiggle ---
+      if (uFlip) {
+        uFlip.t++;
+        const f = uFlip.t / uFlip.dur;
+        const e = f * f * (3 - 2 * f);
+        uBall.x = uFlip.from * (1 - 2 * e);
+        uBar = 1 - Math.sin(f * Math.PI);
+        if (uFlip.t >= uFlip.dur) {
+          uBall.x = -uFlip.from; uBar = 1; uFlip = null; lbBz = false;
+        }
+      } else if (uProto) {
         const running = stepProto(uProto,
           function(v) { if (v !== undefined) uBar = v; return uBar; },
           function(v) { if (v !== undefined) uTi = v; return uTi; });
@@ -5746,7 +5765,7 @@ function initCh6Vis() {
       kBall.x = -1; uBall.x = Math.random() < 0.5 ? -1 : 1;
       hidden = true; kBar = 1; kTi = 0; uBar = 1; uTi = 0;
       lbHeat = 0; lbParts = []; kProto = null; uProto = null;
-      lbBz = false; flashT = 0;
+      kFlip = null; uFlip = null; lbBz = false; flashT = 0;
       lbMsg = 'Left: you can see the bit. Right: it\u2019s hidden.';
       lbMC = COLORS.textDim;
     }
@@ -5768,9 +5787,8 @@ function initCh6Vis() {
     lbKFl?.addEventListener('click', () => {
       if (lbBz) return;
       lbBz = true;
-      const tiltDir = kBall.x < 0 ? 1.5 : -1.5;
-      kProto = makeProto(tiltDir, false);
-      lbMsg = 'Flip! Reversible \u2014 no heat.';
+      kFlip = {from: kBall.x, t: 0, dur: 40};
+      lbMsg = 'Flip! Same operation for either state \u2014 no heat.';
       lbMC = COLORS.green;
     });
 
@@ -5799,13 +5817,13 @@ function initCh6Vis() {
     lbUFl?.addEventListener('click', () => {
       if (lbBz) return;
       if (!hidden) {
+        // Revealed — same symmetric flip animation
         lbBz = true;
-        const tiltDir = uBall.x < 0 ? 1.5 : -1.5;
-        uProto = makeProto(tiltDir, false);
-        lbMsg = 'Flip! Reversible \u2014 no heat.';
+        uFlip = {from: uBall.x, t: 0, dur: 40};
+        lbMsg = 'Flip! Same operation for either state \u2014 no heat.';
         lbMC = COLORS.green; return;
       }
-      // Hidden flip — swap behind screen, no heat
+      // Hidden — barrier dips behind screen, ball swaps, no heat
       uBall.x = -uBall.x;
       flashT = 25;
       lbMsg = 'Flipped! (still unknown) No heat \u2014 flip is always reversible.';
