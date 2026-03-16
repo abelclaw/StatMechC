@@ -7683,8 +7683,8 @@ function initCh7Vis() {
     let hrParticles = [];
     let wallDents = [];
 
-    // Temperature units: slider T maps to kT in velocity^2 units
-    function tempToSpeed(T) { return 15 * Math.sqrt(T); }
+    // Temperature units: slider T maps to RMS speed
+    function tempToSpeed(T) { return 7 * Math.sqrt(T); }
 
     function initHR() {
       const T = parseFloat(resTempSlider?.value || 2.0);
