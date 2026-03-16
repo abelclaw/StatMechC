@@ -541,17 +541,14 @@ function drawEngine(a){
   X.fillStyle=mGrad(VB.x,VB.x+VB.w,'#555','#727272');
   X.strokeStyle='#999';X.lineWidth=2;
   rr(VB.x,VB.y,VB.w,VB.h,5,true,true);
-  // Interior background
+  // Interior: entire compartment filled uniformly with hot red gas
   X.fillStyle='#2e2e2e';
   X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
-  // Hot orange haze ONLY in the upper part (above where the slider sits)
-  // SLIDER_Y is a constant so we can use it here
-  const hazeBot=SLIDER_Y-2;
-  X.fillStyle='rgba(230,70,20,.09)';
-  X.fillRect(VB.x+5,VB.y+5,VB.w-10,hazeBot-VB.y-5);
+  X.fillStyle='rgba(230,70,20,.1)';
+  X.fillRect(VB.x+5,VB.y+5,VB.w-10,VB.h-10);
   for(let i=0;i<7;i++){
     const sx=VB.x+12+Math.random()*(VB.w-24);
-    const sy=VB.y+8+Math.random()*(hazeBot-VB.y-12);
+    const sy=VB.y+8+Math.random()*(VB.h-20);
     X.fillStyle=`rgba(230,80,25,${.03+Math.random()*.05})`;
     X.beginPath();X.arc(sx,sy,2+Math.random()*3,0,Math.PI*2);X.fill();
   }
@@ -562,16 +559,14 @@ function drawEngine(a){
   X.fillText('STEAM',VB.x+40,VB.y+15);
   X.fillText('(hot)',VB.x+40,VB.y+25);
 
-  // Floor of sliding compartment with THREE HOLES
-  X.fillStyle='#5a5a5a';
-  X.fillRect(VB.x+3,VB_BOT-6,VB.w-6,6);
-  // Left port hole
+  // Floor of sliding compartment (thin, part of the wall)
+  X.fillStyle='#555';
+  X.fillRect(VB.x+3,VB_BOT-3,VB.w-6,3);
+  // Three holes in the floor
   X.fillStyle='#2a2a2a';
-  X.fillRect(PORT_L_CX-PORT_W/2, VB_BOT-6, PORT_W, 6);
-  // Center exhaust hole (connects up to exhaust pipe)
-  X.fillRect(PORT_EX_CX-PORT_W/2, VB_BOT-6, PORT_W, 6);
-  // Right port hole
-  X.fillRect(PORT_R_CX-PORT_W/2, VB_BOT-6, PORT_W, 6);
+  X.fillRect(PORT_L_CX-PORT_W/2, VB_BOT-3, PORT_W, 3);
+  X.fillRect(PORT_EX_CX-PORT_W/2, VB_BOT-3, PORT_W, 3);
+  X.fillRect(PORT_R_CX-PORT_W/2, VB_BOT-3, PORT_W, 3);
 
   // ── C. THE SLIDER WITH U-TUBE ──
   // The slider is a block that slides left-right inside the compartment.
@@ -659,7 +654,8 @@ function drawEngine(a){
   const vchX = eccX - Math.sqrt(Math.max(1, ECC_ROD*ECC_ROD - vchDy*vchDy));
 
   // Push rod: from valve crosshead to slider (rigid, fixed length)
-  const sliderMidX = slCx;
+  // Attach eccentric rod to RIGHT side of slider (so it doesn't block the view)
+  const sliderMidX = sliderL + sliderW - 8;
   const sliderMidY = slY + slH/2;
 
   // Draw connecting rod: eccentric pin → valve crosshead
@@ -685,12 +681,12 @@ function drawEngine(a){
   X.strokeStyle='#888';X.lineWidth=1;X.stroke();
 
   // Port glow
-  if(leftOpen){X.fillStyle='rgba(230,70,20,.25)';X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-6,PORT_W,6);}
-  if(rightOpen){X.fillStyle='rgba(230,70,20,.25)';X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-6,PORT_W,6);}
-  if(leftExh){X.fillStyle='rgba(90,110,160,.25)';X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-6,PORT_W,6);}
-  if(rightExh){X.fillStyle='rgba(90,110,160,.25)';X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-6,PORT_W,6);}
+  if(leftOpen){X.fillStyle='rgba(230,70,20,.25)';X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-3,PORT_W,3);}
+  if(rightOpen){X.fillStyle='rgba(230,70,20,.25)';X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-3,PORT_W,3);}
+  if(leftExh){X.fillStyle='rgba(90,110,160,.25)';X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-3,PORT_W,3);}
+  if(rightExh){X.fillStyle='rgba(90,110,160,.25)';X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-3,PORT_W,3);}
 
-  label('Sliding valve',sliderMidX,slY-6,10);
+  label('Sliding valve',sliderL+sliderW+5,slY+slH/2+3,10);
 
   // ─── 6. CYLINDER BORE + GAS (always present, color transitions smoothly) ───
   X.fillStyle='#2a2a2a';X.fillRect(BORE.x,BORE.y,BORE.w,BORE.h);
