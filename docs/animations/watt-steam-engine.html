@@ -483,57 +483,50 @@ function drawEngine(a){
   //
   // Path: center floor hole → right (horizontal) → up to chimney
 
-  // Exhaust connector is BELOW the sliding compartment, with a gap
-  const exhConnY = VB_BOT + 15; // pushed down, gap between compartment and pipe
-
-  // Vertical stub from center floor hole down to the connector
-  X.fillStyle='#484c50';
-  X.fillRect(PORT_EX_CX-exhPW/2-3, VB_BOT, exhPW+6, exhConnY-VB_BOT);
-  X.strokeStyle='#666';X.lineWidth=1;
-  X.strokeRect(PORT_EX_CX-exhPW/2-3, VB_BOT, exhPW+6, exhConnY-VB_BOT);
-  X.fillStyle='#1e1e24';
-  X.fillRect(PORT_EX_CX-exhPW/2, VB_BOT+2, exhPW, exhConnY-VB_BOT-2);
-
-  // Horizontal connector: from stub going RIGHT to the exhaust chimney
-  X.fillStyle='#484c50';
-  X.fillRect(PORT_EX_CX-exhPW/2-3, exhConnY, exX_out-PORT_EX_CX+exhPW, exhPW+6);
-  X.strokeStyle='#666';X.lineWidth=1;
-  X.strokeRect(PORT_EX_CX-exhPW/2-3, exhConnY, exX_out-PORT_EX_CX+exhPW, exhPW+6);
-  // Inner bore
-  X.fillStyle='#1e1e24';
-  X.fillRect(PORT_EX_CX-exhPW/2, exhConnY+3, exX_out-PORT_EX_CX+exhPW/2, exhPW);
-  if(leftExh||rightExh){
-    X.fillStyle='rgba(90,110,160,.07)';
-    X.fillRect(PORT_EX_CX-exhPW/2, exhConnY+3, exX_out-PORT_EX_CX+exhPW/2, exhPW);
-  }
-
-  // Vertical chimney pipe: goes UP from the connector to the chimney
+  // Exhaust connector below the sliding compartment
+  const exhConnY = VB_BOT + 15;
   const riseBot = exhConnY + exhPW + 3;
   const riseTop = 60;
+  const exhW=exhPW; // bore width
+  const wallT=3;    // wall thickness
+
+  // Step 1: Draw ALL outer walls (one continuous shape, no internal lines)
   X.fillStyle='#484c50';
-  X.fillRect(exX_out-exhPW/2-3, riseTop, exhPW+6, riseBot-riseTop);
-  X.strokeStyle='#666';X.lineWidth=1;
-  X.strokeRect(exX_out-exhPW/2-3, riseTop, exhPW+6, riseBot-riseTop);
+  // Vertical stub
+  X.fillRect(PORT_EX_CX-exhW/2-wallT, VB_BOT, exhW+2*wallT, exhConnY+exhW+2*wallT-VB_BOT);
+  // Horizontal connector
+  X.fillRect(PORT_EX_CX-exhW/2-wallT, exhConnY, exX_out+exhW/2+wallT-PORT_EX_CX+exhW/2+wallT, exhW+2*wallT);
+  // Vertical chimney rise
+  X.fillRect(exX_out-exhW/2-wallT, riseTop, exhW+2*wallT, riseBot-riseTop);
+
+  // Step 2: Draw ALL inner bores ON TOP (covers joint lines)
   X.fillStyle='#1e1e24';
-  X.fillRect(exX_out-exhPW/2, riseTop+2, exhPW, riseBot-riseTop-2);
+  // Stub bore
+  X.fillRect(PORT_EX_CX-exhW/2, VB_BOT, exhW, exhConnY+wallT-VB_BOT);
+  // Horizontal bore (extends to cover the corner)
+  X.fillRect(PORT_EX_CX-exhW/2, exhConnY+wallT, exX_out+exhW/2-PORT_EX_CX+exhW/2, exhW);
+  // Chimney bore (extends down to cover the corner)
+  X.fillRect(exX_out-exhW/2, exhConnY+wallT, exhW, riseBot-exhConnY-wallT);
+  // Chimney bore upper part
+  X.fillRect(exX_out-exhW/2, riseTop, exhW, exhConnY+wallT-riseTop);
+
+  // Exhaust flow color
   if(leftExh||rightExh){
-    X.fillStyle='rgba(90,110,160,.06)';
-    X.fillRect(exX_out-exhPW/2, riseTop+2, exhPW, riseBot-riseTop-2);
+    X.fillStyle='rgba(90,110,160,.07)';
+    X.fillRect(PORT_EX_CX-exhW/2, VB_BOT, exhW, exhConnY+wallT-VB_BOT);
+    X.fillRect(PORT_EX_CX-exhW/2, exhConnY+wallT, exX_out+exhW/2-PORT_EX_CX+exhW/2, exhW);
+    X.fillRect(exX_out-exhW/2, riseTop, exhW, riseBot-riseTop);
   }
-  // Chimney cap (prominent)
+
+  // Chimney cap
   X.fillStyle='#5a5a5a';
-  rr(exX_out-exhPW/2-10,riseTop-8,exhPW+20,12,3,true,false);
+  rr(exX_out-exhW/2-8,riseTop-6,exhW+16,10,3,true,false);
   X.strokeStyle='#888';X.lineWidth=1.5;
-  rr(exX_out-exhPW/2-10,riseTop-8,exhPW+20,12,3,false,true);
-  // Wider base of cap
-  X.fillStyle='#505050';
-  X.fillRect(exX_out-exhPW/2-5,riseTop-2,exhPW+10,6);
-  X.strokeStyle='#777';X.lineWidth=1;
-  X.strokeRect(exX_out-exhPW/2-5,riseTop-2,exhPW+10,6);
+  rr(exX_out-exhW/2-8,riseTop-6,exhW+16,10,3,false,true);
 
   // Label
   X.fillStyle='rgba(90,110,160,.5)';X.font='9px Georgia';X.textAlign='center';
-  X.fillText('EXHAUST',exX_out,riseTop+25);
+  X.fillText('EXHAUST',exX_out,riseTop+20);
 
   // ── B. SLIDING COMPARTMENT (middle box — filled with hot steam) ──
   // This is where the slider lives. Hot steam from the boiler fills this.
@@ -686,7 +679,7 @@ function drawEngine(a){
   if(leftExh){X.fillStyle='rgba(90,110,160,.25)';X.fillRect(PORT_L_CX-PORT_W/2,VB_BOT-3,PORT_W,3);}
   if(rightExh){X.fillStyle='rgba(90,110,160,.25)';X.fillRect(PORT_R_CX-PORT_W/2,VB_BOT-3,PORT_W,3);}
 
-  label('Sliding valve',sliderL+sliderW+5,slY+slH/2+3,10);
+  label('Sliding valve',slCx,slY-6,10);
 
   // ─── 6. CYLINDER BORE + GAS (always present, color transitions smoothly) ───
   X.fillStyle='#2a2a2a';X.fillRect(BORE.x,BORE.y,BORE.w,BORE.h);
