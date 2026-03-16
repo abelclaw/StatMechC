@@ -5552,12 +5552,23 @@ function initCh6Vis() {
       ball.x = Math.max(-1.7, Math.min(1.7, ball.x));
     }
 
+    // Protocol factory: lower barrier, tilt, raise barrier, remove tilt
+    function makeProto(tiltDir, heat) {
+      const d = heat ? 80 : 60;
+      return {
+        steps: [{b:1,t:0,dur:heat?40:25},{b:0,t:0,dur:d},{b:0,t:tiltDir,dur:d},{b:1,t:tiltDir,dur:d},{b:1,t:0,dur:d}],
+        i: 0, t: 0, pB: 1, pT: 0, heat: !!heat
+      };
+    }
+
     // State
     let kBall = {x: -1}, uBall = {x: 1};
-    let hidden = true, uBar = 1, uTi = 0;
+    let hidden = true;
+    let kBar = 1, kTi = 0;  // known panel potential (varies during protocol)
+    let uBar = 1, uTi = 0;  // unknown panel potential
     let lbHeat = 0, lbMsg = '', lbMC = COLORS.textDim;
     let lbOn = false, lbBz = false;
-    let lbParts = [], kAnim = null, uAnim = null, proto = null, flashT = 0;
+    let lbParts = [], kProto = null, uProto = null, flashT = 0;
 
     // Layout
     const PW = (WLB - 36) / 2, PH = 150, PY = 30, P1 = 8, P2 = WLB / 2 + 10;
@@ -5626,7 +5637,7 @@ function initCh6Vis() {
       ctxLB.beginPath(); ctxLB.moveTo(WLB / 2, PY - 18); ctxLB.lineTo(WLB / 2, PY + PH + 16);
       ctxLB.stroke(); ctxLB.restore();
 
-      drawPanel(P1, PY, PW, PH, kBall, 1, 0,
+      drawPanel(P1, PY, PW, PH, kBall, kBar, kTi,
         'Known Bit = ' + (kBall.x < 0 ? '0' : '1'), cK, false);
       drawPanel(P2, PY, PW, PH, uBall, uBar, uTi,
         hidden ? 'Unknown Bit = ?' : 'Bit = ' + (uBall.x < 0 ? '0' : '1') + ' (now known)', cU, hidden);
@@ -5662,46 +5673,56 @@ function initCh6Vis() {
       ctxLB.fillText(lbHeat.toFixed(2) + ' kT', barX + barW + 38, barY + 11);
     }
 
+    // Generic protocol stepper — returns true while running
+    function stepProto(pr, setBar, setTi) {
+      pr.t++;
+      const step = pr.steps[pr.i];
+      if (pr.t >= step.dur) {
+        pr.i++; pr.t = 0;
+        if (pr.i >= pr.steps.length) { setBar(1); setTi(0); return false; }
+        pr.pB = setBar(); pr.pT = setTi();
+      }
+      const s = pr.steps[pr.i];
+      const f = pr.t / s.dur, e = f * f * (3 - 2 * f);
+      setBar(pr.pB + (s.b - pr.pB) * e);
+      setTi(pr.pT + (s.t - pr.pT) * e);
+      return true;
+    }
+
     function animLB() {
       if (!lbOn) return;
 
-      // Known ball: smooth animation or thermal jiggle
-      if (kAnim) {
-        kAnim.t++;
-        const f = kAnim.t / kAnim.dur, e = f * f * (3 - 2 * f);
-        kBall.x = kAnim.from + (kAnim.to - kAnim.from) * e;
-        if (kAnim.t >= kAnim.dur) { kBall.x = kAnim.to; kAnim = null; lbBz = false; }
+      // --- Known panel: protocol or jiggle ---
+      if (kProto) {
+        const running = stepProto(kProto,
+          function(v) { if (v !== undefined) kBar = v; return kBar; },
+          function(v) { if (v !== undefined) kTi = v; return kTi; });
+        lbPhys(kBall, kBar, kTi);
+        if (!running) { kBar = 1; kTi = 0; kProto = null; lbBz = false; }
       } else {
         lbPhys(kBall, 1, 0);
       }
 
-      // Unknown ball: animation, protocol, or thermal jiggle
-      if (uAnim) {
-        uAnim.t++;
-        const f = uAnim.t / uAnim.dur, e = f * f * (3 - 2 * f);
-        uBall.x = uAnim.from + (uAnim.to - uAnim.from) * e;
-        if (uAnim.t >= uAnim.dur) { uBall.x = uAnim.to; uAnim = null; lbBz = false; }
-      } else if (proto) {
-        proto.t++;
-        const step = proto.steps[proto.i];
-        if (proto.t >= step.dur) {
-          proto.i++; proto.t = 0;
-          if (proto.i >= proto.steps.length) {
-            uBar = 1; uTi = 0; hidden = false;
+      // --- Unknown panel: protocol or jiggle ---
+      if (uProto) {
+        const running = stepProto(uProto,
+          function(v) { if (v !== undefined) uBar = v; return uBar; },
+          function(v) { if (v !== undefined) uTi = v; return uTi; });
+        lbPhys(uBall, uBar, uTi);
+        if (!running) {
+          uBar = 1; uTi = 0;
+          if (uProto.heat) {
+            hidden = false;
             lbMsg = 'Erased! Heat \u2265 kT ln 2 dissipated.';
-            lbMC = COLORS.red; proto = null; lbBz = false;
-          } else { proto.pB = uBar; proto.pT = uTi; }
-        }
-        if (proto) {
-          const s = proto.steps[proto.i];
-          const f = proto.t / s.dur, e = f * f * (3 - 2 * f);
-          uBar = proto.pB + (s.b - proto.pB) * e;
-          uTi = proto.pT + (s.t - proto.pT) * e;
-          if (proto.i >= 1) {
-            const tot = proto.steps.slice(1).reduce((a, st) => a + st.dur, 0);
-            lbHeat = Math.min(0.693, lbHeat + 0.693 / tot);
+            lbMC = COLORS.red;
           }
-          if (proto.i >= 1 && Math.random() < 0.1) {
+          uProto = null; lbBz = false;
+        }
+        // Heat ramp and particles for erasure protocols
+        if (uProto && uProto.heat && uProto.i >= 1) {
+          const tot = uProto.steps.slice(1).reduce((a, st) => a + st.dur, 0);
+          lbHeat = Math.min(0.693, lbHeat + 0.693 / tot);
+          if (Math.random() < 0.1) {
             const bpx = xc(uBall.x, P2, PW);
             const bpy = vc(lbV(uBall.x, uBar, uTi), PY, PH);
             const ang = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 1.5;
@@ -5709,7 +5730,6 @@ function initCh6Vis() {
               vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 0.3, life: 1});
           }
         }
-        lbPhys(uBall, uBar, uTi);
       } else {
         lbPhys(uBall, uBar, uTi);
       }
@@ -5724,14 +5744,14 @@ function initCh6Vis() {
 
     function lbReset() {
       kBall.x = -1; uBall.x = Math.random() < 0.5 ? -1 : 1;
-      hidden = true; uBar = 1; uTi = 0;
-      lbHeat = 0; lbParts = []; kAnim = null; uAnim = null; proto = null;
+      hidden = true; kBar = 1; kTi = 0; uBar = 1; uTi = 0;
+      lbHeat = 0; lbParts = []; kProto = null; uProto = null;
       lbBz = false; flashT = 0;
       lbMsg = 'Left: you can see the bit. Right: it\u2019s hidden.';
       lbMC = COLORS.textDim;
     }
 
-    // Known panel buttons
+    // Known panel: set/flip use physical protocol (lower barrier, tilt, raise)
     function kSet(tgt) {
       if (lbBz) return;
       if (Math.abs(kBall.x - tgt) < 0.3) {
@@ -5739,7 +5759,7 @@ function initCh6Vis() {
         lbMC = COLORS.green; return;
       }
       lbBz = true;
-      kAnim = {from: kBall.x, to: tgt, t: 0, dur: 50};
+      kProto = makeProto(tgt * 1.5, false);
       lbMsg = 'Known \u2192 ' + (tgt < 0 ? '0' : '1') + '. Reversible \u2014 no heat.';
       lbMC = COLORS.green;
     }
@@ -5748,38 +5768,28 @@ function initCh6Vis() {
     lbKFl?.addEventListener('click', () => {
       if (lbBz) return;
       lbBz = true;
-      kAnim = {from: kBall.x, to: kBall.x < 0 ? 1 : -1, t: 0, dur: 50};
+      const tiltDir = kBall.x < 0 ? 1.5 : -1.5;
+      kProto = makeProto(tiltDir, false);
       lbMsg = 'Flip! Reversible \u2014 no heat.';
       lbMC = COLORS.green;
     });
 
-    // Unknown panel buttons
+    // Unknown panel: set uses erasure protocol (heat) when hidden, physical protocol when revealed
     function uSet(tgt) {
       if (lbBz) return;
       if (!hidden) {
-        // Already revealed — acts like known panel
         if (Math.abs(uBall.x - tgt) < 0.3) {
           lbMsg = 'Already ' + (tgt < 0 ? '0' : '1') + '! No heat.';
           lbMC = COLORS.green; return;
         }
         lbBz = true;
-        uAnim = {from: uBall.x, to: tgt, t: 0, dur: 50};
+        uProto = makeProto(tgt * 1.5, false);
         lbMsg = 'Now known \u2014 set reversibly. No heat.';
         lbMC = COLORS.green; return;
       }
       // Hidden — must erase (costs heat)
       lbBz = true; lbHeat = 0;
-      const td = tgt < 0 ? -1.5 : 1.5;
-      proto = {
-        steps: [
-          {b: 1, t: 0, dur: 40},
-          {b: 0, t: 0, dur: 80},
-          {b: 0, t: td, dur: 80},
-          {b: 1, t: td, dur: 80},
-          {b: 1, t: 0, dur: 80},
-        ],
-        i: 0, t: 0, pB: 1, pT: 0
-      };
+      uProto = makeProto(tgt < 0 ? -1.5 : 1.5, true);
       lbMsg = 'Erasing unknown bit to ' + (tgt < 0 ? '0' : '1') + '...';
       lbMC = COLORS.orange;
     }
@@ -5790,7 +5800,8 @@ function initCh6Vis() {
       if (lbBz) return;
       if (!hidden) {
         lbBz = true;
-        uAnim = {from: uBall.x, to: uBall.x < 0 ? 1 : -1, t: 0, dur: 50};
+        const tiltDir = uBall.x < 0 ? 1.5 : -1.5;
+        uProto = makeProto(tiltDir, false);
         lbMsg = 'Flip! Reversible \u2014 no heat.';
         lbMC = COLORS.green; return;
       }
@@ -5801,11 +5812,17 @@ function initCh6Vis() {
       lbMC = COLORS.green;
     });
 
+    // Reveal is a toggle
     lbURv?.addEventListener('click', () => {
-      if (lbBz || !hidden) return;
-      hidden = false;
-      lbMsg = 'Revealed: bit = ' + (uBall.x < 0 ? '0' : '1') + '. Now you can set it for free!';
-      lbMC = COLORS.cyan;
+      if (lbBz) return;
+      hidden = !hidden;
+      if (!hidden) {
+        lbMsg = 'Revealed: bit = ' + (uBall.x < 0 ? '0' : '1') + '. Now you can set it for free!';
+        lbMC = COLORS.cyan;
+      } else {
+        lbMsg = 'Hidden again. Setting will cost kT ln 2.';
+        lbMC = COLORS.orange;
+      }
     });
 
     lbRst?.addEventListener('click', () => { lbReset(); drawLB(); });
