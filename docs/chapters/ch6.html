@@ -113,7 +113,15 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <p>In chemistry and biology, <strong>concentration gradients</strong> are very important. A concentration gradient means the concentration of some ion, like $\text{Na}^+$ or $\text{K}^+$, is not constant in space. When there is a concentration gradient, the system is not completely homogeneous, so entropy can be increased by mixing. Concentration gradients are critical for life. Neurons fire when the concentration of certain chemicals or ions passes a threshold. Cells use energy to produce concentration gradients &mdash; there are proteins in the cell wall that pump sodium and potassium from areas of low concentration to areas of high concentration.</p>
 
-<figure><img src="images/6-Entropy_p5_img0.png" alt="Cellular pump"><figcaption>A cellular pump, present in practically every cell of every living thing. It uses energy in the form of ATP to establish concentration gradients.</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Na⁺/K⁺ ATPase Pump</h4>
+<canvas id="vis-nak-pump" width="600" height="400"></canvas>
+<div class="controls">
+<button id="nak-playpause">Pause</button>
+<label>Speed: <input type="range" id="nak-speed" min="0.3" max="3" step="0.1" value="1"></label>
+</div>
+<figcaption>The sodium-potassium pump, present in practically every cell of every living thing. It uses one ATP to pump 3 Na⁺ out and 2 K⁺ in, maintaining the concentration gradients essential for nerve signaling and cell function. This active transport fights the entropy of mixing.</figcaption>
+</div>
 
 <p>Another familiar effect due to entropy of mixing is how salt is able to melt ice. The salt draws water out of the ice (i.e. melts it) because saltwater has higher entropy than salt and ice separately.</p>
 
@@ -135,7 +143,15 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <p>To resolve the Gibbs paradox, let's think about why the entropy is changing. When xenon and helium mix, the new microstates we add don't look like the old ones. When helium mixes with helium, the new microstates are indistinguishable from the old ones, so we are overcounting.</p>
 
-<figure><img src="images/6-Entropy_p6_img0.png" alt="Mixing of different vs. identical gases"><figcaption>When xenon and helium mix, the new microstates are genuinely new. When helium mixes with helium, the new microstates are indistinguishable from the old ones.</figcaption></figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Partition Toggle</h4>
+<canvas id="vis-mixing" width="600" height="400"></canvas>
+<div class="controls">
+<label>Case: <select id="mixing-case"><option value="distinguishable">Distinguishable (colored balls)</option><option value="identical">Indistinguishable (He + He)</option><option value="different">Different species (He + Xe)</option></select></label>
+<button id="mixing-toggle">Remove Partition</button>
+</div>
+<figcaption>Toggle the partition to mix or separate the gases. For indistinguishable particles, the partition does nothing &mdash; no new microstates are created. For distinguishable particles or different species, removing the partition increases entropy.</figcaption>
+</div>
 
 <p>In a large volume with every particle in a different position, we can simply divide by $N!$ for permuting those positions. This leads to:</p>
 
@@ -168,16 +184,6 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <p><strong>3. Helium + xenon (each separately indistinguishable):</strong> Entropy of mixing is $\Delta S = 2N\ln 2$. After splitting, each half has $N/2$ of each species, and $\Delta S = 0$ for the split.</p>
 </div>
 
-<div class="interactive-wrapper">
-<h4>Interactive: Entropy of Mixing &mdash; Three Cases</h4>
-<canvas id="vis-mixing" width="600" height="400"></canvas>
-<div class="controls">
-<label>Case: <select id="mixing-case"><option value="distinguishable">Distinguishable (colored balls)</option><option value="identical">Indistinguishable (He + He)</option><option value="different">Different species (He + Xe)</option></select></label>
-<button id="mixing-mix">Mix</button>
-<button id="mixing-reset">Reset</button>
-</div>
-<figcaption>Three cases of mixing: distinguishable particles always gain entropy on mixing; indistinguishable identical particles do not; different species gain entropy of mixing ΔS = 2Nk<sub>B</sub> ln 2.</figcaption>
-</div>
 
 <p>In no situation does entropy go down when we split the volume back into two halves.</p>
 
@@ -305,14 +311,16 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <p>A key observation was made by Rolf Landauer in 1961. Landauer considered a model of a bit with a classical double well: ball on the left is 0, ball on the right is 1.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Landauer's Bit</h4>
-<canvas id="vis-landauer" width="600" height="280"></canvas>
-<div class="controls">
-<button id="landauer-flip">Flip Bit (Reversible)</button>
+<h4>Interactive: Landauer's Erasure Protocol</h4>
+<canvas id="vis-landauer" width="600" height="360"></canvas>
+<div class="controls" style="flex-wrap: wrap; gap: 8px;">
 <button id="landauer-erase">Erase to 0 (Irreversible)</button>
+<button id="landauer-flip">Flip Bit (Reversible)</button>
 <button id="landauer-reset">Reset</button>
+<label>Barrier: <input type="range" id="landauer-barrier" min="0" max="100" value="100"></label>
+<label>Tilt: <input type="range" id="landauer-tilt" min="-100" max="100" value="0"></label>
 </div>
-<figcaption>A double well models a bit: left = 0, right = 1. Flipping is free (reversible). Erasing an unknown bit to 0 requires at least k<sub>B</sub>T ln 2 of work (Landauer's principle).</figcaption>
+<figcaption>Two parallel worlds show the same protocol applied to a bit starting at 0 (blue) and 1 (orange). Erasure must force both to 0 regardless of starting state &mdash; this phase-space compression requires dissipating at least k<sub>B</sub>T ln 2 of heat. A reversible flip of a <em>known</em> bit costs nothing.</figcaption>
 </div>
 
 <p>But what if we don't know what state the bit is in? Can we build an automated "SetToZero" mechanism? The answer is <strong>no</strong> for any reversible (frictionless) mechanism. Since Newton's laws are time-reversible, the function $F$ acting on phase space must be invertible. We want $F(\vec{q}_0,\vec{p}_0) = (\vec{q}_0,\vec{p}_0)$ and $F(\vec{q}_1,\vec{p}_1) = (\vec{q}_0,\vec{p}_0)$. But this is impossible if $F$ is invertible. This argument holds even in quantum mechanics since the Schrodinger equation can also be run backwards.</p>
