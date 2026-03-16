@@ -180,17 +180,33 @@ function updateAndDrawMolecules(dt){
     if(m.t<0) return;
     const pos=pathPos(m.path,m.t);
 
-    // Kill molecules that are inside the slider body but NOT inside the U-tube.
-    // This prevents molecules from floating through the slider when it moves.
     const px=pos.x, py=pos.y;
+
+    // Kill molecules inside the slider body but NOT inside the U-tube
     if(px>curSliderL && px<curSliderR && py>curSliderTop && py<curSliderBot){
-      // Inside slider bounds — check if inside U-tube
       const inLeftLeg = Math.abs(px-curULeftCx)<curUW/2+3;
       const inRightLeg = Math.abs(px-curURightCx)<curUW/2+3;
       const inTopBar = py<curSliderTop+20 && px>curULeftCx-curUW/2-3 && px<curURightCx+curUW/2+3;
       if(!inLeftLeg && !inRightLeg && !inTopBar){
-        m.t=-1; // kill — it's in the solid part of the slider
-        return;
+        m.t=-1; return;
+      }
+    }
+
+    // Kill HOT molecules that enter the exhaust tube zone
+    // (red gas should never appear inside the exhaust pipe)
+    if(m.hot){
+      const exhW=16,wallT=3,exhConnY=VB_BOT+15;
+      // Vertical stub zone
+      if(px>PORT_EX_CX-exhW/2-wallT && px<PORT_EX_CX+exhW/2+wallT && py>VB_BOT && py<exhConnY+exhW+2*wallT){
+        m.t=-1; return;
+      }
+      // Horizontal connector zone
+      if(py>exhConnY && py<exhConnY+exhW+2*wallT && px>PORT_EX_CX-exhW/2-wallT && px<EX_PIPE_X+exhW/2+wallT){
+        m.t=-1; return;
+      }
+      // Vertical rise zone
+      if(px>EX_PIPE_X-exhW/2-wallT && px<EX_PIPE_X+exhW/2+wallT && py>60 && py<exhConnY+exhW+2*wallT){
+        m.t=-1; return;
       }
     }
 
@@ -845,7 +861,7 @@ function drawEngine(a){
 
     // Segment 3: chimney exit — only when fully aligned
     if(leftExhAligned && Math.random()<.4) spawnMolecule([
-      {x:PORT_EX_CX,y:VB_BOT+3},
+      {x:PORT_EX_CX,y:exhConnY+5},
       {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:riseTop+20}
@@ -869,7 +885,7 @@ function drawEngine(a){
     ],COLD, rightExhAligned ? 120 : 25, false);
 
     if(rightExhAligned && Math.random()<.4) spawnMolecule([
-      {x:PORT_EX_CX,y:VB_BOT+3},
+      {x:PORT_EX_CX,y:exhConnY+5},
       {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:riseTop+20}
@@ -927,33 +943,7 @@ function drawFlywheel(){
   X.fillText('eccentric',eccPx+14,eccPy+3);
 }
 
-// Redraw exhaust tube WALLS ONLY (not bore) over molecules.
-// This hides red molecules passing behind the tube but lets cold
-// molecules inside the bore remain visible.
-function drawExhaustWallsOverlay(){
-  const exhW=16,wallT=3,exX_out=EX_PIPE_X;
-  const exhConnY=VB_BOT+15;
-  const riseBot=exhConnY+exhW+2*wallT;
-  const riseTop=60;
-  X.fillStyle='#484c50';
-  // Vertical stub: left wall, right wall (not bore)
-  X.fillRect(PORT_EX_CX-exhW/2-wallT, VB_BOT, wallT, exhConnY+wallT-VB_BOT);
-  X.fillRect(PORT_EX_CX+exhW/2,       VB_BOT, wallT, exhConnY+wallT-VB_BOT);
-  // Horizontal connector: top wall, bottom wall
-  X.fillRect(PORT_EX_CX-exhW/2-wallT, exhConnY,           exX_out+exhW/2+wallT-PORT_EX_CX+exhW/2+wallT, wallT);
-  X.fillRect(PORT_EX_CX-exhW/2-wallT, exhConnY+wallT+exhW, exX_out+exhW/2+wallT-PORT_EX_CX+exhW/2+wallT, wallT);
-  // Vertical rise: left wall, right wall
-  X.fillRect(exX_out-exhW/2-wallT, riseTop, wallT, riseBot-riseTop);
-  X.fillRect(exX_out+exhW/2,       riseTop, wallT, riseBot-riseTop);
-  // Corner fills (solid corners where pipes meet so no gaps)
-  // Bottom-left corner of horizontal connector
-  X.fillRect(PORT_EX_CX-exhW/2-wallT, exhConnY, wallT+exhW+wallT, wallT);
-  // Bottom-right corner where rise meets horizontal
-  X.fillRect(exX_out-exhW/2-wallT, exhConnY+wallT+exhW, exhW+2*wallT, wallT);
-  // Chimney cap
-  X.fillStyle='#5a5a5a';
-  rr(exX_out-exhW/2-8,riseTop-6,exhW+16,10,3,true,false);
-}
+// No overlay — instead we cull hot molecules that enter the exhaust zone
 
 function drawParticles(dt){
   // Chimney smoke from the exhaust pipe top
@@ -1009,7 +999,6 @@ function frame(now){
   drawFlywheel();
   drawParticles(dt);
   updateAndDrawMolecules(dt);
-  drawExhaustWallsOverlay(); // redraw exhaust walls over molecules
   drawStatus();
   drawTitle();
   requestAnimationFrame(frame);
