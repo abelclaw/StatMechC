@@ -217,7 +217,11 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <div class="interactive-container">
   <h3>Interactive: Letter Frequencies in English</h3>
   <canvas id="vis-letterfreq" width="600" height="300"></canvas>
-  <p class="vis-caption">Hover over bars to see individual letter probabilities and information content in bits. Shannon entropy H = 4.17 bits/letter.</p>
+  <div class="vis-controls" style="margin-top:6px;">
+    <label for="letterfreq-text" style="font-size:13px;color:var(--text-dim);">Paste or type text to compare:</label>
+    <textarea id="letterfreq-text" rows="3" placeholder="Type or paste text here to see its letter frequencies overlaid on the chart..." style="width:100%;margin-top:4px;background:var(--bg-card);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;"></textarea>
+  </div>
+  <p class="vis-caption">Hover over bars to see individual letter probabilities and information content in bits. Shannon entropy H = 4.17 bits/letter. <span id="letterfreq-user-entropy"></span></p>
 </div>
 
 <p>What is the minimal number of bits you need to encode a given type of data? Shannon's answer was:</p>

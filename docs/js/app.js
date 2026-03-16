@@ -4470,48 +4470,179 @@ function initCh5Vis() {
     let netRotation = 0;
     let rRunning = false;
     const nTeeth = 12;
+    const toothAngle = (2 * Math.PI) / nTeeth;
+
+    // Gas particles for both chambers
+    const gasParticlesLeft = [];
+    const gasParticlesRight = [];
+    const nGasParticles = 30;
+
+    // Chamber boundaries
+    const leftBox = { x: 30, y: 30, w: 140, h: HBR - 60 };
+    const rightBox = { x: 280, y: 30, w: 140, h: HBR - 60 };
+
+    function tempToColor(T) {
+      const t = Math.max(0, Math.min(1, (T - 200) / 400));
+      const r = Math.round(80 + 175 * t);
+      const g = Math.round(120 + 80 * Math.max(0, 0.5 - Math.abs(t - 0.5)) * 2);
+      const b = Math.round(235 - 195 * t);
+      return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+
+    function tempToSpeed(T) {
+      return 0.5 + Math.sqrt(T / 200) * 1.2;
+    }
+
+    function initGasParticles(arr, box) {
+      arr.length = 0;
+      for (let i = 0; i < nGasParticles; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        arr.push({
+          x: box.x + 15 + Math.random() * (box.w - 30),
+          y: box.y + 15 + Math.random() * (box.h - 30),
+          vx: Math.cos(angle),
+          vy: Math.sin(angle),
+          r: 2.5
+        });
+      }
+    }
+
+    initGasParticles(gasParticlesLeft, leftBox);
+    initGasParticles(gasParticlesRight, rightBox);
+
+    function updateGasParticles(arr, box, T) {
+      const speed = tempToSpeed(T);
+      const cx = box.x + box.w / 2;
+      const cy = box.y + box.h / 2;
+      const mechRadius = 45;
+
+      arr.forEach(p => {
+        p.x += p.vx * speed;
+        p.y += p.vy * speed;
+
+        if (p.x < box.x + p.r + 2) { p.vx = Math.abs(p.vx); p.x = box.x + p.r + 2; }
+        if (p.x > box.x + box.w - p.r - 2) { p.vx = -Math.abs(p.vx); p.x = box.x + box.w - p.r - 2; }
+        if (p.y < box.y + p.r + 2) { p.vy = Math.abs(p.vy); p.y = box.y + p.r + 2; }
+        if (p.y > box.y + box.h - p.r - 2) { p.vy = -Math.abs(p.vy); p.y = box.y + box.h - p.r - 2; }
+
+        // Bounce off central mechanism
+        const dx = p.x - cx, dy = p.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < mechRadius) {
+          const nx = dx / dist, ny = dy / dist;
+          p.x = cx + nx * mechRadius;
+          p.y = cy + ny * mechRadius;
+          const dot = p.vx * nx + p.vy * ny;
+          p.vx -= 2 * dot * nx;
+          p.vy -= 2 * dot * ny;
+        }
+
+        if (Math.random() < 0.02) {
+          const a = Math.random() * 2 * Math.PI;
+          p.vx = Math.cos(a);
+          p.vy = Math.sin(a);
+        }
+      });
+    }
+
+    function drawGasParticles(arr, T) {
+      const col = tempToColor(T);
+      const speed = tempToSpeed(T);
+      const glowAlpha = Math.min(0.6, speed / 4);
+      ctxBR.fillStyle = col;
+      arr.forEach(p => {
+        ctxBR.beginPath();
+        ctxBR.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+        ctxBR.fill();
+        if (T > 350) {
+          ctxBR.save();
+          ctxBR.globalAlpha = glowAlpha;
+          ctxBR.beginPath();
+          ctxBR.arc(p.x, p.y, p.r + 2, 0, 2 * Math.PI);
+          ctxBR.fill();
+          ctxBR.restore();
+        }
+      });
+    }
+
+    function computePawlDeflection() {
+      let relAngle = (-ratchetAngle) % toothAngle;
+      if (relAngle < 0) relAngle += toothAngle;
+      const fraction = relAngle / toothAngle;
+      if (fraction < 0.8) {
+        return (fraction / 0.8) * 0.35;
+      } else {
+        return 0.35 * (1 - (fraction - 0.8) / 0.2);
+      }
+    }
+
+    function thermalVibration(T) {
+      const amplitude = Math.max(0, (T - 300) / 300) * 1.5;
+      return (Math.random() - 0.5) * amplitude;
+    }
 
     function drawRatchet() {
       clearCanvas(ctxBR, WBR, HBR);
       const T1 = parseFloat(t1Slider?.value || 400);
       const T2 = parseFloat(t2Slider?.value || 400);
+      const maxT = Math.max(T1, T2);
 
-      // Left: vane in gas at T1
-      const vx = 100, vy = HBR / 2;
-      ctxBR.fillStyle = 'rgba(220,80,40,0.15)';
-      ctxBR.fillRect(30, 30, 140, HBR - 60);
+      const vibX = thermalVibration(maxT);
+      const vibY = thermalVibration(maxT);
+
+      // Left chamber background tinted by temperature
+      const bgLeft = tempToColor(T1);
+      ctxBR.fillStyle = bgLeft.replace('rgb', 'rgba').replace(')', ',0.08)');
+      ctxBR.fillRect(leftBox.x, leftBox.y, leftBox.w, leftBox.h);
       ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1;
-      ctxBR.strokeRect(30, 30, 140, HBR - 60);
-      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
-      ctxBR.fillText('Gas at T₁ = ' + T1 + ' K', vx, HBR - 15);
+      ctxBR.strokeRect(leftBox.x, leftBox.y, leftBox.w, leftBox.h);
 
-      // Vane (paddle wheel)
+      // Gas particles left
+      drawGasParticles(gasParticlesLeft, T1);
+
+      const vx = 100, vy = HBR / 2;
+      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
+      ctxBR.fillText('Gas at T₁ = ' + T1 + ' K', vx, HBR - 12);
+
+      // Vane with thermal vibration
       ctxBR.save();
-      ctxBR.translate(vx, vy);
+      ctxBR.translate(vx + vibX, vy + vibY);
       ctxBR.rotate(ratchetAngle);
       for (let i = 0; i < 4; i++) {
         ctxBR.rotate(Math.PI / 2);
         ctxBR.fillStyle = COLORS.orange;
+        ctxBR.globalAlpha = 0.9;
         ctxBR.fillRect(-3, 0, 6, 40);
       }
+      ctxBR.globalAlpha = 1;
+      ctxBR.fillStyle = COLORS.textDim;
+      ctxBR.beginPath(); ctxBR.arc(0, 0, 6, 0, 2 * Math.PI); ctxBR.fill();
       ctxBR.restore();
 
       // Axle
       ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 2;
-      ctxBR.beginPath(); ctxBR.moveTo(170, vy); ctxBR.lineTo(280, vy); ctxBR.stroke();
+      ctxBR.beginPath();
+      ctxBR.moveTo(170 + vibX, vy + vibY);
+      ctxBR.lineTo(280 + vibX, vy + vibY);
+      ctxBR.stroke();
 
-      // Right: ratchet at T2
+      // Right chamber background tinted by temperature
       const rx = 350, ry = vy;
-      ctxBR.fillStyle = 'rgba(40,120,220,0.15)';
-      ctxBR.fillRect(280, 30, 140, HBR - 60);
+      const bgRight = tempToColor(T2);
+      ctxBR.fillStyle = bgRight.replace('rgb', 'rgba').replace(')', ',0.08)');
+      ctxBR.fillRect(rightBox.x, rightBox.y, rightBox.w, rightBox.h);
       ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1;
-      ctxBR.strokeRect(280, 30, 140, HBR - 60);
-      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
-      ctxBR.fillText('Ratchet at T₂ = ' + T2 + ' K', rx, HBR - 15);
+      ctxBR.strokeRect(rightBox.x, rightBox.y, rightBox.w, rightBox.h);
 
-      // Ratchet gear (sawtooth)
+      // Gas particles right
+      drawGasParticles(gasParticlesRight, T2);
+
+      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
+      ctxBR.fillText('Ratchet at T₂ = ' + T2 + ' K', rx, HBR - 12);
+
+      // Ratchet gear with thermal vibration
       ctxBR.save();
-      ctxBR.translate(rx, ry);
+      ctxBR.translate(rx + vibX, ry + vibY);
       ctxBR.rotate(ratchetAngle);
       const rr = 35;
       ctxBR.beginPath();
@@ -4524,39 +4655,90 @@ function initCh5Vis() {
         ctxBR.lineTo(rr * Math.cos(a3), rr * Math.sin(a3));
       }
       ctxBR.closePath();
+      ctxBR.fillStyle = 'rgba(79,195,247,0.1)';
+      ctxBR.fill();
       ctxBR.strokeStyle = COLORS.blue; ctxBR.lineWidth = 2;
+      ctxBR.stroke();
+      ctxBR.fillStyle = COLORS.textDim;
+      ctxBR.beginPath(); ctxBR.arc(0, 0, 5, 0, 2 * Math.PI); ctxBR.fill();
+      ctxBR.restore();
+
+      // Pawl - clicks with teeth as wheel rotates
+      const pawlDeflection = computePawlDeflection();
+      const pawlPivotX = rx + 48 + vibX;
+      const pawlPivotY = ry - 30 + vibY;
+      const pawlVibX = thermalVibration(T2) * 0.5;
+      const pawlVibY = thermalVibration(T2) * 0.5;
+
+      ctxBR.save();
+      ctxBR.translate(pawlPivotX + pawlVibX, pawlPivotY + pawlVibY);
+      // Pivot dot
+      ctxBR.fillStyle = COLORS.green;
+      ctxBR.beginPath(); ctxBR.arc(0, 0, 4, 0, 2 * Math.PI); ctxBR.fill();
+      // Pawl lever
+      const pawlLen = 28;
+      const basePawlAngle = Math.atan2(
+        (ry + vibY) - (pawlPivotY + pawlVibY),
+        (rx + vibX) - (pawlPivotX + pawlVibX)
+      );
+      const deflectedAngle = basePawlAngle + pawlDeflection;
+      const tipX = pawlLen * Math.cos(deflectedAngle);
+      const tipY = pawlLen * Math.sin(deflectedAngle);
+      ctxBR.strokeStyle = COLORS.green; ctxBR.lineWidth = 2.5;
+      ctxBR.beginPath(); ctxBR.moveTo(0, 0); ctxBR.lineTo(tipX, tipY); ctxBR.stroke();
+      // Pawl tip triangle
+      ctxBR.fillStyle = COLORS.green;
+      ctxBR.beginPath();
+      const perpX = -Math.sin(deflectedAngle) * 4;
+      const perpY = Math.cos(deflectedAngle) * 4;
+      ctxBR.moveTo(tipX + Math.cos(deflectedAngle) * 4, tipY + Math.sin(deflectedAngle) * 4);
+      ctxBR.lineTo(tipX + perpX, tipY + perpY);
+      ctxBR.lineTo(tipX - perpX, tipY - perpY);
+      ctxBR.closePath();
+      ctxBR.fill();
+      // Spring coil from pivot upward
+      ctxBR.strokeStyle = 'rgba(102,187,106,0.5)'; ctxBR.lineWidth = 1.5;
+      ctxBR.beginPath();
+      const nCoils = 4;
+      ctxBR.moveTo(0, -8);
+      for (let i = 0; i <= nCoils; i++) {
+        const t = i / nCoils;
+        const sy = -8 + (-12) * t;
+        const offset = (i % 2 === 0 ? 1 : -1) * 4;
+        ctxBR.lineTo(i === 0 || i === nCoils ? 0 : offset, sy);
+      }
       ctxBR.stroke();
       ctxBR.restore();
 
-      // Pawl
-      ctxBR.fillStyle = COLORS.green;
-      ctxBR.beginPath(); ctxBR.arc(rx + 45, ry - 25, 5, 0, 2 * Math.PI); ctxBR.fill();
-      ctxBR.strokeStyle = COLORS.green; ctxBR.lineWidth = 2;
-      ctxBR.beginPath(); ctxBR.moveTo(rx + 45, ry - 25); ctxBR.lineTo(rx + 38, ry - 8); ctxBR.stroke();
-
-      // Weight (far right)
-      const weightY = vy + 30 - netRotation * 5;
+      // Weight
+      const weightY = Math.max(40, Math.min(HBR - 50, vy + 30 - netRotation * 5));
       ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1;
       ctxBR.beginPath(); ctxBR.moveTo(420, vy); ctxBR.lineTo(480, vy);
       ctxBR.lineTo(480, weightY); ctxBR.stroke();
+      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1.5;
+      ctxBR.beginPath(); ctxBR.arc(480, vy, 5, 0, 2 * Math.PI); ctxBR.stroke();
       ctxBR.fillStyle = COLORS.purple;
       ctxBR.fillRect(470, weightY, 20, 20);
       ctxBR.fillStyle = COLORS.text; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
-      ctxBR.fillText('Weight', 480, weightY + 35);
+      ctxBR.fillText('m', 480, weightY + 14);
 
       // Status
       const balanced = Math.abs(T1 - T2) < 15;
       ctxBR.fillStyle = balanced ? COLORS.red : COLORS.green;
       ctxBR.font = FONT; ctxBR.textAlign = 'left';
       if (balanced) {
-        ctxBR.fillText('T₁ = T₂: No net work (2nd law)', 450, 40);
+        ctxBR.fillText('T₁ ≈ T₂: No net work', 455, 40);
       } else if (T1 > T2) {
-        ctxBR.fillText('T₁ > T₂: Net forward rotation', 450, 40);
+        ctxBR.fillText('T₁ > T₂: Forward ↻', 455, 40);
       } else {
-        ctxBR.fillText('T₁ < T₂: Net backward rotation', 450, 40);
+        ctxBR.fillText('T₁ < T₂: Backward ↺', 455, 40);
       }
       ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM;
-      ctxBR.fillText('Net rotation: ' + netRotation.toFixed(1) + ' rad', 450, 60);
+      ctxBR.fillText('Net: ' + netRotation.toFixed(1) + ' rad', 455, 58);
+      if (!balanced) {
+        const eta = Math.abs(T1 - T2) / Math.max(T1, T2);
+        ctxBR.fillText('η_Carnot = ' + (eta * 100).toFixed(0) + '%', 455, 73);
+      }
 
       document.getElementById('ratchet-t1-val')?.replaceChildren(document.createTextNode(T1));
       document.getElementById('ratchet-t2-val')?.replaceChildren(document.createTextNode(T2));
@@ -4566,14 +4748,18 @@ function initCh5Vis() {
       if (!rRunning) return;
       const T1 = parseFloat(t1Slider?.value || 400);
       const T2 = parseFloat(t2Slider?.value || 400);
-      const eps = 1.0; // energy barrier
-      const kB = 1 / 300; // scaled
+      const eps = 1.0;
+      const kB = 1 / 300;
       const pFwd = Math.exp(-eps / (kB * T1));
       const pBwd = Math.exp(-eps / (kB * T2));
       const net = (pFwd - pBwd) * 0.5;
       const noise = (Math.random() - 0.5) * 0.08;
       ratchetAngle += net + noise;
       netRotation += net;
+
+      updateGasParticles(gasParticlesLeft, leftBox, T1);
+      updateGasParticles(gasParticlesRight, rightBox, T2);
+
       drawRatchet();
       activeAnimations['ratchet'] = requestAnimationFrame(animateRatchet);
     }
@@ -4585,6 +4771,8 @@ function initCh5Vis() {
       rRunning = false;
       if (activeAnimations['ratchet']) cancelAnimationFrame(activeAnimations['ratchet']);
       ratchetAngle = 0; netRotation = 0;
+      initGasParticles(gasParticlesLeft, leftBox);
+      initGasParticles(gasParticlesRight, rightBox);
       drawRatchet();
     });
     t1Slider?.addEventListener('input', drawRatchet);
@@ -4795,8 +4983,10 @@ function initCh6Vis() {
       if (hoverIdx >= 0 && hoverIdx < letters.length) {
         const p = probs[hoverIdx];
         const bits = p > 0 ? -Math.log2(p) : 0;
+        let tip = letters[hoverIdx] + ': P = ' + (p * 100).toFixed(1) + '%,  -log\u2082P = ' + bits.toFixed(2) + ' bits';
+        if (userFreqs) tip += '  |  Your text: ' + userFreqs[hoverIdx].toFixed(1) + '%';
         ctxLF.fillStyle = COLORS.yellow; ctxLF.font = FONT; ctxLF.textAlign = 'left';
-        ctxLF.fillText(letters[hoverIdx] + ': P = ' + (p * 100).toFixed(1) + '%,  -log\u2082P = ' + bits.toFixed(2) + ' bits', oxLF + 5, oyLF - 8);
+        ctxLF.fillText(tip, oxLF + 5, oyLF - 8);
       }
 
       // Y-axis label
@@ -4809,6 +4999,66 @@ function initCh6Vis() {
       ctxLF.fillStyle = COLORS.textDim; ctxLF.font = FONT_SM;
       ctxLF.fillText('Uniform: log\u2082(26) = ' + Math.log2(26).toFixed(2) + ' bits  |  ASCII: 7 bits', WLF - 10, oyLF + 8);
     }
+
+    // User text input for frequency comparison
+    const textInput = document.getElementById('letterfreq-text');
+    const userEntropySpan = document.getElementById('letterfreq-user-entropy');
+    let userFreqs = null; // array of 26 frequencies (%) indexed same as letters[]
+
+    function computeUserFreqs(text) {
+      const upper = text.toUpperCase();
+      const counts = {};
+      let total = 0;
+      for (const ch of upper) {
+        if (ch >= 'A' && ch <= 'Z') {
+          counts[ch] = (counts[ch] || 0) + 1;
+          total++;
+        }
+      }
+      if (total === 0) return null;
+      const result = letters.map(l => ((counts[l] || 0) / total) * 100);
+      // Compute Shannon entropy of user text
+      let Huser = 0;
+      result.forEach(f => { const p = f / 100; if (p > 0) Huser -= p * Math.log2(p); });
+      userEntropySpan.textContent = 'Your text: H = ' + Huser.toFixed(2) + ' bits/letter (' + total + ' letters)';
+      return result;
+    }
+
+    if (textInput) {
+      textInput.addEventListener('input', () => {
+        userFreqs = computeUserFreqs(textInput.value);
+        if (!userFreqs) userEntropySpan.textContent = '';
+        drawLetterFreq();
+      });
+    }
+
+    // Extend drawLetterFreq to overlay user frequency indicators
+    const origDraw = drawLetterFreq;
+    drawLetterFreq = function() {
+      origDraw();
+      if (!userFreqs) return;
+      // Draw diamond markers for user frequencies
+      letters.forEach((letter, i) => {
+        const x = oxLF + i * (barW + 2) + 1 + barW / 2;
+        const bH = (userFreqs[i] / maxFreq) * plotHLF;
+        const y = oyLF + plotHLF - bH;
+        // Diamond marker
+        ctxLF.fillStyle = COLORS.orange;
+        ctxLF.beginPath();
+        ctxLF.moveTo(x, y - 5);
+        ctxLF.lineTo(x + 4, y);
+        ctxLF.lineTo(x, y + 5);
+        ctxLF.lineTo(x - 4, y);
+        ctxLF.closePath();
+        ctxLF.fill();
+      });
+      // Legend
+      ctxLF.fillStyle = COLORS.orange; ctxLF.font = FONT_SM; ctxLF.textAlign = 'left';
+      // Draw small diamond in legend
+      const lx = oxLF + 5, ly = oyLF + plotHLF + 30;
+      ctxLF.beginPath(); ctxLF.moveTo(lx, ly - 4); ctxLF.lineTo(lx + 3, ly); ctxLF.lineTo(lx, ly + 4); ctxLF.lineTo(lx - 3, ly); ctxLF.closePath(); ctxLF.fill();
+      ctxLF.fillText(' Your text', lx + 5, ly + 4);
+    };
 
     cLF.addEventListener('mousemove', (e) => {
       const rect = cLF.getBoundingClientRect();
