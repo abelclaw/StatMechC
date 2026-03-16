@@ -812,61 +812,68 @@ function drawEngine(a){
     ],HOT,150,true);
   }
 
-  // Exhaust molecules: TWO separate segments to avoid crossing slider walls.
+  // Exhaust molecules: THREE segments
   //
-  // Segment 1: cylinder → pipe → up to the floor hole (BELOW the slider)
-  //   These are in the pipes, never touch the slider.
-  //
-  // Segment 2: inside the U-tube only → exhaust connector → chimney
-  //   These start inside the U-tube (which is inside the slider)
-  //   and travel through the tube to the exhaust.
-  //
-  // This way no molecule ever crosses the slider wall.
+  // 1. PIPE (fast): cylinder → up the pipe → floor hole. Always when exhausting.
+  // 2. U-TUBE (slow/pause): molecules inside the U-tube. They sit here and
+  //    only continue when the exit is aligned with the exhaust hole.
+  // 3. CHIMNEY (fast): from exhaust hole → connector → chimney. Only when aligned.
 
-  // Also check that the U-tube legs are actually over the right holes
   const leftLegAligned = Math.abs(uLeftCx - PORT_L_CX) < PORT_W;
   const rightLegAligned = Math.abs(uRightCx - PORT_R_CX) < PORT_W;
-  const exhLegAligned = leftExh ?
-    (Math.abs(uRightCx - PORT_EX_CX) < PORT_W) :
-    (Math.abs(uLeftCx - PORT_EX_CX) < PORT_W);
+  const leftExhAligned = leftExh && leftLegAligned && Math.abs(uRightCx - PORT_EX_CX) < PORT_W;
+  const rightExhAligned = rightExh && rightLegAligned && Math.abs(uLeftCx - PORT_EX_CX) < PORT_W;
 
-  if(leftExh && leftLegAligned && exhLegAligned && run){
-    // Segment 1: cylinder up to just below the floor (in the pipe, outside slider)
-    if(Math.random()<.4) spawnMolecule([
+  // --- LEFT EXHAUSTING ---
+  if(leftExh && run){
+    // Segment 1: fast rush from cylinder up the pipe (always when exhausting)
+    if(Math.random()<.6) spawnMolecule([
       {x:CYLPORT_L.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_L.cx,y:CYL.y},
       {x:VPIPE_L.botCx,y:CYL.y},{x:pipeMidLX,y:pipeMidLY},
       {x:VPIPE_L.topCx,y:VB_BOT+3}
-    ],COLD,120,false);
-    // Segment 2: inside U-tube → exhaust (starts inside the tube, never outside)
-    if(Math.random()<.35) spawnMolecule([
+    ],COLD,200,false);
+
+    // Segment 2: molecules sitting/moving slowly inside U-tube
+    // These accumulate and show gas waiting in the tube
+    if(Math.random()<.3) spawnMolecule([
       {x:uLeftCx,y:uBotY-2},
       {x:uLeftCx,y:uTopY+uW},
       {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2},
       {x:uRightCx,y:uTopY+uW},
-      {x:uRightCx,y:uBotY-2},
+      {x:uRightCx,y:uBotY-2}
+    ],COLD, leftExhAligned ? 120 : 25, false); // slow/paused when not aligned
+
+    // Segment 3: chimney exit — only when fully aligned
+    if(leftExhAligned && Math.random()<.4) spawnMolecule([
       {x:PORT_EX_CX,y:VB_BOT+3},
       {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:riseTop+20}
-    ],COLD,180,false);
+    ],COLD,200,false);
   }
-  if(rightExh && rightLegAligned && exhLegAligned && run){
-    if(Math.random()<.4) spawnMolecule([
+
+  // --- RIGHT EXHAUSTING ---
+  if(rightExh && run){
+    if(Math.random()<.6) spawnMolecule([
       {x:CYLPORT_R.cx,y:BORE.y+BORE.h/2},{x:CYLPORT_R.cx,y:CYL.y},
       {x:VPIPE_R.botCx,y:CYL.y},{x:pipeMidRX,y:pipeMidRY},
       {x:VPIPE_R.topCx,y:VB_BOT+3}
-    ],COLD,120,false);
-    if(Math.random()<.35) spawnMolecule([
+    ],COLD,200,false);
+
+    if(Math.random()<.3) spawnMolecule([
       {x:uRightCx,y:uBotY-2},
       {x:uRightCx,y:uTopY+uW},
       {x:(uLeftCx+uRightCx)/2,y:uTopY+uW/2},
       {x:uLeftCx,y:uTopY+uW},
-      {x:uLeftCx,y:uBotY-2},
+      {x:uLeftCx,y:uBotY-2}
+    ],COLD, rightExhAligned ? 120 : 25, false);
+
+    if(rightExhAligned && Math.random()<.4) spawnMolecule([
       {x:PORT_EX_CX,y:VB_BOT+3},
       {x:PORT_EX_CX,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:exhConnY+exhPW/2+3},
       {x:exX_out,y:riseTop+20}
-    ],COLD,180,false);
+    ],COLD,200,false);
   }
 
   label('Piston',pf+PW/2,CYL.y+CYL.h+18,12);
@@ -918,6 +925,25 @@ function drawFlywheel(){
   // Label eccentric
   X.fillStyle='#aa8844';X.font='8px Georgia';X.textAlign='left';
   X.fillText('eccentric',eccPx+14,eccPy+3);
+}
+
+// Redraw exhaust tube walls OVER molecules so red gas doesn't appear on top
+function drawExhaustWallsOverlay(){
+  const exhW=16,wallT=3,exX_out=EX_PIPE_X;
+  const exhConnY=VB_BOT+15;
+  const riseBot=exhConnY+exhW+2*wallT;
+  const riseTop=60;
+  // Just the outer walls (not bore) — covers any molecules passing through
+  X.fillStyle='#484c50';
+  // Vertical stub walls
+  X.fillRect(PORT_EX_CX-exhW/2-wallT, VB_BOT, wallT, exhConnY+exhW+2*wallT-VB_BOT);
+  X.fillRect(PORT_EX_CX+exhW/2, VB_BOT, wallT, exhConnY+exhW+2*wallT-VB_BOT);
+  // Horizontal connector walls (top and bottom edges)
+  X.fillRect(PORT_EX_CX-exhW/2-wallT, exhConnY, exX_out+exhW/2+wallT-PORT_EX_CX+exhW/2+wallT, wallT);
+  X.fillRect(PORT_EX_CX-exhW/2-wallT, exhConnY+exhW+wallT, exX_out+exhW/2+wallT-PORT_EX_CX+exhW/2+wallT, wallT);
+  // Vertical rise walls
+  X.fillRect(exX_out-exhW/2-wallT, riseTop, wallT, riseBot-riseTop);
+  X.fillRect(exX_out+exhW/2, riseTop, wallT, riseBot-riseTop);
 }
 
 function drawParticles(dt){
@@ -974,6 +1000,7 @@ function frame(now){
   drawFlywheel();
   drawParticles(dt);
   updateAndDrawMolecules(dt);
+  drawExhaustWallsOverlay(); // redraw exhaust walls over molecules
   drawStatus();
   drawTitle();
   requestAnimationFrame(frame);
