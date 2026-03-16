@@ -5770,7 +5770,7 @@ function initCh6Vis() {
       lbMC = COLORS.textDim;
     }
 
-    // Known panel: set/flip use physical protocol (lower barrier, tilt, raise)
+    // Known panel: set = do nothing or flip (same symmetric operation)
     function kSet(tgt) {
       if (lbBz) return;
       if (Math.abs(kBall.x - tgt) < 0.3) {
@@ -5778,8 +5778,8 @@ function initCh6Vis() {
         lbMC = COLORS.green; return;
       }
       lbBz = true;
-      kProto = makeProto(tgt * 1.5, false);
-      lbMsg = 'Known \u2192 ' + (tgt < 0 ? '0' : '1') + '. Reversible \u2014 no heat.';
+      kFlip = {from: kBall.x, t: 0, dur: 40};
+      lbMsg = 'Known \u2192 ' + (tgt < 0 ? '0' : '1') + '. Just a flip \u2014 no heat.';
       lbMC = COLORS.green;
     }
     lbKS0?.addEventListener('click', () => kSet(-1));
@@ -5792,17 +5792,18 @@ function initCh6Vis() {
       lbMC = COLORS.green;
     });
 
-    // Unknown panel: set uses erasure protocol (heat) when hidden, physical protocol when revealed
+    // Unknown panel: revealed = flip if needed (free), hidden = erasure protocol (heat)
     function uSet(tgt) {
       if (lbBz) return;
       if (!hidden) {
+        // Revealed — just flip if needed, like the known panel
         if (Math.abs(uBall.x - tgt) < 0.3) {
           lbMsg = 'Already ' + (tgt < 0 ? '0' : '1') + '! No heat.';
           lbMC = COLORS.green; return;
         }
         lbBz = true;
-        uProto = makeProto(tgt * 1.5, false);
-        lbMsg = 'Now known \u2014 set reversibly. No heat.';
+        uFlip = {from: uBall.x, t: 0, dur: 40};
+        lbMsg = 'Revealed \u2014 just a flip. No heat.';
         lbMC = COLORS.green; return;
       }
       // Hidden — must erase (costs heat)
