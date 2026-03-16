@@ -7361,7 +7361,7 @@ function initCh7Vis() {
     }
 
     function cpStep() {
-      var T = cpGetT(), eps = cpGetEps(), dt = 1.0;
+      var T = cpGetT(), eps = cpGetEps(), dt = 0.35;
 
       // Move atoms
       for (var k = 0; k < cpAtoms.length; k++) {
@@ -8015,96 +8015,100 @@ function initCh7Vis() {
     }
 
     function stepVE() {
-      const dt = 0.016;
-      const minWall = boxL + 40; // minimum wall position
-      const maxWall = boxR - 40; // maximum wall position
+      const SUBSTEPS = 4;
+      const dt = 0.016 / SUBSTEPS;
+      const minWall = boxL + 40;
+      const maxWall = boxR - 40;
 
-      // Move wall
-      wallX += wallVx * dt;
-      // Wall friction/damping for stability
-      wallVx *= 0.998;
+      for (let sub = 0; sub < SUBSTEPS; sub++) {
+        // Move wall
+        wallX += wallVx * dt;
+        wallVx *= 0.9995;
 
-      // Clamp wall
-      if (wallX < minWall) { wallX = minWall; wallVx = Math.abs(wallVx) * 0.5; }
-      if (wallX > maxWall) { wallX = maxWall; wallVx = -Math.abs(wallVx) * 0.5; }
+        // Clamp wall
+        if (wallX < minWall) { wallX = minWall; wallVx = Math.abs(wallVx) * 0.5; }
+        if (wallX > maxWall) { wallX = maxWall; wallVx = -Math.abs(wallVx) * 0.5; }
 
-      for (const p of veParticles) {
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
+        const wL = wallX - WALL_HALF - PR_VE;
+        const wR = wallX + WALL_HALF + PR_VE;
 
-        // Top/bottom walls
-        if (p.y < boxT + PR_VE) { p.y = boxT + PR_VE; p.vy = Math.abs(p.vy); }
-        if (p.y > boxB - PR_VE) { p.y = boxB - PR_VE; p.vy = -Math.abs(p.vy); }
+        for (const p of veParticles) {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
 
-        if (p.side === 'left') {
-          // Left outer wall
-          if (p.x < boxL + PR_VE) { p.x = boxL + PR_VE; p.vx = Math.abs(p.vx); }
-          // Moveable wall (left side hits right face of wall)
-          if (p.x > wallX - WALL_HALF - PR_VE) {
-            p.x = wallX - WALL_HALF - PR_VE;
-            // Elastic collision with wall of finite mass
-            const vRel = p.vx - wallVx;
-            const impulse = 2 * vRel / (1 + 1 / WALL_MASS);
-            p.vx -= impulse;
-            wallVx += impulse / WALL_MASS;
-          }
-        } else {
-          // Right outer wall
-          if (p.x > boxR - PR_VE) { p.x = boxR - PR_VE; p.vx = -Math.abs(p.vx); }
-          // Moveable wall (right side hits left face of wall)
-          if (p.x < wallX + WALL_HALF + PR_VE) {
-            p.x = wallX + WALL_HALF + PR_VE;
-            const vRel = p.vx - wallVx;
-            const impulse = 2 * vRel / (1 + 1 / WALL_MASS);
-            p.vx -= impulse;
-            wallVx += impulse / WALL_MASS;
-          }
-        }
-      }
+          // Top/bottom walls
+          if (p.y < boxT + PR_VE) { p.y = boxT + PR_VE; p.vy = Math.abs(p.vy); }
+          if (p.y > boxB - PR_VE) { p.y = boxB - PR_VE; p.vy = -Math.abs(p.vy); }
 
-      // Particle-particle collisions (elastic, equal mass)
-      for (let i = 0; i < veParticles.length; i++) {
-        for (let j = i + 1; j < veParticles.length; j++) {
-          if (veParticles[i].side !== veParticles[j].side) continue;
-          const a = veParticles[i], b = veParticles[j];
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const minD = PR_VE * 2;
-          if (dist < minD && dist > 0) {
-            const nx = dx / dist, ny = dy / dist;
-            const dvx = a.vx - b.vx, dvy = a.vy - b.vy;
-            const dvn = dvx * nx + dvy * ny;
-            if (dvn > 0) { // approaching
-              a.vx -= dvn * nx;
-              a.vy -= dvn * ny;
-              b.vx += dvn * nx;
-              b.vy += dvn * ny;
+          if (p.side === 'left') {
+            if (p.x < boxL + PR_VE) { p.x = boxL + PR_VE; p.vx = Math.abs(p.vx); }
+            if (p.x > wL) {
+              p.x = wL;
+              const vRel = p.vx - wallVx;
+              if (vRel > 0) {
+                const imp = 2 * vRel / (1 + 1 / WALL_MASS);
+                p.vx -= imp;
+                wallVx += imp / WALL_MASS;
+              } else {
+                p.vx = wallVx - 1;
+              }
             }
-            // Separate overlap
-            const overlap = minD - dist;
-            a.x -= nx * overlap * 0.5;
-            a.y -= ny * overlap * 0.5;
-            b.x += nx * overlap * 0.5;
-            b.y += ny * overlap * 0.5;
+          } else {
+            if (p.x > boxR - PR_VE) { p.x = boxR - PR_VE; p.vx = -Math.abs(p.vx); }
+            if (p.x < wR) {
+              p.x = wR;
+              const vRel = p.vx - wallVx;
+              if (vRel < 0) {
+                const imp = 2 * vRel / (1 + 1 / WALL_MASS);
+                p.vx -= imp;
+                wallVx += imp / WALL_MASS;
+              } else {
+                p.vx = wallVx + 1;
+              }
+            }
           }
         }
-      }
 
-      // Thermostat: gently rescale each side's speeds toward slider temperature
-      // This keeps kinetic temperature = slider T so that P = NT/V is accurate
+        // Particle-particle collisions (elastic, equal mass)
+        for (let i = 0; i < veParticles.length; i++) {
+          for (let j = i + 1; j < veParticles.length; j++) {
+            if (veParticles[i].side !== veParticles[j].side) continue;
+            const a = veParticles[i], b = veParticles[j];
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const minD = PR_VE * 2;
+            if (dist < minD && dist > 0) {
+              const nx = dx / dist, ny = dy / dist;
+              const dvn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+              if (dvn > 0) {
+                a.vx -= dvn * nx; a.vy -= dvn * ny;
+                b.vx += dvn * nx; b.vy += dvn * ny;
+              }
+              const overlap = minD - dist;
+              a.x -= nx * overlap * 0.5; a.y -= ny * overlap * 0.5;
+              b.x += nx * overlap * 0.5; b.y += ny * overlap * 0.5;
+            }
+          }
+        }
+      } // end substeps
+
+      // Thermostat: rescale each side's speeds toward slider temperature
       const TL = parseFloat(vexTLeftSlider?.value || 2.0);
       const TR = parseFloat(vexTRightSlider?.value || 2.0);
-      const thermoRate = 0.05; // blend toward target each frame
+      const thermoRate = 0.08;
       for (const side of ['left', 'right']) {
         const targetSpd = veTempToSpeed(side === 'left' ? TL : TR);
-        const parts = veParticles.filter(p => p.side === side);
-        if (parts.length === 0) continue;
-        let sumV2 = 0;
-        for (const p of parts) sumV2 += p.vx * p.vx + p.vy * p.vy;
-        const rms = Math.sqrt(sumV2 / parts.length);
+        let sumV2 = 0, n = 0;
+        for (const p of veParticles) {
+          if (p.side === side) { sumV2 += p.vx * p.vx + p.vy * p.vy; n++; }
+        }
+        if (n === 0) continue;
+        const rms = Math.sqrt(sumV2 / n);
         if (rms < 0.1) continue;
         const scale = 1 + thermoRate * (targetSpd / rms - 1);
-        for (const p of parts) { p.vx *= scale; p.vy *= scale; }
+        for (const p of veParticles) {
+          if (p.side === side) { p.vx *= scale; p.vy *= scale; }
+        }
       }
     }
 
