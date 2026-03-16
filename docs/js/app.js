@@ -4473,13 +4473,17 @@ function initCh5Vis() {
     const toothAngle = (2 * Math.PI) / nTeeth;
 
     // Gas particles for both chambers
-    const gasParticlesLeft = [];
-    const gasParticlesRight = [];
+    const gasParticlesRatchet = [];
+    const gasParticlesVane = [];
     const nGasParticles = 30;
 
-    // Chamber boundaries
-    const leftBox = { x: 30, y: 30, w: 140, h: HBR - 60 };
-    const rightBox = { x: 280, y: 30, w: 140, h: HBR - 60 };
+    // Layout: [Ratchet+Pawl T₂] --- axle --- [Vane T₁] --- thread --- [Weight]
+    const ratchetBox = { x: 15, y: 25, w: 135, h: HBR - 50 };
+    const vaneBox = { x: 200, y: 25, w: 175, h: HBR - 50 };
+    const rr = 35; // ratchet inner radius
+    const rcx0 = 82;  // ratchet center x (no vibration)
+    const vcx0 = 288;  // vane center x
+    const cy0 = HBR / 2; // shared center y
 
     function tempToColor(T) {
       const t = Math.max(0, Math.min(1, (T - 200) / 400));
@@ -4490,7 +4494,7 @@ function initCh5Vis() {
     }
 
     function tempToSpeed(T) {
-      return 0.5 + Math.sqrt(T / 200) * 1.2;
+      return 0.5 + Math.sqrt(T / 200) * 1.5;
     }
 
     function initGasParticles(arr, box) {
@@ -4507,14 +4511,14 @@ function initCh5Vis() {
       }
     }
 
-    initGasParticles(gasParticlesLeft, leftBox);
-    initGasParticles(gasParticlesRight, rightBox);
+    initGasParticles(gasParticlesRatchet, ratchetBox);
+    initGasParticles(gasParticlesVane, vaneBox);
 
     function updateGasParticles(arr, box, T) {
       const speed = tempToSpeed(T);
       const cx = box.x + box.w / 2;
       const cy = box.y + box.h / 2;
-      const mechRadius = 45;
+      const mechRadius = 48;
 
       arr.forEach(p => {
         p.x += p.vx * speed;
@@ -4565,86 +4569,49 @@ function initCh5Vis() {
       });
     }
 
-    function computePawlDeflection() {
-      let relAngle = (-ratchetAngle) % toothAngle;
-      if (relAngle < 0) relAngle += toothAngle;
-      const fraction = relAngle / toothAngle;
-      if (fraction < 0.8) {
-        return (fraction / 0.8) * 0.35;
-      } else {
-        return 0.35 * (1 - (fraction - 0.8) / 0.2);
-      }
-    }
-
     function thermalVibration(T) {
       const amplitude = Math.max(0, (T - 300) / 300) * 1.5;
       return (Math.random() - 0.5) * amplitude;
     }
 
+    // Pawl pivot offset from ratchet center (upper-right)
+    const pawlPivotOffX = 32, pawlPivotOffY = -45;
+
+    function toothSurfaceRadius(labAngle) {
+      let frameAngle = labAngle - ratchetAngle;
+      frameAngle = ((frameAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const frac = (frameAngle % toothAngle) / toothAngle;
+      if (frac < 0.8) {
+        return rr + 10 * (frac / 0.8);
+      } else {
+        return rr + 10 * (1 - (frac - 0.8) / 0.2);
+      }
+    }
+
     function drawRatchet() {
       clearCanvas(ctxBR, WBR, HBR);
-      const T1 = parseFloat(t1Slider?.value || 400);
-      const T2 = parseFloat(t2Slider?.value || 400);
+      const T1 = parseFloat(t1Slider?.value || 400); // vane temperature
+      const T2 = parseFloat(t2Slider?.value || 400); // ratchet temperature
       const maxT = Math.max(T1, T2);
 
       const vibX = thermalVibration(maxT);
       const vibY = thermalVibration(maxT);
 
-      // Left chamber background tinted by temperature
-      const bgLeft = tempToColor(T1);
-      ctxBR.fillStyle = bgLeft.replace('rgb', 'rgba').replace(')', ',0.08)');
-      ctxBR.fillRect(leftBox.x, leftBox.y, leftBox.w, leftBox.h);
+      // === LEFT: Ratchet chamber (T₂) ===
+      const bgR = tempToColor(T2);
+      ctxBR.fillStyle = bgR.replace('rgb', 'rgba').replace(')', ',0.08)');
+      ctxBR.fillRect(ratchetBox.x, ratchetBox.y, ratchetBox.w, ratchetBox.h);
       ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1;
-      ctxBR.strokeRect(leftBox.x, leftBox.y, leftBox.w, leftBox.h);
-
-      // Gas particles left
-      drawGasParticles(gasParticlesLeft, T1);
-
-      const vx = 100, vy = HBR / 2;
+      ctxBR.strokeRect(ratchetBox.x, ratchetBox.y, ratchetBox.w, ratchetBox.h);
+      drawGasParticles(gasParticlesRatchet, T2);
       ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
-      ctxBR.fillText('Gas at T₁ = ' + T1 + ' K', vx, HBR - 12);
+      ctxBR.fillText('T₂ = ' + T2 + ' K', rcx0, HBR - 5);
 
-      // Vane with thermal vibration
+      // Ratchet gear (sawtooth)
+      const rcx = rcx0 + vibX, rcy = cy0 + vibY;
       ctxBR.save();
-      ctxBR.translate(vx + vibX, vy + vibY);
+      ctxBR.translate(rcx, rcy);
       ctxBR.rotate(ratchetAngle);
-      for (let i = 0; i < 4; i++) {
-        ctxBR.rotate(Math.PI / 2);
-        ctxBR.fillStyle = COLORS.orange;
-        ctxBR.globalAlpha = 0.9;
-        ctxBR.fillRect(-3, 0, 6, 40);
-      }
-      ctxBR.globalAlpha = 1;
-      ctxBR.fillStyle = COLORS.textDim;
-      ctxBR.beginPath(); ctxBR.arc(0, 0, 6, 0, 2 * Math.PI); ctxBR.fill();
-      ctxBR.restore();
-
-      // Axle
-      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 2;
-      ctxBR.beginPath();
-      ctxBR.moveTo(170 + vibX, vy + vibY);
-      ctxBR.lineTo(280 + vibX, vy + vibY);
-      ctxBR.stroke();
-
-      // Right chamber background tinted by temperature
-      const rx = 350, ry = vy;
-      const bgRight = tempToColor(T2);
-      ctxBR.fillStyle = bgRight.replace('rgb', 'rgba').replace(')', ',0.08)');
-      ctxBR.fillRect(rightBox.x, rightBox.y, rightBox.w, rightBox.h);
-      ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1;
-      ctxBR.strokeRect(rightBox.x, rightBox.y, rightBox.w, rightBox.h);
-
-      // Gas particles right
-      drawGasParticles(gasParticlesRight, T2);
-
-      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
-      ctxBR.fillText('Ratchet at T₂ = ' + T2 + ' K', rx, HBR - 12);
-
-      // Ratchet gear with thermal vibration
-      ctxBR.save();
-      ctxBR.translate(rx + vibX, ry + vibY);
-      ctxBR.rotate(ratchetAngle);
-      const rr = 35;
       ctxBR.beginPath();
       for (let i = 0; i < nTeeth; i++) {
         const a1 = (i / nTeeth) * 2 * Math.PI;
@@ -4663,81 +4630,148 @@ function initCh5Vis() {
       ctxBR.beginPath(); ctxBR.arc(0, 0, 5, 0, 2 * Math.PI); ctxBR.fill();
       ctxBR.restore();
 
-      // Pawl - clicks with teeth as wheel rotates
-      const pawlDeflection = computePawlDeflection();
-      const pawlPivotX = rx + 48 + vibX;
-      const pawlPivotY = ry - 30 + vibY;
+      // Pawl: tip rides on the ratchet tooth surface
       const pawlVibX = thermalVibration(T2) * 0.5;
       const pawlVibY = thermalVibration(T2) * 0.5;
+      const pivX = rcx + pawlPivotOffX + pawlVibX;
+      const pivY = rcy + pawlPivotOffY + pawlVibY;
+      const centerToPivotAngle = Math.atan2(pivY - rcy, pivX - rcx);
+      const surfR = toothSurfaceRadius(centerToPivotAngle);
+      const tipLabX = rcx + surfR * Math.cos(centerToPivotAngle);
+      const tipLabY = rcy + surfR * Math.sin(centerToPivotAngle);
 
-      ctxBR.save();
-      ctxBR.translate(pawlPivotX + pawlVibX, pawlPivotY + pawlVibY);
+      // Bracket anchor: top-right of ratchet chamber
+      const bracketAnchorX = ratchetBox.x + ratchetBox.w - 8;
+      const bracketAnchorY = ratchetBox.y + 6;
+      ctxBR.strokeStyle = 'rgba(255,255,255,0.2)'; ctxBR.lineWidth = 2;
+      ctxBR.beginPath();
+      ctxBR.moveTo(bracketAnchorX, bracketAnchorY);
+      ctxBR.lineTo(pivX, pivY);
+      ctxBR.stroke();
+
       // Pivot dot
       ctxBR.fillStyle = COLORS.green;
-      ctxBR.beginPath(); ctxBR.arc(0, 0, 4, 0, 2 * Math.PI); ctxBR.fill();
-      // Pawl lever
-      const pawlLen = 28;
-      const basePawlAngle = Math.atan2(
-        (ry + vibY) - (pawlPivotY + pawlVibY),
-        (rx + vibX) - (pawlPivotX + pawlVibX)
-      );
-      const deflectedAngle = basePawlAngle + pawlDeflection;
-      const tipX = pawlLen * Math.cos(deflectedAngle);
-      const tipY = pawlLen * Math.sin(deflectedAngle);
+      ctxBR.beginPath(); ctxBR.arc(pivX, pivY, 4, 0, 2 * Math.PI); ctxBR.fill();
+
+      // Pawl lever from pivot to tip on tooth
       ctxBR.strokeStyle = COLORS.green; ctxBR.lineWidth = 2.5;
-      ctxBR.beginPath(); ctxBR.moveTo(0, 0); ctxBR.lineTo(tipX, tipY); ctxBR.stroke();
+      ctxBR.beginPath(); ctxBR.moveTo(pivX, pivY); ctxBR.lineTo(tipLabX, tipLabY); ctxBR.stroke();
+
       // Pawl tip triangle
+      const tipAngle = Math.atan2(rcy - pivY, rcx - pivX);
+      const triSize = 5;
       ctxBR.fillStyle = COLORS.green;
       ctxBR.beginPath();
-      const perpX = -Math.sin(deflectedAngle) * 4;
-      const perpY = Math.cos(deflectedAngle) * 4;
-      ctxBR.moveTo(tipX + Math.cos(deflectedAngle) * 4, tipY + Math.sin(deflectedAngle) * 4);
-      ctxBR.lineTo(tipX + perpX, tipY + perpY);
-      ctxBR.lineTo(tipX - perpX, tipY - perpY);
-      ctxBR.closePath();
-      ctxBR.fill();
-      // Spring coil from pivot upward
+      ctxBR.moveTo(tipLabX + triSize * Math.cos(tipAngle), tipLabY + triSize * Math.sin(tipAngle));
+      ctxBR.lineTo(tipLabX + triSize * Math.cos(tipAngle + 2.3), tipLabY + triSize * Math.sin(tipAngle + 2.3));
+      ctxBR.lineTo(tipLabX + triSize * Math.cos(tipAngle - 2.3), tipLabY + triSize * Math.sin(tipAngle - 2.3));
+      ctxBR.closePath(); ctxBR.fill();
+
+      // Spring zigzag from pivot toward bracket
       ctxBR.strokeStyle = 'rgba(102,187,106,0.5)'; ctxBR.lineWidth = 1.5;
+      const sDx = bracketAnchorX - pivX, sDy = bracketAnchorY - pivY;
+      const sDist = Math.sqrt(sDx * sDx + sDy * sDy);
+      const sUx = sDx / sDist, sUy = sDy / sDist;
+      const sPx = -sUy, sPy = sUx;
+      const nCoils = 5;
       ctxBR.beginPath();
-      const nCoils = 4;
-      ctxBR.moveTo(0, -8);
-      for (let i = 0; i <= nCoils; i++) {
+      ctxBR.moveTo(pivX, pivY);
+      for (let i = 1; i < nCoils; i++) {
         const t = i / nCoils;
-        const sy = -8 + (-12) * t;
-        const offset = (i % 2 === 0 ? 1 : -1) * 4;
-        ctxBR.lineTo(i === 0 || i === nCoils ? 0 : offset, sy);
+        const bx = pivX + sDx * t;
+        const by = pivY + sDy * t;
+        const offset = (i % 2 === 0 ? 1 : -1) * 5;
+        ctxBR.lineTo(bx + sPx * offset, by + sPy * offset);
       }
+      ctxBR.lineTo(bracketAnchorX, bracketAnchorY);
       ctxBR.stroke();
+
+      // === AXLE: connects ratchet hub to vane hub ===
+      const vcx = vcx0 + vibX, vcy = cy0 + vibY;
+      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 3;
+      ctxBR.beginPath();
+      ctxBR.moveTo(rcx, rcy);
+      ctxBR.lineTo(vcx, vcy);
+      ctxBR.stroke();
+      // Thin highlight to make it look like a rod
+      ctxBR.strokeStyle = 'rgba(255,255,255,0.15)'; ctxBR.lineWidth = 1;
+      ctxBR.beginPath();
+      ctxBR.moveTo(rcx, rcy - 1);
+      ctxBR.lineTo(vcx, vcy - 1);
+      ctxBR.stroke();
+
+      // === MIDDLE: Vane chamber (T₁) ===
+      const bgV = tempToColor(T1);
+      ctxBR.fillStyle = bgV.replace('rgb', 'rgba').replace(')', ',0.08)');
+      ctxBR.fillRect(vaneBox.x, vaneBox.y, vaneBox.w, vaneBox.h);
+      ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1;
+      ctxBR.strokeRect(vaneBox.x, vaneBox.y, vaneBox.w, vaneBox.h);
+      drawGasParticles(gasParticlesVane, T1);
+      ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
+      ctxBR.fillText('T₁ = ' + T1 + ' K', vcx0, HBR - 5);
+
+      // Vane (paddle wheel)
+      ctxBR.save();
+      ctxBR.translate(vcx, vcy);
+      ctxBR.rotate(ratchetAngle);
+      for (let i = 0; i < 4; i++) {
+        ctxBR.rotate(Math.PI / 2);
+        ctxBR.fillStyle = COLORS.orange;
+        ctxBR.globalAlpha = 0.9;
+        ctxBR.fillRect(-3, 0, 6, 42);
+      }
+      ctxBR.globalAlpha = 1;
+      ctxBR.fillStyle = COLORS.textDim;
+      ctxBR.beginPath(); ctxBR.arc(0, 0, 6, 0, 2 * Math.PI); ctxBR.fill();
       ctxBR.restore();
 
-      // Weight
-      const weightY = Math.max(40, Math.min(HBR - 50, vy + 30 - netRotation * 5));
-      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1;
-      ctxBR.beginPath(); ctxBR.moveTo(420, vy); ctxBR.lineTo(480, vy);
-      ctxBR.lineTo(480, weightY); ctxBR.stroke();
-      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1.5;
-      ctxBR.beginPath(); ctxBR.arc(480, vy, 5, 0, 2 * Math.PI); ctxBR.stroke();
-      ctxBR.fillStyle = COLORS.purple;
-      ctxBR.fillRect(470, weightY, 20, 20);
-      ctxBR.fillStyle = COLORS.text; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
-      ctxBR.fillText('m', 480, weightY + 14);
+      // === RIGHT: Weight on thread from axle ===
+      // Thread exits vane chamber right wall, goes to pulley, then down
+      const pulleyX = 420, pulleyY = cy0 - 10;
+      const pulleyR = 6;
+      const weightY = Math.max(pulleyY + 25, Math.min(HBR - 30, cy0 + 40 - netRotation * 5));
 
-      // Status
+      // Thread from vane axle to pulley
+      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1;
+      ctxBR.beginPath();
+      ctxBR.moveTo(vcx, vcy);
+      ctxBR.lineTo(pulleyX, pulleyY);
+      ctxBR.stroke();
+      // Pulley wheel
+      ctxBR.strokeStyle = COLORS.axis; ctxBR.lineWidth = 1.5;
+      ctxBR.beginPath(); ctxBR.arc(pulleyX, pulleyY, pulleyR, 0, 2 * Math.PI); ctxBR.stroke();
+      ctxBR.fillStyle = COLORS.bg;
+      ctxBR.beginPath(); ctxBR.arc(pulleyX, pulleyY, pulleyR - 1, 0, 2 * Math.PI); ctxBR.fill();
+      ctxBR.fillStyle = COLORS.textDim;
+      ctxBR.beginPath(); ctxBR.arc(pulleyX, pulleyY, 2, 0, 2 * Math.PI); ctxBR.fill();
+      // Thread from pulley down to weight
+      ctxBR.strokeStyle = COLORS.textDim; ctxBR.lineWidth = 1;
+      ctxBR.beginPath();
+      ctxBR.moveTo(pulleyX, pulleyY + pulleyR);
+      ctxBR.lineTo(pulleyX, weightY);
+      ctxBR.stroke();
+      // Weight block
+      ctxBR.fillStyle = COLORS.purple;
+      ctxBR.fillRect(pulleyX - 12, weightY, 24, 18);
+      ctxBR.fillStyle = COLORS.text; ctxBR.font = FONT_SM; ctxBR.textAlign = 'center';
+      ctxBR.fillText('m', pulleyX, weightY + 13);
+
+      // === Status text (upper right) ===
       const balanced = Math.abs(T1 - T2) < 15;
       ctxBR.fillStyle = balanced ? COLORS.red : COLORS.green;
       ctxBR.font = FONT; ctxBR.textAlign = 'left';
       if (balanced) {
-        ctxBR.fillText('T₁ ≈ T₂: No net work', 455, 40);
+        ctxBR.fillText('T₁ ≈ T₂: No net work', 445, 35);
       } else if (T1 > T2) {
-        ctxBR.fillText('T₁ > T₂: Forward ↻', 455, 40);
+        ctxBR.fillText('T₁ > T₂: Lifts weight', 445, 35);
       } else {
-        ctxBR.fillText('T₁ < T₂: Backward ↺', 455, 40);
+        ctxBR.fillText('T₁ < T₂: Drops weight', 445, 35);
       }
       ctxBR.fillStyle = COLORS.textDim; ctxBR.font = FONT_SM;
-      ctxBR.fillText('Net: ' + netRotation.toFixed(1) + ' rad', 455, 58);
+      ctxBR.fillText('Net: ' + netRotation.toFixed(1) + ' rad', 445, 53);
       if (!balanced) {
         const eta = Math.abs(T1 - T2) / Math.max(T1, T2);
-        ctxBR.fillText('η_Carnot = ' + (eta * 100).toFixed(0) + '%', 455, 73);
+        ctxBR.fillText('η = ' + (eta * 100).toFixed(0) + '%', 445, 68);
       }
 
       document.getElementById('ratchet-t1-val')?.replaceChildren(document.createTextNode(T1));
@@ -4757,8 +4791,8 @@ function initCh5Vis() {
       ratchetAngle += net + noise;
       netRotation += net;
 
-      updateGasParticles(gasParticlesLeft, leftBox, T1);
-      updateGasParticles(gasParticlesRight, rightBox, T2);
+      updateGasParticles(gasParticlesRatchet, ratchetBox, T2);
+      updateGasParticles(gasParticlesVane, vaneBox, T1);
 
       drawRatchet();
       activeAnimations['ratchet'] = requestAnimationFrame(animateRatchet);
@@ -4771,8 +4805,8 @@ function initCh5Vis() {
       rRunning = false;
       if (activeAnimations['ratchet']) cancelAnimationFrame(activeAnimations['ratchet']);
       ratchetAngle = 0; netRotation = 0;
-      initGasParticles(gasParticlesLeft, leftBox);
-      initGasParticles(gasParticlesRight, rightBox);
+      initGasParticles(gasParticlesRatchet, ratchetBox);
+      initGasParticles(gasParticlesVane, vaneBox);
       drawRatchet();
     });
     t1Slider?.addEventListener('input', drawRatchet);
