@@ -10261,7 +10261,25 @@ function initCh9Vis() {
       return inside;
     }
 
-    function drawQCDPhase() {
+    // Experimental probes - spread vertically along a diagonal, no overlapping
+    var probes = [
+      { mu: 15,   T: 330, label: 'Early Universe',  color: COLORS.pink,   align: 'left',   ox: 9, oy: 3,
+        tip: 'The entire universe was a quark-gluon plasma for the first ~10 \u03bcs after the Big Bang, at T > 150 MeV.' },
+      { mu: 15,   T: 210, label: 'LHC Pb+Pb',       color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
+        tip: 'Large Hadron Collider (CERN, Geneva). Pb+Pb collisions at \u221as = 5.02 TeV create QGP at T \u2248 300\u2013600 MeV and near-zero \u03bc_B.' },
+      { mu: 250,  T: 200, label: 'RHIC',             color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
+        tip: 'Relativistic Heavy Ion Collider (Brookhaven, NY). Au+Au collisions at \u221as = 200 GeV. First facility to confirm QGP creation (2005).' },
+      { mu: 500,  T: 180, label: 'RHIC BES-II',      color: COLORS.orange, align: 'left',   ox: 9, oy: 3,
+        tip: 'RHIC Beam Energy Scan Phase II. Scans \u221as = 3\u201320 GeV to search for the critical end point and the onset of deconfinement.' },
+      { mu: 800,  T: 135, label: 'FAIR / CBM',       color: COLORS.cyan,   align: 'left',   ox: 9, oy: 3,
+        tip: 'Facility for Antiproton and Ion Research (Darmstadt, Germany). CBM = Compressed Baryonic Matter experiment, probing the high-\u03bc_B region.' },
+      { mu: 940,  T: 0,   label: 'Ordinary nuclei',  color: '#4fc3f7',     align: 'center', ox: 0, oy: -10,
+        tip: 'Ground-state nuclear matter at \u03bc_B \u2248 938 MeV (the nucleon mass) and T \u2248 0. Every atom heavier than hydrogen.' },
+      { mu: 1400, T: 0,   label: 'Neutron stars',    color: COLORS.orange, align: 'center', ox: 0, oy: -10,
+        tip: 'Neutron star cores reach 2\u20138\u00d7 nuclear density. LIGO/Virgo mergers and NICER X-ray timing constrain the equation of state.' }
+    ];
+
+        function drawQCDPhase() {
       clearCanvas(qctx, QW, QH);
 
       // Axes
@@ -10366,23 +10384,7 @@ function initCh9Vis() {
         qctx.fillText(p.name, qx(p.lx), qy(p.ly) + 6);
       });
 
-      // Experimental probes - spread vertically along a diagonal, no overlapping
-      var probes = [
-        { mu: 15,   T: 330, label: 'Early Universe',  color: COLORS.pink,   align: 'left',   ox: 9, oy: 3,
-          tip: 'The entire universe was a quark-gluon plasma for the first ~10 \u03bcs after the Big Bang, at T > 150 MeV.' },
-        { mu: 15,   T: 210, label: 'LHC Pb+Pb',       color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
-          tip: 'Large Hadron Collider (CERN, Geneva). Pb+Pb collisions at \u221as = 5.02 TeV create QGP at T \u2248 300\u2013600 MeV and near-zero \u03bc_B.' },
-        { mu: 250,  T: 200, label: 'RHIC',             color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
-          tip: 'Relativistic Heavy Ion Collider (Brookhaven, NY). Au+Au collisions at \u221as = 200 GeV. First facility to confirm QGP creation (2005).' },
-        { mu: 500,  T: 180, label: 'RHIC BES-II',      color: COLORS.orange, align: 'left',   ox: 9, oy: 3,
-          tip: 'RHIC Beam Energy Scan Phase II. Scans \u221as = 3\u201320 GeV to search for the critical end point and the onset of deconfinement.' },
-        { mu: 800,  T: 135, label: 'FAIR / CBM',       color: COLORS.cyan,   align: 'left',   ox: 9, oy: 3,
-          tip: 'Facility for Antiproton and Ion Research (Darmstadt, Germany). CBM = Compressed Baryonic Matter experiment, probing the high-\u03bc_B region.' },
-        { mu: 940,  T: 0,   label: 'Ordinary nuclei',  color: '#4fc3f7',     align: 'center', ox: 0, oy: -10,
-          tip: 'Ground-state nuclear matter at \u03bc_B \u2248 938 MeV (the nucleon mass) and T \u2248 0. Every atom heavier than hydrogen.' },
-        { mu: 1400, T: 0,   label: 'Neutron stars',    color: COLORS.orange, align: 'center', ox: 0, oy: -10,
-          tip: 'Neutron star cores reach 2\u20138\u00d7 nuclear density. LIGO/Virgo mergers and NICER X-ray timing constrain the equation of state.' }
-      ];
+      // (probes array is defined above drawQCDPhase)
 
       qctx.font = '10px Inter, system-ui, sans-serif';
       probes.forEach(function(pr) {
