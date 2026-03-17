@@ -10338,7 +10338,11 @@ function initCh9Vis() {
       { mu: 940,  T: 0,   label: 'Ordinary nuclei',  color: '#4fc3f7',     align: 'center', ox: 0, oy: -10,
         tip: 'Ground-state nuclear matter at \u03bc_B \u2248 938 MeV (the nucleon mass) and T \u2248 0. Every atom heavier than hydrogen.' },
       { mu: 1400, T: 0,   label: 'Neutron stars',    color: COLORS.orange, align: 'center', ox: 0, oy: -10,
-        tip: 'Neutron star cores reach 2\u20138\u00d7 nuclear density. LIGO/Virgo mergers and NICER X-ray timing constrain the equation of state.' }
+        tip: 'Neutron star cores reach 2\u20138\u00d7 nuclear density. LIGO/Virgo mergers and NICER X-ray timing constrain the equation of state.' },
+      { mu: CEP.mu, T: CEP.T, label: 'CEP ?', color: '#ef5350', align: 'right', ox: -10, oy: 4,
+        tip: 'Critical End Point \u2014 conjectured terminus of the first-order deconfinement line, where the transition becomes a crossover. Its existence and location are major open questions; RHIC BES-II is searching for it via fluctuation observables.', isAnnotation: true },
+      { mu: nucLG_CP.mu, T: nucLG_CP.T, label: 'nuclear CP', color: '#4fc3f7', align: 'right', ox: -42, oy: -14,
+        tip: 'Nuclear liquid-gas critical point at T \u2248 17 MeV, \u03bc_B \u2248 923 MeV. The only experimentally confirmed critical point on this diagram. Measured via multifragmentation in heavy-ion collisions at E/A \u2248 30\u201350 MeV.', isAnnotation: true }
     ];
 
         function drawQCDPhase() {
@@ -10426,29 +10430,13 @@ function initCh9Vis() {
                  : qctx.lineTo(qx(nucLGpts[ni][0]), qy(nucLGpts[ni][1]));
       }
       qctx.stroke();
-      // Nuclear CP dot
-      qctx.fillStyle = '#4fc3f7';
-      qctx.beginPath(); qctx.arc(qx(nucLG_CP.mu), qy(nucLG_CP.T), 3.5, 0, 2 * Math.PI); qctx.fill();
-      // Leader line to label
-      qctx.strokeStyle = 'rgba(79,195,247,0.4)'; qctx.lineWidth = 1;
-      qctx.beginPath();
-      qctx.moveTo(qx(nucLG_CP.mu), qy(nucLG_CP.T));
-      qctx.lineTo(qx(nucLG_CP.mu) - 40, qy(nucLG_CP.T) - 30);
-      qctx.stroke();
-      qctx.fillStyle = '#4fc3f7';
-      qctx.font = '9px Inter, system-ui, sans-serif';
-      qctx.textAlign = 'right';
-      qctx.fillText('nuclear liquid-gas', qx(nucLG_CP.mu) - 42, qy(nucLG_CP.T) - 32);
-
-      // CEP dot
-      qctx.fillStyle = '#fff';
-      qctx.beginPath(); qctx.arc(qx(CEP.mu), qy(CEP.T), 5, 0, 2 * Math.PI); qctx.fill();
-      qctx.strokeStyle = '#ef5350'; qctx.lineWidth = 2;
-      qctx.beginPath(); qctx.arc(qx(CEP.mu), qy(CEP.T), 5, 0, 2 * Math.PI); qctx.stroke();
-      qctx.fillStyle = '#fff';
-      qctx.font = '10px Inter, system-ui, sans-serif';
-      qctx.textAlign = 'right';
-      qctx.fillText('CEP ?', qx(CEP.mu) - 10, qy(CEP.T) + 4);
+      // CEP and nuclear CP dots (labels drawn by probes loop)
+      [[CEP.mu, CEP.T, '#ef5350'], [nucLG_CP.mu, nucLG_CP.T, '#4fc3f7']].forEach(function(cp) {
+        qctx.fillStyle = '#fff';
+        qctx.beginPath(); qctx.arc(qx(cp[0]), qy(cp[1]), 5, 0, 2 * Math.PI); qctx.fill();
+        qctx.strokeStyle = cp[2]; qctx.lineWidth = 2;
+        qctx.beginPath(); qctx.arc(qx(cp[0]), qy(cp[1]), 5, 0, 2 * Math.PI); qctx.stroke();
+      });
 
       // Phase labels with cartoon icons
       phases.forEach(function(p) {
@@ -10466,6 +10454,7 @@ function initCh9Vis() {
       probes.forEach(function(pr) {
         var px = qx(pr.mu), py = qy(pr.T);
         var isHov = (pr === hoveredProbe);
+        if (pr.isAnnotation) return; // drawn separately as dots above
         // Diamond marker
         qctx.fillStyle = pr.color;
         qctx.save(); qctx.translate(px, py); qctx.rotate(Math.PI / 4);
