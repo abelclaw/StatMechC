@@ -11633,14 +11633,14 @@ function initCh9Vis() {
       h2o: [[0.5635,2.9947,0.0014],[0.7175,2.7166,0.0204],[0.7682,2.5934,0.0389],[0.8023,2.4993,0.0578],[0.8286,2.4187,0.0775],[0.8510,2.3437,0.0988],[0.8696,2.2757,0.1206],[0.8859,2.2106,0.1437],[0.9007,2.1473,0.1684],[0.9144,2.0828,0.1958],[0.9266,2.0200,0.2247],[0.9379,1.9562,0.2563],[0.9485,1.8905,0.2914],[0.9583,1.8212,0.3309],[0.9678,1.7441,0.3780],[0.9765,1.6598,0.4326],[0.9847,1.5600,0.5016],[0.9925,1.4328,0.6008],[0.9998,1.1236,0.8759]]
     };
     const substances = [
-      { id: 'cs-ne', name: 'Ne', color: COLORS.blue, data: nistData.ne },
-      { id: 'cs-ar', name: 'Ar', color: COLORS.green, data: nistData.ar },
-      { id: 'cs-kr', name: 'Kr', color: COLORS.red, data: nistData.kr },
-      { id: 'cs-xe', name: 'Xe', color: COLORS.orange, data: nistData.xe },
-      { id: 'cs-n2', name: 'N₂', color: COLORS.purple, data: nistData.n2 },
-      { id: 'cs-o2', name: 'O₂', color: COLORS.cyan, data: nistData.o2 },
-      { id: 'cs-co2', name: 'CO₂', color: COLORS.yellow, data: nistData.co2 },
-      { id: 'cs-h2o', name: 'H₂O', color: COLORS.pink, data: nistData.h2o },
+      { id: 'cs-ne', name: 'Ne', color: COLORS.blue, data: nistData.ne, Tc: 44.5, nc: 23.9 },
+      { id: 'cs-ar', name: 'Ar', color: COLORS.green, data: nistData.ar, Tc: 150.7, nc: 13.4 },
+      { id: 'cs-kr', name: 'Kr', color: COLORS.red, data: nistData.kr, Tc: 209.5, nc: 10.9 },
+      { id: 'cs-xe', name: 'Xe', color: COLORS.orange, data: nistData.xe, Tc: 289.7, nc: 8.4 },
+      { id: 'cs-n2', name: 'N₂', color: COLORS.purple, data: nistData.n2, Tc: 126.2, nc: 11.2 },
+      { id: 'cs-o2', name: 'O₂', color: COLORS.cyan, data: nistData.o2, Tc: 154.6, nc: 13.6 },
+      { id: 'cs-co2', name: 'CO₂', color: COLORS.yellow, data: nistData.co2, Tc: 304.1, nc: 10.6 },
+      { id: 'cs-h2o', name: 'H₂O', color: COLORS.pink, data: nistData.h2o, Tc: 647.1, nc: 17.9 },
     ];
 
     function drawCorresponding() {
@@ -11705,7 +11705,7 @@ function initCh9Vis() {
       ctxCS.textAlign = 'left';
       ctxCS.fillText('Critical point', cpx + 10, cpy - 5);
 
-      // Legend
+      // Legend with critical constants
       let ly = oy + 5;
       substances.forEach(sub => {
         const cb = document.getElementById(sub.id);
@@ -11714,7 +11714,7 @@ function initCh9Vis() {
         ctxCS.beginPath(); ctxCS.arc(ox + pw - 15, ly + 5, 4, 0, 2 * Math.PI); ctxCS.fill();
         ctxCS.font = FONT_SM;
         ctxCS.textAlign = 'right';
-        ctxCS.fillText(sub.name, ox + pw - 22, ly + 9);
+        ctxCS.fillText(sub.name + '  Tc=' + sub.Tc + ' K, nc=' + sub.nc + ' mol/L', ox + pw - 22, ly + 9);
         ly += 16;
       });
 
