@@ -10199,7 +10199,7 @@ function initCh9Vis() {
         name: 'Quark-Gluon Plasma',
         color: 'rgba(239,83,80,0.18)',
         border: '#ef5350',
-        poly: [[0, 165], [0, 350], [700, 350], [700, 250], [1100, 165]],
+        poly: [[0, 165], [0, 350], [1700, 350], [1700, 165], [1100, 165]],
         lx: 270, ly: 275, icon: 'quarks',
         desc: 'Quarks and gluons are deconfined \u2014 they move freely instead of being bound inside protons and neutrons. This is the state of the universe microseconds after the Big Bang, and is recreated briefly in heavy-ion collisions at RHIC and the LHC.',
         expt: 'Early universe, RHIC Au+Au, LHC Pb+Pb'
