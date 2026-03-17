@@ -19097,3 +19097,4 @@ function initCh15Vis() {
     drawSizes();
   }
 }
+}
