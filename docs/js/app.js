@@ -10355,19 +10355,8 @@ function initCh9Vis() {
       qctx.textAlign = 'center';
       qctx.fillText('1st order (conjectured)', qx(870), qy(boundaryT(870)) + 16);
 
-      // Nuclear liquid-gas boundary (low T, around mu~920-1250)
-      qctx.strokeStyle = '#4fc3f7'; qctx.lineWidth = 1.8;
-      qctx.beginPath();
-      qctx.moveTo(qx(1250), qy(0));
-      qctx.quadraticCurveTo(qx(1100), qy(8), qx(nuclearCP.mu), qy(nuclearCP.T));
-      qctx.stroke();
-
-      // Nuclear CP dot
-      qctx.fillStyle = '#4fc3f7';
-      qctx.beginPath(); qctx.arc(qx(nuclearCP.mu), qy(nuclearCP.T), 4, 0, 2 * Math.PI); qctx.fill();
-      qctx.font = '9px Inter, system-ui, sans-serif';
-      qctx.textAlign = 'right';
-      qctx.fillText('nuclear CP', qx(nuclearCP.mu) - 8, qy(nuclearCP.T) - 5);
+      // Nuclear liquid-gas transition (T~17 MeV) is too small to draw at this
+      // scale — noted in the Nuclear Matter tooltip instead.
 
       // CEP dot
       qctx.fillStyle = '#fff';
