@@ -10770,15 +10770,23 @@ function initCh9Vis() {
   if (cPT) {
     const ptS = setupCanvas(cPT);
     const ctxPT = ptS.ctx, WPT = ptS.W, HPT = ptS.H;
+    // Thermodynamic data with Clausius-Clapeyron parameters
+    // Lvap/Lsub = latent heats at triple point (kJ/mol)
+    // dTdP_sl = dT/dP for solid-liquid line (K/atm)
+    const R_kJ = 8.314e-3; // kJ/(mol·K)
     const substances = {
-      co2: { name: 'CO\u2082', Tt: 216.6, Pt: 5.11, Tc: 304.2, Pc: 72.8, slopeSign: 1, Tmax: 700, Pmax: 300 },
-      ar:  { name: 'Ar',       Tt: 83.8,  Pt: 0.68, Tc: 150.7, Pc: 48.0, slopeSign: 1, Tmax: 700, Pmax: 300 },
-      h2o: { name: 'H\u2082O', Tt: 273.16,Pt: 0.006,Tc: 647.1, Pc: 217.7,slopeSign:-1, Tmax: 700, Pmax: 300 },
-      n2:  { name: 'N\u2082',  Tt: 63.15, Pt: 0.124,Tc: 126.2, Pc: 33.5, slopeSign: 1, Tmax: 700, Pmax: 300 },
-      o2:  { name: 'O\u2082',  Tt: 54.36, Pt: 0.0015,Tc: 154.6,Pc: 49.8, slopeSign: 1, Tmax: 700, Pmax: 300 },
-      nh3: { name: 'NH\u2083', Tt: 195.4, Pt: 0.060,Tc: 405.5, Pc: 111.3,slopeSign: 1, Tmax: 700, Pmax: 300 },
-      ch4: { name: 'CH\u2084', Tt: 90.7,  Pt: 0.117,Tc: 190.6, Pc: 45.4, slopeSign: 1, Tmax: 700, Pmax: 300 }
+      co2: { name: 'CO\u2082', Tt: 216.55, Pt: 5.11,    Tc: 304.13, Pc: 72.8,  Lvap: 15.3, Lsub: 26.1, slopeSign: 1,  dTdP_sl: 0.28 },
+      ar:  { name: 'Ar',       Tt: 83.81,  Pt: 0.680,   Tc: 150.69, Pc: 48.0,  Lvap: 6.53, Lsub: 7.74, slopeSign: 1,  dTdP_sl: 0.25 },
+      h2o: { name: 'H\u2082O', Tt: 273.16, Pt: 0.00603, Tc: 647.10, Pc: 217.7, Lvap: 45.1, Lsub: 51.1, slopeSign:-1,  dTdP_sl: 0.0075 },
+      n2:  { name: 'N\u2082',  Tt: 63.15,  Pt: 0.123,   Tc: 126.19, Pc: 33.5,  Lvap: 5.58, Lsub: 6.88, slopeSign: 1,  dTdP_sl: 0.24 },
+      o2:  { name: 'O\u2082',  Tt: 54.36,  Pt: 0.00146, Tc: 154.58, Pc: 49.8,  Lvap: 6.82, Lsub: 8.42, slopeSign: 1,  dTdP_sl: 0.22 },
+      nh3: { name: 'NH\u2083', Tt: 195.40, Pt: 0.0597,  Tc: 405.56, Pc: 111.3, Lvap: 25.1, Lsub: 31.2, slopeSign: 1,  dTdP_sl: 0.20 },
+      ch4: { name: 'CH\u2084', Tt: 90.69,  Pt: 0.115,   Tc: 190.56, Pc: 45.4,  Lvap: 8.18, Lsub: 9.70, slopeSign: 1,  dTdP_sl: 0.26 }
     };
+    // Clausius-Clapeyron: P(T) = Pt * exp((L/R)(1/Tt - 1/T))
+    function ccPressure(T, Tt, Pt, L) {
+      return Pt * Math.exp((L / R_kJ) * (1/Tt - 1/T));
+    }
     let currentSub = 'co2';
     let mxPT = -1, myPT = -1;
 
@@ -10786,31 +10794,34 @@ function initCh9Vis() {
       clearCanvas(ctxPT, WPT, HPT);
       const sub = substances[currentSub];
       const ox = 80, oy = 30, pw = WPT - 130, ph = HPT - 80;
-      // Log scale for pressure: find range from sublimation low to Pmax
-      const Pmin = Math.max(sub.Pt * Math.exp(-3), 1e-4);
-      const logPmin = Math.log10(Pmin), logPmax = Math.log10(sub.Pmax);
-      const txF = (T) => ox + T / sub.Tmax * pw;
+
+      // Axis ranges: T from 0 to beyond Tc, log P from sublimation low to above Pc
+      const Tmax = sub.Tc * 1.3;
+      const Pmax = sub.Pc * 1.5;
+      const Tlow = sub.Tt * 0.3;
+      const Plow = ccPressure(Tlow, sub.Tt, sub.Pt, sub.Lsub);
+      const logPmin = Math.floor(Math.log10(Math.max(Plow, 1e-12)));
+      const logPmax = Math.ceil(Math.log10(Pmax));
+
+      const txF = (T) => ox + T / Tmax * pw;
       const pyF = (P) => {
         if (P <= 0) return oy + ph;
-        const lp = Math.log10(P);
-        return oy + ph - (lp - logPmin) / (logPmax - logPmin) * ph;
+        return oy + ph - (Math.log10(P) - logPmin) / (logPmax - logPmin) * ph;
       };
 
       drawAxes(ctxPT, ox, oy, pw, ph, { xLabel: 'Temperature (K)', yLabel: 'Pressure (atm)', yLabelOffset: 55 });
 
-      // Ticks
+      // Temperature ticks
       ctxPT.fillStyle = COLORS.textDim; ctxPT.font = FONT_SM; ctxPT.textAlign = 'center';
-      const tStep = sub.Tmax > 500 ? 100 : 50;
-      for (let T = 0; T <= sub.Tmax; T += tStep) ctxPT.fillText(T.toFixed(0), txF(T), oy + ph + 14);
+      const tStep = Tmax > 500 ? 100 : (Tmax > 200 ? 50 : 20);
+      for (let T = 0; T <= Tmax; T += tStep) ctxPT.fillText(T.toFixed(0), txF(T), oy + ph + 14);
+
+      // Log-scale pressure ticks
       ctxPT.textAlign = 'right';
-      // Log-scale pressure ticks: powers of 10
-      const minExp = Math.floor(logPmin), maxExp = Math.ceil(logPmax);
-      for (let exp = minExp; exp <= maxExp; exp++) {
+      for (let exp = logPmin; exp <= logPmax; exp++) {
         const P = Math.pow(10, exp);
-        if (P < Pmin * 0.9 || P > sub.Pmax * 1.1) continue;
-        const label = exp >= 0 ? P.toFixed(0) : P.toExponential(0);
+        const label = exp >= 0 ? P.toFixed(0) : '10^' + exp;
         ctxPT.fillText(label, ox - 5, pyF(P) + 4);
-        // Light gridline
         ctxPT.strokeStyle = 'rgba(255,255,255,0.06)'; ctxPT.lineWidth = 0.5;
         ctxPT.beginPath(); ctxPT.moveTo(ox, pyF(P)); ctxPT.lineTo(ox + pw, pyF(P)); ctxPT.stroke();
       }
@@ -10818,63 +10829,88 @@ function initCh9Vis() {
       const tpx = txF(sub.Tt), tpy = pyF(sub.Pt);
       const cpx = txF(sub.Tc), cpy = pyF(sub.Pc);
 
-      // Solid-liquid line
+      // --- Sublimation curve (solid-gas): Clausius-Clapeyron with Lsub ---
+      ctxPT.strokeStyle = COLORS.red; ctxPT.lineWidth = 2.5; ctxPT.beginPath();
+      for (let i = 0; i <= 100; i++) {
+        const T = Tlow + (i / 100) * (sub.Tt - Tlow);
+        const P = ccPressure(T, sub.Tt, sub.Pt, sub.Lsub);
+        if (i === 0) ctxPT.moveTo(txF(T), pyF(P)); else ctxPT.lineTo(txF(T), pyF(P));
+      }
+      ctxPT.stroke();
+
+      // --- Vaporization curve (liquid-gas): CC with Lvap, scaled to hit critical point ---
+      ctxPT.strokeStyle = COLORS.green; ctxPT.lineWidth = 2.5; ctxPT.beginPath();
+      ctxPT.moveTo(tpx, tpy);
+      // CC overshoots Pc typically, so rescale in log-space to pass through (Tc, Pc) exactly
+      const logPt = Math.log10(sub.Pt), logPc = Math.log10(sub.Pc);
+      const logPcc_at_Tc = Math.log10(ccPressure(sub.Tc, sub.Tt, sub.Pt, sub.Lvap));
+      const ccScale = (logPc - logPt) / (logPcc_at_Tc - logPt);
+      for (let i = 1; i <= 100; i++) {
+        const f = i / 100;
+        const T = sub.Tt + f * (sub.Tc - sub.Tt);
+        const logPcc = Math.log10(ccPressure(T, sub.Tt, sub.Pt, sub.Lvap));
+        const logP = logPt + (logPcc - logPt) * ccScale;
+        ctxPT.lineTo(txF(T), pyF(Math.pow(10, logP)));
+      }
+      ctxPT.stroke();
+
+      // --- Solid-liquid line: Clapeyron with dT/dP slope ---
       ctxPT.strokeStyle = COLORS.blue; ctxPT.lineWidth = 2.5; ctxPT.beginPath();
       ctxPT.moveTo(tpx, tpy);
-      ctxPT.lineTo(txF(sub.Tt + sub.slopeSign * (sub.Pmax - sub.Pt) * 0.04), pyF(sub.Pmax));
-      ctxPT.stroke();
-
-      // Liquid-gas curve (triple to critical)
-      ctxPT.strokeStyle = COLORS.green; ctxPT.lineWidth = 2.5; ctxPT.beginPath(); ctxPT.moveTo(tpx, tpy);
       for (let i = 1; i <= 100; i++) {
-        const f = i / 100;
-        ctxPT.lineTo(txF(sub.Tt + f * (sub.Tc - sub.Tt)), pyF(sub.Pt + (sub.Pc - sub.Pt) * Math.pow(f, 0.7)));
+        const logP = Math.log10(sub.Pt) + (i / 100) * (logPmax - Math.log10(sub.Pt));
+        const P = Math.pow(10, logP);
+        const T = sub.Tt + sub.slopeSign * sub.dTdP_sl * (P - sub.Pt);
+        if (T < 0 || T > Tmax) break;
+        ctxPT.lineTo(txF(T), pyF(P));
       }
       ctxPT.stroke();
 
-      // Solid-gas curve (sublimation)
-      ctxPT.strokeStyle = COLORS.red; ctxPT.lineWidth = 2.5; ctxPT.beginPath(); ctxPT.moveTo(tpx, tpy);
-      for (let i = 1; i <= 100; i++) {
-        const f = i / 100;
-        ctxPT.lineTo(txF(sub.Tt * (1 - f * 0.8)), pyF(Math.max(sub.Pt * Math.exp(-3 * f), 0)));
-      }
-      ctxPT.stroke();
-
-      // Region labels — positioned in log-space
+      // Region labels
       ctxPT.font = FONT_LG; ctxPT.textAlign = 'center';
-      const labelPHigh = Math.pow(10, logPmin + 0.75 * (logPmax - logPmin));
-      const labelPMid  = Math.pow(10, logPmin + 0.6  * (logPmax - logPmin));
-      const labelPLow  = Math.pow(10, logPmin + 0.25 * (logPmax - logPmin));
-      ctxPT.fillStyle = COLORS.blue; ctxPT.fillText('SOLID', txF(sub.Tt * 0.35), pyF(labelPHigh));
-      ctxPT.fillStyle = COLORS.green; ctxPT.fillText('LIQUID', txF((sub.Tt + sub.Tc) / 2), pyF(labelPHigh));
-      ctxPT.fillStyle = COLORS.red; ctxPT.fillText('GAS', txF(sub.Tc * 0.85), pyF(labelPLow));
-      ctxPT.fillStyle = COLORS.textDim; ctxPT.font = FONT_SM; ctxPT.fillText('Supercritical', cpx + 30, oy + 15);
+      const logPmid = (logPmin + logPmax) / 2;
+      ctxPT.fillStyle = COLORS.blue;
+      ctxPT.fillText('SOLID', txF(sub.Tt * 0.4), pyF(Math.pow(10, logPmid + (logPmax - logPmin) * 0.15)));
+      ctxPT.fillStyle = COLORS.green;
+      ctxPT.fillText('LIQUID', txF((sub.Tt + sub.Tc) * 0.5), pyF(Math.pow(10, logPmid + (logPmax - logPmin) * 0.2)));
+      ctxPT.fillStyle = COLORS.red;
+      ctxPT.fillText('GAS', txF(sub.Tc * 0.7), pyF(Math.pow(10, logPmid - (logPmax - logPmin) * 0.25)));
+      ctxPT.fillStyle = COLORS.textDim; ctxPT.font = FONT_SM;
+      ctxPT.fillText('Supercritical', txF(sub.Tc * 1.1), pyF(Math.pow(10, logPmid + (logPmax - logPmin) * 0.1)));
 
-      // Points
+      // Triple point and critical point markers
       ctxPT.fillStyle = '#fff';
       ctxPT.beginPath(); ctxPT.arc(tpx, tpy, 5, 0, 2 * Math.PI); ctxPT.fill();
       ctxPT.beginPath(); ctxPT.arc(cpx, cpy, 5, 0, 2 * Math.PI); ctxPT.fill();
       ctxPT.fillStyle = COLORS.text; ctxPT.font = FONT_SM; ctxPT.textAlign = 'left';
-      ctxPT.fillText('Triple (' + sub.Tt.toFixed(1) + ' K, ' + sub.Pt.toFixed(2) + ' atm)', tpx + 8, tpy + 5);
+      const ptLabel = sub.Pt >= 1 ? sub.Pt.toFixed(1) : sub.Pt.toPrecision(3);
+      ctxPT.fillText('Triple (' + sub.Tt.toFixed(1) + ' K, ' + ptLabel + ' atm)', tpx + 8, tpy + 5);
       ctxPT.fillText('Critical (' + sub.Tc.toFixed(1) + ' K, ' + sub.Pc.toFixed(1) + ' atm)', cpx + 8, cpy - 8);
 
       // STP marker
-      if (293 < sub.Tmax && 1 < sub.Pmax) {
+      if (293 < Tmax && 1 < Pmax) {
         ctxPT.fillStyle = COLORS.yellow;
         ctxPT.beginPath(); ctxPT.arc(txF(293), pyF(1), 4, 0, 2 * Math.PI); ctxPT.fill();
         ctxPT.font = FONT_SM; ctxPT.fillText('STP', txF(293) + 7, pyF(1) + 4);
       }
 
+      // Title
       ctxPT.fillStyle = COLORS.text; ctxPT.font = FONT_LG; ctxPT.textAlign = 'left';
       ctxPT.fillText('Phase Diagram: ' + sub.name, ox + 5, oy + 15);
 
-      // Hover
+      // Anomalous slope note for water
+      if (currentSub === 'h2o') {
+        ctxPT.fillStyle = COLORS.orange; ctxPT.font = FONT_SM; ctxPT.textAlign = 'left';
+        ctxPT.fillText('Note: solid-liquid slope is negative (ice is less dense than water)', ox + 5, oy + ph + 28);
+      }
+
+      // Hover crosshairs and readout
       if (mxPT >= ox && mxPT <= ox + pw && myPT >= oy && myPT <= oy + ph) {
         ctxPT.strokeStyle = 'rgba(255,255,255,0.2)'; ctxPT.lineWidth = 0.5; ctxPT.setLineDash([3, 3]);
         ctxPT.beginPath(); ctxPT.moveTo(mxPT, oy); ctxPT.lineTo(mxPT, oy + ph); ctxPT.stroke();
         ctxPT.beginPath(); ctxPT.moveTo(ox, myPT); ctxPT.lineTo(ox + pw, myPT); ctxPT.stroke();
         ctxPT.setLineDash([]);
-        const hT2 = (mxPT - ox) / pw * sub.Tmax;
+        const hT2 = (mxPT - ox) / pw * Tmax;
         const hLogP = logPmin + (1 - (myPT - oy) / ph) * (logPmax - logPmin);
         const hP = Math.pow(10, hLogP);
         const pStr = hP >= 1 ? hP.toFixed(1) : hP.toExponential(2);
