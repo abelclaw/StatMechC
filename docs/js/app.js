@@ -11442,14 +11442,19 @@ function initCh9Vis() {
         var iPts = sample(p.iVal);
         var mPts = showMF ? sample(p.mfVal) : [];
 
-        // Determine y scale from theory + data
+        // Determine y scale — for diverging quantities, use 85th percentile
+        // of data so the curve rises off the top near Tc (showing divergence)
+        // instead of squashing everything into the upper portion
         var yMax = 0;
-        for (var k = 0; k < iPts.length; k++) yMax = Math.max(yMax, iPts[k].y);
-        for (var k = 0; k < mPts.length; k++) yMax = Math.max(yMax, mPts[k].y);
-        for (var k = 0; k < p.data.length; k++) yMax = Math.max(yMax, p.data[k].y);
-        // For diverging quantities, cap so the curve isn't just a spike
-        if (p.diverges) yMax = Math.min(yMax, yMax * 1.0); // use actual
-        yMax *= 1.12; // top padding
+        if (p.diverges) {
+          var sortedY = p.data.map(function(d) { return d.y; }).sort(function(a,b) { return a-b; });
+          yMax = (sortedY[Math.floor(sortedY.length * 0.85)] || 1) * 2.0;
+        } else {
+          for (var k = 0; k < iPts.length; k++) yMax = Math.max(yMax, iPts[k].y);
+          for (var k = 0; k < mPts.length; k++) yMax = Math.max(yMax, mPts[k].y);
+          for (var k = 0; k < p.data.length; k++) yMax = Math.max(yMax, p.data[k].y);
+          yMax *= 1.12;
+        }
 
         function toPixel(t, y) {
           return {
