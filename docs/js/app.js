@@ -10212,6 +10212,7 @@ function initCh9Vis() {
     ];
 
     let hoveredPhase = null;
+    var hoveredProbe = null;
     let mouseX = -1, mouseY = -1;
 
     function pointInPoly(px, py, verts) {
@@ -10332,25 +10333,43 @@ function initCh9Vis() {
 
       // Experimental probes - spread vertically along a diagonal, no overlapping
       var probes = [
-        { mu: 15,   T: 330, label: 'Early Universe',  color: COLORS.pink,   align: 'left',   ox: 9, oy: 3 },
-        { mu: 15,   T: 210, label: 'LHC Pb+Pb',       color: COLORS.yellow, align: 'left',   ox: 9, oy: 3 },
-        { mu: 250,  T: 200, label: 'RHIC',             color: COLORS.yellow, align: 'left',   ox: 9, oy: 3 },
-        { mu: 500,  T: 180, label: 'RHIC BES-II',      color: COLORS.orange, align: 'left',   ox: 9, oy: 3 },
-        { mu: 800,  T: 135, label: 'FAIR / CBM',       color: COLORS.cyan,   align: 'left',   ox: 9, oy: 3 },
-        { mu: 940,  T: 0,   label: 'Ordinary nuclei',  color: '#4fc3f7',     align: 'center', ox: 0, oy: -10 },
-        { mu: 1400, T: 0,   label: 'Neutron stars',    color: COLORS.orange, align: 'center', ox: 0, oy: -10 }
+        { mu: 15,   T: 330, label: 'Early Universe',  color: COLORS.pink,   align: 'left',   ox: 9, oy: 3,
+          tip: 'The entire universe was a quark-gluon plasma for the first ~10 \u03bcs after the Big Bang, at T > 150 MeV.' },
+        { mu: 15,   T: 210, label: 'LHC Pb+Pb',       color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
+          tip: 'Large Hadron Collider (CERN, Geneva). Pb+Pb collisions at \u221as = 5.02 TeV create QGP at T \u2248 300\u2013600 MeV and near-zero \u03bc_B.' },
+        { mu: 250,  T: 200, label: 'RHIC',             color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
+          tip: 'Relativistic Heavy Ion Collider (Brookhaven, NY). Au+Au collisions at \u221as = 200 GeV. First facility to confirm QGP creation (2005).' },
+        { mu: 500,  T: 180, label: 'RHIC BES-II',      color: COLORS.orange, align: 'left',   ox: 9, oy: 3,
+          tip: 'RHIC Beam Energy Scan Phase II. Scans \u221as = 3\u201320 GeV to search for the critical end point and the onset of deconfinement.' },
+        { mu: 800,  T: 135, label: 'FAIR / CBM',       color: COLORS.cyan,   align: 'left',   ox: 9, oy: 3,
+          tip: 'Facility for Antiproton and Ion Research (Darmstadt, Germany). CBM = Compressed Baryonic Matter experiment, probing the high-\u03bc_B region.' },
+        { mu: 940,  T: 0,   label: 'Ordinary nuclei',  color: '#4fc3f7',     align: 'center', ox: 0, oy: -10,
+          tip: 'Ground-state nuclear matter at \u03bc_B \u2248 938 MeV (the nucleon mass) and T \u2248 0. Every atom heavier than hydrogen.' },
+        { mu: 1400, T: 0,   label: 'Neutron stars',    color: COLORS.orange, align: 'center', ox: 0, oy: -10,
+          tip: 'Neutron star cores reach 2\u20138\u00d7 nuclear density. LIGO/Virgo mergers and NICER X-ray timing constrain the equation of state.' }
       ];
 
       qctx.font = '10px Inter, system-ui, sans-serif';
       probes.forEach(function(pr) {
         var px = qx(pr.mu), py = qy(pr.T);
+        var isHov = (pr === hoveredProbe);
+        // Diamond marker
         qctx.fillStyle = pr.color;
         qctx.save(); qctx.translate(px, py); qctx.rotate(Math.PI / 4);
         qctx.fillRect(-3, -3, 6, 6);
         qctx.restore();
-        qctx.fillStyle = pr.color;
+        // Label (bold if hovered)
+        qctx.fillStyle = isHov ? '#fff' : pr.color;
+        qctx.font = isHov ? 'bold 11px Inter, system-ui, sans-serif' : '10px Inter, system-ui, sans-serif';
         qctx.textAlign = pr.align;
         qctx.fillText(pr.label, px + pr.ox, py + pr.oy);
+        // Underline when hovered
+        if (isHov) {
+          var tw = qctx.measureText(pr.label).width;
+          var ulx = pr.align === 'center' ? px + pr.ox - tw/2 : px + pr.ox;
+          qctx.strokeStyle = pr.color; qctx.lineWidth = 0.8;
+          qctx.beginPath(); qctx.moveTo(ulx, py + pr.oy + 2); qctx.lineTo(ulx + tw, py + pr.oy + 2); qctx.stroke();
+        }
       });
 
       // Schematic watermark
@@ -10359,8 +10378,10 @@ function initCh9Vis() {
       qctx.textAlign = 'right';
       qctx.fillText('schematic \u2014 not to scale', qox + qpw - 2, qoy + 12);
 
-      // Hover tooltip
-      if (hoveredPhase && mouseX > 0)
+      // Hover tooltips
+      if (hoveredProbe && mouseX > 0)
+        drawProbeTip(qctx, hoveredProbe, mouseX, mouseY, QW, QH);
+      else if (hoveredPhase && mouseX > 0)
         drawQCDTooltip(qctx, hoveredPhase, mouseX, mouseY, QW, QH);
     }
 
@@ -10478,18 +10499,83 @@ function initCh9Vis() {
       }
     }
 
+    function drawProbeTip(ctx, pr, mx, my, W, H) {
+      ctx.font = '11px Inter, system-ui, sans-serif';
+      var maxW = 230;
+      var lines = [{ text: pr.label, bold: true }];
+      var ln = '';
+      var words = pr.tip.split(' ');
+      for (var w = 0; w < words.length; w++) {
+        var t = ln + (ln ? ' ' : '') + words[w];
+        if (ctx.measureText(t).width > maxW - 14) { lines.push({ text: ln }); ln = words[w]; }
+        else ln = t;
+      }
+      if (ln) lines.push({ text: ln });
+
+      var lh = 15, pad = 7;
+      var bW = maxW, bH = lines.length * lh + pad * 2;
+      var tx = mx + 12, ty = my - bH - 8;
+      if (tx + bW > W - 4) tx = mx - bW - 12;
+      if (ty < 2) ty = my + 12;
+
+      ctx.fillStyle = 'rgba(12,20,30,0.95)';
+      ctx.strokeStyle = pr.color; ctx.lineWidth = 1.5;
+      var r = 4;
+      ctx.beginPath();
+      ctx.moveTo(tx+r,ty); ctx.lineTo(tx+bW-r,ty);
+      ctx.arcTo(tx+bW,ty,tx+bW,ty+r,r); ctx.lineTo(tx+bW,ty+bH-r);
+      ctx.arcTo(tx+bW,ty+bH,tx+bW-r,ty+bH,r); ctx.lineTo(tx+r,ty+bH);
+      ctx.arcTo(tx,ty+bH,tx,ty+bH-r,r); ctx.lineTo(tx,ty+r);
+      ctx.arcTo(tx,ty,tx+r,ty,r);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      var yy = ty + pad + 11;
+      for (var li = 0; li < lines.length; li++) {
+        var l = lines[li];
+        ctx.fillStyle = l.bold ? '#fff' : 'rgba(232,236,241,0.88)';
+        ctx.font = l.bold ? 'bold 12px Inter, system-ui, sans-serif' : '10.5px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(l.text, tx + pad, yy);
+        yy += lh;
+      }
+    }
+
     cQCD.addEventListener('mousemove', function(e) {
       var rect = cQCD.getBoundingClientRect();
       mouseX = e.clientX - rect.left; mouseY = e.clientY - rect.top;
-      hoveredPhase = null;
-      for (var i = phases.length - 1; i >= 0; i--) {
-        if (pointInPoly(mouseX, mouseY, phases[i].poly)) { hoveredPhase = phases[i]; break; }
+      // Check probes first (small hit radius)
+      hoveredProbe = null;
+      for (var j = 0; j < probes.length; j++) {
+        var ppx = qx(probes[j].mu), ppy = qy(probes[j].T);
+        // Hit test: within 30px of the diamond marker or label area
+        var dx = mouseX - ppx, dy = mouseY - ppy;
+        // Measure label width for hit area
+        qctx.font = '10px Inter, system-ui, sans-serif';
+        var lw = qctx.measureText(probes[j].label).width;
+        var lx0, lx1, ly0, ly1;
+        if (probes[j].align === 'center') {
+          lx0 = ppx - lw/2 - 4; lx1 = ppx + lw/2 + 4;
+          ly0 = ppy + probes[j].oy - 12; ly1 = ppy + 6;
+        } else {
+          lx0 = ppx - 6; lx1 = ppx + probes[j].ox + lw + 4;
+          ly0 = ppy + probes[j].oy - 10; ly1 = ppy + probes[j].oy + 6;
+        }
+        if (mouseX >= lx0 && mouseX <= lx1 && mouseY >= ly0 && mouseY <= ly1) {
+          hoveredProbe = probes[j]; break;
+        }
       }
-      cQCD.style.cursor = hoveredPhase ? 'pointer' : 'default';
+      // Then check phase regions
+      hoveredPhase = null;
+      if (!hoveredProbe) {
+        for (var i = phases.length - 1; i >= 0; i--) {
+          if (pointInPoly(mouseX, mouseY, phases[i].poly)) { hoveredPhase = phases[i]; break; }
+        }
+      }
+      cQCD.style.cursor = (hoveredPhase || hoveredProbe) ? 'pointer' : 'default';
       drawQCDPhase();
     });
     cQCD.addEventListener('mouseleave', function() {
-      hoveredPhase = null; mouseX = mouseY = -1; drawQCDPhase();
+      hoveredPhase = null; hoveredProbe = null; mouseX = mouseY = -1; drawQCDPhase();
     });
     drawQCDPhase();
   }
