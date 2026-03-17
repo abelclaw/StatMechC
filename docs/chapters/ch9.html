@@ -294,12 +294,13 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 
 <div class="interactive-wrapper">
 <h4>Interactive: Ferromagnetic Phase Transition</h4>
-<canvas id="vis-ferromagnet" width="600" height="300"></canvas>
+<canvas id="vis-ferromagnet" width="600" height="420"></canvas>
 <div class="controls">
-<label>Temperature T/T<sub>c</sub>: <input type="range" id="ferro-temp" min="0.1" max="2.0" step="0.05" value="0.5"><span id="ferro-temp-val">0.50</span></label>
+<label>Temperature T/T<sub>c</sub>: <input type="range" id="ferro-temp" min="0.1" max="2.5" step="0.05" value="0.5"><span id="ferro-temp-val">0.50</span></label>
+<label>External field B: <input type="range" id="ferro-field" min="-2.0" max="2.0" step="0.05" value="0.0"><span id="ferro-field-val">0.00</span></label>
 <button id="ferro-randomize">Randomize Spins</button>
 </div>
-<figcaption>Below the Curie temperature T<sub>c</sub>, spins spontaneously align (ferromagnetic). Above T<sub>c</sub>, thermal fluctuations destroy the order (paramagnetic).</figcaption>
+<figcaption>Below T<sub>c</sub>, spins spontaneously align (ferromagnetic). Above T<sub>c</sub>, thermal fluctuations destroy the order (paramagnetic). The external field B competes with temperature: it tries to align all spins, while T tries to randomize them. Slide B to see how even above T<sub>c</sub>, a strong field can partially order the spins.</figcaption>
 </div>
 
 <p>In a crude model, each pair has energy $-\epsilon$ if they are aligned and $+\epsilon$ if they are not aligned. The difference between the fully aligned (ferromagnetic) state and disordered (paramagnetic) state is roughly $E = 2N\epsilon$. The disordered state has $\Omega = 2^N$ configurations and entropy $S = Nk_B\ln 2$. The free energies are:</p>
@@ -351,13 +352,13 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
 
 <p>At the critical point, $\frac{\partial P}{\partial v}\bigg|_T = 0$ and $\frac{\partial^2 P}{\partial v^2}\bigg|_T = 0$. In fact, all derivatives vanish: $\frac{\partial^n P}{\partial v^n}\bigg|_T = 0$. This means $P(v)$ is a non-analytic function at the critical point.</p>
 
-<div class="interactive-wrapper">
-<h4>Interactive: TV Diagram</h4>
-<canvas id="vis-tv-diagram" width="600" height="350"></canvas>
-<div class="controls">
-<label>Pressure: <input type="range" id="tv-pressure" min="1" max="100" step="1" value="50"><span id="tv-pressure-val">50</span>%</label>
+<div class="visualization">
+<div class="vis-header"><span class="vis-icon">📊</span> Interactive: T-v Diagram with Isobars</div>
+<div class="vis-canvas-wrap"><canvas id="vis-tv-diagram" width="600" height="400"></canvas></div>
+<div class="vis-controls">
+<label>$P / P_c$: <input type="range" id="tv-pressure" min="0.1" max="2.0" step="0.01" value="0.60"> <span class="slider-value" id="tv-pressure-val">0.60</span></label>
 </div>
-<figcaption>Temperature–Volume diagram for water. At a given pressure, the liquid–gas coexistence region shrinks to a point at the critical point. Adjust pressure to see how the coexistence dome changes.</figcaption>
+<p class="vis-caption">The coexistence dome (fixed curve) encloses the two-phase region. Each isobar (constant-$P$ curve) is horizontal inside the dome: during the phase transition, temperature stays constant while the mixture shifts from liquid to vapor. As pressure approaches $P_c$, the horizontal segment shrinks to zero at the critical point. Above $P_c$, the isobar passes smoothly through with no phase transition.</p>
 </div>
 
 <p>Because all the derivatives vanish, all dimensionful physical quantities we use to characterize a material either vanish or are infinite at the critical point:</p>

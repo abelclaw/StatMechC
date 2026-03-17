@@ -10110,6 +10110,472 @@ function initCh9Vis() {
     animateCrystals();
   }
 
+  // ----- QCD Phase Diagram -----
+  const cQCD = document.getElementById('vis-qcd-phase');
+  if (cQCD) {
+    const { ctx: qctx, W: QW, H: QH } = setupCanvas(cQCD);
+
+    // Plot area
+    const qox = 70, qoy = 30, qpw = QW - 110, qph = QH - 80;
+
+    // Axis ranges: muB 0–1800 MeV, T 0–400 MeV
+    const muMax = 1800, TMax = 400;
+    function qx(mu) { return qox + (mu / muMax) * qpw; }
+    function qy(T)  { return qoy + qph - (T / TMax) * qph; }
+    function muFromX(px) { return ((px - qox) / qpw) * muMax; }
+    function TFromY(py)  { return ((qoy + qph - py) / qph) * TMax; }
+
+    // Phase regions as polygons with metadata
+    const phases = [
+      {
+        name: 'Quark-Gluon Plasma',
+        color: 'rgba(239,83,80,0.22)',
+        borderColor: '#ef5350',
+        poly: [[0, 170], [0, 400], [600, 400], [600, 300], [1050, 170]],
+        labelPos: [250, 310],
+        icon: 'quarks',
+        description: 'Quarks and gluons are deconfined — they roam freely instead of being locked inside protons and neutrons. This is the state of the universe a few microseconds after the Big Bang. Recreated briefly at RHIC (Brookhaven) and the LHC (CERN) in gold–gold and lead–lead collisions at T ≈ 200–600 MeV.',
+        experiments: 'Early universe (t < 10 μs), RHIC Au+Au, LHC Pb+Pb'
+      },
+      {
+        name: 'Hadron Gas',
+        color: 'rgba(102,187,106,0.18)',
+        borderColor: '#66bb6a',
+        poly: [[0, 0], [0, 170], [1050, 170], [1050, 100], [940, 0]],
+        labelPos: [400, 85],
+        icon: 'hadrons',
+        description: 'Matter is composed of individual hadrons (protons, neutrons, pions, etc.) that scatter off each other like a gas. This is the state of matter in particle collisions just after hadronization — when the QGP cools and quarks recombine into hadrons. Pions, kaons, and other mesons dominate at low μ_B.',
+        experiments: 'Particle collider fireballs after cooling, cosmic rays'
+      },
+      {
+        name: 'Nuclear Liquid',
+        color: 'rgba(79,195,247,0.20)',
+        borderColor: '#4fc3f7',
+        poly: [[870, 0], [940, 0], [1050, 100], [1050, 170], [1150, 80], [1150, 0]],
+        labelPos: [1010, 55],
+        icon: 'nucleus',
+        description: 'Nucleons (protons and neutrons) are bound together by the residual strong force into atomic nuclei. This is ordinary nuclear matter — every atom heavier than hydrogen contains it. The binding energy is about 8 MeV per nucleon and the density is ρ₀ ≈ 0.16 fm⁻³.',
+        experiments: 'All atomic nuclei, nuclear physics experiments'
+      },
+      {
+        name: 'Color Superconductor',
+        color: 'rgba(171,71,188,0.22)',
+        borderColor: '#ab47bc',
+        poly: [[1150, 0], [1150, 80], [1050, 170], [1800, 170], [1800, 0]],
+        labelPos: [1450, 85],
+        icon: 'cooper',
+        description: 'At very high density and low temperature, quarks form Cooper pairs (like electrons in a superconductor) and condense. The color charge is screened — "color superconductivity." Multiple sub-phases exist (CFL, 2SC, etc.). This may exist in the cores of the densest neutron stars.',
+        experiments: 'Possibly in neutron star cores'
+      },
+      {
+        name: 'Neutron Star Matter',
+        color: 'rgba(255,167,38,0.18)',
+        borderColor: '#ffa726',
+        poly: [[1150, 0], [1150, 80], [1400, 30], [1400, 0]],
+        labelPos: [1275, 25],
+        icon: 'star',
+        description: 'Dense nuclear matter compressed by gravity. Mostly neutrons with a few percent protons and electrons. At ρ ≈ 2–5 ρ₀, exotic phases may appear: hyperons (Λ, Σ), kaon condensates, or deconfined quarks. Neutron star observations (masses, radii, mergers via LIGO) constrain the equation of state in this regime.',
+        experiments: 'Neutron stars, LIGO/Virgo mergers, NICER X-ray timing'
+      }
+    ];
+
+    // Phase boundary curves
+    // Crossover line (smooth, at low mu_B) from lattice QCD
+    function crossoverT(mu) {
+      // Parametrize: T_c(mu) = T_c(0) * (1 - kappa * (mu/T_c0)^2)
+      const Tc0 = 158; // MeV, lattice QCD pseudocritical temperature
+      const kappa = 0.012;
+      return Tc0 * (1 - kappa * (mu / Tc0) * (mu / Tc0));
+    }
+
+    // First-order line (at higher mu_B)
+    // Conjectured to start at a critical endpoint ~ mu_B ≈ 400-700 MeV
+    const CEP = { mu: 550, T: 140 }; // Critical End Point (conjectured)
+
+    // Nuclear liquid-gas transition
+    const nuclearCP = { mu: 923, T: 17 }; // nuclear liquid-gas critical point ~17 MeV
+
+    let hoveredPhase = null;
+    let mouseX = -1, mouseY = -1;
+
+    function pointInPoly(px, py, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = qx(poly[i][0]), yi = qy(poly[i][1]);
+        const xj = qx(poly[j][0]), yj = qy(poly[j][1]);
+        if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    }
+
+    function drawQCDPhase() {
+      clearCanvas(qctx, QW, QH);
+
+      // Draw axes
+      drawAxes(qctx, qox, qoy, qpw, qph, {
+        xLabel: 'Baryon Chemical Potential μ_B (MeV)',
+        yLabel: 'Temperature T (MeV)',
+        yLabelOffset: 50
+      });
+
+      // Tick marks on axes
+      qctx.fillStyle = COLORS.textDim;
+      qctx.font = FONT_SM;
+      qctx.textAlign = 'center';
+      for (let mu = 0; mu <= muMax; mu += 300) {
+        const x = qx(mu);
+        qctx.beginPath(); qctx.moveTo(x, qoy + qph); qctx.lineTo(x, qoy + qph + 5); qctx.strokeStyle = COLORS.axis; qctx.stroke();
+        qctx.fillText(mu, x, qoy + qph + 16);
+      }
+      qctx.textAlign = 'right';
+      for (let T = 0; T <= TMax; T += 50) {
+        const y = qy(T);
+        qctx.beginPath(); qctx.moveTo(qox - 5, y); qctx.lineTo(qox, y); qctx.strokeStyle = COLORS.axis; qctx.stroke();
+        qctx.fillText(T, qox - 8, y + 4);
+      }
+
+      // Draw phase regions
+      phases.forEach(p => {
+        const isHovered = (p === hoveredPhase);
+        qctx.fillStyle = isHovered ? p.color.replace(/[\d.]+\)$/, (parseFloat(p.color.match(/[\d.]+\)$/)[0]) + 0.15) + ')') : p.color;
+        qctx.beginPath();
+        qctx.moveTo(qx(p.poly[0][0]), qy(p.poly[0][1]));
+        for (let i = 1; i < p.poly.length; i++) {
+          qctx.lineTo(qx(p.poly[i][0]), qy(p.poly[i][1]));
+        }
+        qctx.closePath();
+        qctx.fill();
+      });
+
+      // Draw crossover band (lattice QCD, smooth transition)
+      qctx.save();
+      qctx.setLineDash([8, 6]);
+      qctx.strokeStyle = '#ffee58';
+      qctx.lineWidth = 2.5;
+      qctx.beginPath();
+      for (let mu = 0; mu <= CEP.mu; mu += 5) {
+        const T = crossoverT(mu);
+        if (mu === 0) qctx.moveTo(qx(mu), qy(T));
+        else qctx.lineTo(qx(mu), qy(T));
+      }
+      qctx.stroke();
+      qctx.setLineDash([]);
+      qctx.restore();
+
+      // Label crossover
+      qctx.fillStyle = '#ffee58';
+      qctx.font = FONT_SM;
+      qctx.textAlign = 'left';
+      qctx.fillText('crossover (lattice QCD)', qx(30), qy(crossoverT(0)) - 8);
+
+      // Draw first-order line from CEP to high mu
+      qctx.strokeStyle = '#ef5350';
+      qctx.lineWidth = 2.5;
+      qctx.beginPath();
+      qctx.moveTo(qx(CEP.mu), qy(CEP.T));
+      // Curve down to nuclear matter region
+      qctx.quadraticCurveTo(qx(800), qy(120), qx(1050), qy(100));
+      qctx.stroke();
+
+      // Label first-order
+      qctx.fillStyle = '#ef5350';
+      qctx.font = FONT_SM;
+      qctx.textAlign = 'left';
+      qctx.fillText('1st order (conjectured)', qx(680), qy(145));
+
+      // Draw nuclear liquid-gas boundary
+      qctx.strokeStyle = '#4fc3f7';
+      qctx.lineWidth = 2;
+      qctx.beginPath();
+      qctx.moveTo(qx(1150), qy(0));
+      qctx.quadraticCurveTo(qx(1050), qy(10), qx(nuclearCP.mu), qy(nuclearCP.T));
+      qctx.stroke();
+
+      // Nuclear critical point
+      qctx.fillStyle = '#4fc3f7';
+      qctx.beginPath();
+      qctx.arc(qx(nuclearCP.mu), qy(nuclearCP.T), 5, 0, 2 * Math.PI);
+      qctx.fill();
+      qctx.fillStyle = COLORS.text;
+      qctx.font = FONT_SM;
+      qctx.textAlign = 'left';
+      qctx.fillText('nuclear CP', qx(nuclearCP.mu) + 8, qy(nuclearCP.T) + 4);
+
+      // Critical End Point (conjectured)
+      qctx.fillStyle = '#fff';
+      qctx.beginPath();
+      qctx.arc(qx(CEP.mu), qy(CEP.T), 6, 0, 2 * Math.PI);
+      qctx.fill();
+      qctx.strokeStyle = '#ef5350';
+      qctx.lineWidth = 2;
+      qctx.beginPath();
+      qctx.arc(qx(CEP.mu), qy(CEP.T), 6, 0, 2 * Math.PI);
+      qctx.stroke();
+      qctx.fillStyle = COLORS.text;
+      qctx.font = FONT_SM;
+      qctx.textAlign = 'center';
+      qctx.fillText('Critical End Point?', qx(CEP.mu), qy(CEP.T) - 12);
+
+      // Draw phase labels with icons
+      qctx.textAlign = 'center';
+      phases.forEach(p => {
+        const lx = qx(p.labelPos[0]), ly = qy(p.labelPos[1]);
+        const isHovered = (p === hoveredPhase);
+
+        // Draw small cartoon icon above label
+        drawPhaseIcon(qctx, p.icon, lx, ly - 22, isHovered);
+
+        // Phase name
+        qctx.fillStyle = isHovered ? '#fff' : p.borderColor;
+        qctx.font = isHovered ? 'bold 13px Inter, system-ui, sans-serif' : '12px Inter, system-ui, sans-serif';
+        qctx.fillText(p.name, lx, ly + 2);
+      });
+
+      // Mark experimental probes
+      const probes = [
+        { mu: 0, T: 158, label: 'LHC (Pb+Pb)', color: COLORS.yellow, anchor: 'left' },
+        { mu: 200, T: 155, label: 'RHIC (Au+Au)', color: COLORS.yellow, anchor: 'left' },
+        { mu: 750, T: 120, label: 'FAIR/CBM', color: COLORS.cyan, anchor: 'left' },
+        { mu: 450, T: 140, label: 'RHIC BES', color: COLORS.orange, anchor: 'right' },
+        { mu: 0, T: 400, label: 'Early Universe', color: COLORS.pink, anchor: 'left' },
+        { mu: 940, T: 0, label: 'Nuclei (ρ₀)', color: '#4fc3f7', anchor: 'center' },
+        { mu: 1300, T: 5, label: 'Neutron Stars', color: COLORS.orange, anchor: 'center' },
+      ];
+      probes.forEach(pr => {
+        const px = qx(pr.mu), py = qy(pr.T);
+        // Diamond marker
+        qctx.fillStyle = pr.color;
+        qctx.save();
+        qctx.translate(px, py);
+        qctx.rotate(Math.PI / 4);
+        qctx.fillRect(-3.5, -3.5, 7, 7);
+        qctx.restore();
+
+        qctx.fillStyle = pr.color;
+        qctx.font = '10px Inter, system-ui, sans-serif';
+        if (pr.anchor === 'left') {
+          qctx.textAlign = 'left';
+          qctx.fillText(pr.label, px + 8, py + 3);
+        } else if (pr.anchor === 'right') {
+          qctx.textAlign = 'right';
+          qctx.fillText(pr.label, px - 8, py + 3);
+        } else {
+          qctx.textAlign = 'center';
+          qctx.fillText(pr.label, px, py - 10);
+        }
+      });
+
+      // Hover tooltip
+      if (hoveredPhase && mouseX > 0) {
+        drawTooltip(qctx, hoveredPhase, mouseX, mouseY, QW, QH);
+      }
+    }
+
+    function drawPhaseIcon(ctx, icon, cx, cy, highlighted) {
+      const s = highlighted ? 1.2 : 1.0;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(s, s);
+
+      switch (icon) {
+        case 'quarks': {
+          // Three colored quarks flying free
+          const colors = ['#ef5350', '#66bb6a', '#4fc3f7'];
+          for (let i = 0; i < 3; i++) {
+            const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
+            const r = 8;
+            ctx.fillStyle = colors[i];
+            ctx.beginPath();
+            ctx.arc(Math.cos(a) * r, Math.sin(a) * r, 4, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+          // Gluon squiggles between them
+          ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 3; i++) {
+            const a1 = (i / 3) * Math.PI * 2 - Math.PI / 2;
+            const a2 = ((i + 1) / 3) * Math.PI * 2 - Math.PI / 2;
+            const x1 = Math.cos(a1) * 5, y1 = Math.sin(a1) * 5;
+            const x2 = Math.cos(a2) * 5, y2 = Math.sin(a2) * 5;
+            ctx.beginPath(); ctx.moveTo(x1, y1);
+            const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * 3;
+            const my = (y1 + y2) / 2 + (Math.random() - 0.5) * 3;
+            ctx.quadraticCurveTo(mx, my, x2, y2);
+            ctx.stroke();
+          }
+          break;
+        }
+        case 'hadrons': {
+          // Proton (3 quarks bound) and pion
+          // proton
+          ctx.fillStyle = 'rgba(102,187,106,0.3)';
+          ctx.beginPath(); ctx.arc(-5, 0, 8, 0, 2 * Math.PI); ctx.fill();
+          const pqc = ['#ef5350', '#66bb6a', '#4fc3f7'];
+          for (let i = 0; i < 3; i++) {
+            const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
+            ctx.fillStyle = pqc[i];
+            ctx.beginPath(); ctx.arc(-5 + Math.cos(a) * 4, Math.sin(a) * 4, 2.5, 0, 2 * Math.PI); ctx.fill();
+          }
+          // pion
+          ctx.fillStyle = 'rgba(255,167,38,0.3)';
+          ctx.beginPath(); ctx.arc(10, 0, 5, 0, 2 * Math.PI); ctx.fill();
+          ctx.fillStyle = '#ef5350'; ctx.beginPath(); ctx.arc(8, 0, 2, 0, 2 * Math.PI); ctx.fill();
+          ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.arc(12, 0, 2, 0, 2 * Math.PI); ctx.fill();
+          break;
+        }
+        case 'nucleus': {
+          // Cluster of nucleons
+          ctx.fillStyle = 'rgba(79,195,247,0.3)';
+          ctx.beginPath(); ctx.arc(0, 0, 10, 0, 2 * Math.PI); ctx.fill();
+          const npos = [[-3,-3],[3,-3],[0,3],[-5,2],[4,1],[0,-5]];
+          npos.forEach((p, i) => {
+            ctx.fillStyle = i % 2 === 0 ? '#ef5350' : '#4fc3f7';
+            ctx.beginPath(); ctx.arc(p[0], p[1], 2.8, 0, 2 * Math.PI); ctx.fill();
+          });
+          break;
+        }
+        case 'cooper': {
+          // Cooper pairs: paired quarks
+          const pairs = [[-6, 0], [0, 0], [6, 0]];
+          pairs.forEach(pr => {
+            ctx.fillStyle = '#ab47bc';
+            ctx.beginPath(); ctx.arc(pr[0] - 2.5, pr[1], 3, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.arc(pr[0] + 2.5, pr[1], 3, 0, 2 * Math.PI); ctx.fill();
+            // Bond line
+            ctx.strokeStyle = 'rgba(171,71,188,0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(pr[0] - 2.5, pr[1]); ctx.lineTo(pr[0] + 2.5, pr[1]); ctx.stroke();
+          });
+          break;
+        }
+        case 'star': {
+          // Simple star shape
+          ctx.fillStyle = '#ffa726';
+          ctx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+            const r = 9;
+            if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+            else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            const a2 = a + Math.PI / 5;
+            ctx.lineTo(Math.cos(a2) * 4, Math.sin(a2) * 4);
+          }
+          ctx.closePath();
+          ctx.fill();
+          break;
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawTooltip(ctx, phase, mx, my, W, H) {
+      ctx.font = '12px Inter, system-ui, sans-serif';
+
+      // Wrap text
+      const maxW = 280;
+      const lines = [];
+      lines.push({ text: phase.name, bold: true });
+      lines.push({ text: '', bold: false }); // spacer
+
+      // Word wrap description
+      const words = phase.description.split(' ');
+      let line = '';
+      words.forEach(w => {
+        const test = line + (line ? ' ' : '') + w;
+        if (ctx.measureText(test).width > maxW - 20) {
+          lines.push({ text: line, bold: false });
+          line = w;
+        } else {
+          line = test;
+        }
+      });
+      if (line) lines.push({ text: line, bold: false });
+
+      lines.push({ text: '', bold: false });
+      // Wrap experiments line too
+      const expLabel = '⬦ ' + phase.experiments;
+      const expWords = expLabel.split(' ');
+      let expLine = '';
+      expWords.forEach(w => {
+        const test = expLine + (expLine ? ' ' : '') + w;
+        if (ctx.measureText(test).width > maxW - 20) {
+          lines.push({ text: expLine, bold: false, color: phase.borderColor });
+          expLine = w;
+        } else {
+          expLine = test;
+        }
+      });
+      if (expLine) lines.push({ text: expLine, bold: false, color: phase.borderColor });
+
+      const lineH = 16;
+      const padX = 10, padY = 8;
+      const boxW = maxW;
+      const boxH = lines.length * lineH + padY * 2;
+
+      // Position tooltip
+      let tx = mx + 15, ty = my - boxH / 2;
+      if (tx + boxW > W - 5) tx = mx - boxW - 15;
+      if (ty < 5) ty = 5;
+      if (ty + boxH > H - 5) ty = H - boxH - 5;
+
+      // Background
+      ctx.fillStyle = 'rgba(15, 25, 35, 0.94)';
+      ctx.strokeStyle = phase.borderColor;
+      ctx.lineWidth = 1.5;
+      const r = 6;
+      ctx.beginPath();
+      ctx.moveTo(tx + r, ty); ctx.lineTo(tx + boxW - r, ty);
+      ctx.arcTo(tx + boxW, ty, tx + boxW, ty + r, r);
+      ctx.lineTo(tx + boxW, ty + boxH - r);
+      ctx.arcTo(tx + boxW, ty + boxH, tx + boxW - r, ty + boxH, r);
+      ctx.lineTo(tx + r, ty + boxH);
+      ctx.arcTo(tx, ty + boxH, tx, ty + boxH - r, r);
+      ctx.lineTo(tx, ty + r);
+      ctx.arcTo(tx, ty, tx + r, ty, r);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Text
+      let textY = ty + padY + 13;
+      lines.forEach(l => {
+        if (l.text === '') { textY += 4; return; }
+        ctx.fillStyle = l.color || (l.bold ? '#fff' : 'rgba(232,236,241,0.9)');
+        ctx.font = l.bold ? 'bold 13px Inter, system-ui, sans-serif' : '11.5px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(l.text, tx + padX, textY);
+        textY += lineH;
+      });
+    }
+
+    cQCD.addEventListener('mousemove', (e) => {
+      const rect = cQCD.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+
+      hoveredPhase = null;
+      // Check phases in reverse order (later = on top)
+      for (let i = phases.length - 1; i >= 0; i--) {
+        if (pointInPoly(mouseX, mouseY, phases[i].poly)) {
+          hoveredPhase = phases[i];
+          break;
+        }
+      }
+      cQCD.style.cursor = hoveredPhase ? 'pointer' : 'default';
+      drawQCDPhase();
+    });
+
+    cQCD.addEventListener('mouseleave', () => {
+      hoveredPhase = null;
+      mouseX = -1; mouseY = -1;
+      drawQCDPhase();
+    });
+
+    drawQCDPhase();
+  }
+
   // ----- Phase Diagram -----
   const c = document.getElementById('vis-phase');
   if (c) {
