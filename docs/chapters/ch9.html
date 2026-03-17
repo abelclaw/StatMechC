@@ -49,7 +49,7 @@ $$\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$$
   <h3>Interactive: Surface Tension of Water</h3>
   <p class="vis-caption">Liquid water in a beaker with vapor above. Each H$_2$O is drawn as an oxygen (red) bonded to two hydrogens (white). Dashed blue lines are hydrogen bonds — they hold the liquid together but occasionally break and reform due to thermal motion. Molecules at the surface have fewer neighbors, leaving unsaturated bonds (orange dashes) — this energy cost per unit area is the surface tension $\sigma$. Raise the temperature to see more bonds break and molecules evaporate.</p>
   <div class="vis-controls">
-    <label>Temperature: <input type="range" id="st-temp" min="0.2" max="3.0" step="0.05" value="0.6"> <span class="slider-value" id="st-temp-val">0.60</span></label>
+    <label>Temperature: <input type="range" id="st-temp" min="0.1" max="5.0" step="0.05" value="1.0"> <span class="slider-value" id="st-temp-val">1.00</span></label>
     <button id="st-reset">Reset</button>
   </div>
   <canvas id="vis-surface-tension" width="600" height="450"></canvas>
@@ -257,13 +257,14 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 
 <div class="interactive-container">
 <h3>Interactive: Chemical Potential Phase Diagram</h3>
-<p class="vis-caption">Each phase has its own $\mu(T)$ curve with slope $-S/N$. The gas curve is steepest (highest entropy). The stable phase at each temperature is the one with the lowest $\mu$ — shown as the bold envelope. Crossing points are phase transitions. Raise the pressure to see the gas curve shift up the most (least dense phase), moving the boiling point lower in $T$.</p>
+<p class="vis-caption">Each phase has its own $\mu(T)$ curve with slope $-S/N$. The gas curve is steepest (highest entropy). The stable phase at each temperature is the one with the lowest $\mu$ — shown as the bold envelope. Crossing points are phase transitions. The P–T diagram on the right shows the corresponding phase boundaries and your current position.</p>
 <div class="vis-controls">
   <button id="chempot-normal" class="active">Normal substance</button>
   <button id="chempot-water">H₂O (anomalous)</button>
-  <label style="margin-left:18px">Pressure: <input type="range" id="chempot-pressure" min="0" max="100" step="1" value="30"> <span class="slider-value" id="chempot-pressure-val">30</span>%</label>
+  <label style="margin-left:18px">Pressure: <input type="range" id="chempot-pressure" min="0" max="100" step="1" value="40"> <span class="slider-value" id="chempot-pressure-val">40</span>%</label>
+  <label style="margin-left:12px">Temperature: <input type="range" id="chempot-temp" min="0" max="100" step="1" value="25"> <span class="slider-value" id="chempot-temp-val">25</span>%</label>
 </div>
-<canvas id="vis-chem-potential" width="600" height="360"></canvas>
+<canvas id="vis-chem-potential" width="700" height="380"></canvas>
 </div>
 
 <p>When we change the pressure: $\left(\frac{\partial \mu}{\partial P}\right)_T = V/N = 1/n > 0$. The less dense the phase, the more its chemical potential changes. The gas curve shifts up the most. For water, the liquid is denser than the solid so its chemical potential changes less -- leading to a lower melting temperature at higher pressure.</p>

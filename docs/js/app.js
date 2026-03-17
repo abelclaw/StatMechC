@@ -9506,7 +9506,7 @@ function initCh8Vis() {
 // CH9: Phase Transitions + 2D Ising Model
 // =============================================================================
 function initCh9Vis() {
-  // ----- Surface Tension: soft-core MD with visible thermal motion -----
+  // ----- Surface Tension: MD with translational + rotational kinetic energy -----
   const cST = document.getElementById('vis-surface-tension');
   if (cST) {
     const { ctx: ctxST, W: WST, H: HST } = setupCanvas(cST);
@@ -9521,21 +9521,23 @@ function initCh9Vis() {
     const bkL = 50, bkR = WST - 50, bkT = 25, bkB = HST - 50;
     const bkW = bkR - bkL, bkRnd = 16;
 
-    // Physics — tuned so liquid is visibly dynamic
+    // Physics
     const N_MOL = 50;
-    const CORE = 21;       // repulsive core
-    const RCUT = 52;       // attraction cutoff
-    const K_REP = 15;      // repulsion strength
-    const K_ATT = 2.2;     // attraction strength (hydrogen bonds!)
-    const GRAV = 0.12;     // gentle gravity
-    const DAMP = 0.965;    // low damping = more fluid motion
-    const NOISE_SCALE = 1.0;
-    const SUBSTEPS = 4;
-    const F_CAP = 10;
+    const CORE = 21;
+    const RCUT = 52;
+    const K_REP = 12;
+    const K_ATT = 1.4;
+    const GRAV = 0.08;
+    const SUBSTEPS = 5;
+    const F_CAP = 8;
+    const LIGHT_DAMP = 0.998;   // very light, just for stability
+    const THERM_TAU = 0.08;     // Berendsen coupling strength
+    const TARGET_KE_SCALE = 4.0; // targetKE = T * this
     let mols = [];
 
     function initMols() {
       mols = [];
+      const T = parseFloat(tempSlider?.value || 1.0);
       const sp = CORE + 2;
       const startY = bkB - 14;
       let count = 0;
@@ -9546,13 +9548,15 @@ function initCh9Vis() {
         const cols = Math.floor((bkW - 30) / sp);
         const x0 = bkL + (bkW - (cols - 1) * sp) / 2;
         for (let c = 0; c < cols && count < N_MOL; c++) {
+          const v0 = Math.sqrt(T) * 1.5;
+          const ang = Math.random() * 2 * Math.PI;
           mols.push({
             x: x0 + c * sp + xOff + (Math.random() - 0.5) * 4,
             y: y + (Math.random() - 0.5) * 4,
-            vx: (Math.random() - 0.5) * 3,
-            vy: (Math.random() - 0.5) * 3,
+            vx: v0 * Math.cos(ang),
+            vy: v0 * Math.sin(ang),
             angle: Math.random() * 2 * Math.PI,
-            va: 0
+            va: (Math.random() - 0.5) * Math.sqrt(T) * 2
           });
           count++;
         }
@@ -9560,11 +9564,12 @@ function initCh9Vis() {
     }
 
     function stepST() {
-      const T = parseFloat(tempSlider?.value || 0.6);
-      const noise = T * NOISE_SCALE;
+      const T = parseFloat(tempSlider?.value || 1.0);
+      const targetKE = T * TARGET_KE_SCALE;
 
       for (let sub = 0; sub < SUBSTEPS; sub++) {
-        for (const m of mols) { m.fx = 0; m.fy = 0; }
+        // Compute pairwise forces
+        for (const m of mols) { m.fx = 0; m.fy = 0; m.torque = 0; }
 
         for (let i = 0; i < mols.length; i++) {
           for (let j = i + 1; j < mols.length; j++) {
@@ -9578,7 +9583,6 @@ function initCh9Vis() {
             if (r < CORE) {
               f = K_REP * (CORE - r);
             } else {
-              // Parabolic attraction well: peaks at midpoint, zero at CORE and RCUT
               const t = (r - CORE) / (RCUT - CORE);
               f = -K_ATT * 4 * t * (1 - t);
             }
@@ -9588,49 +9592,84 @@ function initCh9Vis() {
             const fx = f * dx / r, fy = f * dy / r;
             a.fx += fx; a.fy += fy;
             b.fx -= fx; b.fy -= fy;
+
+            // Torque: cross product of lever arm with force gives angular kick
+            // This makes close encounters spin the molecules
+            if (r < CORE * 1.5) {
+              const torqueScale = f * 0.3;
+              a.torque += torqueScale * (Math.random() - 0.5);
+              b.torque += torqueScale * (Math.random() - 0.5);
+            }
           }
         }
 
+        // Integrate
         for (const m of mols) {
           m.vx += m.fx;
           m.vy += m.fy + GRAV;
-          m.vx *= DAMP;
-          m.vy *= DAMP;
-          // Thermal noise each substep
-          m.vx += (Math.random() - 0.5) * noise;
-          m.vy += (Math.random() - 0.5) * noise;
+          m.va += m.torque;
+
+          // Very light damping for numerical stability only
+          m.vx *= LIGHT_DAMP;
+          m.vy *= LIGHT_DAMP;
+          m.va *= LIGHT_DAMP;
+
           m.x += m.vx;
           m.y += m.vy;
-
-          m.va += (Math.random() - 0.5) * T * 0.2;
-          m.va *= 0.94;
           m.angle += m.va;
 
           // Walls
           const mr = 10;
-          if (m.x < bkL + mr) { m.x = bkL + mr; m.vx = Math.abs(m.vx) * 0.4; }
-          if (m.x > bkR - mr) { m.x = bkR - mr; m.vx = -Math.abs(m.vx) * 0.4; }
-          if (m.y < bkT + mr) { m.y = bkT + mr; m.vy = Math.abs(m.vy) * 0.4; }
-          if (m.y > bkB - mr) { m.y = bkB - mr; m.vy = -Math.abs(m.vy) * 0.4; }
+          if (m.x < bkL + mr) { m.x = bkL + mr; m.vx = Math.abs(m.vx) * 0.5; }
+          if (m.x > bkR - mr) { m.x = bkR - mr; m.vx = -Math.abs(m.vx) * 0.5; }
+          if (m.y < bkT + mr) { m.y = bkT + mr; m.vy = Math.abs(m.vy) * 0.5; }
+          if (m.y > bkB - mr) { m.y = bkB - mr; m.vy = -Math.abs(m.vy) * 0.5; }
           // Rounded corners
-          const cy = bkB - bkRnd;
-          if (m.y > cy) {
+          const ccy = bkB - bkRnd;
+          if (m.y > ccy) {
             const corners = [bkL + bkRnd, bkR - bkRnd];
             for (const cx of corners) {
-              const cdx = m.x - cx, cdy = m.y - cy;
+              const cdx = m.x - cx, cdy = m.y - ccy;
               if ((m.x < cx && cx === corners[0]) || (m.x > cx && cx === corners[1])) {
                 const d = Math.sqrt(cdx * cdx + cdy * cdy);
                 if (d > bkRnd - mr) {
                   const nx = cdx / d, ny = cdy / d;
                   m.x = cx + nx * (bkRnd - mr);
-                  m.y = cy + ny * (bkRnd - mr);
+                  m.y = ccy + ny * (bkRnd - mr);
                   const vn = m.vx * nx + m.vy * ny;
-                  if (vn > 0) { m.vx -= vn * nx * 1.3; m.vy -= vn * ny * 1.3; }
+                  if (vn > 0) { m.vx -= vn * nx * 1.5; m.vy -= vn * ny * 1.5; }
                 }
               }
             }
           }
         }
+      }
+
+      // Berendsen thermostat: gently rescale all velocities toward target KE
+      let ke = 0;
+      for (const m of mols) ke += m.vx * m.vx + m.vy * m.vy + m.va * m.va * 5;
+      ke /= N_MOL;
+      if (ke > 0.001) {
+        const scale = Math.sqrt(1 + THERM_TAU * (targetKE / ke - 1));
+        for (const m of mols) {
+          m.vx *= scale;
+          m.vy *= scale;
+          m.va *= scale;
+        }
+      } else {
+        // Kickstart if everything is frozen
+        for (const m of mols) {
+          const v0 = Math.sqrt(targetKE);
+          const ang = Math.random() * 2 * Math.PI;
+          m.vx = v0 * Math.cos(ang);
+          m.vy = v0 * Math.sin(ang);
+          m.va = (Math.random() - 0.5) * v0 * 0.5;
+        }
+      }
+
+      // Small random angular perturbation to prevent perfect lattice lock
+      for (const m of mols) {
+        m.va += (Math.random() - 0.5) * T * 0.05;
       }
     }
 
@@ -9680,9 +9719,9 @@ function initCh9Vis() {
 
     function drawST() {
       clearCanvas(ctxST, WST, HST);
-      const T = parseFloat(tempSlider?.value || 0.6);
+      const T = parseFloat(tempSlider?.value || 1.0);
 
-      // Find surface: biggest vertical gap
+      // Find surface: biggest vertical gap in sorted positions
       const sorted = mols.map(m => m.y).sort((a, b) => a - b);
       let surfY = bkB, maxGap = 0;
       for (let i = 2; i < sorted.length - 2; i++) {
@@ -9700,12 +9739,11 @@ function initCh9Vis() {
         ctxST.fillRect(bkL + 2, surfY, bkW - 4, bkB - surfY - 2);
       }
 
-      // Count H-bonds and neighbors for phase classification
-      const hbR = CORE * 1.6, hbR2 = hbR * hbR;
+      // H-bonds + neighbor counting
+      const hbR = CORE * 1.55, hbR2 = hbR * hbR;
       let totalBonds = 0;
       const neighCount = new Array(mols.length).fill(0);
 
-      // Draw H-bonds
       ctxST.lineWidth = 1.2;
       ctxST.setLineDash([3, 4]);
       for (let i = 0; i < mols.length; i++) {
@@ -9729,7 +9767,7 @@ function initCh9Vis() {
       for (const m of mols) drawH2O(m.x, m.y, m.angle);
 
       // Unsaturated bond stubs on surface molecules
-      const neighR2 = (CORE * 1.8) * (CORE * 1.8);
+      const neighR2s = (CORE * 1.8) * (CORE * 1.8);
       for (let i = 0; i < mols.length; i++) {
         const m = mols[i];
         if (neighCount[i] < 2 || m.y > surfY + 15) continue;
@@ -9737,7 +9775,7 @@ function initCh9Vis() {
         for (let j = 0; j < mols.length; j++) {
           if (i === j) continue;
           const dx = mols[j].x - m.x, dy = mols[j].y - m.y;
-          if (dx * dx + dy * dy < neighR2) {
+          if (dx * dx + dy * dy < neighR2s) {
             const d = Math.sqrt(dx * dx + dy * dy) + 0.1;
             sumDx += dx / d; sumDy += dy / d;
             if (dy < -3) nAbove++;
@@ -9759,32 +9797,29 @@ function initCh9Vis() {
       drawBeaker();
 
       // --- Phase indicator ---
-      // Classify by average bonds per molecule and kinetic energy
-      const avgBonds = (totalBonds * 2) / N_MOL; // each bond counted once, shared by 2
+      const avgBonds = (totalBonds * 2) / N_MOL;
       let avgKE = 0;
       for (const m of mols) avgKE += m.vx * m.vx + m.vy * m.vy;
       avgKE /= N_MOL;
 
       let phase, phaseColor;
-      if (avgBonds > 4.0 && avgKE < 2) {
+      if (avgBonds > 3.5 && avgKE < 3) {
         phase = 'SOLID'; phaseColor = COLORS.blue;
-      } else if (avgBonds > 1.5) {
+      } else if (avgBonds > 1.8) {
         phase = 'LIQUID'; phaseColor = COLORS.green;
-      } else if (avgBonds > 0.5) {
+      } else if (avgBonds > 0.4) {
         phase = 'LIQUID + GAS'; phaseColor = COLORS.yellow;
       } else {
         phase = 'GAS'; phaseColor = COLORS.red;
       }
 
-      // Phase badge (top-right inside beaker)
       ctxST.font = '13px Inter, system-ui, sans-serif';
       ctxST.textAlign = 'right';
       ctxST.fillStyle = phaseColor;
       ctxST.fillText(phase, bkR - 10, bkT + 18);
       ctxST.font = FONT_SM;
       ctxST.fillStyle = COLORS.textDim;
-      ctxST.fillText('bonds/mol: ' + avgBonds.toFixed(1), bkR - 10, bkT + 34);
-      ctxST.fillText('KE: ' + avgKE.toFixed(1), bkR - 10, bkT + 48);
+      ctxST.fillText('H-bonds/mol: ' + avgBonds.toFixed(1), bkR - 10, bkT + 34);
 
       // Region labels
       ctxST.font = '12px Inter, system-ui, sans-serif';
@@ -9795,7 +9830,7 @@ function initCh9Vis() {
         ctxST.fillText('liquid', bkL + 10, bkB - 12);
       }
 
-      // Legend bar
+      // Legend
       const nGas = mols.filter(m => m.y < surfY).length;
       const ly = HST - 20;
       ctxST.font = FONT_SM; ctxST.textAlign = 'left';
