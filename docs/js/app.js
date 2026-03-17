@@ -8226,6 +8226,8 @@ function initCh7Vis() {
 
     let ceqParticles = [];
     let ceqSealed = true;
+    let ceqSealing = false;   // true while sweep animation is in progress
+    let sealProgress = 1.0;   // 0 = open (barriers at tubeMid), 1 = fully sealed (barriers at tube ends)
 
     function ceqCreateParticles(n, region) {
       const parts = [];
@@ -8251,6 +8253,8 @@ function initCh7Vis() {
 
     function ceqInit() {
       ceqSealed = true;
+      ceqSealing = false;
+      sealProgress = 1.0;
       const nL = parseInt(ceqNLeftSlider?.value || 40);
       const nR = parseInt(ceqNRightSlider?.value || 10);
       ceqParticles = [
@@ -8397,6 +8401,36 @@ function initCh7Vis() {
           }
         }
       } // end substeps
+
+      // Animate sealing sweep: two barriers move from tubeMid outward
+      if (ceqSealing) {
+        sealProgress = Math.min(1, sealProgress + 0.02);
+        const halfTube = (tubeR - tubeL) / 2;
+        // Left barrier moves from tubeMid toward tubeL
+        const barrierL = tubeMid - sealProgress * halfTube;
+        // Right barrier moves from tubeMid toward tubeR
+        const barrierR = tubeMid + sealProgress * halfTube;
+        // Push particles ahead of barriers
+        for (const p of ceqParticles) {
+          if (p.y >= tubeY && p.y <= tubeY + tubeH) {
+            // Particle in tube y-range, check against barriers
+            if (p.x > barrierL - PR_CEQ && p.x < tubeMid) {
+              p.x = barrierL - PR_CEQ - 1;
+              p.vx = -Math.abs(p.vx);
+            }
+            if (p.x < barrierR + PR_CEQ && p.x > tubeMid) {
+              p.x = barrierR + PR_CEQ + 1;
+              p.vx = Math.abs(p.vx);
+            }
+          }
+        }
+        if (sealProgress >= 1) {
+          ceqSealing = false;
+          ceqSealed = true;
+          ceqReleaseBtn.disabled = false;
+          ceqReleaseBtn.textContent = 'Release';
+        }
+      }
     }
 
     function ceqDrawRoundedRect(ctx, x, y, w, h, r) {
@@ -8467,16 +8501,31 @@ function initCh7Vis() {
       ctxCEQ.moveTo(tubeL, tubeY + tubeH); ctxCEQ.lineTo(tubeR, tubeY + tubeH);
       ctxCEQ.stroke();
 
-      // Draw seal/barrier in the middle of the tube
-      if (ceqSealed) {
+      // Draw seal barriers
+      if (ceqSealed || ceqSealing) {
+        const halfTube = (tubeR - tubeL) / 2;
+        const sp = ceqSealing ? sealProgress : 1;
+        const barrierLX = tubeMid - sp * halfTube;
+        const barrierRX = tubeMid + sp * halfTube;
         ctxCEQ.fillStyle = COLORS.orange;
-        ctxCEQ.fillRect(tubeMid - 3, tubeY - 2, 6, tubeH + 4);
-        // Hatch marks on seal
+        // Left barrier
+        ctxCEQ.fillRect(barrierLX - 3, tubeY - 2, 6, tubeH + 4);
+        // Right barrier
+        ctxCEQ.fillRect(barrierRX - 3, tubeY - 2, 6, tubeH + 4);
+        // Hatch marks
         ctxCEQ.strokeStyle = COLORS.bg; ctxCEQ.lineWidth = 1;
         for (let yy = tubeY + 4; yy < tubeY + tubeH; yy += 6) {
           ctxCEQ.beginPath();
-          ctxCEQ.moveTo(tubeMid - 2, yy); ctxCEQ.lineTo(tubeMid + 2, yy + 3);
+          ctxCEQ.moveTo(barrierLX - 2, yy); ctxCEQ.lineTo(barrierLX + 2, yy + 3);
           ctxCEQ.stroke();
+          ctxCEQ.beginPath();
+          ctxCEQ.moveTo(barrierRX - 2, yy); ctxCEQ.lineTo(barrierRX + 2, yy + 3);
+          ctxCEQ.stroke();
+        }
+        // Fill the region between barriers (sealed area) if sealing
+        if (ceqSealing && sp < 1) {
+          ctxCEQ.fillStyle = 'rgba(255,167,38,0.12)';
+          ctxCEQ.fillRect(barrierLX + 3, tubeY, barrierRX - barrierLX - 6, tubeH);
         }
       }
 
@@ -8522,7 +8571,10 @@ function initCh7Vis() {
       // Equilibrium indicator (centered, top of canvas)
       const isEq = !ceqSealed && nL > 0 && nR > 0 && Math.abs(muL - muR) < 0.15;
       ctxCEQ.font = FONT_SM; ctxCEQ.textAlign = 'center';
-      if (ceqSealed) {
+      if (ceqSealing) {
+        ctxCEQ.fillStyle = COLORS.orange;
+        ctxCEQ.fillText('Sealing…', WCEQ / 2, bulbY - 10);
+      } else if (ceqSealed) {
         ctxCEQ.fillStyle = COLORS.textDim;
         ctxCEQ.fillText('Sealed — press Release to open tube', WCEQ / 2, bulbY - 10);
       } else {
@@ -8555,19 +8607,17 @@ function initCh7Vis() {
       ceqParticles = [...leftParticles, ...ceqCreateParticles(nR, 'right')];
     });
     ceqReleaseBtn?.addEventListener('click', () => {
-      ceqSealed = !ceqSealed;
-      ceqReleaseBtn.textContent = ceqSealed ? 'Release' : 'Seal';
-      if (ceqSealed) {
-        // Push particles in tube back to nearest bulb
-        for (const p of ceqParticles) {
-          if (ceqIsInTube(p.x, p.y)) {
-            if (p.x < tubeMid) {
-              p.x = bulbLX + bulbW - PR_CEQ - 1;
-            } else {
-              p.x = bulbRX + PR_CEQ + 1;
-            }
-          }
-        }
+      if (ceqSealing) return; // ignore clicks during sweep
+      if (!ceqSealed) {
+        // Start sealing sweep animation
+        ceqSealing = true;
+        sealProgress = 0;
+        ceqReleaseBtn.disabled = true;
+      } else {
+        // Open instantly
+        ceqSealed = false;
+        sealProgress = 0;
+        ceqReleaseBtn.textContent = 'Seal';
       }
     });
     ceqResetBtn?.addEventListener('click', () => { ceqInit(); });
