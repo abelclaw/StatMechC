@@ -11510,41 +11510,28 @@ function initCh9Vis() {
         var iPts = sample(p.iVal);
         var mPts = showMF ? sample(p.mfVal) : [];
 
-        // Determine y scale — for diverging quantities, use 85th percentile
-        // of data so the curve rises off the top near Tc (showing divergence)
-        // instead of squashing everything into the upper portion
-        // Y-range calibration per panel type:
-        // - Vanishing: yMax = value at left edge × 1.15 (show full curve, hits 0 at Tc)
-        // - Diverging: yMax = value at ε=0.10 × 3 (curve fills panel; peak exits top)
+        // Determine y scale from sampled data.
+        // For diverging quantities, use the 97th percentile of sampled values
+        // so the curve is almost entirely visible with only the very tip at Tc
+        // exiting the top. For vanishing quantities, use the max × 1.15.
         var yMax = 0;
         if (p.diverges) {
-          // Steeper divergences (larger exponent) need more headroom.
-          // Anchor ε and multiplier tuned per exponent magnitude:
-          //   α=0.11 (weak): anchor at ε=0.05, ×2.5 → peak exits ~t=0.997
-          //   γ=1.24 (strong): anchor at ε=0.10, ×5 → peak exits ~t=0.985
-          var anchorEps = p.iVal > 0.5 ? 0.10 : 0.05;
-          var mult = p.iVal > 0.5 ? 5.0 : 2.5;
-          var yAnchor = p.fn(1 - anchorEps, p.iVal);
-          yMax = (yAnchor !== null && yAnchor > 0) ? yAnchor * mult : 10;
+          var allY = iPts.map(function(d) { return d.y; }).sort(function(a,b) { return a - b; });
+          var p97 = allY[Math.floor(allY.length * 0.97)] || 10;
+          yMax = p97 * 1.1;
         } else {
           var yEdge = p.fn(tMin, p.iVal);
           yMax = (yEdge !== null && yEdge > 0) ? yEdge * 1.15 : 1.5;
         }
         // Also ensure MF curve fits when shown
         if (showMF) {
-          var yMfEdge = p.fn(p.diverges ? 0.90 : tMin, p.mfVal);
-          if (yMfEdge !== null && isFinite(yMfEdge)) {
-            var mfMax = yMfEdge * (p.diverges ? 3.0 : 1.15);
-            if (mfMax > yMax) yMax = mfMax;
-          }
+          var mAllY = mPts.map(function(d) { return d.y; }).sort(function(a,b) { return a - b; });
+          var mP97 = mAllY[Math.floor(mAllY.length * (p.diverges ? 0.97 : 1.0))] || 0;
+          var mfMax = mP97 * (p.diverges ? 1.1 : 1.15);
+          if (mfMax > yMax) yMax = mfMax;
         }
         // Safety: never let yMax be 0
         if (yMax < 0.01) yMax = 1;
-        // Ensure far-from-Tc data points are visible
-        var yAtEdge = p.fn(tMin, p.iVal);
-        if (yAtEdge !== null && isFinite(yAtEdge) && yAtEdge > yMax * 0.9) {
-          yMax = yAtEdge * 1.15;
-        }
 
         function toPixel(t, y) {
           return {
