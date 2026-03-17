@@ -47,12 +47,12 @@ $$\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$$
 <!-- INTERACTIVE: Surface Tension -->
 <div class="interactive-container">
   <h3>Interactive: Surface Tension of Water</h3>
-  <p class="vis-caption">H$_2$O molecules in a container: liquid below, vapor above. Each molecule is drawn as an oxygen (red) with two hydrogens (white). Dashed lines show hydrogen bonds between neighbors. Bulk molecules form bonds on all sides; surface molecules have unsaturated bonds pointing into the gas — this energy cost is the surface tension $\sigma = G/A$. Raise the temperature to evaporate molecules into the gas phase.</p>
+  <p class="vis-caption">Liquid water in a beaker with vapor above. Each H$_2$O is drawn as an oxygen (red) bonded to two hydrogens (white). Dashed blue lines are hydrogen bonds — they hold the liquid together but occasionally break and reform due to thermal motion. Molecules at the surface have fewer neighbors, leaving unsaturated bonds (orange dashes) — this energy cost per unit area is the surface tension $\sigma$. Raise the temperature to see more bonds break and molecules evaporate.</p>
   <div class="vis-controls">
-    <label>Temperature: <input type="range" id="st-temp" min="0.3" max="2.5" step="0.05" value="0.8"> <span class="slider-value" id="st-temp-val">0.80</span></label>
+    <label>Temperature: <input type="range" id="st-temp" min="0.2" max="3.0" step="0.05" value="0.6"> <span class="slider-value" id="st-temp-val">0.60</span></label>
     <button id="st-reset">Reset</button>
   </div>
-  <canvas id="vis-surface-tension" width="600" height="420"></canvas>
+  <canvas id="vis-surface-tension" width="600" height="450"></canvas>
 </div>
 
 <p>All liquids have a <span class="tooltip-trigger">surface tension<span class="tooltip-content">$\sigma = G/A$: the Gibbs free energy per area of surface, arising because surface molecules have fewer bonds than bulk molecules</span></span>. The surface tension of water happens to be particularly large ($\sigma_{\text{water}} = 73\;\text{mN/m}$). One consequence of surface tension is that a liquid will not expand to fill all available volume. Liquids form droplets.</p>
