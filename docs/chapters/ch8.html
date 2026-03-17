@@ -279,9 +279,9 @@ $$\text{H}_2 + \text{C}_2\text{H}_4 \to \text{C}_2\text{H}_6$$
 <h4>Interactive: Reaction Enthalpy Diagram</h4>
 <canvas id="vis-reaction-enthalpy" width="600" height="350"></canvas>
 <div class="controls">
-<label>Temperature T (K): <input type="range" id="rh-temp" min="200" max="1000" step="10" value="298"><span id="rh-temp-val">298</span></label>
+<label>Temperature T (K): <input type="range" id="rh-temp" min="200" max="1500" step="10" value="298"><span id="rh-temp-val">298</span></label>
 </div>
-<figcaption>Enthalpy diagram for ethene hydrogenation. The three bars show ΔH (fixed), the −TΔS penalty (grows with T), and the resulting ΔG. Because ΔH is large and negative, the reaction remains spontaneous at all reasonable temperatures.</figcaption>
+<figcaption>Enthalpy diagram for ethene hydrogenation. The three bars show ΔH (fixed), the −TΔS penalty (grows with T), and the resulting ΔG. At low T the large negative ΔH dominates, but above ~1127 K the entropy penalty wins and the reaction becomes non-spontaneous.</figcaption>
 </div>
 
 <p>The standard enthalpy of reaction is $\Delta_r H^\circ = -136.3 \pm 0.3\;\text{kJ/mol}$. Since the enthalpy change is negative, the reaction is <span class="tooltip-trigger">exothermic<span class="tooltip-content">A reaction that releases heat ($\Delta H < 0$)</span></span> (heat is released).</p>
@@ -522,7 +522,7 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 <div class="controls">
 <label>Solute molecules: <input type="range" id="osm-nsolute" min="1" max="20" step="1" value="8"><span id="osm-nsolute-val">8</span></label>
 <label>Temperature T: <input type="range" id="osm-temp" min="0.5" max="3" step="0.1" value="1.5"><span id="osm-temp-val">1.5</span></label>
-<button id="osm-reset" class="btn-reset">Reset</button>
+<button id="osm-reset">Reset</button>
 </div>
 <figcaption>A semipermeable membrane (dashed orange) lets water molecules (blue) through but blocks solute (red). Water flows toward the solution side, raising its level until the hydrostatic pressure balances the osmotic pressure Π = k<sub>B</sub>T N<sub>s</sub>/V.</figcaption>
 </div>
