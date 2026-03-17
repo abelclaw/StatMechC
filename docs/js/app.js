@@ -8249,6 +8249,7 @@ function initCh7Vis() {
         ...ceqCreateParticles(nR, 'right')
       ];
       ceqReleaseBtn.disabled = false;
+      ceqReleaseBtn.textContent = 'Release';
       ceqNLeftSlider.disabled = false;
       ceqNRightSlider.disabled = false;
     }
@@ -8545,10 +8546,22 @@ function initCh7Vis() {
       ceqParticles = [...leftParticles, ...ceqCreateParticles(nR, 'right')];
     });
     ceqReleaseBtn?.addEventListener('click', () => {
-      ceqSealed = false;
-      ceqReleaseBtn.disabled = true;
-      ceqNLeftSlider.disabled = true;
-      ceqNRightSlider.disabled = true;
+      ceqSealed = !ceqSealed;
+      ceqReleaseBtn.textContent = ceqSealed ? 'Release' : 'Seal';
+      ceqNLeftSlider.disabled = !ceqSealed;
+      ceqNRightSlider.disabled = !ceqSealed;
+      if (ceqSealed) {
+        // Push particles in tube back to nearest bulb
+        for (const p of ceqParticles) {
+          if (ceqIsInTube(p.x, p.y)) {
+            if (p.x < tubeMid) {
+              p.x = bulbLX + bulbW - PR_CEQ - 1;
+            } else {
+              p.x = bulbRX + PR_CEQ + 1;
+            }
+          }
+        }
+      }
     });
     ceqResetBtn?.addEventListener('click', () => { ceqInit(); });
 
