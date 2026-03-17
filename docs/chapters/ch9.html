@@ -249,13 +249,13 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 <div class="interactive-container">
 <h3>Interactive: Chemical Potential Phase Diagram</h3>
 <p class="vis-caption">Each phase has its own $\mu(T)$ curve with slope $-S/N$. The gas curve is steepest (highest entropy). The stable phase at each temperature is the one with the lowest $\mu$ — shown as the bold envelope. Crossing points are phase transitions. The P–T diagram on the right shows the corresponding phase boundaries and your current position.</p>
+<canvas id="vis-chem-potential" width="700" height="380"></canvas>
 <div class="vis-controls">
   <button id="chempot-normal" class="active">Normal substance</button>
   <button id="chempot-water">H₂O (anomalous)</button>
   <label style="margin-left:18px">Pressure: <input type="range" id="chempot-pressure" min="0" max="100" step="1" value="40"> <span class="slider-value" id="chempot-pressure-val">40</span>%</label>
   <label style="margin-left:12px">Temperature: <input type="range" id="chempot-temp" min="0" max="100" step="1" value="25"> <span class="slider-value" id="chempot-temp-val">25</span>%</label>
 </div>
-<canvas id="vis-chem-potential" width="700" height="380"></canvas>
 </div>
 
 <p>When we change the pressure: $\left(\frac{\partial \mu}{\partial P}\right)_T = V/N = 1/n > 0$. The less dense the phase, the more its chemical potential changes. The gas curve shifts up the most. For water, the liquid is denser than the solid so its chemical potential changes less -- leading to a lower melting temperature at higher pressure.</p>
