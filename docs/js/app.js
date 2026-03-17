@@ -9527,15 +9527,15 @@ function initCh9Vis() {
     const CORE = 24;          // repulsive core radius
     const RCUT = 52;          // attraction cutoff
     const K_REP = 8.0;        // repulsive spring constant
-    const EPS = 0.5;          // attraction strength (peak force magnitude)
+    const EPS = 0.6;          // attraction strength (peak force magnitude)
     const DT = 0.15;          // integration timestep
     const SUBSTEPS = 5;       // substeps per frame
-    const KE_SCALE = 4.0;     // target KE = T * KE_SCALE
+    const KE_SCALE = 5.0;     // target KE = T * KE_SCALE
     const THERM_TAU = 0.06;   // Berendsen thermostat coupling
     const V_DAMP = 0.999;     // very light velocity damping
     const F_CAP = 30;         // force cap to prevent explosions
 
-    // Well depth per bond = 2 * EPS * (RCUT - CORE) / pi ≈ 12.1
+    // Well depth per bond = 2 * EPS * (RCUT - CORE) / pi = 10.7 ≈ 12.1
     // v_escape(1 bond) = sqrt(2 * 12.1) ≈ 4.92
     // T=0.1: v_rms = 0.63  → solid (rigid lattice)
     // T=1.0: v_rms = 2.0   → liquid (flowing, bonds break/reform)
