@@ -10911,7 +10911,7 @@ function initCh9Vis() {
       const dT = frac * COL_R * COL_T0 * COL_T0 / COL_L;
       const Tb_soln = COL_T0 + dT;
       const isBoiling = Pvap_soln >= 1.0;
-      const jitterAmp = 0.5 + (T - 340) / 60 * 2.5;
+      const jitterAmp = 0.3 + (T - 340) / 60 * 1.0;
 
       // Liquid region
       ctxCL.fillStyle = 'rgba(20,80,170,0.15)';
@@ -10942,8 +10942,12 @@ function initCh9Vis() {
       const waterFracSurface = waterAtSurface / NCOLS;
 
       for (const m of surfaceMols) {
-        m.jx += (Math.random() - 0.5) * jitterAmp * 0.8; m.jy += (Math.random() - 0.5) * jitterAmp * 0.8;
-        m.jx *= 0.85; m.jy *= 0.85;
+        m.jx += (Math.random() - 0.5) * jitterAmp;
+        m.jy += (Math.random() - 0.5) * jitterAmp;
+        m.jx *= 0.7; m.jy *= 0.7;
+        const maxJ = MOL_R * 0.6;
+        m.jx = Math.max(-maxJ, Math.min(maxJ, m.jx));
+        m.jy = Math.max(-maxJ, Math.min(maxJ, m.jy));
         const x = LIQX + MOL_SPACING_X * (m.col + 0.5) + (m.row % 2 ? MOL_SPACING_X * 0.5 : 0) + m.jx;
         const y = SURFACE_Y + 12 + m.row * MOL_SPACING_Y + m.jy;
         if (m.type === 'water') {
@@ -11080,6 +11084,16 @@ function initCh9Vis() {
 
       document.getElementById('col-frac-val')?.replaceChildren(document.createTextNode(frac.toFixed(3)));
       document.getElementById('col-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(0)));
+      const bpEl = document.getElementById('col-bp-display');
+      if (bpEl) {
+        if (frac > 0) {
+          bpEl.textContent = 'Boiling point: ' + Tb_soln.toFixed(1) + ' K (pure: 373 K, \u0394T = +' + dT.toFixed(1) + ' K)';
+          bpEl.style.color = isBoiling ? '#66bb6a' : '#ffa726';
+        } else {
+          bpEl.textContent = 'Boiling point: 373 K';
+          bpEl.style.color = '';
+        }
+      }
     }
 
     function colAnimate() {
