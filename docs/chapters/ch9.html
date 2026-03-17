@@ -6,10 +6,11 @@
 
 <p>Solid H$_2$O (ice) melting into liquid H$_2$O (water) is an example of a phase transition. You may have heard somewhere that there are 4 phases of matter: solid, liquid, gas and plasma. A plasma is an ionized gas, like the sun. I don't know why plasmas get special treatment though -- perhaps it's the old idea of the "four elements." In fact, there are thousands of phases. For example, ferromagnetic is a phase, like a permanent iron magnet. When you heat such a magnet to high enough temperature, it undergoes a phase transition and stops being magnetic. Conductors, insulators, and semi-conductors are also phases of matter. At very very high temperatures, nuclei break apart into a quark-gluon phase. Solids generally have lots of phases, determined by crystal structure or topological properties. For example, diamond and graphite are two phases of carbon with different lattice structure:</p>
 
-<figure>
-<img src="images/9-Phases_p1_img0.png" alt="Diamond and graphite crystal structures">
-<figcaption>Figure 1. Two of the phases of solid carbon.</figcaption>
-</figure>
+<div class="interactive-container">
+  <h3>Crystal Structures of Carbon</h3>
+  <canvas id="vis-carbon-crystals" width="600" height="340"></canvas>
+  <p class="vis-caption">Figure 1. Two phases of solid carbon. Drag to rotate each structure.</p>
+</div>
 
 <p>It's actually quite hard to come up with a precise definition of a phase. Some textbooks say:</p>
 
@@ -43,17 +44,19 @@ $$\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$$
 
 <p>Liquids generally have around the same density as solids, so the atoms are all in contact with each other. Instead of having strong covalent or metallic bonds, like in a solid, liquids have weaker ionic or hydrogen bonds that keep the molecules close.</p>
 
-<figure>
-<img src="images/9-Phases_p3_img0.png" alt="Hydrogen bonds in water">
-<figcaption>Figure 2. The H and O atoms in water have small charges (left) forming attractive hydrogen bonds (middle). Surfaces cannot saturate all the bonds, therefore there is an energy cost $G = \sigma A$ to having a surface, with $\sigma$ the surface tension.</figcaption>
-</figure>
+<!-- INTERACTIVE: Surface Tension -->
+<div class="interactive-container">
+  <h3>Interactive: Surface Tension</h3>
+  <p class="vis-caption">Water molecules attract their neighbors via hydrogen bonds. Bulk molecules (blue) have bonds on all sides. Surface molecules (orange) have fewer neighbors, leaving unsaturated bonds — this energy cost is the surface tension $\sigma = G/A$. Click "Disperse" to scatter the droplet and watch surface tension pull it back together, minimizing surface area.</p>
+  <div class="vis-controls">
+    <button id="st-disperse">Disperse</button>
+    <button id="st-reset">Reset Droplet</button>
+    <label>Surface tension $\sigma$: <input type="range" id="st-sigma" min="0" max="2" step="0.05" value="1.0"> <span class="slider-value" id="st-sigma-val">1.00</span></label>
+  </div>
+  <canvas id="vis-surface-tension" width="600" height="420"></canvas>
+</div>
 
 <p>All liquids have a <span class="tooltip-trigger">surface tension<span class="tooltip-content">$\sigma = G/A$: the Gibbs free energy per area of surface, arising because surface molecules have fewer bonds than bulk molecules</span></span>. The surface tension of water happens to be particularly large ($\sigma_{\text{water}} = 73\;\text{mN/m}$). One consequence of surface tension is that a liquid will not expand to fill all available volume. Liquids form droplets.</p>
-
-<figure>
-<img src="images/9-Phases_p3_img2.png" alt="Water and mercury in zero gravity">
-<figcaption>Figure 3. (Left) water in zero gravity. (Right) a ball of liquid mercury in zero gravity being hit by a piece of metal.</figcaption>
-</figure>
 
 <p>Whether a solid turns into a liquid when heated depends not only on the types of interactions among the molecules, but also on the pressure. At low pressures, when solids are heated, the atoms that break free fly off into gas, and the solid sublimates. Only if the pressure is sufficiently high will the molecules stick around close enough for the weak attractive interactions to dominate and the liquid phase to form.</p>
 
@@ -79,6 +82,10 @@ $$\Delta G = (\mu_2 - \mu_1)\Delta N$$
     <button id="pt-sub-co2" class="active">CO₂</button>
     <button id="pt-sub-ar">Ar</button>
     <button id="pt-sub-h2o">H₂O</button>
+    <button id="pt-sub-n2">N₂</button>
+    <button id="pt-sub-o2">O₂</button>
+    <button id="pt-sub-nh3">NH₃</button>
+    <button id="pt-sub-ch4">CH₄</button>
   </div>
   <canvas id="vis-pt-phase" width="600" height="400"></canvas>
   <p class="vis-caption">Hover to read (T, P) coordinates. STP marked in yellow. Click substance buttons to switch.</p>
