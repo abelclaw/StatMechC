@@ -8777,22 +8777,30 @@ function initCh8Vis() {
     let spPistonY = cyl_y + cyl_h * 0.5;
     let spPistonVy = 0;
 
-    function spTempToSpeed(T) { return 40 * Math.sqrt(T); }
+    // Physics calibration:
+    // Speed = 40*sqrt(T) * uniform(0.3,1.7) → <vy²> ≈ 930*T
+    // Spring pushes piston down: F = kSpring * gasH
+    // Gas pushes piston up:      F = N * <vy²> / gasH
+    // Equilibrium: gasH_eq = sqrt(N * <vy²> / kSpring) = sqrt(N*930*T / (SPRING_SCALE*k))
+    // Plot mapping: x = gasH / GH_SCALE, where GH_SCALE = sqrt(N*930/SPRING_SCALE)
+    //   so at equilibrium x = sqrt(T/k) = x*  ✓
+    const SPRING_SCALE = 2.3;
+    const GH_SCALE = Math.sqrt(SP_N * 930 / SPRING_SCALE); // ≈ 100.5
 
-    function spTargetPistonY(k, T) {
-      const frac = T / (T + k);
-      return cyl_y + cyl_h * (1 - frac);
-    }
+    function spTempToSpeed(T) { return 40 * Math.sqrt(T); }
 
     function initSPParticles() {
       const T = parseFloat(tSlider?.value || 2);
       const k = parseFloat(kSlider?.value || 2);
-      spPistonY = spTargetPistonY(k, T);
+      const gasBot = cyl_y + cyl_h;
+      const pistonThick = 6;
+      // Start piston near expected equilibrium
+      const gasH_eq = GH_SCALE * Math.sqrt(T / k);
+      spPistonY = Math.max(cyl_y + 15, Math.min(gasBot - 25, gasBot - pistonThick - gasH_eq));
       spPistonVy = 0;
       spParticles = [];
       const spd = spTempToSpeed(T);
-      const gasTop = spPistonY + 8;
-      const gasBot = cyl_y + cyl_h;
+      const gasTop = spPistonY + pistonThick;
       for (let i = 0; i < SP_N; i++) {
         const speed = spd * (0.3 + Math.random() * 1.4);
         const angle = Math.random() * 2 * Math.PI;
@@ -8830,16 +8838,18 @@ function initCh8Vis() {
       const T = parseFloat(tSlider?.value || 2);
       const SUBSTEPS = 4;
       const dt = 0.016 / SUBSTEPS;
-      const PISTON_MASS = 2.0;
-      const targetY = spTargetPistonY(k, T);
+      const PISTON_MASS = 15;
+      const kSpring = k * SPRING_SCALE;
       const pistonThick = 6;
       const gasBot = cyl_y + cyl_h;
 
       for (let sub = 0; sub < SUBSTEPS; sub++) {
-        // Spring restoring force toward equilibrium
-        const springForce = -k * 0.5 * (spPistonY - targetY);
-        spPistonVy += springForce / PISTON_MASS * dt;
-        spPistonVy *= 0.998;
+        const gasH = Math.max(gasBot - spPistonY - pistonThick, 1);
+
+        // Spring pushes piston DOWN (+y) proportional to gas height
+        // Gas particles push piston UP (-y) through collisions below
+        spPistonVy += kSpring * gasH / PISTON_MASS * dt;
+        spPistonVy *= 0.9995; // tiny numerical damping
         spPistonY += spPistonVy * dt;
 
         // Clamp piston
@@ -8859,7 +8869,7 @@ function initCh8Vis() {
           // Bottom wall
           if (p.y > gasBot - SP_R) { p.y = gasBot - SP_R; p.vy = -Math.abs(p.vy); }
 
-          // Piston (top boundary for gas)
+          // Piston (top boundary for gas) — elastic collision
           if (p.y < pistonBot + SP_R) {
             p.y = pistonBot + SP_R;
             const vRel = p.vy - spPistonVy;
@@ -8994,11 +9004,10 @@ function initCh8Vis() {
       ctxSP8.stroke();
 
       // Current piston position → x on the plot
-      // Gas height is proportional to x; at equilibrium gasH_eq maps to xMin
+      // x = gasH / GH_SCALE maps simulation gas height to the analytical coordinate
+      // At equilibrium gasH = GH_SCALE * sqrt(T/k), so x = sqrt(T/k) = x*
       const gasH = gasBot - spPistonY - pistonThick;
-      const targetY = spTargetPistonY(k, T);
-      const gasH_eq = gasBot - targetY - pistonThick;
-      const xCur = (gasH_eq > 1) ? xMin * gasH / gasH_eq : xMin;
+      const xCur = Math.max(0.01, gasH / GH_SCALE);
       const xCurClamped = Math.max(xLo + 0.01, Math.min(xHi - 0.01, xCur));
       const Fcur = 0.5 * k * xCurClamped * xCurClamped - T * Math.log(xCurClamped);
       const curPx = ox + (xCurClamped - xLo) / (xHi - xLo) * pw;
