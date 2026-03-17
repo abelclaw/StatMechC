@@ -9166,6 +9166,317 @@ function initCh8Vis() {
 // CH9: Phase Transitions + 2D Ising Model
 // =============================================================================
 function initCh9Vis() {
+  // ----- Carbon Crystal Structures -----
+  const cCrystal = document.getElementById('vis-carbon-crystals');
+  if (cCrystal) {
+    const { ctx: ctxC, W: WC, H: HC } = setupCanvas(cCrystal);
+
+    // Two viewports side by side
+    const halfW = WC / 2;
+    const pad = 15;
+
+    // Rotation angles for each structure (drag to rotate)
+    let diamondAngleX = -0.45, diamondAngleY = 0.6;
+    let graphiteAngleX = -0.35, graphiteAngleY = 0.5;
+    let dragging = null; // 'diamond' or 'graphite'
+    let dragStart = { x: 0, y: 0 };
+    let dragAngleStart = { x: 0, y: 0 };
+
+    // 3D rotation
+    function rotatePoint(p, ax, ay) {
+      let { x, y, z } = p;
+      // Rotate around Y
+      let x1 = x * Math.cos(ay) - z * Math.sin(ay);
+      let z1 = x * Math.sin(ay) + z * Math.cos(ay);
+      // Rotate around X
+      let y1 = y * Math.cos(ax) - z1 * Math.sin(ax);
+      let z2 = y * Math.sin(ax) + z1 * Math.cos(ax);
+      return { x: x1, y: y1, z: z2 };
+    }
+
+    function project(p, cx, cy, scale) {
+      const perspective = 5;
+      const f = perspective / (perspective + p.z);
+      return { x: cx + p.x * scale * f, y: cy + p.y * scale * f, z: p.z, f };
+    }
+
+    // Diamond: FCC with tetrahedral basis
+    function getDiamondAtoms() {
+      const atoms = [];
+      const a = 1; // lattice constant
+      // Conventional cubic cell FCC positions
+      const fcc = [
+        [0,0,0],[.5,.5,0],[.5,0,.5],[0,.5,.5]
+      ];
+      // Basis: each FCC site + offset
+      const basis = [[0,0,0],[.25,.25,.25]];
+      for (let dx = 0; dx < 2; dx++) {
+        for (let dy = 0; dy < 2; dy++) {
+          for (let dz = 0; dz < 2; dz++) {
+            for (const f of fcc) {
+              for (const b of basis) {
+                const x = (f[0] + b[0] + dx) * a - 1;
+                const y = (f[1] + b[1] + dy) * a - 1;
+                const z = (f[2] + b[2] + dz) * a - 1;
+                // Keep atoms inside display range
+                if (x >= -0.1 && x <= 2.1 && y >= -0.1 && y <= 2.1 && z >= -0.1 && z <= 2.1) {
+                  atoms.push({ x: x - 1, y: y - 1, z: z - 1 });
+                }
+              }
+            }
+          }
+        }
+      }
+      // Remove duplicates
+      const unique = [];
+      for (const a of atoms) {
+        if (!unique.some(u => Math.abs(u.x-a.x)<0.01 && Math.abs(u.y-a.y)<0.01 && Math.abs(u.z-a.z)<0.01)) {
+          unique.push(a);
+        }
+      }
+      return unique;
+    }
+
+    function getDiamondBonds(atoms) {
+      const bonds = [];
+      const bondLen = 0.435; // nearest neighbor in diamond
+      for (let i = 0; i < atoms.length; i++) {
+        for (let j = i + 1; j < atoms.length; j++) {
+          const dx = atoms[i].x - atoms[j].x;
+          const dy = atoms[i].y - atoms[j].y;
+          const dz = atoms[i].z - atoms[j].z;
+          const d = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          if (d < bondLen) bonds.push([i, j]);
+        }
+      }
+      return bonds;
+    }
+
+    // Graphite: layered hexagonal
+    function getGraphiteAtoms() {
+      const atoms = [];
+      const a = 0.6; // in-plane spacing
+      const c = 0.85; // layer spacing
+      const layers = 3;
+      for (let layer = 0; layer < layers; layer++) {
+        const zz = (layer - 1) * c;
+        const offset = (layer % 2 === 0) ? 0 : a * 0.5;
+        // Hexagonal grid
+        for (let i = -1; i <= 2; i++) {
+          for (let j = -1; j <= 2; j++) {
+            const x1 = i * a + j * a * 0.5 + offset;
+            const y1 = j * a * Math.sqrt(3) / 2;
+            atoms.push({ x: x1 - 0.3, y: zz, z: y1 - 0.3, layer });
+            // Second basis atom
+            const x2 = x1 + a * 0.5;
+            const y2 = y1 + a * Math.sqrt(3) / 6;
+            atoms.push({ x: x2 - 0.3, y: zz, z: y2 - 0.3, layer });
+          }
+        }
+      }
+      return atoms;
+    }
+
+    function getGraphiteBonds(atoms) {
+      const bonds = [];
+      const intraBond = 0.45;
+      const interBond = 1.0;
+      for (let i = 0; i < atoms.length; i++) {
+        for (let j = i + 1; j < atoms.length; j++) {
+          const dx = atoms[i].x - atoms[j].x;
+          const dy = atoms[i].y - atoms[j].y;
+          const dz = atoms[i].z - atoms[j].z;
+          const d = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          if (atoms[i].layer === atoms[j].layer && d < intraBond) {
+            bonds.push({ a: i, b: j, type: 'covalent' });
+          }
+        }
+      }
+      // Inter-layer weak bonds (just draw a few vertical ones)
+      for (let i = 0; i < atoms.length; i++) {
+        for (let j = i + 1; j < atoms.length; j++) {
+          if (Math.abs(atoms[i].layer - atoms[j].layer) === 1) {
+            const dx = atoms[i].x - atoms[j].x;
+            const dz = atoms[i].z - atoms[j].z;
+            const dy = atoms[i].y - atoms[j].y;
+            const dHoriz = Math.sqrt(dx*dx + dz*dz);
+            if (dHoriz < 0.15) {
+              bonds.push({ a: i, b: j, type: 'weak' });
+            }
+          }
+        }
+      }
+      return bonds;
+    }
+
+    const diamondAtoms = getDiamondAtoms();
+    const diamondBonds = getDiamondBonds(diamondAtoms);
+    const graphiteAtoms = getGraphiteAtoms();
+    const graphiteBonds = getGraphiteBonds(graphiteAtoms);
+
+    function drawStructure(atoms, bonds, ax, ay, cx, cy, scale, label, isGraphite) {
+      // Transform all atoms
+      const projected = atoms.map(a => {
+        const r = rotatePoint(a, ax, ay);
+        return project(r, cx, cy, scale);
+      });
+
+      // Sort bonds and atoms by depth for painter's algorithm
+      // Draw bonds first (behind), then atoms
+      const sortedBonds = bonds.map((b, i) => {
+        const bi = isGraphite ? b.a : b[0];
+        const bj = isGraphite ? b.b : b[1];
+        return { ...b, i: bi, j: bj, z: (projected[bi].z + projected[bj].z) / 2 };
+      }).sort((a, b) => b.z - a.z);
+
+      const sortedAtoms = projected.map((p, i) => ({ ...p, idx: i })).sort((a, b) => b.z - a.z);
+
+      // Draw bonds
+      for (const bond of sortedBonds) {
+        const p1 = projected[bond.i];
+        const p2 = projected[bond.j];
+        if (isGraphite && bond.type === 'weak') {
+          ctxC.strokeStyle = 'rgba(255,255,255,0.15)';
+          ctxC.lineWidth = 1;
+          ctxC.setLineDash([3, 4]);
+        } else {
+          const bAlpha = 0.25 + 0.35 * ((bond.z + 2) / 4);
+          ctxC.strokeStyle = isGraphite ? `rgba(255,167,38,${bAlpha})` : `rgba(79,195,247,${bAlpha})`;
+          ctxC.lineWidth = 2;
+          ctxC.setLineDash([]);
+        }
+        ctxC.beginPath();
+        ctxC.moveTo(p1.x, p1.y);
+        ctxC.lineTo(p2.x, p2.y);
+        ctxC.stroke();
+        ctxC.setLineDash([]);
+      }
+
+      // Draw atoms
+      for (const atom of sortedAtoms) {
+        const r = 4 + 3 * atom.f;
+        const depthFactor = (atom.z + 2) / 4;
+        const alpha = 0.4 + 0.6 * depthFactor;
+        const bright = Math.floor(120 + 135 * depthFactor);
+        if (isGraphite) {
+          ctxC.fillStyle = `rgba(${bright}, ${Math.floor(bright*0.65)}, ${Math.floor(bright*0.25)}, ${alpha})`;
+        } else {
+          ctxC.fillStyle = `rgba(${Math.floor(bright*0.4)}, ${Math.floor(bright*0.75)}, ${bright}, ${alpha})`;
+        }
+        ctxC.beginPath();
+        ctxC.arc(atom.x, atom.y, r, 0, Math.PI * 2);
+        ctxC.fill();
+
+        // Highlight
+        ctxC.fillStyle = `rgba(255,255,255,${0.15 * alpha})`;
+        ctxC.beginPath();
+        ctxC.arc(atom.x - r * 0.3, atom.y - r * 0.3, r * 0.4, 0, Math.PI * 2);
+        ctxC.fill();
+      }
+
+      // Label
+      ctxC.fillStyle = COLORS.text;
+      ctxC.font = FONT_LG;
+      ctxC.textAlign = 'center';
+      ctxC.fillText(label, cx, HC - 12);
+    }
+
+    function drawCrystals() {
+      clearCanvas(ctxC, WC, HC);
+
+      // Divider
+      ctxC.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctxC.lineWidth = 1;
+      ctxC.beginPath();
+      ctxC.moveTo(halfW, 20);
+      ctxC.lineTo(halfW, HC - 30);
+      ctxC.stroke();
+
+      const scale = 75;
+      const cy = HC / 2 - 5;
+
+      // Diamond
+      drawStructure(diamondAtoms, diamondBonds,
+        diamondAngleX, diamondAngleY,
+        halfW / 2, cy, scale, 'Diamond', false);
+
+      // Graphite
+      drawStructure(graphiteAtoms, graphiteBonds,
+        graphiteAngleX, graphiteAngleY,
+        halfW + halfW / 2, cy, scale * 0.95, 'Graphite', true);
+    }
+
+    // Mouse interaction
+    cCrystal.addEventListener('mousedown', e => {
+      const rect = cCrystal.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      dragging = mx < halfW ? 'diamond' : 'graphite';
+      dragStart = { x: e.clientX, y: e.clientY };
+      dragAngleStart = dragging === 'diamond'
+        ? { x: diamondAngleX, y: diamondAngleY }
+        : { x: graphiteAngleX, y: graphiteAngleY };
+    });
+
+    cCrystal.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const dx = (e.clientX - dragStart.x) * 0.01;
+      const dy = (e.clientY - dragStart.y) * 0.01;
+      if (dragging === 'diamond') {
+        diamondAngleY = dragAngleStart.y + dx;
+        diamondAngleX = dragAngleStart.x + dy;
+      } else {
+        graphiteAngleY = dragAngleStart.y + dx;
+        graphiteAngleX = dragAngleStart.x + dy;
+      }
+      drawCrystals();
+    });
+
+    window.addEventListener('mouseup', () => { dragging = null; });
+
+    // Touch support
+    cCrystal.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const rect = cCrystal.getBoundingClientRect();
+      const t = e.touches[0];
+      const mx = t.clientX - rect.left;
+      dragging = mx < halfW ? 'diamond' : 'graphite';
+      dragStart = { x: t.clientX, y: t.clientY };
+      dragAngleStart = dragging === 'diamond'
+        ? { x: diamondAngleX, y: diamondAngleY }
+        : { x: graphiteAngleX, y: graphiteAngleY };
+    }, { passive: false });
+
+    cCrystal.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      const dx = (t.clientX - dragStart.x) * 0.01;
+      const dy = (t.clientY - dragStart.y) * 0.01;
+      if (dragging === 'diamond') {
+        diamondAngleY = dragAngleStart.y + dx;
+        diamondAngleX = dragAngleStart.x + dy;
+      } else {
+        graphiteAngleY = dragAngleStart.y + dx;
+        graphiteAngleX = dragAngleStart.x + dy;
+      }
+      drawCrystals();
+    }, { passive: false });
+
+    cCrystal.addEventListener('touchend', () => { dragging = null; });
+
+    // Slow auto-rotation when not dragging
+    let crystalAnim;
+    function animateCrystals() {
+      if (!dragging) {
+        diamondAngleY += 0.003;
+        graphiteAngleY += 0.003;
+        drawCrystals();
+      }
+      crystalAnim = requestAnimationFrame(animateCrystals);
+    }
+    animateCrystals();
+  }
+
   // ----- Phase Diagram -----
   const c = document.getElementById('vis-phase');
   if (c) {
@@ -9408,9 +9719,13 @@ function initCh9Vis() {
     const ptS = setupCanvas(cPT);
     const ctxPT = ptS.ctx, WPT = ptS.W, HPT = ptS.H;
     const substances = {
-      co2: { name: 'CO\u2082', Tt: 216.6, Pt: 5.11, Tc: 304.2, Pc: 72.8, slopeSign: 1, Tmax: 350, Pmax: 85 },
-      ar:  { name: 'Ar',       Tt: 83.8,  Pt: 0.68, Tc: 150.7, Pc: 48.0, slopeSign: 1, Tmax: 200, Pmax: 55 },
-      h2o: { name: 'H\u2082O', Tt: 273.16,Pt: 0.006,Tc: 647.1, Pc: 217.7,slopeSign:-1, Tmax: 700, Pmax: 250 }
+      co2: { name: 'CO\u2082', Tt: 216.6, Pt: 5.11, Tc: 304.2, Pc: 72.8, slopeSign: 1, Tmax: 700, Pmax: 300 },
+      ar:  { name: 'Ar',       Tt: 83.8,  Pt: 0.68, Tc: 150.7, Pc: 48.0, slopeSign: 1, Tmax: 700, Pmax: 300 },
+      h2o: { name: 'H\u2082O', Tt: 273.16,Pt: 0.006,Tc: 647.1, Pc: 217.7,slopeSign:-1, Tmax: 700, Pmax: 300 },
+      n2:  { name: 'N\u2082',  Tt: 63.15, Pt: 0.124,Tc: 126.2, Pc: 33.5, slopeSign: 1, Tmax: 700, Pmax: 300 },
+      o2:  { name: 'O\u2082',  Tt: 54.36, Pt: 0.0015,Tc: 154.6,Pc: 49.8, slopeSign: 1, Tmax: 700, Pmax: 300 },
+      nh3: { name: 'NH\u2083', Tt: 195.4, Pt: 0.060,Tc: 405.5, Pc: 111.3,slopeSign: 1, Tmax: 700, Pmax: 300 },
+      ch4: { name: 'CH\u2084', Tt: 90.7,  Pt: 0.117,Tc: 190.6, Pc: 45.4, slopeSign: 1, Tmax: 700, Pmax: 300 }
     };
     let currentSub = 'co2';
     let mxPT = -1, myPT = -1;
@@ -9498,7 +9813,7 @@ function initCh9Vis() {
 
     cPT.addEventListener('mousemove', (e) => { const r = cPT.getBoundingClientRect(); mxPT = e.clientX - r.left; myPT = e.clientY - r.top; drawPTPhase(); });
     cPT.addEventListener('mouseleave', () => { mxPT = -1; myPT = -1; drawPTPhase(); });
-    ['co2', 'ar', 'h2o'].forEach(id => {
+    ['co2', 'ar', 'h2o', 'n2', 'o2', 'nh3', 'ch4'].forEach(id => {
       document.getElementById('pt-sub-' + id)?.addEventListener('click', () => {
         currentSub = id;
         document.querySelectorAll('[id^="pt-sub-"]').forEach(b => b.classList.remove('active'));
