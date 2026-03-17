@@ -11395,6 +11395,7 @@ function initCh9Vis() {
       }
       drawColligative();
       colAnimId = requestAnimationFrame(colAnimate);
+      activeAnimations['colligative'] = colAnimId;
     }
 
     function colReset() {
@@ -12646,6 +12647,7 @@ function initCh9Vis() {
     tvPressureSlider?.addEventListener('input', drawTVDiagram);
     drawTVDiagram();
   }
+}
 
 
 // =============================================================================
