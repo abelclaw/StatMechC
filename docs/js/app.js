@@ -11338,67 +11338,230 @@ function initCh9Vis() {
     colAnimate();
   }
 
-  // ----- Heat Capacity Near Critical Point -----
+  // ----- Critical Divergences (three-panel) -----
   const cCPC = document.getElementById('vis-cp-critical');
   if (cCPC) {
     const cpc = setupCanvas(cCPC);
-    const ctxCPC = cpc.ctx, WCPC = cpc.W, HCPC = cpc.H;
-    const cpcSlider = document.getElementById('cpc-range');
+    const ctx = cpc.ctx, WCPC = cpc.W, HCPC = cpc.H;
+    const zoomSlider = document.getElementById('cpc-zoom');
+    const mfCheck = document.getElementById('cpc-meanfield');
 
-    function drawCpCritical() {
-      const range = parseFloat(cpcSlider?.value || 1.5);
-      clearCanvas(ctxCPC, WCPC, HCPC);
+    // 3D Ising critical exponents
+    const ISING = { beta: 0.326, alpha: 0.11, gamma: 1.24 };
+    // Mean-field (van der Waals) critical exponents
+    const MF = { beta: 0.5, alpha: 0, gamma: 1.0 };
 
-      const ox = 70, oy = 20, pw = WCPC - 100, ph = HCPC - 60;
-      drawAxes(ctxCPC, ox, oy, pw, ph, { xLabel: 'T / Tc', yLabel: 'Cp' });
+    function drawCriticalDivergences() {
+      const zoomPct = parseFloat(zoomSlider?.value || 0);
+      const showMF = mfCheck?.checked || false;
+      clearCanvas(ctx, WCPC, HCPC);
 
-      // Cp diverges as |T - Tc|^(-α) with α ≈ 0.11 for 3D Ising
-      const alpha = 0.11;
-      const tMin = 2 - range, tMax = range;
-      const npts = 400;
+      // Zoom: at 0% show T/Tc from 0.2 to 1.8; at 95% show very tight window
+      const halfSpan = 0.8 * Math.pow(10, -zoomPct / 50);
+      const tMin = 1 - halfSpan, tMax = 1 + halfSpan;
+      const zoomLabel = (0.8 / halfSpan).toFixed(0);
+      document.getElementById('cpc-zoom-val')?.replaceChildren(
+        document.createTextNode(zoomLabel + '\u00d7'));
 
-      ctxCPC.strokeStyle = COLORS.red;
-      ctxCPC.lineWidth = 2.5;
-      ctxCPC.beginPath();
-      let started = false;
-      const maxCp = Math.pow(0.01, -alpha);
-      for (let i = 0; i <= npts; i++) {
-        const t = tMin + (tMax - tMin) * i / npts;
-        if (Math.abs(t - 1) < 0.005) continue;
-        const cp = Math.pow(Math.abs(t - 1), -alpha) + 2;
-        const px = ox + ((t - tMin) / (tMax - tMin)) * pw;
-        const py = oy + ph - ((cp - 1) / (maxCp + 2)) * ph;
-        if (py >= oy && py <= oy + ph) {
-          !started ? (ctxCPC.moveTo(px, py), started = true) : ctxCPC.lineTo(px, py);
+      // Three panels
+      const gap = 16, topPad = 10, botPad = 38;
+      const pw = Math.floor((WCPC - 4 * gap) / 3);
+      const ph = HCPC - topPad - botPad;
+      const npts = 500;
+
+      const panels = [
+        { title: 'Order parameter \u0394n',
+          yLabel: '\u0394n / \u0394n\u2080',
+          color: COLORS.blue, mfColor: COLORS.cyan,
+          fn: function(t, beta) { return t >= 1 ? 0 : Math.pow(1 - t, beta); },
+          exponentLabel: '\u03b2',
+          isingVal: ISING.beta, mfVal: MF.beta,
+          diverges: false },
+        { title: 'Heat capacity C\u209a',
+          yLabel: 'C\u209a (arb.)',
+          color: COLORS.red, mfColor: COLORS.orange,
+          fn: function(t, alpha) {
+            var eps = Math.abs(t - 1);
+            if (eps < 1e-6) return null;
+            return alpha < 0.01 ? -Math.log(eps) + 2 : Math.pow(eps, -alpha);
+          },
+          exponentLabel: '\u03b1',
+          isingVal: ISING.alpha, mfVal: MF.alpha,
+          diverges: true },
+        { title: 'Compressibility \u03ba\u1d1b',
+          yLabel: '\u03ba\u1d1b (arb.)',
+          color: COLORS.green, mfColor: COLORS.yellow,
+          fn: function(t, gamma) {
+            var eps = Math.abs(t - 1);
+            if (eps < 1e-6) return null;
+            return Math.pow(eps, -gamma);
+          },
+          exponentLabel: '\u03b3',
+          isingVal: ISING.gamma, mfVal: MF.gamma,
+          diverges: true }
+      ];
+
+      panels.forEach(function(p, pi) {
+        var ox = gap + pi * (pw + gap);
+        var oy = topPad;
+
+        // Panel background
+        ctx.fillStyle = 'rgba(255,255,255,0.02)';
+        ctx.fillRect(ox, oy, pw, ph);
+
+        // Axes
+        ctx.strokeStyle = COLORS.axis;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(ox, oy); ctx.lineTo(ox, oy + ph);
+        ctx.moveTo(ox, oy + ph); ctx.lineTo(ox + pw, oy + ph);
+        ctx.stroke();
+
+        // Tc dashed line
+        var tcFrac = (1 - tMin) / (tMax - tMin);
+        if (tcFrac > 0 && tcFrac < 1) {
+          var tcX = ox + tcFrac * pw;
+          ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.moveTo(tcX, oy); ctx.lineTo(tcX, oy + ph); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = COLORS.textDim;
+          ctx.font = FONT_SM;
+          ctx.textAlign = 'center';
+          ctx.fillText('T\u2091', tcX, oy + ph + 13);
         }
+
+        // Sample curve
+        function sampleCurve(exponent) {
+          var pts = [];
+          for (var i = 0; i <= npts; i++) {
+            var t = tMin + (tMax - tMin) * i / npts;
+            var y = p.fn(t, exponent);
+            if (y !== null && isFinite(y)) pts.push({ t: t, y: y });
+          }
+          return pts;
+        }
+
+        var isingPts = sampleCurve(p.isingVal);
+        var mfPts = showMF ? sampleCurve(p.mfVal) : [];
+        var yMax = 0;
+        for (var k = 0; k < isingPts.length; k++) yMax = Math.max(yMax, isingPts[k].y);
+        for (var k = 0; k < mfPts.length; k++) yMax = Math.max(yMax, mfPts[k].y);
+        var yMin = 0;
+        var yRange = yMax - yMin || 1;
+        var yTop = yMax + yRange * 0.1;
+
+        function plotCurve(pts, color, dash) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.setLineDash(dash);
+          ctx.beginPath();
+          var started = false;
+          for (var j = 0; j < pts.length; j++) {
+            var px = ox + ((pts[j].t - tMin) / (tMax - tMin)) * pw;
+            var py = oy + ph - ((pts[j].y - yMin) / yTop) * ph;
+            if (py < oy - 2 || py > oy + ph + 2) { started = false; continue; }
+            if (!started) { ctx.moveTo(px, py); started = true; }
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Draw mean-field first (behind)
+        if (showMF && mfPts.length) plotCurve(mfPts, p.mfColor, [6, 4]);
+        // Draw 3D Ising
+        plotCurve(isingPts, p.color, []);
+
+        // Panel title
+        ctx.fillStyle = COLORS.text;
+        ctx.font = FONT;
+        ctx.textAlign = 'center';
+        ctx.fillText(p.title, ox + pw / 2, oy + ph + 28);
+
+        // Exponent label
+        ctx.fillStyle = p.color;
+        ctx.font = FONT_SM;
+        ctx.textAlign = 'left';
+        var expText = p.exponentLabel + ' = ' + p.isingVal.toFixed(p.isingVal < 0.2 ? 2 : 3);
+        ctx.fillText(expText, ox + 6, oy + 14);
+        if (showMF) {
+          ctx.fillStyle = p.mfColor;
+          var mfText = 'MF: ' + p.mfVal.toFixed(p.mfVal < 0.1 ? 0 : 1);
+          ctx.fillText(mfText, ox + 6, oy + 28);
+        }
+
+        // Y-axis label
+        ctx.fillStyle = COLORS.textDim;
+        ctx.font = FONT_SM;
+        ctx.save();
+        ctx.translate(ox - 4, oy + ph / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center';
+        ctx.fillText(p.yLabel, 0, 0);
+        ctx.restore();
+
+        // Arrow indicating diverge/vanish
+        if (tcFrac > 0.1 && tcFrac < 0.9) {
+          var tcX2 = ox + tcFrac * pw;
+          ctx.font = '15px Inter, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          if (p.diverges) {
+            ctx.fillStyle = p.color;
+            ctx.fillText('\u2191\u221e', tcX2 + 14, oy + 16);
+          } else {
+            ctx.fillStyle = p.color;
+            ctx.fillText('\u2193 0', tcX2 + 14, oy + 16);
+          }
+        }
+
+        // Tick marks on x-axis
+        ctx.fillStyle = COLORS.textDim;
+        ctx.font = '10px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        var span = tMax - tMin;
+        // Choose nice tick spacing
+        var tickStep = span > 1 ? 0.5 : span > 0.2 ? 0.1 : span > 0.02 ? 0.01 : 0.001;
+        var tStart = Math.ceil(tMin / tickStep) * tickStep;
+        for (var tick = tStart; tick <= tMax + tickStep * 0.01; tick += tickStep) {
+          var tickFrac = (tick - tMin) / span;
+          if (tickFrac < 0.02 || tickFrac > 0.98) continue;
+          var tickX = ox + tickFrac * pw;
+          ctx.strokeStyle = COLORS.axis;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(tickX, oy + ph); ctx.lineTo(tickX, oy + ph + 4); ctx.stroke();
+          if (Math.abs(tick - 1) > tickStep * 0.5) {
+            ctx.fillText(tick.toFixed(span < 0.1 ? 3 : span < 1 ? 2 : 1), tickX, oy + ph + 13);
+          }
+        }
+      });
+
+      // X-axis label centered
+      ctx.fillStyle = COLORS.text;
+      ctx.font = FONT_SM;
+      ctx.textAlign = 'center';
+      ctx.fillText('T / T\u2091', WCPC / 2, HCPC - 2);
+
+      // Legend when mean-field shown
+      if (showMF) {
+        var lx = WCPC - 140, ly = 14;
+        ctx.font = FONT_SM;
+        ctx.textAlign = 'left';
+        ctx.strokeStyle = COLORS.text; ctx.lineWidth = 2; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 20, ly); ctx.stroke();
+        ctx.fillStyle = COLORS.text;
+        ctx.fillText('3D Ising', lx + 24, ly + 4);
+        ctx.strokeStyle = COLORS.textDim; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(lx, ly + 16); ctx.lineTo(lx + 20, ly + 16); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = COLORS.textDim;
+        ctx.fillText('Mean-field', lx + 24, ly + 20);
       }
-      ctxCPC.stroke();
-
-      // Tc line
-      const tcX = ox + ((1 - tMin) / (tMax - tMin)) * pw;
-      ctxCPC.strokeStyle = COLORS.yellow;
-      ctxCPC.lineWidth = 1;
-      ctxCPC.setLineDash([5, 5]);
-      ctxCPC.beginPath();
-      ctxCPC.moveTo(tcX, oy);
-      ctxCPC.lineTo(tcX, oy + ph);
-      ctxCPC.stroke();
-      ctxCPC.setLineDash([]);
-
-      ctxCPC.fillStyle = COLORS.text;
-      ctxCPC.font = FONT;
-      ctxCPC.textAlign = 'center';
-      ctxCPC.fillText('Tc', tcX, oy + ph + 20);
-      ctxCPC.textAlign = 'left';
-      ctxCPC.fillText('Cp ~ |T - Tc|^(-α), α ≈ 0.11', ox + 5, oy + 16);
-      ctxCPC.fillStyle = COLORS.textDim;
-      ctxCPC.fillText('3D Ising universality class', ox + 5, oy + 32);
-
-      document.getElementById('cpc-range-val')?.replaceChildren(document.createTextNode(range.toFixed(2)));
     }
 
-    cpcSlider?.addEventListener('input', drawCpCritical);
-    drawCpCritical();
+    zoomSlider?.addEventListener('input', drawCriticalDivergences);
+    mfCheck?.addEventListener('change', drawCriticalDivergences);
+    drawCriticalDivergences();
   }
 
   // ----- Law of Corresponding States -----
