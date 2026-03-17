@@ -11814,105 +11814,268 @@ function initCh9Vis() {
   }
 
   // ----- Ferromagnetic Phase Transition -----
-  const cFM = document.getElementById('vis-ferromagnet');
+  var cFM = document.getElementById('vis-ferromagnet');
   if (cFM) {
-    const {ctx: ctxFM, W: WFM, H: HFM} = setupCanvas(cFM);
-    const ferroTempSlider = document.getElementById('ferro-temp');
-    const randomizeBtn = document.getElementById('ferro-randomize');
+    var fmSetup = setupCanvas(cFM);
+    var ctxFM = fmSetup.ctx, WFM = fmSetup.W, HFM = fmSetup.H;
+    var ferroTempSlider = document.getElementById('ferro-temp');
+    var ferroFieldSlider = document.getElementById('ferro-field');
+    var randomizeBtn = document.getElementById('ferro-randomize');
 
-    const gridSize = 20;
-    let spins = [];
+    var fmGridSize = 30;
+    var fmSpins = [];
+    var fmMHistory = [];
+    var fmMHistLen = 30;
 
-    function initSpins() {
-      spins = [];
-      for (let i = 0; i < gridSize; i++) {
-        spins[i] = [];
-        for (let j = 0; j < gridSize; j++) {
-          spins[i][j] = Math.random() < 0.5 ? 1 : -1;
+    function fmInitSpins() {
+      fmSpins = [];
+      for (var i = 0; i < fmGridSize; i++) {
+        fmSpins[i] = [];
+        for (var j = 0; j < fmGridSize; j++) {
+          fmSpins[i][j] = Math.random() < 0.5 ? 1 : -1;
+        }
+      }
+      fmMHistory = [];
+    }
+
+    function fmEquilibrate(steps) {
+      var T = parseFloat(ferroTempSlider ? ferroTempSlider.value : 0.5);
+      var B = parseFloat(ferroFieldSlider ? ferroFieldSlider.value : 0.0);
+      var Tc_ising = 2.269;
+      var beta = 1.0 / (T * Tc_ising + 0.001);
+      for (var s = 0; s < steps; s++) {
+        var i = Math.floor(Math.random() * fmGridSize);
+        var j = Math.floor(Math.random() * fmGridSize);
+        var up = fmSpins[i][(j + 1) % fmGridSize];
+        var dn = fmSpins[i][(j - 1 + fmGridSize) % fmGridSize];
+        var lt = fmSpins[(i - 1 + fmGridSize) % fmGridSize][j];
+        var rt = fmSpins[(i + 1) % fmGridSize][j];
+        var dE = 2 * fmSpins[i][j] * (up + dn + lt + rt + B);
+        if (dE <= 0 || Math.random() < Math.exp(-beta * dE)) {
+          fmSpins[i][j] *= -1;
         }
       }
     }
 
-    function equilibrateSpins(steps) {
-      const T = parseFloat(ferroTempSlider?.value || 0.5);
-      const beta = 1.0 / (T + 0.001);
-      for (let s = 0; s < steps; s++) {
-        const i = Math.floor(Math.random() * gridSize);
-        const j = Math.floor(Math.random() * gridSize);
-        // Nearest neighbor sum
-        const up = spins[i][(j + 1) % gridSize];
-        const dn = spins[i][(j - 1 + gridSize) % gridSize];
-        const lt = spins[(i - 1 + gridSize) % gridSize][j];
-        const rt = spins[(i + 1) % gridSize][j];
-        const dE = 2 * spins[i][j] * (up + dn + lt + rt);
-        if (dE <= 0 || Math.random() < Math.exp(-beta * dE)) {
-          spins[i][j] *= -1;
+    function fmDrawMagnet(cx, cy, strength) {
+      var absB = Math.abs(strength);
+      var dir = strength >= 0 ? 1 : -1;
+      var mW = 32, mH = 60;
+      var mx = cx - mW / 2, my = cy - mH / 2;
+      var topCol = dir > 0 ? '#e53935' : '#1e88e5';
+      var botCol = dir > 0 ? '#1e88e5' : '#e53935';
+      var topLbl = dir > 0 ? 'N' : 'S';
+      var botLbl = dir > 0 ? 'S' : 'N';
+
+      // Top half
+      ctxFM.fillStyle = topCol;
+      ctxFM.beginPath();
+      ctxFM.moveTo(mx + 4, my); ctxFM.lineTo(mx + mW - 4, my);
+      ctxFM.quadraticCurveTo(mx + mW, my, mx + mW, my + 4);
+      ctxFM.lineTo(mx + mW, my + mH / 2); ctxFM.lineTo(mx, my + mH / 2);
+      ctxFM.lineTo(mx, my + 4);
+      ctxFM.quadraticCurveTo(mx, my, mx + 4, my);
+      ctxFM.fill();
+      // Bottom half
+      ctxFM.fillStyle = botCol;
+      ctxFM.beginPath();
+      ctxFM.moveTo(mx, my + mH / 2); ctxFM.lineTo(mx + mW, my + mH / 2);
+      ctxFM.lineTo(mx + mW, my + mH - 4);
+      ctxFM.quadraticCurveTo(mx + mW, my + mH, mx + mW - 4, my + mH);
+      ctxFM.lineTo(mx + 4, my + mH);
+      ctxFM.quadraticCurveTo(mx, my + mH, mx, my + mH - 4);
+      ctxFM.closePath(); ctxFM.fill();
+
+      // Pole labels
+      ctxFM.fillStyle = '#fff'; ctxFM.font = 'bold 12px Inter, system-ui, sans-serif';
+      ctxFM.textAlign = 'center'; ctxFM.textBaseline = 'middle';
+      ctxFM.fillText(topLbl, cx, my + mH / 4);
+      ctxFM.fillText(botLbl, cx, my + 3 * mH / 4);
+      ctxFM.textBaseline = 'alphabetic';
+
+      // Zigzag field lines
+      if (absB > 0.05) {
+        var nLines = Math.min(5, Math.max(2, Math.round(absB * 2.5)));
+        var alpha = Math.min(0.9, absB / 1.5);
+        ctxFM.strokeStyle = 'rgba(255,238,88,' + alpha.toFixed(2) + ')';
+        ctxFM.lineWidth = 1.3;
+        ctxFM.lineJoin = 'round';
+
+        for (var li = 0; li < nLines; li++) {
+          var side = (li % 2 === 0) ? -1 : 1;
+          var spread = 14 + Math.floor(li / 2) * 12;
+          var nPoleY = dir > 0 ? my : my + mH;
+          var sPoleY = dir > 0 ? my + mH : my;
+          var startX = cx + side * (mW / 2);
+
+          ctxFM.beginPath();
+          ctxFM.moveTo(startX, nPoleY);
+          var segs = 8;
+          for (var ss = 1; ss <= segs; ss++) {
+            var frac = ss / segs;
+            var zigAmp = 2.5 + absB * 1.5;
+            var zigX = ((ss % 2 === 0) ? -zigAmp : zigAmp);
+            var curveX = startX + side * spread * Math.sin(frac * Math.PI) + zigX;
+            var curveY = nPoleY + (sPoleY - nPoleY) * frac;
+            ctxFM.lineTo(curveX, curveY);
+          }
+          ctxFM.stroke();
+
+          // Arrow at midpoint
+          var midFrac = 0.5;
+          var arrowY = nPoleY + (sPoleY - nPoleY) * midFrac;
+          var arrowX = startX + side * spread * Math.sin(midFrac * Math.PI);
+          var arrowDir = (sPoleY > nPoleY) ? 1 : -1;
+          ctxFM.beginPath();
+          ctxFM.moveTo(arrowX - 3, arrowY - arrowDir * 4);
+          ctxFM.lineTo(arrowX, arrowY);
+          ctxFM.lineTo(arrowX + 3, arrowY - arrowDir * 4);
+          ctxFM.stroke();
         }
       }
     }
 
     function drawFerromagnet() {
       clearCanvas(ctxFM, WFM, HFM);
-      const T = parseFloat(ferroTempSlider?.value || 0.5);
+      var T = parseFloat(ferroTempSlider ? ferroTempSlider.value : 0.5);
+      var B = parseFloat(ferroFieldSlider ? ferroFieldSlider.value : 0.0);
 
-      // Run Monte Carlo steps
-      equilibrateSpins(200);
+      fmEquilibrate(500);
 
-      // Draw spin grid
-      const ox = 30, oy = 30, gridPx = Math.min(HFM - 60, 230);
-      const cellSz = gridPx / gridSize;
+      // Spin grid on the left
+      var ox = 16, oy = 12;
+      var gridPx = Math.min(HFM - 30, 300);
+      var cellSz = gridPx / fmGridSize;
 
-      for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-          ctxFM.fillStyle = spins[i][j] === 1 ? COLORS.blue : COLORS.red;
-          ctxFM.fillRect(ox + i * cellSz, oy + j * cellSz, cellSz - 1, cellSz - 1);
+      for (var i = 0; i < fmGridSize; i++) {
+        for (var j = 0; j < fmGridSize; j++) {
+          ctxFM.fillStyle = fmSpins[i][j] === 1 ? COLORS.blue : COLORS.red;
+          ctxFM.fillRect(ox + i * cellSz, oy + j * cellSz, cellSz - 0.5, cellSz - 0.5);
         }
       }
-
-      // Compute magnetization
-      let M = 0;
-      for (let i = 0; i < gridSize; i++) for (let j = 0; j < gridSize; j++) M += spins[i][j];
-      M /= (gridSize * gridSize);
+      ctxFM.strokeStyle = COLORS.axis; ctxFM.lineWidth = 1;
+      ctxFM.strokeRect(ox, oy, gridPx, gridPx);
 
       // Right panel
-      const tx = ox + gridPx + 30;
-      ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_LG; ctxFM.textAlign = 'left';
-      ctxFM.fillText('Ferromagnetic Phase Transition', tx, 25);
+      var tx = ox + gridPx + 18;
+      var panelW = WFM - tx - 8;
+
+      // Magnetization
+      var Mag = 0;
+      for (var ii = 0; ii < fmGridSize; ii++)
+        for (var jj = 0; jj < fmGridSize; jj++) Mag += fmSpins[ii][jj];
+      Mag /= (fmGridSize * fmGridSize);
+      fmMHistory.push(Mag);
+      if (fmMHistory.length > fmMHistLen) fmMHistory.shift();
+      var sumM = 0;
+      for (var k = 0; k < fmMHistory.length; k++) sumM += fmMHistory[k];
+      var avgM = sumM / fmMHistory.length;
+
+      // Phase label
+      var phase, phaseColor;
+      if (Math.abs(B) > 0.1) {
+        phase = T < 1.0 ? 'Ferromagnetic + field' : 'Field-induced order';
+        phaseColor = COLORS.orange;
+      } else {
+        phase = T < 1.0 ? 'Ferromagnetic (ordered)' : 'Paramagnetic (disordered)';
+        phaseColor = T < 1.0 ? COLORS.blue : COLORS.red;
+      }
+      ctxFM.fillStyle = phaseColor; ctxFM.font = FONT; ctxFM.textAlign = 'left';
+      ctxFM.fillText(phase, tx, oy + 14);
 
       ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT;
-      ctxFM.fillText('T/T_c = ' + T.toFixed(2), tx, 55);
-
-      const phase = T < 1.0 ? 'Ferromagnetic (ordered)' : 'Paramagnetic (disordered)';
-      ctxFM.fillStyle = T < 1.0 ? COLORS.blue : COLORS.red;
-      ctxFM.fillText(phase, tx, 80);
+      ctxFM.fillText('T/Tc = ' + T.toFixed(2), tx, oy + 36);
+      ctxFM.fillText('B = ' + B.toFixed(2), tx + 100, oy + 36);
 
       ctxFM.fillStyle = COLORS.green; ctxFM.font = FONT;
-      ctxFM.fillText('⟨M⟩ = ' + Math.abs(M).toFixed(3), tx, 110);
+      ctxFM.fillText('\u27E8M\u27E9 = ' + avgM.toFixed(3), tx, oy + 58);
 
-      // Magnetization bar
-      const barX = tx, barY = 135, barW = 150, barH = 15;
+      // Signed magnetization bar
+      var barX = tx, barY = oy + 66, barW = panelW - 6, barH = 12;
       ctxFM.fillStyle = COLORS.grid;
       ctxFM.fillRect(barX, barY, barW, barH);
-      ctxFM.fillStyle = COLORS.green;
-      ctxFM.fillRect(barX, barY, Math.abs(M) * barW, barH);
+      ctxFM.strokeStyle = COLORS.textDim; ctxFM.lineWidth = 1;
+      ctxFM.beginPath();
+      ctxFM.moveTo(barX + barW / 2, barY);
+      ctxFM.lineTo(barX + barW / 2, barY + barH);
+      ctxFM.stroke();
+      var mFill = avgM * barW / 2;
+      ctxFM.fillStyle = avgM >= 0 ? COLORS.blue : COLORS.red;
+      if (mFill >= 0) ctxFM.fillRect(barX + barW / 2, barY, mFill, barH);
+      else ctxFM.fillRect(barX + barW / 2 + mFill, barY, -mFill, barH);
+      ctxFM.fillStyle = COLORS.textDim; ctxFM.font = FONT_SM; ctxFM.textAlign = 'center';
+      ctxFM.fillText('-1', barX + 8, barY + barH + 11);
+      ctxFM.fillText('0', barX + barW / 2, barY + barH + 11);
+      ctxFM.fillText('+1', barX + barW - 8, barY + barH + 11);
+
+      // Magnet cartoon
+      var magnetCX = tx + panelW / 2;
+      var magnetCY = oy + 140;
+      fmDrawMagnet(magnetCX, magnetCY, B);
+
+      ctxFM.textAlign = 'center'; ctxFM.font = FONT_SM;
+      if (Math.abs(B) > 0.05) {
+        ctxFM.fillStyle = COLORS.yellow;
+        ctxFM.fillText('External field ' + (B > 0 ? '\u2191' : '\u2193'), magnetCX, magnetCY + 42);
+      } else {
+        ctxFM.fillStyle = COLORS.textDim;
+        ctxFM.fillText('No external field', magnetCX, magnetCY + 42);
+      }
+
+      // Competition bars
+      var compY = oy + 200;
+      ctxFM.textAlign = 'left';
+      ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM;
+      ctxFM.fillText('Competition:', tx, compY);
+
+      var cbX = tx, cbW = panelW - 6, cbH = 9;
+      var cbY1 = compY + 6;
+      var thermalStr = Math.min(1, T / 2.5);
+      ctxFM.fillStyle = 'rgba(239,83,80,0.2)';
+      ctxFM.fillRect(cbX, cbY1, cbW, cbH);
+      ctxFM.fillStyle = COLORS.red;
+      ctxFM.fillRect(cbX, cbY1, thermalStr * cbW, cbH);
+      ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM; ctxFM.textAlign = 'right';
+      ctxFM.fillText('T (disorder)', cbX + cbW, cbY1 - 1);
+
+      var cbY2 = cbY1 + cbH + 4;
+      var fieldStr = Math.min(1, Math.abs(B) / 2.0);
+      ctxFM.fillStyle = 'rgba(255,238,88,0.12)';
+      ctxFM.fillRect(cbX, cbY2, cbW, cbH);
+      ctxFM.fillStyle = COLORS.yellow;
+      ctxFM.fillRect(cbX, cbY2, fieldStr * cbW, cbH);
+      ctxFM.fillStyle = COLORS.text; ctxFM.textAlign = 'right';
+      ctxFM.fillText('B (order)', cbX + cbW, cbY2 - 1);
 
       // Legend
-      ctxFM.fillStyle = COLORS.blue; ctxFM.fillRect(tx, 170, 12, 12);
-      ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM; ctxFM.fillText('Spin ↑', tx + 16, 181);
-      ctxFM.fillStyle = COLORS.red; ctxFM.fillRect(tx + 80, 170, 12, 12);
-      ctxFM.fillStyle = COLORS.text; ctxFM.fillText('Spin ↓', tx + 96, 181);
+      ctxFM.textAlign = 'left';
+      var legY = compY + 42;
+      ctxFM.fillStyle = COLORS.blue; ctxFM.fillRect(tx, legY, 9, 9);
+      ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM;
+      ctxFM.fillText('Spin \u2191', tx + 13, legY + 8);
+      ctxFM.fillStyle = COLORS.red; ctxFM.fillRect(tx + 65, legY, 9, 9);
+      ctxFM.fillStyle = COLORS.text;
+      ctxFM.fillText('Spin \u2193', tx + 78, legY + 8);
 
+      // Hamiltonian
       ctxFM.fillStyle = COLORS.textDim; ctxFM.font = FONT_SM;
-      ctxFM.fillText('F_mag = −Nε (aligned, low T)', tx, 210);
-      ctxFM.fillText('F_para = −NkT ln2 (random, high T)', tx, 228);
+      ctxFM.fillText('H = \u2212J\u2211s\u1d62s\u2c7c \u2212 B\u2211s\u1d62', tx, legY + 26);
 
-      document.getElementById('ferro-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(2)));
+      // Update slider displays
+      var tempValEl = document.getElementById('ferro-temp-val');
+      var fieldValEl = document.getElementById('ferro-field-val');
+      if (tempValEl) tempValEl.textContent = T.toFixed(2);
+      if (fieldValEl) fieldValEl.textContent = B.toFixed(2);
     }
 
-    ferroTempSlider?.addEventListener('input', drawFerromagnet);
-    randomizeBtn?.addEventListener('click', () => { initSpins(); drawFerromagnet(); });
-    initSpins();
-    drawFerromagnet();
+    function ferroAnimate() {
+      drawFerromagnet();
+      requestAnimationFrame(ferroAnimate);
+    }
+
+    if (randomizeBtn) randomizeBtn.addEventListener('click', function() { fmInitSpins(); });
+    fmInitSpins();
+    ferroAnimate();
   }
 
   // ----- Chemical Potential Phase Diagram -----
@@ -12152,115 +12315,248 @@ function initCh9Vis() {
     drawChemPotential();
   }
 
-  // ----- TV Diagram -----
+  // ----- T-v Diagram with Isobars -----
   const cTV = document.getElementById('vis-tv-diagram');
   if (cTV) {
     const { ctx: ctxTV, W: WTV, H: HTV } = setupCanvas(cTV);
     const tvPressureSlider = document.getElementById('tv-pressure');
 
+    // Guggenheim coexistence dome (empirical fit, reduced units)
+    function domeVL(That) {
+      var tau = 1 - That;
+      if (tau <= 0) return 1;
+      return 1 / (1 + 0.75 * tau + 1.75 * Math.pow(tau, 1/3));
+    }
+    function domeVG(That) {
+      var tau = 1 - That;
+      if (tau <= 0) return 1;
+      var nG = 1 + 0.75 * tau - 1.75 * Math.pow(tau, 1/3);
+      return nG > 0.01 ? 1 / nG : 100;
+    }
+    // Coexistence temperature for given P_hat via Clausius-Clapeyron
+    function coexTemp(Phat) {
+      if (Phat >= 1) return 1;
+      if (Phat <= 0) return 0;
+      return 1 / (1 - Math.log(Phat) / 5.4);
+    }
+    // Van der Waals isobar: T_hat(v_hat) at constant P_hat
+    function isobarT(Phat, vhat) {
+      if (3 * vhat - 1 <= 0) return 0;
+      return (Phat + 3 / (vhat * vhat)) * (3 * vhat - 1) / 8;
+    }
+
     function drawTVDiagram() {
       clearCanvas(ctxTV, WTV, HTV);
-      const P = parseFloat(tvPressureSlider?.value || 50) / 100;
-      document.getElementById('tv-pressure-val')?.replaceChildren(document.createTextNode(Math.round(P * 100)));
+      var Phat = parseFloat(tvPressureSlider?.value || 0.6);
+      document.getElementById('tv-pressure-val')?.replaceChildren(document.createTextNode(Phat.toFixed(2)));
 
-      const ox = 70, oy = HTV - 50, pw = WTV - 100, ph = HTV - 80;
+      var ox = 80, oy = HTV - 55, pw = WTV - 110, ph = HTV - 90;
+      var vMin = 0.25, vMax = 8;
+      function vToX(v) { return ox + (Math.log(v / vMin) / Math.log(vMax / vMin)) * pw; }
+      var TMin = 0.5, TMax = 1.3;
+      function TToY(T) { return oy - ((T - TMin) / (TMax - TMin)) * ph; }
 
       // Axes
       ctxTV.strokeStyle = COLORS.axis; ctxTV.lineWidth = 1;
       ctxTV.beginPath(); ctxTV.moveTo(ox, oy); ctxTV.lineTo(ox + pw, oy); ctxTV.stroke();
       ctxTV.beginPath(); ctxTV.moveTo(ox, oy); ctxTV.lineTo(ox, oy - ph); ctxTV.stroke();
-
       ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT; ctxTV.textAlign = 'center';
-      ctxTV.fillText('V (specific volume)', ox + pw / 2, oy + 30);
-      ctxTV.save(); ctxTV.translate(20, oy - ph / 2); ctxTV.rotate(-Math.PI / 2);
-      ctxTV.fillText('T', 0, 0); ctxTV.restore();
+      ctxTV.fillText('v / vc  (log scale)', ox + pw / 2, oy + 38);
+      ctxTV.save(); ctxTV.translate(18, oy - ph / 2); ctxTV.rotate(-Math.PI / 2);
+      ctxTV.fillText('T / Tc', 0, 0); ctxTV.restore();
 
-      // Draw coexistence dome (bell curve shape)
-      // At P < Pc: dome is wider. As P→Pc: dome shrinks to critical point.
-      const Tc = 0.8; // critical T (normalized)
-      const Vc = 0.5; // critical V
-      const domeWidth = 0.4 * (1 - P * 0.8); // shrinks with pressure
+      // v-axis ticks
+      ctxTV.fillStyle = COLORS.textDim; ctxTV.font = FONT_SM; ctxTV.textAlign = 'center';
+      [0.25, 0.5, 1, 2, 4, 8].forEach(function(v) {
+        var x = vToX(v);
+        ctxTV.beginPath(); ctxTV.moveTo(x, oy); ctxTV.lineTo(x, oy + 5); ctxTV.stroke();
+        ctxTV.fillText(v <= 1 ? v.toFixed(2) : v.toFixed(0), x, oy + 18);
+      });
+      // T-axis ticks
+      ctxTV.textAlign = 'right';
+      [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2].forEach(function(T) {
+        var y = TToY(T);
+        ctxTV.beginPath(); ctxTV.moveTo(ox - 5, y); ctxTV.lineTo(ox, y); ctxTV.stroke();
+        ctxTV.fillText(T.toFixed(1), ox - 8, y + 4);
+      });
 
-      // Dome: left side (saturated liquid), right side (saturated vapor)
-      if (P < 0.95) {
-        const nD = 100;
-        ctxTV.strokeStyle = COLORS.blue; ctxTV.lineWidth = 2;
+      // Fill coexistence dome
+      var nD = 200;
+      ctxTV.fillStyle = 'rgba(255, 167, 38, 0.10)';
+      ctxTV.beginPath();
+      for (var i = 0; i <= nD; i++) {
+        var That = 0.5 + (i / nD) * 0.5;
+        var vL = domeVL(That);
+        if (i === 0) ctxTV.moveTo(vToX(vL), TToY(That));
+        else ctxTV.lineTo(vToX(vL), TToY(That));
+      }
+      for (var i = nD; i >= 0; i--) {
+        var That = 0.5 + (i / nD) * 0.5;
+        var vG = Math.min(domeVG(That), vMax);
+        ctxTV.lineTo(vToX(vG), TToY(That));
+      }
+      ctxTV.closePath(); ctxTV.fill();
+
+      // Saturated liquid curve (blue)
+      ctxTV.strokeStyle = COLORS.blue; ctxTV.lineWidth = 2.5;
+      ctxTV.beginPath();
+      for (var i = 0; i <= nD; i++) {
+        var That = 0.5 + (i / nD) * 0.5;
+        if (i === 0) ctxTV.moveTo(vToX(domeVL(That)), TToY(That));
+        else ctxTV.lineTo(vToX(domeVL(That)), TToY(That));
+      }
+      ctxTV.stroke();
+
+      // Saturated vapor curve (red)
+      ctxTV.strokeStyle = COLORS.red; ctxTV.lineWidth = 2.5;
+      ctxTV.beginPath();
+      for (var i = 0; i <= nD; i++) {
+        var That = 0.5 + (i / nD) * 0.5;
+        var vG = Math.min(domeVG(That), vMax);
+        if (i === 0) ctxTV.moveTo(vToX(vG), TToY(That));
+        else ctxTV.lineTo(vToX(vG), TToY(That));
+      }
+      ctxTV.stroke();
+
+      // Region labels
+      ctxTV.font = FONT_SM; ctxTV.textAlign = 'center';
+      ctxTV.fillStyle = COLORS.blue;
+      ctxTV.fillText('Compressed', vToX(0.3), TToY(0.78));
+      ctxTV.fillText('Liquid', vToX(0.3), TToY(0.74));
+      ctxTV.fillStyle = COLORS.red;
+      ctxTV.fillText('Superheated', vToX(5.5), TToY(0.78));
+      ctxTV.fillText('Vapor', vToX(5.5), TToY(0.74));
+      ctxTV.fillStyle = COLORS.orange;
+      ctxTV.fillText('Liquid + Vapor', vToX(1), TToY(0.62));
+      ctxTV.fillStyle = COLORS.textDim;
+      ctxTV.fillText('Supercritical Fluid', vToX(1), TToY(1.2));
+
+      // Faint background isobars
+      [0.2, 0.4, 0.6, 0.8, 1.0, 1.5].forEach(function(Pbg) {
+        if (Math.abs(Pbg - Phat) < 0.05) return;
+        ctxTV.strokeStyle = 'rgba(150,150,150,0.2)'; ctxTV.lineWidth = 1;
         ctxTV.beginPath();
-        for (let i = 0; i <= nD; i++) {
-          const frac = i / nD;
-          const T = Tc * (1 - (1 - frac) * (1 - frac) * (1 - P * 0.8));
-          const vLeft = Vc - domeWidth * (1 - frac);
-          const x = ox + vLeft * pw;
-          const y = oy - T * ph;
-          if (i === 0) ctxTV.moveTo(x, y); else ctxTV.lineTo(x, y);
+        var started = false;
+        if (Pbg < 1) {
+          var Tc = coexTemp(Pbg);
+          var vL = domeVL(Tc), vG = Math.min(domeVG(Tc), vMax);
+          for (var j = 0; j <= 60; j++) {
+            var v = vMin + (vL - vMin) * (j / 60);
+            var T = isobarT(Pbg, v);
+            if (T < TMin || T > TMax) continue;
+            if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
+            else ctxTV.lineTo(vToX(v), TToY(T));
+          }
+          ctxTV.lineTo(vToX(vG), TToY(Tc));
+          for (var j = 0; j <= 100; j++) {
+            var v = vG + (vMax - vG) * (j / 100);
+            var T = isobarT(Pbg, v);
+            if (T < TMin || T > TMax) continue;
+            ctxTV.lineTo(vToX(v), TToY(T));
+          }
+        } else {
+          for (var j = 0; j <= 200; j++) {
+            var v = vMin + (vMax - vMin) * (j / 200);
+            var T = isobarT(Pbg, v);
+            if (T < TMin || T > TMax) continue;
+            if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
+            else ctxTV.lineTo(vToX(v), TToY(T));
+          }
+        }
+        ctxTV.stroke();
+      });
+
+      // Highlighted isobar
+      ctxTV.lineWidth = 3;
+      if (Phat < 1) {
+        var Tcoex = coexTemp(Phat);
+        var vL = domeVL(Tcoex), vG = Math.min(domeVG(Tcoex), vMax);
+
+        // Liquid branch
+        ctxTV.strokeStyle = COLORS.blue;
+        ctxTV.beginPath();
+        var started = false;
+        for (var j = 0; j <= 80; j++) {
+          var v = vMin + (vL - vMin) * (j / 80);
+          var T = isobarT(Phat, v);
+          if (T < TMin || T > TMax) continue;
+          if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
+          else ctxTV.lineTo(vToX(v), TToY(T));
         }
         ctxTV.stroke();
 
-        ctxTV.strokeStyle = COLORS.red; ctxTV.lineWidth = 2;
+        // Horizontal tie line (dashed)
+        ctxTV.strokeStyle = COLORS.yellow; ctxTV.lineWidth = 2.5;
+        ctxTV.setLineDash([6, 4]);
         ctxTV.beginPath();
-        for (let i = 0; i <= nD; i++) {
-          const frac = i / nD;
-          const T = Tc * (1 - (1 - frac) * (1 - frac) * (1 - P * 0.8));
-          const vRight = Vc + domeWidth * (1 - frac);
-          const x = ox + vRight * pw;
-          const y = oy - T * ph;
-          if (i === 0) ctxTV.moveTo(x, y); else ctxTV.lineTo(x, y);
+        ctxTV.moveTo(vToX(vL), TToY(Tcoex));
+        ctxTV.lineTo(vToX(vG), TToY(Tcoex));
+        ctxTV.stroke();
+        ctxTV.setLineDash([]);
+
+        // Gas branch
+        ctxTV.strokeStyle = COLORS.red; ctxTV.lineWidth = 3;
+        ctxTV.beginPath();
+        started = false;
+        for (var j = 0; j <= 120; j++) {
+          var v = vG + (vMax - vG) * (j / 120);
+          var T = isobarT(Phat, v);
+          if (T < TMin || T > TMax) continue;
+          if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
+          else ctxTV.lineTo(vToX(v), TToY(T));
         }
         ctxTV.stroke();
 
-        // Fill coexistence region
-        ctxTV.fillStyle = 'rgba(255, 167, 38, 0.08)';
-        ctxTV.beginPath();
-        for (let i = 0; i <= nD; i++) {
-          const frac = i / nD;
-          const T = Tc * (1 - (1 - frac) * (1 - frac) * (1 - P * 0.8));
-          const vLeft = Vc - domeWidth * (1 - frac);
-          ctxTV.lineTo(ox + vLeft * pw, oy - T * ph);
-        }
-        for (let i = nD; i >= 0; i--) {
-          const frac = i / nD;
-          const T = Tc * (1 - (1 - frac) * (1 - frac) * (1 - P * 0.8));
-          const vRight = Vc + domeWidth * (1 - frac);
-          ctxTV.lineTo(ox + vRight * pw, oy - T * ph);
-        }
-        ctxTV.fill();
-
-        // Labels in regions
-        ctxTV.fillStyle = COLORS.blue; ctxTV.font = FONT_SM; ctxTV.textAlign = 'center';
-        ctxTV.fillText('Liquid', ox + (Vc - domeWidth * 0.7) * pw, oy - 0.3 * ph);
+        // Dots at dome intersections
+        ctxTV.fillStyle = COLORS.blue;
+        ctxTV.beginPath(); ctxTV.arc(vToX(vL), TToY(Tcoex), 5, 0, 2 * Math.PI); ctxTV.fill();
         ctxTV.fillStyle = COLORS.red;
-        ctxTV.fillText('Gas', ox + (Vc + domeWidth * 0.7) * pw, oy - 0.3 * ph);
-        ctxTV.fillStyle = COLORS.orange; ctxTV.font = FONT_SM;
-        ctxTV.fillText('L + G', ox + Vc * pw, oy - 0.25 * ph);
+        ctxTV.beginPath(); ctxTV.arc(vToX(vG), TToY(Tcoex), 5, 0, 2 * Math.PI); ctxTV.fill();
+
+        // Coexistence temperature label
+        ctxTV.fillStyle = COLORS.yellow; ctxTV.font = FONT_SM; ctxTV.textAlign = 'right';
+        ctxTV.fillText('T = ' + Tcoex.toFixed(2) + ' Tc', ox - 12, TToY(Tcoex) + 4);
+
+        // Pressure label
+        ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
+        var labelV = vG + (vMax - vG) * 0.3;
+        var labelT = isobarT(Phat, labelV);
+        if (labelT >= TMin && labelT <= TMax) {
+          ctxTV.fillText('P = ' + Phat.toFixed(2) + ' Pc', vToX(labelV) + 5, TToY(labelT) - 8);
+        }
+      } else {
+        // Supercritical: smooth curve
+        ctxTV.strokeStyle = Phat < 1.05 ? COLORS.yellow : COLORS.green;
+        ctxTV.beginPath();
+        var started = false;
+        for (var j = 0; j <= 300; j++) {
+          var v = vMin + (vMax - vMin) * (j / 300);
+          var T = isobarT(Phat, v);
+          if (T < TMin || T > TMax) continue;
+          if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
+          else ctxTV.lineTo(vToX(v), TToY(T));
+        }
+        ctxTV.stroke();
+
+        ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
+        var lv = 3, lt = isobarT(Phat, lv);
+        if (lt >= TMin && lt <= TMax) {
+          ctxTV.fillText('P = ' + Phat.toFixed(2) + ' Pc (supercritical)', vToX(lv) + 5, TToY(lt) - 8);
+        }
       }
 
       // Critical point
-      const cpX = ox + Vc * pw, cpY = oy - Tc * ph;
       ctxTV.fillStyle = COLORS.yellow;
-      ctxTV.beginPath(); ctxTV.arc(cpX, cpY, 6, 0, 2 * Math.PI); ctxTV.fill();
-      ctxTV.fillStyle = COLORS.yellow; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
-      ctxTV.fillText('Critical Point', cpX + 10, cpY - 5);
-
-      // Isotherms (horizontal lines at constant T)
-      ctxTV.strokeStyle = COLORS.textDim; ctxTV.lineWidth = 0.5; ctxTV.setLineDash([3, 6]);
-      for (let t = 0.2; t < 1; t += 0.2) {
-        const y = oy - t * ph;
-        ctxTV.beginPath(); ctxTV.moveTo(ox, y); ctxTV.lineTo(ox + pw, y); ctxTV.stroke();
-      }
-      ctxTV.setLineDash([]);
-
-      // Supercritical region label
-      ctxTV.fillStyle = COLORS.textDim; ctxTV.font = FONT_SM; ctxTV.textAlign = 'center';
-      ctxTV.fillText('Supercritical', ox + Vc * pw, oy - 0.9 * ph);
-
-      ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_LG; ctxTV.textAlign = 'left';
-      ctxTV.fillText('T–V Diagram', ox, oy - ph - 8);
+      ctxTV.beginPath(); ctxTV.arc(vToX(1), TToY(1), 7, 0, 2 * Math.PI); ctxTV.fill();
+      ctxTV.strokeStyle = '#000'; ctxTV.lineWidth = 1.5;
+      ctxTV.beginPath(); ctxTV.arc(vToX(1), TToY(1), 7, 0, 2 * Math.PI); ctxTV.stroke();
+      ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT; ctxTV.textAlign = 'left';
+      ctxTV.fillText('Critical Point', vToX(1) + 12, TToY(1) + 5);
     }
 
     tvPressureSlider?.addEventListener('input', drawTVDiagram);
     drawTVDiagram();
   }
-}
 
 
 // =============================================================================
