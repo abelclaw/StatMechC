@@ -9511,7 +9511,7 @@ function initCh9Vis() {
   if (cST) {
     const { ctx: ctxST, W: WST, H: HST } = setupCanvas(cST);
 
-    const O_R = 8, H_R = 5, OH_LEN = 11;
+    const O_R = 6, H_R = 3.5, OH_LEN = 8;
     const HOH_ANG = 104.5 * Math.PI / 180;
 
     const tempSlider = document.getElementById('st-temp');
@@ -9523,9 +9523,9 @@ function initCh9Vis() {
     const wW = wR - wL, wH = wB - wT;
 
     // ----- Physics constants -----
-    const N_MOL = 35;
-    const CORE = 34;          // repulsive core radius (big enough that molecules never overlap)
-    const RCUT = 72;          // attraction cutoff
+    const N_MOL = 55;
+    const CORE = 24;          // repulsive core radius
+    const RCUT = 52;          // attraction cutoff
     const K_REP = 8.0;        // repulsive spring constant
     const EPS = 0.5;          // attraction strength (peak force magnitude)
     const DT = 0.15;          // integration timestep
@@ -9628,7 +9628,7 @@ function initCh9Vis() {
           m.angle += m.va * DT;
 
           // Wall collisions (elastic-ish)
-          const mr = 12;
+          const mr = 9;
           if (m.x < wL + mr) { m.x = wL + mr; m.vx = Math.abs(m.vx) * 0.5; }
           if (m.x > wR - mr) { m.x = wR - mr; m.vx = -Math.abs(m.vx) * 0.5; }
           if (m.y < wT + mr) { m.y = wT + mr; m.vy = Math.abs(m.vy) * 0.5; }
@@ -9664,7 +9664,7 @@ function initCh9Vis() {
 
       // O-H bonds
       ctxST.strokeStyle = 'rgba(200,200,200,0.55)';
-      ctxST.lineWidth = 2.5;
+      ctxST.lineWidth = 2;
       ctxST.setLineDash([]);
       ctxST.beginPath();
       ctxST.moveTo(h1x, h1y); ctxST.lineTo(x, y);
@@ -9747,13 +9747,18 @@ function initCh9Vis() {
       const avgBonds = mols.length > 0 ? (totalBonds * 2) / mols.length : 0;
 
       let phase, phaseColor;
+      // Count isolated molecules (0 bonds) as gas
+      let nIsolated = 0;
+      for (let i = 0; i < mols.length; i++) if (neighCount[i] === 0) nIsolated++;
+      const gasPresent = nIsolated >= 2;
+
       if (avgBonds > 4.0) {
         phase = 'SOLID'; phaseColor = COLORS.blue;
       } else if (avgBonds > 2.5) {
-        phase = 'SOLID / LIQUID'; phaseColor = COLORS.cyan;
-      } else if (avgBonds > 1.0) {
+        phase = gasPresent ? 'SOLID / GAS' : 'SOLID / LIQUID'; phaseColor = COLORS.cyan;
+      } else if (avgBonds > 1.0 && !gasPresent) {
         phase = 'LIQUID'; phaseColor = COLORS.green;
-      } else if (avgBonds > 0.3) {
+      } else if (avgBonds > 0.5) {
         phase = 'LIQUID / GAS'; phaseColor = COLORS.yellow;
       } else {
         phase = 'GAS'; phaseColor = COLORS.red;
