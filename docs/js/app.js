@@ -12218,152 +12218,150 @@ function initCh9Vis() {
       ctxCP.fillStyle = COLORS.textDim; ctxCP.font = FONT_SM;
       ctxCP.fillText('slope = \u2212S/N', ox, 28);
 
-      // ========= RIGHT: P-T phase diagram =========
-      var ptL = leftW + gap, ptT = 36, ptB = HCP - 48;
-      var ptR = WCP - 10, ptPw = ptR - ptL, ptPh = ptB - ptT;
+      // ========= RIGHT: P-T phase diagram (Clausius-Clapeyron style) =========
+      // Use real-looking schematic parameters
+      var sub = isWater
+        ? { Tt: 273, Pt: 0.006, Tc: 647, Pc: 218, Lvap: 45.1, Lsub: 51.1, slopeSign: -1, dTdP_sl: 0.0075 }
+        : { Tt: 216, Pt: 5.1,   Tc: 304, Pc: 73,  Lvap: 15.3, Lsub: 26.1, slopeSign:  1, dTdP_sl: 0.28 };
+      var R_kJ = 8.314e-3;
+      function ccP(T, Tt, Pt, L) { return Pt * Math.exp((L / R_kJ) * (1 / Tt - 1 / T)); }
 
-      // Subtle background
+      var ptL = leftW + gap, ptT2 = 36, ptB = HCP - 48;
+      var ptR = WCP - 10, ptPw = ptR - ptL, ptPh = ptB - ptT2;
+
+      // Axis ranges
+      var Tmax = sub.Tc * 1.25, Tlow = sub.Tt * 0.35;
+      var Pmax = sub.Pc * 1.4;
+      var Plow = ccP(Tlow, sub.Tt, sub.Pt, sub.Lsub);
+      var logPmin = Math.floor(Math.log10(Math.max(Plow, 1e-10)));
+      var logPmax = Math.ceil(Math.log10(Pmax));
+
+      function ptTX(T) { return ptL + (T / Tmax) * ptPw; }
+      function ptPY(Pv) {
+        if (Pv <= 0) return ptB;
+        return ptB - (Math.log10(Pv) - logPmin) / (logPmax - logPmin) * ptPh;
+      }
+
+      // Background
       ctxCP.fillStyle = 'rgba(255,255,255,0.025)';
-      ctxCP.fillRect(ptL, ptT, ptPw, ptPh);
+      ctxCP.fillRect(ptL, ptT2, ptPw, ptPh);
 
       // Axes
       ctxCP.strokeStyle = COLORS.axis; ctxCP.lineWidth = 1;
       ctxCP.beginPath(); ctxCP.moveTo(ptL, ptB); ctxCP.lineTo(ptR, ptB); ctxCP.stroke();
-      ctxCP.beginPath(); ctxCP.moveTo(ptL, ptB); ctxCP.lineTo(ptL, ptT); ctxCP.stroke();
+      ctxCP.beginPath(); ctxCP.moveTo(ptL, ptB); ctxCP.lineTo(ptL, ptT2); ctxCP.stroke();
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
-      ctxCP.fillText('T', ptL + ptPw / 2, ptB + 14);
-      ctxCP.save(); ctxCP.translate(ptL - 10, ptT + ptPh / 2); ctxCP.rotate(-Math.PI / 2);
-      ctxCP.fillText('P', 0, 0); ctxCP.restore();
+      ctxCP.fillText('T (K)', ptL + ptPw / 2, ptB + 14);
+      ctxCP.save(); ctxCP.translate(ptL - 10, ptT2 + ptPh / 2); ctxCP.rotate(-Math.PI / 2);
+      ctxCP.fillText('P (atm)', 0, 0); ctxCP.restore();
 
-      // Scan pressures to build phase boundary curves for P-T diagram
-      var ptNp = 100;
-      var meltPts = [], boilPts = [], sublimPts = [];
-      for (var ip = 0; ip <= ptNp; ip++) {
-        var pp = ip / ptNp;
-        var fns = cpMuFns(pp, isWater);
-        var tm2 = cpFindCrossing(fns.s, fns.l, 0.01, 0.99);
-        var tb2 = cpFindCrossing(fns.l, fns.g, 0.01, 0.99);
-        var ts2 = cpFindCrossing(fns.s, fns.g, 0.01, 0.99);
-        var hl2 = tm2 !== null && tb2 !== null && tm2 < tb2;
-        if (hl2) {
-          meltPts.push({ t: tm2, p: pp });
-          boilPts.push({ t: tb2, p: pp });
-        } else if (ts2 !== null) {
-          sublimPts.push({ t: ts2, p: pp });
-        }
+      // T ticks
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = '9px Inter, system-ui, sans-serif'; ctxCP.textAlign = 'center';
+      var tStp = Tmax > 500 ? 200 : 100;
+      for (var tTk = 0; tTk <= Tmax; tTk += tStp) {
+        if (ptTX(tTk) > ptL + 5 && ptTX(tTk) < ptR - 5)
+          ctxCP.fillText(tTk, ptTX(tTk), ptB + 11);
+      }
+      // P ticks (log scale)
+      ctxCP.textAlign = 'right';
+      for (var ex = logPmin; ex <= logPmax; ex++) {
+        var Pv = Math.pow(10, ex);
+        var lbl = ex >= 0 ? Pv.toFixed(0) : Pv.toExponential(0);
+        ctxCP.fillText(lbl, ptL - 2, ptPY(Pv) + 3);
+        ctxCP.strokeStyle = 'rgba(255,255,255,0.04)'; ctxCP.lineWidth = 0.5;
+        ctxCP.beginPath(); ctxCP.moveTo(ptL, ptPY(Pv)); ctxCP.lineTo(ptR, ptPY(Pv)); ctxCP.stroke();
       }
 
-      function ptTX(t) { return ptL + t * ptPw; }
-      function ptPY(p) { return ptB - p * ptPh; }
-
-      // Phase region fills on P-T diagram
-      // Solid region: left of melting + sublimation lines
-      // Gas region: right of boiling + sublimation lines
-      // Liquid region: between melting and boiling
+      // Clip to plot area
       ctxCP.save();
-      ctxCP.beginPath();
-      ctxCP.rect(ptL, ptT, ptPw, ptPh);
-      ctxCP.clip();
+      ctxCP.beginPath(); ctxCP.rect(ptL, ptT2, ptPw, ptPh); ctxCP.clip();
 
-      // Fill solid region (left of melt/sublim boundary)
-      if (sublimPts.length > 0 || meltPts.length > 0) {
-        ctxCP.fillStyle = 'rgba(79,195,247,0.06)';
-        ctxCP.beginPath();
-        ctxCP.moveTo(ptL, ptB);
-        sublimPts.forEach(function(pt) { ctxCP.lineTo(ptTX(pt.t), ptPY(pt.p)); });
-        meltPts.forEach(function(pt) { ctxCP.lineTo(ptTX(pt.t), ptPY(pt.p)); });
-        ctxCP.lineTo(ptL, ptT);
-        ctxCP.closePath(); ctxCP.fill();
+      // --- Sublimation curve (solid-gas) ---
+      ctxCP.strokeStyle = COLORS.red; ctxCP.lineWidth = 2.5; ctxCP.beginPath();
+      for (var is2 = 0; is2 <= 80; is2++) {
+        var Ts = Tlow + (is2 / 80) * (sub.Tt - Tlow);
+        var Ps = ccP(Ts, sub.Tt, sub.Pt, sub.Lsub);
+        if (is2 === 0) ctxCP.moveTo(ptTX(Ts), ptPY(Ps)); else ctxCP.lineTo(ptTX(Ts), ptPY(Ps));
       }
+      ctxCP.stroke();
 
-      // Fill gas region (right of boil/sublim boundary)
-      if (sublimPts.length > 0 || boilPts.length > 0) {
-        ctxCP.fillStyle = 'rgba(239,83,80,0.06)';
-        ctxCP.beginPath();
-        ctxCP.moveTo(ptR, ptB);
-        var allGas = sublimPts.concat(boilPts);
-        // sort by p ascending
-        allGas.sort(function(a, b) { return a.p - b.p; });
-        allGas.forEach(function(pt) { ctxCP.lineTo(ptTX(pt.t), ptPY(pt.p)); });
-        ctxCP.lineTo(ptR, ptT);
-        ctxCP.closePath(); ctxCP.fill();
+      // --- Vaporization curve (liquid-gas): CC rescaled to pass through critical point ---
+      ctxCP.strokeStyle = COLORS.green; ctxCP.lineWidth = 2.5; ctxCP.beginPath();
+      var logPt = Math.log10(sub.Pt), logPc = Math.log10(sub.Pc);
+      var logPccTc = Math.log10(ccP(sub.Tc, sub.Tt, sub.Pt, sub.Lvap));
+      var ccSc = (logPc - logPt) / (logPccTc - logPt);
+      ctxCP.moveTo(ptTX(sub.Tt), ptPY(sub.Pt));
+      for (var iv = 1; iv <= 80; iv++) {
+        var f = iv / 80;
+        var Tv = sub.Tt + f * (sub.Tc - sub.Tt);
+        var logPcc = Math.log10(ccP(Tv, sub.Tt, sub.Pt, sub.Lvap));
+        var logPv = logPt + (logPcc - logPt) * ccSc;
+        ctxCP.lineTo(ptTX(Tv), ptPY(Math.pow(10, logPv)));
       }
+      ctxCP.stroke();
 
-      // Fill liquid region (between melt and boil)
-      if (meltPts.length > 0 && boilPts.length > 0) {
-        ctxCP.fillStyle = 'rgba(102,187,106,0.06)';
-        ctxCP.beginPath();
-        meltPts.forEach(function(pt, i) {
-          if (i === 0) ctxCP.moveTo(ptTX(pt.t), ptPY(pt.p));
-          else ctxCP.lineTo(ptTX(pt.t), ptPY(pt.p));
-        });
-        for (var ib = boilPts.length - 1; ib >= 0; ib--) {
-          ctxCP.lineTo(ptTX(boilPts[ib].t), ptPY(boilPts[ib].p));
-        }
-        ctxCP.closePath(); ctxCP.fill();
+      // --- Solid-liquid line (Clapeyron, steep) ---
+      ctxCP.strokeStyle = COLORS.blue; ctxCP.lineWidth = 2.5; ctxCP.beginPath();
+      ctxCP.moveTo(ptTX(sub.Tt), ptPY(sub.Pt));
+      for (var im = 1; im <= 80; im++) {
+        var logPm = Math.log10(sub.Pt) + (im / 80) * (logPmax - Math.log10(sub.Pt));
+        var Pm = Math.pow(10, logPm);
+        var Tm = sub.Tt + sub.slopeSign * sub.dTdP_sl * (Pm - sub.Pt);
+        if (Tm < 0 || Tm > Tmax) break;
+        ctxCP.lineTo(ptTX(Tm), ptPY(Pm));
       }
-      ctxCP.restore();
+      ctxCP.stroke();
 
-      // Draw boundary lines
-      function drawPTLine(pts, color) {
-        if (pts.length < 2) return;
-        ctxCP.strokeStyle = color; ctxCP.lineWidth = 2;
-        ctxCP.beginPath();
-        ctxCP.moveTo(ptTX(pts[0].t), ptPY(pts[0].p));
-        for (var j = 1; j < pts.length; j++) ctxCP.lineTo(ptTX(pts[j].t), ptPY(pts[j].p));
-        ctxCP.stroke();
-      }
-      drawPTLine(sublimPts, COLORS.cyan);
-      drawPTLine(meltPts, COLORS.blue);
-      drawPTLine(boilPts, COLORS.red);
+      // Region labels
+      ctxCP.font = FONT; ctxCP.textAlign = 'center';
+      var logPmid = (logPmin + logPmax) / 2;
+      ctxCP.fillStyle = COLORS.blue;
+      ctxCP.fillText('SOLID', ptTX(sub.Tt * 0.4), ptPY(Math.pow(10, logPmid + (logPmax - logPmin) * 0.12)));
+      ctxCP.fillStyle = COLORS.green;
+      ctxCP.fillText('LIQUID', ptTX((sub.Tt + sub.Tc) * 0.48), ptPY(Math.pow(10, logPmid + (logPmax - logPmin) * 0.18)));
+      ctxCP.fillStyle = COLORS.red;
+      ctxCP.fillText('GAS', ptTX(sub.Tc * 0.7), ptPY(Math.pow(10, logPmid - (logPmax - logPmin) * 0.22)));
 
-      // Connect sublimation to melt/boil at triple point
-      if (sublimPts.length > 0 && meltPts.length > 0) {
-        var sl = sublimPts[sublimPts.length - 1], mf = meltPts[0];
-        ctxCP.strokeStyle = COLORS.textDim; ctxCP.lineWidth = 1;
-        ctxCP.beginPath();
-        ctxCP.moveTo(ptTX(sl.t), ptPY(sl.p)); ctxCP.lineTo(ptTX(mf.t), ptPY(mf.p));
-        ctxCP.stroke();
-        // Triple point marker
-        var tpx = ptTX((sl.t + mf.t) / 2), tpy = ptPY((sl.p + mf.p) / 2);
-        ctxCP.fillStyle = COLORS.yellow;
-        ctxCP.beginPath(); ctxCP.arc(tpx, tpy, 3.5, 0, 2 * Math.PI); ctxCP.fill();
-      }
+      ctxCP.restore(); // unclip
 
-      // Phase region labels
-      ctxCP.font = '12px Inter, system-ui, sans-serif'; ctxCP.textAlign = 'center';
-      if (meltPts.length > 0) {
-        ctxCP.fillStyle = 'rgba(79,195,247,0.7)';
-        ctxCP.fillText('S', ptL + ptPw * 0.10, ptT + ptPh * 0.3);
-        ctxCP.fillStyle = 'rgba(102,187,106,0.7)';
-        var mt = meltPts[Math.floor(meltPts.length * 0.6)];
-        var bt = boilPts.length > 0 ? boilPts[Math.floor(boilPts.length * 0.6)] : mt;
-        ctxCP.fillText('L', ptTX((mt.t + bt.t) / 2), ptPY((mt.p + bt.p) / 2));
-      }
-      ctxCP.fillStyle = 'rgba(239,83,80,0.7)';
-      ctxCP.fillText('G', ptL + ptPw * 0.82, ptT + ptPh * 0.75);
+      // Triple point and critical point markers
+      var tpx2 = ptTX(sub.Tt), tpy2 = ptPY(sub.Pt);
+      var cpx2 = ptTX(sub.Tc), cpy2 = ptPY(sub.Pc);
+      ctxCP.fillStyle = '#fff';
+      ctxCP.beginPath(); ctxCP.arc(tpx2, tpy2, 4, 0, 2 * Math.PI); ctxCP.fill();
+      ctxCP.beginPath(); ctxCP.arc(cpx2, cpy2, 4, 0, 2 * Math.PI); ctxCP.fill();
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = '9px Inter, system-ui, sans-serif'; ctxCP.textAlign = 'left';
+      ctxCP.fillText('Triple', tpx2 + 6, tpy2 + 3);
+      ctxCP.fillText('Critical', cpx2 + 6, cpy2 - 4);
 
-      // Current (T, P) position dot with crosshairs
-      var dxPT = ptTX(Tcur), dyPT = ptPY(P);
+      // Map slider T (0-1) to absolute T, P (0-1) to absolute P (log scale)
+      var Tabs = Tlow + Tcur * (Tmax - Tlow);
+      var logPcur = logPmin + P * (logPmax - logPmin);
+      var Pabs = Math.pow(10, logPcur);
+      var dxPT = ptTX(Tabs), dyPT = ptPY(Pabs);
+
+      // Crosshairs
       ctxCP.strokeStyle = 'rgba(255,255,255,0.25)'; ctxCP.lineWidth = 1;
       ctxCP.setLineDash([2, 3]);
-      ctxCP.beginPath(); ctxCP.moveTo(dxPT, ptB); ctxCP.lineTo(dxPT, ptT); ctxCP.stroke();
+      ctxCP.beginPath(); ctxCP.moveTo(dxPT, ptB); ctxCP.lineTo(dxPT, ptT2); ctxCP.stroke();
       ctxCP.beginPath(); ctxCP.moveTo(ptL, dyPT); ctxCP.lineTo(ptR, dyPT); ctxCP.stroke();
       ctxCP.setLineDash([]);
-      // Dot
+
+      // Position dot colored by phase from mu-T model
       ctxCP.fillStyle = '#fff';
       ctxCP.beginPath(); ctxCP.arc(dxPT, dyPT, 7, 0, 2 * Math.PI); ctxCP.fill();
       ctxCP.fillStyle = phCol[curPh];
       ctxCP.beginPath(); ctxCP.arc(dxPT, dyPT, 5, 0, 2 * Math.PI); ctxCP.fill();
+
       // Phase label near dot
-      ctxCP.fillStyle = '#fff'; ctxCP.font = FONT_SM; ctxCP.textAlign = 'left';
+      ctxCP.fillStyle = '#fff'; ctxCP.font = '11px Inter, system-ui, sans-serif'; ctxCP.textAlign = 'left';
       var lox = dxPT + 10 < ptR - 35 ? dxPT + 10 : dxPT - 42;
-      var loy = dyPT - 10 > ptT + 10 ? dyPT - 10 : dyPT + 16;
+      var loy = dyPT - 10 > ptT2 + 10 ? dyPT - 10 : dyPT + 16;
       ctxCP.fillText(phName[curPh], lox, loy);
 
-      // P-T title
+      // Title
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_LG; ctxCP.textAlign = 'center';
-      ctxCP.fillText('P\u2013T Phase Diagram', ptL + ptPw / 2, ptT - 8);
+      ctxCP.fillText('P\u2013T Phase Diagram', ptL + ptPw / 2, ptT2 - 8);
     }
 
     cpPressureSlider?.addEventListener('input', drawChemPotential);
