@@ -46,12 +46,11 @@ $$\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$$
 
 <!-- INTERACTIVE: Surface Tension -->
 <div class="interactive-container">
-  <h3>Interactive: Surface Tension</h3>
-  <p class="vis-caption">Water molecules attract their neighbors via hydrogen bonds. Bulk molecules (blue) have bonds on all sides. Surface molecules (orange) have fewer neighbors, leaving unsaturated bonds — this energy cost is the surface tension $\sigma = G/A$. Click "Disperse" to scatter the droplet and watch surface tension pull it back together, minimizing surface area.</p>
+  <h3>Interactive: Surface Tension of Water</h3>
+  <p class="vis-caption">H$_2$O molecules in a container: liquid below, vapor above. Each molecule is drawn as an oxygen (red) with two hydrogens (white). Dashed lines show hydrogen bonds between neighbors. Bulk molecules form bonds on all sides; surface molecules have unsaturated bonds pointing into the gas — this energy cost is the surface tension $\sigma = G/A$. Raise the temperature to evaporate molecules into the gas phase.</p>
   <div class="vis-controls">
-    <button id="st-disperse">Disperse</button>
-    <button id="st-reset">Reset Droplet</button>
-    <label>Surface tension $\sigma$: <input type="range" id="st-sigma" min="0" max="2" step="0.05" value="1.0"> <span class="slider-value" id="st-sigma-val">1.00</span></label>
+    <label>Temperature: <input type="range" id="st-temp" min="0.3" max="2.5" step="0.05" value="0.8"> <span class="slider-value" id="st-temp-val">0.80</span></label>
+    <button id="st-reset">Reset</button>
   </div>
   <canvas id="vis-surface-tension" width="600" height="420"></canvas>
 </div>
