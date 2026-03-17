@@ -363,13 +363,15 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
 
 <p>Because all the derivatives vanish, all dimensionful physical quantities we use to characterize a material either vanish or are infinite at the critical point:</p>
 
-<!-- INTERACTIVE: Heat Capacity Near Critical Point -->
+<!-- INTERACTIVE: Critical Divergences -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🌡️</span> Interactive: Heat Capacity Near Critical Point</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-cp-critical" width="600" height="350"></canvas></div>
+  <div class="vis-header"><span class="vis-icon">🌡️</span> Interactive: Divergences at the Critical Point</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-cp-critical" width="600" height="420"></canvas></div>
   <div class="vis-controls">
-    <label>$T/T_c$ range: <input type="range" id="cpc-range" min="0.5" max="2" step="0.01" value="1.5"> <span class="value-display" id="cpc-range-val">1.50</span></label>
+    <label>Zoom into $T_c$: <input type="range" id="cpc-zoom" min="0" max="95" step="1" value="0"> <span class="value-display" id="cpc-zoom-val">1&times;</span></label>
+    <label style="margin-left:16px"><input type="checkbox" id="cpc-meanfield"> Show mean-field prediction</label>
   </div>
+  <figcaption>Three quantities near the critical point: the order parameter $\Delta n = n_\ell - n_g$ vanishes, while the heat capacity $C_p$ and isothermal compressibility $\kappa_T$ diverge. The 3D Ising exponents (solid) differ from mean-field theory (dashed) because fluctuations matter near $T_c$.</figcaption>
 </div>
 
 <p>We say that the theory near the critical point is <span class="tooltip-trigger">scale-invariant<span class="tooltip-content">Having no characteristic scale. At a critical point, all dimensionful quantities vanish or diverge, and the system looks the same at all length scales.</span></span> or conformal. Choosing reduced units:</p>
@@ -411,6 +413,17 @@ $$\hat{n}_g(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) - \frac{7}{4}(1 - \hat{T})^{
 
 <p>The exponent $1/3$ is an example of a <span class="tooltip-trigger">critical exponent<span class="tooltip-content">An exponent characterizing how an order parameter approaches its value at the critical point. Critical exponents are universal -- they depend only on symmetry and dimensionality, not on microscopic details.</span></span>. It characterizes the approach of the density towards the critical point. The fractional exponent makes these functions non-analytic. Because of the law of corresponding states, the critical exponents can be calculated with any material -- even a made-up theoretical one. An important example is the <span class="tooltip-trigger">Ising model<span class="tooltip-content">A theoretical model of a material as a lattice of spins with interaction energies $\pm 1$. Its critical exponents agree with measured values in real fluids to one part in 1000.</span></span>, which treats a material as a lattice of spins with interaction energies $\pm 1$. Computing the critical exponents of the Ising model agrees with measured values in water to one part in 1000!</p>
 
+<!-- Interactive: Ising Model -->
+<div class="interactive-container">
+  <h3>Interactive: 2D Ising Model</h3>
+  <p class="vis-caption">The Ising model treats a material as a square lattice of spins, each pointing up or down, with energy $-J$ for aligned neighbors and $+J$ for anti-aligned ones. Despite its simplicity, it captures the essential physics of phase transitions. Below the critical temperature $T_c \approx 2.27\,J/k_B$ (solved exactly by Onsager in 1944), large domains of aligned spins form spontaneously — this is the ordered, ferromagnetic phase. Above $T_c$, thermal fluctuations destroy long-range order and the spins appear random. Near $T_c$, you can see clusters of all sizes: the system becomes scale-invariant, with no characteristic domain size. The critical exponents of this model agree with real fluid data to one part in 1000.</p>
+  <div class="vis-controls">
+    <label>$T / (J/k_B)$: <input type="range" id="ising-temp" min="0.5" max="5" step="0.05" value="2.27"> <span class="slider-value" id="ising-temp-val">2.27</span></label>
+    <button id="ising-reset">Reset</button>
+  </div>
+  <canvas id="vis-ising" width="600" height="400"></canvas>
+</div>
+
 <!-- Explore Further -->
 <div class="info-box explore">
 <div class="box-title">Explore Further</div>
@@ -441,20 +454,3 @@ $$\hat{n}_g(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) - \frac{7}{4}(1 - \hat{T})^{
 </ul>
 </div>
 
-<!-- Interactive: Ising Model -->
-<div class="interactive-container">
-  <h3>Interactive: 2D Ising Model</h3>
-  <p class="vis-caption">A lattice of spins with nearest-neighbor interactions. Below $T_c \approx 2.27\,J/k_B$, spontaneous magnetization appears (spontaneous symmetry breaking). Above $T_c$, the system is disordered. Watch domains form and dissolve as you adjust temperature.</p>
-  <div class="vis-controls">
-    <label>$T / (J/k_B)$: <input type="range" id="ising-temp" min="0.5" max="5" step="0.05" value="2.27"> <span class="slider-value" id="ising-temp-val">2.27</span></label>
-    <button id="ising-reset">Reset</button>
-  </div>
-  <canvas id="vis-ising" width="600" height="400"></canvas>
-</div>
-
-<!-- Interactive: Phase Diagram -->
-<h3>Interactive: Phase Diagram</h3>
-<div class="interactive-container">
-<canvas id="vis-phase" width="600" height="400"></canvas>
-<p class="vis-caption">Interactive phase diagram. Explore the different phases (solid, liquid, gas) as a function of temperature and pressure. Notice the triple point where all three phases coexist, and the critical point where the liquid-gas distinction vanishes.</p>
-</div>
