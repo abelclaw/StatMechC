@@ -11325,14 +11325,15 @@ function initCh9Vis() {
       dataL.push({t:t, y: lCurve(t, EXP_I.beta) * (1+(rng2()-0.5)*0.04), sub:'Xe'});
     });
 
-    // --- Heat capacity: Cp/R = A₀/α (|ε|^{-α} - 1) + B_bg ---
-    // CO2: A₀ ≈ 0.11, B_bg ≈ 4.5 (background from non-critical modes)
-    var cpA0 = 0.11, cpBg = 4.5;
+    // --- Heat capacity: Cp/R = (A/α)(|ε|^{-α} - 1) + B_bg ---
+    // Amplitude chosen so Cp/R rises from ~5 far from Tc to ~25 at ε≈0.003
+    // consistent with CO2 calorimetry (Haupt & Straub 1999)
+    var cpAmp = 1.5, cpBg = 5.0;
     function cpCurve(t, alpha) {
       var eps = Math.abs(t - 1);
       if (eps < 3e-4) return null;
-      if (alpha < 0.01) return cpBg + cpA0 * (-Math.log(eps));  // MF: log divergence
-      return cpBg + (cpA0 / alpha) * (Math.pow(eps, -alpha) - 1);
+      if (alpha < 0.01) return cpBg + cpAmp * (-Math.log(eps));  // MF: log divergence
+      return cpBg + (cpAmp / alpha) * (Math.pow(eps, -alpha) - 1);
     }
     var rng3 = seededRng(271);
     var dataCp = [];
@@ -11441,15 +11442,31 @@ function initCh9Vis() {
         // Determine y scale — for diverging quantities, use 85th percentile
         // of data so the curve rises off the top near Tc (showing divergence)
         // instead of squashing everything into the upper portion
+        // Y-range calibration per panel type:
+        // - Vanishing: yMax = value at left edge × 1.15 (show full curve, hits 0 at Tc)
+        // - Diverging: yMax = value at ε=0.10 × 3 (curve fills panel; peak exits top)
         var yMax = 0;
         if (p.diverges) {
-          var sortedY = p.data.map(function(d) { return d.y; }).sort(function(a,b) { return a-b; });
-          yMax = (sortedY[Math.floor(sortedY.length * 0.85)] || 1) * 2.0;
+          var yAnchor = p.fn(0.90, p.iVal);  // value at 10% from Tc
+          yMax = (yAnchor !== null && yAnchor > 0) ? yAnchor * 3.0 : 10;
         } else {
-          for (var k = 0; k < iPts.length; k++) yMax = Math.max(yMax, iPts[k].y);
-          for (var k = 0; k < mPts.length; k++) yMax = Math.max(yMax, mPts[k].y);
-          for (var k = 0; k < p.data.length; k++) yMax = Math.max(yMax, p.data[k].y);
-          yMax *= 1.12;
+          var yEdge = p.fn(tMin, p.iVal);
+          yMax = (yEdge !== null && yEdge > 0) ? yEdge * 1.15 : 1.5;
+        }
+        // Also ensure MF curve fits when shown
+        if (showMF) {
+          var yMfEdge = p.fn(p.diverges ? 0.90 : tMin, p.mfVal);
+          if (yMfEdge !== null && isFinite(yMfEdge)) {
+            var mfMax = yMfEdge * (p.diverges ? 3.0 : 1.15);
+            if (mfMax > yMax) yMax = mfMax;
+          }
+        }
+        // Safety: never let yMax be 0
+        if (yMax < 0.01) yMax = 1;
+        // Ensure far-from-Tc data points are visible
+        var yAtEdge = p.fn(tMin, p.iVal);
+        if (yAtEdge !== null && isFinite(yAtEdge) && yAtEdge > yMax * 0.9) {
+          yMax = yAtEdge * 1.15;
         }
 
         function toPixel(t, y) {
