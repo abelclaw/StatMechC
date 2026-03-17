@@ -9506,40 +9506,38 @@ function initCh8Vis() {
 // CH9: Phase Transitions + 2D Ising Model
 // =============================================================================
 function initCh9Vis() {
-  // ----- Surface Tension: soft-core MD, liquid forms from attraction + gravity -----
+  // ----- Surface Tension: soft-core MD with visible thermal motion -----
   const cST = document.getElementById('vis-surface-tension');
   if (cST) {
     const { ctx: ctxST, W: WST, H: HST } = setupCanvas(cST);
 
-    // H2O drawing
     const O_R = 7, H_R = 4, OH_LEN = 10;
     const HOH_ANG = 104.5 * Math.PI / 180;
 
     const tempSlider = document.getElementById('st-temp');
     const tempVal = document.getElementById('st-temp-val');
 
-    // Beaker geometry
+    // Beaker
     const bkL = 50, bkR = WST - 50, bkT = 25, bkB = HST - 50;
     const bkW = bkR - bkL, bkRnd = 16;
 
-    // Physics: soft-core pairwise potential
-    const N_MOL = 55;
-    const CORE = 20;
-    const EQ_R = 24;
-    const RCUT = 50;
-    const K_REP = 18;
-    const K_ATT = 1.8;
-    const GRAV = 0.25;
-    const DAMP = 0.88;
-    const NOISE_SCALE = 1.8;
-    const SUBSTEPS = 3;
-    const F_CAP = 12;
+    // Physics — tuned so liquid is visibly dynamic
+    const N_MOL = 50;
+    const CORE = 21;       // repulsive core
+    const RCUT = 52;       // attraction cutoff
+    const K_REP = 15;      // repulsion strength
+    const K_ATT = 2.2;     // attraction strength (hydrogen bonds!)
+    const GRAV = 0.12;     // gentle gravity
+    const DAMP = 0.965;    // low damping = more fluid motion
+    const NOISE_SCALE = 1.0;
+    const SUBSTEPS = 4;
+    const F_CAP = 10;
     let mols = [];
 
     function initMols() {
       mols = [];
-      const sp = EQ_R;
-      const startY = bkB - 15;
+      const sp = CORE + 2;
+      const startY = bkB - 14;
       let count = 0;
       for (let row = 0; count < N_MOL; row++) {
         const y = startY - row * sp * 0.87;
@@ -9551,8 +9549,8 @@ function initCh9Vis() {
           mols.push({
             x: x0 + c * sp + xOff + (Math.random() - 0.5) * 4,
             y: y + (Math.random() - 0.5) * 4,
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2,
+            vx: (Math.random() - 0.5) * 3,
+            vy: (Math.random() - 0.5) * 3,
             angle: Math.random() * 2 * Math.PI,
             va: 0
           });
@@ -9568,7 +9566,6 @@ function initCh9Vis() {
       for (let sub = 0; sub < SUBSTEPS; sub++) {
         for (const m of mols) { m.fx = 0; m.fy = 0; }
 
-        // Pairwise forces
         for (let i = 0; i < mols.length; i++) {
           for (let j = i + 1; j < mols.length; j++) {
             const a = mols[i], b = mols[j];
@@ -9580,7 +9577,8 @@ function initCh9Vis() {
             let f = 0;
             if (r < CORE) {
               f = K_REP * (CORE - r);
-            } else if (r < RCUT) {
+            } else {
+              // Parabolic attraction well: peaks at midpoint, zero at CORE and RCUT
               const t = (r - CORE) / (RCUT - CORE);
               f = -K_ATT * 4 * t * (1 - t);
             }
@@ -9593,28 +9591,28 @@ function initCh9Vis() {
           }
         }
 
-        // Integrate: damped dynamics + gravity + thermal noise
         for (const m of mols) {
           m.vx += m.fx;
           m.vy += m.fy + GRAV;
           m.vx *= DAMP;
           m.vy *= DAMP;
+          // Thermal noise each substep
           m.vx += (Math.random() - 0.5) * noise;
           m.vy += (Math.random() - 0.5) * noise;
           m.x += m.vx;
           m.y += m.vy;
 
-          m.va += (Math.random() - 0.5) * T * 0.15;
-          m.va *= 0.93;
+          m.va += (Math.random() - 0.5) * T * 0.2;
+          m.va *= 0.94;
           m.angle += m.va;
 
-          // Beaker walls
+          // Walls
           const mr = 10;
-          if (m.x < bkL + mr) { m.x = bkL + mr; m.vx = Math.abs(m.vx) * 0.3; }
-          if (m.x > bkR - mr) { m.x = bkR - mr; m.vx = -Math.abs(m.vx) * 0.3; }
-          if (m.y < bkT + mr) { m.y = bkT + mr; m.vy = Math.abs(m.vy) * 0.3; }
-          if (m.y > bkB - mr) { m.y = bkB - mr; m.vy = -Math.abs(m.vy) * 0.3; }
-          // Rounded bottom corners
+          if (m.x < bkL + mr) { m.x = bkL + mr; m.vx = Math.abs(m.vx) * 0.4; }
+          if (m.x > bkR - mr) { m.x = bkR - mr; m.vx = -Math.abs(m.vx) * 0.4; }
+          if (m.y < bkT + mr) { m.y = bkT + mr; m.vy = Math.abs(m.vy) * 0.4; }
+          if (m.y > bkB - mr) { m.y = bkB - mr; m.vy = -Math.abs(m.vy) * 0.4; }
+          // Rounded corners
           const cy = bkB - bkRnd;
           if (m.y > cy) {
             const corners = [bkL + bkRnd, bkR - bkRnd];
@@ -9682,17 +9680,18 @@ function initCh9Vis() {
 
     function drawST() {
       clearCanvas(ctxST, WST, HST);
+      const T = parseFloat(tempSlider?.value || 0.6);
 
-      // Find surface: biggest vertical gap in sorted y-positions
+      // Find surface: biggest vertical gap
       const sorted = mols.map(m => m.y).sort((a, b) => a - b);
       let surfY = bkB, maxGap = 0;
-      for (let i = 3; i < sorted.length - 3; i++) {
+      for (let i = 2; i < sorted.length - 2; i++) {
         const gap = sorted[i + 1] - sorted[i];
         if (gap > maxGap) { maxGap = gap; surfY = (sorted[i] + sorted[i + 1]) / 2; }
       }
-      if (maxGap < 15) surfY = sorted[0] - 10;
+      if (maxGap < 18) surfY = sorted[0] - 10;
 
-      // Subtle liquid tint
+      // Liquid tint
       if (surfY < bkB - 20) {
         const grad = ctxST.createLinearGradient(0, surfY, 0, surfY + 25);
         grad.addColorStop(0, 'rgba(30, 80, 180, 0)');
@@ -9701,8 +9700,12 @@ function initCh9Vis() {
         ctxST.fillRect(bkL + 2, surfY, bkW - 4, bkB - surfY - 2);
       }
 
-      // Hydrogen bonds: dashed blue between close molecules
-      const hbR = EQ_R * 1.4, hbR2 = hbR * hbR;
+      // Count H-bonds and neighbors for phase classification
+      const hbR = CORE * 1.6, hbR2 = hbR * hbR;
+      let totalBonds = 0;
+      const neighCount = new Array(mols.length).fill(0);
+
+      // Draw H-bonds
       ctxST.lineWidth = 1.2;
       ctxST.setLineDash([3, 4]);
       for (let i = 0; i < mols.length; i++) {
@@ -9712,8 +9715,11 @@ function initCh9Vis() {
           const r2 = dx * dx + dy * dy;
           if (r2 > hbR2) continue;
           const r = Math.sqrt(r2);
+          neighCount[i]++;
+          neighCount[j]++;
+          totalBonds++;
           const strength = Math.max(0, 1 - (r - CORE) / (hbR - CORE));
-          ctxST.strokeStyle = 'rgba(79, 195, 247, ' + (strength * 0.5).toFixed(2) + ')';
+          ctxST.strokeStyle = 'rgba(79, 195, 247, ' + (strength * 0.55).toFixed(2) + ')';
           ctxST.beginPath(); ctxST.moveTo(a.x, a.y); ctxST.lineTo(b.x, b.y); ctxST.stroke();
         }
       }
@@ -9723,21 +9729,21 @@ function initCh9Vis() {
       for (const m of mols) drawH2O(m.x, m.y, m.angle);
 
       // Unsaturated bond stubs on surface molecules
-      const neighR2 = (EQ_R * 1.5) * (EQ_R * 1.5);
+      const neighR2 = (CORE * 1.8) * (CORE * 1.8);
       for (let i = 0; i < mols.length; i++) {
         const m = mols[i];
-        let nAbove = 0, nTotal = 0, sumDx = 0, sumDy = 0;
+        if (neighCount[i] < 2 || m.y > surfY + 15) continue;
+        let nAbove = 0, sumDx = 0, sumDy = 0;
         for (let j = 0; j < mols.length; j++) {
           if (i === j) continue;
           const dx = mols[j].x - m.x, dy = mols[j].y - m.y;
           if (dx * dx + dy * dy < neighR2) {
-            nTotal++;
             const d = Math.sqrt(dx * dx + dy * dy) + 0.1;
             sumDx += dx / d; sumDy += dy / d;
             if (dy < -3) nAbove++;
           }
         }
-        if (nTotal >= 2 && nAbove <= 1 && m.y < surfY + 15) {
+        if (nAbove <= 1) {
           const len = Math.sqrt(sumDx * sumDx + sumDy * sumDy) + 0.1;
           ctxST.strokeStyle = 'rgba(255, 167, 38, 0.5)';
           ctxST.lineWidth = 1.8;
@@ -9752,15 +9758,44 @@ function initCh9Vis() {
 
       drawBeaker();
 
-      // Labels
-      ctxST.font = '12px Inter, system-ui, sans-serif';
-      ctxST.textAlign = 'center';
-      ctxST.fillStyle = 'rgba(255,255,255,0.15)';
-      if (surfY > bkT + 30 && surfY < bkB - 30) {
-        ctxST.fillText('vapor', bkL + bkW / 2, Math.max(bkT + 18, surfY - 25));
-        ctxST.fillText('liquid', bkL + bkW / 2, bkB - 12);
+      // --- Phase indicator ---
+      // Classify by average bonds per molecule and kinetic energy
+      const avgBonds = (totalBonds * 2) / N_MOL; // each bond counted once, shared by 2
+      let avgKE = 0;
+      for (const m of mols) avgKE += m.vx * m.vx + m.vy * m.vy;
+      avgKE /= N_MOL;
+
+      let phase, phaseColor;
+      if (avgBonds > 4.0 && avgKE < 2) {
+        phase = 'SOLID'; phaseColor = COLORS.blue;
+      } else if (avgBonds > 1.5) {
+        phase = 'LIQUID'; phaseColor = COLORS.green;
+      } else if (avgBonds > 0.5) {
+        phase = 'LIQUID + GAS'; phaseColor = COLORS.yellow;
+      } else {
+        phase = 'GAS'; phaseColor = COLORS.red;
       }
 
+      // Phase badge (top-right inside beaker)
+      ctxST.font = '13px Inter, system-ui, sans-serif';
+      ctxST.textAlign = 'right';
+      ctxST.fillStyle = phaseColor;
+      ctxST.fillText(phase, bkR - 10, bkT + 18);
+      ctxST.font = FONT_SM;
+      ctxST.fillStyle = COLORS.textDim;
+      ctxST.fillText('bonds/mol: ' + avgBonds.toFixed(1), bkR - 10, bkT + 34);
+      ctxST.fillText('KE: ' + avgKE.toFixed(1), bkR - 10, bkT + 48);
+
+      // Region labels
+      ctxST.font = '12px Inter, system-ui, sans-serif';
+      ctxST.textAlign = 'left';
+      ctxST.fillStyle = 'rgba(255,255,255,0.15)';
+      if (surfY > bkT + 50 && surfY < bkB - 30) {
+        ctxST.fillText('vapor', bkL + 10, Math.max(bkT + 18, surfY - 20));
+        ctxST.fillText('liquid', bkL + 10, bkB - 12);
+      }
+
+      // Legend bar
       const nGas = mols.filter(m => m.y < surfY).length;
       const ly = HST - 20;
       ctxST.font = FONT_SM; ctxST.textAlign = 'left';
