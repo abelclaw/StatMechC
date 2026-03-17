@@ -8899,28 +8899,31 @@ function initCh8Vis() {
       // F(x) = (1/2)k*x^2 - T*ln(x), minimum at x* = sqrt(T/k)
       const xMin = Math.sqrt(T / k);
 
-      // x range centered on minimum so it's always visible
-      const xLo = Math.max(0.01, xMin * 0.2);
-      const xHi = xMin * 3.0;
+      // Fixed x range that covers all possible minima across slider ranges
+      // k ∈ [0.5, 5], T ∈ [0.5, 5] → x* = sqrt(T/k) ∈ [sqrt(0.1), sqrt(10)] ≈ [0.32, 3.16]
+      const xLo = 0.05;
+      const xHi = 5.0;
 
       const ox = 280, oy = 40, pw = WSP8 - ox - 40, ph = HSP8 - 90;
       drawAxes(ctxSP8, ox, oy, pw, ph, {xLabel: 'Piston position x', yLabel: 'F(x)'});
 
       // Compute F values over the visible range
-      ctxSP8.strokeStyle = COLORS.blue; ctxSP8.lineWidth = 2;
-      ctxSP8.beginPath();
-      let minF = Infinity, maxF = -Infinity;
       const pts = [];
-      for (let i = 0; i <= 200; i++) {
+      let minF = Infinity, maxF = -Infinity;
+      for (let i = 1; i <= 200; i++) {
         const x = xLo + (xHi - xLo) * i / 200;
         const F = 0.5 * k * x * x - T * Math.log(x);
         pts.push({x, F});
         if (F < minF) minF = F;
         if (F > maxF) maxF = F;
       }
-      const Frange = maxF - minF || 1;
-      const Fbot = minF - Frange * 0.1;
-      const Ftop = maxF + Frange * 0.1;
+      // Clamp vertical range: show from just below minimum to a reasonable cap
+      const Fmin = 0.5 * k * xMin * xMin - T * Math.log(xMin);
+      const Fbot = Fmin - 1;
+      const Ftop = Fmin + 15;
+
+      ctxSP8.strokeStyle = COLORS.blue; ctxSP8.lineWidth = 2;
+      ctxSP8.beginPath();
       let started = false;
       for (let i = 0; i < pts.length; i++) {
         const px = ox + (pts[i].x - xLo) / (xHi - xLo) * pw;
@@ -8932,13 +8935,12 @@ function initCh8Vis() {
       ctxSP8.stroke();
 
       // Mark minimum
-      const Fmin = 0.5 * k * xMin * xMin - T * Math.log(xMin);
       const minPx = ox + (xMin - xLo) / (xHi - xLo) * pw;
       const minPy = oy + ph * (1 - (Fmin - Fbot) / (Ftop - Fbot));
       ctxSP8.beginPath(); ctxSP8.arc(minPx, minPy, 5, 0, 2 * Math.PI);
       ctxSP8.fillStyle = COLORS.green; ctxSP8.fill();
       ctxSP8.fillStyle = COLORS.green; ctxSP8.font = FONT_SM; ctxSP8.textAlign = 'left';
-      ctxSP8.fillText('x* = \u221a(T/k) = ' + xMin.toFixed(2), minPx + 8, minPy - 5);
+      ctxSP8.fillText('x* = ' + xMin.toFixed(2), minPx + 8, minPy - 5);
 
       ctxSP8.fillStyle = COLORS.text; ctxSP8.font = FONT_LG; ctxSP8.textAlign = 'left';
       ctxSP8.fillText('Free Energy F = \u00bdkx\u00b2 \u2212 T ln x', ox + 5, oy - 10);
