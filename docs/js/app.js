@@ -10124,7 +10124,7 @@ function initCh9Vis() {
     const qox = 62, qoy = 20, qpw = QW - 90, qph = QH - 65;
 
     // Axis ranges: muB 0-1700 MeV, T 0-350 MeV
-    const muMax = 1700, TMax = 350;
+    const muMax = 1700, TMax = 250;
     function qx(mu) { return qox + (mu / muMax) * qpw; }
     function qy(T)  { return qoy + qph - (T / TMax) * qph; }
 
@@ -10169,8 +10169,8 @@ function initCh9Vis() {
     // bottom edge: follow boundary left to right
     for (var bi = 0; bi < boundaryCurve.length; bi++) qgpPoly.push(boundaryCurve[bi]);
     // top edge: right to left along top of diagram
-    qgpPoly.push([1700, 350]);
-    qgpPoly.push([0, 350]);
+    qgpPoly.push([1700, 250]);
+    qgpPoly.push([0, 250]);
 
     // Hadron gas: below boundary at low mu_B (0 to ~920)
     var hadronPoly = [[0, 0]];
@@ -10206,7 +10206,7 @@ function initCh9Vis() {
         color: 'rgba(239,83,80,0.18)',
         border: '#ef5350',
         poly: qgpPoly,
-        lx: 400, ly: 270, icon: 'quarks',
+        lx: 550, ly: 210, icon: 'quarks',
         desc: 'Quarks and gluons are deconfined \u2014 they move freely instead of being bound inside protons and neutrons. This is the state of the universe microseconds after the Big Bang, and is recreated briefly in heavy-ion collisions at RHIC and the LHC.',
         expt: 'Early universe, RHIC Au+Au, LHC Pb+Pb'
       },
@@ -10215,7 +10215,7 @@ function initCh9Vis() {
         color: 'rgba(102,187,106,0.14)',
         border: '#66bb6a',
         poly: hadronPoly,
-        lx: 350, ly: 70, icon: 'hadrons',
+        lx: 300, ly: 60, icon: 'hadrons',
         desc: 'Individual hadrons (protons, neutrons, pions, kaons) scatter off each other like a gas. This is what the QGP cools into \u2014 quarks recombine into color-neutral bound states in a process called hadronization.',
         expt: 'Collider fireballs after hadronization, cosmic rays'
       },
@@ -10224,7 +10224,7 @@ function initCh9Vis() {
         color: 'rgba(79,195,247,0.16)',
         border: '#4fc3f7',
         poly: nucPoly,
-        lx: 1080, ly: 30, icon: 'nucleus',
+        lx: 1080, ly: 25, icon: 'nucleus',
         desc: 'Protons and neutrons bound by the strong nuclear force into atomic nuclei. Saturation density \u03c1\u2080 \u2248 0.16 fm\u207b\u00b3, binding energy \u2248 8 MeV/nucleon. There is a nuclear liquid-gas phase transition at T \u2248 17 MeV with its own critical point.',
         expt: 'All atomic nuclei, low-energy nuclear experiments'
       },
@@ -10233,7 +10233,7 @@ function initCh9Vis() {
         color: 'rgba(171,71,188,0.16)',
         border: '#ab47bc',
         poly: cscPoly,
-        lx: 1450, ly: 20, icon: 'cooper',
+        lx: 1500, ly: 18, icon: 'cooper',
         desc: 'At extreme baryon density and low T, quarks form Cooper pairs analogous to BCS superconductivity. Color charge is screened. Sub-phases include 2SC (two-flavor) and CFL (color-flavor locked). May exist in the cores of the most massive neutron stars.',
         expt: 'Possibly in neutron star cores (M > 2 M\u2609)'
       }
@@ -10256,11 +10256,11 @@ function initCh9Vis() {
 
     // Experimental probes - spread vertically along a diagonal, no overlapping
     var probes = [
-      { mu: 15,   T: 330, label: 'Early Universe',  color: COLORS.pink,   align: 'left',   ox: 9, oy: 3,
+      { mu: 15,   T: 240, label: 'Early Universe',  color: COLORS.pink,   align: 'left',   ox: 9, oy: 3,
         tip: 'The entire universe was a quark-gluon plasma for the first ~10 \u03bcs after the Big Bang, at T > 150 MeV.' },
-      { mu: 15,   T: 210, label: 'LHC Pb+Pb',       color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
+      { mu: 15,   T: 200, label: 'LHC Pb+Pb',       color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
         tip: 'Large Hadron Collider (CERN, Geneva). Pb+Pb collisions at \u221as = 5.02 TeV create QGP at T \u2248 300\u2013600 MeV and near-zero \u03bc_B.' },
-      { mu: 250,  T: 200, label: 'RHIC',             color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
+      { mu: 250,  T: 190, label: 'RHIC',             color: COLORS.yellow, align: 'left',   ox: 9, oy: 3,
         tip: 'Relativistic Heavy Ion Collider (Brookhaven, NY). Au+Au collisions at \u221as = 200 GeV. First facility to confirm QGP creation (2005).' },
       { mu: 500,  T: 180, label: 'RHIC BES-II',      color: COLORS.orange, align: 'left',   ox: 9, oy: 3,
         tip: 'RHIC Beam Energy Scan Phase II. Scans \u221as = 3\u201320 GeV to search for the critical end point and the onset of deconfinement.' },
