@@ -11465,8 +11465,14 @@ function initCh9Vis() {
         // - Diverging: yMax = value at ε=0.10 × 3 (curve fills panel; peak exits top)
         var yMax = 0;
         if (p.diverges) {
-          var yAnchor = p.fn(0.90, p.iVal);  // value at 10% from Tc
-          yMax = (yAnchor !== null && yAnchor > 0) ? yAnchor * 3.0 : 10;
+          // Steeper divergences (larger exponent) need more headroom.
+          // Anchor ε and multiplier tuned per exponent magnitude:
+          //   α=0.11 (weak): anchor at ε=0.05, ×2.5 → peak exits ~t=0.997
+          //   γ=1.24 (strong): anchor at ε=0.10, ×5 → peak exits ~t=0.985
+          var anchorEps = p.iVal > 0.5 ? 0.10 : 0.05;
+          var mult = p.iVal > 0.5 ? 5.0 : 2.5;
+          var yAnchor = p.fn(1 - anchorEps, p.iVal);
+          yMax = (yAnchor !== null && yAnchor > 0) ? yAnchor * mult : 10;
         } else {
           var yEdge = p.fn(tMin, p.iVal);
           yMax = (yEdge !== null && yEdge > 0) ? yEdge * 1.15 : 1.5;
