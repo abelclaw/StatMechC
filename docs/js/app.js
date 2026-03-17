@@ -12211,23 +12211,26 @@ function initCh9Vis() {
       // Pressure shifts: dmu/dP = V/N = 1/n. Gas (least dense) shifts most.
       // Normal: solid densest, liquid middle, gas least dense
       // Water: liquid densest, solid middle, gas least dense
+      // P ranges 0-1. At low P (gas-like), gas curve is low and dominates early.
+      // At high P, solid (densest) gets the smallest upward shift so it wins at low T.
       var solShift, liqShift;
-      const gasShift = P * 0.9;
+      const gasShift = P * 1.4;
       if (isWater) {
-        solShift = P * 0.18;
-        liqShift = P * 0.10;
+        solShift = P * 0.35;
+        liqShift = P * 0.20;
       } else {
-        solShift = P * 0.08;
-        liqShift = P * 0.15;
+        solShift = P * 0.15;
+        liqShift = P * 0.35;
       }
 
       // mu(t) functions, t in [0,1] maps to temperature range
       // Solid: starts flat at T=0 (3rd law), gentle negative curvature
       // Liquid: steeper slope (higher S/N)
       // Gas: steepest slope
-      function muSolid(t) { return 0.6 - 0.08 * t - 0.12 * t * t + solShift; }
-      function muLiquid(t) { return 0.55 - 0.45 * t + liqShift; }
-      function muGas(t) { return 1.1 - 1.3 * t + gasShift; }
+      // Base values chosen so that at P~0.5 all three phases appear.
+      function muSolid(t) { return 0.3 - 0.08 * t - 0.12 * t * t + solShift; }
+      function muLiquid(t) { return 0.2 - 0.45 * t + liqShift; }
+      function muGas(t) { return 0.6 - 1.3 * t + gasShift; }
 
       var nPts = 400;
 
@@ -12248,7 +12251,7 @@ function initCh9Vis() {
       var hasLiquid = tMelt !== null && tBoil !== null && tMelt < tBoil;
 
       // Map mu value to canvas y
-      var muMin = -0.6, muMax = 1.8;
+      var muMin = -0.8, muMax = 2.2;
       function muToY(mu) { return oy - (mu - muMin) / (muMax - muMin) * ph2; }
       function tToX(t) { return ox + t * pw; }
 
