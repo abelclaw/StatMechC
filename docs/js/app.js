@@ -8201,7 +8201,7 @@ function initCh7Vis() {
 
     const PR_CEQ = 4; // particle radius
     const T_CEQ = 1.0;
-    const SPEED_CEQ = 30 * Math.sqrt(T_CEQ);
+    const SPEED_CEQ = 80 * Math.sqrt(T_CEQ);
 
     // Geometry: two bulbs + connecting tube
     // Bulbs are rounded rectangles; tube is a narrow horizontal channel
@@ -8211,7 +8211,7 @@ function initCh7Vis() {
     const bulbRX = WCEQ - 20 - bulbW; // right bulb left edge
     const bulbR = 16; // corner radius for rounded rect
 
-    const tubeH = 36; // tube height (narrow)
+    const tubeH = 52; // tube height
     const tubeY = bulbY + (bulbH - tubeH) / 2; // vertically centered
     const tubeL = bulbLX + bulbW; // tube left edge
     const tubeR = bulbRX; // tube right edge
@@ -8282,7 +8282,7 @@ function initCh7Vis() {
     }
 
     function ceqStep() {
-      const SUBSTEPS = 4;
+      const SUBSTEPS = 8;
       const dt = 0.016 / SUBSTEPS;
 
       for (let sub = 0; sub < SUBSTEPS; sub++) {
