@@ -7320,6 +7320,8 @@ function initCh7Vis() {
     const cpTempVal = document.getElementById('chempot-temp-val');
     const cpEpsSlider = document.getElementById('chempot-eps');
     const cpEpsVal = document.getElementById('chempot-eps-val');
+    const cpSpdSlider = document.getElementById('chempot-speed');
+    const cpSpdVal = document.getElementById('chempot-speed-val');
 
     // Layout: sim box left, μ panel + bars right
     const cpSimW = Math.floor(WCP * 0.55);
@@ -7362,8 +7364,12 @@ function initCh7Vis() {
       return s * Math.sqrt(-2 * Math.log(1 - Math.random() * 0.999));
     }
 
+    function cpGetSpeed() { return parseFloat(cpSpdSlider?.value || 0.5); }
+
     function cpStep() {
-      var T = cpGetT(), eps = cpGetEps(), dt = 0.35;
+      var spd = cpGetSpeed();
+      // speed 0 → dt=0.01 (nearly frozen), speed 1 → dt=0.7
+      var T = cpGetT(), eps = cpGetEps(), dt = 0.01 + spd * 0.69;
 
       // Move atoms
       for (var k = 0; k < cpAtoms.length; k++) {
@@ -7458,7 +7464,7 @@ function initCh7Vis() {
       }
 
       // Spontaneous dissociation: rate ~ exp(-eps/T)
-      var breakProb = 0.02 * Math.exp(-eps / T);
+      var breakProb = 0.02 * (dt / 0.35) * Math.exp(-eps / T);
       for (var i = cpDimers.length - 1; i >= 0; i--) {
         if (Math.random() < breakProb) {
           var dd = cpDimers[i];
@@ -7623,6 +7629,9 @@ function initCh7Vis() {
     });
     cpEpsSlider?.addEventListener('input', function() {
       if (cpEpsVal) cpEpsVal.textContent = parseFloat(cpEpsSlider.value).toFixed(1);
+    });
+    cpSpdSlider?.addEventListener('input', function() {
+      if (cpSpdVal) cpSpdVal.textContent = parseFloat(cpSpdSlider.value).toFixed(2);
     });
     document.getElementById('chempot-reset')?.addEventListener('click', function() {
       cpInit(); cpDraw();
