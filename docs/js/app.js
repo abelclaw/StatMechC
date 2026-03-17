@@ -12383,11 +12383,6 @@ function initCh9Vis() {
       if (Phat <= 0) return 0;
       return 1 / (1 - Math.log(Phat) / 5.4);
     }
-    // Van der Waals isobar: T_hat(v_hat) at constant P_hat
-    function isobarT(Phat, vhat) {
-      if (3 * vhat - 1 <= 0) return 0;
-      return (Phat + 3 / (vhat * vhat)) * (3 * vhat - 1) / 8;
-    }
 
     function drawTVDiagram() {
       clearCanvas(ctxTV, WTV, HTV);
@@ -12475,133 +12470,129 @@ function initCh9Vis() {
       ctxTV.fillStyle = COLORS.textDim;
       ctxTV.fillText('Supercritical Fluid', vToX(1), TToY(1.2));
 
-      // Helper: draw a shifted VdW isobar that passes through the dome endpoints.
-      // The raw VdW T(v) doesn't match the Guggenheim dome, so we add a smooth
-      // offset that is Tcoex - isobarT(P, vDome) at the dome and fades to 0 far away.
-      var vLiqStart = 0.35; // above VdW singularity at v=1/3
-      function shiftedIsobarT(Phat, v, Tcoex, vDome, side) {
-        var Traw = isobarT(Phat, v);
-        var Tdome = isobarT(Phat, vDome);
-        var offset = Tcoex - Tdome;
-        // Blend: full offset at dome, fading away with distance
-        var dist = Math.abs(Math.log(v) - Math.log(vDome));
-        var blend = Math.exp(-dist * 2.5);
-        return Traw + offset * blend;
+      // --- Isobar drawing ---
+      // Physical isobar shapes anchored to the dome:
+      //   Liquid side: nearly vertical (liquid is incompressible),
+      //     T rises steeply as v decreases below vL
+      //   Gas side: ideal-gas-like, T ~ v^gamma where gamma < 1
+      //   Supercritical: smooth curve through the region, no flat segment
+      function drawIsobar(Phat, color, lw, drawLabel) {
+        ctxTV.lineWidth = lw;
+        if (Phat < 1) {
+          var Tcoex = coexTemp(Phat);
+          var vL = domeVL(Tcoex);
+          var vG = Math.min(domeVG(Tcoex), vMax);
+
+          // Liquid branch: from top of canvas down to dome point (vL, Tcoex)
+          // T(v) = Tcoex / (v/vL)^alpha, alpha large => nearly vertical
+          ctxTV.strokeStyle = typeof color === 'string' ? color : COLORS.blue;
+          ctxTV.beginPath();
+          var pts = [];
+          for (var j = 0; j <= 60; j++) {
+            var t = j / 60; // 0=top, 1=dome
+            var v = vL * Math.pow(vMin / vL, 1 - t); // from vMin to vL
+            var T = Tcoex * Math.pow(vL / v, 0.08); // nearly vertical: tiny T change
+            if (T > TMax) T = TMax;
+            if (T >= TMin) pts.push([v, T]);
+          }
+          if (pts.length > 0) {
+            ctxTV.moveTo(vToX(pts[0][0]), TToY(pts[0][1]));
+            for (var k = 1; k < pts.length; k++) ctxTV.lineTo(vToX(pts[k][0]), TToY(pts[k][1]));
+          }
+          ctxTV.stroke();
+
+          // Horizontal tie line (dashed yellow for highlighted, solid dim for background)
+          if (drawLabel) {
+            ctxTV.strokeStyle = COLORS.yellow; ctxTV.lineWidth = 2.5;
+            ctxTV.setLineDash([6, 4]);
+          } else {
+            ctxTV.strokeStyle = typeof color === 'string' ? color : 'rgba(150,150,150,0.2)';
+            ctxTV.lineWidth = lw;
+            ctxTV.setLineDash([]);
+          }
+          ctxTV.beginPath();
+          ctxTV.moveTo(vToX(vL), TToY(Tcoex));
+          ctxTV.lineTo(vToX(vG), TToY(Tcoex));
+          ctxTV.stroke();
+          ctxTV.setLineDash([]);
+
+          // Gas branch: from dome point (vG, Tcoex) rising with v
+          // T(v) = Tcoex * (v/vG)^gamma, gamma depends on P
+          ctxTV.strokeStyle = typeof color === 'string' ? color : COLORS.red;
+          ctxTV.lineWidth = lw;
+          ctxTV.beginPath();
+          var gamma = 0.5 + 0.15 * Phat; // gentler rise at low P
+          ctxTV.moveTo(vToX(vG), TToY(Tcoex));
+          for (var j = 1; j <= 80; j++) {
+            var v = vG + (vMax - vG) * (j / 80);
+            var T = Tcoex * Math.pow(v / vG, gamma);
+            if (T > TMax) break;
+            ctxTV.lineTo(vToX(v), TToY(T));
+          }
+          ctxTV.stroke();
+
+          if (drawLabel) {
+            // Dots at dome intersections
+            ctxTV.fillStyle = COLORS.blue;
+            ctxTV.beginPath(); ctxTV.arc(vToX(vL), TToY(Tcoex), 5, 0, 2 * Math.PI); ctxTV.fill();
+            ctxTV.fillStyle = COLORS.red;
+            ctxTV.beginPath(); ctxTV.arc(vToX(vG), TToY(Tcoex), 5, 0, 2 * Math.PI); ctxTV.fill();
+
+            // Coexistence temperature label
+            ctxTV.fillStyle = COLORS.yellow; ctxTV.font = FONT_SM; ctxTV.textAlign = 'right';
+            ctxTV.fillText('T = ' + Tcoex.toFixed(2) + ' Tc', ox - 12, TToY(Tcoex) + 4);
+
+            // Pressure label on gas branch
+            ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
+            var lv = vG * 2;
+            var lt = Tcoex * Math.pow(lv / vG, gamma);
+            if (lt >= TMin && lt <= TMax) {
+              ctxTV.fillText('P = ' + Phat.toFixed(2) + ' Pc', vToX(lv) + 5, TToY(lt) - 8);
+            }
+          }
+        } else {
+          // Supercritical: smooth curve, no phase transition
+          // T(v) rises from liquid-like (steep) to gas-like (gentle)
+          ctxTV.strokeStyle = typeof color === 'string' ? color : (Phat < 1.05 ? COLORS.yellow : COLORS.green);
+          ctxTV.lineWidth = lw;
+          ctxTV.beginPath();
+          var started = false;
+          var gamma = 0.5 + 0.15 * Phat;
+          // Anchor: at v=1, T = some value depending on P
+          var T1 = 0.95 + 0.25 * (Phat - 1); // T at v=1
+          for (var j = 0; j <= 200; j++) {
+            var v = vMin + (vMax - vMin) * (j / 200);
+            // Blend: for v < 1, steep liquid-like; for v > 1, gentle gas-like
+            var T;
+            if (v < 1) {
+              T = T1 * Math.pow(1 / v, 0.08);
+            } else {
+              T = T1 * Math.pow(v, gamma);
+            }
+            if (T < TMin || T > TMax) continue;
+            if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
+            else ctxTV.lineTo(vToX(v), TToY(T));
+          }
+          ctxTV.stroke();
+
+          if (drawLabel) {
+            ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
+            var lv = 3, lt = T1 * Math.pow(lv, gamma);
+            if (lt >= TMin && lt <= TMax) {
+              ctxTV.fillText('P = ' + Phat.toFixed(2) + ' Pc (supercritical)', vToX(lv) + 5, TToY(lt) - 8);
+            }
+          }
+        }
       }
 
       // Faint background isobars
       [0.2, 0.4, 0.6, 0.8, 1.0, 1.5].forEach(function(Pbg) {
         if (Math.abs(Pbg - Phat) < 0.05) return;
-        ctxTV.strokeStyle = 'rgba(150,150,150,0.2)'; ctxTV.lineWidth = 1;
-        ctxTV.beginPath();
-        var started = false;
-        if (Pbg < 1) {
-          var Tc = coexTemp(Pbg);
-          var vL = domeVL(Tc), vG = Math.min(domeVG(Tc), vMax);
-          for (var j = 0; j <= 60; j++) {
-            var v = vLiqStart + (vL - vLiqStart) * (j / 60);
-            var T = shiftedIsobarT(Pbg, v, Tc, vL);
-            if (T < TMin || T > TMax) continue;
-            if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
-            else ctxTV.lineTo(vToX(v), TToY(T));
-          }
-          ctxTV.lineTo(vToX(vG), TToY(Tc));
-          for (var j = 0; j <= 100; j++) {
-            var v = vG + (vMax - vG) * (j / 100);
-            var T = shiftedIsobarT(Pbg, v, Tc, vG);
-            if (T < TMin || T > TMax) continue;
-            ctxTV.lineTo(vToX(v), TToY(T));
-          }
-        } else {
-          for (var j = 0; j <= 200; j++) {
-            var v = vLiqStart + (vMax - vLiqStart) * (j / 200);
-            var T = isobarT(Pbg, v);
-            if (T < TMin || T > TMax) continue;
-            if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
-            else ctxTV.lineTo(vToX(v), TToY(T));
-          }
-        }
-        ctxTV.stroke();
+        drawIsobar(Pbg, 'rgba(150,150,150,0.2)', 1, false);
       });
 
       // Highlighted isobar
-      ctxTV.lineWidth = 3;
-      if (Phat < 1) {
-        var Tcoex = coexTemp(Phat);
-        var vL = domeVL(Tcoex), vG = Math.min(domeVG(Tcoex), vMax);
-
-        // Liquid branch (shifted to meet dome)
-        ctxTV.strokeStyle = COLORS.blue;
-        ctxTV.beginPath();
-        var started = false;
-        for (var j = 0; j <= 80; j++) {
-          var v = vLiqStart + (vL - vLiqStart) * (j / 80);
-          var T = shiftedIsobarT(Phat, v, Tcoex, vL);
-          if (T < TMin || T > TMax) continue;
-          if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
-          else ctxTV.lineTo(vToX(v), TToY(T));
-        }
-        ctxTV.stroke();
-
-        // Horizontal tie line (dashed)
-        ctxTV.strokeStyle = COLORS.yellow; ctxTV.lineWidth = 2.5;
-        ctxTV.setLineDash([6, 4]);
-        ctxTV.beginPath();
-        ctxTV.moveTo(vToX(vL), TToY(Tcoex));
-        ctxTV.lineTo(vToX(vG), TToY(Tcoex));
-        ctxTV.stroke();
-        ctxTV.setLineDash([]);
-
-        // Gas branch (shifted to meet dome)
-        ctxTV.strokeStyle = COLORS.red; ctxTV.lineWidth = 3;
-        ctxTV.beginPath();
-        started = false;
-        for (var j = 0; j <= 120; j++) {
-          var v = vG + (vMax - vG) * (j / 120);
-          var T = shiftedIsobarT(Phat, v, Tcoex, vG);
-          if (T < TMin || T > TMax) continue;
-          if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
-          else ctxTV.lineTo(vToX(v), TToY(T));
-        }
-        ctxTV.stroke();
-
-        // Dots at dome intersections
-        ctxTV.fillStyle = COLORS.blue;
-        ctxTV.beginPath(); ctxTV.arc(vToX(vL), TToY(Tcoex), 5, 0, 2 * Math.PI); ctxTV.fill();
-        ctxTV.fillStyle = COLORS.red;
-        ctxTV.beginPath(); ctxTV.arc(vToX(vG), TToY(Tcoex), 5, 0, 2 * Math.PI); ctxTV.fill();
-
-        // Coexistence temperature label
-        ctxTV.fillStyle = COLORS.yellow; ctxTV.font = FONT_SM; ctxTV.textAlign = 'right';
-        ctxTV.fillText('T = ' + Tcoex.toFixed(2) + ' Tc', ox - 12, TToY(Tcoex) + 4);
-
-        // Pressure label
-        ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
-        var labelV = vG + (vMax - vG) * 0.3;
-        var labelT = shiftedIsobarT(Phat, labelV, Tcoex, vG);
-        if (labelT >= TMin && labelT <= TMax) {
-          ctxTV.fillText('P = ' + Phat.toFixed(2) + ' Pc', vToX(labelV) + 5, TToY(labelT) - 8);
-        }
-      } else {
-        // Supercritical: smooth curve (no dome correction needed)
-        ctxTV.strokeStyle = Phat < 1.05 ? COLORS.yellow : COLORS.green;
-        ctxTV.beginPath();
-        var started = false;
-        for (var j = 0; j <= 300; j++) {
-          var v = vLiqStart + (vMax - vLiqStart) * (j / 300);
-          var T = isobarT(Phat, v);
-          if (T < TMin || T > TMax) continue;
-          if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
-          else ctxTV.lineTo(vToX(v), TToY(T));
-        }
-        ctxTV.stroke();
-
-        ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
-        var lv = 3, lt = isobarT(Phat, lv);
-        if (lt >= TMin && lt <= TMax) {
-          ctxTV.fillText('P = ' + Phat.toFixed(2) + ' Pc (supercritical)', vToX(lv) + 5, TToY(lt) - 8);
-        }
-      }
+      drawIsobar(Phat, null, 3, true);
 
       // Critical point
       ctxTV.fillStyle = COLORS.yellow;
@@ -12615,7 +12606,6 @@ function initCh9Vis() {
     tvPressureSlider?.addEventListener('input', drawTVDiagram);
     drawTVDiagram();
   }
-}
 
 
 // =============================================================================
