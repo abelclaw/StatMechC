@@ -10185,14 +10185,75 @@ function initCh9Vis() {
       return Tc0 * (1 - 0.013 * (mu / Tc0) * (mu / Tc0));
     }
 
-    // 4 main phases with well-separated label positions
+    // Full deconfinement boundary: crossover at low mu, first-order after CEP,
+    // continuing to curve down at high mu_B. This is the key curve in the diagram.
+    // At high mu_B (>1100), the boundary between QGP and CSC continues to drop.
+    function boundaryT(mu) {
+      if (mu <= CEP.mu) return crossoverT(mu);
+      // First-order line from CEP, curving down via quadratic interpolation
+      // through (850, 105) to (1100, 65), then continuing to (1700, 30)
+      if (mu <= 1100) {
+        var t = (mu - CEP.mu) / (1100 - CEP.mu);
+        // quadratic bezier: CEP -> control(850,105) -> (1100,65)
+        var t0 = CEP.T, t1 = 105, t2 = 65;
+        return (1-t)*(1-t)*t0 + 2*(1-t)*t*t1 + t*t*t2;
+      }
+      // Beyond nuclear matter: QGP-CSC boundary continues down
+      var t = (mu - 1100) / (1700 - 1100);
+      return 65 * (1 - t) + 30 * t;
+    }
+
+    // Sample boundary curve as array of [mu, T] points
+    var boundaryCurve = [];
+    for (var bmu = 0; bmu <= 1700; bmu += 20) {
+      boundaryCurve.push([bmu, boundaryT(bmu)]);
+    }
+    boundaryCurve.push([1700, boundaryT(1700)]);
+
+    // Build phase polygons from boundary curve
+    // QGP: above the boundary, full width
+    var qgpPoly = [];
+    // bottom edge: follow boundary left to right
+    for (var bi = 0; bi < boundaryCurve.length; bi++) qgpPoly.push(boundaryCurve[bi]);
+    // top edge: right to left along top of diagram
+    qgpPoly.push([1700, 350]);
+    qgpPoly.push([0, 350]);
+
+    // Hadron gas: below boundary at low mu_B (0 to ~920)
+    var hadronPoly = [[0, 0]];
+    // top edge: follow boundary from mu=0 to where first-order meets nuclear matter
+    for (var bi = 0; bi < boundaryCurve.length; bi++) {
+      if (boundaryCurve[bi][0] > 920) break;
+      hadronPoly.push(boundaryCurve[bi]);
+    }
+    hadronPoly.push([920, boundaryT(920)]);
+    hadronPoly.push([920, 0]);
+
+    // Nuclear matter: pocket around mu=920-1250, below the boundary
+    var nucPoly = [[920, 0], [920, boundaryT(920)]];
+    for (var bi = 0; bi < boundaryCurve.length; bi++) {
+      if (boundaryCurve[bi][0] >= 920 && boundaryCurve[bi][0] <= 1250)
+        nucPoly.push(boundaryCurve[bi]);
+    }
+    nucPoly.push([1250, boundaryT(1250)]);
+    nucPoly.push([1250, 0]);
+
+    // Color superconductor: high mu_B, below boundary
+    var cscPoly = [[1250, 0], [1250, boundaryT(1250)]];
+    for (var bi = 0; bi < boundaryCurve.length; bi++) {
+      if (boundaryCurve[bi][0] >= 1250)
+        cscPoly.push(boundaryCurve[bi]);
+    }
+    cscPoly.push([1700, 0]);
+
+    // 4 main phases
     const phases = [
       {
         name: 'Quark-Gluon Plasma',
         color: 'rgba(239,83,80,0.18)',
         border: '#ef5350',
-        poly: [[0, 165], [0, 350], [1700, 350], [1700, 165], [1100, 165]],
-        lx: 270, ly: 275, icon: 'quarks',
+        poly: qgpPoly,
+        lx: 400, ly: 270, icon: 'quarks',
         desc: 'Quarks and gluons are deconfined \u2014 they move freely instead of being bound inside protons and neutrons. This is the state of the universe microseconds after the Big Bang, and is recreated briefly in heavy-ion collisions at RHIC and the LHC.',
         expt: 'Early universe, RHIC Au+Au, LHC Pb+Pb'
       },
@@ -10200,8 +10261,8 @@ function initCh9Vis() {
         name: 'Hadron Gas',
         color: 'rgba(102,187,106,0.14)',
         border: '#66bb6a',
-        poly: [[0, 0], [0, 165], [1100, 165], [1100, 70], [920, 0]],
-        lx: 320, ly: 80, icon: 'hadrons',
+        poly: hadronPoly,
+        lx: 350, ly: 70, icon: 'hadrons',
         desc: 'Individual hadrons (protons, neutrons, pions, kaons) scatter off each other like a gas. This is what the QGP cools into \u2014 quarks recombine into color-neutral bound states in a process called hadronization.',
         expt: 'Collider fireballs after hadronization, cosmic rays'
       },
@@ -10209,8 +10270,8 @@ function initCh9Vis() {
         name: 'Nuclear Matter',
         color: 'rgba(79,195,247,0.16)',
         border: '#4fc3f7',
-        poly: [[920, 0], [1100, 70], [1100, 165], [1250, 55], [1250, 0]],
-        lx: 1080, ly: 38, icon: 'nucleus',
+        poly: nucPoly,
+        lx: 1080, ly: 30, icon: 'nucleus',
         desc: 'Protons and neutrons bound by the strong nuclear force into atomic nuclei. Saturation density \u03c1\u2080 \u2248 0.16 fm\u207b\u00b3, binding energy \u2248 8 MeV/nucleon. There is a nuclear liquid-gas phase transition at T \u2248 17 MeV with its own critical point.',
         expt: 'All atomic nuclei, low-energy nuclear experiments'
       },
@@ -10218,8 +10279,8 @@ function initCh9Vis() {
         name: 'Color Superconductor',
         color: 'rgba(171,71,188,0.16)',
         border: '#ab47bc',
-        poly: [[1250, 0], [1250, 55], [1100, 165], [1700, 165], [1700, 0]],
-        lx: 1430, ly: 75, icon: 'cooper',
+        poly: cscPoly,
+        lx: 1450, ly: 20, icon: 'cooper',
         desc: 'At extreme baryon density and low T, quarks form Cooper pairs analogous to BCS superconductivity. Color charge is screened. Sub-phases include 2SC (two-flavor) and CFL (color-flavor locked). May exist in the cores of the most massive neutron stars.',
         expt: 'Possibly in neutron star cores (M > 2 M\u2609)'
       }
@@ -10295,41 +10356,46 @@ function initCh9Vis() {
         qctx.closePath(); qctx.fill();
       });
 
-      // Crossover (dashed yellow, low mu_B)
+      // --- Deconfinement boundary ---
+      // Crossover portion (dashed, low mu_B, from lattice QCD)
       qctx.save();
       qctx.setLineDash([6, 5]);
       qctx.strokeStyle = '#ffee58'; qctx.lineWidth = 2.5;
       qctx.beginPath();
       for (var mu = 0; mu <= CEP.mu; mu += 4) {
-        var T = crossoverT(mu);
+        var T = boundaryT(mu);
         mu === 0 ? qctx.moveTo(qx(mu), qy(T)) : qctx.lineTo(qx(mu), qy(T));
       }
       qctx.stroke();
       qctx.setLineDash([]);
       qctx.restore();
 
-      // Crossover label - centered around mu=200, well above the probes
+      // First-order portion (solid, from CEP rightward)
+      qctx.strokeStyle = '#ef5350'; qctx.lineWidth = 2.5;
+      qctx.beginPath();
+      var started = false;
+      for (var mu = CEP.mu; mu <= 1700; mu += 4) {
+        var T = boundaryT(mu);
+        if (!started) { qctx.moveTo(qx(mu), qy(T)); started = true; }
+        else qctx.lineTo(qx(mu), qy(T));
+      }
+      qctx.stroke();
+
+      // Crossover label
       qctx.font = '10px Inter, system-ui, sans-serif';
       qctx.textAlign = 'center';
       qctx.fillStyle = '#ffee58';
-      qctx.fillText('crossover', qx(200), qy(crossoverT(200)) - 10);
+      qctx.fillText('crossover', qx(200), qy(boundaryT(200)) - 10);
       qctx.fillStyle = COLORS.textDim;
-      qctx.fillText('(lattice QCD)', qx(200), qy(crossoverT(200)) + 2);
+      qctx.fillText('(lattice QCD)', qx(200), qy(boundaryT(200)) + 2);
 
-      // First-order line (solid red, CEP rightward)
-      qctx.strokeStyle = '#ef5350'; qctx.lineWidth = 2.5;
-      qctx.beginPath();
-      qctx.moveTo(qx(CEP.mu), qy(CEP.T));
-      qctx.quadraticCurveTo(qx(850), qy(105), qx(1100), qy(70));
-      qctx.stroke();
-
-      // 1st-order label - below the line, around mu=870
+      // 1st-order label
       qctx.fillStyle = '#ef5350';
       qctx.font = '10px Inter, system-ui, sans-serif';
       qctx.textAlign = 'center';
-      qctx.fillText('1st order (conjectured)', qx(870), qy(85) + 14);
+      qctx.fillText('1st order (conjectured)', qx(870), qy(boundaryT(870)) + 16);
 
-      // Nuclear liquid-gas boundary
+      // Nuclear liquid-gas boundary (low T, around mu~920-1250)
       qctx.strokeStyle = '#4fc3f7'; qctx.lineWidth = 1.8;
       qctx.beginPath();
       qctx.moveTo(qx(1250), qy(0));
