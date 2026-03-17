@@ -6779,6 +6779,7 @@ function initCh7Vis() {
   redistributeAll(1.0 / parseFloat(tempSlider?.value || 1));
 
   let lastBeta = 1.0 / parseFloat(tempSlider?.value || 1);
+  let frameCount = 0;
 
   function draw() {
     const T = parseFloat(tempSlider?.value || 1);
@@ -6790,15 +6791,18 @@ function initCh7Vis() {
       lastBeta = beta;
     }
 
-    // Run Metropolis steps
-    const stepsPerFrame = nParticles;
-    for (let s = 0; s < stepsPerFrame; s++) metropolisStep(beta);
-    recomputeCounts();
+    // Only update physics every 3rd frame to slow visible blinking
+    frameCount++;
+    if (frameCount % 3 === 0) {
+      const stepsPerFrame = nParticles;
+      for (let s = 0; s < stepsPerFrame; s++) metropolisStep(beta);
+      recomputeCounts();
 
-    // Update smoothed fractions
-    const alpha = 0.03;
-    for (let l = 0; l < nLevels; l++) {
-      smoothFrac[l] += alpha * (counts[l] / nParticles - smoothFrac[l]);
+      // Update smoothed fractions
+      const alpha = 0.03;
+      for (let l = 0; l < nLevels; l++) {
+        smoothFrac[l] += alpha * (counts[l] / nParticles - smoothFrac[l]);
+      }
     }
 
     clearCanvas(ctx, W, H);
@@ -7328,7 +7332,6 @@ function initCh7Vis() {
 
     let cpAtoms = [];
     let cpDimers = [];
-    let cpSmoothMuA = 0, cpSmoothMuA2 = 0;
 
     function cpGetT() { return parseFloat(cpTempSlider?.value || 1.5); }
     function cpGetEps() { return parseFloat(cpEpsSlider?.value || 3.0); }
@@ -7342,7 +7345,6 @@ function initCh7Vis() {
 
     function cpInit() {
       cpAtoms = []; cpDimers = [];
-      cpSmoothMuA = 0; cpSmoothMuA2 = 0;
       var T = cpGetT();
       for (var i = 0; i < cpNTotal; i++) {
         var spd = cpRandSpd(T);
@@ -7533,72 +7535,67 @@ function initCh7Vis() {
 
       // ---- Right panel ----
       var panL = cpSimW + 8, panR = WCP - 8, panCx = (panL + panR) / 2;
+      var panW = panR - panL;
+
+      // Key parameter
+      var epsOverT = eps / T;
 
       // Title
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT;
       ctxCP.textAlign = 'center';
       ctxCP.fillText('A + A \u21CC A\u2082', panCx, 22);
 
-      // Compute chemical potentials (in units where kB=1)
-      var boxArea = (cpBoxR - cpBoxL) * (cpBoxB - cpBoxT);
-      var densA = Math.max(nFree, 0.5) / boxArea;
-      var densA2 = Math.max(nDim, 0.5) / boxArea;
-      var muA = T * Math.log(densA * 1e4);
-      var muA2 = T * Math.log(densA2 * 1e4) - eps;
-      var twoMuA = 2 * muA;
+      // Show ε/kT — the parameter that controls everything
+      ctxCP.font = FONT; ctxCP.fillStyle = COLORS.text;
+      ctxCP.fillText('\u03B5/k\u0042T = ' + epsOverT.toFixed(1), panCx, 46);
 
-      // Smooth for display
-      var ema = 0.04;
-      cpSmoothMuA = cpSmoothMuA * (1 - ema) + twoMuA * ema;
-      cpSmoothMuA2 = cpSmoothMuA2 * (1 - ema) + muA2 * ema;
-
-      // --- Equilibrium condition: horizontal bar comparison ---
-      var eqY = 38;
-      ctxCP.font = FONT_SM; ctxCP.textAlign = 'left';
-
-      // Normalize both values to a bar length
-      var barL = panL + 12, barR = panR - 12, barW = barR - barL;
-      var maxVal = Math.max(Math.abs(cpSmoothMuA), Math.abs(cpSmoothMuA2), 1) * 1.2;
-
-      // 2μ_A bar
-      var bw1 = Math.abs(cpSmoothMuA / maxVal) * barW * 0.45;
-      ctxCP.fillStyle = COLORS.textDim; ctxCP.textAlign = 'left';
-      ctxCP.fillText('2\u03BC\u2090', barL, eqY - 3);
-      ctxCP.fillStyle = COLORS.blue; ctxCP.globalAlpha = 0.7;
-      ctxCP.fillRect(barL, eqY + 2, bw1, 12);
-      ctxCP.globalAlpha = 1.0;
-      ctxCP.fillStyle = COLORS.text; ctxCP.textAlign = 'left';
-      ctxCP.fillText(cpSmoothMuA.toFixed(1), barL + bw1 + 4, eqY + 12);
-
-      // μ_{A₂} bar
-      var row2Y = eqY + 26;
-      var bw2 = Math.abs(cpSmoothMuA2 / maxVal) * barW * 0.45;
-      ctxCP.fillStyle = COLORS.textDim; ctxCP.textAlign = 'left';
-      ctxCP.fillText('\u03BC_A\u2082', barL, row2Y - 3);
-      ctxCP.fillStyle = COLORS.orange; ctxCP.globalAlpha = 0.7;
-      ctxCP.fillRect(barL, row2Y + 2, bw2, 12);
-      ctxCP.globalAlpha = 1.0;
-      ctxCP.fillStyle = COLORS.text; ctxCP.textAlign = 'left';
-      ctxCP.fillText(cpSmoothMuA2.toFixed(1), barL + bw2 + 4, row2Y + 12);
-
-      // Equilibrium condition label
-      var imb = cpSmoothMuA - cpSmoothMuA2;
-      var statusY = row2Y + 30;
-      ctxCP.textAlign = 'center';
-      if (Math.abs(imb) < 0.4) {
-        ctxCP.fillStyle = COLORS.green;
-        ctxCP.fillText('2\u03BC\u2090 \u2248 \u03BC_A\u2082  \u2714 equilibrium', panCx, statusY);
-      } else if (imb > 0) {
-        ctxCP.fillStyle = COLORS.textDim;
-        ctxCP.fillText('2\u03BC\u2090 > \u03BC_A\u2082 \u2192 forming dimers', panCx, statusY);
+      // Who-wins label
+      ctxCP.font = FONT_SM;
+      if (epsOverT > 2.5) {
+        ctxCP.fillStyle = COLORS.orange;
+        ctxCP.fillText('energy wins \u2192 dimers', panCx, 64);
+      } else if (epsOverT < 1.0) {
+        ctxCP.fillStyle = COLORS.blue;
+        ctxCP.fillText('entropy wins \u2192 free atoms', panCx, 64);
       } else {
-        ctxCP.fillStyle = COLORS.textDim;
-        ctxCP.fillText('2\u03BC\u2090 < \u03BC_A\u2082 \u2192 breaking dimers', panCx, statusY);
+        ctxCP.fillStyle = COLORS.green;
+        ctxCP.fillText('competing \u2192 mixture', panCx, 64);
       }
 
-      // --- Bar chart ---
-      var cTop = statusY + 18, cBot = HCP - 40, cH = cBot - cTop;
-      var bW = (panR - panL) * 0.25, bGap = (panR - panL) * 0.08;
+      // --- Stacked composition bar ---
+      var barY = 82, barH = 24;
+      var barL2 = panL + 10, barR2 = panR - 10, barW2 = barR2 - barL2;
+      var totalAtoms = nFree + nDim * 2;
+      var fracFree = totalAtoms > 0 ? nFree / totalAtoms : 0.5;
+      var fracBound = 1 - fracFree;
+
+      // Free portion (blue)
+      var freeW = fracFree * barW2;
+      ctxCP.fillStyle = COLORS.blue;
+      ctxCP.fillRect(barL2, barY, freeW, barH);
+      // Bound portion (orange)
+      ctxCP.fillStyle = COLORS.orange;
+      ctxCP.fillRect(barL2 + freeW, barY, fracBound * barW2, barH);
+      // Border
+      ctxCP.strokeStyle = COLORS.axis; ctxCP.lineWidth = 1;
+      ctxCP.strokeRect(barL2, barY, barW2, barH);
+
+      // Percentage labels inside bar
+      ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
+      var pctFree = Math.round(fracFree * 100);
+      var pctBound = Math.round(fracBound * 100);
+      if (pctFree > 15) {
+        ctxCP.fillStyle = '#000';
+        ctxCP.fillText(pctFree + '% free', barL2 + freeW / 2, barY + 16);
+      }
+      if (pctBound > 15) {
+        ctxCP.fillStyle = '#000';
+        ctxCP.fillText(pctBound + '% bound', barL2 + freeW + (fracBound * barW2) / 2, barY + 16);
+      }
+
+      // --- Vertical bar chart below ---
+      var cTop = barY + barH + 28, cBot = HCP - 40, cH = cBot - cTop;
+      var bW = panW * 0.25, bGap = panW * 0.08;
       var fX = panL + bGap, bX = panCx + bGap * 0.5;
 
       // Free bar
@@ -7608,7 +7605,7 @@ function initCh7Vis() {
       ctxCP.strokeStyle = 'rgba(79,195,247,0.4)'; ctxCP.lineWidth = 1;
       ctxCP.strokeRect(fX, cBot - fH, bW, fH);
 
-      // Bound bar (count atoms in dimers, not number of dimers)
+      // Bound bar (count atoms in dimers)
       var bH = (nDim * 2 / cpNTotal) * cH;
       ctxCP.fillStyle = COLORS.orange;
       ctxCP.fillRect(bX, cBot - bH, bW, bH);
@@ -7617,10 +7614,8 @@ function initCh7Vis() {
 
       // Labels
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
-      ctxCP.fillText('Free A', fX + bW / 2, cBot + 13);
-      ctxCP.fillText(nFree + ' atoms', fX + bW / 2, cBot + 25);
-      ctxCP.fillText('Bound A\u2082', bX + bW / 2, cBot + 13);
-      ctxCP.fillText(nDim + ' dimers', bX + bW / 2, cBot + 25);
+      ctxCP.fillText(nFree + ' free', fX + bW / 2, cBot + 13);
+      ctxCP.fillText(nDim + ' dimers', bX + bW / 2, cBot + 13);
     }
 
     cpTempSlider?.addEventListener('input', function() {
