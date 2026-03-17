@@ -9744,24 +9744,48 @@ function initCh9Vis() {
       }
 
       // --- Phase indicator (top-right) ---
-      const avgBonds = mols.length > 0 ? (totalBonds * 2) / mols.length : 0;
+      // Gas: molecules with zero H-bonds (loose/airborne)
+      let nGas = 0;
+      for (let i = 0; i < mols.length; i++) if (neighCount[i] === 0) nGas++;
 
+      // Solid: bonded molecules with very low velocity (frozen in place)
+      const FROZEN_V = 0.8; // velocity threshold for "frozen"
+      let nSolid = 0, nBonded = 0;
+      for (let i = 0; i < mols.length; i++) {
+        if (neighCount[i] > 0) {
+          nBonded++;
+          const speed = Math.sqrt(mols[i].vx * mols[i].vx + mols[i].vy * mols[i].vy);
+          if (speed < FROZEN_V) nSolid++;
+        }
+      }
+
+      // Liquid: bonded molecules that are NOT frozen
+      const nLiquid = nBonded - nSolid;
+
+      // Determine dominant phase label
       let phase, phaseColor;
-      // Count isolated molecules (0 bonds) as gas
-      let nIsolated = 0;
-      for (let i = 0; i < mols.length; i++) if (neighCount[i] === 0) nIsolated++;
-      const gasPresent = nIsolated >= 2;
+      const fGas = nGas / mols.length;
+      const fSolid = nSolid / mols.length;
+      const fLiquid = nLiquid / mols.length;
 
-      if (avgBonds > 4.0) {
-        phase = 'SOLID'; phaseColor = COLORS.blue;
-      } else if (avgBonds > 2.5) {
-        phase = gasPresent ? 'SOLID / GAS' : 'SOLID / LIQUID'; phaseColor = COLORS.cyan;
-      } else if (avgBonds > 1.0 && !gasPresent) {
-        phase = 'LIQUID'; phaseColor = COLORS.green;
-      } else if (avgBonds > 0.5) {
-        phase = 'LIQUID / GAS'; phaseColor = COLORS.yellow;
-      } else {
+      if (fGas > 0.8) {
         phase = 'GAS'; phaseColor = COLORS.red;
+      } else if (fSolid > 0.8) {
+        phase = 'SOLID'; phaseColor = COLORS.blue;
+      } else if (fSolid > 0.3 && fLiquid > 0.15) {
+        phase = 'SOLID / LIQUID'; phaseColor = COLORS.cyan;
+      } else if (fLiquid > 0.3 && fGas > 0.05) {
+        phase = 'LIQUID / GAS'; phaseColor = COLORS.yellow;
+      } else if (fLiquid > 0.4) {
+        phase = 'LIQUID'; phaseColor = COLORS.green;
+      } else if (fSolid > 0.3 && fGas > 0.05) {
+        phase = 'SOLID / GAS'; phaseColor = '#ff8800';
+      } else if (fGas > 0.3) {
+        phase = 'GAS'; phaseColor = COLORS.red;
+      } else if (fSolid > 0.3) {
+        phase = 'SOLID'; phaseColor = COLORS.blue;
+      } else {
+        phase = 'LIQUID'; phaseColor = COLORS.green;
       }
 
       ctxST.font = '14px Inter, system-ui, sans-serif';
@@ -9770,7 +9794,8 @@ function initCh9Vis() {
       ctxST.fillText(phase, wR - 8, wT + 18);
       ctxST.font = FONT_SM;
       ctxST.fillStyle = COLORS.textDim;
-      ctxST.fillText('H-bonds/mol: ' + avgBonds.toFixed(1), wR - 8, wT + 34);
+      const pcts = 'S:' + Math.round(fSolid*100) + '% L:' + Math.round(fLiquid*100) + '% G:' + Math.round(fGas*100) + '%';
+      ctxST.fillText(pcts, wR - 8, wT + 34);
 
       // --- Legend bar at bottom ---
       const ly = HST - 14;
