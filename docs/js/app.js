@@ -12479,8 +12479,21 @@ function initCh9Vis() {
       ctxTV.fillStyle = COLORS.textDim;
       ctxTV.fillText('Supercritical Fluid', vToX(1), TToY(1.2));
 
-      // Faint background isobars
+      // Helper: draw a shifted VdW isobar that passes through the dome endpoints.
+      // The raw VdW T(v) doesn't match the Guggenheim dome, so we add a smooth
+      // offset that is Tcoex - isobarT(P, vDome) at the dome and fades to 0 far away.
       var vLiqStart = 0.35; // above VdW singularity at v=1/3
+      function shiftedIsobarT(Phat, v, Tcoex, vDome, side) {
+        var Traw = isobarT(Phat, v);
+        var Tdome = isobarT(Phat, vDome);
+        var offset = Tcoex - Tdome;
+        // Blend: full offset at dome, fading away with distance
+        var dist = Math.abs(Math.log(v) - Math.log(vDome));
+        var blend = Math.exp(-dist * 2.5);
+        return Traw + offset * blend;
+      }
+
+      // Faint background isobars
       [0.2, 0.4, 0.6, 0.8, 1.0, 1.5].forEach(function(Pbg) {
         if (Math.abs(Pbg - Phat) < 0.05) return;
         ctxTV.strokeStyle = 'rgba(150,150,150,0.2)'; ctxTV.lineWidth = 1;
@@ -12491,7 +12504,7 @@ function initCh9Vis() {
           var vL = domeVL(Tc), vG = Math.min(domeVG(Tc), vMax);
           for (var j = 0; j <= 60; j++) {
             var v = vLiqStart + (vL - vLiqStart) * (j / 60);
-            var T = isobarT(Pbg, v);
+            var T = shiftedIsobarT(Pbg, v, Tc, vL);
             if (T < TMin || T > TMax) continue;
             if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
             else ctxTV.lineTo(vToX(v), TToY(T));
@@ -12499,7 +12512,7 @@ function initCh9Vis() {
           ctxTV.lineTo(vToX(vG), TToY(Tc));
           for (var j = 0; j <= 100; j++) {
             var v = vG + (vMax - vG) * (j / 100);
-            var T = isobarT(Pbg, v);
+            var T = shiftedIsobarT(Pbg, v, Tc, vG);
             if (T < TMin || T > TMax) continue;
             ctxTV.lineTo(vToX(v), TToY(T));
           }
@@ -12521,13 +12534,13 @@ function initCh9Vis() {
         var Tcoex = coexTemp(Phat);
         var vL = domeVL(Tcoex), vG = Math.min(domeVG(Tcoex), vMax);
 
-        // Liquid branch (start above VdW singularity at v=1/3)
+        // Liquid branch (shifted to meet dome)
         ctxTV.strokeStyle = COLORS.blue;
         ctxTV.beginPath();
         var started = false;
         for (var j = 0; j <= 80; j++) {
           var v = vLiqStart + (vL - vLiqStart) * (j / 80);
-          var T = isobarT(Phat, v);
+          var T = shiftedIsobarT(Phat, v, Tcoex, vL);
           if (T < TMin || T > TMax) continue;
           if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
           else ctxTV.lineTo(vToX(v), TToY(T));
@@ -12543,13 +12556,13 @@ function initCh9Vis() {
         ctxTV.stroke();
         ctxTV.setLineDash([]);
 
-        // Gas branch
+        // Gas branch (shifted to meet dome)
         ctxTV.strokeStyle = COLORS.red; ctxTV.lineWidth = 3;
         ctxTV.beginPath();
         started = false;
         for (var j = 0; j <= 120; j++) {
           var v = vG + (vMax - vG) * (j / 120);
-          var T = isobarT(Phat, v);
+          var T = shiftedIsobarT(Phat, v, Tcoex, vG);
           if (T < TMin || T > TMax) continue;
           if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
           else ctxTV.lineTo(vToX(v), TToY(T));
@@ -12569,12 +12582,12 @@ function initCh9Vis() {
         // Pressure label
         ctxTV.fillStyle = COLORS.text; ctxTV.font = FONT_SM; ctxTV.textAlign = 'left';
         var labelV = vG + (vMax - vG) * 0.3;
-        var labelT = isobarT(Phat, labelV);
+        var labelT = shiftedIsobarT(Phat, labelV, Tcoex, vG);
         if (labelT >= TMin && labelT <= TMax) {
           ctxTV.fillText('P = ' + Phat.toFixed(2) + ' Pc', vToX(labelV) + 5, TToY(labelT) - 8);
         }
       } else {
-        // Supercritical: smooth curve
+        // Supercritical: smooth curve (no dome correction needed)
         ctxTV.strokeStyle = Phat < 1.05 ? COLORS.yellow : COLORS.green;
         ctxTV.beginPath();
         var started = false;
