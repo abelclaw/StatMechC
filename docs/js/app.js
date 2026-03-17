@@ -12358,6 +12358,7 @@ function initCh9Vis() {
       ctxTV.fillText('Supercritical Fluid', vToX(1), TToY(1.2));
 
       // Faint background isobars
+      var vLiqStart = 0.35; // above VdW singularity at v=1/3
       [0.2, 0.4, 0.6, 0.8, 1.0, 1.5].forEach(function(Pbg) {
         if (Math.abs(Pbg - Phat) < 0.05) return;
         ctxTV.strokeStyle = 'rgba(150,150,150,0.2)'; ctxTV.lineWidth = 1;
@@ -12367,7 +12368,7 @@ function initCh9Vis() {
           var Tc = coexTemp(Pbg);
           var vL = domeVL(Tc), vG = Math.min(domeVG(Tc), vMax);
           for (var j = 0; j <= 60; j++) {
-            var v = vMin + (vL - vMin) * (j / 60);
+            var v = vLiqStart + (vL - vLiqStart) * (j / 60);
             var T = isobarT(Pbg, v);
             if (T < TMin || T > TMax) continue;
             if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
@@ -12382,7 +12383,7 @@ function initCh9Vis() {
           }
         } else {
           for (var j = 0; j <= 200; j++) {
-            var v = vMin + (vMax - vMin) * (j / 200);
+            var v = vLiqStart + (vMax - vLiqStart) * (j / 200);
             var T = isobarT(Pbg, v);
             if (T < TMin || T > TMax) continue;
             if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
@@ -12398,12 +12399,12 @@ function initCh9Vis() {
         var Tcoex = coexTemp(Phat);
         var vL = domeVL(Tcoex), vG = Math.min(domeVG(Tcoex), vMax);
 
-        // Liquid branch
+        // Liquid branch (start above VdW singularity at v=1/3)
         ctxTV.strokeStyle = COLORS.blue;
         ctxTV.beginPath();
         var started = false;
         for (var j = 0; j <= 80; j++) {
-          var v = vMin + (vL - vMin) * (j / 80);
+          var v = vLiqStart + (vL - vLiqStart) * (j / 80);
           var T = isobarT(Phat, v);
           if (T < TMin || T > TMax) continue;
           if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
@@ -12456,7 +12457,7 @@ function initCh9Vis() {
         ctxTV.beginPath();
         var started = false;
         for (var j = 0; j <= 300; j++) {
-          var v = vMin + (vMax - vMin) * (j / 300);
+          var v = vLiqStart + (vMax - vLiqStart) * (j / 300);
           var T = isobarT(Phat, v);
           if (T < TMin || T > TMax) continue;
           if (!started) { ctxTV.moveTo(vToX(v), TToY(T)); started = true; }
