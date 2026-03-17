@@ -9506,7 +9506,7 @@ function initCh8Vis() {
 // CH9: Phase Transitions + 2D Ising Model
 // =============================================================================
 function initCh9Vis() {
-  // ----- Surface Tension: MD with proper phase behavior -----
+  // ----- Surface Tension: MD with proper dt scaling -----
   const cST = document.getElementById('vis-surface-tension');
   if (cST) {
     const { ctx: ctxST, W: WST, H: HST } = setupCanvas(cST);
@@ -9521,19 +9521,19 @@ function initCh9Vis() {
     const bkL = 50, bkR = WST - 50, bkT = 25, bkB = HST - 50;
     const bkW = bkR - bkL, bkRnd = 16;
 
-    // Physics
+    // Physics with explicit timestep
     const N_MOL = 45;
-    const CORE = 24;        // hard core distance
-    const RCUT = 56;        // attraction range
-    const K_REP = 14;
-    const K_ATT = 1.6;
-    const GRAV = 0.06;
+    const CORE = 24;
+    const RCUT = 52;
+    const K_REP = 12;
+    const K_ATT = 1.5;
+    const GRAV = 1.0;
+    const DT = 0.18;         // timestep per substep
     const SUBSTEPS = 5;
-    const F_CAP = 8;
-    const LIGHT_DAMP = 0.999;
-    const THERM_TAU = 0.06;
-    const KE_SCALE = 3.5;   // targetKE = T * this
-    const ROT_DAMP = 0.96;  // angular damping — stronger than translational
+    const F_CAP = 15;
+    const V_DAMP = 0.9985;   // very light translational damping
+    const KE_SCALE = 4.0;    // targetKE = T * this
+    const THERM_TAU = 0.05;  // Berendsen coupling
     let mols = [];
 
     function initMols() {
@@ -9549,15 +9549,15 @@ function initCh9Vis() {
         const cols = Math.floor((bkW - 30) / sp);
         const x0 = bkL + (bkW - (cols - 1) * sp) / 2;
         for (let c = 0; c < cols && count < N_MOL; c++) {
-          const v0 = Math.sqrt(T) * 1.2;
-          const ang = Math.random() * 2 * Math.PI;
+          const v0 = Math.sqrt(T * KE_SCALE);
+          const a = Math.random() * 2 * Math.PI;
           mols.push({
             x: x0 + c * sp + xOff + (Math.random() - 0.5) * 3,
             y: y + (Math.random() - 0.5) * 3,
-            vx: v0 * Math.cos(ang),
-            vy: v0 * Math.sin(ang),
+            vx: v0 * Math.cos(a),
+            vy: v0 * Math.sin(a),
             angle: Math.random() * 2 * Math.PI,
-            va: (Math.random() - 0.5) * T * 0.3
+            va: (Math.random() - 0.5) * T * 0.5
           });
           count++;
         }
@@ -9596,26 +9596,26 @@ function initCh9Vis() {
           }
         }
 
-        // Integrate translation
+        // Integrate with DT
         for (const m of mols) {
-          m.vx += m.fx;
-          m.vy += m.fy + GRAV;
-          m.vx *= LIGHT_DAMP;
-          m.vy *= LIGHT_DAMP;
-          m.x += m.vx;
-          m.y += m.vy;
+          m.vx += m.fx * DT;
+          m.vy += (m.fy + GRAV) * DT;
+          m.vx *= V_DAMP;
+          m.vy *= V_DAMP;
+          m.x += m.vx * DT;
+          m.y += m.vy * DT;
 
-          // Angular: damp toward zero, thermal perturbation scaled by T
-          m.va *= ROT_DAMP;
-          m.va += (Math.random() - 0.5) * T * T * 0.008;
-          m.angle += m.va;
+          // Angular: damped proportional to T (frozen at low T, free at high T)
+          m.va *= (1 - 0.05 / (T + 0.1));
+          m.va += (Math.random() - 0.5) * T * 0.02;
+          m.angle += m.va * DT;
 
           // Walls
           const mr = 12;
-          if (m.x < bkL + mr) { m.x = bkL + mr; m.vx = Math.abs(m.vx) * 0.5; }
-          if (m.x > bkR - mr) { m.x = bkR - mr; m.vx = -Math.abs(m.vx) * 0.5; }
-          if (m.y < bkT + mr) { m.y = bkT + mr; m.vy = Math.abs(m.vy) * 0.5; }
-          if (m.y > bkB - mr) { m.y = bkB - mr; m.vy = -Math.abs(m.vy) * 0.5; }
+          if (m.x < bkL + mr) { m.x = bkL + mr; m.vx = Math.abs(m.vx) * 0.4; }
+          if (m.x > bkR - mr) { m.x = bkR - mr; m.vx = -Math.abs(m.vx) * 0.4; }
+          if (m.y < bkT + mr) { m.y = bkT + mr; m.vy = Math.abs(m.vy) * 0.4; }
+          if (m.y > bkB - mr) { m.y = bkB - mr; m.vy = -Math.abs(m.vy) * 0.4; }
           // Rounded corners
           const ccy = bkB - bkRnd;
           if (m.y > ccy) {
@@ -9637,22 +9637,20 @@ function initCh9Vis() {
         }
       }
 
-      // Berendsen thermostat on TRANSLATIONAL KE only
+      // Berendsen thermostat on translational KE
       let ke = 0;
       for (const m of mols) ke += m.vx * m.vx + m.vy * m.vy;
       ke /= N_MOL;
-      if (ke > 0.001) {
+      if (ke > 0.01) {
         const scale = Math.sqrt(1 + THERM_TAU * (targetKE / ke - 1));
-        for (const m of mols) {
-          m.vx *= scale;
-          m.vy *= scale;
-        }
-      } else if (targetKE > 0.01) {
+        for (const m of mols) { m.vx *= scale; m.vy *= scale; }
+      } else if (targetKE > 0.1) {
+        // Kickstart
         for (const m of mols) {
           const v0 = Math.sqrt(targetKE);
-          const ang = Math.random() * 2 * Math.PI;
-          m.vx = v0 * Math.cos(ang);
-          m.vy = v0 * Math.sin(ang);
+          const a = Math.random() * 2 * Math.PI;
+          m.vx = v0 * Math.cos(a);
+          m.vy = v0 * Math.sin(a);
         }
       }
     }
@@ -9711,7 +9709,7 @@ function initCh9Vis() {
         const gap = sorted[i + 1] - sorted[i];
         if (gap > maxGap) { maxGap = gap; surfY = (sorted[i] + sorted[i + 1]) / 2; }
       }
-      if (maxGap < 20) surfY = sorted[0] - 12;
+      if (maxGap < 22) surfY = sorted[0] - 12;
 
       // Liquid tint
       if (surfY < bkB - 20) {
@@ -9722,13 +9720,13 @@ function initCh9Vis() {
         ctxST.fillRect(bkL + 2, surfY, bkW - 4, bkB - surfY - 2);
       }
 
-      // H-bonds: dashed blue lines ONLY when molecules are close enough
-      const hbR = CORE * 1.45;   // bond drawn only when within ~35px
-      const hbR2 = hbR * hbR;
+      // H-bonds: dashed lines only when close enough
+      const hbR = CORE * 1.4, hbR2 = hbR * hbR;
       let totalBonds = 0;
       const neighCount = new Array(mols.length).fill(0);
 
       ctxST.lineWidth = 1.3;
+      ctxST.setLineDash([3, 4]);
       for (let i = 0; i < mols.length; i++) {
         for (let j = i + 1; j < mols.length; j++) {
           const a = mols[i], b = mols[j];
@@ -9741,7 +9739,6 @@ function initCh9Vis() {
           totalBonds++;
           const strength = Math.max(0, 1 - (r - CORE * 0.9) / (hbR - CORE * 0.9));
           ctxST.strokeStyle = 'rgba(79, 195, 247, ' + (strength * 0.6).toFixed(2) + ')';
-          ctxST.setLineDash([3, 4]);
           ctxST.beginPath(); ctxST.moveTo(a.x, a.y); ctxST.lineTo(b.x, b.y); ctxST.stroke();
         }
       }
@@ -9751,7 +9748,7 @@ function initCh9Vis() {
       for (const m of mols) drawH2O(m.x, m.y, m.angle);
 
       // Unsaturated bond stubs on surface molecules
-      const neighR2s = (CORE * 1.8) * (CORE * 1.8);
+      const nsR2 = (CORE * 1.8) * (CORE * 1.8);
       for (let i = 0; i < mols.length; i++) {
         const m = mols[i];
         if (neighCount[i] < 2 || m.y > surfY + 15) continue;
@@ -9759,7 +9756,7 @@ function initCh9Vis() {
         for (let j = 0; j < mols.length; j++) {
           if (i === j) continue;
           const dx = mols[j].x - m.x, dy = mols[j].y - m.y;
-          if (dx * dx + dy * dy < neighR2s) {
+          if (dx * dx + dy * dy < nsR2) {
             const d = Math.sqrt(dx * dx + dy * dy) + 0.1;
             sumDx += dx / d; sumDy += dy / d;
             if (dy < -3) nAbove++;
@@ -9782,15 +9779,10 @@ function initCh9Vis() {
 
       // --- Phase indicator ---
       const avgBonds = (totalBonds * 2) / N_MOL;
-      let avgKE = 0;
-      for (const m of mols) avgKE += m.vx * m.vx + m.vy * m.vy;
-      avgKE /= N_MOL;
-      let avgVA = 0;
-      for (const m of mols) avgVA += Math.abs(m.va);
-      avgVA /= N_MOL;
+      const T = parseFloat(tempSlider?.value || 1.0);
 
       let phase, phaseColor;
-      if (avgBonds > 3.0 && avgKE < 2.5 && avgVA < 0.15) {
+      if (avgBonds > 3.5) {
         phase = 'SOLID'; phaseColor = COLORS.blue;
       } else if (avgBonds > 1.5) {
         phase = 'LIQUID'; phaseColor = COLORS.green;
