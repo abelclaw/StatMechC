@@ -9523,9 +9523,9 @@ function initCh9Vis() {
     const wW = wR - wL, wH = wB - wT;
 
     // ----- Physics constants -----
-    const N_MOL = 40;
-    const CORE = 22;          // repulsive core radius
-    const RCUT = 55;          // attraction cutoff
+    const N_MOL = 35;
+    const CORE = 34;          // repulsive core radius (big enough that molecules never overlap)
+    const RCUT = 72;          // attraction cutoff
     const K_REP = 8.0;        // repulsive spring constant
     const EPS = 0.5;          // attraction strength (peak force magnitude)
     const DT = 0.15;          // integration timestep
@@ -9535,11 +9535,11 @@ function initCh9Vis() {
     const V_DAMP = 0.999;     // very light velocity damping
     const F_CAP = 30;         // force cap to prevent explosions
 
-    // Well depth per bond = 2 * EPS * (RCUT - CORE) / pi ≈ 10.5
-    // v_escape(1 bond) = sqrt(2 * 10.5) ≈ 4.58
-    // T=0.1: v_rms = sqrt(0.4) = 0.63  → solid (deeply bound)
-    // T=2.0: v_rms = sqrt(8)   = 2.83  → liquid (62% of escape)
-    // T=4.0: v_rms = sqrt(16)  = 4.0   → gas (87% of escape, surface mols evaporate)
+    // Well depth per bond = 2 * EPS * (RCUT - CORE) / pi ≈ 12.1
+    // v_escape(1 bond) = sqrt(2 * 12.1) ≈ 4.92
+    // T=0.1: v_rms = 0.63  → solid (rigid lattice)
+    // T=1.0: v_rms = 2.0   → liquid (flowing, bonds break/reform)
+    // T=4.0: v_rms = 4.0   → gas (molecules escape)
 
     let mols = [];
 
@@ -9690,7 +9690,7 @@ function initCh9Vis() {
       ctxST.strokeRect(wL, wT, wW, wB - wT);
 
       // --- H-bonds (dashed blue lines) ---
-      const hbR = CORE * 1.45;
+      const hbR = CORE * 1.55;
       const hbR2 = hbR * hbR;
       let totalBonds = 0;
       const neighCount = new Array(mols.length).fill(0);
@@ -9747,12 +9747,14 @@ function initCh9Vis() {
       const avgBonds = mols.length > 0 ? (totalBonds * 2) / mols.length : 0;
 
       let phase, phaseColor;
-      if (avgBonds > 3.5) {
+      if (avgBonds > 4.0) {
         phase = 'SOLID'; phaseColor = COLORS.blue;
-      } else if (avgBonds > 1.2) {
+      } else if (avgBonds > 2.5) {
+        phase = 'SOLID / LIQUID'; phaseColor = COLORS.cyan;
+      } else if (avgBonds > 1.0) {
         phase = 'LIQUID'; phaseColor = COLORS.green;
       } else if (avgBonds > 0.3) {
-        phase = 'LIQUID + GAS'; phaseColor = COLORS.yellow;
+        phase = 'LIQUID / GAS'; phaseColor = COLORS.yellow;
       } else {
         phase = 'GAS'; phaseColor = COLORS.red;
       }
