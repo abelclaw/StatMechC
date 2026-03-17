@@ -7334,6 +7334,9 @@ function initCh7Vis() {
 
     let cpAtoms = [];
     let cpDimers = [];
+    let cpMeasurements = [];  // {epsOverT, fracBound, age}
+    let cpFrameCount = 0;
+    let cpSmoothFrac = 0.5;  // EMA of fraction bound
 
     function cpGetT() { return parseFloat(cpTempSlider?.value || 1.5); }
     function cpGetEps() { return parseFloat(cpEpsSlider?.value || 3.0); }
@@ -7347,6 +7350,7 @@ function initCh7Vis() {
 
     function cpInit() {
       cpAtoms = []; cpDimers = [];
+      cpMeasurements = []; cpFrameCount = 0; cpSmoothFrac = 0.5;
       var T = cpGetT();
       for (var i = 0; i < cpNTotal; i++) {
         var spd = cpRandSpd(T);
@@ -7539,89 +7543,93 @@ function initCh7Vis() {
         ctxCP.beginPath(); ctxCP.arc(x2, y2, cpPR, 0, 2 * Math.PI); ctxCP.stroke();
       }
 
-      // ---- Right panel ----
+      // ---- Right panel: scatter plot of % bound vs ε/kT ----
       var panL = cpSimW + 8, panR = WCP - 8, panCx = (panL + panR) / 2;
-      var panW = panR - panL;
 
-      // Key parameter
+      // Current state
       var epsOverT = eps / T;
+      var totalAtoms = nFree + nDim * 2;
+      var fracBound = totalAtoms > 0 ? (nDim * 2) / totalAtoms : 0;
+
+      // Smooth the fraction for the current dot
+      cpSmoothFrac = cpSmoothFrac * 0.93 + fracBound * 0.07;
+
+      // Sample a measurement every 40 frames
+      cpFrameCount++;
+      if (cpFrameCount % 40 === 0) {
+        cpMeasurements.push({ x: epsOverT, y: cpSmoothFrac });
+        // Keep last 200 measurements
+        if (cpMeasurements.length > 200) cpMeasurements.shift();
+      }
 
       // Title
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT;
       ctxCP.textAlign = 'center';
-      ctxCP.fillText('A + A \u21CC A\u2082', panCx, 22);
+      ctxCP.fillText('Law of mass action', panCx, 20);
 
-      // Show ε/kT — the parameter that controls everything
-      ctxCP.font = FONT; ctxCP.fillStyle = COLORS.text;
-      ctxCP.fillText('\u03B5/k\u0042T = ' + epsOverT.toFixed(1), panCx, 46);
+      // Plot area
+      var pL = panL + 38, pR = panR - 12, pT = 34, pB = HCP - 50;
+      var pW = pR - pL, pH = pB - pT;
 
-      // Who-wins label
-      ctxCP.font = FONT_SM;
-      if (epsOverT > 2.5) {
-        ctxCP.fillStyle = COLORS.orange;
-        ctxCP.fillText('energy wins \u2192 dimers', panCx, 64);
-      } else if (epsOverT < 1.0) {
-        ctxCP.fillStyle = COLORS.blue;
-        ctxCP.fillText('entropy wins \u2192 free atoms', panCx, 64);
-      } else {
-        ctxCP.fillStyle = COLORS.green;
-        ctxCP.fillText('competing \u2192 mixture', panCx, 64);
-      }
-
-      // --- Stacked composition bar ---
-      var barY = 82, barH = 24;
-      var barL2 = panL + 10, barR2 = panR - 10, barW2 = barR2 - barL2;
-      var totalAtoms = nFree + nDim * 2;
-      var fracFree = totalAtoms > 0 ? nFree / totalAtoms : 0.5;
-      var fracBound = 1 - fracFree;
-
-      // Free portion (blue)
-      var freeW = fracFree * barW2;
-      ctxCP.fillStyle = COLORS.blue;
-      ctxCP.fillRect(barL2, barY, freeW, barH);
-      // Bound portion (orange)
-      ctxCP.fillStyle = COLORS.orange;
-      ctxCP.fillRect(barL2 + freeW, barY, fracBound * barW2, barH);
-      // Border
+      // Axes
       ctxCP.strokeStyle = COLORS.axis; ctxCP.lineWidth = 1;
-      ctxCP.strokeRect(barL2, barY, barW2, barH);
+      ctxCP.beginPath();
+      ctxCP.moveTo(pL, pT); ctxCP.lineTo(pL, pB); ctxCP.lineTo(pR, pB);
+      ctxCP.stroke();
 
-      // Percentage labels inside bar
-      ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
-      var pctFree = Math.round(fracFree * 100);
-      var pctBound = Math.round(fracBound * 100);
-      if (pctFree > 15) {
-        ctxCP.fillStyle = '#000';
-        ctxCP.fillText(pctFree + '% free', barL2 + freeW / 2, barY + 16);
+      // Axis labels
+      ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_SM;
+      ctxCP.textAlign = 'center';
+      ctxCP.fillText('\u03B5 / k\u0042T', panCx, HCP - 10);
+      ctxCP.save();
+      ctxCP.translate(panL + 6, pT + pH / 2);
+      ctxCP.rotate(-Math.PI / 2);
+      ctxCP.fillText('% bound', 0, 0);
+      ctxCP.restore();
+
+      // Tick marks on x-axis (0 to 10)
+      var xMax = 10;
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = FONT_SM;
+      ctxCP.textAlign = 'center';
+      for (var tx = 0; tx <= xMax; tx += 2) {
+        var xx = pL + (tx / xMax) * pW;
+        ctxCP.beginPath(); ctxCP.moveTo(xx, pB); ctxCP.lineTo(xx, pB + 4); ctxCP.stroke();
+        ctxCP.fillText(tx, xx, pB + 15);
       }
-      if (pctBound > 15) {
-        ctxCP.fillStyle = '#000';
-        ctxCP.fillText(pctBound + '% bound', barL2 + freeW + (fracBound * barW2) / 2, barY + 16);
+
+      // Tick marks on y-axis (0% to 100%)
+      ctxCP.textAlign = 'right';
+      for (var ty = 0; ty <= 100; ty += 25) {
+        var yy = pB - (ty / 100) * pH;
+        ctxCP.beginPath(); ctxCP.moveTo(pL - 3, yy); ctxCP.lineTo(pL, yy); ctxCP.stroke();
+        ctxCP.fillText(ty, pL - 5, yy + 4);
       }
 
-      // --- Vertical bar chart below ---
-      var cTop = barY + barH + 28, cBot = HCP - 40, cH = cBot - cTop;
-      var bW = panW * 0.25, bGap = panW * 0.08;
-      var fX = panL + bGap, bX = panCx + bGap * 0.5;
+      // Helper to convert data to pixel coords
+      function cpPlotX(v) { return pL + Math.min(v / xMax, 1) * pW; }
+      function cpPlotY(v) { return pB - Math.min(Math.max(v, 0), 1) * pH; }
 
-      // Free bar
-      var fH = (nFree / cpNTotal) * cH;
-      ctxCP.fillStyle = COLORS.blue;
-      ctxCP.fillRect(fX, cBot - fH, bW, fH);
-      ctxCP.strokeStyle = 'rgba(79,195,247,0.4)'; ctxCP.lineWidth = 1;
-      ctxCP.strokeRect(fX, cBot - fH, bW, fH);
+      // Draw past measurements as fading dots
+      for (var i = 0; i < cpMeasurements.length; i++) {
+        var m = cpMeasurements[i];
+        var age = (cpMeasurements.length - i) / cpMeasurements.length;
+        var alpha = 0.15 + 0.4 * (1 - age);
+        ctxCP.fillStyle = 'rgba(255,167,38,' + alpha + ')';
+        ctxCP.beginPath();
+        ctxCP.arc(cpPlotX(m.x), cpPlotY(m.y), 2.5, 0, 2 * Math.PI);
+        ctxCP.fill();
+      }
 
-      // Bound bar (count atoms in dimers)
-      var bH = (nDim * 2 / cpNTotal) * cH;
-      ctxCP.fillStyle = COLORS.orange;
-      ctxCP.fillRect(bX, cBot - bH, bW, bH);
-      ctxCP.strokeStyle = 'rgba(255,167,38,0.4)'; ctxCP.lineWidth = 1;
-      ctxCP.strokeRect(bX, cBot - bH, bW, bH);
+      // Draw current state as a large bright dot
+      var curX = cpPlotX(epsOverT), curY = cpPlotY(cpSmoothFrac);
+      ctxCP.fillStyle = COLORS.green;
+      ctxCP.beginPath(); ctxCP.arc(curX, curY, 5, 0, 2 * Math.PI); ctxCP.fill();
+      ctxCP.strokeStyle = '#fff'; ctxCP.lineWidth = 1.5;
+      ctxCP.beginPath(); ctxCP.arc(curX, curY, 5, 0, 2 * Math.PI); ctxCP.stroke();
 
-      // Labels
-      ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
-      ctxCP.fillText(nFree + ' free', fX + bW / 2, cBot + 13);
-      ctxCP.fillText(nDim + ' dimers', bX + bW / 2, cBot + 13);
+      // Current readout
+      ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_SM; ctxCP.textAlign = 'left';
+      ctxCP.fillText('\u03B5/kT=' + epsOverT.toFixed(1) + '  ' + Math.round(cpSmoothFrac * 100) + '% bound', pL + 4, pT + 12);
     }
 
     cpTempSlider?.addEventListener('input', function() {
@@ -7636,6 +7644,8 @@ function initCh7Vis() {
     document.getElementById('chempot-reset')?.addEventListener('click', function() {
       cpInit(); cpDraw();
     });
+    // Clear measurement trail when sliders change so old data doesn't confuse
+    // (new measurements will accumulate at the new parameter values)
 
     function cpAnimate() {
       cpStep(); cpDraw();
