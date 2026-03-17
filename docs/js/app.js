@@ -10571,110 +10571,391 @@ function initCh9Vis() {
     const col = setupCanvas(cCol);
     const ctxCL = col.ctx, WCL = col.W, HCL = col.H;
     const colSlider = document.getElementById('col-frac');
+    const colHeatBtn = document.getElementById('col-heat-btn');
+    const colResetBtn = document.getElementById('col-reset-btn');
+
+    // Physics constants
+    const COL_L = 40700, COL_R = 8.314, COL_T0 = 373;
+
+    // State
+    let colTemp = 293; // current temperature K (start at room temp)
+    let colHeating = false;
+    let colAnimId = null;
+    let colTime = 0;
+    let colPureBoiling = false;
+    let colSaltBoiling = false;
+
+    // Particles for each pot
+    const COL_N_WATER = 40; // water particles per pot
+    let colPureParticles = [];
+    let colSaltWater = [];
+    let colSaltSolute = [];
+    // Bubbles
+    let colPureBubbles = [];
+    let colSaltBubbles = [];
+    // Steam
+    let colPureSteam = [];
+    let colSaltSteam = [];
+
+    function colInitParticles() {
+      const frac = parseFloat(colSlider?.value || 0.05);
+      const nSolute = Math.round(COL_N_WATER * frac);
+
+      function makeLiquidParticles(n, potLeft, potRight, potTop, potBot) {
+        const arr = [];
+        for (let i = 0; i < n; i++) {
+          arr.push({
+            x: potLeft + 8 + Math.random() * (potRight - potLeft - 16),
+            y: potTop + 8 + Math.random() * (potBot - potTop - 16),
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+          });
+        }
+        return arr;
+      }
+
+      // Pot geometry (CSS pixels)
+      const potW = 120, potH = 140;
+      const gap = 60;
+      const cx = WCL / 2;
+      const pureL = cx - gap / 2 - potW, pureR = cx - gap / 2;
+      const saltL = cx + gap / 2, saltR = cx + gap / 2 + potW;
+      const potBot = HCL - 80, potTop = potBot - potH;
+      const liquidTop = potTop + 20; // liquid starts a bit below pot rim
+
+      colPureParticles = makeLiquidParticles(COL_N_WATER, pureL, pureR, liquidTop, potBot);
+      colSaltWater = makeLiquidParticles(COL_N_WATER - nSolute, saltL, saltR, liquidTop, potBot);
+      colSaltSolute = makeLiquidParticles(nSolute, saltL, saltR, liquidTop, potBot);
+      colPureBubbles = [];
+      colSaltBubbles = [];
+      colPureSteam = [];
+      colSaltSteam = [];
+    }
 
     function drawColligative() {
-      const frac = parseFloat(colSlider?.value || 0);
+      const frac = parseFloat(colSlider?.value || 0.05);
       clearCanvas(ctxCL, WCL, HCL);
+      colTime += 0.016;
 
-      const ox = 70, oy = 30, pw = WCL - 100, ph = HCL - 70;
-      drawAxes(ctxCL, ox, oy, pw, ph, { xLabel: 'T (K)', yLabel: 'P (atm)' });
+      const dT = frac > 0 ? frac * COL_R * COL_T0 * COL_T0 / COL_L : 0;
+      const Tb_pure = COL_T0;
+      const Tb_salt = COL_T0 + dT;
 
-      // Temperature range: 250 to 420 K
-      const tMin = 250, tMax = 420;
-      // Clausius-Clapeyron for water: P = P0 * exp(-L/R * (1/T - 1/T0))
-      const L = 40700, R = 8.314, T0 = 373, P0 = 1;
+      colPureBoiling = colTemp >= Tb_pure;
+      colSaltBoiling = colTemp >= Tb_salt;
 
-      function vaporP(T) { return P0 * Math.exp(-L / R * (1 / T - 1 / T0)); }
+      // Layout
+      const potW = 120, potH = 140;
+      const gap = 60;
+      const cx = WCL / 2;
+      const pureL = cx - gap / 2 - potW, pureR = cx - gap / 2;
+      const saltL = cx + gap / 2, saltR = cx + gap / 2 + potW;
+      const potBot = HCL - 80, potTop = potBot - potH;
+      const liquidTop = potTop + 20;
 
-      // Pure water curve
-      const npts = 200;
-      ctxCL.strokeStyle = COLORS.blue;
-      ctxCL.lineWidth = 2.5;
-      ctxCL.beginPath();
-      for (let i = 0; i <= npts; i++) {
-        const T = tMin + (tMax - tMin) * i / npts;
-        const P = vaporP(T);
-        const px = ox + ((T - tMin) / (tMax - tMin)) * pw;
-        const py = oy + ph - (P / 3.5) * ph;
-        if (py >= oy && py <= oy + ph) {
-          i === 0 ? ctxCL.moveTo(px, py) : ctxCL.lineTo(px, py);
+      // Speed factor based on temperature
+      const speed = 0.3 + (colTemp - 293) / (420 - 293) * 2.0;
+
+      // Update and draw each pot
+      function updateParticles(particles, left, right, top, bot) {
+        for (const p of particles) {
+          p.x += p.vx * speed;
+          p.y += p.vy * speed;
+          // Bounce off walls
+          if (p.x < left + 6) { p.x = left + 6; p.vx = Math.abs(p.vx); }
+          if (p.x > right - 6) { p.x = right - 6; p.vx = -Math.abs(p.vx); }
+          if (p.y < top + 4) { p.y = top + 4; p.vy = Math.abs(p.vy); }
+          if (p.y > bot - 4) { p.y = bot - 4; p.vy = -Math.abs(p.vy); }
+          // Random jitter
+          p.vx += (Math.random() - 0.5) * 0.15;
+          p.vy += (Math.random() - 0.5) * 0.15;
+          // Damping
+          p.vx *= 0.98;
+          p.vy *= 0.98;
         }
       }
-      ctxCL.stroke();
 
-      // Saltwater curve (Raoult's law: P_salt = P_pure * (1 - x_s))
-      if (frac > 0) {
-        ctxCL.strokeStyle = COLORS.pink;
-        ctxCL.lineWidth = 2.5;
-        ctxCL.beginPath();
-        let started = false;
-        for (let i = 0; i <= npts; i++) {
-          const T = tMin + (tMax - tMin) * i / npts;
-          const P = vaporP(T) * (1 - frac);
-          const px = ox + ((T - tMin) / (tMax - tMin)) * pw;
-          const py = oy + ph - (P / 3.5) * ph;
-          if (py >= oy && py <= oy + ph) {
-            !started ? (ctxCL.moveTo(px, py), started = true) : ctxCL.lineTo(px, py);
+      updateParticles(colPureParticles, pureL, pureR, liquidTop, potBot);
+      updateParticles(colSaltWater, saltL, saltR, liquidTop, potBot);
+      updateParticles(colSaltSolute, saltL, saltR, liquidTop, potBot);
+
+      // Generate bubbles when boiling
+      function genBubbles(bubbles, left, right, bot, isBoiling) {
+        if (isBoiling && Math.random() < 0.3) {
+          bubbles.push({
+            x: left + 10 + Math.random() * (right - left - 20),
+            y: bot - 5,
+            r: 2 + Math.random() * 3,
+            vy: -0.5 - Math.random() * 1.5,
+          });
+        }
+        for (let i = bubbles.length - 1; i >= 0; i--) {
+          bubbles[i].y += bubbles[i].vy;
+          bubbles[i].x += (Math.random() - 0.5) * 0.3;
+          if (bubbles[i].y < liquidTop) {
+            bubbles.splice(i, 1);
           }
         }
+      }
+
+      genBubbles(colPureBubbles, pureL, pureR, potBot, colPureBoiling);
+      genBubbles(colSaltBubbles, saltL, saltR, potBot, colSaltBoiling);
+
+      // Generate steam above pot
+      function genSteam(steam, left, right, top, isBoiling) {
+        if (isBoiling && Math.random() < 0.15) {
+          steam.push({
+            x: left + 10 + Math.random() * (right - left - 20),
+            y: top - 2,
+            r: 2 + Math.random() * 2,
+            vy: -0.3 - Math.random() * 0.5,
+            life: 1.0,
+          });
+        }
+        for (let i = steam.length - 1; i >= 0; i--) {
+          steam[i].y += steam[i].vy;
+          steam[i].x += (Math.random() - 0.5) * 0.5;
+          steam[i].life -= 0.008;
+          steam[i].r += 0.03;
+          if (steam[i].life <= 0) steam.splice(i, 1);
+        }
+      }
+
+      genSteam(colPureSteam, pureL, pureR, potTop, colPureBoiling);
+      genSteam(colSaltSteam, saltL, saltR, potTop, colSaltBoiling);
+
+      // --- Drawing ---
+
+      // Title labels
+      ctxCL.font = FONT_LG;
+      ctxCL.textAlign = 'center';
+      ctxCL.fillStyle = COLORS.blue;
+      ctxCL.fillText('Pure Water', (pureL + pureR) / 2, potTop - 38);
+      ctxCL.fillStyle = COLORS.orange;
+      ctxCL.fillText('Salt Water', (saltL + saltR) / 2, potTop - 38);
+
+      // Draw steam (behind pot)
+      function drawSteam(steam) {
+        for (const s of steam) {
+          ctxCL.fillStyle = 'rgba(200,220,255,' + (s.life * 0.4) + ')';
+          ctxCL.beginPath();
+          ctxCL.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctxCL.fill();
+        }
+      }
+      drawSteam(colPureSteam);
+      drawSteam(colSaltSteam);
+
+      // Draw pots
+      function drawPot(left, right, top, bot) {
+        // Pot body (rounded rect)
+        const r = 6;
+        ctxCL.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctxCL.lineWidth = 2;
+        ctxCL.beginPath();
+        ctxCL.moveTo(left, top);
+        ctxCL.lineTo(left, bot - r);
+        ctxCL.quadraticCurveTo(left, bot, left + r, bot);
+        ctxCL.lineTo(right - r, bot);
+        ctxCL.quadraticCurveTo(right, bot, right, bot - r);
+        ctxCL.lineTo(right, top);
         ctxCL.stroke();
       }
 
-      // 1 atm line
-      const atmY = oy + ph - (1 / 3.5) * ph;
-      ctxCL.strokeStyle = COLORS.yellow;
-      ctxCL.lineWidth = 1;
-      ctxCL.setLineDash([6, 4]);
-      ctxCL.beginPath();
-      ctxCL.moveTo(ox, atmY);
-      ctxCL.lineTo(ox + pw, atmY);
-      ctxCL.stroke();
-      ctxCL.setLineDash([]);
-      ctxCL.fillStyle = COLORS.yellow;
-      ctxCL.font = FONT_SM;
-      ctxCL.textAlign = 'left';
-      ctxCL.fillText('1 atm', ox + pw + 5, atmY + 4);
+      drawPot(pureL, pureR, potTop, potBot);
+      drawPot(saltL, saltR, potTop, potBot);
 
-      // Mark boiling points
-      const Tb_pure = T0;
-      const dT = frac > 0 ? frac * R * T0 * T0 / L : 0;
-      const Tb_salt = Tb_pure + dT;
-
-      // Pure boiling point marker
-      const pxPure = ox + ((Tb_pure - tMin) / (tMax - tMin)) * pw;
-      ctxCL.fillStyle = COLORS.blue;
-      ctxCL.beginPath(); ctxCL.arc(pxPure, atmY, 5, 0, 2 * Math.PI); ctxCL.fill();
-
-      if (frac > 0) {
-        const pxSalt = ox + ((Tb_salt - tMin) / (tMax - tMin)) * pw;
-        ctxCL.fillStyle = COLORS.pink;
-        ctxCL.beginPath(); ctxCL.arc(pxSalt, atmY, 5, 0, 2 * Math.PI); ctxCL.fill();
-
-        // Arrow showing ΔT
-        ctxCL.strokeStyle = COLORS.green;
-        ctxCL.lineWidth = 2;
-        drawArrow(ctxCL, pxPure, atmY + 15, pxSalt, atmY + 15, 8);
-        ctxCL.fillStyle = COLORS.green;
-        ctxCL.font = FONT_SM;
-        ctxCL.textAlign = 'center';
-        ctxCL.fillText('ΔT = ' + dT.toFixed(1) + ' K', (pxPure + pxSalt) / 2, atmY + 30);
+      // Draw liquid fill
+      function drawLiquid(left, right, liqTop, bot, color) {
+        // Wavy surface
+        ctxCL.fillStyle = color;
+        ctxCL.beginPath();
+        ctxCL.moveTo(left + 1, bot - 1);
+        ctxCL.lineTo(left + 1, liqTop);
+        for (let x = left + 1; x <= right - 1; x += 2) {
+          const wave = Math.sin((x - left) * 0.08 + colTime * 3) * (colHeating ? 2 : 0.5);
+          ctxCL.lineTo(x, liqTop + wave);
+        }
+        ctxCL.lineTo(right - 1, bot - 1);
+        ctxCL.closePath();
+        ctxCL.fill();
       }
 
-      // Legend
+      drawLiquid(pureL, pureR, liquidTop, potBot, 'rgba(30,100,200,0.25)');
+      drawLiquid(saltL, saltR, liquidTop, potBot, 'rgba(30,100,200,0.25)');
+
+      // Draw particles
+      function drawParticles(particles, color, radius) {
+        ctxCL.fillStyle = color;
+        for (const p of particles) {
+          ctxCL.beginPath();
+          ctxCL.arc(p.x, p.y, radius, 0, Math.PI * 2);
+          ctxCL.fill();
+        }
+      }
+
+      drawParticles(colPureParticles, COLORS.blue, 3.5);
+      drawParticles(colSaltWater, COLORS.blue, 3.5);
+      drawParticles(colSaltSolute, COLORS.orange, 4.5);
+
+      // Draw bubbles
+      function drawBubbles(bubbles) {
+        for (const b of bubbles) {
+          ctxCL.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctxCL.lineWidth = 1;
+          ctxCL.beginPath();
+          ctxCL.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctxCL.stroke();
+        }
+      }
+      drawBubbles(colPureBubbles);
+      drawBubbles(colSaltBubbles);
+
+      // Burner flames under each pot
+      function drawFlame(cx, bot, heating) {
+        if (!heating) return;
+        const flameH = 15 + Math.random() * 5;
+        const grd = ctxCL.createLinearGradient(cx, bot + 18, cx, bot + 18 - flameH);
+        grd.addColorStop(0, 'rgba(255,100,0,0.0)');
+        grd.addColorStop(0.3, 'rgba(255,100,0,0.7)');
+        grd.addColorStop(0.7, 'rgba(255,200,50,0.8)');
+        grd.addColorStop(1, 'rgba(255,255,200,0.9)');
+        for (let i = -2; i <= 2; i++) {
+          const fx = cx + i * 14;
+          const h = flameH * (0.6 + Math.random() * 0.4);
+          ctxCL.fillStyle = grd;
+          ctxCL.beginPath();
+          ctxCL.moveTo(fx - 5, bot + 18);
+          ctxCL.quadraticCurveTo(fx - 3, bot + 18 - h * 0.6, fx, bot + 18 - h);
+          ctxCL.quadraticCurveTo(fx + 3, bot + 18 - h * 0.6, fx + 5, bot + 18);
+          ctxCL.fill();
+        }
+      }
+
+      drawFlame((pureL + pureR) / 2, potBot, colHeating);
+      drawFlame((saltL + saltR) / 2, potBot, colHeating);
+
+      // Burner base
+      if (colHeating) {
+        ctxCL.fillStyle = 'rgba(80,80,80,0.6)';
+        ctxCL.fillRect(pureL - 5, potBot + 16, potW + 10, 5);
+        ctxCL.fillRect(saltL - 5, potBot + 16, potW + 10, 5);
+      }
+
+      // Thermometer for each pot
+      function drawThermo(x, top, bot, temp, label, boilingT) {
+        const thH = bot - top - 10;
+        const thX = x;
+        const thTop = top + 5;
+        const thBot = thTop + thH;
+        // Bulb
+        ctxCL.fillStyle = COLORS.red;
+        ctxCL.beginPath();
+        ctxCL.arc(thX, thBot, 6, 0, Math.PI * 2);
+        ctxCL.fill();
+        // Tube
+        ctxCL.fillStyle = 'rgba(255,255,255,0.15)';
+        ctxCL.fillRect(thX - 2, thTop, 4, thH);
+        // Mercury level
+        const frac01 = Math.min(1, Math.max(0, (temp - 293) / (420 - 293)));
+        const mercH = frac01 * (thH - 10);
+        ctxCL.fillStyle = COLORS.red;
+        ctxCL.fillRect(thX - 2, thBot - mercH, 4, mercH);
+        // Temperature text
+        ctxCL.font = FONT_SM;
+        ctxCL.textAlign = 'center';
+        ctxCL.fillStyle = COLORS.text;
+        ctxCL.fillText(temp.toFixed(0) + ' K', thX, thTop - 6);
+        // Boiling point tick
+        const bpFrac = (boilingT - 293) / (420 - 293);
+        const bpY = thBot - bpFrac * (thH - 10);
+        ctxCL.strokeStyle = COLORS.yellow;
+        ctxCL.lineWidth = 1;
+        ctxCL.setLineDash([3, 2]);
+        ctxCL.beginPath();
+        ctxCL.moveTo(thX - 8, bpY);
+        ctxCL.lineTo(thX + 8, bpY);
+        ctxCL.stroke();
+        ctxCL.setLineDash([]);
+        ctxCL.fillStyle = COLORS.yellow;
+        ctxCL.font = '9px Inter, system-ui, sans-serif';
+        ctxCL.textAlign = 'left';
+        ctxCL.fillText('Tb=' + boilingT.toFixed(1), thX + 10, bpY + 3);
+      }
+
+      drawThermo(pureR + 22, potTop, potBot, colTemp, 'Pure', Tb_pure);
+      drawThermo(saltR + 22, potTop, potBot, colTemp, 'Salt', Tb_salt);
+
+      // Status labels
       ctxCL.font = FONT;
-      ctxCL.textAlign = 'left';
-      ctxCL.fillStyle = COLORS.blue;
-      ctxCL.fillText('—— Pure water (Tb = ' + Tb_pure.toFixed(0) + ' K)', ox + 5, oy + 16);
+      ctxCL.textAlign = 'center';
+      if (colPureBoiling) {
+        ctxCL.fillStyle = COLORS.green;
+        ctxCL.fillText('BOILING!', (pureL + pureR) / 2, potTop - 20);
+      }
+      if (colSaltBoiling) {
+        ctxCL.fillStyle = COLORS.green;
+        ctxCL.fillText('BOILING!', (saltL + saltR) / 2, potTop - 20);
+      } else if (colPureBoiling && !colSaltBoiling) {
+        ctxCL.fillStyle = COLORS.textDim;
+        ctxCL.fillText('Not yet...', (saltL + saltR) / 2, potTop - 20);
+      }
+
+      // Bottom info: ΔT display
+      ctxCL.font = FONT;
+      ctxCL.textAlign = 'center';
+      ctxCL.fillStyle = COLORS.text;
+      const infoY = HCL - 15;
       if (frac > 0) {
-        ctxCL.fillStyle = COLORS.pink;
-        ctxCL.fillText('—— With solute (Tb = ' + Tb_salt.toFixed(1) + ' K)', ox + 5, oy + 32);
+        ctxCL.fillText('ΔT = (N_s/N_w) × RT₀²/L = ' + dT.toFixed(2) + ' K', cx, infoY);
+        if (colPureBoiling && !colSaltBoiling) {
+          ctxCL.fillStyle = COLORS.orange;
+          ctxCL.fillText('Pure water boils at ' + Tb_pure.toFixed(0) + ' K — salt water needs ' + dT.toFixed(1) + ' K more!', cx, infoY - 18);
+        }
+      } else {
+        ctxCL.fillStyle = COLORS.textDim;
+        ctxCL.fillText('Add solute to see boiling point elevation', cx, infoY);
       }
 
       document.getElementById('col-frac-val')?.replaceChildren(document.createTextNode(frac.toFixed(3)));
     }
 
-    colSlider?.addEventListener('input', drawColligative);
-    drawColligative();
+    function colAnimate() {
+      if (colHeating && colTemp < 420) {
+        colTemp += 0.15;
+      }
+      drawColligative();
+      colAnimId = requestAnimationFrame(colAnimate);
+    }
+
+    function colReset() {
+      colHeating = false;
+      colTemp = 293;
+      colTime = 0;
+      colPureBoiling = false;
+      colSaltBoiling = false;
+      colInitParticles();
+      if (colHeatBtn) colHeatBtn.textContent = '▶ Heat Both Pots';
+    }
+
+    colSlider?.addEventListener('input', () => {
+      colReset();
+    });
+
+    colHeatBtn?.addEventListener('click', () => {
+      if (!colHeating) {
+        colHeating = true;
+        if (colHeatBtn) colHeatBtn.textContent = '⏸ Pause';
+      } else {
+        colHeating = false;
+        if (colHeatBtn) colHeatBtn.textContent = '▶ Heat Both Pots';
+      }
+    });
+
+    colResetBtn?.addEventListener('click', colReset);
+
+    colInitParticles();
+    colAnimate();
   }
 
   // ----- Heat Capacity Near Critical Point -----
