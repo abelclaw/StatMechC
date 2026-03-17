@@ -87,7 +87,7 @@ $$\Delta G = (\mu_2 - \mu_1)\Delta N$$
     <button id="pt-sub-ch4">CH₄</button>
   </div>
   <canvas id="vis-pt-phase" width="600" height="400"></canvas>
-  <p class="vis-caption">Hover to read (T, P) coordinates. STP marked in yellow. Click substance buttons to switch.</p>
+  <p class="vis-caption">Phase diagram showing solid, liquid, and gas regions with log-scale pressure axis. Water has an anomalous negative slope for the solid-liquid boundary because ice is less dense than water. Hover to read (T, P) coordinates. STP marked in yellow.</p>
 </div>
 
 <p>The thick lines in the phase diagram are the phase boundaries, determined by $\mu_1 = \mu_2$. We define:</p>
@@ -164,15 +164,6 @@ $$L = \Delta\left(\frac{H}{N}\right)$$
 <p>Using the Clapeyron equation, we can deduce features of phase boundaries:</p>
 
 <p><strong>Solid to liquid (melting):</strong> $L_{\text{fuse}} > 0$. In general, the density change is small and slightly negative (most solids are denser than their liquids). So $\Delta(1/n) \gtrsim 0$ and $dP/dT$ is very large and positive: the solid/liquid phase boundary is steep and goes slightly to the right.</p>
-
-<div class="interactive-wrapper">
-<h4>Interactive: Phase Diagram</h4>
-<canvas id="vis-water-phase" width="600" height="350"></canvas>
-<div class="controls">
-<label>Substance: <select id="wp-substance"><option value="water">Water (anomalous solid-liquid slope)</option><option value="co2">CO₂ (normal solid-liquid slope)</option></select></label>
-</div>
-<figcaption>Phase diagram showing solid, liquid, and gas regions. Water has an anomalous negative slope for the solid-liquid boundary because ice is less dense than water. Click anywhere to see the phase at that T, P.</figcaption>
-</div>
 
 <p>A well known exception is water. Water expands when it freezes due to the unusual importance of hydrogen bonding. The tetrahedral structure of solid ice makes it not particularly dense.</p>
 
