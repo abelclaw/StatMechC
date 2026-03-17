@@ -10775,8 +10775,15 @@ function initCh9Vis() {
       clearCanvas(ctxPT, WPT, HPT);
       const sub = substances[currentSub];
       const ox = 80, oy = 30, pw = WPT - 130, ph = HPT - 80;
+      // Log scale for pressure: find range from sublimation low to Pmax
+      const Pmin = Math.max(sub.Pt * Math.exp(-3), 1e-4);
+      const logPmin = Math.log10(Pmin), logPmax = Math.log10(sub.Pmax);
       const txF = (T) => ox + T / sub.Tmax * pw;
-      const pyF = (P) => oy + ph - P / sub.Pmax * ph;
+      const pyF = (P) => {
+        if (P <= 0) return oy + ph;
+        const lp = Math.log10(P);
+        return oy + ph - (lp - logPmin) / (logPmax - logPmin) * ph;
+      };
 
       drawAxes(ctxPT, ox, oy, pw, ph, { xLabel: 'Temperature (K)', yLabel: 'Pressure (atm)', yLabelOffset: 55 });
 
@@ -10785,8 +10792,17 @@ function initCh9Vis() {
       const tStep = sub.Tmax > 500 ? 100 : 50;
       for (let T = 0; T <= sub.Tmax; T += tStep) ctxPT.fillText(T.toFixed(0), txF(T), oy + ph + 14);
       ctxPT.textAlign = 'right';
-      const pStep = sub.Pmax > 100 ? 50 : (sub.Pmax > 20 ? 10 : 1);
-      for (let P = 0; P <= sub.Pmax; P += pStep) ctxPT.fillText(P.toFixed(pStep < 1 ? 2 : 0), ox - 5, pyF(P) + 4);
+      // Log-scale pressure ticks: powers of 10
+      const minExp = Math.floor(logPmin), maxExp = Math.ceil(logPmax);
+      for (let exp = minExp; exp <= maxExp; exp++) {
+        const P = Math.pow(10, exp);
+        if (P < Pmin * 0.9 || P > sub.Pmax * 1.1) continue;
+        const label = exp >= 0 ? P.toFixed(0) : P.toExponential(0);
+        ctxPT.fillText(label, ox - 5, pyF(P) + 4);
+        // Light gridline
+        ctxPT.strokeStyle = 'rgba(255,255,255,0.06)'; ctxPT.lineWidth = 0.5;
+        ctxPT.beginPath(); ctxPT.moveTo(ox, pyF(P)); ctxPT.lineTo(ox + pw, pyF(P)); ctxPT.stroke();
+      }
 
       const tpx = txF(sub.Tt), tpy = pyF(sub.Pt);
       const cpx = txF(sub.Tc), cpy = pyF(sub.Pc);
@@ -10813,11 +10829,14 @@ function initCh9Vis() {
       }
       ctxPT.stroke();
 
-      // Region labels
+      // Region labels — positioned in log-space
       ctxPT.font = FONT_LG; ctxPT.textAlign = 'center';
-      ctxPT.fillStyle = COLORS.blue; ctxPT.fillText('SOLID', txF(sub.Tt * 0.35), pyF(sub.Pmax * 0.6));
-      ctxPT.fillStyle = COLORS.green; ctxPT.fillText('LIQUID', txF((sub.Tt + sub.Tc) / 2), pyF(sub.Pmax * 0.7));
-      ctxPT.fillStyle = COLORS.red; ctxPT.fillText('GAS', txF(sub.Tc * 0.85), pyF(sub.Pmax * 0.15));
+      const labelPHigh = Math.pow(10, logPmin + 0.75 * (logPmax - logPmin));
+      const labelPMid  = Math.pow(10, logPmin + 0.6  * (logPmax - logPmin));
+      const labelPLow  = Math.pow(10, logPmin + 0.25 * (logPmax - logPmin));
+      ctxPT.fillStyle = COLORS.blue; ctxPT.fillText('SOLID', txF(sub.Tt * 0.35), pyF(labelPHigh));
+      ctxPT.fillStyle = COLORS.green; ctxPT.fillText('LIQUID', txF((sub.Tt + sub.Tc) / 2), pyF(labelPHigh));
+      ctxPT.fillStyle = COLORS.red; ctxPT.fillText('GAS', txF(sub.Tc * 0.85), pyF(labelPLow));
       ctxPT.fillStyle = COLORS.textDim; ctxPT.font = FONT_SM; ctxPT.fillText('Supercritical', cpx + 30, oy + 15);
 
       // Points
@@ -10844,11 +10863,12 @@ function initCh9Vis() {
         ctxPT.beginPath(); ctxPT.moveTo(mxPT, oy); ctxPT.lineTo(mxPT, oy + ph); ctxPT.stroke();
         ctxPT.beginPath(); ctxPT.moveTo(ox, myPT); ctxPT.lineTo(ox + pw, myPT); ctxPT.stroke();
         ctxPT.setLineDash([]);
-        const hT = mxPT / pw * sub.Tmax * (pw / (pw)) ;
         const hT2 = (mxPT - ox) / pw * sub.Tmax;
-        const hP = (1 - (myPT - oy) / ph) * sub.Pmax;
+        const hLogP = logPmin + (1 - (myPT - oy) / ph) * (logPmax - logPmin);
+        const hP = Math.pow(10, hLogP);
+        const pStr = hP >= 1 ? hP.toFixed(1) : hP.toExponential(2);
         ctxPT.fillStyle = 'rgba(255,255,255,0.85)'; ctxPT.font = FONT_SM; ctxPT.textAlign = 'left';
-        ctxPT.fillText('T = ' + hT2.toFixed(1) + ' K,  P = ' + hP.toFixed(1) + ' atm', mxPT + 10, myPT - 8);
+        ctxPT.fillText('T = ' + hT2.toFixed(1) + ' K,  P = ' + pStr + ' atm', mxPT + 10, myPT - 8);
       }
     }
 
