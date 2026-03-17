@@ -11711,67 +11711,59 @@ function initCh9Vis() {
       }
     }
 
-    function fmDrawMagnet(cx, cy, strength) {
+    // Horseshoe magnet opening rightward, pointing at the grid
+    // cx,cy = center of magnet body; pole faces point right toward poleEndX
+    function fmDrawMagnet(cx, cy, strength, poleEndX) {
       var absB = Math.abs(strength);
       var dir = strength >= 0 ? 1 : -1;
 
-      // Horseshoe magnet: U-shape opening downward
-      // Left leg = N (red), right leg = S (blue) when dir > 0
-      var legW = 12, legH = 36, gap = 30, arcR = (gap + legW) / 2;
-      var topY = cy - legH / 2 - arcR + 6;
-      var legTop = topY + arcR;
-      var legBot = legTop + legH;
-      var leftX = cx - gap / 2 - legW;
-      var rightX = cx + gap / 2;
-
-      var leftCol = dir > 0 ? '#e53935' : '#1e88e5';
-      var rightCol = dir > 0 ? '#1e88e5' : '#e53935';
-      var leftLbl = dir > 0 ? 'N' : 'S';
-      var rightLbl = dir > 0 ? 'S' : 'N';
-
-      // Draw the horseshoe as one path: left leg, arc across top, right leg
-      // Left leg
-      ctxFM.fillStyle = leftCol;
-      ctxFM.fillRect(leftX, legTop, legW, legH);
-      // Right leg
-      ctxFM.fillStyle = rightCol;
-      ctxFM.fillRect(rightX, legTop, legW, legH);
-
-      // Top arc connecting the two legs (gradient from left to right color)
+      // U rotated 90 CW: arc on left, two horizontal legs pointing right
+      var legW = 10, legLen = 28, gap = 28, arcR2 = (gap + legW) / 2;
       var arcCX = cx;
-      var arcCY = legTop;
+      var arcCY = cy;
       var outerR = gap / 2 + legW;
       var innerR = gap / 2;
+      var legLeft = arcCX;
+      var legRight = legLeft + legLen;
+      var topLegY = cy - gap / 2 - legW;
+      var botLegY = cy + gap / 2;
 
-      // Draw arc in two halves for the two colors
-      // Left half of arc (N color)
-      ctxFM.fillStyle = leftCol;
+      var topCol = dir > 0 ? '#e53935' : '#1e88e5';
+      var botCol = dir > 0 ? '#1e88e5' : '#e53935';
+      var topLbl = dir > 0 ? 'N' : 'S';
+      var botLbl = dir > 0 ? 'S' : 'N';
+
+      // Arc on left (two color halves)
+      ctxFM.fillStyle = topCol;
       ctxFM.beginPath();
       ctxFM.arc(arcCX, arcCY, outerR, Math.PI, Math.PI * 1.5);
       ctxFM.arc(arcCX, arcCY, innerR, Math.PI * 1.5, Math.PI, true);
-      ctxFM.closePath();
-      ctxFM.fill();
-      // Right half of arc (S color)
-      ctxFM.fillStyle = rightCol;
+      ctxFM.closePath(); ctxFM.fill();
+      ctxFM.fillStyle = botCol;
       ctxFM.beginPath();
-      ctxFM.arc(arcCX, arcCY, outerR, Math.PI * 1.5, Math.PI * 2);
-      ctxFM.arc(arcCX, arcCY, innerR, Math.PI * 2, Math.PI * 1.5, true);
-      ctxFM.closePath();
-      ctxFM.fill();
+      ctxFM.arc(arcCX, arcCY, outerR, Math.PI * 0.5, Math.PI);
+      ctxFM.arc(arcCX, arcCY, innerR, Math.PI, Math.PI * 0.5, true);
+      ctxFM.closePath(); ctxFM.fill();
 
-      // Pole face caps at bottom of each leg
-      ctxFM.fillStyle = '#ccc';
-      ctxFM.fillRect(leftX - 1, legBot, legW + 2, 3);
-      ctxFM.fillRect(rightX - 1, legBot, legW + 2, 3);
+      // Horizontal legs
+      ctxFM.fillStyle = topCol;
+      ctxFM.fillRect(legLeft, topLegY, legLen, legW);
+      ctxFM.fillStyle = botCol;
+      ctxFM.fillRect(legLeft, botLegY, legLen, legW);
+
+      // Pole face caps
+      ctxFM.fillStyle = '#aaa';
+      ctxFM.fillRect(legRight, topLegY - 1, 3, legW + 2);
+      ctxFM.fillRect(legRight, botLegY - 1, 3, legW + 2);
 
       // Pole labels
-      ctxFM.fillStyle = '#fff'; ctxFM.font = 'bold 10px Inter, system-ui, sans-serif';
+      ctxFM.fillStyle = '#fff'; ctxFM.font = 'bold 9px Inter, system-ui, sans-serif';
       ctxFM.textAlign = 'center'; ctxFM.textBaseline = 'middle';
-      ctxFM.fillText(leftLbl, leftX + legW / 2, legTop + legH / 2);
-      ctxFM.fillText(rightLbl, rightX + legW / 2, legTop + legH / 2);
+      ctxFM.fillText(topLbl, legLeft + legLen / 2, topLegY + legW / 2);
+      ctxFM.fillText(botLbl, legLeft + legLen / 2, botLegY + legW / 2);
       ctxFM.textBaseline = 'alphabetic';
 
-      // Zigzag field lines between the poles (across the gap at bottom)
+      // Zigzag field lines shooting rightward from gap toward grid
       if (absB > 0.05) {
         var nLines = Math.min(5, Math.max(2, Math.round(absB * 2.5)));
         var alpha = Math.min(0.9, absB / 1.5);
@@ -11779,32 +11771,31 @@ function initCh9Vis() {
         ctxFM.lineWidth = 1.3;
         ctxFM.lineJoin = 'round';
 
-        // Field lines go from N pole face to S pole face across the gap
-        var nFaceX = leftX + legW / 2;
-        var sFaceX = rightX + legW / 2;
-        var faceY = legBot + 2;
+        var nFaceY = topLegY + legW / 2;
+        var sFaceY = botLegY + legW / 2;
+        var faceX = legRight + 3;
+        var targetX = poleEndX || (faceX + 50);
 
         for (var li = 0; li < nLines; li++) {
-          var yOff = 3 + li * 6;
-          var startY = faceY + yOff;
+          var frac0 = (li + 0.5) / nLines;
+          var startY = nFaceY + (sFaceY - nFaceY) * frac0;
 
           ctxFM.beginPath();
-          ctxFM.moveTo(nFaceX, startY);
-          // Zigzag from left (N) to right (S)
-          var segs = 6;
-          var totalDx = sFaceX - nFaceX;
+          ctxFM.moveTo(faceX, startY);
+          var segs = 8;
+          var totalDx = targetX - faceX;
           for (var ss = 1; ss <= segs; ss++) {
             var frac = ss / segs;
             var zigAmp = 2 + absB * 1.2;
             var zigY = ((ss % 2 === 0) ? -zigAmp : zigAmp);
-            var px = nFaceX + totalDx * frac;
+            var px = faceX + totalDx * frac;
             var py = startY + zigY;
             ctxFM.lineTo(px, py);
           }
           ctxFM.stroke();
 
-          // Arrow at midpoint pointing from N to S (left to right)
-          var midX = nFaceX + totalDx * 0.5;
+          // Arrow at midpoint pointing right
+          var midX = faceX + totalDx * 0.5;
           ctxFM.beginPath();
           ctxFM.moveTo(midX - 4, startY - 3);
           ctxFM.lineTo(midX, startY);
@@ -11812,39 +11803,26 @@ function initCh9Vis() {
           ctxFM.stroke();
         }
 
-        // Also draw curved field lines looping outside the magnet (from N up and around to S)
+        // Outer field lines looping around back of magnet
         var nOuterLines = Math.min(3, Math.max(1, Math.round(absB * 1.5)));
         for (var oi = 0; oi < nOuterLines; oi++) {
-          var outerSpread = 12 + oi * 10;
+          var outerSpread = 10 + oi * 8;
           ctxFM.beginPath();
-          // Start from N pole bottom, curve out left, over the top, down to S pole
-          var nPx = nFaceX;
-          var sPx = sFaceX;
-          var baseY2 = faceY + 2;
-          ctxFM.moveTo(nPx, baseY2);
-          // Bezier going out wide, over the top, and back
-          var topArcY = topY - 10 - outerSpread;
-          var leftBulge = cx - outerR - 8 - outerSpread;
-          var rightBulge = cx + outerR + 8 + outerSpread;
-
-          // Use multiple curve segments for zigzag effect
           var pts = [];
           var nPts2 = 12;
           for (var pi = 0; pi <= nPts2; pi++) {
             var t = pi / nPts2;
-            // Parametric path: goes left, up, over, right, down
-            var angle = Math.PI + t * Math.PI; // from PI (bottom-left) to 2PI (bottom-right)
-            var rx = (outerR + 8 + outerSpread) * 1.0;
-            var ry = (legH / 2 + arcR + 5 + outerSpread) * 1.0;
-            var ptx = cx + rx * Math.cos(angle);
-            var pty = arcCY + ry * Math.sin(angle);
+            var angle = -Math.PI / 2 + t * (-Math.PI);
+            var rx = (legLen / 2 + arcR2 + outerSpread);
+            var ry = (outerR + 4 + outerSpread);
+            var ptx = arcCX + legLen / 2 + rx * Math.cos(angle);
+            var pty = cy + ry * Math.sin(angle);
             pts.push({x: ptx, y: pty});
           }
           ctxFM.moveTo(pts[0].x, pts[0].y);
           for (var pi2 = 1; pi2 < pts.length; pi2++) {
-            var zigAmp2 = 2 + absB;
+            var zigAmp2 = 1.5 + absB * 0.8;
             var zig = ((pi2 % 2 === 0) ? zigAmp2 : -zigAmp2);
-            // Perturb perpendicular to path direction
             var dx = pts[pi2].x - pts[pi2 - 1].x;
             var dy = pts[pi2].y - pts[pi2 - 1].y;
             var len = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -11862,23 +11840,43 @@ function initCh9Vis() {
 
       fmEquilibrate(500);
 
-      // Spin grid on the left
-      var ox = 16, oy = 12;
-      var gridPx = Math.min(HFM - 30, 300);
+      // Layout: magnet on left, smaller grid center-right, info below
+      var gridPx = 220;
       var cellSz = gridPx / fmGridSize;
+      var gridRight = WFM - 14;
+      var gridLeft = gridRight - gridPx;
+      var gridTop = 10;
 
+      // Draw spin grid
       for (var i = 0; i < fmGridSize; i++) {
         for (var j = 0; j < fmGridSize; j++) {
           ctxFM.fillStyle = fmSpins[i][j] === 1 ? COLORS.blue : COLORS.red;
-          ctxFM.fillRect(ox + i * cellSz, oy + j * cellSz, cellSz - 0.5, cellSz - 0.5);
+          ctxFM.fillRect(gridLeft + i * cellSz, gridTop + j * cellSz, cellSz - 0.5, cellSz - 0.5);
         }
       }
       ctxFM.strokeStyle = COLORS.axis; ctxFM.lineWidth = 1;
-      ctxFM.strokeRect(ox, oy, gridPx, gridPx);
+      ctxFM.strokeRect(gridLeft, gridTop, gridPx, gridPx);
 
-      // Right panel
-      var tx = ox + gridPx + 18;
-      var panelW = WFM - tx - 8;
+      // Horseshoe magnet to the left of grid, pointing right at it
+      var magnetSpace = gridLeft - 14;
+      var magnetCX = magnetSpace / 2;
+      var magnetCY = gridTop + gridPx / 2;
+      fmDrawMagnet(magnetCX, magnetCY, B, gridLeft);
+
+      // Field label under magnet
+      ctxFM.textAlign = 'center'; ctxFM.font = FONT_SM;
+      if (Math.abs(B) > 0.05) {
+        ctxFM.fillStyle = COLORS.yellow;
+        ctxFM.fillText('B = ' + B.toFixed(2), magnetCX, magnetCY + 42);
+      } else {
+        ctxFM.fillStyle = COLORS.textDim;
+        ctxFM.fillText('No field', magnetCX, magnetCY + 42);
+      }
+
+      // --- Info panel below ---
+      var infoY = gridTop + gridPx + 16;
+      var infoX = 14;
+      var infoW = WFM - 28;
 
       // Magnetization
       var Mag = 0;
@@ -11900,86 +11898,67 @@ function initCh9Vis() {
         phase = T < 1.0 ? 'Ferromagnetic (ordered)' : 'Paramagnetic (disordered)';
         phaseColor = T < 1.0 ? COLORS.blue : COLORS.red;
       }
-      ctxFM.fillStyle = phaseColor; ctxFM.font = FONT; ctxFM.textAlign = 'left';
-      ctxFM.fillText(phase, tx, oy + 14);
 
+      ctxFM.textAlign = 'left';
+      ctxFM.fillStyle = phaseColor; ctxFM.font = FONT;
+      ctxFM.fillText(phase, infoX, infoY);
       ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT;
-      ctxFM.fillText('T/Tc = ' + T.toFixed(2), tx, oy + 36);
-      ctxFM.fillText('B = ' + B.toFixed(2), tx + 100, oy + 36);
+      ctxFM.fillText('T/Tc = ' + T.toFixed(2), infoX + 220, infoY);
+      ctxFM.fillText('B = ' + B.toFixed(2), infoX + 330, infoY);
 
+      // Magnetization + bar
       ctxFM.fillStyle = COLORS.green; ctxFM.font = FONT;
-      ctxFM.fillText('\u27E8M\u27E9 = ' + avgM.toFixed(3), tx, oy + 58);
+      ctxFM.fillText('\u27E8M\u27E9 = ' + avgM.toFixed(3), infoX, infoY + 20);
 
-      // Signed magnetization bar
-      var barX = tx, barY = oy + 66, barW = panelW - 6, barH = 12;
+      var barX = infoX + 110, barY2 = infoY + 10, barW = 180, barH = 10;
       ctxFM.fillStyle = COLORS.grid;
-      ctxFM.fillRect(barX, barY, barW, barH);
+      ctxFM.fillRect(barX, barY2, barW, barH);
       ctxFM.strokeStyle = COLORS.textDim; ctxFM.lineWidth = 1;
       ctxFM.beginPath();
-      ctxFM.moveTo(barX + barW / 2, barY);
-      ctxFM.lineTo(barX + barW / 2, barY + barH);
+      ctxFM.moveTo(barX + barW / 2, barY2);
+      ctxFM.lineTo(barX + barW / 2, barY2 + barH);
       ctxFM.stroke();
       var mFill = avgM * barW / 2;
       ctxFM.fillStyle = avgM >= 0 ? COLORS.blue : COLORS.red;
-      if (mFill >= 0) ctxFM.fillRect(barX + barW / 2, barY, mFill, barH);
-      else ctxFM.fillRect(barX + barW / 2 + mFill, barY, -mFill, barH);
+      if (mFill >= 0) ctxFM.fillRect(barX + barW / 2, barY2, mFill, barH);
+      else ctxFM.fillRect(barX + barW / 2 + mFill, barY2, -mFill, barH);
       ctxFM.fillStyle = COLORS.textDim; ctxFM.font = FONT_SM; ctxFM.textAlign = 'center';
-      ctxFM.fillText('-1', barX + 8, barY + barH + 11);
-      ctxFM.fillText('0', barX + barW / 2, barY + barH + 11);
-      ctxFM.fillText('+1', barX + barW - 8, barY + barH + 11);
-
-      // Magnet cartoon
-      var magnetCX = tx + panelW / 2;
-      var magnetCY = oy + 140;
-      fmDrawMagnet(magnetCX, magnetCY, B);
-
-      ctxFM.textAlign = 'center'; ctxFM.font = FONT_SM;
-      if (Math.abs(B) > 0.05) {
-        ctxFM.fillStyle = COLORS.yellow;
-        ctxFM.fillText('External field ' + (B > 0 ? '\u2191' : '\u2193'), magnetCX, magnetCY + 42);
-      } else {
-        ctxFM.fillStyle = COLORS.textDim;
-        ctxFM.fillText('No external field', magnetCX, magnetCY + 42);
-      }
+      ctxFM.fillText('-1', barX + 4, barY2 + barH + 10);
+      ctxFM.fillText('0', barX + barW / 2, barY2 + barH + 10);
+      ctxFM.fillText('+1', barX + barW - 4, barY2 + barH + 10);
 
       // Competition bars
-      var compY = oy + 200;
+      var compX = barX + barW + 30;
+      var compW = infoW - compX + infoX;
+      if (compW > 60) {
+        ctxFM.textAlign = 'left'; ctxFM.font = FONT_SM; ctxFM.fillStyle = COLORS.text;
+        ctxFM.fillText('T', compX - 12, infoY + 4);
+        var thermalStr = Math.min(1, T / 2.5);
+        ctxFM.fillStyle = 'rgba(239,83,80,0.2)';
+        ctxFM.fillRect(compX, infoY - 4, compW, 8);
+        ctxFM.fillStyle = COLORS.red;
+        ctxFM.fillRect(compX, infoY - 4, thermalStr * compW, 8);
+
+        ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM;
+        ctxFM.fillText('B', compX - 12, infoY + 18);
+        var fieldStr = Math.min(1, Math.abs(B) / 2.0);
+        ctxFM.fillStyle = 'rgba(255,238,88,0.12)';
+        ctxFM.fillRect(compX, infoY + 10, compW, 8);
+        ctxFM.fillStyle = COLORS.yellow;
+        ctxFM.fillRect(compX, infoY + 10, fieldStr * compW, 8);
+      }
+
+      // Legend + Hamiltonian
+      var legY = infoY + 36;
       ctxFM.textAlign = 'left';
+      ctxFM.fillStyle = COLORS.blue; ctxFM.fillRect(infoX, legY, 9, 9);
       ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM;
-      ctxFM.fillText('Competition:', tx, compY);
-
-      var cbX = tx, cbW = panelW - 6, cbH = 9;
-      var cbY1 = compY + 6;
-      var thermalStr = Math.min(1, T / 2.5);
-      ctxFM.fillStyle = 'rgba(239,83,80,0.2)';
-      ctxFM.fillRect(cbX, cbY1, cbW, cbH);
-      ctxFM.fillStyle = COLORS.red;
-      ctxFM.fillRect(cbX, cbY1, thermalStr * cbW, cbH);
-      ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM; ctxFM.textAlign = 'right';
-      ctxFM.fillText('T (disorder)', cbX + cbW, cbY1 - 1);
-
-      var cbY2 = cbY1 + cbH + 4;
-      var fieldStr = Math.min(1, Math.abs(B) / 2.0);
-      ctxFM.fillStyle = 'rgba(255,238,88,0.12)';
-      ctxFM.fillRect(cbX, cbY2, cbW, cbH);
-      ctxFM.fillStyle = COLORS.yellow;
-      ctxFM.fillRect(cbX, cbY2, fieldStr * cbW, cbH);
-      ctxFM.fillStyle = COLORS.text; ctxFM.textAlign = 'right';
-      ctxFM.fillText('B (order)', cbX + cbW, cbY2 - 1);
-
-      // Legend
-      ctxFM.textAlign = 'left';
-      var legY = compY + 42;
-      ctxFM.fillStyle = COLORS.blue; ctxFM.fillRect(tx, legY, 9, 9);
-      ctxFM.fillStyle = COLORS.text; ctxFM.font = FONT_SM;
-      ctxFM.fillText('Spin \u2191', tx + 13, legY + 8);
-      ctxFM.fillStyle = COLORS.red; ctxFM.fillRect(tx + 65, legY, 9, 9);
+      ctxFM.fillText('Spin \u2191', infoX + 13, legY + 8);
+      ctxFM.fillStyle = COLORS.red; ctxFM.fillRect(infoX + 60, legY, 9, 9);
       ctxFM.fillStyle = COLORS.text;
-      ctxFM.fillText('Spin \u2193', tx + 78, legY + 8);
-
-      // Hamiltonian
-      ctxFM.fillStyle = COLORS.textDim; ctxFM.font = FONT_SM;
-      ctxFM.fillText('H = \u2212J\u2211s\u1d62s\u2c7c \u2212 B\u2211s\u1d62', tx, legY + 26);
+      ctxFM.fillText('Spin \u2193', infoX + 73, legY + 8);
+      ctxFM.fillStyle = COLORS.textDim;
+      ctxFM.fillText('H = \u2212J\u2211s\u1d62s\u2c7c \u2212 B\u2211s\u1d62', infoX + 130, legY + 8);
 
       // Update slider displays
       var tempValEl = document.getElementById('ferro-temp-val');
