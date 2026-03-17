@@ -8943,13 +8943,32 @@ function initCh8Vis() {
       }
       ctxSP8.stroke();
 
-      // Mark minimum
+      // Current piston position → x on the plot
+      // Gas height is proportional to x; at equilibrium gasH_eq maps to xMin
+      const gasH = gasBot - spPistonY - pistonThick;
+      const targetY = spTargetPistonY(k, T);
+      const gasH_eq = gasBot - targetY - pistonThick;
+      const xCur = (gasH_eq > 1) ? xMin * gasH / gasH_eq : xMin;
+      const xCurClamped = Math.max(xLo + 0.01, Math.min(xHi - 0.01, xCur));
+      const Fcur = 0.5 * k * xCurClamped * xCurClamped - T * Math.log(xCurClamped);
+      const curPx = ox + (xCurClamped - xLo) / (xHi - xLo) * pw;
+      const curPy = oy + ph * (1 - (Fcur - Fbot) / (Ftop - Fbot));
+
+      // Draw moving dot on curve
+      if (curPy >= oy && curPy <= oy + ph) {
+        ctxSP8.beginPath(); ctxSP8.arc(curPx, curPy, 6, 0, 2 * Math.PI);
+        ctxSP8.fillStyle = COLORS.orange; ctxSP8.fill();
+        ctxSP8.beginPath(); ctxSP8.arc(curPx, curPy, 3, 0, 2 * Math.PI);
+        ctxSP8.fillStyle = '#fff'; ctxSP8.fill();
+      }
+
+      // Mark equilibrium minimum
       const minPx = ox + (xMin - xLo) / (xHi - xLo) * pw;
       const minPy = oy + ph * (1 - (Fmin - Fbot) / (Ftop - Fbot));
-      ctxSP8.beginPath(); ctxSP8.arc(minPx, minPy, 5, 0, 2 * Math.PI);
+      ctxSP8.beginPath(); ctxSP8.arc(minPx, minPy, 4, 0, 2 * Math.PI);
       ctxSP8.fillStyle = COLORS.green; ctxSP8.fill();
       ctxSP8.fillStyle = COLORS.green; ctxSP8.font = FONT_SM; ctxSP8.textAlign = 'left';
-      ctxSP8.fillText('x* = ' + xMin.toFixed(2), minPx + 8, minPy - 5);
+      ctxSP8.fillText('x*', minPx + 7, minPy + 4);
 
       ctxSP8.fillStyle = COLORS.text; ctxSP8.font = FONT_LG; ctxSP8.textAlign = 'left';
       ctxSP8.fillText('Free Energy F = \u00bdkx\u00b2 \u2212 T ln x', ox + 5, oy - 10);
