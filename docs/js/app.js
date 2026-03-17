@@ -9146,51 +9146,68 @@ function initCh8Vis() {
     const rW = 2.5, rS = 5.5;        // radii: water small, solute large
     const mW = 1, mS = 5;            // mass (solute heavier)
     const nWaterTot = 60;
-    const grav = 0.012;               // gravity pulls particles down
     const blockRange = rS * 2.2;      // how far solute blocks membrane pores
+    // Pixels of liquid height per water molecule on one side
+    const pixPerMol = chH * 0.75 / (nWaterTot * 0.55);
 
     let waterP = [], soluteP = [];
     let hist = [];                     // time series of water fraction on right
+    let osmLeftSurf = chBot, osmRightSurf = chBot; // surface y-coords (stored for draw)
+
+    function computeSurfaces() {
+      let nL = 0, nR = 0;
+      for (const p of waterP) { if (p.x < membrX) nL++; else nR++; }
+      osmLeftSurf = chBot - Math.max(nL, 1) * pixPerMol;
+      osmRightSurf = chBot - Math.max(nR, 1) * pixPerMol;
+      return {nL, nR};
+    }
 
     function initOsm() {
       const T = parseFloat(osmTempSlider?.value || 1.5);
       const Ns = parseInt(nSoluteSlider?.value || 8);
-      const spd = Math.sqrt(T) * 1.3;
+      const spd = Math.sqrt(T) * 1.2;
       waterP = []; soluteP = []; hist = [];
 
-      // Water: half on each side, distributed in lower portion
+      // Water: half on each side, distributed within liquid region
+      const halfH = (nWaterTot / 2) * pixPerMol; // height of liquid when 30 molecules
       for (let i = 0; i < nWaterTot; i++) {
         const left = i < nWaterTot / 2;
         const xMin = left ? chL + rW + 1 : membrX + rW + 1;
         const xMax = left ? membrX - rW - 1 : chR - rW - 1;
         waterP.push({
           x: xMin + Math.random() * (xMax - xMin),
-          y: chTop + chH * 0.25 + Math.random() * chH * 0.7,
+          y: chBot - halfH + Math.random() * (halfH - 2 * rW),
           vx: (Math.random() - 0.5) * spd,
           vy: (Math.random() - 0.5) * spd
         });
       }
-      // Solute: all on right side
+      // Solute: all on right side, within liquid
       for (let i = 0; i < Ns; i++) {
         soluteP.push({
           x: membrX + rS + 4 + Math.random() * (chR - membrX - 2 * rS - 8),
-          y: chTop + chH * 0.25 + Math.random() * chH * 0.7,
-          vx: (Math.random() - 0.5) * spd * 0.6,
-          vy: (Math.random() - 0.5) * spd * 0.6
+          y: chBot - halfH + Math.random() * (halfH - 2 * rS),
+          vx: (Math.random() - 0.5) * spd * 0.5,
+          vy: (Math.random() - 0.5) * spd * 0.5
         });
       }
+      computeSurfaces();
     }
 
     function stepOsm() {
       const T = parseFloat(osmTempSlider?.value || 1.5);
-      const kick = T * 0.04;
-      const damp = 0.996;
+      const kick = T * 0.08;
+      const damp = 0.94;
 
-      // --- Update water particles ---
+      // Compute current water surfaces
+      const {nL, nR} = computeSurfaces();
+      const leftSurf = osmLeftSurf;
+      const rightSurf = osmRightSurf;
+
+      // --- Update water particles (Brownian motion within liquid) ---
       for (const p of waterP) {
         const prevX = p.x;
         p.vx += (Math.random() - 0.5) * kick;
-        p.vy += (Math.random() - 0.5) * kick + grav;
+        p.vy += (Math.random() - 0.5) * kick;
         p.vx *= damp; p.vy *= damp;
         p.x += p.vx; p.y += p.vy;
 
@@ -9204,29 +9221,34 @@ function initCh8Vis() {
           }
           if (blocked) {
             p.x = membrX + rW + 0.5;
-            p.vx = Math.abs(p.vx) * 0.5;
+            p.vx = Math.abs(p.vx) * 0.3;
           }
         }
         // Water from left->right: always passes freely through membrane
 
-        // Outer wall bouncing
+        // Determine which side and get that side's surface
+        const onLeft = p.x < membrX;
+        const surf = onLeft ? leftSurf : rightSurf;
+
+        // Outer walls
         if (p.x < chL + rW) { p.x = chL + rW; p.vx = Math.abs(p.vx); }
         if (p.x > chR - rW) { p.x = chR - rW; p.vx = -Math.abs(p.vx); }
-        if (p.y < chTop + rW) { p.y = chTop + rW; p.vy = Math.abs(p.vy); }
+        // Confine to liquid: bounce off surface and bottom
+        if (p.y < surf + rW) { p.y = surf + rW; p.vy = Math.abs(p.vy); }
         if (p.y > chBot - rW) { p.y = chBot - rW; p.vy = -Math.abs(p.vy); }
       }
 
-      // --- Update solute particles ---
+      // --- Update solute particles (confined to right-side liquid) ---
       for (const p of soluteP) {
         p.vx += (Math.random() - 0.5) * kick;
-        p.vy += (Math.random() - 0.5) * kick + grav;
+        p.vy += (Math.random() - 0.5) * kick;
         p.vx *= damp; p.vy *= damp;
         p.x += p.vx; p.y += p.vy;
 
-        // Solute bounces off membrane (can't cross)
+        // Solute bounces off membrane (can't cross) and stays in right-side liquid
         if (p.x < membrX + rS) { p.x = membrX + rS; p.vx = Math.abs(p.vx); }
         if (p.x > chR - rS) { p.x = chR - rS; p.vx = -Math.abs(p.vx); }
-        if (p.y < chTop + rS) { p.y = chTop + rS; p.vy = Math.abs(p.vy); }
+        if (p.y < rightSurf + rS) { p.y = rightSurf + rS; p.vy = Math.abs(p.vy); }
         if (p.y > chBot - rS) { p.y = chBot - rS; p.vy = -Math.abs(p.vy); }
       }
 
@@ -9261,8 +9283,6 @@ function initCh8Vis() {
       }
 
       // Track fraction of water on right
-      let nR = 0;
-      for (const p of waterP) { if (p.x >= membrX) nR++; }
       hist.push(nR / nWaterTot);
       if (hist.length > 400) hist.shift();
     }
@@ -9276,15 +9296,22 @@ function initCh8Vis() {
       let nL = 0, nR = 0;
       for (const p of waterP) { if (p.x < membrX) nL++; else nR++; }
 
-      // Compute water fill levels (visual only, proportional to count)
-      const maxFill = chH * 0.88;
-      const leftFillH = Math.min((nL / (nWaterTot * 0.5)) * maxFill * 0.5, chH - 4);
-      const rightFillH = Math.min((nR / (nWaterTot * 0.5)) * maxFill * 0.5, chH - 4);
+      const leftSurf = osmLeftSurf;
+      const rightSurf = osmRightSurf;
 
-      // Water fill background
-      ctxO.fillStyle = 'rgba(40,130,230,0.10)';
-      ctxO.fillRect(chL + 1, chBot - leftFillH, membrX - chL - 1, leftFillH);
-      ctxO.fillRect(membrX + 1, chBot - rightFillH, chR - membrX - 1, rightFillH);
+      // Water fill: shaded region IS the liquid
+      ctxO.fillStyle = 'rgba(40,130,230,0.13)';
+      ctxO.fillRect(chL + 1, leftSurf, membrX - chL - 1, chBot - leftSurf);
+      ctxO.fillRect(membrX + 1, rightSurf, chR - membrX - 1, chBot - rightSurf);
+
+      // Subtle surface line
+      ctxO.strokeStyle = 'rgba(80,180,255,0.35)'; ctxO.lineWidth = 1;
+      ctxO.beginPath();
+      ctxO.moveTo(chL + 1, leftSurf); ctxO.lineTo(membrX - 1, leftSurf);
+      ctxO.stroke();
+      ctxO.beginPath();
+      ctxO.moveTo(membrX + 1, rightSurf); ctxO.lineTo(chR - 1, rightSurf);
+      ctxO.stroke();
 
       // Chamber walls
       ctxO.strokeStyle = COLORS.axis; ctxO.lineWidth = 2;
@@ -9338,18 +9365,16 @@ function initCh8Vis() {
       ctxO.restore();
 
       // Height difference arrow
-      const leftLev = chBot - leftFillH;
-      const rightLev = chBot - rightFillH;
-      if (rightFillH - leftFillH > 6) {
+      if (leftSurf - rightSurf > 6) {
         const aX = chR + 14;
         ctxO.strokeStyle = COLORS.green; ctxO.lineWidth = 1.5;
         ctxO.beginPath();
-        ctxO.moveTo(aX - 4, leftLev); ctxO.lineTo(aX + 4, leftLev);
-        ctxO.moveTo(aX - 4, rightLev); ctxO.lineTo(aX + 4, rightLev);
+        ctxO.moveTo(aX - 4, leftSurf); ctxO.lineTo(aX + 4, leftSurf);
+        ctxO.moveTo(aX - 4, rightSurf); ctxO.lineTo(aX + 4, rightSurf);
         ctxO.stroke();
-        drawArrow(ctxO, aX, leftLev, aX, rightLev, 5);
+        drawArrow(ctxO, aX, leftSurf, aX, rightSurf, 5);
         ctxO.fillStyle = COLORS.green; ctxO.font = FONT_SM; ctxO.textAlign = 'left';
-        ctxO.fillText('\u0394h', aX + 7, (leftLev + rightLev) / 2 + 4);
+        ctxO.fillText('\u0394h', aX + 7, (leftSurf + rightSurf) / 2 + 4);
       }
 
       // === Right info panel ===
@@ -9443,7 +9468,7 @@ function initCh8Vis() {
     nSoluteSlider?.addEventListener('input', initOsm);
     osmTempSlider?.addEventListener('input', () => {
       const T = parseFloat(osmTempSlider.value);
-      const spd = Math.sqrt(T) * 1.3;
+      const spd = Math.sqrt(T) * 1.2;
       for (const p of waterP.concat(soluteP)) {
         const s = Math.sqrt(p.vx * p.vx + p.vy * p.vy) || 0.1;
         const f = spd / s * (0.5 + Math.random());
@@ -9717,23 +9742,24 @@ function initCh9Vis() {
     function getDiamondAtoms() {
       const atoms = [];
       const a = 1; // lattice constant
+      const N = 3; // unit cells per axis
       // Conventional cubic cell FCC positions
       const fcc = [
         [0,0,0],[.5,.5,0],[.5,0,.5],[0,.5,.5]
       ];
       // Basis: each FCC site + offset
       const basis = [[0,0,0],[.25,.25,.25]];
-      for (let dx = 0; dx < 2; dx++) {
-        for (let dy = 0; dy < 2; dy++) {
-          for (let dz = 0; dz < 2; dz++) {
+      const center = N / 2;
+      for (let dx = 0; dx < N; dx++) {
+        for (let dy = 0; dy < N; dy++) {
+          for (let dz = 0; dz < N; dz++) {
             for (const f of fcc) {
               for (const b of basis) {
-                const x = (f[0] + b[0] + dx) * a - 1;
-                const y = (f[1] + b[1] + dy) * a - 1;
-                const z = (f[2] + b[2] + dz) * a - 1;
-                // Keep atoms inside display range
-                if (x >= -0.1 && x <= 2.1 && y >= -0.1 && y <= 2.1 && z >= -0.1 && z <= 2.1) {
-                  atoms.push({ x: x - 1, y: y - 1, z: z - 1 });
+                const x = (f[0] + b[0] + dx) * a;
+                const y = (f[1] + b[1] + dy) * a;
+                const z = (f[2] + b[2] + dz) * a;
+                if (x >= -0.1 && x <= N + 0.1 && y >= -0.1 && y <= N + 0.1 && z >= -0.1 && z <= N + 0.1) {
+                  atoms.push({ x: x - center, y: y - center, z: z - center });
                 }
               }
             }
@@ -9855,7 +9881,7 @@ function initCh9Vis() {
         } else {
           const bAlpha = 0.25 + 0.35 * ((bond.z + 2) / 4);
           ctxC.strokeStyle = isGraphite ? `rgba(255,167,38,${bAlpha})` : `rgba(79,195,247,${bAlpha})`;
-          ctxC.lineWidth = 2;
+          ctxC.lineWidth = isGraphite ? 2 : 1.5;
           ctxC.setLineDash([]);
         }
         ctxC.beginPath();
@@ -9867,7 +9893,7 @@ function initCh9Vis() {
 
       // Draw atoms
       for (const atom of sortedAtoms) {
-        const r = 4 + 3 * atom.f;
+        const r = (isGraphite ? 4 : 3) + (isGraphite ? 3 : 2) * atom.f;
         const depthFactor = (atom.z + 2) / 4;
         const alpha = 0.4 + 0.6 * depthFactor;
         const bright = Math.floor(120 + 135 * depthFactor);
@@ -9905,18 +9931,17 @@ function initCh9Vis() {
       ctxC.lineTo(halfW, HC - 30);
       ctxC.stroke();
 
-      const scale = 75;
       const cy = HC / 2 - 5;
 
-      // Diamond
+      // Diamond (smaller scale for 3x3x3 lattice)
       drawStructure(diamondAtoms, diamondBonds,
         diamondAngleX, diamondAngleY,
-        halfW / 2, cy, scale, 'Diamond', false);
+        halfW / 2, cy, 52, 'Diamond', false);
 
       // Graphite
       drawStructure(graphiteAtoms, graphiteBonds,
         graphiteAngleX, graphiteAngleY,
-        halfW + halfW / 2, cy, scale * 0.95, 'Graphite', true);
+        halfW + halfW / 2, cy, 75, 'Graphite', true);
     }
 
     // Mouse interaction
