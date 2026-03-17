@@ -8515,7 +8515,7 @@ function initCh7Vis() {
       ctxCEQ.font = FONT_SM; ctxCEQ.textAlign = 'center';
       if (ceqSealed) {
         ctxCEQ.fillStyle = COLORS.textDim;
-        ctxCEQ.fillText('Sealed — adjust N and press Release', WCEQ / 2, bulbY - 10);
+        ctxCEQ.fillText('Sealed — press Release to open tube', WCEQ / 2, bulbY - 10);
       } else {
         ctxCEQ.fillStyle = isEq ? COLORS.green : COLORS.textDim;
         ctxCEQ.fillText(isEq ? '✓ μ₁ ≈ μ₂  (equilibrium)' : 'μ₁ ≠ μ₂  …equilibrating', WCEQ / 2, bulbY - 10);
@@ -8548,8 +8548,6 @@ function initCh7Vis() {
     ceqReleaseBtn?.addEventListener('click', () => {
       ceqSealed = !ceqSealed;
       ceqReleaseBtn.textContent = ceqSealed ? 'Release' : 'Seal';
-      ceqNLeftSlider.disabled = !ceqSealed;
-      ceqNRightSlider.disabled = !ceqSealed;
       if (ceqSealed) {
         // Push particles in tube back to nearest bulb
         for (const p of ceqParticles) {
@@ -9051,113 +9049,331 @@ function initCh8Vis() {
     drawReactionEnthalpy();
   }
 
-  // ----- Osmotic Pressure -----
+  // ----- Osmotic Equilibrium (particle simulation) -----
   const cOsm = document.getElementById('vis-osmotic');
   if (cOsm) {
     const {ctx: ctxO, W: WO, H: HO} = setupCanvas(cOsm);
-    const fracSlider = document.getElementById('osm-frac');
+    const nSoluteSlider = document.getElementById('osm-nsolute');
     const osmTempSlider = document.getElementById('osm-temp');
+    const resetBtn = document.getElementById('osm-reset');
 
-    function drawOsmotic() {
-      clearCanvas(ctxO, WO, HO);
-      const xs = parseFloat(fracSlider?.value || 0.05);
-      const T = parseFloat(osmTempSlider?.value || 300);
+    // Chamber geometry: two chambers separated by membrane
+    const chL = 15, chR = 365, chTop = 55, chBot = 385;
+    const membrX = (chL + chR) / 2;  // membrane at center
+    const chH = chBot - chTop;
 
-      // U-tube visualization
-      const tubeW = 50, tubeH = 200;
-      const leftX = 80, rightX = 220;
-      const baseY = HO - 60;
-      const topY = baseY - tubeH;
+    // Particle properties
+    const rW = 2.5, rS = 5.5;        // radii: water small, solute large
+    const mW = 1, mS = 5;            // mass (solute heavier)
+    const nWaterTot = 60;
+    const grav = 0.012;               // gravity pulls particles down
+    const blockRange = rS * 2.2;      // how far solute blocks membrane pores
 
-      // Osmotic pressure determines height difference
-      // Pi = (Ns/V) kT ≈ xs * kT / v_mol, simplified units
-      const heightDiff = xs * T / 30; // arbitrary scaling for visualization
-      const maxDiff = tubeH * 0.6;
-      const hDiff = Math.min(heightDiff, maxDiff);
+    let waterP = [], soluteP = [];
+    let hist = [];                     // time series of water fraction on right
 
-      // Draw tube outlines
-      ctxO.strokeStyle = COLORS.axis; ctxO.lineWidth = 2;
-      // Left tube
-      ctxO.strokeRect(leftX, topY, tubeW, tubeH);
-      // Right tube
-      ctxO.strokeRect(rightX, topY, tubeW, tubeH);
-      // Connection
-      ctxO.fillStyle = COLORS.axis;
-      ctxO.fillRect(leftX + tubeW, baseY - 15, rightX - leftX - tubeW, 15);
-      ctxO.strokeRect(leftX + tubeW, baseY - 15, rightX - leftX - tubeW, 15);
+    function initOsm() {
+      const T = parseFloat(osmTempSlider?.value || 1.5);
+      const Ns = parseInt(nSoluteSlider?.value || 8);
+      const spd = Math.sqrt(T) * 1.3;
+      waterP = []; soluteP = []; hist = [];
 
-      // Semi-permeable membrane
-      ctxO.strokeStyle = COLORS.orange; ctxO.lineWidth = 2;
-      ctxO.setLineDash([4, 4]);
-      const memX = (leftX + tubeW + rightX) / 2;
-      ctxO.beginPath(); ctxO.moveTo(memX, baseY - 15); ctxO.lineTo(memX, baseY); ctxO.stroke();
-      ctxO.setLineDash([]);
-      ctxO.fillStyle = COLORS.orange; ctxO.font = FONT_SM; ctxO.textAlign = 'center';
-      ctxO.fillText('Membrane', memX, baseY + 12);
-
-      // Water levels
-      const baseLevel = baseY - 30;
-      const leftLevel = baseLevel + hDiff / 2;
-      const rightLevel = baseLevel - hDiff / 2;
-
-      // Left: pure water (blue)
-      ctxO.fillStyle = 'rgba(40,120,220,0.3)';
-      ctxO.fillRect(leftX + 1, leftLevel, tubeW - 2, baseY - leftLevel);
-
-      // Right: solution (blue + red dots)
-      ctxO.fillStyle = 'rgba(40,120,220,0.3)';
-      ctxO.fillRect(rightX + 1, rightLevel, tubeW - 2, baseY - rightLevel);
-
-      // Solute particles in right tube
-      const nSolute = Math.round(xs * 60);
-      for (let i = 0; i < nSolute; i++) {
-        const sx = rightX + 8 + Math.random() * (tubeW - 16);
-        const sy = rightLevel + 8 + Math.random() * (baseY - rightLevel - 16);
-        ctxO.beginPath(); ctxO.arc(sx, sy, 2.5, 0, 2 * Math.PI);
-        ctxO.fillStyle = COLORS.red; ctxO.fill();
+      // Water: half on each side, distributed in lower portion
+      for (let i = 0; i < nWaterTot; i++) {
+        const left = i < nWaterTot / 2;
+        const xMin = left ? chL + rW + 1 : membrX + rW + 1;
+        const xMax = left ? membrX - rW - 1 : chR - rW - 1;
+        waterP.push({
+          x: xMin + Math.random() * (xMax - xMin),
+          y: chTop + chH * 0.25 + Math.random() * chH * 0.7,
+          vx: (Math.random() - 0.5) * spd,
+          vy: (Math.random() - 0.5) * spd
+        });
       }
-
-      // Labels
-      ctxO.fillStyle = COLORS.blue; ctxO.font = FONT_SM; ctxO.textAlign = 'center';
-      ctxO.fillText('Pure', leftX + tubeW / 2, topY - 15);
-      ctxO.fillText('water', leftX + tubeW / 2, topY - 3);
-      ctxO.fillStyle = COLORS.red;
-      ctxO.fillText('Solution', rightX + tubeW / 2, topY - 15);
-      ctxO.fillText('(solute)', rightX + tubeW / 2, topY - 3);
-
-      // Height difference arrow
-      if (hDiff > 5) {
-        ctxO.strokeStyle = COLORS.green; ctxO.lineWidth = 2;
-        drawArrow(ctxO, rightX + tubeW + 15, leftLevel, rightX + tubeW + 15, rightLevel, 6);
-        ctxO.fillStyle = COLORS.green; ctxO.font = FONT_SM; ctxO.textAlign = 'left';
-        ctxO.fillText('Δh', rightX + tubeW + 20, (leftLevel + rightLevel) / 2 + 4);
+      // Solute: all on right side
+      for (let i = 0; i < Ns; i++) {
+        soluteP.push({
+          x: membrX + rS + 4 + Math.random() * (chR - membrX - 2 * rS - 8),
+          y: chTop + chH * 0.25 + Math.random() * chH * 0.7,
+          vx: (Math.random() - 0.5) * spd * 0.6,
+          vy: (Math.random() - 0.5) * spd * 0.6
+        });
       }
-
-      // Right panel: equations and values
-      const tx = 350;
-      ctxO.fillStyle = COLORS.text; ctxO.font = FONT_LG; ctxO.textAlign = 'left';
-      ctxO.fillText('Osmotic Pressure', tx, 30);
-
-      ctxO.fillStyle = COLORS.text; ctxO.font = FONT;
-      ctxO.fillText('Π = (N_s/V) k_BT', tx, 70);
-      ctxO.fillStyle = COLORS.green;
-      const Pi = xs * T * 0.0821 / 18; // rough osmotic pressure in atm
-      ctxO.fillText('Π ≈ ' + (Pi).toFixed(2) + ' (arb. units)', tx, 95);
-
-      ctxO.fillStyle = COLORS.textDim; ctxO.font = FONT_SM;
-      ctxO.fillText('Solute fraction x_s = ' + xs.toFixed(3), tx, 130);
-      ctxO.fillText('Temperature T = ' + T + ' K', tx, 150);
-      ctxO.fillText('Water flows toward higher solute', tx, 185);
-      ctxO.fillText('concentration until hydrostatic', tx, 200);
-      ctxO.fillText('pressure balances osmotic pressure.', tx, 215);
-
-      document.getElementById('osm-frac-val')?.replaceChildren(document.createTextNode(xs.toFixed(3)));
-      document.getElementById('osm-temp-val')?.replaceChildren(document.createTextNode(T));
     }
 
-    fracSlider?.addEventListener('input', drawOsmotic);
-    osmTempSlider?.addEventListener('input', drawOsmotic);
-    drawOsmotic();
+    function stepOsm() {
+      const T = parseFloat(osmTempSlider?.value || 1.5);
+      const kick = T * 0.04;
+      const damp = 0.996;
+
+      // --- Update water particles ---
+      for (const p of waterP) {
+        const prevX = p.x;
+        p.vx += (Math.random() - 0.5) * kick;
+        p.vy += (Math.random() - 0.5) * kick + grav;
+        p.vx *= damp; p.vy *= damp;
+        p.x += p.vx; p.y += p.vy;
+
+        // Membrane crossing: water from right->left may be blocked by nearby solute.
+        // This is the microscopic mechanism of osmosis: solute near the membrane
+        // reduces the rate at which water can cross back to the pure side.
+        if (prevX >= membrX && p.x < membrX) {
+          let blocked = false;
+          for (const s of soluteP) {
+            if (Math.abs(s.y - p.y) < blockRange) { blocked = true; break; }
+          }
+          if (blocked) {
+            p.x = membrX + rW + 0.5;
+            p.vx = Math.abs(p.vx) * 0.5;
+          }
+        }
+        // Water from left->right: always passes freely through membrane
+
+        // Outer wall bouncing
+        if (p.x < chL + rW) { p.x = chL + rW; p.vx = Math.abs(p.vx); }
+        if (p.x > chR - rW) { p.x = chR - rW; p.vx = -Math.abs(p.vx); }
+        if (p.y < chTop + rW) { p.y = chTop + rW; p.vy = Math.abs(p.vy); }
+        if (p.y > chBot - rW) { p.y = chBot - rW; p.vy = -Math.abs(p.vy); }
+      }
+
+      // --- Update solute particles ---
+      for (const p of soluteP) {
+        p.vx += (Math.random() - 0.5) * kick;
+        p.vy += (Math.random() - 0.5) * kick + grav;
+        p.vx *= damp; p.vy *= damp;
+        p.x += p.vx; p.y += p.vy;
+
+        // Solute bounces off membrane (can't cross)
+        if (p.x < membrX + rS) { p.x = membrX + rS; p.vx = Math.abs(p.vx); }
+        if (p.x > chR - rS) { p.x = chR - rS; p.vx = -Math.abs(p.vx); }
+        if (p.y < chTop + rS) { p.y = chTop + rS; p.vy = Math.abs(p.vy); }
+        if (p.y > chBot - rS) { p.y = chBot - rS; p.vy = -Math.abs(p.vy); }
+      }
+
+      // --- Particle-particle collisions ---
+      const all = waterP.concat(soluteP);
+      const nAll = all.length;
+      for (let i = 0; i < nAll; i++) {
+        const a = all[i];
+        const ra = i < nWaterTot ? rW : rS;
+        const ma = i < nWaterTot ? mW : mS;
+        for (let j = i + 1; j < nAll; j++) {
+          const b = all[j];
+          const rb = j < nWaterTot ? rW : rS;
+          const mb = j < nWaterTot ? mW : mS;
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const distSq = dx * dx + dy * dy;
+          const minD = ra + rb;
+          if (distSq < minD * minD && distSq > 0.01) {
+            const dist = Math.sqrt(distSq);
+            const nx = dx / dist, ny = dy / dist;
+            const dvn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+            if (dvn > 0) {
+              const imp = 2 * dvn / (ma + mb);
+              a.vx -= imp * mb * nx; a.vy -= imp * mb * ny;
+              b.vx += imp * ma * nx; b.vy += imp * ma * ny;
+              const overlap = (minD - dist) / 2 + 0.3;
+              a.x -= overlap * nx; a.y -= overlap * ny;
+              b.x += overlap * nx; b.y += overlap * ny;
+            }
+          }
+        }
+      }
+
+      // Track fraction of water on right
+      let nR = 0;
+      for (const p of waterP) { if (p.x >= membrX) nR++; }
+      hist.push(nR / nWaterTot);
+      if (hist.length > 400) hist.shift();
+    }
+
+    function drawOsm() {
+      clearCanvas(ctxO, WO, HO);
+      const Ns = parseInt(nSoluteSlider?.value || 8);
+      const T = parseFloat(osmTempSlider?.value || 1.5);
+
+      // Count water on each side
+      let nL = 0, nR = 0;
+      for (const p of waterP) { if (p.x < membrX) nL++; else nR++; }
+
+      // Compute water fill levels (visual only, proportional to count)
+      const maxFill = chH * 0.88;
+      const leftFillH = Math.min((nL / (nWaterTot * 0.5)) * maxFill * 0.5, chH - 4);
+      const rightFillH = Math.min((nR / (nWaterTot * 0.5)) * maxFill * 0.5, chH - 4);
+
+      // Water fill background
+      ctxO.fillStyle = 'rgba(40,130,230,0.10)';
+      ctxO.fillRect(chL + 1, chBot - leftFillH, membrX - chL - 1, leftFillH);
+      ctxO.fillRect(membrX + 1, chBot - rightFillH, chR - membrX - 1, rightFillH);
+
+      // Chamber walls
+      ctxO.strokeStyle = COLORS.axis; ctxO.lineWidth = 2;
+      ctxO.beginPath();
+      ctxO.moveTo(chL, chTop); ctxO.lineTo(chL, chBot);
+      ctxO.lineTo(chR, chBot); ctxO.lineTo(chR, chTop);
+      ctxO.stroke();
+
+      // Membrane (dashed orange)
+      ctxO.strokeStyle = COLORS.orange; ctxO.lineWidth = 2.5;
+      ctxO.setLineDash([6, 5]);
+      ctxO.beginPath();
+      ctxO.moveTo(membrX, chTop); ctxO.lineTo(membrX, chBot);
+      ctxO.stroke();
+      ctxO.setLineDash([]);
+
+      // Draw water particles
+      ctxO.fillStyle = COLORS.blue;
+      for (const p of waterP) {
+        ctxO.beginPath();
+        ctxO.arc(p.x, p.y, rW, 0, 2 * Math.PI);
+        ctxO.fill();
+      }
+
+      // Draw solute particles (larger, with inner dot to distinguish)
+      for (const p of soluteP) {
+        ctxO.fillStyle = COLORS.red;
+        ctxO.beginPath();
+        ctxO.arc(p.x, p.y, rS, 0, 2 * Math.PI);
+        ctxO.fill();
+        ctxO.fillStyle = 'rgba(0,0,0,0.35)';
+        ctxO.beginPath();
+        ctxO.arc(p.x, p.y, rS * 0.4, 0, 2 * Math.PI);
+        ctxO.fill();
+      }
+
+      // Chamber labels
+      ctxO.font = FONT; ctxO.textAlign = 'center';
+      ctxO.fillStyle = COLORS.blue;
+      ctxO.fillText('Pure solvent', (chL + membrX) / 2, chTop - 15);
+      ctxO.fillStyle = COLORS.text;
+      ctxO.fillText('Solution', (membrX + chR) / 2, chTop - 15);
+
+      // Membrane label (vertical)
+      ctxO.fillStyle = COLORS.orange; ctxO.font = FONT_SM;
+      ctxO.save();
+      ctxO.translate(membrX - 8, chTop + chH * 0.5);
+      ctxO.rotate(-Math.PI / 2);
+      ctxO.textAlign = 'center';
+      ctxO.fillText('membrane', 0, 0);
+      ctxO.restore();
+
+      // Height difference arrow
+      const leftLev = chBot - leftFillH;
+      const rightLev = chBot - rightFillH;
+      if (rightFillH - leftFillH > 6) {
+        const aX = chR + 14;
+        ctxO.strokeStyle = COLORS.green; ctxO.lineWidth = 1.5;
+        ctxO.beginPath();
+        ctxO.moveTo(aX - 4, leftLev); ctxO.lineTo(aX + 4, leftLev);
+        ctxO.moveTo(aX - 4, rightLev); ctxO.lineTo(aX + 4, rightLev);
+        ctxO.stroke();
+        drawArrow(ctxO, aX, leftLev, aX, rightLev, 5);
+        ctxO.fillStyle = COLORS.green; ctxO.font = FONT_SM; ctxO.textAlign = 'left';
+        ctxO.fillText('\u0394h', aX + 7, (leftLev + rightLev) / 2 + 4);
+      }
+
+      // === Right info panel ===
+      const tx = 400;
+
+      ctxO.textAlign = 'left';
+      ctxO.fillStyle = COLORS.text; ctxO.font = FONT_LG;
+      ctxO.fillText('Osmotic Equilibrium', tx, chTop + 5);
+
+      ctxO.font = FONT;
+      ctxO.fillStyle = COLORS.blue;
+      ctxO.fillText('Water (left): ' + nL, tx, chTop + 32);
+      ctxO.fillText('Water (right): ' + nR, tx, chTop + 50);
+      ctxO.fillStyle = COLORS.red;
+      ctxO.fillText('Solute (right): ' + Ns, tx, chTop + 68);
+
+      // Status indicator
+      const diff = nR - nL;
+      const equil = Math.abs(diff) <= 3;
+      ctxO.fillStyle = equil ? COLORS.green : COLORS.yellow;
+      ctxO.font = FONT_SM;
+      ctxO.fillText(equil ? '\u2713 Near equilibrium' : '\u25b6 Equilibrating\u2026', tx, chTop + 90);
+
+      // --- Time-series plot ---
+      const plx = tx, ply = chTop + 108, plw = WO - tx - 12, plh = 90;
+      ctxO.fillStyle = 'rgba(0,0,0,0.25)';
+      ctxO.fillRect(plx, ply, plw, plh);
+      ctxO.strokeStyle = 'rgba(255,255,255,0.2)'; ctxO.lineWidth = 1;
+      ctxO.strokeRect(plx, ply, plw, plh);
+      // Midline at 0.5 (equal split)
+      ctxO.strokeStyle = 'rgba(255,255,255,0.15)'; ctxO.lineWidth = 1;
+      ctxO.setLineDash([3, 3]);
+      ctxO.beginPath();
+      ctxO.moveTo(plx, ply + plh / 2); ctxO.lineTo(plx + plw, ply + plh / 2);
+      ctxO.stroke();
+      ctxO.setLineDash([]);
+      // Plot water fraction on right over time
+      if (hist.length > 1) {
+        ctxO.strokeStyle = COLORS.blue; ctxO.lineWidth = 1.5;
+        ctxO.beginPath();
+        for (let i = 0; i < hist.length; i++) {
+          const hx = plx + (i / 400) * plw;
+          const hy = ply + plh - hist[i] * plh;
+          i === 0 ? ctxO.moveTo(hx, hy) : ctxO.lineTo(hx, hy);
+        }
+        ctxO.stroke();
+      }
+      // Plot axis labels
+      ctxO.fillStyle = COLORS.textDim; ctxO.font = '10px Inter, system-ui, sans-serif';
+      ctxO.textAlign = 'left';
+      ctxO.fillText('fraction of water on right', plx + 2, ply - 3);
+      ctxO.textAlign = 'right';
+      ctxO.fillText('1', plx - 3, ply + 8);
+      ctxO.fillText('\u00bd', plx - 3, ply + plh / 2 + 3);
+      ctxO.fillText('0', plx - 3, ply + plh + 1);
+      ctxO.textAlign = 'left';
+      ctxO.fillText('time \u2192', plx + plw - 30, ply + plh + 11);
+
+      // --- Explanation text ---
+      let ty = ply + plh + 28;
+      ctxO.textAlign = 'left'; ctxO.font = FONT_SM; ctxO.fillStyle = COLORS.textDim;
+      ctxO.fillText('Solvent freely crosses the membrane.', tx, ty);
+      ctxO.fillText('Solute is too large \u2014 it bounces off,', tx, ty + 15);
+      ctxO.fillText('partially blocking solvent return.', tx, ty + 30);
+      ctxO.fillText('Net flow \u2192 solution side until', tx, ty + 50);
+      ctxO.fillStyle = COLORS.green; ctxO.font = FONT;
+      ctxO.fillText('\u03a0 = k\u0042T \u00b7 N\u209b / V', tx, ty + 68);
+
+      // Legend
+      const ly = ty + 90;
+      ctxO.fillStyle = COLORS.blue;
+      ctxO.beginPath(); ctxO.arc(tx + 5, ly, rW + 0.5, 0, 2 * Math.PI); ctxO.fill();
+      ctxO.fillStyle = COLORS.textDim; ctxO.font = FONT_SM;
+      ctxO.fillText('Solvent', tx + 14, ly + 4);
+      ctxO.fillStyle = COLORS.red;
+      ctxO.beginPath(); ctxO.arc(tx + 80, ly, rS, 0, 2 * Math.PI); ctxO.fill();
+      ctxO.fillStyle = COLORS.textDim;
+      ctxO.fillText('Solute', tx + 90, ly + 4);
+
+      // Update slider displays
+      document.getElementById('osm-nsolute-val')?.replaceChildren(document.createTextNode(Ns));
+      document.getElementById('osm-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(1)));
+    }
+
+    function animateOsm() {
+      stepOsm();
+      drawOsm();
+      activeAnimations['osmotic'] = requestAnimationFrame(animateOsm);
+    }
+
+    nSoluteSlider?.addEventListener('input', initOsm);
+    osmTempSlider?.addEventListener('input', () => {
+      const T = parseFloat(osmTempSlider.value);
+      const spd = Math.sqrt(T) * 1.3;
+      for (const p of waterP.concat(soluteP)) {
+        const s = Math.sqrt(p.vx * p.vx + p.vy * p.vy) || 0.1;
+        const f = spd / s * (0.5 + Math.random());
+        p.vx *= f; p.vy *= f;
+      }
+    });
+    resetBtn?.addEventListener('click', initOsm);
+
+    initOsm();
+    animateOsm();
   }
 }
 
