@@ -9,7 +9,12 @@
 <p>Holding any two of the four differentials fixed we can derive from this equation lots of other formulas</p>
 
 <div class="equation">
-$$\left(\frac{\partial S}{\partial E}\right)_{V,N} = \frac{1}{T};\quad \left(\frac{\partial S}{\partial N}\right)_{E,V} = -\frac{\mu}{T};\quad \left(\frac{\partial S}{\partial V}\right)_{E,N} = \frac{P}{T};\quad \left(\frac{\partial E}{\partial S}\right)_{V,N} = T;\quad \left(\frac{\partial E}{\partial V}\right)_{S,N} = -P$$
+$$\left(\frac{\partial S}{\partial E}\right)_{V,N} = \frac{1}{T};\qquad \left(\frac{\partial S}{\partial N}\right)_{E,V} = -\frac{\mu}{T};\qquad \left(\frac{\partial S}{\partial V}\right)_{E,N} = \frac{P}{T}$$
+<span class="eq-number">(1)</span>
+</div>
+
+<div class="equation">
+$$\left(\frac{\partial E}{\partial S}\right)_{V,N} = T;\qquad \left(\frac{\partial E}{\partial V}\right)_{S,N} = -P$$
 <span class="eq-number">(2)</span>
 </div>
 
@@ -35,7 +40,7 @@ $$S(E, V, N) = Nk_B\left[\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{4\pi mE}{3Nh
 
 <div class="equation">
 $$\left(\frac{\partial T}{\partial V}\right)_{S,N} = -\left(\frac{\partial P}{\partial S}\right)_{V,N}$$
-<span class="eq-number">(7)</span>
+<span class="eq-number">(5)</span>
 </div>
 
 <p>and so on. These type of relations among derivatives are known as <span class="tooltip-trigger">Maxwell relations<span class="tooltip-content">Relations between second partial derivatives of thermodynamic potentials that follow from the commutativity of mixed partial derivatives</span></span>.</p>
@@ -88,14 +93,14 @@ $$S = \frac{E}{T} + \frac{P}{T}V - \frac{\mu}{T}N$$
 
 <div class="equation key-result">
 $$E = TS - PV + \mu N$$
-<span class="eq-number">(17)</span>
+<span class="eq-number">(6)</span>
 </div>
 
 <p>A related result comes from taking the total derivative of both sides and subtracting $dE = TdS - PdV + \mu dN$:</p>
 
 <div class="equation key-result">
 $$SdT - VdP + Nd\mu = 0$$
-<span class="eq-number">(19)</span>
+<span class="eq-number">(7)</span>
 </div>
 
 <p>This is called the <span class="tooltip-trigger">Gibbs-Duhem equation<span class="tooltip-content">$SdT - VdP + Nd\mu = 0$: it says that $T$, $P$ and $\mu$ are not independent -- changing $T$ and $P$ makes $\mu$ change in a certain way.</span></span>. It says that $T$, $P$ and $\mu$ are not independent -- changing $T$ and $P$ makes $\mu$ change in a certain way.</p>
@@ -107,21 +112,21 @@ $$SdT - VdP + Nd\mu = 0$$
 
 <div class="equation key-result">
 $$F \equiv E - TS$$
-<span class="eq-number">(21)</span>
+<span class="eq-number">(8)</span>
 </div>
 
 <p>Free energy is a concept particularly useful at constant temperature. We can take the differential of $F$:</p>
 
 <div class="equation key-result">
 $$dF = dE - TdS - SdT = -PdV + \mu dN - SdT$$
-<span class="eq-number">(22)</span>
+<span class="eq-number">(9)</span>
 </div>
 
 <p>Note that the $dS$ has dropped out. The right-hand side suggests that we should think of $F$ as a function of $V$, $N$ and $T$: $F = F(V, N, T)$. We say that $V$, $N$, $T$ are the natural arguments of the Helmholtz free energy. We can then generate Maxwell relations:</p>
 
 <div class="equation">
 $$\left(\frac{\partial F}{\partial V}\right)_{N,T} = -P;\qquad \left(\frac{\partial F}{\partial N}\right)_{V,T} = \mu;\qquad \left(\frac{\partial F}{\partial T}\right)_{V,N} = -S$$
-<span class="eq-number">(24)</span>
+<span class="eq-number">(10)</span>
 </div>
 
 <p>It is worth pointing out that the operation of replacing the dependent variable $S$ in $E(S, V, N)$ with a new dependent variable given by a derivative, $T = \frac{\partial E}{\partial S}$, is known as a <span class="tooltip-trigger">Legendre transform<span class="tooltip-content">A mathematical operation that trades a variable for its conjugate derivative, e.g. going from $E(S,V,N)$ to $F(T,V,N) = E - TS$</span></span>.</p>
@@ -134,7 +139,7 @@ $$\left(\frac{\partial F}{\partial V}\right)_{N,T} = -P;\qquad \left(\frac{\part
 
 <div class="equation key-result">
 $$W \leq -\Delta F_{\text{system}}$$
-<span class="eq-number">(26)</span>
+<span class="eq-number">(11)</span>
 </div>
 
 <p>where the inequality becomes an equality if and only if the transformation is done reversibly. So the free energy of the system is depleted to do the work. This is why free energy is called free: it is the energy available to do work.</p>
@@ -160,7 +165,7 @@ $$W \leq -\Delta F_{\text{system}}$$
 
 <div class="equation key-result">
 $$F = -k_BT \ln Z$$
-<span class="eq-number">(28)</span>
+<span class="eq-number">(12)</span>
 </div>
 
 <p>Equivalently, $e^{-\beta F} = Z = \sum e^{-\beta E}$, which shows that the free energy is the same as the energy if there is only one microstate.</p>
@@ -169,7 +174,7 @@ $$F = -k_BT \ln Z$$
 
 <div class="equation">
 $$F = -Nk_BT\left(\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{2\pi mk_BT}{h^2}\right) + 1\right)$$
-<span class="eq-number">(31)</span>
+<span class="eq-number">(13)</span>
 </div>
 
 <p>One can verify that $\left(\frac{\partial F}{\partial T}\right)_{V,N} = -S$ reproduces the Sackur-Tetrode formula, and $P = -\left(\frac{\partial F}{\partial V}\right)_{T,N} = \frac{Nk_BT}{V}$ gives the ideal gas law.</p>
@@ -180,7 +185,7 @@ $$F = -Nk_BT\left(\ln\frac{V}{N} + \frac{3}{2}\ln\left(\frac{2\pi mk_BT}{h^2}\ri
 
 <div class="equation">
 $$\Delta F = \Delta E - T\Delta S = -Nk_BT\ln\frac{V_2}{V_1}$$
-<span class="eq-number">(34)</span>
+<span class="eq-number">(14)</span>
 </div>
 
 <p>This transition is completely driven by entropic considerations.</p>
@@ -201,7 +206,7 @@ $$\Delta F = \Delta E - T\Delta S = -Nk_BT\ln\frac{V_2}{V_1}$$
 
 <div class="equation">
 $$\frac{\partial F}{\partial x} = \mathcal{F}_{\text{piston}} - \mathcal{F}_{\text{gas}}$$
-<span class="eq-number">(38)</span>
+<span class="eq-number">(15)</span>
 </div>
 
 <p>Setting the variation to zero implies $\mathcal{F}_{\text{piston}} = \mathcal{F}_{\text{gas}}$: forces are equal at equilibrium. We can find the equilibrium by minimizing the free energy -- the result is the same as demanding that forces balance.</p>
@@ -216,6 +221,15 @@ $$\Delta F = \Delta E - T\Delta S = -T\left[\underbrace{\frac{-\Delta E}{T}}_{\D
 <p>The tendency to minimize free energy is entirely because of a tendency to maximize entropy. In summary, energy minimization is really free energy minimization, which really is entropy maximization.</p>
 </div>
 
+<div class="interactive-wrapper">
+<h4>Interactive: Energy vs Entropy</h4>
+<canvas id="vis-freeenergy" width="600" height="400"></canvas>
+<div class="controls">
+<label>Temperature $T$: <input type="range" id="fe-temp" min="0.1" max="5" step="0.1" value="1"><span id="fe-temp-val">1.0</span></label>
+</div>
+<figcaption>A system can lower its energy by ordering (left) or raise its entropy by disordering (right). At low $T$, energy wins and $F$ is minimized in the ordered state. At high $T$, entropy wins and the disordered state has lower $F$. The dot marks the equilibrium.</figcaption>
+</div>
+
 <!-- Section 4: Enthalpy -->
 <h2>8.4 Enthalpy</h2>
 
@@ -223,21 +237,21 @@ $$\Delta F = \Delta E - T\Delta S = -T\left[\underbrace{\frac{-\Delta E}{T}}_{\D
 
 <div class="equation key-result">
 $$H \equiv E + PV$$
-<span class="eq-number">(40)</span>
+<span class="eq-number">(16)</span>
 </div>
 
 <p>So, using $dE = TdS - PdV + \mu dN$:</p>
 
 <div class="equation">
 $$dH = TdS + VdP + \mu dN$$
-<span class="eq-number">(41)</span>
+<span class="eq-number">(17)</span>
 </div>
 
 <p>Thus</p>
 
 <div class="equation">
 $$\left(\frac{\partial H}{\partial S}\right)_{P,N} = T;\qquad \left(\frac{\partial H}{\partial P}\right)_{S,N} = V;\qquad \left(\frac{\partial H}{\partial N}\right)_{P,S} = \mu$$
-<span class="eq-number">(42)</span>
+<span class="eq-number">(18)</span>
 </div>
 
 <p>Enthalpy is useful at constant pressure. It is a function $H = H(S, P, N)$.</p>
@@ -246,7 +260,7 @@ $$\left(\frac{\partial H}{\partial S}\right)_{P,N} = T;\qquad \left(\frac{\parti
 
 <div class="equation key-result">
 $$C_P = \left(\frac{\partial H}{\partial T}\right)_P$$
-<span class="eq-number">(44)</span>
+<span class="eq-number">(19)</span>
 </div>
 
 <p>Thus enthalpy plays the role at constant pressure that energy does at constant volume.</p>
@@ -263,11 +277,11 @@ $$\text{H}_2 + \text{C}_2\text{H}_4 \to \text{C}_2\text{H}_6$$
 
 <div class="interactive-wrapper">
 <h4>Interactive: Reaction Enthalpy Diagram</h4>
-<canvas id="vis-reaction-enthalpy" width="600" height="300"></canvas>
+<canvas id="vis-reaction-enthalpy" width="600" height="350"></canvas>
 <div class="controls">
 <label>Temperature T (K): <input type="range" id="rh-temp" min="200" max="1000" step="10" value="298"><span id="rh-temp-val">298</span></label>
 </div>
-<figcaption>Enthalpy diagram for the hydrogenation of ethene. Adjust temperature to see how ΔG = ΔH − TΔS changes — the reaction remains spontaneous (ΔG &lt; 0) at all reasonable temperatures.</figcaption>
+<figcaption>Enthalpy diagram for ethene hydrogenation. The three bars show ΔH (fixed), the −TΔS penalty (grows with T), and the resulting ΔG. Because ΔH is large and negative, the reaction remains spontaneous at all reasonable temperatures.</figcaption>
 </div>
 
 <p>The standard enthalpy of reaction is $\Delta_r H^\circ = -136.3 \pm 0.3\;\text{kJ/mol}$. Since the enthalpy change is negative, the reaction is <span class="tooltip-trigger">exothermic<span class="tooltip-content">A reaction that releases heat ($\Delta H < 0$)</span></span> (heat is released).</p>
@@ -325,7 +339,7 @@ $$3\text{H}_2 + \text{N}_2 \to 2\text{NH}_3$$
 
 <div class="equation">
 $$\Delta(PV) = (\Delta n)RT = -2 \times 8.3\;\frac{\text{J}}{\text{mol}\cdot\text{K}} \times 298\;\text{K} = -4.9\;\frac{\text{kJ}}{\text{mol}}$$
-<span class="eq-number">(50)</span>
+<span class="eq-number">(20)</span>
 </div>
 
 <p>Compared to $\Delta H = -97\;\text{kJ/mol}$, this is about 5%. As a rule of thumb, enthalpies and energies are pretty similar for solids and liquids, but for gases the difference can be relatively large. The difference is $\Delta H - \Delta E = (\Delta n)RT$.</p>
@@ -337,21 +351,21 @@ $$\Delta(PV) = (\Delta n)RT = -2 \times 8.3\;\frac{\text{J}}{\text{mol}\cdot\tex
 
 <div class="equation key-result">
 $$G \equiv H - TS = E + PV - TS$$
-<span class="eq-number">(51)</span>
+<span class="eq-number">(21)</span>
 </div>
 
 <p>The differential of $G$ is</p>
 
 <div class="equation key-result">
 $$dG = VdP - SdT + \mu dN$$
-<span class="eq-number">(52)</span>
+<span class="eq-number">(22)</span>
 </div>
 
 <p>so $G = G(P, N, T)$ and</p>
 
 <div class="equation">
 $$\left(\frac{\partial G}{\partial T}\right)_{P,N} = -S;\qquad \left(\frac{\partial G}{\partial P}\right)_{T,N} = V;\qquad \left(\frac{\partial G}{\partial N}\right)_{P,T} = \mu$$
-<span class="eq-number">(53)</span>
+<span class="eq-number">(23)</span>
 </div>
 
 <p>Gibbs free energy is the constant pressure version of Helmholtz free energy. At constant pressure and constant temperature, Gibbs free energy has its minimum value at equilibrium.</p>
@@ -365,7 +379,7 @@ $$\left(\frac{\partial G}{\partial T}\right)_{P,N} = -S;\qquad \left(\frac{\part
 
 <div class="equation">
 $$G = -Nk_BT\left(\ln\frac{k_BT}{P} + \frac{3}{2}\ln\left(\frac{2\pi mT}{h^2}\right)\right)$$
-<span class="eq-number">(55)</span>
+<span class="eq-number">(24)</span>
 </div>
 
 <p>Then $\mu = G/N = k_BT\ln(n\lambda^3)$, confirming that for a monatomic ideal gas the chemical potential is the Gibbs free energy per molecule.</p>
@@ -378,14 +392,14 @@ $$G = -Nk_BT\left(\ln\frac{k_BT}{P} + \frac{3}{2}\ln\left(\frac{2\pi mT}{h^2}\ri
 
 <div class="equation">
 $$P_i \equiv \frac{N_i}{V}k_BT \qquad \text{(ideal gases)}$$
-<span class="eq-number">(57)</span>
+<span class="eq-number">(25)</span>
 </div>
 
 <p>This gives <span class="tooltip-trigger">Dalton's law<span class="tooltip-content">$P_i/P = N_i/N$: the partial pressure of a gas in a mixture is proportional to its mole fraction</span></span>:</p>
 
 <div class="equation">
 $$\frac{P_i}{P} = \frac{N_i}{N}$$
-<span class="eq-number">(58)</span>
+<span class="eq-number">(26)</span>
 </div>
 
 <p>The total Gibbs free energy is extensive: $G = G_1 + G_2 + \cdots$, where each $G_i$ uses the partial pressure $P_i$.</p>
@@ -396,28 +410,28 @@ $$\frac{P_i}{P} = \frac{N_i}{N}$$
 
 <div class="equation">
 $$\zeta = Z_{\text{single molecule}} = \int \frac{d^3x\,d^3p}{h^3}\sum_{\text{internal states } j} e^{-\beta\left(\frac{\vec{p}^2}{2m} + \epsilon_j\right)}$$
-<span class="eq-number">(63)</span>
+<span class="eq-number">(27)</span>
 </div>
 
 <p>Including binding energy $\epsilon_b$ and a vibrational mode of frequency $\omega$:</p>
 
 <div class="equation">
 $$\zeta = \frac{V}{\lambda^3}e^{-\beta\epsilon_b}\frac{1}{2\sinh\left(\frac{\beta}{2}\hbar\omega\right)}$$
-<span class="eq-number">(64)</span>
+<span class="eq-number">(28)</span>
 </div>
 
 <p>For $N_1$ molecules, the partition function is $Z_1 = \frac{1}{N_1!}\zeta_1^{N_1}$. The chemical potential for gas 1 is</p>
 
 <div class="equation">
 $$\mu_1 = -k_BT\ln\frac{\zeta_1}{N_1}$$
-<span class="eq-number">(68)</span>
+<span class="eq-number">(29)</span>
 </div>
 
 <p>Using the notation $x_j \equiv N_j/N$ for the molar fraction of a reactant, for a reaction like $2A + 3B \rightleftharpoons 7C$:</p>
 
 <div class="equation key-result">
 $$K \equiv \frac{x_C^7}{x_A^2 x_B^3} = \exp\left(-\frac{\Delta_r G^0}{k_BT}\right) = \exp\left(-\frac{\Delta_r G}{RT}\right)$$
-<span class="eq-number">(79)</span>
+<span class="eq-number">(30)</span>
 </div>
 
 <p>This is the <span class="tooltip-trigger">law of mass action<span class="tooltip-content">The equilibrium constant $K$ relates molar fractions (or partial pressures) of reactants and products to the Gibbs reaction energy</span></span>. The powers on the left hand side are determined by the stoichiometric coefficients and $\Delta_r G^0$ is the change in Gibbs free energy per particle.</p>
@@ -442,7 +456,7 @@ $$\frac{x_{\text{H}_2} x_{\text{O}_2}^{1/2}}{x_{\text{H}_2\text{O}}} = \exp\left
 
 <div class="equation key-result">
 $$\Delta_r G = \Delta_r H - T\Delta_r S$$
-<span class="eq-number">(81)</span>
+<span class="eq-number">(31)</span>
 </div>
 
 <p>Both $\Delta_r H$ and $\Delta_r S$ are generally weakly dependent on temperature, while $\Delta_r G$ depends strongly on $T$ because of the explicit factor of $T$.</p>
@@ -503,34 +517,35 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 <p><span class="tooltip-trigger">Osmotic pressure<span class="tooltip-content">The pressure resulting from a concentration imbalance on two sides of a semi-permeable barrier. It is an entropic effect.</span></span> is the pressure resulting from a concentration imbalance on the two sides of a semi-permeable barrier. For example, if you put a raisin in water, the higher sugar content of the raisin forces the water to be drawn into the raisin, swelling it up.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Osmotic Pressure</h4>
-<canvas id="vis-osmotic" width="600" height="350"></canvas>
+<h4>Interactive: Osmotic Equilibrium</h4>
+<canvas id="vis-osmotic" width="600" height="400"></canvas>
 <div class="controls">
-<label>Solute fraction: <input type="range" id="osm-frac" min="0.01" max="0.2" step="0.005" value="0.05"><span id="osm-frac-val">0.05</span></label>
-<label>Temperature T: <input type="range" id="osm-temp" min="200" max="400" step="5" value="300"><span id="osm-temp-val">300</span></label>
+<label>Solute molecules: <input type="range" id="osm-nsolute" min="1" max="20" step="1" value="8"><span id="osm-nsolute-val">8</span></label>
+<label>Temperature T: <input type="range" id="osm-temp" min="0.5" max="3" step="0.1" value="1.5"><span id="osm-temp-val">1.5</span></label>
+<button id="osm-reset" class="btn-reset">Reset</button>
 </div>
-<figcaption>Osmotic pressure arises when concentrations differ across a semi-permeable membrane. Water flows toward the higher-solute side, raising the liquid level until the hydrostatic pressure balances.</figcaption>
+<figcaption>A semipermeable membrane (dashed orange) lets water molecules (blue) through but blocks solute (red). Water flows toward the solution side, raising its level until the hydrostatic pressure balances the osmotic pressure Π = k<sub>B</sub>T N<sub>s</sub>/V.</figcaption>
 </div>
 
 <p>To compute the osmotic pressure, we use the entropy of mixing. For $N_w$ molecules of solvent and $N_s$ molecules of solute, in the limit $N_s \ll N_w$:</p>
 
 <div class="equation">
 $$\Delta S_{\text{mix}} = k_BN_s\left(1 - \ln\frac{N_s}{N_w}\right)$$
-<span class="eq-number">(88)</span>
+<span class="eq-number">(32)</span>
 </div>
 
 <p>The chemical potential of the solvent on the mixed side is</p>
 
 <div class="equation">
 $$\mu_w^{\text{mixed}}(T, P) = \mu_w(T, P) - k_BT\frac{N_s}{N_w}$$
-<span class="eq-number">(90)</span>
+<span class="eq-number">(33)</span>
 </div>
 
 <p>Setting the chemical potentials equal on both sides of the barrier and expanding leads to:</p>
 
 <div class="equation key-result">
 $$\Pi = k_BT\frac{N_s}{V}$$
-<span class="eq-number">(95)</span>
+<span class="eq-number">(34)</span>
 </div>
 
 <p>This is known as <span class="tooltip-trigger">van 't Hoff's formula<span class="tooltip-content">$\Pi = k_BT N_s/V$: the osmotic pressure has the same form as the ideal gas law, even for liquids and solids, because dilute solutes behave ideally</span></span>. Remarkably, this formula has the same form as the ideal gas law $P = k_BTN/V$. The key insight is that for dilute solutes, the $N_s$ dependence is always linear, approaching ideal extensive scaling behavior.</p>
@@ -539,7 +554,7 @@ $$\Pi = k_BT\frac{N_s}{V}$$
 
 <div class="equation">
 $$\Pi = k_BT\sum_s \frac{N_s}{V}$$
-<span class="eq-number">(96)</span>
+<span class="eq-number">(35)</span>
 </div>
 
 <div class="info-box example">
@@ -558,28 +573,28 @@ $$n_s = \frac{\Pi}{RT} = \frac{7.65\;\text{atm}}{0.08314\;\frac{\text{L}\cdot\te
 
 <div class="equation key-result">
 $$\Omega = -k_BT\ln\mathcal{Z}$$
-<span class="eq-number">(101)</span>
+<span class="eq-number">(36)</span>
 </div>
 
 <p>Thus</p>
 
 <div class="equation">
 $$\Omega(T, V, \mu) = \langle E \rangle - TS - \mu\langle N \rangle$$
-<span class="eq-number">(102)</span>
+<span class="eq-number">(37)</span>
 </div>
 
 <p>We can also write $\Omega(T, V, \mu) = F - \mu N$. Using $dE = TdS - PdV + \mu dN$:</p>
 
 <div class="equation">
 $$d\Omega = -SdT - PdV - Nd\mu$$
-<span class="eq-number">(104)</span>
+<span class="eq-number">(38)</span>
 </div>
 
 <p>An important property is that $\Omega$ is extensive and depends on only a single extensive variable $V$. Since $\frac{\partial\Omega}{\partial V}\big|_{\mu,T} = -P$, we have</p>
 
 <div class="equation key-result">
 $$\Omega = -PV$$
-<span class="eq-number">(105)</span>
+<span class="eq-number">(39)</span>
 </div>
 
 <p>This is a useful relation, similar to $G = \mu N$ for the Gibbs free energy.</p>
@@ -610,14 +625,3 @@ $$\Omega = -PV$$
 </ul>
 </div>
 
-<!-- Interactive Visualization -->
-<h3>Interactive: Free Energy Landscape</h3>
-<div class="interactive-container">
-<canvas id="vis-freeenergy" width="600" height="400"></canvas>
-<div class="slider-container">
-<label for="fe-temp">Temperature $T$:</label>
-<input type="range" id="fe-temp" min="0.1" max="5" step="0.1" value="1">
-<span class="slider-value" id="fe-temp-val">1.0</span>
-</div>
-<p class="vis-caption">Adjust the temperature to see how free energy $F = E - TS$ changes. At low temperature, the energy term dominates and the system prefers the lowest-energy state. At high temperature, the entropy term dominates and the system prefers the highest-entropy (most disordered) state.</p>
-</div>

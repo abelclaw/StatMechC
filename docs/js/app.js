@@ -8568,75 +8568,123 @@ function initCh8Vis() {
 
   const tempSlider = document.getElementById('fe-temp');
 
+  // Model: order-disorder transition with order parameter x ∈ [0,1].
+  // x = 0: fully ordered (low energy, low entropy)
+  // x = 1: fully disordered (high energy, high entropy)
+  // E(x) = ε·x  (energy cost of breaking bonds)
+  // S(x) = S0·[-x ln(x) - (1-x) ln(1-x)]  (mixing entropy)
+  // F(x) = E(x) - T·S(x)
+  const eps = 4;
+  const S0 = 2;
+
+  function entropy(x) {
+    if (x <= 0.001 || x >= 0.999) return 0;
+    return S0 * (-x * Math.log(x) - (1 - x) * Math.log(1 - x));
+  }
+
   function draw() {
     const T = parseFloat(tempSlider?.value || 1);
     clearCanvas(ctx, W, H);
 
-    const ox = 60, xAxis = H - 50;
-    const xRange = W - ox - 40;
+    const ox = 70, oy = 40, pw = W - ox - 30, ph = H - 90;
 
-    drawAxes(ctx, ox, 20, xRange, xAxis - 20, { xLabel: 'State parameter x' });
-
-    const midY = (xAxis + 20) / 2;
-    const scale = (xAxis - 40) / 8;
-
-    // Energy curve E(x) = x^2
-    ctx.strokeStyle = COLORS.red;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let px = 0; px < xRange; px++) {
-      const x = (px / xRange - 0.5) * 4;
-      const E = x * x;
-      const py = midY - E * scale / 4;
-      px === 0 ? ctx.moveTo(ox + px, py) : ctx.lineTo(ox + px, py);
-    }
-    ctx.stroke();
-
-    // -TS curve
-    ctx.strokeStyle = COLORS.green;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let px = 0; px < xRange; px++) {
-      const x = (px / xRange - 0.5) * 4;
-      const S = 2 - 0.5 * x * x;
+    // Compute curves
+    const N = 200;
+    const pts = [];
+    let minF = Infinity, maxF = -Infinity;
+    let allMin = Infinity, allMax = -Infinity;
+    let minFi = 0;
+    for (let i = 0; i <= N; i++) {
+      const x = i / N;
+      const E = eps * x;
+      const S = entropy(x);
       const nTS = -T * S;
-      const py = midY - nTS * scale / 4;
-      px === 0 ? ctx.moveTo(ox + px, py) : ctx.lineTo(ox + px, py);
+      const F = E + nTS;
+      pts.push({ x, E, nTS, F });
+      if (F < minF) { minF = F; minFi = i; }
+      if (F > maxF) maxF = F;
+      allMin = Math.min(allMin, F, E, nTS);
+      allMax = Math.max(allMax, F, E, nTS);
+    }
+
+    const yPad = (allMax - allMin) * 0.12;
+    const yMin = allMin - yPad;
+    const yMax = allMax + yPad;
+
+    function toScreen(x, y) {
+      return [ox + x * pw, oy + ph * (1 - (y - yMin) / (yMax - yMin))];
+    }
+
+    // Axes
+    drawAxes(ctx, ox, oy, pw, ph, { xLabel: '', yLabel: '' });
+    ctx.fillStyle = COLORS.textDim; ctx.font = FONT_SM; ctx.textAlign = 'center';
+    ctx.fillText('Ordered', ox + 2, oy + ph + 28);
+    ctx.fillText('Disordered', ox + pw - 2, oy + ph + 28);
+
+    // Zero line
+    if (yMin < 0 && yMax > 0) {
+      const [, zy] = toScreen(0, 0);
+      ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(ox, zy); ctx.lineTo(ox + pw, zy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.textDim; ctx.font = FONT_SM; ctx.textAlign = 'right';
+      ctx.fillText('0', ox - 6, zy + 4);
+    }
+
+    // E(x) curve (red)
+    ctx.strokeStyle = COLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const [sx, sy] = toScreen(pts[i].x, pts[i].E);
+      i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
     }
     ctx.stroke();
 
-    // Free energy F = E - TS
-    ctx.strokeStyle = COLORS.orange;
-    ctx.lineWidth = 3;
+    // -TS(x) curve (green)
+    ctx.strokeStyle = COLORS.green; ctx.lineWidth = 2;
     ctx.beginPath();
-    let minF = Infinity, minFx = 0;
-    for (let px = 0; px < xRange; px++) {
-      const x = (px / xRange - 0.5) * 4;
-      const E = x * x;
-      const S = 2 - 0.5 * x * x;
-      const F = E - T * S;
-      if (F < minF) { minF = F; minFx = px; }
-      const py = midY - F * scale / 4;
-      px === 0 ? ctx.moveTo(ox + px, py) : ctx.lineTo(ox + px, py);
+    for (let i = 0; i <= N; i++) {
+      const [sx, sy] = toScreen(pts[i].x, pts[i].nTS);
+      i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+
+    // F(x) curve (blue, thick)
+    ctx.strokeStyle = COLORS.blue; ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const [sx, sy] = toScreen(pts[i].x, pts[i].F);
+      i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
     }
     ctx.stroke();
 
     // Minimum marker
-    const minPy = midY - minF * scale / 4;
-    ctx.fillStyle = COLORS.orange;
-    ctx.beginPath(); ctx.arc(ox + minFx, minPy, 5, 0, 2 * Math.PI); ctx.fill();
+    const minPt = pts[minFi];
+    const [mx, my] = toScreen(minPt.x, minPt.F);
+    ctx.fillStyle = COLORS.blue;
+    ctx.beginPath(); ctx.arc(mx, my, 6, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(mx, my, 3, 0, 2 * Math.PI); ctx.fill();
+
+    // Equilibrium label
+    ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'left';
+    const lbl = mx > ox + pw - 80 ? mx - 80 : mx + 10;
+    ctx.fillText('Equilibrium', lbl, my < oy + ph / 2 ? my + 16 : my - 8);
 
     // Legend
-    ctx.font = FONT_SM;
-    ctx.textAlign = 'left';
-    ctx.fillStyle = COLORS.red; ctx.fillText('E (energy)', W - 160, 30);
-    ctx.fillStyle = COLORS.green; ctx.fillText('-TS', W - 160, 48);
-    ctx.fillStyle = COLORS.orange; ctx.fillText('F = E - TS (free energy)', W - 160, 66);
+    const lx = ox + 8, ly = oy + 6;
+    ctx.font = FONT_SM; ctx.textAlign = 'left';
+    ctx.fillStyle = COLORS.red;
+    ctx.fillRect(lx, ly, 14, 3); ctx.fillText('E  (energy cost)', lx + 20, ly + 5);
+    ctx.fillStyle = COLORS.green;
+    ctx.fillRect(lx, ly + 18, 14, 3); ctx.fillText('−TS  (entropy benefit)', lx + 20, ly + 23);
+    ctx.fillStyle = COLORS.blue;
+    ctx.fillRect(lx, ly + 36, 14, 4); ctx.fillText('F = E − TS  (free energy)', lx + 20, ly + 41);
 
-    ctx.fillStyle = COLORS.text;
-    ctx.font = FONT;
-    ctx.fillText('T = ' + T.toFixed(1), 80, 30);
-    ctx.fillText('System minimizes F, not E', 80, 48);
+    // Temperature
+    ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'right';
+    ctx.fillText('T = ' + T.toFixed(1), ox + pw - 5, oy + 16);
 
     document.getElementById('fe-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(1)));
   }
@@ -8651,104 +8699,254 @@ function initCh8Vis() {
     const kSlider = document.getElementById('sp-k');
     const tSlider = document.getElementById('sp-temp');
 
+    // Gas particles
+    const SP_N = 25;
+    const SP_R = 3;
+    const cyl_x = 40, cyl_y = 50, cyl_w = 180, cyl_h = HSP8 - 90;
+    let spParticles = [];
+    let spPistonY = cyl_y + cyl_h * 0.5;
+    let spPistonVy = 0;
+
+    function spTempToSpeed(T) { return 40 * Math.sqrt(T); }
+
+    function spTargetPistonY(k, T) {
+      const frac = T / (T + k);
+      return cyl_y + cyl_h * (1 - frac);
+    }
+
+    function initSPParticles() {
+      const T = parseFloat(tSlider?.value || 2);
+      const k = parseFloat(kSlider?.value || 2);
+      spPistonY = spTargetPistonY(k, T);
+      spPistonVy = 0;
+      spParticles = [];
+      const spd = spTempToSpeed(T);
+      const gasTop = spPistonY + 8;
+      const gasBot = cyl_y + cyl_h;
+      for (let i = 0; i < SP_N; i++) {
+        const speed = spd * (0.3 + Math.random() * 1.4);
+        const angle = Math.random() * 2 * Math.PI;
+        spParticles.push({
+          x: cyl_x + SP_R + Math.random() * (cyl_w - 2 * SP_R),
+          y: gasTop + SP_R + Math.random() * Math.max(10, gasBot - gasTop - 2 * SP_R),
+          vx: speed * Math.cos(angle),
+          vy: speed * Math.sin(angle)
+        });
+      }
+    }
+
+    function rescaleSPSpeeds() {
+      const T = parseFloat(tSlider?.value || 2);
+      const target = spTempToSpeed(T);
+      if (spParticles.length === 0) return;
+      let sumV2 = 0;
+      for (const p of spParticles) sumV2 += p.vx * p.vx + p.vy * p.vy;
+      const rms = Math.sqrt(sumV2 / spParticles.length);
+      if (rms < 1) {
+        for (const p of spParticles) {
+          const speed = target * (0.3 + Math.random() * 1.4);
+          const angle = Math.random() * 2 * Math.PI;
+          p.vx = speed * Math.cos(angle);
+          p.vy = speed * Math.sin(angle);
+        }
+        return;
+      }
+      const scale = target / rms;
+      for (const p of spParticles) { p.vx *= scale; p.vy *= scale; }
+    }
+
+    function stepSP() {
+      const k = parseFloat(kSlider?.value || 2);
+      const T = parseFloat(tSlider?.value || 2);
+      const SUBSTEPS = 4;
+      const dt = 0.016 / SUBSTEPS;
+      const PISTON_MASS = 2.0;
+      const targetY = spTargetPistonY(k, T);
+      const pistonThick = 6;
+      const gasBot = cyl_y + cyl_h;
+
+      for (let sub = 0; sub < SUBSTEPS; sub++) {
+        // Spring restoring force toward equilibrium
+        const springForce = -k * 0.5 * (spPistonY - targetY);
+        spPistonVy += springForce / PISTON_MASS * dt;
+        spPistonVy *= 0.998;
+        spPistonY += spPistonVy * dt;
+
+        // Clamp piston
+        if (spPistonY < cyl_y + 15) { spPistonY = cyl_y + 15; spPistonVy = Math.abs(spPistonVy) * 0.5; }
+        if (spPistonY > gasBot - 20) { spPistonY = gasBot - 20; spPistonVy = -Math.abs(spPistonVy) * 0.5; }
+
+        const pistonBot = spPistonY + pistonThick;
+
+        for (const p of spParticles) {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          // Left/right walls
+          if (p.x < cyl_x + SP_R) { p.x = cyl_x + SP_R; p.vx = Math.abs(p.vx); }
+          if (p.x > cyl_x + cyl_w - SP_R) { p.x = cyl_x + cyl_w - SP_R; p.vx = -Math.abs(p.vx); }
+
+          // Bottom wall
+          if (p.y > gasBot - SP_R) { p.y = gasBot - SP_R; p.vy = -Math.abs(p.vy); }
+
+          // Piston (top boundary for gas)
+          if (p.y < pistonBot + SP_R) {
+            p.y = pistonBot + SP_R;
+            const vRel = p.vy - spPistonVy;
+            if (vRel < 0) {
+              const imp = 2 * vRel / (1 + 1 / PISTON_MASS);
+              p.vy -= imp;
+              spPistonVy += imp / PISTON_MASS;
+            } else {
+              p.vy = spPistonVy + 1;
+            }
+          }
+        }
+
+        // Particle-particle collisions
+        for (let i = 0; i < spParticles.length; i++) {
+          for (let j = i + 1; j < spParticles.length; j++) {
+            const a = spParticles[i], b = spParticles[j];
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const minD = SP_R * 2;
+            if (dist < minD && dist > 0) {
+              const nx = dx / dist, ny = dy / dist;
+              const dvn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+              if (dvn > 0) {
+                a.vx -= dvn * nx; a.vy -= dvn * ny;
+                b.vx += dvn * nx; b.vy += dvn * ny;
+              }
+              const overlap = minD - dist;
+              a.x -= nx * overlap * 0.5; a.y -= ny * overlap * 0.5;
+              b.x += nx * overlap * 0.5; b.y += ny * overlap * 0.5;
+            }
+          }
+        }
+      }
+    }
+
     function drawSpringPiston() {
       clearCanvas(ctxSP8, WSP8, HSP8);
       const k = parseFloat(kSlider?.value || 2);
       const T = parseFloat(tSlider?.value || 2);
 
-      // Left panel: physical system
-      const cyl_x = 40, cyl_y = 60, cyl_w = 180, cyl_h = HSP8 - 100;
+      const pistonThick = 6;
+      const gasBot = cyl_y + cyl_h;
 
-      // Equilibrium: gas pushes piston up, spring pushes down
-      // F = E - TS for ideal gas with spring. Piston position determined by minimizing F.
-      // Simplified: piston_eq ~ T / (T + k) fraction of cylinder
-      const frac = T / (T + k);
-      const pistonY = cyl_y + cyl_h * (1 - frac);
-
-      // Gas below piston (blue tint)
-      ctxSP8.fillStyle = 'rgba(30,100,200,0.15)';
-      ctxSP8.fillRect(cyl_x, pistonY, cyl_w, cyl_y + cyl_h - pistonY);
+      // Gas region tint
+      ctxSP8.fillStyle = 'rgba(30,100,200,0.10)';
+      ctxSP8.fillRect(cyl_x, spPistonY + pistonThick, cyl_w, gasBot - spPistonY - pistonThick);
 
       // Cylinder walls
       ctxSP8.strokeStyle = COLORS.axis; ctxSP8.lineWidth = 2;
       ctxSP8.strokeRect(cyl_x, cyl_y, cyl_w, cyl_h);
 
+      // Gas particles
+      ctxSP8.fillStyle = COLORS.blue;
+      for (const p of spParticles) {
+        ctxSP8.beginPath();
+        ctxSP8.arc(p.x, p.y, SP_R, 0, 2 * Math.PI);
+        ctxSP8.fill();
+      }
+
       // Piston
       ctxSP8.fillStyle = COLORS.purple;
-      ctxSP8.fillRect(cyl_x + 2, pistonY - 4, cyl_w - 4, 8);
+      ctxSP8.fillRect(cyl_x + 2, spPistonY - 1, cyl_w - 4, pistonThick + 2);
 
       // Spring above piston (zigzag)
       ctxSP8.strokeStyle = COLORS.orange; ctxSP8.lineWidth = 2;
       const springTop = cyl_y + 5;
-      const springBot = pistonY - 6;
+      const springBot = spPistonY - 2;
       const nCoils = 8;
       const coilH = (springBot - springTop) / nCoils;
-      ctxSP8.beginPath();
-      ctxSP8.moveTo(cyl_x + cyl_w / 2, springTop);
-      for (let i = 0; i < nCoils; i++) {
-        const y1 = springTop + i * coilH + coilH * 0.25;
-        const y2 = springTop + i * coilH + coilH * 0.75;
-        const dx = 25;
-        ctxSP8.lineTo(cyl_x + cyl_w / 2 + (i % 2 === 0 ? dx : -dx), y1);
-        ctxSP8.lineTo(cyl_x + cyl_w / 2 + (i % 2 === 0 ? -dx : dx), y2);
+      if (coilH > 2) {
+        ctxSP8.beginPath();
+        ctxSP8.moveTo(cyl_x + cyl_w / 2, springTop);
+        for (let i = 0; i < nCoils; i++) {
+          const y1 = springTop + i * coilH + coilH * 0.25;
+          const y2 = springTop + i * coilH + coilH * 0.75;
+          const dx = 25;
+          ctxSP8.lineTo(cyl_x + cyl_w / 2 + (i % 2 === 0 ? dx : -dx), y1);
+          ctxSP8.lineTo(cyl_x + cyl_w / 2 + (i % 2 === 0 ? -dx : dx), y2);
+        }
+        ctxSP8.lineTo(cyl_x + cyl_w / 2, springBot);
+        ctxSP8.stroke();
       }
-      ctxSP8.lineTo(cyl_x + cyl_w / 2, springBot);
-      ctxSP8.stroke();
 
       // Labels
       ctxSP8.fillStyle = COLORS.blue; ctxSP8.font = FONT; ctxSP8.textAlign = 'center';
-      ctxSP8.fillText('Gas (T = ' + T.toFixed(1) + ')', cyl_x + cyl_w / 2, cyl_y + cyl_h - 10);
+      ctxSP8.fillText('Gas (T = ' + T.toFixed(1) + ')', cyl_x + cyl_w / 2, gasBot + 18);
       ctxSP8.fillStyle = COLORS.orange;
-      ctxSP8.fillText('Spring (k = ' + k.toFixed(1) + ')', cyl_x + cyl_w / 2, cyl_y + 15);
+      ctxSP8.fillText('Spring (k = ' + k.toFixed(1) + ')', cyl_x + cyl_w / 2, cyl_y - 8);
 
       // Heat bath indicator
       ctxSP8.fillStyle = COLORS.textDim; ctxSP8.font = FONT_SM;
-      ctxSP8.fillText('Heat bath', cyl_x + cyl_w / 2, cyl_y + cyl_h + 20);
+      ctxSP8.fillText('Heat bath', cyl_x + cyl_w / 2, gasBot + 34);
 
       // Right panel: Free energy plot
+      // F(x) = (1/2)k*x^2 - T*ln(x), minimum at x* = sqrt(T/k)
+      const xMin = Math.sqrt(T / k);
+
+      // x range centered on minimum so it's always visible
+      const xLo = Math.max(0.01, xMin * 0.2);
+      const xHi = xMin * 3.0;
+
       const ox = 280, oy = 40, pw = WSP8 - ox - 40, ph = HSP8 - 90;
       drawAxes(ctxSP8, ox, oy, pw, ph, {xLabel: 'Piston position x', yLabel: 'F(x)'});
 
-      // Plot F(x) = (1/2)k*x^2 - T*ln(x) (simplified free energy)
+      // Compute F values over the visible range
       ctxSP8.strokeStyle = COLORS.blue; ctxSP8.lineWidth = 2;
       ctxSP8.beginPath();
-      let minF = Infinity, minFx = 0;
+      let minF = Infinity, maxF = -Infinity;
       const pts = [];
-      for (let i = 1; i <= 200; i++) {
-        const x = i / 200;
+      for (let i = 0; i <= 200; i++) {
+        const x = xLo + (xHi - xLo) * i / 200;
         const F = 0.5 * k * x * x - T * Math.log(x);
         pts.push({x, F});
-        if (F < minF) { minF = F; minFx = x; }
+        if (F < minF) minF = F;
+        if (F > maxF) maxF = F;
       }
-      const maxF = Math.max(...pts.map(p => p.F));
-      const Frange = maxF - minF;
+      const Frange = maxF - minF || 1;
+      const Fbot = minF - Frange * 0.1;
+      const Ftop = maxF + Frange * 0.1;
+      let started = false;
       for (let i = 0; i < pts.length; i++) {
-        const px = ox + pts[i].x * pw;
-        const py = oy + ph * (1 - (pts[i].F - minF + Frange * 0.1) / (Frange * 1.2));
-        if (py < oy || py > oy + ph) continue;
-        if (i === 0 || pts[i - 1].F === undefined) ctxSP8.moveTo(px, py);
+        const px = ox + (pts[i].x - xLo) / (xHi - xLo) * pw;
+        const py = oy + ph * (1 - (pts[i].F - Fbot) / (Ftop - Fbot));
+        if (py < oy || py > oy + ph) { started = false; continue; }
+        if (!started) { ctxSP8.moveTo(px, py); started = true; }
         else ctxSP8.lineTo(px, py);
       }
       ctxSP8.stroke();
 
       // Mark minimum
-      const minPx = ox + minFx * pw;
-      const minPy = oy + ph * (1 - Frange * 0.1 / (Frange * 1.2));
+      const Fmin = 0.5 * k * xMin * xMin - T * Math.log(xMin);
+      const minPx = ox + (xMin - xLo) / (xHi - xLo) * pw;
+      const minPy = oy + ph * (1 - (Fmin - Fbot) / (Ftop - Fbot));
       ctxSP8.beginPath(); ctxSP8.arc(minPx, minPy, 5, 0, 2 * Math.PI);
       ctxSP8.fillStyle = COLORS.green; ctxSP8.fill();
       ctxSP8.fillStyle = COLORS.green; ctxSP8.font = FONT_SM; ctxSP8.textAlign = 'left';
-      ctxSP8.fillText('Equilibrium', minPx + 8, minPy - 5);
+      ctxSP8.fillText('x* = \u221a(T/k) = ' + xMin.toFixed(2), minPx + 8, minPy - 5);
 
       ctxSP8.fillStyle = COLORS.text; ctxSP8.font = FONT_LG; ctxSP8.textAlign = 'left';
-      ctxSP8.fillText('Free Energy F = E − TS', ox + 5, oy - 10);
+      ctxSP8.fillText('Free Energy F = \u00bdkx\u00b2 \u2212 T ln x', ox + 5, oy - 10);
 
       document.getElementById('sp-k-val')?.replaceChildren(document.createTextNode(k.toFixed(1)));
       document.getElementById('sp-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(1)));
     }
 
-    kSlider?.addEventListener('input', drawSpringPiston);
-    tSlider?.addEventListener('input', drawSpringPiston);
-    drawSpringPiston();
+    function animateSP() {
+      stepSP();
+      drawSpringPiston();
+      activeAnimations['spring-piston'] = requestAnimationFrame(animateSP);
+    }
+
+    kSlider?.addEventListener('input', rescaleSPSpeeds);
+    tSlider?.addEventListener('input', rescaleSPSpeeds);
+
+    initSPParticles();
+    animateSP();
   }
 
   // ----- Reaction Enthalpy Diagram -----
@@ -8761,56 +8959,77 @@ function initCh8Vis() {
       clearCanvas(ctxRH, WRH, HRH);
       const T = parseFloat(rhTempSlider?.value || 298);
 
-      const ox = 60, oy = 30, pw = WRH - 120, ph = HRH - 80;
-
-      // Enthalpy levels
+      // Thermodynamic data for ethene hydrogenation
       const dH = -136.3; // kJ/mol
-      const dS = -0.121; // kJ/(mol·K) approximate
-      const dG = dH - T * dS;
+      const dS = -0.121; // kJ/(mol·K)
+      const TdS = T * dS; // negative (entropy decreases)
+      const dG = dH - TdS;
 
-      // Draw energy levels
-      const reactantY = oy + 40;
-      const productY = oy + ph - 40;
-      const arrowX = ox + pw / 2;
+      // Layout: bar chart showing ΔH, −TΔS, and ΔG
+      const ox = 80, oy = 45, pw = WRH - 140, ph = HRH - 100;
+      const zeroY = oy + ph * 0.4; // zero line positioned in upper portion since values are mostly negative
+      const scale = ph / 300; // pixels per kJ/mol — range roughly ±150
 
-      // Reactant level (higher energy)
-      ctxRH.strokeStyle = COLORS.blue; ctxRH.lineWidth = 3;
-      ctxRH.beginPath(); ctxRH.moveTo(ox, reactantY); ctxRH.lineTo(ox + pw * 0.35, reactantY); ctxRH.stroke();
-      ctxRH.fillStyle = COLORS.blue; ctxRH.font = FONT; ctxRH.textAlign = 'center';
-      ctxRH.fillText('H₂ + C₂H₄', ox + pw * 0.175, reactantY - 12);
+      // Title
+      ctxRH.fillStyle = COLORS.text; ctxRH.font = FONT_LG; ctxRH.textAlign = 'left';
+      ctxRH.fillText('Reaction Enthalpy Diagram', ox, oy - 10);
+      ctxRH.fillStyle = COLORS.textDim; ctxRH.font = FONT_SM; ctxRH.textAlign = 'right';
+      ctxRH.fillText('T = ' + T + ' K', ox + pw, oy - 10);
 
-      // Product level (lower energy)
-      ctxRH.strokeStyle = COLORS.green; ctxRH.lineWidth = 3;
-      ctxRH.beginPath(); ctxRH.moveTo(ox + pw * 0.65, productY); ctxRH.lineTo(ox + pw, productY); ctxRH.stroke();
-      ctxRH.fillStyle = COLORS.green; ctxRH.font = FONT;
-      ctxRH.fillText('C₂H₆', ox + pw * 0.825, productY - 12);
+      // Zero line
+      ctxRH.strokeStyle = COLORS.axis; ctxRH.lineWidth = 1;
+      ctxRH.beginPath(); ctxRH.moveTo(ox - 10, zeroY); ctxRH.lineTo(ox + pw + 10, zeroY); ctxRH.stroke();
+      ctxRH.fillStyle = COLORS.textDim; ctxRH.font = FONT_SM; ctxRH.textAlign = 'right';
+      ctxRH.fillText('0', ox - 14, zeroY + 4);
 
-      // Arrow connecting them
-      ctxRH.strokeStyle = COLORS.orange; ctxRH.lineWidth = 2;
-      ctxRH.setLineDash([5, 5]);
-      ctxRH.beginPath(); ctxRH.moveTo(ox + pw * 0.35, reactantY); ctxRH.lineTo(ox + pw * 0.65, productY); ctxRH.stroke();
-      ctxRH.setLineDash([]);
+      // Bar positions
+      const barW = pw * 0.18;
+      const gap = pw * 0.08;
+      const x1 = ox + pw * 0.1;
+      const x2 = x1 + barW + gap;
+      const x3 = x2 + barW + gap;
 
-      // ΔH label
-      ctxRH.strokeStyle = COLORS.red; ctxRH.lineWidth = 1;
-      drawArrow(ctxRH, arrowX - 30, reactantY + 5, arrowX - 30, productY - 5, 8);
-      ctxRH.fillStyle = COLORS.red; ctxRH.font = FONT; ctxRH.textAlign = 'right';
-      ctxRH.fillText('ΔH = ' + dH.toFixed(1) + ' kJ/mol', arrowX - 35, (reactantY + productY) / 2);
+      // Helper: draw a bar from zero line
+      function drawBar(x, val, color, label, sublabel) {
+        const barH = Math.abs(val) * scale;
+        const y = val < 0 ? zeroY : zeroY - barH;
+        ctxRH.fillStyle = color;
+        ctxRH.globalAlpha = 0.3;
+        ctxRH.fillRect(x, y, barW, barH);
+        ctxRH.globalAlpha = 1.0;
+        ctxRH.strokeStyle = color; ctxRH.lineWidth = 2;
+        ctxRH.strokeRect(x, y, barW, barH);
 
-      // ΔG display
+        // Value label inside or near bar
+        ctxRH.fillStyle = color; ctxRH.font = FONT; ctxRH.textAlign = 'center';
+        const valY = val < 0 ? y + barH / 2 + 5 : y + barH / 2 + 5;
+        if (barH > 25) {
+          ctxRH.fillText(val.toFixed(1), x + barW / 2, valY);
+        } else {
+          ctxRH.fillText(val.toFixed(1), x + barW / 2, val < 0 ? y + barH + 15 : y - 8);
+        }
+
+        // Label below
+        ctxRH.fillStyle = COLORS.text; ctxRH.font = FONT; ctxRH.textAlign = 'center';
+        ctxRH.fillText(label, x + barW / 2, oy + ph + 18);
+        if (sublabel) {
+          ctxRH.fillStyle = COLORS.textDim; ctxRH.font = FONT_SM;
+          ctxRH.fillText(sublabel, x + barW / 2, oy + ph + 34);
+        }
+      }
+
+      drawBar(x1, dH, COLORS.blue, 'ΔH', dH.toFixed(1) + ' kJ/mol');
+      drawBar(x2, -TdS, COLORS.orange, '−TΔS', (-TdS).toFixed(1) + ' kJ/mol');
+      drawBar(x3, dG, dG < 0 ? COLORS.green : COLORS.red, 'ΔG', dG.toFixed(1) + ' kJ/mol');
+
+      // Equation and spontaneity at bottom
       const spontaneous = dG < 0;
       ctxRH.fillStyle = spontaneous ? COLORS.green : COLORS.red;
       ctxRH.font = FONT_LG; ctxRH.textAlign = 'center';
-      ctxRH.fillText('ΔG = ΔH − TΔS = ' + dG.toFixed(1) + ' kJ/mol', WRH / 2, ph + oy + 10);
-      ctxRH.fillStyle = spontaneous ? COLORS.green : COLORS.red;
-      ctxRH.font = FONT;
-      ctxRH.fillText(spontaneous ? '(Spontaneous ✓)' : '(Non-spontaneous ✗)', WRH / 2, ph + oy + 30);
-
-      // Temperature label
-      ctxRH.fillStyle = COLORS.text; ctxRH.font = FONT_LG; ctxRH.textAlign = 'left';
-      ctxRH.fillText('Reaction Enthalpy Diagram', ox, oy + 10);
-      ctxRH.fillStyle = COLORS.textDim; ctxRH.font = FONT_SM; ctxRH.textAlign = 'right';
-      ctxRH.fillText('T = ' + T + ' K', WRH - 40, oy + 10);
+      ctxRH.fillText(
+        'ΔG = ΔH − TΔS = ' + dG.toFixed(1) + ' kJ/mol  ' + (spontaneous ? '(Spontaneous)' : '(Non-spontaneous)'),
+        WRH / 2, oy + ph + 52
+      );
 
       document.getElementById('rh-temp-val')?.replaceChildren(document.createTextNode(T));
     }
