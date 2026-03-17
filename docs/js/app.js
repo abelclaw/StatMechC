@@ -11950,40 +11950,64 @@ function initCh9Vis() {
     function fmDrawMagnet(cx, cy, strength) {
       var absB = Math.abs(strength);
       var dir = strength >= 0 ? 1 : -1;
-      var mW = 32, mH = 60;
-      var mx = cx - mW / 2, my = cy - mH / 2;
-      var topCol = dir > 0 ? '#e53935' : '#1e88e5';
-      var botCol = dir > 0 ? '#1e88e5' : '#e53935';
-      var topLbl = dir > 0 ? 'N' : 'S';
-      var botLbl = dir > 0 ? 'S' : 'N';
 
-      // Top half
-      ctxFM.fillStyle = topCol;
+      // Horseshoe magnet: U-shape opening downward
+      // Left leg = N (red), right leg = S (blue) when dir > 0
+      var legW = 12, legH = 36, gap = 30, arcR = (gap + legW) / 2;
+      var topY = cy - legH / 2 - arcR + 6;
+      var legTop = topY + arcR;
+      var legBot = legTop + legH;
+      var leftX = cx - gap / 2 - legW;
+      var rightX = cx + gap / 2;
+
+      var leftCol = dir > 0 ? '#e53935' : '#1e88e5';
+      var rightCol = dir > 0 ? '#1e88e5' : '#e53935';
+      var leftLbl = dir > 0 ? 'N' : 'S';
+      var rightLbl = dir > 0 ? 'S' : 'N';
+
+      // Draw the horseshoe as one path: left leg, arc across top, right leg
+      // Left leg
+      ctxFM.fillStyle = leftCol;
+      ctxFM.fillRect(leftX, legTop, legW, legH);
+      // Right leg
+      ctxFM.fillStyle = rightCol;
+      ctxFM.fillRect(rightX, legTop, legW, legH);
+
+      // Top arc connecting the two legs (gradient from left to right color)
+      var arcCX = cx;
+      var arcCY = legTop;
+      var outerR = gap / 2 + legW;
+      var innerR = gap / 2;
+
+      // Draw arc in two halves for the two colors
+      // Left half of arc (N color)
+      ctxFM.fillStyle = leftCol;
       ctxFM.beginPath();
-      ctxFM.moveTo(mx + 4, my); ctxFM.lineTo(mx + mW - 4, my);
-      ctxFM.quadraticCurveTo(mx + mW, my, mx + mW, my + 4);
-      ctxFM.lineTo(mx + mW, my + mH / 2); ctxFM.lineTo(mx, my + mH / 2);
-      ctxFM.lineTo(mx, my + 4);
-      ctxFM.quadraticCurveTo(mx, my, mx + 4, my);
+      ctxFM.arc(arcCX, arcCY, outerR, Math.PI, Math.PI * 1.5);
+      ctxFM.arc(arcCX, arcCY, innerR, Math.PI * 1.5, Math.PI, true);
+      ctxFM.closePath();
       ctxFM.fill();
-      // Bottom half
-      ctxFM.fillStyle = botCol;
+      // Right half of arc (S color)
+      ctxFM.fillStyle = rightCol;
       ctxFM.beginPath();
-      ctxFM.moveTo(mx, my + mH / 2); ctxFM.lineTo(mx + mW, my + mH / 2);
-      ctxFM.lineTo(mx + mW, my + mH - 4);
-      ctxFM.quadraticCurveTo(mx + mW, my + mH, mx + mW - 4, my + mH);
-      ctxFM.lineTo(mx + 4, my + mH);
-      ctxFM.quadraticCurveTo(mx, my + mH, mx, my + mH - 4);
-      ctxFM.closePath(); ctxFM.fill();
+      ctxFM.arc(arcCX, arcCY, outerR, Math.PI * 1.5, Math.PI * 2);
+      ctxFM.arc(arcCX, arcCY, innerR, Math.PI * 2, Math.PI * 1.5, true);
+      ctxFM.closePath();
+      ctxFM.fill();
+
+      // Pole face caps at bottom of each leg
+      ctxFM.fillStyle = '#ccc';
+      ctxFM.fillRect(leftX - 1, legBot, legW + 2, 3);
+      ctxFM.fillRect(rightX - 1, legBot, legW + 2, 3);
 
       // Pole labels
-      ctxFM.fillStyle = '#fff'; ctxFM.font = 'bold 12px Inter, system-ui, sans-serif';
+      ctxFM.fillStyle = '#fff'; ctxFM.font = 'bold 10px Inter, system-ui, sans-serif';
       ctxFM.textAlign = 'center'; ctxFM.textBaseline = 'middle';
-      ctxFM.fillText(topLbl, cx, my + mH / 4);
-      ctxFM.fillText(botLbl, cx, my + 3 * mH / 4);
+      ctxFM.fillText(leftLbl, leftX + legW / 2, legTop + legH / 2);
+      ctxFM.fillText(rightLbl, rightX + legW / 2, legTop + legH / 2);
       ctxFM.textBaseline = 'alphabetic';
 
-      // Zigzag field lines
+      // Zigzag field lines between the poles (across the gap at bottom)
       if (absB > 0.05) {
         var nLines = Math.min(5, Math.max(2, Math.round(absB * 2.5)));
         var alpha = Math.min(0.9, absB / 1.5);
@@ -11991,35 +12015,77 @@ function initCh9Vis() {
         ctxFM.lineWidth = 1.3;
         ctxFM.lineJoin = 'round';
 
+        // Field lines go from N pole face to S pole face across the gap
+        var nFaceX = leftX + legW / 2;
+        var sFaceX = rightX + legW / 2;
+        var faceY = legBot + 2;
+
         for (var li = 0; li < nLines; li++) {
-          var side = (li % 2 === 0) ? -1 : 1;
-          var spread = 14 + Math.floor(li / 2) * 12;
-          var nPoleY = dir > 0 ? my : my + mH;
-          var sPoleY = dir > 0 ? my + mH : my;
-          var startX = cx + side * (mW / 2);
+          var yOff = 3 + li * 6;
+          var startY = faceY + yOff;
 
           ctxFM.beginPath();
-          ctxFM.moveTo(startX, nPoleY);
-          var segs = 8;
+          ctxFM.moveTo(nFaceX, startY);
+          // Zigzag from left (N) to right (S)
+          var segs = 6;
+          var totalDx = sFaceX - nFaceX;
           for (var ss = 1; ss <= segs; ss++) {
             var frac = ss / segs;
-            var zigAmp = 2.5 + absB * 1.5;
-            var zigX = ((ss % 2 === 0) ? -zigAmp : zigAmp);
-            var curveX = startX + side * spread * Math.sin(frac * Math.PI) + zigX;
-            var curveY = nPoleY + (sPoleY - nPoleY) * frac;
-            ctxFM.lineTo(curveX, curveY);
+            var zigAmp = 2 + absB * 1.2;
+            var zigY = ((ss % 2 === 0) ? -zigAmp : zigAmp);
+            var px = nFaceX + totalDx * frac;
+            var py = startY + zigY;
+            ctxFM.lineTo(px, py);
           }
           ctxFM.stroke();
 
-          // Arrow at midpoint
-          var midFrac = 0.5;
-          var arrowY = nPoleY + (sPoleY - nPoleY) * midFrac;
-          var arrowX = startX + side * spread * Math.sin(midFrac * Math.PI);
-          var arrowDir = (sPoleY > nPoleY) ? 1 : -1;
+          // Arrow at midpoint pointing from N to S (left to right)
+          var midX = nFaceX + totalDx * 0.5;
           ctxFM.beginPath();
-          ctxFM.moveTo(arrowX - 3, arrowY - arrowDir * 4);
-          ctxFM.lineTo(arrowX, arrowY);
-          ctxFM.lineTo(arrowX + 3, arrowY - arrowDir * 4);
+          ctxFM.moveTo(midX - 4, startY - 3);
+          ctxFM.lineTo(midX, startY);
+          ctxFM.lineTo(midX - 4, startY + 3);
+          ctxFM.stroke();
+        }
+
+        // Also draw curved field lines looping outside the magnet (from N up and around to S)
+        var nOuterLines = Math.min(3, Math.max(1, Math.round(absB * 1.5)));
+        for (var oi = 0; oi < nOuterLines; oi++) {
+          var outerSpread = 12 + oi * 10;
+          ctxFM.beginPath();
+          // Start from N pole bottom, curve out left, over the top, down to S pole
+          var nPx = nFaceX;
+          var sPx = sFaceX;
+          var baseY2 = faceY + 2;
+          ctxFM.moveTo(nPx, baseY2);
+          // Bezier going out wide, over the top, and back
+          var topArcY = topY - 10 - outerSpread;
+          var leftBulge = cx - outerR - 8 - outerSpread;
+          var rightBulge = cx + outerR + 8 + outerSpread;
+
+          // Use multiple curve segments for zigzag effect
+          var pts = [];
+          var nPts2 = 12;
+          for (var pi = 0; pi <= nPts2; pi++) {
+            var t = pi / nPts2;
+            // Parametric path: goes left, up, over, right, down
+            var angle = Math.PI + t * Math.PI; // from PI (bottom-left) to 2PI (bottom-right)
+            var rx = (outerR + 8 + outerSpread) * 1.0;
+            var ry = (legH / 2 + arcR + 5 + outerSpread) * 1.0;
+            var ptx = cx + rx * Math.cos(angle);
+            var pty = arcCY + ry * Math.sin(angle);
+            pts.push({x: ptx, y: pty});
+          }
+          ctxFM.moveTo(pts[0].x, pts[0].y);
+          for (var pi2 = 1; pi2 < pts.length; pi2++) {
+            var zigAmp2 = 2 + absB;
+            var zig = ((pi2 % 2 === 0) ? zigAmp2 : -zigAmp2);
+            // Perturb perpendicular to path direction
+            var dx = pts[pi2].x - pts[pi2 - 1].x;
+            var dy = pts[pi2].y - pts[pi2 - 1].y;
+            var len = Math.sqrt(dx * dx + dy * dy) || 1;
+            ctxFM.lineTo(pts[pi2].x + (-dy / len) * zig, pts[pi2].y + (dx / len) * zig);
+          }
           ctxFM.stroke();
         }
       }
