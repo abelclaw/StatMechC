@@ -10355,8 +10355,26 @@ function initCh9Vis() {
       qctx.textAlign = 'center';
       qctx.fillText('1st order (conjectured)', qx(870), qy(boundaryT(870)) + 16);
 
-      // Nuclear liquid-gas transition (T~17 MeV) is too small to draw at this
-      // scale — noted in the Nuclear Matter tooltip instead.
+      // Nuclear liquid-gas phase boundary + critical point
+      // This is a real, well-measured 1st-order transition at T ~ 17 MeV
+      qctx.strokeStyle = '#4fc3f7'; qctx.lineWidth = 1.8;
+      qctx.beginPath();
+      qctx.moveTo(qx(1250), qy(0));
+      qctx.quadraticCurveTo(qx(1100), qy(8), qx(nuclearCP.mu), qy(nuclearCP.T));
+      qctx.stroke();
+      // Nuclear CP dot
+      qctx.fillStyle = '#4fc3f7';
+      qctx.beginPath(); qctx.arc(qx(nuclearCP.mu), qy(nuclearCP.T), 3.5, 0, 2 * Math.PI); qctx.fill();
+      // Label with leader line so it's readable despite being near the axis
+      qctx.strokeStyle = 'rgba(79,195,247,0.4)'; qctx.lineWidth = 1;
+      qctx.beginPath();
+      qctx.moveTo(qx(nuclearCP.mu), qy(nuclearCP.T));
+      qctx.lineTo(qx(nuclearCP.mu) - 30, qy(nuclearCP.T) - 25);
+      qctx.stroke();
+      qctx.fillStyle = '#4fc3f7';
+      qctx.font = '9px Inter, system-ui, sans-serif';
+      qctx.textAlign = 'right';
+      qctx.fillText('nuclear liquid-gas CP', qx(nuclearCP.mu) - 32, qy(nuclearCP.T) - 27);
 
       // CEP dot
       qctx.fillStyle = '#fff';
