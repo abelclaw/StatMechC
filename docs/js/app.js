@@ -9506,183 +9506,144 @@ function initCh8Vis() {
 // CH9: Phase Transitions + 2D Ising Model
 // =============================================================================
 function initCh9Vis() {
-  // ----- Surface Tension Interactive (beaker with liquid + vapor H2O) -----
+  // ----- Surface Tension: soft-core MD, liquid forms from attraction + gravity -----
   const cST = document.getElementById('vis-surface-tension');
   if (cST) {
     const { ctx: ctxST, W: WST, H: HST } = setupCanvas(cST);
 
-    // H2O drawing sizes — big enough to see clearly
-    const O_R = 7;
-    const H_R = 4;
-    const OH_LEN = 10;
-    const HOH_ANGLE = 104.5 * Math.PI / 180;
+    // H2O drawing
+    const O_R = 7, H_R = 4, OH_LEN = 10;
+    const HOH_ANG = 104.5 * Math.PI / 180;
 
     const tempSlider = document.getElementById('st-temp');
     const tempVal = document.getElementById('st-temp-val');
 
     // Beaker geometry
-    const bkLeft = 60, bkRight = WST - 60;
-    const bkTop = 30, bkBot = HST - 55;
-    const bkWidth = bkRight - bkLeft;
-    const bkRound = 18; // corner radius
+    const bkL = 50, bkR = WST - 50, bkT = 25, bkB = HST - 50;
+    const bkW = bkR - bkL, bkRnd = 16;
 
-    // Liquid and gas molecule arrays
-    let liqMols = [];  // {x, y, homeX, homeY, angle, va, vx, vy}
-    let gasMols = [];  // {x, y, vx, vy, angle, va}
-
-    // H-bond state: per pair, a fluctuating "strength" that determines visibility
-    let bondPhase = []; // random phase offsets for each liquid mol
-
-    // Grid spacing for liquid
-    const SP = 26;
-    const SURFACE_Y = bkTop + (bkBot - bkTop) * 0.42; // liquid surface level
+    // Physics: soft-core pairwise potential
+    const N_MOL = 55;
+    const CORE = 20;
+    const EQ_R = 24;
+    const RCUT = 50;
+    const K_REP = 18;
+    const K_ATT = 1.8;
+    const GRAV = 0.25;
+    const DAMP = 0.88;
+    const NOISE_SCALE = 1.8;
+    const SUBSTEPS = 3;
+    const F_CAP = 12;
+    let mols = [];
 
     function initMols() {
-      liqMols = [];
-      gasMols = [];
-      bondPhase = [];
-
-      // Hex-pack liquid molecules below SURFACE_Y
-      const cols = Math.floor((bkWidth - 20) / SP);
-      const startX = bkLeft + (bkWidth - (cols - 1) * SP) / 2;
-      let row = 0;
-      let y = SURFACE_Y + SP * 0.3;
-      while (y < bkBot - 12) {
-        const xOff = (row % 2) * SP * 0.5;
-        for (let c = 0; c < cols; c++) {
-          const hx = startX + c * SP + xOff;
-          if (hx < bkLeft + 14 || hx > bkRight - 14) continue;
-          liqMols.push({
-            homeX: hx, homeY: y,
-            x: hx + (Math.random() - 0.5) * 4,
+      mols = [];
+      const sp = EQ_R;
+      const startY = bkB - 15;
+      let count = 0;
+      for (let row = 0; count < N_MOL; row++) {
+        const y = startY - row * sp * 0.87;
+        if (y < bkT + 15) break;
+        const xOff = (row % 2) * sp * 0.5;
+        const cols = Math.floor((bkW - 30) / sp);
+        const x0 = bkL + (bkW - (cols - 1) * sp) / 2;
+        for (let c = 0; c < cols && count < N_MOL; c++) {
+          mols.push({
+            x: x0 + c * sp + xOff + (Math.random() - 0.5) * 4,
             y: y + (Math.random() - 0.5) * 4,
-            vx: 0, vy: 0,
-            angle: Math.random() * Math.PI * 2,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            angle: Math.random() * 2 * Math.PI,
             va: 0
           });
-          bondPhase.push(Math.random() * Math.PI * 2);
+          count++;
         }
-        y += SP * 0.87;
-        row++;
-      }
-
-      // A few gas molecules in the vapor space
-      for (let i = 0; i < 4; i++) {
-        gasMols.push({
-          x: bkLeft + 30 + Math.random() * (bkWidth - 60),
-          y: bkTop + 20 + Math.random() * (SURFACE_Y - bkTop - 50),
-          vx: (Math.random() - 0.5) * 120,
-          vy: (Math.random() - 0.5) * 120,
-          angle: Math.random() * Math.PI * 2,
-          va: (Math.random() - 0.5) * 3
-        });
       }
     }
-
-    let stTime = 0;
-    let evapCooldown = 0;
 
     function stepST() {
       const T = parseFloat(tempSlider?.value || 0.6);
-      const dt = 0.016;
-      stTime += dt;
-      if (evapCooldown > 0) evapCooldown -= dt;
+      const noise = T * NOISE_SCALE;
 
-      // --- Liquid molecules: spring back to home + thermal jiggle ---
-      const springK = 8;   // spring constant to home position
-      const damp = 0.85;
-      const jiggle = T * 35;
-      for (const m of liqMols) {
-        // Spring force toward home
-        let fx = -springK * (m.x - m.homeX);
-        let fy = -springK * (m.y - m.homeY);
-        // Random thermal kick
-        fx += (Math.random() - 0.5) * jiggle;
-        fy += (Math.random() - 0.5) * jiggle;
-        m.vx = (m.vx + fx * dt) * damp;
-        m.vy = (m.vy + fy * dt) * damp;
-        m.x += m.vx;
-        m.y += m.vy;
-        // Rotation jiggle
-        m.va += (Math.random() - 0.5) * T * 0.8;
-        m.va *= 0.9;
-        m.angle += m.va * dt;
-      }
+      for (let sub = 0; sub < SUBSTEPS; sub++) {
+        for (const m of mols) { m.fx = 0; m.fy = 0; }
 
-      // --- Gas molecules: free bounce in vapor region ---
-      for (const g of gasMols) {
-        g.x += g.vx * dt;
-        g.y += g.vy * dt;
-        g.angle += g.va * dt;
-        g.va *= 0.995;
-        g.va += (Math.random() - 0.5) * 0.5;
+        // Pairwise forces
+        for (let i = 0; i < mols.length; i++) {
+          for (let j = i + 1; j < mols.length; j++) {
+            const a = mols[i], b = mols[j];
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const r2 = dx * dx + dy * dy;
+            if (r2 > RCUT * RCUT || r2 < 1) continue;
+            const r = Math.sqrt(r2);
 
-        // Bounce off beaker walls
-        if (g.x < bkLeft + 14) { g.x = bkLeft + 14; g.vx = Math.abs(g.vx); }
-        if (g.x > bkRight - 14) { g.x = bkRight - 14; g.vx = -Math.abs(g.vx); }
-        if (g.y < bkTop + 12) { g.y = bkTop + 12; g.vy = Math.abs(g.vy); }
-        // If gas molecule drifts below surface, push back up (condensation handled separately)
-        if (g.y > SURFACE_Y - 10) { g.y = SURFACE_Y - 10; g.vy = -Math.abs(g.vy) * 0.8; }
-      }
+            let f = 0;
+            if (r < CORE) {
+              f = K_REP * (CORE - r);
+            } else if (r < RCUT) {
+              const t = (r - CORE) / (RCUT - CORE);
+              f = -K_ATT * 4 * t * (1 - t);
+            }
+            if (f > F_CAP) f = F_CAP;
+            if (f < -F_CAP) f = -F_CAP;
 
-      // --- Evaporation: occasionally a surface molecule escapes ---
-      if (evapCooldown <= 0 && T > 0.5) {
-        const evapProb = 0.003 * T * T;
-        // Find surface molecules (top row of liquid)
-        const surfaceMols = liqMols.filter(m => m.homeY < SURFACE_Y + SP);
-        if (surfaceMols.length > 3 && Math.random() < evapProb) {
-          const idx = Math.floor(Math.random() * surfaceMols.length);
-          const mol = surfaceMols[idx];
-          // Remove from liquid, add to gas
-          const li = liqMols.indexOf(mol);
-          if (li >= 0) {
-            liqMols.splice(li, 1);
-            bondPhase.splice(li, 1);
-            gasMols.push({
-              x: mol.x, y: mol.y - 15,
-              vx: (Math.random() - 0.5) * 100,
-              vy: -40 - Math.random() * 80,
-              angle: mol.angle,
-              va: (Math.random() - 0.5) * 3
-            });
-            evapCooldown = 1.5 / T;
+            const fx = f * dx / r, fy = f * dy / r;
+            a.fx += fx; a.fy += fy;
+            b.fx -= fx; b.fy -= fy;
           }
         }
-      }
 
-      // --- Condensation: gas molecule near surface gets absorbed ---
-      if (gasMols.length > 2 && T < 2.0) {
-        const condProb = 0.01 * (2.5 - T);
-        for (let i = gasMols.length - 1; i >= 0; i--) {
-          const g = gasMols[i];
-          if (g.y > SURFACE_Y - 25 && Math.random() < condProb) {
-            gasMols.splice(i, 1);
-            // Find an empty home position near where it landed, or create one
-            liqMols.push({
-              homeX: g.x, homeY: SURFACE_Y + SP * 0.3,
-              x: g.x, y: SURFACE_Y + SP * 0.3,
-              vx: 0, vy: 0,
-              angle: g.angle, va: 0
-            });
-            bondPhase.push(Math.random() * Math.PI * 2);
-            break;
+        // Integrate: damped dynamics + gravity + thermal noise
+        for (const m of mols) {
+          m.vx += m.fx;
+          m.vy += m.fy + GRAV;
+          m.vx *= DAMP;
+          m.vy *= DAMP;
+          m.vx += (Math.random() - 0.5) * noise;
+          m.vy += (Math.random() - 0.5) * noise;
+          m.x += m.vx;
+          m.y += m.vy;
+
+          m.va += (Math.random() - 0.5) * T * 0.15;
+          m.va *= 0.93;
+          m.angle += m.va;
+
+          // Beaker walls
+          const mr = 10;
+          if (m.x < bkL + mr) { m.x = bkL + mr; m.vx = Math.abs(m.vx) * 0.3; }
+          if (m.x > bkR - mr) { m.x = bkR - mr; m.vx = -Math.abs(m.vx) * 0.3; }
+          if (m.y < bkT + mr) { m.y = bkT + mr; m.vy = Math.abs(m.vy) * 0.3; }
+          if (m.y > bkB - mr) { m.y = bkB - mr; m.vy = -Math.abs(m.vy) * 0.3; }
+          // Rounded bottom corners
+          const cy = bkB - bkRnd;
+          if (m.y > cy) {
+            const corners = [bkL + bkRnd, bkR - bkRnd];
+            for (const cx of corners) {
+              const cdx = m.x - cx, cdy = m.y - cy;
+              if ((m.x < cx && cx === corners[0]) || (m.x > cx && cx === corners[1])) {
+                const d = Math.sqrt(cdx * cdx + cdy * cdy);
+                if (d > bkRnd - mr) {
+                  const nx = cdx / d, ny = cdy / d;
+                  m.x = cx + nx * (bkRnd - mr);
+                  m.y = cy + ny * (bkRnd - mr);
+                  const vn = m.vx * nx + m.vy * ny;
+                  if (vn > 0) { m.vx -= vn * nx * 1.3; m.vy -= vn * ny * 1.3; }
+                }
+              }
+            }
           }
         }
       }
     }
 
-    function drawH2O(x, y, angle, big) {
-      const ha = HOH_ANGLE / 2;
-      const oR = big ? O_R : O_R * 0.9;
-      const hR = big ? H_R : H_R * 0.9;
-      const ohL = big ? OH_LEN : OH_LEN * 0.9;
-      const h1x = x + ohL * Math.cos(angle - ha);
-      const h1y = y + ohL * Math.sin(angle - ha);
-      const h2x = x + ohL * Math.cos(angle + ha);
-      const h2y = y + ohL * Math.sin(angle + ha);
+    function drawH2O(x, y, angle) {
+      const ha = HOH_ANG / 2;
+      const h1x = x + OH_LEN * Math.cos(angle - ha);
+      const h1y = y + OH_LEN * Math.sin(angle - ha);
+      const h2x = x + OH_LEN * Math.cos(angle + ha);
+      const h2y = y + OH_LEN * Math.sin(angle + ha);
 
-      // Covalent bonds
-      ctxST.strokeStyle = 'rgba(200,200,200,0.55)';
+      ctxST.strokeStyle = 'rgba(200,200,200,0.5)';
       ctxST.lineWidth = 2;
       ctxST.setLineDash([]);
       ctxST.beginPath();
@@ -9690,183 +9651,140 @@ function initCh9Vis() {
       ctxST.moveTo(h2x, h2y); ctxST.lineTo(x, y);
       ctxST.stroke();
 
-      // Oxygen (red)
       ctxST.fillStyle = '#ef5350';
-      ctxST.beginPath(); ctxST.arc(x, y, oR, 0, 2 * Math.PI); ctxST.fill();
-
-      // Hydrogens (white)
+      ctxST.beginPath(); ctxST.arc(x, y, O_R, 0, 2 * Math.PI); ctxST.fill();
       ctxST.fillStyle = '#e8e8e8';
-      ctxST.beginPath(); ctxST.arc(h1x, h1y, hR, 0, 2 * Math.PI); ctxST.fill();
-      ctxST.beginPath(); ctxST.arc(h2x, h2y, hR, 0, 2 * Math.PI); ctxST.fill();
+      ctxST.beginPath(); ctxST.arc(h1x, h1y, H_R, 0, 2 * Math.PI); ctxST.fill();
+      ctxST.beginPath(); ctxST.arc(h2x, h2y, H_R, 0, 2 * Math.PI); ctxST.fill();
     }
 
     function drawBeaker() {
-      // Glass beaker outline with rounded bottom
       ctxST.strokeStyle = 'rgba(150, 200, 240, 0.3)';
       ctxST.lineWidth = 3;
       ctxST.beginPath();
-      // Left wall
-      ctxST.moveTo(bkLeft, bkTop - 5);
-      ctxST.lineTo(bkLeft, bkBot - bkRound);
-      ctxST.quadraticCurveTo(bkLeft, bkBot, bkLeft + bkRound, bkBot);
-      // Bottom
-      ctxST.lineTo(bkRight - bkRound, bkBot);
-      ctxST.quadraticCurveTo(bkRight, bkBot, bkRight, bkBot - bkRound);
-      // Right wall
-      ctxST.lineTo(bkRight, bkTop - 5);
+      ctxST.moveTo(bkL, bkT - 5);
+      ctxST.lineTo(bkL, bkB - bkRnd);
+      ctxST.quadraticCurveTo(bkL, bkB, bkL + bkRnd, bkB);
+      ctxST.lineTo(bkR - bkRnd, bkB);
+      ctxST.quadraticCurveTo(bkR, bkB, bkR, bkB - bkRnd);
+      ctxST.lineTo(bkR, bkT - 5);
       ctxST.stroke();
-
-      // Spout flares at top
       ctxST.beginPath();
-      ctxST.moveTo(bkLeft, bkTop - 5);
-      ctxST.lineTo(bkLeft - 6, bkTop - 10);
-      ctxST.moveTo(bkRight, bkTop - 5);
-      ctxST.lineTo(bkRight + 6, bkTop - 10);
+      ctxST.moveTo(bkL, bkT - 5); ctxST.lineTo(bkL - 6, bkT - 10);
+      ctxST.moveTo(bkR, bkT - 5); ctxST.lineTo(bkR + 6, bkT - 10);
       ctxST.stroke();
-
-      // Glass highlight
-      ctxST.strokeStyle = 'rgba(150, 200, 240, 0.08)';
-      ctxST.lineWidth = 6;
+      ctxST.strokeStyle = 'rgba(150, 200, 240, 0.07)';
+      ctxST.lineWidth = 5;
       ctxST.beginPath();
-      ctxST.moveTo(bkLeft + 3, bkTop + 20);
-      ctxST.lineTo(bkLeft + 3, bkBot - 30);
+      ctxST.moveTo(bkL + 3, bkT + 20); ctxST.lineTo(bkL + 3, bkB - 30);
       ctxST.stroke();
     }
 
     function drawST() {
       clearCanvas(ctxST, WST, HST);
 
-      const T = parseFloat(tempSlider?.value || 0.6);
+      // Find surface: biggest vertical gap in sorted y-positions
+      const sorted = mols.map(m => m.y).sort((a, b) => a - b);
+      let surfY = bkB, maxGap = 0;
+      for (let i = 3; i < sorted.length - 3; i++) {
+        const gap = sorted[i + 1] - sorted[i];
+        if (gap > maxGap) { maxGap = gap; surfY = (sorted[i] + sorted[i + 1]) / 2; }
+      }
+      if (maxGap < 15) surfY = sorted[0] - 10;
 
-      // Liquid tint
-      const liqGrad = ctxST.createLinearGradient(0, SURFACE_Y - 5, 0, SURFACE_Y + 20);
-      liqGrad.addColorStop(0, 'rgba(30, 80, 160, 0)');
-      liqGrad.addColorStop(1, 'rgba(30, 80, 160, 0.08)');
-      ctxST.fillStyle = liqGrad;
-      ctxST.beginPath();
-      ctxST.moveTo(bkLeft + 2, SURFACE_Y);
-      ctxST.lineTo(bkLeft + 2, bkBot - bkRound);
-      ctxST.quadraticCurveTo(bkLeft + 2, bkBot - 2, bkLeft + bkRound, bkBot - 2);
-      ctxST.lineTo(bkRight - bkRound, bkBot - 2);
-      ctxST.quadraticCurveTo(bkRight - 2, bkBot - 2, bkRight - 2, bkBot - bkRound);
-      ctxST.lineTo(bkRight - 2, SURFACE_Y);
-      ctxST.closePath();
-      ctxST.fill();
+      // Subtle liquid tint
+      if (surfY < bkB - 20) {
+        const grad = ctxST.createLinearGradient(0, surfY, 0, surfY + 25);
+        grad.addColorStop(0, 'rgba(30, 80, 180, 0)');
+        grad.addColorStop(1, 'rgba(30, 80, 180, 0.06)');
+        ctxST.fillStyle = grad;
+        ctxST.fillRect(bkL + 2, surfY, bkW - 4, bkB - surfY - 2);
+      }
 
-      // Meniscus line at surface
-      ctxST.strokeStyle = 'rgba(79, 195, 247, 0.2)';
-      ctxST.lineWidth = 1.5;
-      ctxST.beginPath();
-      ctxST.moveTo(bkLeft + 2, SURFACE_Y + 4);
-      ctxST.quadraticCurveTo(bkLeft + bkWidth / 2, SURFACE_Y - 2, bkRight - 2, SURFACE_Y + 4);
-      ctxST.stroke();
-
-      // --- Hydrogen bonds between liquid molecules ---
-      const hbondR = SP * 1.15;
-      const hbondR2 = hbondR * hbondR;
+      // Hydrogen bonds: dashed blue between close molecules
+      const hbR = EQ_R * 1.4, hbR2 = hbR * hbR;
       ctxST.lineWidth = 1.2;
-      for (let i = 0; i < liqMols.length; i++) {
-        for (let j = i + 1; j < liqMols.length; j++) {
-          const a = liqMols[i], b = liqMols[j];
+      ctxST.setLineDash([3, 4]);
+      for (let i = 0; i < mols.length; i++) {
+        for (let j = i + 1; j < mols.length; j++) {
+          const a = mols[i], b = mols[j];
           const dx = b.x - a.x, dy = b.y - a.y;
           const r2 = dx * dx + dy * dy;
-          if (r2 > hbondR2) continue;
+          if (r2 > hbR2) continue;
           const r = Math.sqrt(r2);
-          // Fluctuating bond: use time + per-molecule phase to make bonds blink
-          const phase1 = bondPhase[i] || 0, phase2 = bondPhase[j] || 0;
-          const flicker = 0.5 + 0.5 * Math.sin(stTime * (1.5 + T * 1.5) + phase1 + phase2);
-          // At low T, bonds mostly on; at high T, more flickering
-          const threshold = 0.15 + T * 0.25;
-          if (flicker < threshold) continue;
-          const distFade = Math.max(0, 1 - (r - SP * 0.5) / (hbondR - SP * 0.5));
-          const alpha = distFade * 0.45 * flicker;
-          ctxST.strokeStyle = 'rgba(79, 195, 247, ' + alpha.toFixed(2) + ')';
-          ctxST.setLineDash([3, 4]);
-          ctxST.beginPath();
-          ctxST.moveTo(a.x, a.y);
-          ctxST.lineTo(b.x, b.y);
-          ctxST.stroke();
+          const strength = Math.max(0, 1 - (r - CORE) / (hbR - CORE));
+          ctxST.strokeStyle = 'rgba(79, 195, 247, ' + (strength * 0.5).toFixed(2) + ')';
+          ctxST.beginPath(); ctxST.moveTo(a.x, a.y); ctxST.lineTo(b.x, b.y); ctxST.stroke();
         }
       }
       ctxST.setLineDash([]);
 
-      // --- Draw liquid molecules ---
-      for (const m of liqMols) {
-        drawH2O(m.x, m.y, m.angle, true);
-      }
+      // Draw molecules
+      for (const m of mols) drawH2O(m.x, m.y, m.angle);
 
-      // --- Unsaturated bond stubs on surface molecules ---
-      for (const m of liqMols) {
-        // Surface = in top row (near SURFACE_Y)
-        if (m.homeY > SURFACE_Y + SP * 1.2) continue;
-        // Count neighbors above
-        let above = 0;
-        for (const o of liqMols) {
-          if (o === m) continue;
-          if (o.y < m.y - 5) {
-            const dx = o.x - m.x, dy = o.y - m.y;
-            if (dx * dx + dy * dy < hbondR2) above++;
+      // Unsaturated bond stubs on surface molecules
+      const neighR2 = (EQ_R * 1.5) * (EQ_R * 1.5);
+      for (let i = 0; i < mols.length; i++) {
+        const m = mols[i];
+        let nAbove = 0, nTotal = 0, sumDx = 0, sumDy = 0;
+        for (let j = 0; j < mols.length; j++) {
+          if (i === j) continue;
+          const dx = mols[j].x - m.x, dy = mols[j].y - m.y;
+          if (dx * dx + dy * dy < neighR2) {
+            nTotal++;
+            const d = Math.sqrt(dx * dx + dy * dy) + 0.1;
+            sumDx += dx / d; sumDy += dy / d;
+            if (dy < -3) nAbove++;
           }
         }
-        if (above < 2) {
-          // Draw dashed orange stub pointing upward
-          ctxST.strokeStyle = 'rgba(255, 167, 38, 0.55)';
+        if (nTotal >= 2 && nAbove <= 1 && m.y < surfY + 15) {
+          const len = Math.sqrt(sumDx * sumDx + sumDy * sumDy) + 0.1;
+          ctxST.strokeStyle = 'rgba(255, 167, 38, 0.5)';
           ctxST.lineWidth = 1.8;
           ctxST.setLineDash([3, 3]);
-          const stubAngle = -Math.PI / 2 + (Math.random() - 0.5) * 0.01; // mostly upward
           ctxST.beginPath();
-          ctxST.moveTo(m.x, m.y - O_R);
-          ctxST.lineTo(m.x + Math.cos(stubAngle) * 14, m.y - O_R + Math.sin(stubAngle) * 14);
+          ctxST.moveTo(m.x, m.y);
+          ctxST.lineTo(m.x - sumDx / len * 14, m.y - sumDy / len * 14);
           ctxST.stroke();
           ctxST.setLineDash([]);
         }
       }
 
-      // --- Gas molecules ---
-      for (const g of gasMols) {
-        drawH2O(g.x, g.y, g.angle, true);
-      }
-
-      // Beaker on top (drawn last so it overlays edges)
       drawBeaker();
 
-      // Region labels
-      ctxST.font = FONT_SM; ctxST.textAlign = 'center';
-      ctxST.fillStyle = 'rgba(255,255,255,0.18)';
-      ctxST.fillText('VAPOR', bkLeft + bkWidth / 2, bkTop + 20);
-      ctxST.fillText('LIQUID', bkLeft + bkWidth / 2, bkBot - 10);
+      // Labels
+      ctxST.font = '12px Inter, system-ui, sans-serif';
+      ctxST.textAlign = 'center';
+      ctxST.fillStyle = 'rgba(255,255,255,0.15)';
+      if (surfY > bkT + 30 && surfY < bkB - 30) {
+        ctxST.fillText('vapor', bkL + bkW / 2, Math.max(bkT + 18, surfY - 25));
+        ctxST.fillText('liquid', bkL + bkW / 2, bkB - 12);
+      }
 
-      // Legend bar
-      const ly = HST - 18;
+      const nGas = mols.filter(m => m.y < surfY).length;
+      const ly = HST - 20;
       ctxST.font = FONT_SM; ctxST.textAlign = 'left';
-
-      // H2O molecule icon
       ctxST.fillStyle = '#ef5350';
-      ctxST.beginPath(); ctxST.arc(12, ly, 4, 0, 2 * Math.PI); ctxST.fill();
+      ctxST.beginPath(); ctxST.arc(8, ly, 4, 0, 2 * Math.PI); ctxST.fill();
       ctxST.fillStyle = '#e8e8e8';
-      ctxST.beginPath(); ctxST.arc(20, ly - 3, 2.5, 0, 2 * Math.PI); ctxST.fill();
-      ctxST.beginPath(); ctxST.arc(20, ly + 3, 2.5, 0, 2 * Math.PI); ctxST.fill();
-      ctxST.fillStyle = COLORS.text;
-      ctxST.fillText('H\u2082O', 26, ly + 4);
+      ctxST.beginPath(); ctxST.arc(17, ly - 3, 2.5, 0, 2 * Math.PI); ctxST.fill();
+      ctxST.beginPath(); ctxST.arc(17, ly + 3, 2.5, 0, 2 * Math.PI); ctxST.fill();
+      ctxST.fillStyle = COLORS.text; ctxST.fillText('H\u2082O', 23, ly + 4);
 
-      // H-bond legend
-      ctxST.strokeStyle = 'rgba(79, 195, 247, 0.5)'; ctxST.lineWidth = 1.2;
+      ctxST.strokeStyle = 'rgba(79,195,247,0.5)'; ctxST.lineWidth = 1.2;
       ctxST.setLineDash([3, 4]);
-      ctxST.beginPath(); ctxST.moveTo(68, ly); ctxST.lineTo(92, ly); ctxST.stroke();
+      ctxST.beginPath(); ctxST.moveTo(62, ly); ctxST.lineTo(86, ly); ctxST.stroke();
       ctxST.setLineDash([]);
-      ctxST.fillText('hydrogen bond', 96, ly + 4);
+      ctxST.fillText('H-bond', 90, ly + 4);
 
-      // Unsaturated stub legend
-      ctxST.strokeStyle = 'rgba(255, 167, 38, 0.55)'; ctxST.lineWidth = 1.8;
+      ctxST.strokeStyle = 'rgba(255,167,38,0.5)'; ctxST.lineWidth = 1.8;
       ctxST.setLineDash([3, 3]);
-      ctxST.beginPath(); ctxST.moveTo(210, ly); ctxST.lineTo(230, ly); ctxST.stroke();
+      ctxST.beginPath(); ctxST.moveTo(148, ly); ctxST.lineTo(170, ly); ctxST.stroke();
       ctxST.setLineDash([]);
-      ctxST.fillText('unsaturated bond (surface)', 234, ly + 4);
+      ctxST.fillText('unsaturated (surface)', 174, ly + 4);
 
-      // Molecule counts
-      ctxST.font = FONT; ctxST.textAlign = 'right';
-      ctxST.fillStyle = COLORS.textDim;
-      ctxST.fillText('Vapor: ' + gasMols.length + '   Liquid: ' + liqMols.length, WST - 8, ly + 4);
+      ctxST.font = FONT; ctxST.textAlign = 'right'; ctxST.fillStyle = COLORS.textDim;
+      ctxST.fillText('Vapor: ' + nGas + '   Liquid: ' + (N_MOL - nGas), WST - 8, ly + 4);
     }
 
     function animateST() {
@@ -9875,11 +9793,7 @@ function initCh9Vis() {
       requestAnimationFrame(animateST);
     }
 
-    document.getElementById('st-reset')?.addEventListener('click', () => {
-      evapCooldown = 0;
-      stTime = 0;
-      initMols();
-    });
+    document.getElementById('st-reset')?.addEventListener('click', initMols);
     tempSlider?.addEventListener('input', () => {
       if (tempVal) tempVal.textContent = parseFloat(tempSlider.value).toFixed(2);
     });
@@ -11036,7 +10950,7 @@ function initCh9Vis() {
 
   // ----- Colligative Properties (Boiling Point Elevation) -----
   const cCol = document.getElementById('vis-colligative');
-  if (cCol) {
+  if (cCol) { // BEGIN_COLLIGATIVE
     const col = setupCanvas(cCol);
     const ctxCL = col.ctx, WCL = col.W, HCL = col.H;
     const colSlider = document.getElementById('col-frac');
@@ -11426,7 +11340,7 @@ function initCh9Vis() {
 
     colInitParticles();
     colAnimate();
-  }
+  } // END_COLLIGATIVE
 
   // ----- Critical Divergences (three-panel) -----
   const cCPC = document.getElementById('vis-cp-critical');
