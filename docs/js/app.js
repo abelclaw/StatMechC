@@ -11377,89 +11377,232 @@ function initCh9Vis() {
   if (cChemPot) {
     const { ctx: ctxCP, W: WCP, H: HCP } = setupCanvas(cChemPot);
     const pressureSlider = document.getElementById('chempot-pressure');
+    const btnNormal = document.getElementById('chempot-normal');
+    const btnWater = document.getElementById('chempot-water');
+    let cpSubstance = 'normal';
+
+    btnNormal?.addEventListener('click', function() {
+      cpSubstance = 'normal';
+      btnNormal.classList.add('active');
+      btnWater?.classList.remove('active');
+      drawChemPotential();
+    });
+    btnWater?.addEventListener('click', function() {
+      cpSubstance = 'water';
+      btnWater.classList.add('active');
+      btnNormal?.classList.remove('active');
+      drawChemPotential();
+    });
 
     function drawChemPotential() {
       clearCanvas(ctxCP, WCP, HCP);
-      const P = parseFloat(pressureSlider?.value || 50) / 100; // 0 to 1
+      const P = parseFloat(pressureSlider?.value || 30) / 100;
       document.getElementById('chempot-pressure-val')?.replaceChildren(document.createTextNode(Math.round(P * 100)));
 
-      const ox = 70, oy = HCP - 50, pw = WCP - 100, ph = HCP - 80;
+      const isWater = cpSubstance === 'water';
+      const ox = 80, oy = HCP - 55, pw = WCP - 110, ph2 = HCP - 90;
 
       // Axes
       ctxCP.strokeStyle = COLORS.axis; ctxCP.lineWidth = 1;
       ctxCP.beginPath(); ctxCP.moveTo(ox, oy); ctxCP.lineTo(ox + pw, oy); ctxCP.stroke();
-      ctxCP.beginPath(); ctxCP.moveTo(ox, oy); ctxCP.lineTo(ox, oy - ph); ctxCP.stroke();
-
+      ctxCP.beginPath(); ctxCP.moveTo(ox, oy); ctxCP.lineTo(ox, oy - ph2); ctxCP.stroke();
+      // Axis labels
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT; ctxCP.textAlign = 'center';
-      ctxCP.fillText('T', ox + pw / 2, oy + 30);
-      ctxCP.save(); ctxCP.translate(20, oy - ph / 2); ctxCP.rotate(-Math.PI / 2);
-      ctxCP.fillText('μ', 0, 0); ctxCP.restore();
+      ctxCP.fillText('Temperature T', ox + pw / 2, oy + 38);
+      ctxCP.save(); ctxCP.translate(18, oy - ph2 / 2); ctxCP.rotate(-Math.PI / 2);
+      ctxCP.fillText('Chemical potential \u03BC', 0, 0); ctxCP.restore();
 
-      // Chemical potential curves: μ decreases with T, steeper for higher entropy phases
-      // Pressure shifts curves up (gas most, solid least)
-      const gasShift = P * 0.5;
-      const liqShift = P * 0.2;
-      const solShift = P * 0.05;
-
-      // For water: liquid denser than solid, so liquid shifts less than solid at high P
-      const waterSolShift = P * 0.12;
-      const waterLiqShift = P * 0.08;
-
-      const nPts = 200;
-      function muSolid(t) { return -0.05 * t * t - waterSolShift * 2; }
-      function muLiquid(t) { return -0.3 - 0.2 * t - waterLiqShift * 2; }
-      function muGas(t) { return 0.5 - 0.8 * t - gasShift * 2; }
-
-      // Draw each phase curve
-      function drawCurve(muFn, color, label) {
-        ctxCP.strokeStyle = color; ctxCP.lineWidth = 2.5;
-        ctxCP.beginPath();
-        for (let i = 0; i < nPts; i++) {
-          const t = i / (nPts - 1);
-          const x = ox + t * pw;
-          const y = oy - (muFn(t) + 1.5) / 3 * ph;
-          if (y < oy - ph || y > oy) continue;
-          if (i === 0) ctxCP.moveTo(x, y); else ctxCP.lineTo(x, y);
-        }
-        ctxCP.stroke();
-
-        // Label at start
-        const y0 = oy - (muFn(0.05) + 1.5) / 3 * ph;
-        ctxCP.fillStyle = color; ctxCP.font = FONT_SM; ctxCP.textAlign = 'left';
-        if (y0 > oy - ph && y0 < oy) ctxCP.fillText(label, ox + 0.05 * pw + 5, y0 - 8);
+      // Pressure shifts: dmu/dP = V/N = 1/n. Gas (least dense) shifts most.
+      // Normal: solid densest, liquid middle, gas least dense
+      // Water: liquid densest, solid middle, gas least dense
+      var solShift, liqShift;
+      const gasShift = P * 0.9;
+      if (isWater) {
+        solShift = P * 0.18;
+        liqShift = P * 0.10;
+      } else {
+        solShift = P * 0.08;
+        liqShift = P * 0.15;
       }
 
-      drawCurve(muSolid, COLORS.blue, 'Solid');
-      drawCurve(muLiquid, COLORS.green, 'Liquid');
-      drawCurve(muGas, COLORS.red, 'Gas');
+      // mu(t) functions, t in [0,1] maps to temperature range
+      // Solid: starts flat at T=0 (3rd law), gentle negative curvature
+      // Liquid: steeper slope (higher S/N)
+      // Gas: steepest slope
+      function muSolid(t) { return 0.6 - 0.08 * t - 0.12 * t * t + solShift; }
+      function muLiquid(t) { return 0.55 - 0.45 * t + liqShift; }
+      function muGas(t) { return 1.1 - 1.3 * t + gasShift; }
 
-      // Find and mark crossings (phase boundaries)
+      var nPts = 400;
+
+      // Find crossings
       function findCrossing(f1, f2, tMin, tMax) {
-        for (let t = tMin; t < tMax; t += 0.001) {
-          if ((f1(t) - f2(t)) * (f1(t + 0.001) - f2(t + 0.001)) < 0) return t;
+        for (let t = tMin; t < tMax; t += 0.0005) {
+          var d1 = f1(t) - f2(t), d2 = f1(t + 0.0005) - f2(t + 0.0005);
+          if (d1 * d2 < 0) return t + 0.00025;
         }
         return null;
       }
 
-      const tMelt = findCrossing(muSolid, muLiquid, 0, 1);
-      const tBoil = findCrossing(muLiquid, muGas, 0, 1);
+      var tMelt = findCrossing(muSolid, muLiquid, 0.01, 0.99);
+      var tBoil = findCrossing(muLiquid, muGas, 0.01, 0.99);
+      var tSublim = findCrossing(muSolid, muGas, 0.01, 0.99);
 
-      [tMelt, tBoil].forEach(tc => {
-        if (tc !== null) {
-          const x = ox + tc * pw;
-          const muVal = muSolid(tc);
-          const y = oy - (muVal + 1.5) / 3 * ph;
-          ctxCP.fillStyle = COLORS.yellow;
-          ctxCP.beginPath(); ctxCP.arc(x, Math.min(y, oy), 5, 0, 2 * Math.PI); ctxCP.fill();
+      // Determine if there's a liquid window
+      var hasLiquid = tMelt !== null && tBoil !== null && tMelt < tBoil;
+
+      // Map mu value to canvas y
+      var muMin = -0.6, muMax = 1.8;
+      function muToY(mu) { return oy - (mu - muMin) / (muMax - muMin) * ph2; }
+      function tToX(t) { return ox + t * pw; }
+
+      // Phase region shading along T axis
+      if (hasLiquid) {
+        ctxCP.fillStyle = 'rgba(79,195,247,0.08)';
+        ctxCP.fillRect(ox, oy - ph2, tToX(tMelt) - ox, ph2);
+        ctxCP.fillStyle = 'rgba(102,187,106,0.08)';
+        ctxCP.fillRect(tToX(tMelt), oy - ph2, tToX(tBoil) - tToX(tMelt), ph2);
+        ctxCP.fillStyle = 'rgba(239,83,80,0.08)';
+        ctxCP.fillRect(tToX(tBoil), oy - ph2, ox + pw - tToX(tBoil), ph2);
+      } else if (tSublim !== null) {
+        ctxCP.fillStyle = 'rgba(79,195,247,0.08)';
+        ctxCP.fillRect(ox, oy - ph2, tToX(tSublim) - ox, ph2);
+        ctxCP.fillStyle = 'rgba(239,83,80,0.08)';
+        ctxCP.fillRect(tToX(tSublim), oy - ph2, ox + pw - tToX(tSublim), ph2);
+      }
+
+      // Draw thin (non-stable) phase curves as dashed
+      function drawThinCurve(muFn, color) {
+        ctxCP.strokeStyle = color; ctxCP.lineWidth = 1.2;
+        ctxCP.globalAlpha = 0.35;
+        ctxCP.setLineDash([6, 4]);
+        ctxCP.beginPath();
+        var started = false;
+        for (let i = 0; i < nPts; i++) {
+          var t = i / (nPts - 1);
+          var x = tToX(t);
+          var y = muToY(muFn(t));
+          if (y < oy - ph2 || y > oy) { started = false; continue; }
+          if (!started) { ctxCP.moveTo(x, y); started = true; } else ctxCP.lineTo(x, y);
         }
-      });
+        ctxCP.stroke();
+        ctxCP.globalAlpha = 1;
+        ctxCP.setLineDash([]);
+      }
 
-      // Highlight stable phase (lowest μ)
-      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = FONT_SM; ctxCP.textAlign = 'center';
-      ctxCP.fillText('Lowest μ = stable phase', ox + pw / 2, 20);
+      drawThinCurve(muSolid, COLORS.blue);
+      drawThinCurve(muLiquid, COLORS.green);
+      drawThinCurve(muGas, COLORS.red);
 
+      // Draw bold stable envelope (lowest mu at each T)
+      function stableMu(t) { return Math.min(muSolid(t), muLiquid(t), muGas(t)); }
+      function stablePhase(t) {
+        var ms = muSolid(t), ml = muLiquid(t), mg = muGas(t);
+        var m = Math.min(ms, ml, mg);
+        if (m === ms) return 'solid';
+        if (m === ml) return 'liquid';
+        return 'gas';
+      }
+      var phaseColor = { solid: COLORS.blue, liquid: COLORS.green, gas: COLORS.red };
+
+      // Draw envelope in segments by phase
+      var segPhase = stablePhase(0);
+      var segStart = 0;
+      function drawSeg(from, to, phase) {
+        ctxCP.strokeStyle = phaseColor[phase]; ctxCP.lineWidth = 3.5;
+        ctxCP.beginPath();
+        var started = false;
+        for (let i = Math.floor(from * nPts); i <= Math.ceil(to * nPts) && i < nPts; i++) {
+          var t = i / (nPts - 1);
+          var x = tToX(t);
+          var y = muToY(stableMu(t));
+          if (y < oy - ph2 || y > oy) { started = false; continue; }
+          if (!started) { ctxCP.moveTo(x, y); started = true; } else ctxCP.lineTo(x, y);
+        }
+        ctxCP.stroke();
+      }
+      for (let i = 1; i < nPts; i++) {
+        var t = i / (nPts - 1);
+        var curPhase = stablePhase(t);
+        if (curPhase !== segPhase) {
+          drawSeg(segStart, t, segPhase);
+          segPhase = curPhase;
+          segStart = t - 1 / nPts;
+        }
+      }
+      drawSeg(segStart, 1, segPhase);
+
+      // Phase labels along T axis
+      ctxCP.font = '12px Inter, system-ui, sans-serif'; ctxCP.textAlign = 'center';
+      if (hasLiquid) {
+        ctxCP.fillStyle = COLORS.blue;
+        ctxCP.fillText('Solid', tToX((0 + tMelt) / 2), oy + 18);
+        ctxCP.fillStyle = COLORS.green;
+        ctxCP.fillText('Liquid', tToX((tMelt + tBoil) / 2), oy + 18);
+        ctxCP.fillStyle = COLORS.red;
+        ctxCP.fillText('Gas', tToX((tBoil + 1) / 2), oy + 18);
+      } else if (tSublim !== null) {
+        ctxCP.fillStyle = COLORS.blue;
+        ctxCP.fillText('Solid', tToX(tSublim / 2), oy + 18);
+        ctxCP.fillStyle = COLORS.red;
+        ctxCP.fillText('Gas', tToX((tSublim + 1) / 2), oy + 18);
+      }
+
+      // Mark transition points with dots and vertical dashed lines
+      function markTransition(tc, label) {
+        if (tc === null) return;
+        var x = tToX(tc);
+        var y = muToY(stableMu(tc));
+        // Vertical dashed line
+        ctxCP.strokeStyle = COLORS.yellow; ctxCP.lineWidth = 1;
+        ctxCP.setLineDash([4, 3]);
+        ctxCP.beginPath(); ctxCP.moveTo(x, oy); ctxCP.lineTo(x, y - 8); ctxCP.stroke();
+        ctxCP.setLineDash([]);
+        // Dot
+        ctxCP.fillStyle = COLORS.yellow;
+        ctxCP.beginPath(); ctxCP.arc(x, y, 5, 0, 2 * Math.PI); ctxCP.fill();
+        ctxCP.strokeStyle = '#000'; ctxCP.lineWidth = 1;
+        ctxCP.stroke();
+        // Label
+        ctxCP.fillStyle = COLORS.yellow; ctxCP.font = '11px Inter, system-ui, sans-serif';
+        ctxCP.textAlign = 'center';
+        ctxCP.fillText(label, x, y - 12);
+      }
+
+      if (hasLiquid) {
+        markTransition(tMelt, 'T_melt');
+        markTransition(tBoil, 'T_boil');
+      } else if (tSublim !== null) {
+        markTransition(tSublim, 'T_sublim');
+      }
+
+      // Curve labels at right edge
+      function labelCurveRight(muFn, color, label) {
+        var tR = 0.95;
+        var y = muToY(muFn(tR));
+        if (y > oy - ph2 + 10 && y < oy - 10) {
+          ctxCP.fillStyle = color; ctxCP.font = '11px Inter, system-ui, sans-serif';
+          ctxCP.textAlign = 'left';
+          ctxCP.fillText(label, tToX(tR) + 6, y + 4);
+        }
+      }
+      labelCurveRight(muSolid, COLORS.blue, '\u03BC_solid');
+      labelCurveRight(muLiquid, COLORS.green, '\u03BC_liquid');
+      labelCurveRight(muGas, COLORS.red, '\u03BC_gas');
+
+      // Title and slope annotation
       ctxCP.fillStyle = COLORS.text; ctxCP.font = FONT_LG; ctxCP.textAlign = 'left';
-      ctxCP.fillText('μ–T Phase Diagram (H₂O)', ox, oy - ph - 8);
+      ctxCP.fillText(isWater ? '\u03BC\u2013T Phase Diagram (H\u2082O \u2014 anomalous)' : '\u03BC\u2013T Phase Diagram (normal substance)', ox, 18);
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = FONT_SM;
+      ctxCP.fillText('slope = \u2212S/N   \u2192   steeper for higher-entropy phases', ox, 33);
+
+      // Pressure annotation
+      ctxCP.fillStyle = COLORS.textDim; ctxCP.font = FONT_SM; ctxCP.textAlign = 'right';
+      if (isWater) {
+        ctxCP.fillText('Higher P: gas shifts most; solid > liquid (ice less dense)', ox + pw, 18);
+      } else {
+        ctxCP.fillText('Higher P: gas shifts most, solid least (densest)', ox + pw, 18);
+      }
     }
 
     pressureSlider?.addEventListener('input', drawChemPotential);
