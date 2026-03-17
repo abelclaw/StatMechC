@@ -10163,42 +10163,75 @@ function initCh9Vis() {
       return 65 * (1 - t) + 30 * t;
     }
 
-    // Sample boundary curve as array of [mu, T] points
+    // Sample deconfinement boundary curve as array of [mu, T] points
     var boundaryCurve = [];
     for (var bmu = 0; bmu <= 1700; bmu += 20) {
       boundaryCurve.push([bmu, boundaryT(bmu)]);
     }
     boundaryCurve.push([1700, boundaryT(1700)]);
 
-    // Build phase polygons from boundary curve
-    // QGP: above the boundary, full width
+    // Nuclear liquid-gas boundary curve.
+    // Real transition: CP at (923, 17 MeV), meets T=0 axis at mu ~ 930 MeV.
+    // Exaggerated slightly in T for visibility on this schematic.
+    var nucLG_CP = { mu: 923, T: 25 };  // exaggerated T for visibility (real: 17)
+    var nucLG_T0 = 960;  // mu where curve meets T=0 (exaggerated from ~930)
+    function nucLGcurveT(mu) {
+      // Parabolic: T = T_cp * (1 - ((mu - mu_cp)/(mu_T0 - mu_cp))^2)
+      var x = (mu - nucLG_CP.mu) / (nucLG_T0 - nucLG_CP.mu);
+      return nucLG_CP.T * (1 - x * x);
+    }
+    // Sample it
+    var nucLGpts = [];
+    for (var nlmu = nucLG_CP.mu; nlmu <= nucLG_T0; nlmu += 2) {
+      nucLGpts.push([nlmu, nucLGcurveT(nlmu)]);
+    }
+    nucLGpts.push([nucLG_T0, 0]);
+
+    // Build phase polygons from boundary curves
+    // QGP: above the deconfinement boundary, full width
     var qgpPoly = [];
-    // bottom edge: follow boundary left to right
     for (var bi = 0; bi < boundaryCurve.length; bi++) qgpPoly.push(boundaryCurve[bi]);
-    // top edge: right to left along top of diagram
     qgpPoly.push([1700, 250]);
     qgpPoly.push([0, 250]);
 
-    // Hadron gas: below boundary at low mu_B (0 to ~920)
+    // Hadron gas: below deconfinement boundary, LEFT of nuclear liquid-gas curve
+    // At low T: extends right to the nuclear l-g curve. Above the nuclear CP: extends
+    // to the deconfinement boundary all the way to where CSC starts.
     var hadronPoly = [[0, 0]];
-    // top edge: follow boundary from mu=0 to where first-order meets nuclear matter
+    // top: follow deconfinement boundary from mu=0 up to mu where we meet CSC (~1250)
     for (var bi = 0; bi < boundaryCurve.length; bi++) {
-      if (boundaryCurve[bi][0] > 920) break;
+      if (boundaryCurve[bi][0] > 1250) break;
       hadronPoly.push(boundaryCurve[bi]);
     }
-    hadronPoly.push([920, boundaryT(920)]);
-    hadronPoly.push([920, 0]);
+    hadronPoly.push([1250, boundaryT(1250)]);
+    // right side: down from deconfinement boundary to nuclear CP
+    hadronPoly.push([nucLG_CP.mu, nucLG_CP.T]);
+    // follow nuclear l-g curve down to T=0
+    for (var ni = nucLGpts.length - 1; ni >= 0; ni--) {
+      hadronPoly.push(nucLGpts[ni]);
+    }
+    // But we need the bottom-right at T=0 to be nucLG_T0, then back to origin
+    // Actually nucLGpts ends at (nucLG_T0, 0), so just close along bottom
+    hadronPoly.push([nucLG_T0, 0]);
 
-    // Nuclear matter: pocket around mu=920-1250, below the boundary
-    var nucPoly = [[920, 0], [920, boundaryT(920)]];
+    // Nuclear matter (liquid): RIGHT of the nuclear l-g curve, below deconfinement
+    // boundary, up to ~1250 where CSC starts. This is the "nuclear liquid" phase.
+    var nucPoly = [];
+    // left boundary: follow nuclear l-g curve from T=0 up to CP
+    for (var ni = nucLGpts.length - 1; ni >= 0; ni--) {
+      nucPoly.push(nucLGpts[ni]);
+    }
+    // from CP up to deconfinement boundary (vertical-ish)
+    nucPoly.push([nucLG_CP.mu, boundaryT(nucLG_CP.mu)]);
+    // top: follow deconfinement boundary right to mu=1250
     for (var bi = 0; bi < boundaryCurve.length; bi++) {
-      if (boundaryCurve[bi][0] >= 920 && boundaryCurve[bi][0] <= 1250)
+      if (boundaryCurve[bi][0] >= nucLG_CP.mu && boundaryCurve[bi][0] <= 1250)
         nucPoly.push(boundaryCurve[bi]);
     }
     nucPoly.push([1250, boundaryT(1250)]);
     nucPoly.push([1250, 0]);
 
-    // Color superconductor: high mu_B, below boundary
+    // Color superconductor: high mu_B (>1250), below deconfinement boundary
     var cscPoly = [[1250, 0], [1250, boundaryT(1250)]];
     for (var bi = 0; bi < boundaryCurve.length; bi++) {
       if (boundaryCurve[bi][0] >= 1250)
@@ -10227,7 +10260,7 @@ function initCh9Vis() {
         expt: 'Collider fireballs after hadronization, cosmic rays'
       },
       {
-        name: 'Nuclear Matter',
+        name: 'Nuclear Liquid',
         color: 'rgba(79,195,247,0.16)',
         border: '#4fc3f7',
         poly: nucPoly,
@@ -10355,26 +10388,28 @@ function initCh9Vis() {
       qctx.textAlign = 'center';
       qctx.fillText('1st order (conjectured)', qx(870), qy(boundaryT(870)) + 16);
 
-      // Nuclear liquid-gas phase boundary + critical point
-      // This is a real, well-measured 1st-order transition at T ~ 17 MeV
-      qctx.strokeStyle = '#4fc3f7'; qctx.lineWidth = 1.8;
+      // Nuclear liquid-gas phase boundary (1st-order, well-measured)
+      // The curve separates hadron gas (green, left) from nuclear liquid (blue, right)
+      qctx.strokeStyle = '#4fc3f7'; qctx.lineWidth = 2;
       qctx.beginPath();
-      qctx.moveTo(qx(1250), qy(0));
-      qctx.quadraticCurveTo(qx(1100), qy(8), qx(nuclearCP.mu), qy(nuclearCP.T));
+      for (var ni = 0; ni < nucLGpts.length; ni++) {
+        ni === 0 ? qctx.moveTo(qx(nucLGpts[ni][0]), qy(nucLGpts[ni][1]))
+                 : qctx.lineTo(qx(nucLGpts[ni][0]), qy(nucLGpts[ni][1]));
+      }
       qctx.stroke();
       // Nuclear CP dot
       qctx.fillStyle = '#4fc3f7';
-      qctx.beginPath(); qctx.arc(qx(nuclearCP.mu), qy(nuclearCP.T), 3.5, 0, 2 * Math.PI); qctx.fill();
-      // Label with leader line so it's readable despite being near the axis
+      qctx.beginPath(); qctx.arc(qx(nucLG_CP.mu), qy(nucLG_CP.T), 3.5, 0, 2 * Math.PI); qctx.fill();
+      // Leader line to label
       qctx.strokeStyle = 'rgba(79,195,247,0.4)'; qctx.lineWidth = 1;
       qctx.beginPath();
-      qctx.moveTo(qx(nuclearCP.mu), qy(nuclearCP.T));
-      qctx.lineTo(qx(nuclearCP.mu) - 30, qy(nuclearCP.T) - 25);
+      qctx.moveTo(qx(nucLG_CP.mu), qy(nucLG_CP.T));
+      qctx.lineTo(qx(nucLG_CP.mu) - 40, qy(nucLG_CP.T) - 30);
       qctx.stroke();
       qctx.fillStyle = '#4fc3f7';
       qctx.font = '9px Inter, system-ui, sans-serif';
       qctx.textAlign = 'right';
-      qctx.fillText('nuclear liquid-gas CP', qx(nuclearCP.mu) - 32, qy(nuclearCP.T) - 27);
+      qctx.fillText('nuclear liquid-gas', qx(nucLG_CP.mu) - 42, qy(nucLG_CP.T) - 32);
 
       // CEP dot
       qctx.fillStyle = '#fff';
