@@ -10187,45 +10187,49 @@ function initCh9Vis() {
     }
     nucLGpts.push([nucLG_T0, 0]);
 
-    // Build phase polygons from boundary curves
+    // Build phase polygons from boundary curves.
+    // The nuclear l-g curve separates hadron gas (left) from nuclear liquid (right)
+    // at low T. Above the nuclear CP, we extend the boundary as a vertical line
+    // at mu = nucLG_CP.mu up to the deconfinement curve.
+
     // QGP: above the deconfinement boundary, full width
     var qgpPoly = [];
     for (var bi = 0; bi < boundaryCurve.length; bi++) qgpPoly.push(boundaryCurve[bi]);
     qgpPoly.push([1700, 250]);
     qgpPoly.push([0, 250]);
 
-    // Hadron gas: below deconfinement boundary, LEFT of nuclear liquid-gas curve
-    // At low T: extends right to the nuclear l-g curve. Above the nuclear CP: extends
-    // to the deconfinement boundary all the way to where CSC starts.
+    // Hadron gas: below deconfinement boundary, LEFT of nuclear l-g boundary.
+    // Boundary: deconfinement curve on top (mu=0 to mu=923),
+    //           vertical at mu=923 from deconfinement down to nuclear CP,
+    //           then nuclear l-g curve from CP down to T=0 at mu=960.
     var hadronPoly = [[0, 0]];
-    // top: follow deconfinement boundary from mu=0 up to mu where we meet CSC (~1250)
     for (var bi = 0; bi < boundaryCurve.length; bi++) {
-      if (boundaryCurve[bi][0] > 1250) break;
       hadronPoly.push(boundaryCurve[bi]);
+      if (boundaryCurve[bi][0] >= nucLG_CP.mu) break;
     }
-    hadronPoly.push([1250, boundaryT(1250)]);
-    // right side: down from deconfinement boundary to nuclear CP
+    hadronPoly.push([nucLG_CP.mu, boundaryT(nucLG_CP.mu)]);
+    // down to nuclear CP
     hadronPoly.push([nucLG_CP.mu, nucLG_CP.T]);
-    // follow nuclear l-g curve down to T=0
-    for (var ni = nucLGpts.length - 1; ni >= 0; ni--) {
+    // follow l-g curve from CP down to T=0
+    for (var ni = 0; ni < nucLGpts.length; ni++) {
       hadronPoly.push(nucLGpts[ni]);
     }
-    // But we need the bottom-right at T=0 to be nucLG_T0, then back to origin
-    // Actually nucLGpts ends at (nucLG_T0, 0), so just close along bottom
-    hadronPoly.push([nucLG_T0, 0]);
+    // close along bottom back to origin
 
-    // Nuclear matter (liquid): RIGHT of the nuclear l-g curve, below deconfinement
-    // boundary, up to ~1250 where CSC starts. This is the "nuclear liquid" phase.
-    var nucPoly = [];
-    // left boundary: follow nuclear l-g curve from T=0 up to CP
+    // Nuclear liquid: RIGHT of l-g curve, below deconfinement boundary, left of CSC.
+    // Left edge: l-g curve from T=0 up to CP, then vertical to deconfinement boundary.
+    // Top: deconfinement boundary from mu=923 to mu=1250.
+    // Right: vertical down at mu=1250. Bottom: T=0.
+    var nucPoly = [[nucLG_T0, 0]];
+    // left: follow l-g curve from T=0 up to CP (reverse order)
     for (var ni = nucLGpts.length - 1; ni >= 0; ni--) {
       nucPoly.push(nucLGpts[ni]);
     }
-    // from CP up to deconfinement boundary (vertical-ish)
+    // up from CP to deconfinement boundary
     nucPoly.push([nucLG_CP.mu, boundaryT(nucLG_CP.mu)]);
     // top: follow deconfinement boundary right to mu=1250
     for (var bi = 0; bi < boundaryCurve.length; bi++) {
-      if (boundaryCurve[bi][0] >= nucLG_CP.mu && boundaryCurve[bi][0] <= 1250)
+      if (boundaryCurve[bi][0] > nucLG_CP.mu && boundaryCurve[bi][0] <= 1250)
         nucPoly.push(boundaryCurve[bi]);
     }
     nucPoly.push([1250, boundaryT(1250)]);
