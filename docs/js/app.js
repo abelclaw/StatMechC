@@ -6791,10 +6791,10 @@ function initCh7Vis() {
       lastBeta = beta;
     }
 
-    // Only update physics every 3rd frame to slow visible blinking
+    // Only update physics every 8th frame to slow visible blinking
     frameCount++;
-    if (frameCount % 3 === 0) {
-      const stepsPerFrame = nParticles;
+    if (frameCount % 8 === 0) {
+      const stepsPerFrame = Math.floor(nParticles / 2);
       for (let s = 0; s < stepsPerFrame; s++) metropolisStep(beta);
       recomputeCounts();
 
@@ -9166,6 +9166,223 @@ function initCh8Vis() {
 // CH9: Phase Transitions + 2D Ising Model
 // =============================================================================
 function initCh9Vis() {
+  // ----- Surface Tension Interactive -----
+  const cST = document.getElementById('vis-surface-tension');
+  if (cST) {
+    const { ctx: ctxST, W: WST, H: HST } = setupCanvas(cST);
+
+    const ST_N = 120;
+    const ST_R = 5;
+    const ST_BOND_DIST = 18;
+    const ST_BOND_DRAW = 22;
+    const ST_REPEL_DIST = 12;
+    let stParticles = [];
+    let stAnimId = null;
+
+    const sigmaSlider = document.getElementById('st-sigma');
+    const sigmaVal = document.getElementById('st-sigma-val');
+
+    function initSTDroplet() {
+      stParticles = [];
+      const cx = WST / 2, cy = HST / 2;
+      const spacing = 14;
+      const rings = Math.ceil(Math.sqrt(ST_N));
+      let count = 0;
+      for (let ring = 0; ring <= rings && count < ST_N; ring++) {
+        if (ring === 0) {
+          stParticles.push({ x: cx, y: cy, vx: 0, vy: 0 });
+          count++;
+          continue;
+        }
+        const circumference = 2 * Math.PI * ring * spacing;
+        const nInRing = Math.min(Math.floor(circumference / spacing), ST_N - count);
+        for (let i = 0; i < nInRing && count < ST_N; i++) {
+          const angle = (2 * Math.PI * i) / nInRing + ring * 0.3;
+          stParticles.push({
+            x: cx + ring * spacing * Math.cos(angle),
+            y: cy + ring * spacing * Math.sin(angle),
+            vx: 0, vy: 0
+          });
+          count++;
+        }
+      }
+    }
+
+    function disperseDroplet() {
+      const cx = WST / 2, cy = HST / 2;
+      for (const p of stParticles) {
+        const dx = p.x - cx, dy = p.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+        const speed = 80 + Math.random() * 120;
+        p.vx = (dx / dist) * speed + (Math.random() - 0.5) * 100;
+        p.vy = (dy / dist) * speed + (Math.random() - 0.5) * 100;
+      }
+    }
+
+    function stepST() {
+      const sigma = parseFloat(sigmaSlider?.value || 1.0);
+      const SUBSTEPS = 3;
+      const subDt = 0.016 / SUBSTEPS;
+      const damping = 0.97;
+
+      for (let sub = 0; sub < SUBSTEPS; sub++) {
+        for (const p of stParticles) { p.fx = 0; p.fy = 0; }
+
+        for (let i = 0; i < stParticles.length; i++) {
+          for (let j = i + 1; j < stParticles.length; j++) {
+            const pi = stParticles[i], pj = stParticles[j];
+            const dx = pj.x - pi.x, dy = pj.y - pi.y;
+            const dist2 = dx * dx + dy * dy;
+            const cutoff = ST_BOND_DIST * 2.5;
+            if (dist2 < cutoff * cutoff) {
+              const dist = Math.sqrt(dist2) + 0.01;
+              const attract = sigma * 800 * (dist - ST_BOND_DIST) / (dist * ST_BOND_DIST);
+              let repel = 0;
+              if (dist < ST_REPEL_DIST) {
+                repel = -3000 * (ST_REPEL_DIST - dist) / (dist * ST_REPEL_DIST);
+              }
+              const f = attract + repel;
+              const fx = f * dx / dist, fy = f * dy / dist;
+              pi.fx += fx; pi.fy += fy;
+              pj.fx -= fx; pj.fy -= fy;
+            }
+          }
+        }
+
+        for (const p of stParticles) {
+          p.vx += p.fx * subDt;
+          p.vy += p.fy * subDt;
+          p.vx *= damping; p.vy *= damping;
+          p.x += p.vx * subDt;
+          p.y += p.vy * subDt;
+          if (p.x < ST_R) { p.x = ST_R; p.vx = Math.abs(p.vx) * 0.5; }
+          if (p.x > WST - ST_R) { p.x = WST - ST_R; p.vx = -Math.abs(p.vx) * 0.5; }
+          if (p.y < ST_R) { p.y = ST_R; p.vy = Math.abs(p.vy) * 0.5; }
+          if (p.y > HST - ST_R) { p.y = HST - ST_R; p.vy = -Math.abs(p.vy) * 0.5; }
+        }
+      }
+    }
+
+    function drawST() {
+      clearCanvas(ctxST, WST, HST);
+
+      const neighborCount = stParticles.map((p, i) => {
+        let count = 0;
+        for (let j = 0; j < stParticles.length; j++) {
+          if (i === j) continue;
+          const dx = stParticles[j].x - p.x, dy = stParticles[j].y - p.y;
+          if (dx * dx + dy * dy < ST_BOND_DRAW * ST_BOND_DRAW) count++;
+        }
+        return count;
+      });
+
+      // Draw bonds
+      ctxST.lineWidth = 1;
+      for (let i = 0; i < stParticles.length; i++) {
+        for (let j = i + 1; j < stParticles.length; j++) {
+          const pi = stParticles[i], pj = stParticles[j];
+          const dx = pj.x - pi.x, dy = pj.y - pi.y;
+          const dist2 = dx * dx + dy * dy;
+          if (dist2 < ST_BOND_DRAW * ST_BOND_DRAW) {
+            const dist = Math.sqrt(dist2);
+            const alpha = Math.max(0, 1 - dist / ST_BOND_DRAW) * 0.4;
+            ctxST.strokeStyle = 'rgba(79, 195, 247, ' + alpha + ')';
+            ctxST.beginPath();
+            ctxST.moveTo(pi.x, pi.y);
+            ctxST.lineTo(pj.x, pj.y);
+            ctxST.stroke();
+          }
+        }
+      }
+
+      // Draw particles: blue=bulk, orange=surface
+      const maxNeighbors = 6;
+      for (let i = 0; i < stParticles.length; i++) {
+        const p = stParticles[i];
+        const isSurface = neighborCount[i] < maxNeighbors;
+        if (isSurface) {
+          ctxST.fillStyle = COLORS.orange;
+          ctxST.shadowColor = COLORS.orange;
+          ctxST.shadowBlur = 6;
+        } else {
+          ctxST.fillStyle = COLORS.blue;
+          ctxST.shadowColor = 'transparent';
+          ctxST.shadowBlur = 0;
+        }
+        ctxST.beginPath();
+        ctxST.arc(p.x, p.y, ST_R, 0, 2 * Math.PI);
+        ctxST.fill();
+      }
+      ctxST.shadowColor = 'transparent';
+      ctxST.shadowBlur = 0;
+
+      // Dashed stubs for unsaturated bonds on surface molecules
+      for (let i = 0; i < stParticles.length; i++) {
+        if (neighborCount[i] >= maxNeighbors) continue;
+        const p = stParticles[i];
+        const angles = [];
+        for (let j = 0; j < stParticles.length; j++) {
+          if (i === j) continue;
+          const dx = stParticles[j].x - p.x, dy = stParticles[j].y - p.y;
+          if (dx * dx + dy * dy < ST_BOND_DRAW * ST_BOND_DRAW) {
+            angles.push(Math.atan2(dy, dx));
+          }
+        }
+        if (angles.length > 0) {
+          angles.sort((a, b) => a - b);
+          let bestGap = 0, bestAngle = 0;
+          for (let k = 0; k < angles.length; k++) {
+            const next = k < angles.length - 1 ? angles[k + 1] : angles[0] + 2 * Math.PI;
+            const gap = next - angles[k];
+            if (gap > bestGap) { bestGap = gap; bestAngle = (angles[k] + next) / 2; }
+          }
+          ctxST.strokeStyle = 'rgba(255, 167, 38, 0.5)';
+          ctxST.lineWidth = 1.5;
+          ctxST.setLineDash([3, 3]);
+          ctxST.beginPath();
+          ctxST.moveTo(p.x, p.y);
+          ctxST.lineTo(p.x + Math.cos(bestAngle) * 12, p.y + Math.sin(bestAngle) * 12);
+          ctxST.stroke();
+          ctxST.setLineDash([]);
+        }
+      }
+
+      // Legend
+      ctxST.font = FONT_SM; ctxST.textAlign = 'left';
+      ctxST.fillStyle = COLORS.blue;
+      ctxST.fillRect(10, HST - 50, 10, 10);
+      ctxST.fillStyle = COLORS.text;
+      ctxST.fillText('Bulk (all bonds satisfied)', 25, HST - 41);
+      ctxST.fillStyle = COLORS.orange;
+      ctxST.fillRect(10, HST - 34, 10, 10);
+      ctxST.fillStyle = COLORS.text;
+      ctxST.fillText('Surface (unsaturated bonds)', 25, HST - 25);
+
+      const sigma = parseFloat(sigmaSlider?.value || 1.0);
+      const nSurface = neighborCount.filter(n => n < maxNeighbors).length;
+      ctxST.font = FONT; ctxST.textAlign = 'right';
+      ctxST.fillStyle = COLORS.text;
+      ctxST.fillText('Surface molecules: ' + nSurface + '/' + ST_N, WST - 10, HST - 38);
+      ctxST.fillStyle = COLORS.orange;
+      ctxST.fillText('\u03C3 = ' + sigma.toFixed(2), WST - 10, HST - 22);
+    }
+
+    function animateST() {
+      stepST();
+      drawST();
+      stAnimId = requestAnimationFrame(animateST);
+    }
+
+    document.getElementById('st-disperse')?.addEventListener('click', disperseDroplet);
+    document.getElementById('st-reset')?.addEventListener('click', initSTDroplet);
+    sigmaSlider?.addEventListener('input', () => {
+      if (sigmaVal) sigmaVal.textContent = parseFloat(sigmaSlider.value).toFixed(2);
+    });
+
+    initSTDroplet();
+    animateST();
+  }
+
   // ----- Carbon Crystal Structures -----
   const cCrystal = document.getElementById('vis-carbon-crystals');
   if (cCrystal) {
