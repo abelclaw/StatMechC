@@ -39,7 +39,8 @@
 
 <!-- INTERACTIVE: Phonon Wave in 1D Chain -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔊</span> Interactive: Normal Modes of a 1D Chain</div>
+  <div class="figure-label">Interactive 1: Normal Modes of a 1D Chain</div>
+  <p class="vis-caption">A chain of atoms connected by springs showing standing wave normal modes. Higher modes have shorter wavelengths and oscillate faster.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-phonon-chain" width="600" height="340"></canvas></div>
   <div class="vis-controls">
     <label>Mode $n$: <input type="range" id="phonon-mode" min="1" max="10" step="1" value="1"> <span class="value-display" id="phonon-mode-val">1</span></label>
@@ -47,7 +48,7 @@
     <button id="phonon-play">&#9654; Play</button>
     <button id="phonon-reset">Reset</button>
   </div>
-  <div class="vis-caption">A chain of $N$ atoms (blue) connected by springs, with fixed walls at each end. Each <strong>normal mode</strong> $n$ is a standing wave $A(x,t) = A_0 \sin(k_n x)\cos(\omega_n t)$ with wavevector $k_n = \pi n / L$ and frequency $\omega_n = c_s k_n$. The gray dots show equilibrium positions; the dashed envelope shows the maximum displacement. Higher modes have shorter wavelengths and oscillate faster.</div>
+  <div class="vis-caption">Each normal mode $n$ is a standing wave $A(x,t) = A_0 \sin(k_n x)\cos(\omega_n t)$ with wavevector $k_n = \pi n / L$ and frequency $\omega_n = c_s k_n$. The gray dots show equilibrium positions; the dashed envelope shows the maximum displacement.</div>
 </div>
 
 <p>If you knock one side of the solid, a sound wave will propagate through by vibrating each successive molecule. The quanta of sound-wave excitations in solids are called phonons.</p>
@@ -175,8 +176,8 @@ $$\omega_D = c_s\!\left(\frac{6\pi^2 N}{V}\right)^{1/3}$$
 <p>Here is a comparison of the heat capacity of various metals to the prediction from the Debye model:</p>
 
 <div class="interactive-container">
-  <h3>Interactive: Debye Model Heat Capacity</h3>
-  <p class="vis-caption">The Debye model predicts $C_V \propto T^3$ at low $T$ and recovers the classical Dulong–Petit value $C_V = 3Nk_B$ at high $T$. Click a material to load its data and Debye temperature, or drag the slider to fit by eye.</p>
+  <div class="figure-label">Interactive 2: Debye Model Heat Capacity</div>
+  <p class="vis-caption">Comparison of the Debye model prediction with experimental heat capacity data for various metals. Click a material to load its data, or drag the slider to fit by eye.</p>
   <div class="vis-controls">
     <label>Debye temperature $\theta_D$: <input type="range" id="debye-td" min="50" max="2300" step="5" value="396"> <span class="slider-value" id="debye-td-val">396</span> K</label>
     <div id="debye-materials" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
@@ -270,13 +271,14 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 <p>This is known as the <span class="tooltip-trigger">Rayleigh-Jeans Law<span class="tooltip-content">The classical prediction for blackbody radiation: $I(\omega) \propto \omega^2 k_BT$. It works at low frequencies but diverges at high frequencies, predicting infinite total energy &mdash; the ultraviolet catastrophe.</span></span>. Instead, the observed energy spectrum dies off at high frequencies:</p>
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 3: The Ultraviolet Catastrophe</div>
+<p class="vis-caption">The classical Rayleigh-Jeans prediction (red, dashed) diverges at high frequencies, while Planck's quantum formula (blue, solid) correctly predicts the observed spectrum.</p>
 <canvas id="vis-uv-catastrophe" width="600" height="400"></canvas>
 <div class="slider-container">
 <label for="uv-temp">Temperature $T$ (K):</label>
 <input type="range" id="uv-temp" min="1000" max="10000" step="100" value="5000">
 <span class="slider-value" id="uv-temp-val">5000</span>
 </div>
-<p class="vis-caption">Figure 3. The classical Rayleigh-Jeans prediction (red, dashed) diverges at high frequencies — the ultraviolet catastrophe. Planck's quantum formula (blue, solid) correctly predicts the observed spectrum.</p>
 </div>
 
 <p>This is known as the <strong>ultraviolet catastrophe</strong>. This catastrophe of 19th century classical physics was resolved in 1900 by Max Planck who first quantized the energy in the different modes.</p>
@@ -369,14 +371,15 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <!-- INTERACTIVE: Lambert's cosine law -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#128161;</span> Interactive: Lambert's Cosine Law</div>
+  <div class="figure-label">Interactive 4: Lambert's Cosine Law</div>
+  <p class="vis-caption">A blackbody cavity emits photons through an aperture. A distant detector at angle &theta; sees the opening foreshortened by cos&thinsp;&theta;, reducing the effective solid angle from 4&pi; to &pi;.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-lambert" width="600" height="440"></canvas></div>
   <div class="vis-controls">
     <label>Observer angle &theta;: <input type="range" id="lambert-theta" min="0" max="85" step="1" value="0"> <span class="value-display" id="lambert-theta-val">0</span>&deg;</label>
     <span style="margin-left:18px">cos &theta; = <span class="value-display" id="lambert-cos-val">1.000</span></span>
     <span style="margin-left:18px">Flux: <span class="value-display" id="lambert-flux-val">100</span>%</span>
   </div>
-  <p class="vis-caption">A blackbody is a cavity in thermal equilibrium. Photons bounce around inside; those that reach the aperture escape. A distant detector at angle &theta; from the normal sees the opening foreshortened by cos&thinsp;&theta;, so it captures fewer photons&thinsp;&mdash;&thinsp;this is Lambert's cosine law. The effective solid angle is reduced from 4&pi; to &pi;.</p>
+
 </div>
 
 <p>Think of the flux of photons passing through a spherical shell far away from the blackbody at some time. At any point on the shell, it is only the perpendicular component of the flux from the surface that hits the point. So we need to multiply by a projection factor of $\cos\theta$ when doing the angular integral over the outgoing directions. (The factor of $\cos\theta$ actually has a name, <span class="tooltip-trigger">Lambert's cosine law<span class="tooltip-content">The radiation intensity from a surface element is proportional to $\cos\theta$, where $\theta$ is the angle from the surface normal. This geometric factor reduces the effective solid angle from $4\pi$ to $\pi$.</span></span>). Thus, instead of $4\pi$ of the sphere, the effective solid angle reached from the surface of the black body is</p>
@@ -405,7 +408,8 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <!-- INTERACTIVE: Blackbody spectrum -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#9728;&#65039;</span> Interactive: Blackbody Radiation Spectrum</div>
+  <div class="figure-label">Interactive 5: Blackbody Radiation Spectrum</div>
+  <p class="vis-caption">The Planck distribution $I(\lambda, T)$ showing intensity vs. wavelength. Drag the temperature slider to see the spectrum shift and the visible-light band highlighted.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-blackbody" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <label>Temperature: <input type="range" id="bb-temp" min="1000" max="12000" step="100" value="5000"> <span class="value-display" id="bb-temp-val">5000</span> K</label>
@@ -422,7 +426,8 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <!-- INTERACTIVE: Stellar Blackbody Spectra -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#11088;</span> Interactive: Blackbody Spectra of Hot Objects</div>
+  <div class="figure-label">Interactive 6: Blackbody Spectra of Hot Objects</div>
+  <p class="vis-caption">Blackbody spectra for various objects from lava to blue-giant stars, illustrating Wien's displacement law.</p>
   <div style="display:flex;align-items:stretch;min-height:340px;background:var(--bg-alt,#0f1923)">
     <div style="flex:1;min-width:0">
       <div class="vis-canvas-wrap" style="height:100%;padding:0;min-height:0"><canvas id="vis-stellar-bb" width="600" height="340"></canvas></div>
@@ -444,7 +449,7 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
     <button class="bb-obj-btn" data-obj="sirius">Sirius</button>
     <button class="bb-obj-btn" data-obj="rigel">Rigel</button>
   </div>
-  <div class="vis-caption">The peak wavelength is inversely proportional to the temperature: $\lambda_\text{peak} = 2.89\,\text{mm}\cdot\text{K}\,/\,T$ (Wien's law). Cooler objects like lava peak in the infrared and glow red-orange; the Sun peaks near 500 nm; hot stars like Rigel peak in the ultraviolet and appear blue-white.</div>
+  <div class="vis-caption">The peak wavelength is inversely proportional to the temperature: $\lambda_\text{peak} = 2.89\,\text{mm}\cdot\text{K}\,/\,T$ (Wien's law).</div>
 </div>
 
 <div class="info-box example">
