@@ -284,8 +284,8 @@ $$D = \frac{1}{2}\ell\bar{v} = \frac{1}{2}\frac{\ell^2}{\tau}$$
 
 <div class="info-box physical">
 <div class="box-title">How Fast is Diffusion?</div>
-<p>In air, $\ell \approx 0.26\,\mu\text{m}$ and $\tau \approx 0.57\,\text{ns}$ so $D = 5.9 \times 10^{-5}\,\text{m}^2/\text{s}$. This means it takes <strong>1 day</strong> for an individual gas molecule to diffuse 1 meter. Then it takes <strong>100 days</strong> to diffuse 10 meters. Diffusion in air over macroscopic distances is generally very slow.</p>
-<p>For proteins in water, $D \approx 10^{-11}\,\text{m}^2/\text{s}$. To diffuse across a cell of size $10^{-4}\,\text{m}$ takes 15 minutes. To diffuse across a cell nucleus of size $6\,\mu\text{m}$ takes only 3.6 seconds.</p>
+<p>In air, $\ell \approx 0.26\,\mu\text{m}$ and $\tau \approx 0.57\,\text{ns}$ so $D = 5.9 \times 10^{-5}\,\text{m}^2/\text{s}$. This means it takes <strong>2.4 hours</strong> for an individual gas molecule to diffuse 1 meter. Then it takes <strong>10 days</strong> to diffuse 10 meters. Diffusion in air over macroscopic distances is generally very slow.</p>
+<p>For proteins in water, $D \approx 10^{-11}\,\text{m}^2/\text{s}$. To diffuse across a cell of size $10^{-4}\,\text{m}$ takes 8 minutes. To diffuse across a cell nucleus of size $6\,\mu\text{m}$ takes only 1.8 seconds.</p>
 </div>
 
 <p>Just because the diffusion equation looks simple does not mean it has trivial consequences! For example, it is mathematically identical to the Schrodinger equation, which accounts for a great variety of interesting physics. It is also mathematically identical to the <span class="tooltip-trigger">heat equation<span class="tooltip-content">A PDE describing heat conduction: $\partial T/\partial t = \kappa \nabla^2 T$. Mathematically identical to the diffusion equation.</span></span>: heat conduction is a diffusive process.</p>
@@ -370,7 +370,7 @@ $$x_{\text{rms}} = \sqrt{2Dt}$$
 <span class="eq-number">(39)</span>
 </div>
 
-<p>For example, taking a dye molecule in water with $D \approx 10^{-9}\,\text{m}^2/\text{s}$, to move $\Delta x = 1\,\text{m}$ would take $\frac{(\Delta x)^2}{2D} = 31\,\text{years}$. So clearly diffusion is not the main mechanism by which dyes move around in water.</p>
+<p>For example, taking a dye molecule in water with $D \approx 10^{-9}\,\text{m}^2/\text{s}$, to move $\Delta x = 1\,\text{m}$ would take $\frac{(\Delta x)^2}{2D} = 16\,\text{years}$. So clearly diffusion is not the main mechanism by which dyes move around in water.</p>
 
 <p>By the way, thermal conduction is very much like diffusion. Instead of the diffusion equation, temperature satisfies the <strong>heat equation</strong>:</p>
 <div class="equation">
@@ -392,7 +392,7 @@ $$\vec{J}_{\text{conv}}(\vec{x},t) = \vec{v}_{\text{conv}}\, n(\vec{x},t)$$
 
 <p>Adding this convective flux to the diffusive flux, we get a new term:</p>
 <div class="equation">
-$$\frac{\partial n(\vec{x},t)}{\partial t} = D\nabla^2 n(\vec{x},t) + \vec{v}_{\text{conv}}\cdot\nabla n(\vec{x},t)$$
+$$\frac{\partial n(\vec{x},t)}{\partial t} = D\nabla^2 n(\vec{x},t) - \vec{v}_{\text{conv}}\cdot\nabla n(\vec{x},t)$$
 <span class="eq-number">(42)</span>
 </div>
 
@@ -436,10 +436,10 @@ $$\langle\vec{x}\cdot\vec{v}\rangle = \frac{m}{\mu}\langle\vec{v}^2\rangle\left(
 
 <div class="step"><div class="step-label">Step 3</div>
 <p>Next use that</p>
-$$\frac{d}{dt}\langle\vec{x}^{\,2}\rangle = 2\langle\vec{x}\cdot\vec{v}\rangle = \frac{m}{\mu}\langle\vec{v}^2\rangle$$
+$$\frac{d}{dt}\langle\vec{x}^{\,2}\rangle = 2\langle\vec{x}\cdot\vec{v}\rangle = \frac{2m}{\mu}\langle\vec{v}^2\rangle$$
 <span class="eq-number">(48)</span>
 <p>This says that the displacement-squared grows linearly with time, characteristic of a random walk:</p>
-$$\langle\vec{x}^{\,2}\rangle = \frac{m}{\mu}\langle\vec{v}^2\rangle\, t$$
+$$\langle\vec{x}^{\,2}\rangle = \frac{2m}{\mu}\langle\vec{v}^2\rangle\, t$$
 <span class="eq-number">(49)</span>
 </div>
 
