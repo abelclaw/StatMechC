@@ -18158,9 +18158,6 @@ function initCh14Vis() {
       ctxOE.fillStyle = COLORS.yellow; ctxOE.font = '14px Inter, system-ui, sans-serif'; ctxOE.textAlign = 'center';
       ctxOE.fillText(sym + '  (Z = ' + Z + ')', zPx, oy - 10);
 
-      // --- Title ---
-      ctxOE.fillStyle = COLORS.text; ctxOE.font = '15px Inter, system-ui, sans-serif'; ctxOE.textAlign = 'left';
-      ctxOE.fillText('Orbital Energies vs Atomic Number', ox + 5, oy - 10);
 
       // --- Legend ---
       const lx = ox + pw - 140, ly = oy + 10;
