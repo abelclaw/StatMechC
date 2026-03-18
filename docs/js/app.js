@@ -26249,7 +26249,7 @@ function initCh15Vis() {
     const zoomLabel = document.getElementById('size-zoom-label');
 
     const stars = [
-      {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:450},
+      {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:44},
       {name:'Stephenson 2-18',R:2150,T:3200, type:'M6Ia',  cat:'Hypergiant'},
       {name:'WOH G64',    R:1540, T:3400, type:'M5I',    cat:'Hypergiant'},
       {name:'UY Scuti',   R:755,  T:3365, type:'M4Ia',   cat:'Hypergiant'},
