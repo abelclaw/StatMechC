@@ -23522,7 +23522,7 @@ function initCh14Vis() {
     }
 
     // ---- NOT GATE: switch → base resistor → NPN → LED inverts ----
-    function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); bbDesc('<b>LED Circuit.</b> 9V battery \u2192 470\u03A9 resistor \u2192 LED \u2192 ground. The resistor limits current so the LED doesn\u2019t burn out. Click the resistor to change its value and see the effect.'); }
+    function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); bbDesc('<b>LED Circuit.</b> Current flows from the + rail through the red wire to the 470\u03A9 resistor (row a, cols 5\u201310), then through the orange wire to the LED (row a, cols 15\u201320), and back to the \u2013 rail through the blue wire. The resistor limits current so the LED doesn\u2019t burn out. <b>Hover over the resistor to see the current</b>, then click it to change the value.'); }
     function bbPresetSwitch() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
@@ -23531,7 +23531,7 @@ function initCh14Vis() {
       bbAddPart('RESISTOR',[{row:'b',col:10},{row:'b',col:15}],{value:470});
       bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]);
       bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>Switch Circuit.</b> Same as the LED circuit but with a switch. Click the switch to open/close it and turn the LED on/off.');
+      bbRunSim(); bbDesc('<b>Switch Circuit \u2014 click the switch!</b> Same path as the LED circuit, but with a switch (row a, cols 5\u201310) in series. When the switch is open, the circuit is broken and no current flows. <b>Click the switch to close it</b> and watch the LED light up and current start flowing.');
     }
 
     function bbPresetNOT() {
@@ -23553,7 +23553,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:10}],{value:10000});
       bbAddPart('WIRE',[{row:'c',col:10},{row:'h',col:16}],{color:'#43a047'}); // to base
-      bbRunSim(); bbDesc('<b>NOT Gate (Inverter) \u2014 click the switch!</b><br><br>This is the transistor inverter from section 14.5.1. Read the circuit left to right:<br>\u2022 <b>Input</b> (left): switch \u2192 10k\u03A9 resistor \u2192 transistor base (green wire).<br>\u2022 <b>Output</b> (top): 9V \u2192 1k\u03A9 pull-up resistor \u2192 LED \u2192 ground.<br>\u2022 <b>Transistor</b> (bottom): collector connected to the output node (orange wire), emitter to ground (blue wire).<br><br><b>Switch OFF:</b> No current to the base \u2192 transistor OFF \u2192 current has no path except through the LED \u2192 <b>LED ON</b>.<br><b>Switch ON:</b> Current flows into the base \u2192 transistor ON \u2192 shorts the output to ground \u2192 current bypasses the LED \u2192 <b>LED OFF</b>.<br><br>Input ON \u2192 Output OFF. That\u2019s inversion!<br><br><b>Why not just use a switch?</b> Because the transistor is a switch controlled by an <em>electrical signal</em>, not your finger. The input is a tiny current (0.8mA through 10k\u03A9) that controls a much larger output current (9mA through 1k\u03A9). And crucially, you can chain them: the output of one NOT gate can be the input to the next. That\u2019s how you get from transistors to computers.');
+      bbRunSim(); bbDesc('<b>NOT Gate (Inverter) \u2014 click the switch!</b><br><br>This is the transistor inverter from section 14.5.1. Read the circuit left to right:<br>\u2022 <b>Input</b> (left): switch (row a, cols 3\u20137) \u2192 10k\u03A9 resistor (row b, cols 7\u201310) \u2192 transistor base (green wire).<br>\u2022 <b>Output</b> (top): 9V \u2192 1k\u03A9 resistor (row a, cols 12\u201315) \u2192 LED (row b, cols 15\u201319) \u2192 ground.<br>\u2022 <b>Transistor</b> (bottom): collector connected to the output node (orange wire), emitter to ground (blue wire).<br><br><b>Switch OFF:</b> No current to the base \u2192 transistor OFF \u2192 current has no path except through the LED \u2192 <b>LED ON</b>.<br><b>Switch ON:</b> Current flows into the base \u2192 transistor ON \u2192 shorts the output to ground \u2192 current bypasses the LED \u2192 <b>LED OFF</b>.<br><br>Input ON \u2192 Output OFF. That\u2019s inversion!<br><br><b>Why not just use a switch?</b> Because the transistor is a switch controlled by an <em>electrical signal</em>, not your finger. The input is a tiny current (0.8mA through 10k\u03A9) that controls a much larger output current (9mA through 1k\u03A9). And crucially, you can chain them: the output of one NOT gate can be the input to the next. That\u2019s how you get from transistors to computers.');
     }
 
     // ---- NAND GATE: two NPN in series, pull-up resistor ----
@@ -23584,7 +23584,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:24},{row:'a',col:27}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:27},{row:'b',col:29}],{value:10000});
       bbAddPart('WIRE',[{row:'c',col:29},{row:'h',col:5}],{color:'#8e24aa'});
-      bbRunSim(); bbDesc('<b>NAND Gate \u2014 try both switches!</b><br><br>Two transistors stacked in series. Current can only flow through both to ground if <em>both</em> are turned on. The LED shows the output:<br><br>\u2022 Both switches OFF \u2192 LED ON<br>\u2022 Switch A only \u2192 LED ON<br>\u2022 Switch B only \u2192 LED ON<br>\u2022 <b>Both switches ON \u2192 LED OFF</b><br><br>The LED turns off <em>only</em> when both inputs are on. That\u2019s a NAND gate \u2014 it\u2019s the opposite of AND. Every computer chip is built from gates like this.');
+      bbRunSim(); bbDesc('<b>NAND Gate \u2014 try both switches (row a)!</b><br><br>Two transistors stacked in series. Current can only flow through both to ground if <em>both</em> are turned on. The LED shows the output:<br><br>\u2022 Both switches OFF \u2192 LED ON<br>\u2022 Switch A only \u2192 LED ON<br>\u2022 Switch B only \u2192 LED ON<br>\u2022 <b>Both switches ON \u2192 LED OFF</b><br><br>The LED turns off <em>only</em> when both inputs are on. That\u2019s a NAND gate \u2014 it\u2019s the opposite of AND. Every computer chip is built from gates like this.');
     }
 
     // ---- RC CHARGE/DISCHARGE: switch charges cap, LED shows discharge ----
@@ -23609,7 +23609,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:12}],{value:100000});
       bbAddPart('WIRE',[{row:'c',col:12},{row:'h',col:23}],{color:'#8e24aa'}); // to Q1 base
-      bbRunSim(); bbDesc('<b>Darlington Pair \u2014 click the switch!</b><br><br>Two transistors working together as a team. The first transistor\u2019s output feeds directly into the second transistor\u2019s input, so the amplification multiplies: if each transistor amplifies 100\u00D7, the pair amplifies 10,000\u00D7.<br><br>The input goes through a <em>huge</em> 100k\u03A9 resistor (purple wire), which only lets a tiny trickle of current through (0.08mA). Normally that\u2019s far too little to light an LED. But the Darlington pair amplifies it enough to drive the LED brightly.<br><br><b>Switch OFF:</b> No input current \u2192 both transistors OFF \u2192 LED OFF.<br><b>Switch ON:</b> Tiny input current \u2192 first transistor amplifies it \u2192 second transistor amplifies it again \u2192 LED ON.<br><br>This is why transistors changed the world: they turn whisper-quiet signals into powerful ones.');
+      bbRunSim(); bbDesc('<b>Darlington Pair \u2014 click the switch!</b><br><br>Two transistors working together as a team. The first transistor\u2019s output feeds directly into the second transistor\u2019s input, so the amplification multiplies: if each transistor amplifies 100\u00D7, the pair amplifies 10,000\u00D7.<br><br>The input goes through a <em>huge</em> 100k\u03A9 resistor (row b, cols 7\u201312, purple wire), which only lets a tiny trickle of current through (0.08mA). Normally that\u2019s far too little to light an LED. But the Darlington pair amplifies it enough to drive the LED brightly.<br><br><b>Switch OFF:</b> No input current \u2192 both transistors OFF \u2192 LED OFF.<br><b>Switch ON:</b> Tiny input current \u2192 first transistor amplifies it \u2192 second transistor amplifies it again \u2192 LED ON.<br><br>This is why transistors changed the world: they turn whisper-quiet signals into powerful ones.');
     }
 
     // ---- VOLTAGE DIVIDER: two resistors split VCC, LED shows midpoint ----
@@ -23636,13 +23636,35 @@ function initCh14Vis() {
       bbAddPart('LED',[{row:'i',col:18},{row:'i',col:22}]);
       bbAddPart('RESISTOR',[{row:'j',col:22},{row:'j',col:26}],{value:470});
       bbAddPart('WIRE',[{row:'i',col:26},{row:'r-b',col:26}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>Emitter Follower (Voltage Buffer)</b><br><br>The input voltage is set to about 4.5V by two equal resistors splitting the 9V supply. The transistor\u2019s output (at the emitter) copies the input but shifted down by 0.7V \u2014 the unavoidable voltage drop across the base-emitter junction.<br><br><b>Hover over the base and emitter holes to compare the voltages.</b> You should see the emitter is about 0.7V lower than the base.<br><br>Why bother? The input side can only provide a trickle of current (through 10k\u03A9 resistors). But the emitter side can supply much more current (through only 1k\u03A9) to drive things like LEDs or motors. The transistor acts like a power booster that copies the voltage while multiplying the available current.');
+      bbRunSim(); bbDesc('<b>Emitter Follower (Voltage Buffer)</b><br><br>The input voltage is set to about 4.5V by two equal resistors splitting the 9V supply. The transistor\u2019s output (at the emitter) copies the input but shifted down by 0.7V \u2014 the unavoidable voltage drop across the base-emitter junction.<br><br><b>Hover over the base (row f, col 23) and emitter (row f, col 22) to compare voltages.</b> You should see the emitter is about 0.7V lower than the base.<br><br>Why bother? The input side can only provide a trickle of current (through 10k\u03A9 resistors). But the emitter side can supply much more current (through only 1k\u03A9) to drive things like LEDs or motors. The transistor acts like a power booster that copies the voltage while multiplying the available current.');
+    }
+
+    // ---- AMPLIFIER: shows current gain of a single transistor ----
+    function bbPresetAmplifier() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'});
+      // Collector circuit: VCC → R_collector(470Ω, cols 14-18) → LED → transistor collector
+      bbAddPart('WIRE',[{row:'r+t',col:14},{row:'a',col:14}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:14},{row:'a',col:18}],{value:470});
+      bbAddPart('LED',[{row:'b',col:18},{row:'b',col:22}]);
+      // Transistor: E=col22, B=col23, C=col24
+      bbAddPart('NPN',[{row:'f',col:22},{row:'f',col:23},{row:'f',col:24}]);
+      bbAddPart('WIRE',[{row:'d',col:22},{row:'g',col:24}],{color:'#ff9800'}); // LED cathode → collector
+      bbAddPart('WIRE',[{row:'g',col:22},{row:'r-b',col:22}],{color:'#1e88e5'}); // emitter → GND
+      // Base circuit: VCC → switch → R_base(47kΩ, cols 4-10) → transistor base
+      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:true});
+      bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:12}],{value:47000});
+      bbAddPart('WIRE',[{row:'c',col:12},{row:'h',col:23}],{color:'#43a047'}); // → base
+      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 see the current gain!</b><br><br>This circuit shows how a transistor amplifies current. There are two paths:<br><br>\u2022 <b>Input (left, green wire):</b> 9V \u2192 switch \u2192 47k\u03A9 resistor (row b, cols 6\u201312) \u2192 transistor base. This is a <em>tiny</em> current.<br>\u2022 <b>Output (top, orange wire):</b> 9V \u2192 470\u03A9 resistor (row a, cols 14\u201318) \u2192 LED \u2192 transistor collector. This is a <em>large</em> current.<br><br><b>Hover over the 47k\u03A9 resistor</b> (row b, left side) to see the input current: about 0.18mA.<br><b>Hover over the 470\u03A9 resistor</b> (row a, right side) to see the output current: about 15mA.<br><br>The output current is <b>~100\u00D7 larger</b> than the input \u2014 that\u2019s the transistor\u2019s current gain (\u03B2). A tiny trickle into the base controls a flood through the collector. Click the switch to turn it off and watch both currents drop to zero.');
     }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
     document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
     document.getElementById('bb-preset-not')?.addEventListener('click', bbPresetNOT);
     document.getElementById('bb-preset-nand')?.addEventListener('click', bbPresetNAND);
+    document.getElementById('bb-preset-amp')?.addEventListener('click', bbPresetAmplifier);
     document.getElementById('bb-preset-darlington')?.addEventListener('click', bbPresetDarlington);
     document.getElementById('bb-preset-astable')?.addEventListener('click', bbPresetAstable);
     document.getElementById('bb-preset-follower')?.addEventListener('click', bbPresetFollower);
