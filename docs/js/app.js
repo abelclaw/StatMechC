@@ -23468,47 +23468,47 @@ function initCh14Vis() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
       bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
-      // Pull-up: VCC → R(1kΩ) → output node (col 15)
+      // Pull-up: VCC -> R(1k) -> output node (col 15)
       bbAddPart('WIRE',[{row:'r+t',col:12},{row:'a',col:12}],{color:'#e53935'});
       bbAddPart('RESISTOR',[{row:'a',col:12},{row:'a',col:15}],{value:1000});
       // Output LED
       bbAddPart('LED',[{row:'b',col:15},{row:'b',col:19}]);
       bbAddPart('WIRE',[{row:'c',col:19},{row:'r-t',col:19}],{color:'#1e88e5'});
-      // Q1 (top): collector at output, emitter to Q2 collector
-      bbAddPart('NPN',[{row:'f',col:15},{row:'f',col:16},{row:'f',col:17}]);
-      bbAddPart('WIRE',[{row:'d',col:15},{row:'g',col:17}],{color:'#ff9800'}); // output to Q1 collector
-      // Q2 (bottom): collector = Q1 emitter, emitter to GND
-      bbAddPart('NPN',[{row:'f',col:20},{row:'f',col:21},{row:'f',col:22}]);
-      bbAddPart('WIRE',[{row:'g',col:15},{row:'g',col:22}],{color:'#ff9800'}); // Q1 emitter to Q2 collector
-      bbAddPart('WIRE',[{row:'g',col:20},{row:'r-b',col:20}],{color:'#1e88e5'}); // Q2 emitter to GND
-      // Switch A → base resistor → Q1 base
-      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
-      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:false});
-      bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:9}],{value:10000});
-      bbAddPart('WIRE',[{row:'c',col:9},{row:'h',col:16}],{color:'#43a047'}); // to Q1 base
-      // Switch B → base resistor → Q2 base
-      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:24}],{color:'#e53935'});
+      // Q1: E=col9, B=col10, C=col11
+      bbAddPart('NPN',[{row:'f',col:9},{row:'f',col:10},{row:'f',col:11}]);
+      bbAddPart('WIRE',[{row:'d',col:15},{row:'g',col:11}],{color:'#ff9800'});
+      // Q2: E=col4, B=col5, C=col6
+      bbAddPart('NPN',[{row:'f',col:4},{row:'f',col:5},{row:'f',col:6}]);
+      bbAddPart('WIRE',[{row:'g',col:9},{row:'g',col:6}],{color:'#ff9800'});
+      bbAddPart('WIRE',[{row:'g',col:4},{row:'r-b',col:4}],{color:'#1e88e5'});
+      // Switch A -> 10k -> Q1 base
+      bbAddPart('WIRE',[{row:'r+t',col:17},{row:'a',col:17}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:17},{row:'a',col:20}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:20},{row:'b',col:23}],{value:10000});
+      bbAddPart('WIRE',[{row:'c',col:23},{row:'h',col:10}],{color:'#43a047'});
+      // Switch B -> 10k -> Q2 base
+      bbAddPart('WIRE',[{row:'r+t',col:24},{row:'a',col:24}],{color:'#e53935'});
       bbAddPart('SWITCH',[{row:'a',col:24},{row:'a',col:27}],{on:false});
-      bbAddPart('RESISTOR',[{row:'b',col:24},{row:'b',col:22}],{value:10000});
-      bbAddPart('WIRE',[{row:'c',col:22},{row:'h',col:21}],{color:'#8e24aa'}); // to Q2 base
+      bbAddPart('RESISTOR',[{row:'b',col:27},{row:'b',col:29}],{value:10000});
+      bbAddPart('WIRE',[{row:'c',col:29},{row:'h',col:5}],{color:'#8e24aa'});
       bbRunSim();
     }
 
-    // ---- RC CHARGE/DISCHARGE: switch charges cap, release discharges through LED ----
+    // ---- RC CHARGE/DISCHARGE: switch charges cap, LED shows discharge ----
     function bbPresetRC() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
       bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
-      // Charging path: VCC → switch → R(1kΩ) → capacitor → GND
+      // Charging: VCC -> switch -> R(1k) -> cap+ (col 13) -> cap- (col 18) -> GND
       bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
       bbAddPart('SWITCH',[{row:'a',col:4},{row:'a',col:8}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:8},{row:'b',col:13}],{value:1000});
       bbAddPart('CAPACITOR',[{row:'a',col:13},{row:'a',col:18}],{value:470e-6});
       bbAddPart('WIRE',[{row:'b',col:18},{row:'r-t',col:18}],{color:'#1e88e5'});
-      // Discharge path: cap top → R(470Ω) → LED → GND
-      bbAddPart('RESISTOR',[{row:'c',col:13},{row:'c',col:18}],{value:470});
-      bbAddPart('LED',[{row:'d',col:18},{row:'d',col:22}]);
-      bbAddPart('WIRE',[{row:'e',col:22},{row:'r-t',col:22}],{color:'#1e88e5'});
+      // Discharge: cap+ (col 13) -> R(470) -> LED -> GND
+      bbAddPart('RESISTOR',[{row:'d',col:13},{row:'d',col:18}],{value:470});
+      bbAddPart('LED',[{row:'e',col:18},{row:'e',col:22}]);
+      bbAddPart('WIRE',[{row:'d',col:22},{row:'r-t',col:22}],{color:'#1e88e5'});
       bbRunSim();
     }
 
@@ -23538,6 +23538,48 @@ function initCh14Vis() {
       bbRunSim();
     }
 
+    // ---- VOLTAGE DIVIDER: two resistors split VCC, LED shows midpoint ----
+    function bbPresetDivider() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      // R1: VCC -> col 10 (top resistor)
+      bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:1000});
+      // R2: col 10 -> GND (bottom resistor)
+      bbAddPart('RESISTOR',[{row:'b',col:10},{row:'b',col:15}],{value:1000});
+      bbAddPart('WIRE',[{row:'c',col:15},{row:'r-t',col:15}],{color:'#1e88e5'});
+      // LED from midpoint to GND (shows voltage at divider output)
+      bbAddPart('LED',[{row:'c',col:10},{row:'c',col:20}]);
+      bbAddPart('RESISTOR',[{row:'d',col:20},{row:'d',col:24}],{value:470});
+      bbAddPart('WIRE',[{row:'e',col:24},{row:'r-t',col:24}],{color:'#1e88e5'});
+      bbRunSim();
+    }
+
+    // ---- EMITTER FOLLOWER: NPN voltage follower, output tracks input minus VBE ----
+    function bbPresetFollower() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
+      // Input voltage divider: VCC -> R1(10k) -> base -> R2(10k) -> GND
+      // This sets base at ~4.5V
+      bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:4},{row:'a',col:9}],{value:10000});
+      bbAddPart('RESISTOR',[{row:'b',col:9},{row:'b',col:14}],{value:10000});
+      bbAddPart('WIRE',[{row:'c',col:14},{row:'r-t',col:14}],{color:'#1e88e5'});
+      // NPN: base at col 9, collector to VCC, emitter is output
+      bbAddPart('NPN',[{row:'f',col:18},{row:'f',col:19},{row:'f',col:20}]);
+      bbAddPart('WIRE',[{row:'c',col:9},{row:'h',col:19}],{color:'#43a047'}); // divider to base
+      bbAddPart('WIRE',[{row:'r+b',col:20},{row:'g',col:20}],{color:'#e53935'}); // collector to VCC
+      // Emitter load: R(1k) to GND
+      bbAddPart('RESISTOR',[{row:'h',col:18},{row:'h',col:14}],{value:1000});
+      bbAddPart('WIRE',[{row:'i',col:14},{row:'r-b',col:14}],{color:'#1e88e5'});
+      // Output LED from emitter to GND (shows Vout = Vbase - 0.7V)
+      bbAddPart('LED',[{row:'i',col:18},{row:'i',col:22}]);
+      bbAddPart('RESISTOR',[{row:'j',col:22},{row:'j',col:26}],{value:470});
+      bbAddPart('WIRE',[{row:'i',col:26},{row:'r-b',col:26}],{color:'#1e88e5'});
+      bbRunSim();
+    }
+
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
     document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
     document.getElementById('bb-preset-not')?.addEventListener('click', bbPresetNOT);
@@ -23545,6 +23587,8 @@ function initCh14Vis() {
     document.getElementById('bb-preset-rc')?.addEventListener('click', bbPresetRC);
     document.getElementById('bb-preset-darlington')?.addEventListener('click', bbPresetDarlington);
     document.getElementById('bb-preset-astable')?.addEventListener('click', bbPresetAstable);
+    document.getElementById('bb-preset-divider')?.addEventListener('click', bbPresetDivider);
+    document.getElementById('bb-preset-follower')?.addEventListener('click', bbPresetFollower);
 
     var bbAnimRunning = false;
     function bbAnimate() {
