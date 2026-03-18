@@ -26147,8 +26147,9 @@ function initCh15Vis() {
       {name:'Sun',        R:1.0,  T:5772, type:'G2V',    cat:'Main Seq.'},
       {name:'α Cen B',    R:0.86, T:5260, type:'K1V',    cat:'Main Seq.'},
       {name:'Proxima Cen',R:0.15, T:3042, type:'M5V',    cat:'Red Dwarf'},
+      {name:'Jupiter',    R:0.1005,T:110, type:'',       cat:'Planet'},
+      {name:'Earth',      R:0.009, T:255, type:'',       cat:'Planet'},
     ];
-    const earthR = 0.009;
 
     // Unicode superscript digits for exponents
     function superscript(n) {
@@ -26350,6 +26351,27 @@ function initCh15Vis() {
       }
     }
 
+    // --- Draw Jupiter ---
+    function drawJupiter(sx, sy, rPx) {
+      const jr = Math.max(rPx, 1.2);
+      const jg = ctxS.createRadialGradient(sx - jr * 0.2, sy - jr * 0.2, jr * 0.1, sx, sy, jr);
+      jg.addColorStop(0, '#e8d5a3');
+      jg.addColorStop(0.5, '#c4a265');
+      jg.addColorStop(1, '#8b6914');
+      ctxS.fillStyle = jg;
+      ctxS.beginPath(); ctxS.arc(sx, sy, jr, 0, 2 * Math.PI); ctxS.fill();
+      // Bands
+      if (jr > 6) {
+        ctxS.save(); ctxS.beginPath(); ctxS.arc(sx, sy, jr, 0, 2 * Math.PI); ctxS.clip();
+        const bands = [-0.5, -0.2, 0.15, 0.45];
+        for (const b of bands) {
+          ctxS.fillStyle = 'rgba(139,90,20,0.3)';
+          ctxS.fillRect(sx - jr, sy + b * jr, jr * 2, jr * 0.12);
+        }
+        ctxS.restore();
+      }
+    }
+
     // --- Main draw ---
     function drawSizes() {
       const z = parseFloat(zoomSlider?.value || 0);
@@ -26398,7 +26420,9 @@ function initCh15Vis() {
         if (v.sy + v.rPx < -50 || v.sy - v.rPx > HS + 50) continue;
 
         const isHover = hoverStar === v.i;
-        drawStar(v.s, v.sx, v.sy, v.rPx, isHover);
+        if (v.s.name === 'Earth') drawEarth(v.sx, v.sy, v.rPx);
+        else if (v.s.name === 'Jupiter') drawJupiter(v.sx, v.sy, v.rPx);
+        else drawStar(v.s, v.sx, v.sy, v.rPx, isHover);
 
         // Labels above the star
         const labelAbove = v.sy - v.rPx - 10;
@@ -26445,22 +26469,6 @@ function initCh15Vis() {
             ctxS.fillText(sunText, textLeft + sizeW + 1, labelBelow + 2);
             ctxS.textAlign = 'center';
           }
-        }
-      }
-
-      // Draw Earth next to Sun if Sun is big enough
-      const sunIdx = stars.findIndex(s => s.name === 'Sun');
-      const sunRPx = stars[sunIdx].R * scale;
-      if (sunRPx > 6) {
-        const [sunSX, sunSY] = worldToScreen(worldX[sunIdx], worldY, camX, scale);
-        const earthPx = earthR * scale;
-        const esx = sunSX + sunRPx + Math.max(earthPx, 2) + 5;
-        const esy = sunSY;
-        if (esx > 0 && esx < WS + 20) {
-          drawEarth(esx, esy, earthPx);
-          ctxS.fillStyle = '#7ec8e3'; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
-          const eLabelY = esy - Math.max(earthPx, 2) - 5;
-          if (eLabelY > 8) ctxS.fillText('Earth', esx, eLabelY);
         }
       }
 
