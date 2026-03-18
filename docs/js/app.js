@@ -17687,6 +17687,17 @@ function initCh14Vis() {
         { l: 3, m: 1, label: 'f_{xz²}' },
         { l: 3, m: 2, label: 'f_{z(x²-y²)}' },
         { l: 3, m: 3, label: 'f_{x(x²-3y²)}' },
+      ],
+      'g': [
+        { l: 4, m: -4, label: 'g, m=−4' },
+        { l: 4, m: -3, label: 'g, m=−3' },
+        { l: 4, m: -2, label: 'g, m=−2' },
+        { l: 4, m: -1, label: 'g, m=−1' },
+        { l: 4, m: 0, label: 'g, m=0' },
+        { l: 4, m: 1, label: 'g, m=1' },
+        { l: 4, m: 2, label: 'g, m=2' },
+        { l: 4, m: 3, label: 'g, m=3' },
+        { l: 4, m: 4, label: 'g, m=4' },
       ]
     };
 
