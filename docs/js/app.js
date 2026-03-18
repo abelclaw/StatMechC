@@ -13507,7 +13507,7 @@ function initCh11Vis() {
 
     // --- Particles ---
     const LB_MAX_INSIDE = 60;
-    const LB_MAX_OUTSIDE = 120;
+    const LB_MAX_OUTSIDE = 400;
     const insideP = [];
     const outsideP = [];
 
@@ -13555,15 +13555,28 @@ function initCh11Vis() {
             // Escape through aperture
             const speed = Math.hypot(p.vx, p.vy);
             const escAng = (Math.random() - 0.5) * Math.PI;
+            const spd2 = 1.4 + Math.random() * 1.2;
             outsideP.push({
               x: p.x, y: aperY - 2,
-              vx: Math.sin(escAng) * speed, vy: -Math.cos(escAng) * speed,
+              vx: Math.sin(escAng) * spd2, vy: -Math.cos(escAng) * spd2,
               alive: true, age: 0, hit: false,
             });
             const sp = spawnInside();
             p.x = sp.x; p.y = sp.y; p.vx = sp.vx; p.vy = sp.vy;
           }
         }
+      }
+      // Direct emission pump: firehose of photons from aperture
+      for (let _e = 0; _e < 5; _e++) {
+        if (outsideP.length >= LB_MAX_OUTSIDE) break;
+        const ex = aperL + Math.random() * (aperR - aperL);
+        const escAng = (Math.random() - 0.5) * Math.PI;
+        const spd = 1.4 + Math.random() * 1.2;
+        outsideP.push({
+          x: ex, y: aperY - 2,
+          vx: Math.sin(escAng) * spd, vy: -Math.cos(escAng) * spd,
+          alive: true, age: 0, hit: false,
+        });
       }
       while (outsideP.length > LB_MAX_OUTSIDE) outsideP.shift();
 
@@ -13573,7 +13586,7 @@ function initCh11Vis() {
         if (!p.alive) continue;
         p.x += p.vx; p.y += p.vy; p.age++;
         if (!p.hit && ptSegDist(p.x, p.y, d1x, d1y, d2x, d2y) < 4) { p.hit = true; p.alive = false; }
-        if (p.x < -10 || p.x > WL + 10 || p.y < -30 || p.age > 300) p.alive = false;
+        if (p.x < -10 || p.x > WL + 10 || p.y < -30 || p.age > 400) p.alive = false;
       }
       for (let i = outsideP.length - 1; i >= 0; i--) {
         if (!outsideP[i].alive && outsideP[i].age > (outsideP[i].hit ? 18 : 0)) outsideP.splice(i, 1);
@@ -16041,7 +16054,7 @@ function initCh12Vis() {
   }
 
 
-  // ----- Exact vs Approximate Ground State (with real numerical computation) -----
+  // ----- Exact vs Approximate Ground State (redesigned) -----
   const cN1 = document.getElementById('vis-n1-compare');
   if (cN1) {
     const { ctx: ctxN1, W: WN1, H: HN1 } = setupCanvas(cN1);
