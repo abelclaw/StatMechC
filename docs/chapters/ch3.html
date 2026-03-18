@@ -6,7 +6,7 @@
 
 <p>Now we have a little bit of sense of how things simplify when large numbers of events are sampled from a probability distribution. The next thing to do is apply this simplification to general physical systems. The key observation, which allows statistical mechanics to be useful at all, is that systems <span class="tooltip-trigger">equilibrate<span class="tooltip-content">The process by which a system's macroscopic properties stop changing over time, even though microscopic dynamics continue.</span></span>. This means that at some point the macroscopic properties of the system stop changing. Note that equilibrium does not mean the system is static: a gas at fixed temperature still has moving molecules, but its macroscopic properties, pressure, temperature, etc. are not changing. From a microscopic perspective, the probability distribution of the states does not change. In this lecture, we will show that probabilities eventually stop changing.</p>
 
-<p>It is not hard to build intuition for equilibration of probabilities. For example, take a deck of cards and pick two consecutive cards from somewhere in the middle. What is the probability that the cards have the same suit after the deck has been shuffled $t$ times? When you first open a new deck, it is all in order, so the chance that the two cards have the same suit is pretty high, $P(0) \approx 1$. Then you shuffle it. After shuffling once, the probability of two suited cards in a row is lower than before, $P(t = 1) \lesssim 1$ but probably still pretty high since one shuffle doesn't mix them much. Eventually, after shuffling a bunch of times, the probability of finding two consecutive suited cards is going to stop changing ($\lim_{t\to\infty} P(t) = \frac{12}{52}$). Note that in equilibrium the cards change with each shuffle, but the probabilities don't: after each shuffle the identity of the top card is not constant, but the probability that the top card is the ace of spades is constant, $P = \frac{1}{52}$.</p>
+<p>It is not hard to build intuition for equilibration of probabilities. For example, take a deck of cards and pick two consecutive cards from somewhere in the middle. What is the probability that the cards have the same suit after the deck has been shuffled $t$ times? When you first open a new deck, it is all in order, so the chance that the two cards have the same suit is pretty high, $P(0) \approx 1$. Then you shuffle it. After shuffling once, the probability of two suited cards in a row is lower than before, $P(t = 1) \lesssim 1$ but probably still pretty high since one shuffle doesn't mix them much. Eventually, after shuffling a bunch of times, the probability of finding two consecutive suited cards is going to stop changing ($\lim_{t\to\infty} P(t) = \frac{12}{51}$). Note that in equilibrium the cards change with each shuffle, but the probabilities don't: after each shuffle the identity of the top card is not constant, but the probability that the top card is the ace of spades is constant, $P = \frac{1}{52}$.</p>
 
 <p>One of the most important properties of equilibrium is that in equilibrium, all possible states are equally likely. This is known as the <span class="tooltip-trigger">postulate of equal a priori probabilities<span class="tooltip-content">The fundamental postulate that in equilibrium, all accessible microstates of a system are equally likely. This is justified by the Boltzmann H-theorem.</span></span>. For example, with a shuffled deck, the chance of the top card being any of the 52 cards is the same $P = \frac{1}{52}$.</p>
 
@@ -41,7 +41,7 @@
 
 <p>By working out the geometry, we see that $b$, $R$ and $\theta$ are related by:</p>
 <div class="equation">
-$$\frac{b}{2} = R\sin\frac{\theta}{2}$$
+$$\frac{b}{2} = R\cos\frac{\theta}{2}$$
 <span class="eq-number">(2)</span>
 </div>
 
@@ -59,11 +59,11 @@ $$\frac{b}{2} = R\sin\frac{\theta}{2}$$
 
 <p>Let us follow one ball. It first collides with an impact parameter $b_1$ deflecting at an angle $\theta_1$, then hits another ball, with impact parameter $b_2$ at angle $\theta_2$ and so on. We are interested in how the trajectory of this molecule changes upon a really weak force. If the force changes the impact parameter of the first collision by some small $\Delta b_1$, then after the first collision, the scattering angle will change by $\Delta\theta_1$ where, by Taylor expanding around $\theta_1$ we get</p>
 <div class="equation">
-$$\frac{b + \Delta b_1}{2} = R\sin\!\left(\frac{\theta_1 + \Delta\theta_1}{2}\right) \approx R\sin\frac{\theta_1}{2} + R\frac{\Delta\theta_1}{2}\cos\frac{\theta_1}{2} + \cdots$$
+$$\frac{b + \Delta b_1}{2} = R\cos\!\left(\frac{\theta_1 + \Delta\theta_1}{2}\right) \approx R\cos\frac{\theta_1}{2} - R\frac{\Delta\theta_1}{2}\sin\frac{\theta_1}{2} + \cdots$$
 <span class="eq-number">(3)</span>
 </div>
 
-<p>Assuming $\frac{\Delta b_1}{R} \ll 1$ we can then solve for $\Delta\theta_1 \approx \frac{2\Delta b_1}{R\cos\theta_1}$. Let us not assume anything special about $\theta_1$, so that $\cos\theta_1$ is not unusually big or small, and therefore $\Delta\theta_1 \approx \frac{\Delta b_1}{R}$ up to some number of order 1. This makes sense: if $\Delta b_1$ is small, then $\Delta\theta_1$ is small too.</p>
+<p>Assuming $\frac{\Delta b_1}{R} \ll 1$ we can then solve for $\Delta\theta_1 \approx \frac{\Delta b_1}{R\sin(\theta_1/2)}$. Let us not assume anything special about $\theta_1$, so that $\sin(\theta_1/2)$ is not unusually big or small, and therefore $\Delta\theta_1 \approx \frac{\Delta b_1}{R}$ up to some number of order 1. This makes sense: if $\Delta b_1$ is small, then $\Delta\theta_1$ is small too.</p>
 
 <p>However, after the first collision, the sphere moves a distance $\ell$ to the next collision. Then the impact parameter for the second collision changes by $\Delta b_2 = \ell\,\Delta\theta_1$. This implies $\Delta\theta_2 \approx \frac{\Delta b_2}{R} = \frac{\ell}{R}\Delta\theta_1$. In this way, the angle change has grown by a factor of $\frac{\ell}{R}$. After $N$ collisions,</p>
 <div class="equation key-result">
@@ -77,9 +77,9 @@ $$\Delta\theta_N \approx \left(\frac{\ell}{R}\right)^N \Delta\theta_1$$
 <div class="box-title">Example: Effect of Waving Your Arm</div>
 <p>Displacing your arm by distance $\Delta r$ at $r = 10\,\text{km}$ away changes the gravitational force on an atom by</p>
 $$\Delta F = \frac{d}{dr}\left(\frac{G\, m_{\text{atom}}\, m_{\text{arm}}}{r^2}\right)\Delta r \approx 10^{-50}\,\text{N}$$
-<p>This causes an acceleration $a = \frac{\Delta F}{m_{\text{atom}}} = 10^{-23}\,\text{m/s}^2$ on the atom. Over one collision time $\tau \sim 10^{-9}\,\text{s}$, the atom is displaced by $\Delta b_1 = a\tau^2 \approx 10^{-32}\,\text{m}$, giving $\Delta\theta_1 \sim 10^{-22}$. However, after $N$ collisions:</p>
-$$\Delta\theta_N = 10^{-22}\left(\frac{\ell}{R}\right)^N = 10^{-22}(10^3)^N$$
-<p>After only <strong>8 collisions</strong> over $10^{-8}\,\text{s}$, the change in angle is of order 1! This is chaos.</p>
+<p>This causes an acceleration $a = \frac{\Delta F}{m_{\text{atom}}} = 10^{-23}\,\text{m/s}^2$ on the atom. Over one collision time $\tau \sim 10^{-9}\,\text{s}$, the atom is displaced by $\Delta b_1 = \frac{1}{2}a\tau^2 \approx 10^{-41}\,\text{m}$, giving $\Delta\theta_1 \sim 10^{-31}$. However, after $N$ collisions:</p>
+$$\Delta\theta_N = 10^{-31}\left(\frac{\ell}{R}\right)^N = 10^{-31}(10^3)^N$$
+<p>After only <strong>11 collisions</strong> over $10^{-8}\,\text{s}$, the change in angle is of order 1! This is chaos.</p>
 </div>
 
 <div class="info-box example">
@@ -113,7 +113,7 @@ $$\Delta\theta_N = 10^{-22}\left(\frac{\ell}{R}\right)^N = 10^{-22}(10^3)^N$$
 
 <p>Pick randomly one molecule of mass $m_1$ and one of mass $m_2$. Say these two molecules come in to hit each other with incoming velocities $\vec{v}_1$ and $\vec{v}_2$, respectively. If there is no preferred direction in the system, then the velocities are equally likely to point in any direction. Thus the dot product $\vec{v}_1 \cdot \vec{v}_2 = |\vec{v}_1||\vec{v}_2|\cos\theta$ is equally likely to be positive or negative and therefore the expectation value of the dot product of the incoming velocities must be zero:</p>
 <div class="equation">
-$$\langle\vec{v}_1\cdot\vec{v}_2\rangle = \langle|\vec{v}_1|\rangle\langle|\vec{v}_2|\rangle\langle\cos\theta\rangle = \langle|\vec{v}_1|\rangle\langle|\vec{v}_2|\rangle\frac{1}{\pi}\int_0^{\pi}d\theta\,\cos\theta = 0$$
+$$\langle\vec{v}_1\cdot\vec{v}_2\rangle = \langle|\vec{v}_1|\rangle\langle|\vec{v}_2|\rangle\langle\cos\theta\rangle = \langle|\vec{v}_1|\rangle\langle|\vec{v}_2|\rangle\frac{1}{2}\int_0^{\pi}\sin\theta\,\cos\theta\,d\theta = 0$$
 <span class="eq-number">(8)</span>
 </div>
 
@@ -440,7 +440,7 @@ $$\Omega(E) \sim E^{10^{24}}$$
 
 <p>So when you add energy to a system, the number of states grows enormously. For example, say we increased the energy by 0.00001% ($E \to E + 10^{-7}E$). Then the number of new states is</p>
 <div class="equation">
-$$\text{\# new states} = \Omega(E + 10^{-7}E) - \Omega(E) = 10^{-7}\partial_E E^{10^{24}} = 10^{18}\,\Omega(E)$$
+$$\text{\# new states} = \Omega(E + 10^{-7}E) - \Omega(E) = 10^{-7}\partial_E E^{10^{24}} = 10^{17}\,\Omega(E)$$
 <span class="eq-number">(42)</span>
 </div>
 
