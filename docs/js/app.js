@@ -26198,16 +26198,17 @@ function initCh15Vis() {
       }
     }
 
-    // Zoom maps through the star list: at each star's position the scale is set
-    // so that star has a comfortable pixel radius (~100px). Between stars we
-    // log-interpolate scale and linearly interpolate camera position.
+    // Zoom maps through the star list in reverse: zoom=0 starts at the Sun,
+    // sliding right zooms out to progressively larger stars.
     const targetPx = 100;
+    const sunIndex = stars.findIndex(s => s.name === 'Sun');
     function getCamera(z) {
       const n = stars.length;
-      const t = (z / 100) * (n - 1); // 0 → n-1
-      const i = Math.min(Math.floor(t), n - 2);
+      // Reverse: z=0 → last star (Sun end), z=100 → first star (biggest)
+      const tRev = (1 - z / 100) * (n - 1);
+      const i = Math.min(Math.floor(tRev), n - 2);
       const j = i + 1;
-      const frac = t - i;
+      const frac = tRev - i;
       const scaleI = targetPx / stars[i].R;
       const scaleJ = targetPx / stars[j].R;
       const scale = Math.exp(Math.log(scaleI) + frac * (Math.log(scaleJ) - Math.log(scaleI)));
@@ -26530,11 +26531,11 @@ function initCh15Vis() {
         ctxS.fillText(info, tx + 10, ty + 16);
       }
 
-      // Zoom label — show focused star
+      // Zoom label — show focused star (reversed direction)
       if (zoomLabel) {
         const n = stars.length;
-        const t = (z / 100) * (n - 1);
-        const focusIdx = Math.min(Math.round(t), n - 1);
+        const tRev = (1 - z / 100) * (n - 1);
+        const focusIdx = Math.min(Math.round(tRev), n - 1);
         zoomLabel.textContent = ' ' + stars[focusIdx].name;
       }
     }
