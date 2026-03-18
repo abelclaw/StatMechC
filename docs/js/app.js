@@ -13489,33 +13489,47 @@ function initCh11Vis() {
     drawStellar();
   }
 
-  // ----- Lambert's Cosine Law (animated photon simulation) -----
+  // ----- Lambert's Cosine Law (cavity + photon animation) -----
   const cLambert = document.getElementById('vis-lambert');
   if (cLambert) {
     const lam = setupCanvas(cLambert);
     const ctxL = lam.ctx, WL = lam.W, HL = lam.H;
     const lambertSlider = document.getElementById('lambert-theta');
 
-    // Photon particle pool
-    const LB_MAX = 150;
-    const lbPhotons = [];
-    let lbEmitAccum = 0;
-    const LB_EMIT_RATE = 2.0;
+    // --- Cavity geometry ---
+    // Box on the left with an aperture at the top
+    const boxL = 20, boxR = 190, boxT = HL * 0.42, boxB = HL - 30;
+    const boxW = boxR - boxL, boxH = boxB - boxT;
+    const aperL = 78, aperR = 132; // aperture x-range (gap in top wall)
+    const aperCx = (aperL + aperR) / 2, aperY = boxT;
+    const aperHalf = (aperR - aperL) / 2;
 
-    // Layout
-    const lbSurfCx = WL * 0.35, lbSurfY = HL * 0.82;
-    const lbSurfHalf = 60;
-    const lbDetDist = 230, lbDetHalf = 48;
+    // --- Detector geometry ---
+    const detDist = 175; // distance from aperture center to detector
+    const detHalfLen = 40;
 
-    function lbEmit() {
-      const sx = lbSurfCx + (Math.random() - 0.5) * 2 * lbSurfHalf * 0.8;
-      const ang = (Math.random() - 0.5) * Math.PI;
-      const spd = 1.6 + Math.random();
-      return { x: sx, y: lbSurfY, vx: Math.sin(ang) * spd, vy: -Math.cos(ang) * spd, alive: true, age: 0, hit: false };
+    // --- Particles ---
+    const LB_MAX_INSIDE = 50;  // particles bouncing inside
+    const LB_MAX_OUTSIDE = 80; // escaped particles in flight
+    const insideParticles = [];
+    const outsideParticles = [];
+
+    // Initialize cavity particles
+    function spawnInside() {
+      const speed = 1.2 + Math.random() * 1.5;
+      const ang = Math.random() * Math.PI * 2;
+      return {
+        x: boxL + 15 + Math.random() * (boxW - 30),
+        y: boxT + 15 + Math.random() * (boxH - 30),
+        vx: Math.cos(ang) * speed,
+        vy: Math.sin(ang) * speed,
+      };
     }
+    for (let i = 0; i < LB_MAX_INSIDE; i++) insideParticles.push(spawnInside());
 
     function lbPtSeg(px, py, ax, ay, bx, by) {
       const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+      if (len2 === 0) return Math.hypot(px - ax, py - ay);
       const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
       return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
     }
@@ -13526,91 +13540,157 @@ function initCh11Vis() {
       const cosTheta = Math.cos(theta);
       clearCanvas(ctxL, WL, HL);
 
-      // Detector position
-      const detCx = lbSurfCx + lbDetDist * Math.sin(theta);
-      const detCy = lbSurfY - lbDetDist * Math.cos(theta);
-      const detDx = Math.cos(theta) * lbDetHalf, detDy = Math.sin(theta) * lbDetHalf;
+      // --- Detector position ---
+      const detCx = aperCx + detDist * Math.sin(theta);
+      const detCy = aperY - detDist * Math.cos(theta);
+      const detDx = Math.cos(theta) * detHalfLen, detDy = Math.sin(theta) * detHalfLen;
       const d1x = detCx - detDx, d1y = detCy - detDy;
       const d2x = detCx + detDx, d2y = detCy + detDy;
 
-      // --- Normal (dashed) ---
+      // === UPDATE INSIDE PARTICLES ===
+      for (const p of insideParticles) {
+        p.x += p.vx; p.y += p.vy;
+
+        // Wall bounces
+        if (p.x <= boxL + 2) { p.x = boxL + 2; p.vx = Math.abs(p.vx); }
+        if (p.x >= boxR - 2) { p.x = boxR - 2; p.vx = -Math.abs(p.vx); }
+        if (p.y >= boxB - 2) { p.y = boxB - 2; p.vy = -Math.abs(p.vy); }
+
+        // Top wall bounce (except through the aperture)
+        if (p.y <= boxT + 2 && p.vy < 0) {
+          if (p.x < aperL || p.x > aperR) {
+            // Hit solid wall, bounce
+            p.y = boxT + 2; p.vy = Math.abs(p.vy);
+          } else {
+            // Escape through aperture!
+            const speed = Math.hypot(p.vx, p.vy);
+            // Pick a random upward direction for escaped photon
+            const escAng = (Math.random() - 0.5) * Math.PI; // -90 to +90
+            outsideParticles.push({
+              x: p.x, y: aperY - 2,
+              vx: Math.sin(escAng) * speed,
+              vy: -Math.cos(escAng) * speed,
+              alive: true, age: 0, hit: false,
+            });
+            // Respawn inside
+            const sp = spawnInside();
+            p.x = sp.x; p.y = sp.y; p.vx = sp.vx; p.vy = sp.vy;
+          }
+        }
+      }
+
+      // Trim outside particles if too many
+      while (outsideParticles.length > LB_MAX_OUTSIDE) outsideParticles.shift();
+
+      // === UPDATE OUTSIDE PARTICLES ===
+      for (let i = outsideParticles.length - 1; i >= 0; i--) {
+        const p = outsideParticles[i];
+        if (!p.alive) continue;
+        p.x += p.vx; p.y += p.vy; p.age++;
+        // Detector hit check
+        if (!p.hit && lbPtSeg(p.x, p.y, d1x, d1y, d2x, d2y) < 4) {
+          p.hit = true; p.alive = false;
+        }
+        // Off-screen
+        if (p.x < -10 || p.x > WL + 10 || p.y < -30 || p.age > 300) p.alive = false;
+      }
+      // Cleanup
+      for (let i = outsideParticles.length - 1; i >= 0; i--) {
+        if (!outsideParticles[i].alive && outsideParticles[i].age > (outsideParticles[i].hit ? 18 : 0)) {
+          outsideParticles.splice(i, 1);
+        }
+      }
+
+      // === DRAW CAVITY ===
+      // Warm interior glow
+      const glow = ctxL.createRadialGradient(aperCx, boxT + boxH * 0.5, 10, aperCx, boxT + boxH * 0.5, boxH * 0.7);
+      glow.addColorStop(0, 'rgba(255, 120, 40, 0.10)');
+      glow.addColorStop(1, 'rgba(255, 80, 20, 0.02)');
+      ctxL.fillStyle = glow;
+      ctxL.fillRect(boxL, boxT, boxW, boxH);
+
+      // Cavity walls
+      ctxL.strokeStyle = COLORS.text; ctxL.lineWidth = 2.5;
+      ctxL.beginPath();
+      // Left wall
+      ctxL.moveTo(boxL, boxT); ctxL.lineTo(boxL, boxB);
+      // Bottom wall
+      ctxL.lineTo(boxR, boxB);
+      // Right wall
+      ctxL.lineTo(boxR, boxT);
+      // Top wall with gap (aperture)
+      ctxL.moveTo(boxR, boxT); ctxL.lineTo(aperR, boxT);
+      ctxL.moveTo(aperL, boxT); ctxL.lineTo(boxL, boxT);
+      ctxL.stroke();
+
+      // Aperture highlight
+      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 3;
+      ctxL.beginPath();
+      ctxL.moveTo(aperL, boxT); ctxL.lineTo(aperL, boxT - 6);
+      ctxL.moveTo(aperR, boxT); ctxL.lineTo(aperR, boxT - 6);
+      ctxL.stroke();
+
+      // Labels
+      ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
+      ctxL.fillText('cavity', aperCx, boxB - 8);
+      ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_SM;
+      ctxL.fillText('aperture', aperCx, boxT - 10);
+
+      // --- Draw inside particles ---
+      ctxL.fillStyle = COLORS.yellow;
+      for (const p of insideParticles) {
+        ctxL.globalAlpha = 0.8;
+        ctxL.beginPath(); ctxL.arc(p.x, p.y, 2, 0, Math.PI * 2); ctxL.fill();
+      }
+      ctxL.globalAlpha = 1.0;
+
+      // --- Normal line (dashed, from aperture upward) ---
       ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
       ctxL.setLineDash([5, 4]);
-      ctxL.beginPath(); ctxL.moveTo(lbSurfCx, lbSurfY); ctxL.lineTo(lbSurfCx, lbSurfY - lbDetDist - 20); ctxL.stroke();
+      ctxL.beginPath(); ctxL.moveTo(aperCx, aperY); ctxL.lineTo(aperCx, aperY - detDist - 15); ctxL.stroke();
       ctxL.setLineDash([]);
       ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
-      ctxL.fillText('n\u0302', lbSurfCx + 4, lbSurfY - lbDetDist - 10);
+      ctxL.fillText('n\u0302', aperCx + 4, aperY - detDist - 6);
 
       // --- Theta arc ---
       if (thetaDeg > 2) {
-        const arcR = 44;
+        const arcR = 36;
         ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 1.5;
-        ctxL.beginPath(); ctxL.arc(lbSurfCx, lbSurfY, arcR, -Math.PI / 2, -Math.PI / 2 + theta, false); ctxL.stroke();
+        ctxL.beginPath(); ctxL.arc(aperCx, aperY, arcR, -Math.PI / 2, -Math.PI / 2 + theta, false); ctxL.stroke();
         const la = -Math.PI / 2 + theta / 2;
-        ctxL.fillStyle = COLORS.orange; ctxL.font = '15px Inter, system-ui, sans-serif';
+        ctxL.fillStyle = COLORS.orange; ctxL.font = '14px Inter, system-ui, sans-serif';
         ctxL.textAlign = 'center'; ctxL.textBaseline = 'middle';
-        ctxL.fillText('\u03B8', lbSurfCx + (arcR + 13) * Math.cos(la), lbSurfY + (arcR + 13) * Math.sin(la));
+        ctxL.fillText('\u03B8', aperCx + (arcR + 12) * Math.cos(la), aperY + (arcR + 12) * Math.sin(la));
         ctxL.textBaseline = 'alphabetic';
       }
 
-      // --- Faint line surface to detector ---
-      ctxL.strokeStyle = 'rgba(255,255,255,0.08)'; ctxL.lineWidth = 1;
+      // --- Faint line aperture to detector ---
+      ctxL.strokeStyle = 'rgba(255,255,255,0.06)'; ctxL.lineWidth = 1;
       ctxL.setLineDash([3, 5]);
-      ctxL.beginPath(); ctxL.moveTo(lbSurfCx, lbSurfY); ctxL.lineTo(detCx, detCy); ctxL.stroke();
+      ctxL.beginPath(); ctxL.moveTo(aperCx, aperY); ctxL.lineTo(detCx, detCy); ctxL.stroke();
       ctxL.setLineDash([]);
-
-      // --- Emitting surface ---
-      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 3;
-      ctxL.beginPath(); ctxL.moveTo(lbSurfCx - lbSurfHalf, lbSurfY); ctxL.lineTo(lbSurfCx + lbSurfHalf, lbSurfY); ctxL.stroke();
-      ctxL.shadowColor = 'rgba(255,160,40,0.35)'; ctxL.shadowBlur = 10;
-      ctxL.strokeStyle = 'rgba(255,160,40,0.5)'; ctxL.lineWidth = 2;
-      ctxL.beginPath(); ctxL.moveTo(lbSurfCx - lbSurfHalf, lbSurfY); ctxL.lineTo(lbSurfCx + lbSurfHalf, lbSurfY); ctxL.stroke();
-      ctxL.shadowBlur = 0;
-      ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
-      for (let i = -lbSurfHalf + 5; i <= lbSurfHalf - 5; i += 9) {
-        ctxL.beginPath(); ctxL.moveTo(lbSurfCx + i, lbSurfY + 1); ctxL.lineTo(lbSurfCx + i - 4, lbSurfY + 8); ctxL.stroke();
-      }
-      ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
-      ctxL.fillText('blackbody surface', lbSurfCx, lbSurfY + 20);
 
       // --- Detector window ---
       ctxL.strokeStyle = COLORS.cyan; ctxL.lineWidth = 3;
       ctxL.beginPath(); ctxL.moveTo(d1x, d1y); ctxL.lineTo(d2x, d2y); ctxL.stroke();
-      const capL = 5, capNx = -Math.sin(theta) * capL, capNy = Math.cos(theta) * capL;
+      const capSz = 5, cnx = -Math.sin(theta) * capSz, cny = Math.cos(theta) * capSz;
       ctxL.lineWidth = 2;
       ctxL.beginPath();
-      ctxL.moveTo(d1x + capNx, d1y + capNy); ctxL.lineTo(d1x - capNx, d1y - capNy);
-      ctxL.moveTo(d2x + capNx, d2y + capNy); ctxL.lineTo(d2x - capNx, d2y - capNy);
+      ctxL.moveTo(d1x + cnx, d1y + cny); ctxL.lineTo(d1x - cnx, d1y - cny);
+      ctxL.moveTo(d2x + cnx, d2y + cny); ctxL.lineTo(d2x - cnx, d2y - cny);
       ctxL.stroke();
       ctxL.fillStyle = COLORS.cyan; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
-      ctxL.fillText('detector', detCx + (lbDetHalf + 10) * Math.cos(theta), detCy + (lbDetHalf + 10) * Math.sin(theta));
+      ctxL.fillText('detector', detCx + (detHalfLen + 8) * Math.cos(theta), detCy + (detHalfLen + 8) * Math.sin(theta));
 
-      // --- Emit photons ---
-      lbEmitAccum += LB_EMIT_RATE;
-      while (lbEmitAccum >= 1 && lbPhotons.length < LB_MAX) { lbPhotons.push(lbEmit()); lbEmitAccum -= 1; }
-      if (lbEmitAccum >= 1) lbEmitAccum = 0;
-
-      // --- Update photons ---
-      for (let i = lbPhotons.length - 1; i >= 0; i--) {
-        const p = lbPhotons[i];
-        if (!p.alive) continue;
-        p.x += p.vx; p.y += p.vy; p.age++;
-        if (!p.hit && lbPtSeg(p.x, p.y, d1x, d1y, d2x, d2y) < 4) { p.hit = true; p.alive = false; }
-        if (p.x < -10 || p.x > WL + 10 || p.y < -10 || p.y > HL + 10 || p.age > 280) p.alive = false;
-      }
-      for (let i = lbPhotons.length - 1; i >= 0; i--) {
-        if (!lbPhotons[i].alive && lbPhotons[i].age > (lbPhotons[i].hit ? 15 : 0)) lbPhotons.splice(i, 1);
-      }
-
-      // --- Draw photons ---
-      for (const p of lbPhotons) {
-        const alpha = p.hit ? Math.max(0, 1 - p.age * 0.06) : Math.min(0.85, Math.max(0, 1 - p.age / 220));
+      // --- Draw outside particles ---
+      for (const p of outsideParticles) {
+        const alpha = p.hit ? Math.max(0, 1 - p.age * 0.055) : Math.min(0.85, Math.max(0, 1 - p.age / 250));
         if (alpha <= 0) continue;
         if (p.hit) {
           ctxL.globalAlpha = alpha * 0.5; ctxL.fillStyle = COLORS.cyan;
           ctxL.beginPath(); ctxL.arc(p.x, p.y, 6, 0, Math.PI * 2); ctxL.fill();
           ctxL.globalAlpha = alpha; ctxL.fillStyle = '#fff';
-          ctxL.beginPath(); ctxL.arc(p.x, p.y, 2, 0, Math.PI * 2); ctxL.fill();
+          ctxL.beginPath(); ctxL.arc(p.x, p.y, 2.2, 0, Math.PI * 2); ctxL.fill();
         } else {
           ctxL.globalAlpha = alpha; ctxL.fillStyle = COLORS.yellow;
           ctxL.beginPath(); ctxL.arc(p.x, p.y, 1.8, 0, Math.PI * 2); ctxL.fill();
@@ -13618,8 +13698,10 @@ function initCh11Vis() {
       }
       ctxL.globalAlpha = 1.0;
 
-      // --- Right panel: cos theta lobe ---
-      const plotCx = WL * 0.80, plotCy = HL * 0.45, plotR = 60;
+      // === RIGHT PANEL ===
+
+      // --- cos theta emission lobe ---
+      const plotCx = WL * 0.62, plotCy = HL * 0.38, plotR = 50;
       ctxL.globalAlpha = 0.12; ctxL.fillStyle = COLORS.blue;
       ctxL.beginPath();
       for (let a = -Math.PI / 2; a <= Math.PI / 2; a += 0.03) {
@@ -13630,46 +13712,55 @@ function initCh11Vis() {
       ctxL.closePath(); ctxL.fill();
       ctxL.globalAlpha = 0.4; ctxL.strokeStyle = COLORS.blue; ctxL.lineWidth = 1; ctxL.stroke();
       ctxL.globalAlpha = 1.0;
+      // Base line
       ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
-      ctxL.beginPath(); ctxL.moveTo(plotCx - plotR - 8, plotCy); ctxL.lineTo(plotCx + plotR + 8, plotCy); ctxL.stroke();
-      const lobeV = plotR * cosTheta;
-      const arX = plotCx + lobeV * Math.sin(theta), arY = plotCy - lobeV * Math.cos(theta);
+      ctxL.beginPath(); ctxL.moveTo(plotCx - plotR - 6, plotCy); ctxL.lineTo(plotCx + plotR + 6, plotCy); ctxL.stroke();
+      // Arrow at theta
+      const lv = plotR * cosTheta;
+      const arX = plotCx + lv * Math.sin(theta), arY = plotCy - lv * Math.cos(theta);
       ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2;
       drawArrow(ctxL, plotCx, plotCy, arX, arY, 7);
       ctxL.fillStyle = COLORS.orange;
       ctxL.beginPath(); ctxL.arc(arX, arY, 3, 0, Math.PI * 2); ctxL.fill();
       ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
-      ctxL.fillText('I(\u03B8) \u221D cos \u03B8', plotCx, plotCy + 18);
+      ctxL.fillText('I(\u03B8) \u221D cos \u03B8', plotCx, plotCy + 16);
 
       // --- Flux bar ---
-      const barX = WL * 0.64, barY2 = 24, barW = WL * 0.32, barH2 = 18;
+      const barX = WL * 0.42, barY = 18, barW = WL * 0.42, barH = 16;
       ctxL.fillStyle = COLORS.text; ctxL.font = FONT; ctxL.textAlign = 'left';
-      ctxL.fillText('Relative flux through detector', barX, barY2 - 2);
-      ctxL.fillStyle = 'rgba(255,255,255,0.07)'; ctxL.fillRect(barX, barY2 + 4, barW, barH2);
-      const bGrad = ctxL.createLinearGradient(barX, 0, barX + barW * cosTheta, 0);
-      bGrad.addColorStop(0, COLORS.cyan); bGrad.addColorStop(1, COLORS.blue);
-      ctxL.fillStyle = bGrad; ctxL.fillRect(barX, barY2 + 4, barW * cosTheta, barH2);
-      ctxL.strokeStyle = COLORS.axis; ctxL.lineWidth = 1; ctxL.strokeRect(barX, barY2 + 4, barW, barH2);
-      ctxL.fillStyle = COLORS.text; ctxL.font = FONT_LG; ctxL.fillText((cosTheta * 100).toFixed(0) + '%', barX + barW + 6, barY2 + 18);
+      ctxL.fillText('Flux through detector', barX, barY - 2);
+      ctxL.fillStyle = 'rgba(255,255,255,0.07)'; ctxL.fillRect(barX, barY + 4, barW, barH);
+      const bg = ctxL.createLinearGradient(barX, 0, barX + barW * cosTheta, 0);
+      bg.addColorStop(0, COLORS.cyan); bg.addColorStop(1, COLORS.blue);
+      ctxL.fillStyle = bg; ctxL.fillRect(barX, barY + 4, barW * cosTheta, barH);
+      ctxL.strokeStyle = COLORS.axis; ctxL.lineWidth = 1; ctxL.strokeRect(barX, barY + 4, barW, barH);
+      ctxL.fillStyle = COLORS.text; ctxL.font = FONT_LG;
+      ctxL.fillText((cosTheta * 100).toFixed(0) + '%', barX + barW + 6, barY + 16);
 
-      // --- Projected width comparison ---
-      const pwY = HL * 0.72, pwX = WL * 0.62, fullW = 80;
+      // --- Aperture projection diagram ---
+      const apDiagX = WL * 0.42, apDiagY = HL * 0.60;
+      const apW = 70;
+      // Full aperture width
       ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2;
-      ctxL.beginPath(); ctxL.moveTo(pwX, pwY); ctxL.lineTo(pwX + fullW, pwY); ctxL.stroke();
+      ctxL.beginPath(); ctxL.moveTo(apDiagX, apDiagY); ctxL.lineTo(apDiagX + apW, apDiagY); ctxL.stroke();
       ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
-      ctxL.fillText('surface width', pwX + fullW + 6, pwY + 4);
-      ctxL.strokeStyle = COLORS.cyan;
-      ctxL.beginPath(); ctxL.moveTo(pwX, pwY + 16); ctxL.lineTo(pwX + fullW * cosTheta, pwY + 16); ctxL.stroke();
+      ctxL.fillText('aperture width', apDiagX + apW + 6, apDiagY + 4);
+      // Projected
+      const projApW = apW * cosTheta;
+      ctxL.strokeStyle = COLORS.cyan; ctxL.lineWidth = 2;
+      ctxL.beginPath(); ctxL.moveTo(apDiagX, apDiagY + 18); ctxL.lineTo(apDiagX + projApW, apDiagY + 18); ctxL.stroke();
       ctxL.fillStyle = COLORS.textDim;
-      ctxL.fillText('as seen by detector (\u00d7cos\u03b8)', pwX + fullW + 6, pwY + 20);
-      ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_LG; ctxL.textAlign = 'left';
-      ctxL.fillText('cos ' + thetaDeg + '\u00b0 = ' + cosTheta.toFixed(3), pwX, pwY + 46);
+      ctxL.fillText('seen by detector (\u00d7 cos \u03B8)', apDiagX + apW + 6, apDiagY + 22);
+
+      // cos theta readout
+      ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_LG;
+      ctxL.fillText('cos ' + thetaDeg + '\u00b0 = ' + cosTheta.toFixed(3), apDiagX, apDiagY + 48);
 
       // --- Title ---
       ctxL.fillStyle = COLORS.text; ctxL.font = FONT_LG; ctxL.textAlign = 'left';
       ctxL.fillText("Lambert's Cosine Law", 10, 18);
 
-      // --- Update displays ---
+      // --- Update HTML displays ---
       document.getElementById('lambert-theta-val')?.replaceChildren(document.createTextNode(thetaDeg.toFixed(0)));
       document.getElementById('lambert-cos-val')?.replaceChildren(document.createTextNode(cosTheta.toFixed(3)));
       document.getElementById('lambert-flux-val')?.replaceChildren(document.createTextNode((cosTheta * 100).toFixed(0)));

@@ -370,13 +370,13 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 <!-- INTERACTIVE: Lambert's cosine law -->
 <div class="visualization">
   <div class="vis-header"><span class="vis-icon">&#128161;</span> Interactive: Lambert's Cosine Law</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-lambert" width="600" height="420"></canvas></div>
+  <div class="vis-canvas-wrap"><canvas id="vis-lambert" width="600" height="440"></canvas></div>
   <div class="vis-controls">
     <label>Observer angle &theta;: <input type="range" id="lambert-theta" min="0" max="85" step="1" value="0"> <span class="value-display" id="lambert-theta-val">0</span>&deg;</label>
     <span style="margin-left:18px">cos &theta; = <span class="value-display" id="lambert-cos-val">1.000</span></span>
     <span style="margin-left:18px">Flux: <span class="value-display" id="lambert-flux-val">100</span>%</span>
   </div>
-  <p class="vis-caption">Photons stream outward from the surface in all directions. A detector window (orange) collects those that pass through it. As the detector tilts away from the normal, its cross-section shrinks by cos&thinsp;&theta;, so fewer photons are captured per unit time&thinsp;&mdash;&thinsp;this is Lambert's cosine law.</p>
+  <p class="vis-caption">A blackbody is a cavity in thermal equilibrium. Photons bounce around inside; those that reach the aperture escape. A distant detector at angle &theta; from the normal sees the opening foreshortened by cos&thinsp;&theta;, so it captures fewer photons&thinsp;&mdash;&thinsp;this is Lambert's cosine law. The effective solid angle is reduced from 4&pi; to &pi;.</p>
 </div>
 
 <p>Think of the flux of photons passing through a spherical shell far away from the blackbody at some time. At any point on the shell, it is only the perpendicular component of the flux from the surface that hits the point. So we need to multiply by a projection factor of $\cos\theta$ when doing the angular integral over the outgoing directions. (The factor of $\cos\theta$ actually has a name, <span class="tooltip-trigger">Lambert's cosine law<span class="tooltip-content">The radiation intensity from a surface element is proportional to $\cos\theta$, where $\theta$ is the angle from the surface normal. This geometric factor reduces the effective solid angle from $4\pi$ to $\pi$.</span></span>). Thus, instead of $4\pi$ of the sphere, the effective solid angle reached from the surface of the black body is</p>
