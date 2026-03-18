@@ -16121,7 +16121,7 @@ function initCh12Vis() {
           if (Nex > N_PARTICLES * 3) break;
         }
         const Ng = 1.0 / (Math.exp(-betaEps1 * muMid) - 1);
-        if (Ng + Nex > N_PARTICLES) muLo = muMid; else muHi = muMid;
+        if (Ng + Nex > N_PARTICLES) muHi = muMid; else muLo = muMid;
       }
       return (muLo + muHi) / 2;
     }
@@ -16153,11 +16153,29 @@ function initCh12Vis() {
 
       // Solve exact mu
       const muExact = solveForMu(betaEps1);
-      const muApprox = 0;
 
-      // Get occupations
+      // Get exact occupations (using true mu)
       const exactOccs = getOccupations(muExact, betaEps1);
-      const approxOccs = getOccupations(muApprox, betaEps1);
+
+      // Get approximate occupations (mu=0 for excited states, N_ground = N - N_excited)
+      const approxOccs = [];
+      let approxNex = 0;
+      for (let j = 0; j < Math.min(excitedLevels.length, 7); j++) {
+        const [eps, mult] = excitedLevels[j];
+        const arg = betaEps1 * eps; // mu=0 so just beta*eps
+        const occ = arg > 40 ? 0 : Math.max(0, 1.0 / (Math.exp(arg) - 1));
+        approxOccs.push(occ);
+        approxNex += occ * mult;
+      }
+      // Also count excited levels beyond the displayed ones
+      for (let j = 7; j < excitedLevels.length; j++) {
+        const [eps, mult] = excitedLevels[j];
+        const arg = betaEps1 * eps;
+        if (arg > 40) break;
+        approxNex += mult / (Math.exp(arg) - 1);
+      }
+      const approxN0 = Math.max(0, N_PARTICLES - approxNex);
+      approxOccs.unshift(approxN0); // ground state at index 0
 
       // Layout
       const margin = { top: 50, bottom: 50, left: 40, right: 40 };
@@ -16291,20 +16309,14 @@ function initCh12Vis() {
         }
       }
 
-      // ---- Bottom annotation: total N check ----
-      let exactTotal = 0, approxTotal = 0;
-      for (let i = 0; i < displayEnergies.length; i++) {
-        exactTotal += exactOccs[i] * displayMults[i];
-        approxTotal += approxOccs[i] * displayMults[i];
-      }
+      // ---- Bottom annotation ----
       ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
       ctxN1.fillText('N\u2080 = ' + Math.round(exactOccs[0]) + ' / ' + N_PARTICLES, leftX + panelW / 2, topY + panelH + 20);
-      const approxN0 = Math.max(0, N_PARTICLES - (approxTotal - approxOccs[0]));
-      ctxN1.fillText('N\u2080 \u2248 ' + Math.round(approxN0) + ' / ' + N_PARTICLES, rightX + panelW / 2, topY + panelH + 20);
+      ctxN1.fillText('N\u2080 \u2248 ' + Math.round(approxOccs[0]) + ' / ' + N_PARTICLES, rightX + panelW / 2, topY + panelH + 20);
 
       // Highlight mismatch above Tc
       if (tRatio > 1.05) {
-        const err = Math.abs(approxN0 - exactOccs[0]);
+        const err = Math.abs(approxOccs[0] - exactOccs[0]);
         if (err > 1) {
           ctxN1.fillStyle = COLORS.red; ctxN1.globalAlpha = 0.6;
           ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
