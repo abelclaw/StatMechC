@@ -11743,8 +11743,8 @@ function initCh9Vis() {
       ctxCS.fillStyle = COLORS.text;
       ctxCS.beginPath(); ctxCS.arc(cpx, cpy, 6, 0, 2 * Math.PI); ctxCS.fill();
       ctxCS.font = FONT_SM;
-      ctxCS.textAlign = 'left';
-      ctxCS.fillText('Critical point', cpx + 10, cpy - 5);
+      ctxCS.textAlign = 'center';
+      ctxCS.fillText('Critical point', cpx, cpy + 18);
 
       // Legend with critical constants
       let ly = oy + 5;
