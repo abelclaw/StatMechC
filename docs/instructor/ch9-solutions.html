@@ -1,0 +1,325 @@
+<div class="chapter-solutions" id="ch9-solutions">
+<h2>Chapter 9: Phase Transitions — Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Chemical Potential and Phase Transfer (Q1)</div>
+<p>Answer: (b). At constant $T$ and $P$, equilibrium minimizes Gibbs free energy $G = N_1\mu_1 + N_2\mu_2$. Transferring $\Delta N$ particles from phase 1 to phase 2 changes $G$ by $\Delta G = (\mu_2 - \mu_1)\Delta N$. To decrease $G$, particles must flow from the phase with higher $\mu$ to the phase with lower $\mu$. This continues until either one phase is completely consumed, or $\mu_1 = \mu_2$ (coexistence on the phase boundary).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Why Solids Melt (Q2)</div>
+<p>Answer: (b). From Eq. (4), $(\partial\mu/\partial T)_P = -S/N$. Since entropy is always positive, all chemical potentials decrease with temperature. The key is the rate: the phase with larger molar entropy has a steeper slope. Since $S_{\text{liquid}} > S_{\text{solid}}$, the liquid's chemical potential decreases faster. At low $T$, the solid has lower $\mu$ (it is energetically favorable). As $T$ increases, the liquid's $\mu$ catches up and eventually crosses below the solid's $\mu$ at the melting temperature. This is visible in Interactive 4.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Critical Point Properties (Q3)</div>
+<p>Answer: (c). At the critical point, the liquid and gas phases merge — their densities become equal and the latent heat (enthalpy difference per molecule between phases) vanishes continuously. Meanwhile, $\partial P/\partial v|_T = 0$ at the critical point (the critical isotherm has an inflection point), which means $\kappa_T = -(1/V)(\partial V/\partial P)_T \to \infty$. The system becomes infinitely compressible. This is discussed in Section 9.4.2 and shown in Interactive 10.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Ferromagnetic Transition (Q4)</div>
+<p>Answer: (b). The ferromagnetic-to-paramagnetic transition is second order in the Ehrenfest classification: the magnetization (the order parameter) vanishes continuously as $T \to T_c$ from below, with no discontinuous jump and no latent heat. Below $T_c$, the magnetization spontaneously picks a direction, breaking the rotational symmetry of the Hamiltonian — this is spontaneous symmetry breaking. The Curie temperature for iron is $T_c = 1043\;\text{K}$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: Pressure Cooker (Q5)</div>
+<p>Answer: (b) $394\;\text{K}$ ($121^\circ\text{C}$).</p>
+<div class="solution-part">
+<p>From Eq. (14), inverting to solve for $T$:
+$$T = \left(\frac{1}{T^\circ} - \frac{R}{L}\ln\frac{P}{P^\circ}\right)^{-1}$$
+Substituting $P/P^\circ = 2$, $T^\circ = 373\;\text{K}$, $L = 42\;\text{kJ/mol}$, $R = 8.314\;\text{J/(mol·K)}$:
+$$\frac{1}{T} = \frac{1}{373} - \frac{8.314}{42000}\ln 2 = 0.002681 - 0.000198 \times 0.693 = 0.002681 - 0.000137 = 0.002544\;\text{K}^{-1}$$
+$$T = \frac{1}{0.002544} = 393\;\text{K} \approx 394\;\text{K} = 121^\circ\text{C}$$
+This explains why pressure cookers cook food faster — the higher boiling point means higher cooking temperatures.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: Ice Skating and Pressure Melting (Q6)</div>
+<p>Answer: (a) About $0.2\;\text{K}$.</p>
+<div class="solution-part">
+<p>The pressure exerted by the skater on the ice is:
+$$\Delta P = \frac{mg}{A} = \frac{70 \times 9.8}{3 \times 10^{-4}} = 2.29 \times 10^6\;\text{Pa} \approx 23\;\text{atm}$$
+
+Using the Clapeyron equation with $dP/dT = -1.4 \times 10^7\;\text{Pa/K}$:
+$$\Delta T = \frac{\Delta P}{dP/dT} = \frac{2.29 \times 10^6}{-1.4 \times 10^7} = -0.16\;\text{K}$$
+
+The negative sign means the melting point decreases, but only by $0.16\;\text{K}$. This is far too small to melt ice at typical winter temperatures of $-5^\circ\text{C}$ or colder. The real explanation for ice's slipperiness involves a premelted quasi-liquid layer that exists on ice surfaces even well below $0^\circ\text{C}$, driven by the lower surface energy of liquid water.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Antifreeze (Q7)</div>
+<p>Answer: (c) $3.0\;\text{L}$.</p>
+<div class="solution-part">
+<p>Number of moles of water: $N_w = 5000\;\text{g} / 18\;\text{g/mol} = 278\;\text{mol}$.
+
+We need $|\Delta T| = 20\;\text{K}$. From the freezing point depression formula (the sign-reversed version of Eq. (23) for the solid-liquid boundary):
+$$N_s = \frac{N_w |\Delta T| L}{RT_0^2} = \frac{278 \times 20 \times 6000}{8.314 \times (273)^2}$$
+$$= \frac{278 \times 20 \times 6000}{619,800} = \frac{33,360,000}{619,800} = 53.8\;\text{mol}$$
+
+Mass of ethylene glycol: $53.8 \times 62\;\text{g/mol} = 3340\;\text{g}$.
+
+Volume: $3340\;\text{g} / 1110\;\text{g/L} = 3.0\;\text{L}$.
+
+Note: At such a high solute concentration ($N_s/N_w = 0.19$), the dilute-solution approximation used to derive Eq. (23) becomes inaccurate. In practice, one uses the full colligative property tables, and the actual amount needed is somewhat different. Also, ethylene glycol partially hydrogen-bonds with water, modifying the effective interaction.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Crude Ising Estimate (Q8)</div>
+<p>Answer: (b) $k_BT_c \approx 5.8\,J$, about 155% too high.</p>
+<div class="solution-part">
+<p>On a square lattice, each spin has $q = 4$ nearest neighbors. Counting each pair once, there are $qN/2 = 2N$ pairs. In the fully aligned state, each pair contributes $-J$, giving total energy $E_{\text{aligned}} = -2NJ$. In the fully disordered state, pairs are equally likely to be aligned or anti-aligned, giving $E_{\text{disordered}} \approx 0$. The energy difference per spin is $\epsilon \sim 2J$.
+
+The crude estimate from Eq. (29):
+$$k_BT_c = \frac{2\epsilon}{\ln 2} = \frac{2 \times 2J}{\ln 2} = \frac{4J}{0.693} = 5.77\,J$$
+
+The exact Onsager result is $k_BT_c = 2J/\ln(1+\sqrt{2}) = 2.269\,J$, so the crude estimate is too high by a factor of 2.5.
+
+The crude model dramatically overestimates $T_c$ because it compares only two extreme states: perfectly ordered and perfectly disordered. In reality, partially ordered configurations (with domains of aligned spins) have intermediate energy and significant entropy, and these dominate near $T_c$. The transition is driven by the competition between these partially ordered states, which occurs at a much lower temperature.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Clausius-Clapeyron and Sublimation (Q9)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Latent heat is defined as the change in molar enthalpy, Eq. (9): $L = \Delta(H/N)$. Since enthalpy is a state function, the change from solid to gas is path-independent:
+$$\frac{H_{\text{gas}}}{N} - \frac{H_{\text{solid}}}{N} = \left(\frac{H_{\text{liquid}}}{N} - \frac{H_{\text{solid}}}{N}\right) + \left(\frac{H_{\text{gas}}}{N} - \frac{H_{\text{liquid}}}{N}\right)$$
+Therefore:
+$$L_{\text{sub}} = L_{\text{fuse}} + L_{\text{vap}}$$
+This gives $L_{\text{fuse}} = L_{\text{sub}} - L_{\text{vap}} = 51 - 45 = 6\;\text{kJ/mol}$, consistent with the value quoted in the chapter.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The Clausius-Clapeyron equation applies whenever one phase is a dilute gas: $dP/dT = PL/(RT^2)$. For sublimation, replacing $L_{\text{vap}}$ with $L_{\text{sub}}$:
+$$\frac{dP}{P} = \frac{L_{\text{sub}}}{R}\frac{dT}{T^2}$$
+Integrating from $(T_{\text{tp}}, P_{\text{tp}})$:
+$$P(T) = P_{\text{tp}}\exp\left(-\frac{L_{\text{sub}}}{R}\left(\frac{1}{T} - \frac{1}{T_{\text{tp}}}\right)\right)$$
+$$= 611\;\text{Pa}\;\exp\left(-\frac{51000}{8.314}\left(\frac{1}{T} - \frac{1}{273.16}\right)\right)$$
+$$= 611\;\text{Pa}\;\exp\left(-6136\left(\frac{1}{T} - \frac{1}{273.16}\right)\right)$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Setting $P = 100\;\text{Pa}$ and solving for $T$:
+$$\frac{100}{611} = \exp\left(-6136\left(\frac{1}{T} - \frac{1}{273.16}\right)\right)$$
+$$\ln\frac{100}{611} = -6136\left(\frac{1}{T} - \frac{1}{273.16}\right)$$
+$$-1.812 = -6136\left(\frac{1}{T} - 0.003661\right)$$
+$$\frac{1}{T} = 0.003661 + \frac{1.812}{6136} = 0.003661 + 0.000295 = 0.003956$$
+$$T = 252.8\;\text{K} = -20.4^\circ\text{C}$$
+So in a freeze-dryer at 100 Pa, ice sublimates at about $-20^\circ\text{C}$. The low temperature is why freeze-drying preserves food quality better than heat-drying.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p><strong>Mathematical argument:</strong> The Clausius-Clapeyron equation gives $dP/dT = PL/(RT^2)$. At the triple point, $P$ and $T$ are the same for both curves, so the slope is proportional to $L$. Since $L_{\text{sub}} = 51\;\text{kJ/mol} > L_{\text{vap}} = 45\;\text{kJ/mol}$, the sublimation curve has a steeper slope: $(dP/dT)_{\text{sub}}/(dP/dT)_{\text{vap}} = L_{\text{sub}}/L_{\text{vap}} = 51/45 = 1.13$.
+
+<strong>Physical argument:</strong> Sublimation requires breaking all intermolecular bonds (both the weak liquid-phase bonds and the stronger solid-phase bonds), while vaporization only needs to overcome the weaker bonds in the liquid. More energy per molecule is needed, so the entropy change is larger, and the phase boundary is steeper. Equivalently, at a given temperature below the triple point, the solid's chemical potential is lower than the liquid's would be, so you need to go to lower pressures (or higher temperatures) to make the gas favorable — the sublimation boundary is pushed further from the gas region.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: Van der Waals Critical Point (Q10)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Solving the van der Waals equation for $P$:
+$$P = \frac{RT}{v - b} - \frac{a}{v^2}$$
+
+Taking derivatives:
+$$\frac{\partial P}{\partial v}\bigg|_T = -\frac{RT}{(v-b)^2} + \frac{2a}{v^3} = 0 \quad (i)$$
+$$\frac{\partial^2 P}{\partial v^2}\bigg|_T = \frac{2RT}{(v-b)^3} - \frac{6a}{v^4} = 0 \quad (ii)$$
+
+From (ii): $RT/(v-b)^3 = 3a/v^4$. From (i): $RT/(v-b)^2 = 2a/v^3$.
+
+Dividing (i) by (ii):
+$$\frac{(v-b)^3}{(v-b)^2} = \frac{2a/v^3}{3a/v^4} \implies v - b = \frac{2v}{3} \implies v_c = 3b$$
+
+Substituting back into (i): $RT_c/(2b)^2 = 2a/(3b)^3 = 2a/(27b^3)$, so:
+$$T_c = \frac{8a}{27Rb}$$
+
+Substituting into the equation of state:
+$$P_c = \frac{R \cdot 8a/(27Rb)}{3b - b} - \frac{a}{9b^2} = \frac{8a}{27 \cdot 2b^2} - \frac{a}{9b^2} = \frac{4a}{27b^2} - \frac{3a}{27b^2} = \frac{a}{27b^2}$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>Substituting $P = \hat{P}P_c$, $v = \hat{v}v_c$, $T = \hat{T}T_c$ into the van der Waals equation:
+$$\left(\hat{P}\frac{a}{27b^2} + \frac{a}{\hat{v}^2 \cdot 9b^2}\right)\left(\hat{v}\cdot 3b - b\right) = R\hat{T}\frac{8a}{27Rb}$$
+
+Factor out $a/(27b^2)$ on the left and simplify:
+$$\frac{a}{27b^2}\left(\hat{P} + \frac{3}{\hat{v}^2}\right) \cdot b(3\hat{v} - 1) = \frac{8a\hat{T}}{27b}$$
+$$\frac{a}{27b}\left(\hat{P} + \frac{3}{\hat{v}^2}\right)(3\hat{v} - 1) = \frac{8a\hat{T}}{27b}$$
+$$\left(\hat{P} + \frac{3}{\hat{v}^2}\right)(3\hat{v} - 1) = 8\hat{T}$$
+
+Dividing by 3:
+$$\left(\hat{P} + \frac{3}{\hat{v}^2}\right)\left(\hat{v} - \frac{1}{3}\right) = \frac{8}{3}\hat{T}$$
+
+This is independent of $a$ and $b$ — all van der Waals gases obey the same equation in reduced units.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>$$Z_c = \frac{P_c v_c}{RT_c} = \frac{\frac{a}{27b^2} \cdot 3b}{R \cdot \frac{8a}{27Rb}} = \frac{\frac{3a}{27b}}{\frac{8a}{27b}} = \frac{3}{8} = 0.375$$
+
+The van der Waals prediction of $Z_c = 3/8 = 0.375$ is the same for all gases. Experimental values are: Ar (0.29), N$_2$ (0.29), CO$_2$ (0.27), H$_2$O (0.23). The van der Waals value is 30-60% too high. The discrepancy increases for more polar molecules (H$_2$O is worst), reflecting the limitations of the van der Waals model, which treats intermolecular attractions as purely mean-field and ignores molecular shape and orientation effects. Noble gases and simple diatomic molecules come closest because their interactions are most isotropic.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>Write $v = v_c(1 + \epsilon)$ with $\epsilon = (v - v_c)/v_c$. At $T = T_c$:
+$$P = \frac{RT_c}{v_c(1+\epsilon) - b} - \frac{a}{v_c^2(1+\epsilon)^2}$$
+
+With $v_c = 3b$: $v_c(1+\epsilon) - b = b(3+3\epsilon - 1) = b(2 + 3\epsilon)$.
+
+$$P = \frac{RT_c}{b(2+3\epsilon)} - \frac{a}{9b^2(1+\epsilon)^2}$$
+
+Using $RT_c = 8a/(27b)$:
+$$P = \frac{8a}{27b^2(2+3\epsilon)} - \frac{a}{9b^2(1+\epsilon)^2}$$
+
+Factor out $P_c = a/(27b^2)$:
+$$P = P_c\left(\frac{8}{2+3\epsilon} - \frac{3}{(1+\epsilon)^2}\right)$$
+
+Expand each term around $\epsilon = 0$:
+$$\frac{8}{2+3\epsilon} = 4\left(1 - \frac{3\epsilon}{2} + \frac{9\epsilon^2}{4} - \frac{27\epsilon^3}{8} + \cdots\right)$$
+$$\frac{3}{(1+\epsilon)^2} = 3(1 - 2\epsilon + 3\epsilon^2 - 4\epsilon^3 + \cdots)$$
+
+$$P = P_c\left(4 - 6\epsilon + 9\epsilon^2 - \frac{27}{2}\epsilon^3 - 3 + 6\epsilon - 9\epsilon^2 + 12\epsilon^3 + \cdots\right)$$
+$$P = P_c\left(1 + 0\cdot\epsilon + 0\cdot\epsilon^2 - \frac{3}{2}\epsilon^3 + \cdots\right)$$
+
+Therefore $P_c - P = \frac{3}{2}P_c\epsilon^3$, i.e., $|P - P_c| \propto |v - v_c|^3$, giving $\delta = 3$.
+
+The experimental value is $\delta \approx 4.8$. Van der Waals theory gives the wrong exponent because it is a mean-field theory — it replaces the actual molecular environment with an average. Near the critical point, fluctuations in density become correlated over very large distances (the correlation length diverges), and these long-range correlations, which mean-field theory ignores, dramatically change the critical behavior. Correctly accounting for fluctuations via the renormalization group gives $\delta \approx 4.8$ in three dimensions.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: Gibbs Phase Rule and Coexistence (Q11)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The total number of independent intensive variables is $\mathcal{P}(C - 1) + 2$: each of $\mathcal{P}$ phases has $C - 1$ independent mole fractions, plus the shared $T$ and $P$.
+
+The equilibrium constraints are: for each of the $C$ components, the chemical potential must be equal across all $\mathcal{P}$ phases. For component $i$: $\mu_i^{(1)} = \mu_i^{(2)} = \cdots = \mu_i^{(\mathcal{P})}$, which gives $\mathcal{P} - 1$ equations. With $C$ components, the total number of constraints is $C(\mathcal{P} - 1)$.
+
+The number of degrees of freedom:
+$$f = \mathcal{P}(C-1) + 2 - C(\mathcal{P} - 1) = \mathcal{P}C - \mathcal{P} + 2 - C\mathcal{P} + C = C - \mathcal{P} + 2$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>For $C = 1$:
+
+(i) One phase ($\mathcal{P} = 1$): $f = 1 - 1 + 2 = 2$. We can independently vary both $T$ and $P$ while remaining in a single phase. This corresponds to moving freely within one region of the phase diagram.
+
+(ii) Two phases ($\mathcal{P} = 2$): $f = 1 - 2 + 2 = 1$. Only one variable can be chosen freely — once $T$ is fixed, $P$ is determined (or vice versa). This corresponds to moving along a phase boundary curve in the $P$-$T$ diagram.
+
+(iii) Three phases ($\mathcal{P} = 3$): $f = 1 - 3 + 2 = 0$. No degrees of freedom — the triple point is a unique point in the $P$-$T$ plane. For water: $T_{\text{tp}} = 273.16\;\text{K}$, $P_{\text{tp}} = 611\;\text{Pa}$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>For $C = 2$: the maximum number of coexisting phases occurs when $f = 0$:
+$$0 = 2 - \mathcal{P}_{\text{max}} + 2 \implies \mathcal{P}_{\text{max}} = 4$$
+
+Four phases can coexist at a single point in the appropriate parameter space.
+
+When solid and liquid coexist ($\mathcal{P} = 2$):
+$$f = 2 - 2 + 2 = 2$$
+
+Two degrees of freedom remain. At fixed pressure ($P$ specified), there is still one degree of freedom — the composition. This means the alloy can be in a two-phase (solid + liquid) state over a range of temperatures. As you heat the alloy at fixed $P$, melting begins at one temperature (the solidus) and is complete at a higher temperature (the liquidus). Between these temperatures, the alloy is in a "mushy zone" of coexisting solid and liquid with continuously changing compositions.
+
+In contrast, for a pure substance ($C = 1$) with two phases, $f = 1$, so fixing $P$ leaves $f = 0$: melting occurs at a single temperature.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>The Clapeyron equation (Eq. 7) gives:
+$$\frac{dP}{dT} = \frac{\Delta(S/N)}{\Delta(V/N)} = \frac{S_{\text{normal}}/N - S_{\text{super}}/N}{V_{\text{normal}}/N - V_{\text{super}}/N}$$
+
+The superfluid has $S_{\text{super}} \approx 0$, so the numerator is $S_{\text{normal}}/N > 0$. Both phases are liquids with nearly identical densities, so $\Delta(V/N) \approx 0$ but slightly positive (normal liquid is slightly less dense).
+
+Therefore $dP/dT > 0$ and very large — the lambda line is nearly vertical with a positive slope in the $P$-$T$ diagram. The slope is determined by the (small) density difference between normal and superfluid helium. Experimentally, the lambda line rises steeply from the triple point, confirming this analysis. The transition is second order (no latent heat), but we can still use the Clapeyron equation to determine the slope, understanding that $\Delta S/\Delta V$ gives the limiting slope even though both $\Delta S$ and $\Delta V$ individually approach zero at the actual transition.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Mean-Field Theory of the Ising Model (Q12)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>In mean-field theory, we replace $s_j \to m = \langle s \rangle$ for each neighbor. A spin $s_i$ with $q$ neighbors has effective energy:
+$$H_i = -s_i\left(J\sum_{j \in \text{nn}} m + B\right) = -s_i(qJm + B) = -s_i B_{\text{eff}}$$
+where $B_{\text{eff}} = B + qJm$.
+
+This is the Hamiltonian for a single spin in a field $B_{\text{eff}}$. The partition function for a single spin is:
+$$Z_1 = e^{B_{\text{eff}}/k_BT} + e^{-B_{\text{eff}}/k_BT} = 2\cosh\frac{B_{\text{eff}}}{k_BT}$$
+
+The thermal average:
+$$\langle s_i \rangle = \frac{e^{B_{\text{eff}}/k_BT} - e^{-B_{\text{eff}}/k_BT}}{e^{B_{\text{eff}}/k_BT} + e^{-B_{\text{eff}}/k_BT}} = \tanh\frac{B_{\text{eff}}}{k_BT}$$
+
+Self-consistency requires $\langle s_i \rangle = m$:
+$$m = \tanh\left(\frac{B + qJm}{k_BT}\right)$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>With $B = 0$: $m = \tanh(qJm/k_BT)$. Define $x = qJm/k_BT$, so $m = (k_BT/qJ)x$ and the equation becomes:
+$$\frac{k_BT}{qJ}x = \tanh(x)$$
+
+Graphically, this is the intersection of $y = (k_BT/qJ)x$ (a line through the origin with slope $k_BT/qJ$) and $y = \tanh(x)$ (which has slope 1 at the origin).
+
+$m = 0$ is always a solution. A nonzero solution exists when the slope of the line is less than the slope of $\tanh(x)$ at the origin. Since $d(\tanh x)/dx|_{x=0} = 1$, we need:
+$$\frac{k_BT}{qJ} < 1 \implies k_BT < qJ$$
+
+The critical temperature is:
+$$k_BT_c = qJ$$
+
+For a 2D square lattice ($q = 4$): $k_BT_c^{\text{MF}} = 4J$, compared to the exact Onsager result $k_BT_c = 2.269\,J$. Mean-field theory overestimates $T_c$ by a factor of $4/2.269 = 1.76$ (76% too high). This is because mean-field theory neglects fluctuations and correlations between spins, effectively assuming each spin interacts with the average of all its neighbors rather than with their actual (fluctuating) values.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Near $T_c$ with $B = 0$ and $m$ small, let $\alpha = qJ/(k_BT)$. The self-consistency equation is:
+$$m = \tanh(\alpha m) \approx \alpha m - \frac{(\alpha m)^3}{3}$$
+
+Rearranging:
+$$m(1 - \alpha) = -\frac{\alpha^3 m^3}{3}$$
+$$m^2 = \frac{3(a - 1)}{\alpha^3}$$
+
+Since $\alpha = qJ/(k_BT) = T_c/T$, near $T_c$ we have $\alpha \approx 1 + (T_c - T)/T_c$:
+$$\alpha - 1 = \frac{T_c - T}{T} \approx \frac{T_c - T}{T_c}$$
+
+And $\alpha^3 \approx 1$, so:
+$$m^2 = 3\frac{T_c - T}{T_c} \implies m = \sqrt{3}\left(\frac{T_c - T}{T_c}\right)^{1/2}$$
+
+Therefore $m \propto (T_c - T)^{1/2}$, giving critical exponent $\beta = 1/2$.
+
+The exact 2D Ising result is $\beta = 1/8$. Mean-field theory overestimates $\beta$ because it ignores correlations between neighboring spins. Near the critical point, spins form large correlated clusters. Within a cluster, a spin's neighbors are more likely to be aligned with it than the average magnetization would suggest. These correlations make the magnetization more robust against thermal fluctuations, so it persists closer to $T_c$ (slower decay, smaller $\beta$). Mean-field theory misses these correlations entirely, predicting a faster decay of $m$ near $T_c$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>At $T = T_c$ (so $qJ/(k_BT_c) = 1$) with small $B$:
+$$m = \tanh\left(\frac{B + qJm}{k_BT_c}\right) = \tanh\left(\frac{B}{k_BT_c} + m\right)$$
+
+Let $h = B/(k_BT_c)$ and expand $\tanh(h + m) \approx (h + m) - (h + m)^3/3$. For small $h$ and $m$:
+$$m \approx h + m - \frac{(h + m)^3}{3} \approx h + m - \frac{m^3}{3}$$
+
+where we dropped terms of order $hm^2$ and higher. Simplifying:
+$$0 = h - \frac{m^3}{3} \implies h = \frac{m^3}{3}$$
+
+Therefore:
+$$B = k_BT_c \cdot h = \frac{k_BT_c}{3}m^3$$
+
+This gives $B \propto m^3$, so $\delta = 3$.
+
+The exact 2D Ising value is $\delta = 15$. As with $\beta$, the discrepancy arises because mean-field theory ignores the critical fluctuations that dominate near $T_c$. In 2D, fluctuations are particularly strong (the lower the dimension, the more important fluctuations become). Mean-field theory becomes exact in $d \geq 4$ dimensions, where it correctly predicts $\delta = 3$. The upper critical dimension $d_c = 4$ is the dimension above which mean-field exponents are exact.</p>
+</div>
+</div>
+
+</div>

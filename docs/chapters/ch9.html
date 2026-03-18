@@ -452,3 +452,237 @@ $$\hat{n}_g(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) - \frac{7}{4}(1 - \hat{T})^{
 </ul>
 </div>
 
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch9-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>At constant temperature and pressure, a system with two phases present will evolve so that particles move from one phase to the other. What determines the direction of this transfer?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-rq1" value="a"> (a) Particles move from the phase with lower entropy to the phase with higher entropy.</label>
+  <label><input type="radio" name="ch9-rq1" value="b"> (b) Particles move from the phase with higher chemical potential to the phase with lower chemical potential.</label>
+  <label><input type="radio" name="ch9-rq1" value="c"> (c) Particles move from the denser phase to the less dense phase.</label>
+  <label><input type="radio" name="ch9-rq1" value="d"> (d) Particles move from the phase with higher enthalpy to the phase with lower enthalpy.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="At constant $T$ and $P$, equilibrium minimizes the Gibbs free energy $G = N_1\mu_1 + N_2\mu_2$. When $\Delta N$ particles move from phase 1 to phase 2, $\Delta G = (\mu_2 - \mu_1)\Delta N$. Minimizing $G$ requires particles to flow from higher to lower chemical potential.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>Which of the following best explains why heating a solid causes it to melt (at sufficient pressure)?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-rq2" value="a"> (a) The solid phase always has higher energy, so it becomes unstable at any nonzero temperature.</label>
+  <label><input type="radio" name="ch9-rq2" value="b"> (b) Since $(\partial\mu/\partial T)_P = -S/N$ and $S_{\text{liquid}} > S_{\text{solid}}$, the liquid chemical potential decreases faster with $T$ and eventually becomes lower.</label>
+  <label><input type="radio" name="ch9-rq2" value="c"> (c) The latent heat of fusion is always negative, favoring the liquid at high temperature.</label>
+  <label><input type="radio" name="ch9-rq2" value="d"> (d) Pressure always increases with temperature, pushing the system across the phase boundary.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Since $(\partial\mu/\partial T)_P = -S/N < 0$, each phase's chemical potential decreases with temperature, but the phase with larger molar entropy decreases faster. Because $S_{\text{liquid}} > S_{\text{solid}}$, the liquid's $\mu$ eventually drops below the solid's $\mu$, making the liquid the stable phase.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>At the critical point of a liquid-gas transition, which of the following is true?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-rq3" value="a"> (a) The latent heat reaches its maximum value.</label>
+  <label><input type="radio" name="ch9-rq3" value="b"> (b) The compressibility $\kappa_T$ goes to zero.</label>
+  <label><input type="radio" name="ch9-rq3" value="c"> (c) The latent heat vanishes and the compressibility diverges.</label>
+  <label><input type="radio" name="ch9-rq3" value="d"> (d) The liquid and gas densities both diverge.</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="At the critical point, the distinction between liquid and gas vanishes, so the latent heat (which measures the enthalpy difference between phases) goes to zero. Meanwhile, $\partial P/\partial v|_T = 0$, so the compressibility $\kappa_T = -(1/V)(\partial V/\partial P)_T$ diverges.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>The ferromagnetic-to-paramagnetic phase transition is an example of:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-rq4" value="a"> (a) A first-order transition with large latent heat.</label>
+  <label><input type="radio" name="ch9-rq4" value="b"> (b) A second-order transition involving spontaneous symmetry breaking.</label>
+  <label><input type="radio" name="ch9-rq4" value="c"> (c) Sublimation of the magnetic domains.</label>
+  <label><input type="radio" name="ch9-rq4" value="d"> (d) A first-order transition where the order parameter is the compressibility.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The ferromagnetic transition is second order: the magnetization (order parameter) vanishes continuously at $T_c$, with no latent heat. Below $T_c$, the magnetization picks a direction, breaking the rotational symmetry of the Hamiltonian — this is spontaneous symmetry breaking.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>Pressure cookers work by sealing the pot so that vapor pressure builds up, raising the internal pressure to about $P = 2\;\text{atm}$. Using the Clausius-Clapeyron result Eq. (14) with $L = 42\;\text{kJ/mol}$, $P^\circ = 1\;\text{atm}$, and $T^\circ = 373\;\text{K}$, what is the boiling point of water inside the pressure cooker?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-sa1" value="a"> (a) $380\;\text{K}$ ($107^\circ\text{C}$)</label>
+  <label><input type="radio" name="ch9-sa1" value="b"> (b) $394\;\text{K}$ ($121^\circ\text{C}$)</label>
+  <label><input type="radio" name="ch9-sa1" value="c"> (c) $410\;\text{K}$ ($137^\circ\text{C}$)</label>
+  <label><input type="radio" name="ch9-sa1" value="d"> (d) $446\;\text{K}$ ($173^\circ\text{C}$)</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (14): $T = \left(\frac{1}{T^\circ} - \frac{R}{L}\ln\frac{P}{P^\circ}\right)^{-1} = \left(\frac{1}{373} - \frac{8.314}{42000}\ln 2\right)^{-1} = \left(0.002681 - 0.000137\right)^{-1} \approx 393\;\text{K}$, which is $120^\circ\text{C}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>A pond has a thin layer of ice on the surface. An ice skater (mass $70\;\text{kg}$) stands on one blade of area $A = 3\;\text{cm}^2$. The Clapeyron equation for the ice-water boundary has $dP/dT \approx -1.4 \times 10^7\;\text{Pa/K}$ (negative because water expands upon freezing). By how much does the skater's weight lower the melting point of ice?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-sa2" value="a"> (a) About $0.2\;\text{K}$ — far too little to melt ice by pressure alone.</label>
+  <label><input type="radio" name="ch9-sa2" value="b"> (b) About $2\;\text{K}$ — enough to melt a thin surface layer.</label>
+  <label><input type="radio" name="ch9-sa2" value="c"> (c) About $20\;\text{K}$ — significant enough to explain ice skating.</label>
+  <label><input type="radio" name="ch9-sa2" value="d"> (d) About $200\;\text{K}$ — ice melts easily under any moderate weight.</label>
+</div>
+<button class="check-answer-btn" data-answer="a" data-explanation="The extra pressure is $\Delta P = mg/A = (70)(9.8)/(3 \times 10^{-4}) = 2.3 \times 10^6\;\text{Pa} \approx 23\;\text{atm}$. From the Clapeyron equation, $|\Delta T| = |\Delta P/(dP/dT)| = 2.3 \times 10^6/1.4 \times 10^7 \approx 0.16\;\text{K}$. This is far too small to explain ice skating — the slipperiness of ice comes from a premelted surface layer, not pressure melting.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>Antifreeze (ethylene glycol, molar mass $62\;\text{g/mol}$) is added to a car radiator containing $5\;\text{L}$ of water. Using $L_{\text{fuse}} = 6.0\;\text{kJ/mol}$ and the freezing point depression formula $\Delta T = -(N_s/N_w)(RT_0^2/L)$, approximately how many liters of antifreeze (density $1.11\;\text{kg/L}$) must be added to lower the freezing point to $-20^\circ\text{C}$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-sa3" value="a"> (a) $0.5\;\text{L}$</label>
+  <label><input type="radio" name="ch9-sa3" value="b"> (b) $1.5\;\text{L}$</label>
+  <label><input type="radio" name="ch9-sa3" value="c"> (c) $3.0\;\text{L}$</label>
+  <label><input type="radio" name="ch9-sa3" value="d"> (d) $6.0\;\text{L}$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="Water: $N_w = 5000/18 = 278\;\text{mol}$. We need $|\Delta T| = 20\;\text{K}$: $N_s = N_w|\Delta T|L/(RT_0^2) = 278 \times 20 \times 6000/(8.314 \times 273^2) = 53.8\;\text{mol}$. Mass: $53.8 \times 62 = 3340\;\text{g}$. Volume: $3340/1110 \approx 3.0\;\text{L}$. (The dilute approximation becomes inaccurate at such high concentrations.)">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>The 2D Ising model on a square lattice has exact critical temperature $k_BT_c = 2J/\ln(1+\sqrt{2}) \approx 2.27\,J$. The crude estimate in Eq. (29) gives $k_BT_c = 2\epsilon/\ln 2$. On a square lattice each spin has $q = 4$ neighbors; counting each pair once gives $2N$ pairs total, so the energy difference between aligned and disordered states is $E \sim 2N(2J)$ and $\epsilon \sim 2J$. What value does the crude estimate give?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch9-sa4" value="a"> (a) $k_BT_c \approx 2.9\,J$ — about 27% too high.</label>
+  <label><input type="radio" name="ch9-sa4" value="b"> (b) $k_BT_c \approx 5.8\,J$ — about 155% too high.</label>
+  <label><input type="radio" name="ch9-sa4" value="c"> (c) $k_BT_c \approx 1.4\,J$ — about 38% too low.</label>
+  <label><input type="radio" name="ch9-sa4" value="d"> (d) $k_BT_c \approx 2.27\,J$ — exact agreement.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="With $\epsilon = 2J$: $k_BT_c = 2(2J)/\ln 2 = 4J/0.693 \approx 5.77\,J$. The exact answer is $2.269\,J$, so the crude estimate is too high by a factor of 2.5. It overestimates $T_c$ because it only compares the fully ordered and fully disordered states, ignoring the partially ordered configurations that actually drive the transition.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Clausius-Clapeyron and Sublimation</div>
+<p>At the triple point of water, $T_{\text{tp}} = 273.16\;\text{K}$ and $P_{\text{tp}} = 611\;\text{Pa}$. The latent heat of sublimation is $L_{\text{sub}} = 51\;\text{kJ/mol}$ and the latent heat of vaporization is $L_{\text{vap}} = 45\;\text{kJ/mol}$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Explain why $L_{\text{sub}} = L_{\text{fuse}} + L_{\text{vap}}$ (the latent heats add). Use the fact that latent heat is a change in molar enthalpy, Eq. (9).</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using the Clausius-Clapeyron equation Eq. (11), derive the vapor pressure curve $P(T)$ for the sublimation boundary near the triple point. Assume $L_{\text{sub}}$ is constant.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Freeze-drying works by reducing the pressure below $P_{\text{tp}}$ so that ice sublimates directly to vapor. If a freeze-dryer operates at $P = 100\;\text{Pa}$, at what temperature will the ice sublimate? Express your answer in $^\circ\text{C}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Why is the sublimation curve steeper than the vaporization curve in the $P$-$T$ diagram? Give both a mathematical argument (from the Clausius-Clapeyron equation) and a physical argument (in terms of bond-breaking).</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Van der Waals Critical Point</div>
+<p>The van der Waals equation of state is</p>
+$$\left(P + \frac{a}{v^2}\right)(v - b) = RT$$
+<p>where $v = V/N$ is the molar volume and $a$, $b$ are substance-specific constants.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>At the critical point, $\partial P/\partial v\big|_T = 0$ and $\partial^2 P/\partial v^2\big|_T = 0$. Use these two conditions together with the equation of state to show that $v_c = 3b$, $T_c = 8a/(27Rb)$, and $P_c = a/(27b^2)$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Define reduced variables $\hat{P} = P/P_c$, $\hat{v} = v/v_c$, $\hat{T} = T/T_c$. Show that the van der Waals equation becomes</p>
+$$\left(\hat{P} + \frac{3}{\hat{v}^2}\right)\left(\hat{v} - \frac{1}{3}\right) = \frac{8}{3}\hat{T}$$
+<p>independent of $a$ and $b$. This demonstrates the law of corresponding states.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute the compressibility ratio $Z_c = P_c v_c/(RT_c)$. Compare with experimental values: Ar (0.29), N$_2$ (0.29), CO$_2$ (0.27), H$_2$O (0.23). Comment on the agreement.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Near the critical point, write $v = v_c(1 + \epsilon)$ and expand $P(v)$ at $T = T_c$ to leading order in $\epsilon$. Show that $P_c - P \propto \epsilon^3$, giving a critical exponent $\delta = 3$ (where $|P - P_c| \propto |v - v_c|^\delta$ on the critical isotherm). The experimental value is $\delta \approx 4.8$. Why does van der Waals theory get the wrong answer?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Gibbs Phase Rule and Coexistence</div>
+<p>Consider a system with $C$ independent chemical components and $\mathcal{P}$ coexisting phases.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Each phase is described by $T$, $P$, and $C - 1$ independent mole fractions, giving $C + 1$ intensive variables per phase and $\mathcal{P}(C + 1)$ total. But $T$ and $P$ are shared, so the independent variables are $\mathcal{P}(C - 1) + 2$. The equilibrium conditions require $\mu_i^{(\alpha)} = \mu_i^{(\beta)}$ for each component $i$ across each pair of phases. Count the constraints and derive the Gibbs phase rule: $f = C - \mathcal{P} + 2$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Verify the phase rule for a single-component system ($C = 1$): (i) one phase present, (ii) two phases coexisting on a phase boundary, (iii) three phases at the triple point. State the physical meaning of $f$ in each case.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>For a binary alloy ($C = 2$), what is the maximum number of coexisting phases? When solid and liquid coexist ($\mathcal{P} = 2$), how many degrees of freedom remain? Explain why a binary alloy melts over a range of temperatures at fixed pressure, unlike a pure substance.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Helium-4 has a triple point at $T_\lambda = 2.17\;\text{K}$ where normal liquid, superfluid, and gas coexist. The superfluid has essentially zero entropy ($S \approx 0$). Using the Clapeyron equation Eq. (7), what can you say about the slope $dP/dT$ of the normal-liquid/superfluid boundary (the lambda line)?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Mean-Field Theory of the Ising Model</div>
+<p>Consider the Ising model with Hamiltonian</p>
+$$H = -J\sum_{\langle ij\rangle} s_i s_j - B\sum_i s_i$$
+<p>where $s_i = \pm 1$ and the first sum runs over nearest-neighbor pairs. In mean-field theory, replace each neighbor $s_j$ by its average $m = \langle s \rangle$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Show that each spin sees an effective field $B_{\text{eff}} = B + qJm$, where $q$ is the coordination number. A single spin in field $h$ has $\langle s \rangle = \tanh(h/k_BT)$. Derive the self-consistency equation:</p>
+$$m = \tanh\!\left(\frac{B + qJm}{k_BT}\right)$$
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Set $B = 0$. Show that a nonzero solution for $m$ exists only when $k_BT < qJ$, giving the mean-field critical temperature $k_BT_c = qJ$. For a 2D square lattice ($q = 4$), compare $T_c^{\text{MF}} = 4J/k_B$ with the exact Onsager result $k_BT_c \approx 2.269\,J$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Near $T_c$ with $B = 0$, expand $\tanh(x) \approx x - x^3/3$ to show that $m \propto (T_c - T)^{1/2}$ for $T \lesssim T_c$. This gives mean-field exponent $\beta = 1/2$, while the exact 2D Ising value is $\beta = 1/8$. Explain physically why mean-field theory overestimates $\beta$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Set $T = T_c$ with small $B \neq 0$. Expand $\tanh(x) \approx x - x^3/3$ and show that $B \propto m^3$, giving $\delta = 3$. Compare with the exact 2D Ising value $\delta = 15$.</p>
+</div>
+</div>
+
+</div>
+</details>
