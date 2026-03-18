@@ -1,0 +1,211 @@
+<div class="chapter-solutions" id="ch6-solutions">
+<h2>Chapter 6: Entropy — Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Free Expansion</div>
+<p>Answer: <strong>(b)</strong></p>
+<p>In free expansion, the gas expands into vacuum with no piston and no heat bath. Therefore $W = 0$ and $Q = 0$. By the first law, $\Delta E = 0$, so the temperature of an ideal gas is unchanged. However, the number of accessible microstates increases: $\Omega \propto V^N$, so $\Delta S = Nk_B\ln\frac{V_2}{V_1} = Nk_B\ln 2 > 0$. The process is irreversible.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Gibbs Paradox Resolution</div>
+<p>Answer: <strong>(b)</strong></p>
+<p>For indistinguishable particles, permutations of identical particles in different positions do not produce distinct microstates. Dividing $\Omega$ by $N!$ gives the Sackur-Tetrode equation (Eq. 14), where entropy depends on $V/N$ rather than $V$. With this correction, inserting or removing a partition in a uniform gas of identical particles leaves $S$ unchanged, resolving the Gibbs paradox.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Landauer's Principle</div>
+<p>Answer: <strong>(c)</strong></p>
+<p>Landauer's principle states that erasing information necessarily dissipates heat. The operation "SetToZero" on an unknown bit maps two possible phase-space states to one — this is a many-to-one (irreversible) operation. By the second law, this requires dissipating at least $k_BT\ln 2$ of heat. Reading a bit, copying a known bit, and flipping a known bit are all logically reversible operations (one-to-one maps on phase space) and need not dissipate any heat in principle.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Shannon Entropy of English</div>
+<p>Answer: <strong>(b)</strong></p>
+<p>Shannon entropy $H = -\sum P_i \log_2 P_i$ is maximized when all probabilities are equal, giving $H_{\max} = \log_2 26 = 4.7$ bits. Since English letter frequencies are highly non-uniform (e.g., "e" appears ~12.7% of the time while "z" appears ~0.1%), the actual entropy is lower: $H \approx 4.17$ bits. This non-uniformity is precisely what allows compression — common letters can be encoded with fewer bits.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: Three-Gas Mixing</div>
+<p>Each of the three gases expands from volume $V$ to $3V$ when the partitions are removed. By the entropy of mixing formula (analogous to Eq. 9):</p>
+<p>$$\Delta S_{\text{each}} = Nk_B\ln\frac{3V}{V} = Nk_B\ln 3$$</p>
+<p>Since there are three gases, the total entropy of mixing is:</p>
+<p>$$\boxed{\Delta S = 3Nk_B\ln 3}$$</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: Shannon Entropy and Coding</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The Shannon entropy is:</p>
+<p>$$H = -\sum P_i \log_2 P_i = -\left(\frac{1}{2}\log_2\frac{1}{2} + \frac{1}{4}\log_2\frac{1}{4} + \frac{1}{8}\log_2\frac{1}{8} + \frac{1}{8}\log_2\frac{1}{8}\right)$$</p>
+<p>$$= -\left(-\frac{1}{2} - \frac{2}{4} - \frac{3}{8} - \frac{3}{8}\right) = \frac{1}{2} + \frac{1}{2} + \frac{3}{8} + \frac{3}{8} = \boxed{\frac{7}{4} = 1.75 \text{ bits}}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>A prefix-free code achieving exactly $H = 1.75$ bits on average:</p>
+<p>A $\to$ 0 (1 bit), B $\to$ 10 (2 bits), C $\to$ 110 (3 bits), D $\to$ 111 (3 bits)</p>
+<p>Average code length: $\frac{1}{2}(1) + \frac{1}{4}(2) + \frac{1}{8}(3) + \frac{1}{8}(3) = 0.5 + 0.5 + 0.375 + 0.375 = 1.75$ bits.</p>
+<p>This equals $H$, confirming the code is optimal. This is an example of a Huffman code.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Szilard Engine</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>From Eq. (41), the maximum work extractable from one bit of information is:</p>
+<p>$$W = k_BT\ln 2 = (1.38\times 10^{-23}\;\text{J/K})(300\;\text{K})(\ln 2) = \boxed{2.87\times 10^{-21}\;\text{J}}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>At $10^9$ cycles per second:</p>
+<p>$$P = 10^9 \times 2.87\times 10^{-21}\;\text{J} = \boxed{2.87\times 10^{-12}\;\text{W} \approx 2.9\;\text{pW}}$$</p>
+<p>This is an extraordinarily small power — information-to-work conversion at the molecular scale yields very little energy by macroscopic standards.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Maximum Entropy Proof</div>
+<p>We maximize $S = -k_B\sum_{i=1}^{\Omega} P_i \ln P_i$ subject to the constraint $g = \sum_{i=1}^{\Omega} P_i - 1 = 0$.</p>
+<p>Using a Lagrange multiplier $\lambda$, we set:</p>
+<p>$$\frac{\partial}{\partial P_j}\left[-k_B\sum_i P_i\ln P_i - \lambda\left(\sum_i P_i - 1\right)\right] = 0$$</p>
+<p>$$-k_B(\ln P_j + 1) - \lambda = 0$$</p>
+<p>$$\ln P_j = -1 - \frac{\lambda}{k_B}$$</p>
+<p>Since the right side is independent of $j$, all probabilities are equal: $P_j = \text{const}$. From the constraint $\sum P_j = 1$:</p>
+<p>$$P_j = \frac{1}{\Omega} \quad \text{for all } j$$</p>
+<p>To confirm this is a maximum (not a minimum), note that $\frac{\partial^2}{\partial P_j^2}(-k_B P_j\ln P_j) = -\frac{k_B}{P_j} < 0$, so the function is concave and any critical point is a global maximum. The maximum entropy is:</p>
+<p>$$S_{\max} = -k_B\sum_{i=1}^{\Omega}\frac{1}{\Omega}\ln\frac{1}{\Omega} = k_B\ln\Omega$$</p>
+<p>which is the Boltzmann entropy. $\square$</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Entropy of Mixing and Osmotic Pressure</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Initially, the right side has $N_w$ water molecules and $N_s$ salt ions. The entropy of mixing on the right side is (from the Gibbs entropy for a two-component system):</p>
+<p>$$S_{\text{mix}} = -k_B\left[(N_w + N_s)\left(\frac{N_w}{N_w+N_s}\ln\frac{N_w}{N_w+N_s} + \frac{N_s}{N_w+N_s}\ln\frac{N_s}{N_w+N_s}\right)\right]$$</p>
+<p>When $\delta N$ water molecules cross from left to right, $N_w \to N_w + \delta N$ on the right. The entropy change is:</p>
+<p>$$\delta S = \frac{\partial S_{\text{mix}}}{\partial N_w}\delta N$$</p>
+<p>Taking the derivative and using $N_s \ll N_w$:</p>
+<p>$$\frac{\partial S_{\text{mix}}}{\partial N_w} = -k_B\ln\frac{N_w}{N_w + N_s} \approx -k_B\ln\left(1 - \frac{N_s}{N_w}\right) \approx k_B\frac{N_s}{N_w}$$</p>
+<p>Therefore: $\delta S \approx k_B\frac{N_s}{N_w}\,\delta N$. $\square$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The osmotic pressure $\Pi$ is the pressure that must be applied to the right side to prevent water from crossing. At equilibrium, the free energy change is zero: $\Pi\,\delta V = T\,\delta S$.</p>
+<p>Each water molecule occupies volume $v = V/N_w$, so $\delta V = v\,\delta N = \frac{V}{N_w}\delta N$. Substituting:</p>
+<p>$$\Pi\frac{V}{N_w}\delta N = T\cdot k_B\frac{N_s}{N_w}\delta N$$</p>
+<p>$$\boxed{\Pi V = N_s k_B T}$$</p>
+<p>This is the van 't Hoff formula, which has the same form as the ideal gas law with $N_s$ playing the role of solute particle number.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>For seawater with salt concentration $c = 0.6\;\text{mol/L}$:</p>
+<p>$$\Pi = cRT = (0.6\;\text{mol/L})(0.0821\;\text{L·atm/(mol·K)})(300\;\text{K}) \approx \boxed{14.8\;\text{atm} \approx 15\;\text{atm}}$$</p>
+<p>This is the minimum thermodynamic pressure for reverse osmosis. Practical desalination plants operate at 50–80 atm to achieve reasonable flow rates.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: Entropy and Data Compression</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>$$H = -\sum P_i\log_2 P_i = -(0.50\log_2 0.50 + 0.25\log_2 0.25 + 0.20\log_2 0.20 + 0.05\log_2 0.05)$$</p>
+<p>$$= -(0.50\times(-1) + 0.25\times(-2) + 0.20\times(-2.322) + 0.05\times(-4.322))$$</p>
+<p>$$= -(-0.500 - 0.500 - 0.464 - 0.216)$$</p>
+<p>$$= \boxed{1.68\;\text{bits per reading}}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>With a fixed-length code of 2 bits per reading: $1000 \times 2 = \boxed{2000\;\text{bits}}$.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>At the Shannon limit: $1000 \times 1.68 = 1680\;\text{bits}$.</p>
+<p>Compression ratio: $\frac{2000}{1680} \approx \boxed{1.19}$, meaning the data can be compressed to about 84% of the fixed-length size.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>Using the relation $S = k_B(\ln 2)H$ (Eq. 39):</p>
+<p>$$S = k_B(\ln 2)(1.68) = \boxed{1.16\,k_B}$$</p>
+<p>per reading. This is the thermodynamic entropy associated with the uncertainty in the weather outcome.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: Maxwell's Demon and the Second Law</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>After sorting, fast molecules are concentrated on the left and slow molecules on the right. The left side has a higher average kinetic energy (higher temperature) and the right side has a lower average kinetic energy (lower temperature). This is a more ordered configuration — instead of a uniform thermal distribution across the whole box, energy is spatially segregated. The number of microstates consistent with this non-equilibrium macrostate is smaller than for the uniform-temperature equilibrium, so the Boltzmann entropy $S = k_B\ln\Omega$ decreases. Equivalently, we have more information about the system (fast molecules are on the left), so the Gibbs/information entropy decreases.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>Each measurement produces one bit of information (fast or slow). Recording $M$ bits increases the demon's memory entropy by:</p>
+<p>$$\Delta S_{\text{memory}} = Mk_B\ln 2$$</p>
+<p>This is because the demon's memory goes from a known state (all zeros) to $M$ random bits, each contributing $k_B\ln 2$ of entropy.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>By Landauer's principle, erasing each bit requires at least $k_BT\ln 2$ of heat to be dissipated into the environment. For $M$ bits:</p>
+<p>$$Q_{\text{erase}} \geq Mk_BT\ln 2$$</p>
+<p>The entropy increase of the environment due to this heat is:</p>
+<p>$$\Delta S_{\text{env}} = \frac{Q_{\text{erase}}}{T} \geq Mk_B\ln 2$$</p>
+<p>This exactly compensates the entropy decrease of the gas from sorting ($\Delta S_{\text{gas}} \leq -Mk_B\ln 2$ at most). Therefore:</p>
+<p>$$\Delta S_{\text{tot}} = \Delta S_{\text{gas}} + \Delta S_{\text{env}} \geq -Mk_B\ln 2 + Mk_B\ln 2 = 0$$</p>
+<p>The second law is preserved. $\square$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>Minimum power from Landauer's principle:</p>
+<p>$$P_{\text{Landauer}} = \dot{N}_{\text{bits}} \times k_BT\ln 2 = 10^{10} \times (1.38\times 10^{-23})(300)(\ln 2)$$</p>
+<p>$$= 10^{10} \times 2.87\times 10^{-21}\;\text{W} = \boxed{2.87\times 10^{-11}\;\text{W} \approx 29\;\text{pW}}$$</p>
+<p>A modern CPU dissipates ~100 W, which is about $3.5\times 10^{12}$ times the Landauer limit. This enormous gap tells us that current computers are extraordinarily far from the fundamental thermodynamic limit of computation. Most of the energy dissipated in a CPU goes to resistive heating in transistors, not to the fundamental information-theoretic cost of erasure.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Black Hole Thermodynamics</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>With $E = Mc^2$, we have $M = E/c^2$ and:</p>
+<p>$$S = \frac{4\pi G}{\hbar c}M^2 = \frac{4\pi G}{\hbar c}\frac{E^2}{c^4} = \frac{4\pi G}{\hbar c^5}E^2$$</p>
+<p>$$\frac{\partial S}{\partial E} = \frac{8\pi G}{\hbar c^5}E = \frac{8\pi G M}{\hbar c^3}$$</p>
+<p>Meanwhile:</p>
+<p>$$\frac{1}{T} = \frac{8\pi G M k_B}{\hbar c^3} \cdot \frac{1}{k_B} = \frac{8\pi G M}{\hbar c^3}$$</p>
+<p>These are equal, confirming $\frac{\partial S}{\partial E} = \frac{1}{T}$. $\checkmark$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The entropy of a solar-mass black hole:</p>
+<p>$$S_{\text{BH}} = \frac{4\pi G}{\hbar c}M_\odot^2 = \frac{4\pi (6.67\times 10^{-11})(2\times 10^{30})^2}{(1.055\times 10^{-34})(3\times 10^8)}$$</p>
+<p>$$= \frac{4\pi \times 2.67\times 10^{50}}{3.17\times 10^{-26}} = \frac{3.35\times 10^{51}}{3.17\times 10^{-26}} \approx 1.06\times 10^{77}\;\text{J/K}$$</p>
+<p>Dividing by $k_B$: $S_{\text{BH}}/k_B \approx 7.7\times 10^{99} \approx 10^{77}\;\text{J/K}$.</p>
+<p>Wait — let's be more careful with units. $S$ has units of J/K only if we include $k_B$:</p>
+<p>$$S_{\text{BH}} = \frac{4\pi G k_B}{\hbar c}M_\odot^2 \cdot \frac{1}{k_B} \cdot k_B$$</p>
+<p>Actually, from the formula $S = \frac{4\pi G}{\hbar c}M^2$, this $S$ already has the right units since $[G M^2/(\hbar c)] = [\text{J·s}^{-1}·\text{m}^3·\text{kg}^{-1}·\text{s}^{-1}\cdot\text{kg}^2/(\text{J·s·m·s}^{-1})] = [\text{J/K}]$ when we note $S/k_B$ is dimensionless.</p>
+<p>In natural units where $k_B = 1$:</p>
+<p>$$\frac{S_{\text{BH}}}{k_B} = \frac{4\pi G M_\odot^2}{\hbar c} = \frac{4\pi(6.674\times10^{-11})(2\times10^{30})^2}{(1.055\times10^{-34})(3\times10^{8})} \approx 1.06\times 10^{77}$$</p>
+<p>So $S_{\text{BH}} \approx 1.06\times 10^{77}k_B$, or in SI: $S_{\text{BH}} \approx 1.5\times 10^{54}\;\text{J/K}$.</p>
+<p>The ratio: $\frac{S_{\text{BH}}}{S_\odot} \approx \frac{1.5\times 10^{54}}{10^{35}} = \boxed{1.5\times 10^{19}}$.</p>
+<p>The entropy would increase by a factor of about $10^{19}$ — an enormous increase, illustrating how much entropy is hidden in gravitational degrees of freedom.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>The number of microstates is $\Omega = e^{S/k_B}$:</p>
+<p>$$\frac{S}{k_B} \approx 1.06\times 10^{77}$$</p>
+<p>$$\log_{10}\Omega = \frac{S/k_B}{\ln 10} = \frac{1.06\times 10^{77}}{2.303} \approx \boxed{4.6\times 10^{76}}$$</p>
+<p>This is a staggeringly large number. The number of particles in the observable universe is $\sim 10^{80}$, so $\log_{10}\Omega$ is comparable to the number of particles. But $\Omega$ itself is $10^{4.6\times 10^{76}}$, which is incomprehensibly larger than $10^{80}$.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>Each supermassive black hole has mass $M \sim 10^6 M_\odot$. Since $S \propto M^2$:</p>
+<p>$$S_{\text{SMBH}} = (10^6)^2 \times S_{\text{solar BH}} = 10^{12} \times 1.5\times 10^{54}\;\text{J/K} = 1.5\times 10^{66}\;\text{J/K}$$</p>
+<p>With $\sim 10^{11}$ such black holes:</p>
+<p>$$S_{\text{total}} \sim 10^{11}\times 1.5\times 10^{66} \approx \boxed{10^{77}\;\text{J/K}}$$</p>
+<p>(equivalently, $S/k_B \sim 10^{100}$).</p>
+<p>For comparison, the entropy of all the CMB photons in the universe is about $10^{89} k_B \approx 10^{66}\;\text{J/K}$, and the entropy of all stellar matter is even less. The entropy of supermassive black holes ($\sim 10^{100} k_B$) exceeds all other sources by many orders of magnitude. Black holes utterly dominate the entropy budget of the observable universe.</p>
+</div>
+</div>
+
+</div>

@@ -529,3 +529,199 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <li><strong>Entropy = ignorance:</strong> The unifying modern viewpoint. All forms of entropy measure our lack of information about the microstate.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch6-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>A gas undergoes free expansion from volume $V$ to $2V$. Which statement is correct?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch6-rq1" value="a"> (a) The gas does work $W = Nk_BT\ln 2$ on the surroundings.</label>
+  <label><input type="radio" name="ch6-rq1" value="b"> (b) The entropy of the gas increases by $\Delta S = Nk_B\ln 2$, even though no heat flows and no work is done.</label>
+  <label><input type="radio" name="ch6-rq1" value="c"> (c) The Gibbs entropy does not change, so the process is reversible.</label>
+  <label><input type="radio" name="ch6-rq1" value="d"> (d) The temperature of the gas decreases because it expands.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="In free expansion, the gas expands into vacuum: no piston, so $W = 0$, and no heat bath, so $Q = 0$. The temperature is unchanged (for an ideal gas). But the number of accessible microstates increases from $\Omega(V)$ to $\Omega(2V)$, so $\Delta S = Nk_B\ln 2 > 0$. The process is irreversible.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>The Gibbs paradox is resolved by:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch6-rq2" value="a"> (a) Recognizing that inserting a partition always increases entropy.</label>
+  <label><input type="radio" name="ch6-rq2" value="b"> (b) Including a factor of $\frac{1}{N!}$ in the microstate count for indistinguishable particles.</label>
+  <label><input type="radio" name="ch6-rq2" value="c"> (c) Using the Clausius definition of entropy instead of Boltzmann's.</label>
+  <label><input type="radio" name="ch6-rq2" value="d"> (d) Treating all particles as distinguishable regardless of species.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="When particles are indistinguishable, permutations of identical particles do not create new microstates. Dividing by $N!$ gives the Sackur-Tetrode equation (Eq. 14), in which inserting or removing a partition in a uniform gas leaves $S$ unchanged, resolving the paradox.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>According to Landauer's principle, which operation necessarily dissipates heat?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch6-rq3" value="a"> (a) Reading a bit.</label>
+  <label><input type="radio" name="ch6-rq3" value="b"> (b) Copying a known bit.</label>
+  <label><input type="radio" name="ch6-rq3" value="c"> (c) Erasing (resetting) an unknown bit.</label>
+  <label><input type="radio" name="ch6-rq3" value="d"> (d) Flipping a known bit from 0 to 1.</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="Landauer's key insight is that it is erasure&mdash;the destruction of information&mdash;that requires energy dissipation. Setting an unknown bit to a known value (e.g., SetToZero) is a many-to-one map on phase space, which is irreversible and must dissipate at least $k_BT\ln 2$ of heat. Reading, copying, or flipping a known bit are all logically reversible and need not dissipate heat.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>The Shannon entropy of English text is approximately $H \approx 4.17$ bits per letter when letter frequencies are used. This is less than $\log_2 26 = 4.7$ bits because:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch6-rq4" value="a"> (a) English has fewer than 26 letters in common use.</label>
+  <label><input type="radio" name="ch6-rq4" value="b"> (b) Letter frequencies are not uniform&mdash;common letters like "e" carry less information than rare letters like "z".</label>
+  <label><input type="radio" name="ch6-rq4" value="c"> (c) English text contains mostly vowels.</label>
+  <label><input type="radio" name="ch6-rq4" value="d"> (d) Shannon entropy is always less than $\log_2 N$ regardless of the distribution.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Shannon entropy $H = -\sum P_i\log_2 P_i$ is maximized when all outcomes are equally probable, giving $H = \log_2 N$. Since English letters have non-uniform frequencies (e.g., 'e' at 12.7% vs. 'z' at 0.1%), the entropy is lower. The non-uniformity means we can compress text by assigning shorter codes to common letters.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>A box is divided into three equal compartments of volume $V$, each containing $N$ molecules of a different ideal gas (argon, neon, and krypton) at the same temperature $T$. The partitions are removed and the gases mix.</p>
+<p>Calculate the total entropy of mixing. Express your answer in terms of $N$ and $k_B$.</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>A source emits four symbols A, B, C, D with probabilities $P_A = \frac{1}{2}$, $P_B = \frac{1}{4}$, $P_C = \frac{1}{8}$, $P_D = \frac{1}{8}$.</p>
+<p>(a) Compute the Shannon entropy $H$ in bits.</p>
+<p>(b) Propose a binary code for these four symbols such that the average code length equals $H$. (Hint: more probable symbols get shorter codes.)</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>A Szilard engine operates with a single molecule in a box at temperature $T = 300\;\text{K}$. The engine uses one bit of information about the molecule's position to extract work.</p>
+<p>(a) What is the maximum work extractable per cycle?</p>
+<p>(b) If the engine runs at $10^{9}$ cycles per second, what is the maximum power output?</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>Show that the Gibbs entropy $S = -k_B\sum_i P_i \ln P_i$ is maximized when all probabilities are equal, $P_i = \frac{1}{\Omega}$, subject to the constraint $\sum_i P_i = 1$. Use the method of Lagrange multipliers.</p>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Entropy of Mixing and Osmotic Pressure</div>
+<p>A container is divided by a semi-permeable membrane. On the left is pure water (volume $V$, $N_w$ molecules). On the right is salt water ($N_w$ water molecules and $N_s \ll N_w$ salt ions in the same volume $V$). The membrane allows water to pass but not salt. Temperature is $T$ throughout.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Using the entropy of mixing formula, show that when a small amount of water $\delta N$ crosses from left to right, the entropy change of the universe is $\delta S \approx k_B \frac{N_s}{N_w}\,\delta N$. (Hint: on the right side, the water fraction changes from $\frac{N_w}{N_w + N_s}$ to $\frac{N_w + \delta N}{N_w + N_s + \delta N}$.)</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>The osmotic pressure $\Pi$ is the pressure needed to prevent water from crossing. By equating the work $\Pi\,\delta V$ done against osmotic pressure to $T\,\delta S$, derive the van 't Hoff formula $\Pi V = N_s k_B T$ for dilute solutions.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Estimate the osmotic pressure (in atm) of seawater, which has a salt concentration of roughly $0.6\;\text{mol/L}$ at $T = 300\;\text{K}$. This is the minimum pressure needed for reverse osmosis desalination.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Entropy and Data Compression</div>
+<p>A weather station records one of four conditions each hour: Sunny (S), Cloudy (C), Rainy (R), or Snowy (W), with probabilities $P_S = 0.50$, $P_C = 0.25$, $P_R = 0.20$, $P_W = 0.05$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Calculate the Shannon entropy $H$ of this source in bits per reading.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Suppose we use a fixed-length code with 2 bits per reading (e.g., S$\to$00, C$\to$01, R$\to$10, W$\to$11). How many bits does it take to encode 1000 readings?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The source coding theorem guarantees we can approach $H$ bits per reading. How many bits would be needed for 1000 readings at the Shannon limit? What is the compression ratio compared to the fixed-length code?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>If the weather station is connected to a thermodynamic system and each reading corresponds to a macrostate, what is the corresponding thermodynamic entropy per reading? Express your answer in units of $k_B$.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Maxwell's Demon and the Second Law</div>
+<p>A demon operates a shutter between two halves of a box, each initially containing $N$ molecules of an ideal gas at temperature $T$. The demon measures each molecule's speed as it approaches the shutter and only lets fast molecules (speed $> v_{\text{rms}}$) pass from right to left.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>After sorting, the left side is hotter and the right side is cooler. Explain qualitatively why this decreases the entropy of the gas.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Each measurement requires the demon to record one bit of information (fast or slow). After $M$ measurements, what is the minimum entropy increase of the demon's memory, expressed in terms of $M$ and $k_B$?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>To continue operating, the demon must periodically erase its memory. Using Landauer's principle, show that the heat dissipated during erasure is at least $Q = Mk_BT\ln 2$. Argue that this is sufficient to ensure $\Delta S_{\text{tot}} \geq 0$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>A modern computer erases roughly $10^{10}$ bits per second. At room temperature ($T = 300\;\text{K}$), what is the minimum power dissipation due to Landauer's principle alone? Compare this to the actual power consumption of a modern CPU (roughly 100 W). What does this tell you about how far we are from the Landauer limit?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Black Hole Thermodynamics</div>
+<p>A Schwarzschild black hole has entropy $S = \frac{4\pi G}{\hbar c}M^2$ and Hawking temperature $T = \frac{\hbar c^3}{8\pi G M k_B}$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Verify that $\frac{\partial S}{\partial E} = \frac{1}{T}$, where $E = Mc^2$ is the rest energy. This is a consistency check that the black hole obeys thermodynamics.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>The entropy of the sun is approximately $S_\odot \approx 10^{35}\;\text{J/K}$. Compute the entropy of a solar-mass black hole ($M_\odot = 2\times 10^{30}\;\text{kg}$) and compare. By what factor does entropy increase if the sun collapsed into a black hole?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>A black hole of mass $M$ has a finite number of microstates $\Omega = e^{S/k_B}$. Estimate $\log_{10}\Omega$ for a solar-mass black hole. How does this compare to the number of particles in the observable universe ($\sim 10^{80}$)?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The observable universe contains roughly $10^{11}$ galaxies, each with a supermassive black hole of mass $\sim 10^{6} M_\odot$. Estimate the total entropy of all these black holes and show it dominates over all other known sources of entropy in the universe.</p>
+</div>
+</div>
+
+</div>
+</details>

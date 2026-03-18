@@ -678,3 +678,199 @@ $$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h}\right)^{3/2} e^{-m_pc^2/k_BT} = 
 </ul>
 </div>
 
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch7-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>In the canonical ensemble, which quantity is held fixed?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch7-rq1" value="a"> (a) Total energy $E$</label>
+  <label><input type="radio" name="ch7-rq1" value="b"> (b) Temperature $T$</label>
+  <label><input type="radio" name="ch7-rq1" value="c"> (c) Chemical potential $\mu$</label>
+  <label><input type="radio" name="ch7-rq1" value="d"> (d) Pressure $P$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="In the canonical ensemble, the temperature $T$, volume $V$, and particle number $N$ are fixed, while the energy is allowed to fluctuate. The partition function $Z = \sum_k e^{-\beta E_k}$ sums over all microstates regardless of energy.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>The partition function for a system with two independent subsystems (with partition functions $Z_1$ and $Z_2$) is:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch7-rq2" value="a"> (a) $Z = Z_1 + Z_2$</label>
+  <label><input type="radio" name="ch7-rq2" value="b"> (b) $Z = Z_1 \times Z_2$</label>
+  <label><input type="radio" name="ch7-rq2" value="c"> (c) $Z = Z_1^{Z_2}$</label>
+  <label><input type="radio" name="ch7-rq2" value="d"> (d) $Z = \ln(Z_1 + Z_2)$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Since the total energy is the sum of the energies of independent subsystems, $E = E_1 + E_2$, the Boltzmann factor factorizes: $e^{-\beta(E_1+E_2)} = e^{-\beta E_1} e^{-\beta E_2}$. Therefore $Z = Z_1 \times Z_2$, as shown in Eq. (39).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>The chemical potential $\mu$ of a dilute classical ideal gas is:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch7-rq3" value="a"> (a) Always positive</label>
+  <label><input type="radio" name="ch7-rq3" value="b"> (b) Always zero</label>
+  <label><input type="radio" name="ch7-rq3" value="c"> (c) Always negative</label>
+  <label><input type="radio" name="ch7-rq3" value="d"> (d) Can be positive or negative depending on density</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="For a classical ideal gas, $\mu = k_BT \ln(n\lambda^3)$. The classical regime requires $n\lambda^3 \ll 1$, so the argument of the logarithm is much less than 1, making $\mu$ negative. As discussed in the chapter, air at room temperature has $\mu = -0.39$ eV.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>In the derivation of the Boltzmann distribution from the canonical ensemble, the probability of finding the system in microstate $k$ with energy $E_k$ is proportional to:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch7-rq4" value="a"> (a) The number of microstates of the system with energy $E_k$</label>
+  <label><input type="radio" name="ch7-rq4" value="b"> (b) The number of microstates of the reservoir with energy $E_{\text{tot}} - E_k$</label>
+  <label><input type="radio" name="ch7-rq4" value="c"> (c) The total number of microstates of the system</label>
+  <label><input type="radio" name="ch7-rq4" value="d"> (d) The energy $E_k$ itself</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="When the system is in a specific microstate $k$ with energy $E_k$, the reservoir has energy $E_{\text{tot}} - E_k$. The probability is proportional to the number of ways the reservoir can arrange itself with that remaining energy: $P_k \propto \Omega_{\text{res}}(E_{\text{tot}} - E_k)$. Expanding the logarithm then gives the Boltzmann factor.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>A quantum system has exactly three energy levels: $E_0 = 0$, $E_1 = \epsilon$, and $E_2 = 3\epsilon$, each non-degenerate. What is the partition function $Z(\beta)$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch7-sa1" value="a"> (a) $Z = 3e^{-\beta\epsilon}$</label>
+  <label><input type="radio" name="ch7-sa1" value="b"> (b) $Z = 1 + e^{-\beta\epsilon} + e^{-3\beta\epsilon}$</label>
+  <label><input type="radio" name="ch7-sa1" value="c"> (c) $Z = e^{-\beta\epsilon}(1 + e^{-\beta\epsilon} + e^{-3\beta\epsilon})$</label>
+  <label><input type="radio" name="ch7-sa1" value="d"> (d) $Z = 1 + e^{-\beta\epsilon} + e^{-2\beta\epsilon}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The partition function is $Z = \sum_k e^{-\beta E_k} = e^{0} + e^{-\beta\epsilon} + e^{-3\beta\epsilon} = 1 + e^{-\beta\epsilon} + e^{-3\beta\epsilon}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>A classical harmonic oscillator at temperature $T$ has Hamiltonian $H = \frac{p^2}{2m} + \frac{1}{2}m\omega^2 x^2$. Using the classical partition function $Z = \int \frac{dp\,dx}{h} e^{-\beta H}$, compute the average energy $\langle E \rangle$. How does this compare to the quantum result at high temperature?</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>Consider the fluctuation-dissipation relation $C_V = \frac{\langle E^2\rangle - \langle E\rangle^2}{k_BT^2}$. For a monatomic ideal gas of $N$ particles, $C_V = \frac{3}{2}Nk_B$. Compute the relative size of energy fluctuations $\frac{\sqrt{\langle E^2\rangle - \langle E\rangle^2}}{\langle E\rangle}$. Why does this justify using the canonical ensemble even for an isolated system?</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>The thermal de Broglie wavelength of helium-4 ($m = 6.65 \times 10^{-27}$ kg) at $T = 300$ K is approximately:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch7-sa4" value="a"> (a) $5.1 \times 10^{-12}$ m</label>
+  <label><input type="radio" name="ch7-sa4" value="b"> (b) $5.1 \times 10^{-11}$ m</label>
+  <label><input type="radio" name="ch7-sa4" value="c"> (c) $5.1 \times 10^{-10}$ m</label>
+  <label><input type="radio" name="ch7-sa4" value="d"> (d) $5.1 \times 10^{-9}$ m</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Using $\lambda = h/\sqrt{2\pi m k_B T}$: $\lambda = \frac{6.63\times10^{-34}}{\sqrt{2\pi(6.65\times10^{-27})(1.38\times10^{-23})(300)}} = \frac{6.63\times10^{-34}}{1.29\times10^{-23}} \approx 5.1\times10^{-11}$ m. This is about 0.05 nm, much smaller than the inter-particle spacing, confirming helium at room temperature is safely classical.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Paramagnet in the Canonical Ensemble</div>
+<p>A paramagnet consists of $N$ non-interacting spin-$\frac{1}{2}$ particles in an external magnetic field $B$. Each spin has two states: aligned with the field (energy $-\mu_0 B$) or anti-aligned (energy $+\mu_0 B$), where $\mu_0$ is the magnetic moment.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Write down the single-spin partition function $z_1$. Then use the factorization property to write the $N$-particle partition function $Z_N$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Compute the average energy $\langle E \rangle = -\frac{\partial \ln Z}{\partial \beta}$ and the total magnetization $M = -\frac{\partial \langle E \rangle}{\partial B}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Show that the heat capacity is $C = Nk_B \left(\frac{\beta\mu_0 B}{\cosh(\beta\mu_0 B)}\right)^2$. Sketch $C$ vs $T$ and explain why it has a maximum (the <em>Schottky anomaly</em>).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Compute the entropy $S$ using Eq. (16). Verify that $S \to Nk_B\ln 2$ as $T \to \infty$ and $S \to 0$ as $T \to 0$, and explain why these limits make physical sense.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Diatomic Gas: Rotation and Vibration</div>
+<p>A diatomic gas has translational, rotational, and vibrational degrees of freedom. The rotational energy levels are $E_\ell = \frac{\hbar^2}{2I}\ell(\ell+1)$ with degeneracy $g_\ell = 2\ell + 1$, where $I$ is the moment of inertia. Define the rotational temperature $\theta_{\text{rot}} = \frac{\hbar^2}{2Ik_B}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Write the single-molecule rotational partition function $Z_{\text{rot}}$ as a sum. Show that at high temperatures ($T \gg \theta_{\text{rot}}$), the sum can be approximated by an integral, giving $Z_{\text{rot}} \approx \frac{T}{\theta_{\text{rot}}}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using the high-$T$ result, show that rotation contributes $k_BT$ per molecule to the energy and $k_B$ per molecule to $C_V$, consistent with equipartition (two rotational degrees of freedom).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>For HCl, $\theta_{\text{rot}} = 15.2$ K and $\theta_{\text{vib}} = 4300$ K. Using Eq. (38) and your result from (b), write the total heat capacity $C_V(T)$ for $N$ molecules of HCl gas, including translation, rotation, and vibration. What is $C_V$ at $T = 300$ K? At $T = 6000$ K?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>At very low temperatures ($T \ll \theta_{\text{rot}}$), show that the rotational partition function is approximately $Z_{\text{rot}} \approx 1 + 3e^{-2\theta_{\text{rot}}/T}$. Use this to find the rotational contribution to $C_V$ in this limit and show it is exponentially suppressed.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Grand Canonical Ensemble for Adsorption Sites</div>
+<p>Consider a surface with $M$ independent adsorption sites, each of which can hold at most one atom. An adsorbed atom has energy $-\epsilon$ (with $\epsilon > 0$). The surface is in equilibrium with an ideal gas at temperature $T$ and chemical potential $\mu$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Write down the grand partition function $\mathcal{Z}_1$ for a single adsorption site that can be either empty (energy 0, $N=0$) or occupied (energy $-\epsilon$, $N=1$).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using the factorization property, write the grand partition function for the full surface. Compute the average number of adsorbed atoms $\langle N \rangle$ using Eq. (61).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Show that the fractional coverage $\theta = \langle N \rangle / M$ can be written as $\theta = \frac{1}{e^{\beta(\epsilon + \mu)} + 1}$. This is the <em>Langmuir adsorption isotherm</em>.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Using $\mu = k_BT\ln(n\lambda^3)$ for the gas phase (Eq. 69), express $\theta$ as a function of gas pressure $P$ and temperature $T$. Show that at low pressure $\theta \propto P$ and at high pressure $\theta \to 1$.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Rubber Band Thermodynamics</div>
+<p>A simple model of a rubber band consists of $N$ polymer links, each of length $a$. Each link points either right (energy 0) or left (energy $\epsilon$, due to an applied tension). The rubber band is in contact with a heat reservoir at temperature $T$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Write down the single-link partition function $z_1$ and the full partition function $Z_N$. Compute the Helmholtz free energy $F = -k_BT\ln Z_N$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>If $n_R$ links point right and $n_L = N - n_R$ point left, the total length is $L = (n_R - n_L)a = (2n_R - N)a$. Compute $\langle L \rangle$ as a function of $T$ and $\epsilon$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The tension in the rubber band is related to the energy difference by $\epsilon = 2fa$, where $f$ is the applied force. Show that for small forces ($\beta\epsilon \ll 1$), the rubber band obeys a Hooke's law: $\langle L \rangle \approx -\frac{Na^2 f}{k_BT}$. Note the minus sign: the rubber band <em>contracts</em> when pulled, because pulling increases order and decreases entropy.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Compute the entropy $S$ of the rubber band. Show that when you stretch the rubber band isothermally (increase $\epsilon$), the entropy decreases. If instead you stretch it adiabatically, what happens to the temperature? This explains why a rubber band warms up when stretched quickly.</p>
+</div>
+</div>
+
+</div>
+</details>
+
