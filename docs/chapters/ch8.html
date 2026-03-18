@@ -191,13 +191,13 @@ $$\Delta F = \Delta E - T\Delta S = -Nk_BT\ln\frac{V_2}{V_1}$$
 <p>This transition is completely driven by entropic considerations.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Spring-Piston Equilibrium</h4>
+<div class="figure-label">Interactive 1: Spring-Piston Equilibrium</div>
+<p class="vis-caption">Spring-loaded piston against gas in a heat bath. Equilibrium occurs where Helmholtz free energy is minimized.</p>
 <canvas id="vis-spring-piston" width="600" height="300"></canvas>
 <div class="controls">
 <label>Spring constant k: <input type="range" id="sp-k" min="0.5" max="5" step="0.1" value="2.0"><span id="sp-k-val">2.0</span></label>
 <label>Temperature T: <input type="range" id="sp-temp" min="0.5" max="5" step="0.1" value="2.0"><span id="sp-temp-val">2.0</span></label>
 </div>
-<figcaption>Spring-loaded piston against gas in a heat bath. Equilibrium occurs where the Helmholtz free energy F = E − TS is minimized.</figcaption>
 </div>
 
 <p>Now consider a piston on a spring, with force constant $k$, immersed in a heat bath. Let $x$ be the displacement of the piston from its equilibrium position, with energy $E(x, \dot{x}) = \frac{1}{2}m\dot{x}^2 + \frac{1}{2}kx^2$. The entropy of the spring is zero. Since $S = 0$, $F = E$. Minimizing $F$ corresponds to minimizing $E$, giving equilibrium at $x = \dot{x} = 0$.</p>
@@ -222,12 +222,12 @@ $$\Delta F = \Delta E - T\Delta S = -T\left[\underbrace{\frac{-\Delta E}{T}}_{\D
 </div>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Energy vs Entropy</h4>
+<div class="figure-label">Interactive 2: Energy vs Entropy</div>
+<p class="vis-caption">At low T, energy wins and the ordered state is favored. At high T, entropy wins and the disordered state has lower F.</p>
 <canvas id="vis-freeenergy" width="600" height="400"></canvas>
 <div class="controls">
 <label>Temperature $T$: <input type="range" id="fe-temp" min="0.1" max="5" step="0.1" value="1"><span id="fe-temp-val">1.0</span></label>
 </div>
-<figcaption>A system can lower its energy by ordering (left) or raise its entropy by disordering (right). At low $T$, energy wins and $F$ is minimized in the ordered state. At high $T$, entropy wins and the disordered state has lower $F$. The dot marks the equilibrium.</figcaption>
 </div>
 
 <!-- Section 4: Enthalpy -->
@@ -276,12 +276,12 @@ $$C_P = \left(\frac{\partial H}{\partial T}\right)_P$$
 $$\text{H}_2 + \text{C}_2\text{H}_4 \to \text{C}_2\text{H}_6$$
 
 <div class="interactive-wrapper">
-<h4>Interactive: Reaction Enthalpy Diagram</h4>
+<div class="figure-label">Interactive 3: Reaction Enthalpy Diagram</div>
+<p class="vis-caption">Enthalpy diagram for ethene hydrogenation showing how temperature affects spontaneity via the entropy penalty.</p>
 <canvas id="vis-reaction-enthalpy" width="600" height="350"></canvas>
 <div class="controls">
 <label>Temperature T (K): <input type="range" id="rh-temp" min="200" max="1500" step="10" value="298"><span id="rh-temp-val">298</span></label>
 </div>
-<figcaption>Enthalpy diagram for ethene hydrogenation. The three bars show ΔH (fixed), the −TΔS penalty (grows with T), and the resulting ΔG. At low T the large negative ΔH dominates, but above ~1127 K the entropy penalty wins and the reaction becomes non-spontaneous.</figcaption>
 </div>
 
 <p>The standard enthalpy of reaction is $\Delta_r H^\circ = -136.3 \pm 0.3\;\text{kJ/mol}$. Since the enthalpy change is negative, the reaction is <span class="tooltip-trigger">exothermic<span class="tooltip-content">A reaction that releases heat ($\Delta H < 0$)</span></span> (heat is released).</p>
@@ -289,6 +289,8 @@ $$\text{H}_2 + \text{C}_2\text{H}_4 \to \text{C}_2\text{H}_6$$
 <p>If we don't know the reaction enthalpy, we can compute it by taking the differences of the enthalpies of the products and reactants. That we can add and subtract enthalpies to get the reaction enthalpy is known as <span class="tooltip-trigger">Hess's law<span class="tooltip-content">The total enthalpy change of a reaction is independent of the pathway, so we can add enthalpies of intermediate steps</span></span>.</p>
 
 <figure>
+<div class="figure-label">Figure 1: Bond Enthalpies</div>
+<p class="vis-caption">Average enthalpies of common covalent bonds. Numbers are listed as positive, as enthalpies required to break the bonds.</p>
 <table style="width:100%; max-width:600px; margin:16px auto; border-collapse:collapse; font-size:0.9rem;">
 <thead>
 <tr>
@@ -313,7 +315,6 @@ $$\text{H}_2 + \text{C}_2\text{H}_4 \to \text{C}_2\text{H}_6$$
 <tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">Cl&ndash;Cl</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">242</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;"></td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;"></td></tr>
 </tbody>
 </table>
-<figcaption>Figure 2. Average enthalpies of common covalent bonds. Numbers are listed as positive, as enthalpies required to break the bonds.</figcaption>
 </figure>
 
 <div class="info-box concept">
@@ -462,6 +463,8 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 <p>Both $\Delta_r H$ and $\Delta_r S$ are generally weakly dependent on temperature, while $\Delta_r G$ depends strongly on $T$ because of the explicit factor of $T$.</p>
 
 <figure>
+<div class="figure-label">Figure 2: Standard Molar Entropies</div>
+<p class="vis-caption">Standard molar entropies for some compounds at 298 K, organized by phase.</p>
 <table style="width:100%; max-width:600px; margin:16px auto; border-collapse:collapse; font-size:0.9rem;">
 <thead>
 <tr><th colspan="4" style="border:1px solid #ddd; padding:6px 10px; text-align:center; background:#e8ecf1;">Gases</th></tr>
@@ -497,7 +500,6 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 <tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;"></td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;"></td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">I&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">116.1</td></tr>
 </tbody>
 </table>
-<figcaption>Figure 3. Standard molar entropies for some compounds at 298 K.</figcaption>
 </figure>
 
 <div class="info-box example">
@@ -517,14 +519,14 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 <p><span class="tooltip-trigger">Osmotic pressure<span class="tooltip-content">The pressure resulting from a concentration imbalance on two sides of a semi-permeable barrier. It is an entropic effect.</span></span> is the pressure resulting from a concentration imbalance on the two sides of a semi-permeable barrier. For example, if you put a raisin in water, the higher sugar content of the raisin forces the water to be drawn into the raisin, swelling it up.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Osmotic Equilibrium</h4>
+<div class="figure-label">Interactive 4: Osmotic Equilibrium</div>
+<p class="vis-caption">A semipermeable membrane lets water through but blocks solute. Water flows until hydrostatic pressure balances osmotic pressure.</p>
 <canvas id="vis-osmotic" width="600" height="400"></canvas>
 <div class="controls">
 <label>Solute molecules: <input type="range" id="osm-nsolute" min="1" max="20" step="1" value="8"><span id="osm-nsolute-val">8</span></label>
 <label>Temperature T: <input type="range" id="osm-temp" min="0.5" max="3" step="0.1" value="1.5"><span id="osm-temp-val">1.5</span></label>
 <button id="osm-reset">Reset</button>
 </div>
-<figcaption>A semipermeable membrane (dashed orange) lets water molecules (blue) through but blocks solute (red). Water flows toward the solution side, raising its level until the hydrostatic pressure balances the osmotic pressure Π = k<sub>B</sub>T N<sub>s</sub>/V.</figcaption>
 </div>
 
 <p>To compute the osmotic pressure, we use the entropy of mixing. For $N_w$ molecules of solvent and $N_s$ molecules of solute, in the limit $N_s \ll N_w$:</p>

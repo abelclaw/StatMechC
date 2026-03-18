@@ -56,13 +56,14 @@ $$\mathcal{Z} = \sum_{\substack{\text{microstates } k \\ \text{with same } V}} e
 <p>In order to fix the temperature, it is a useful conceptual trick to imagine our system of interest in thermal contact with a heat reservoir. This means the system and heat reservoir can exchange energy through heat, but no work can be done by the system on the reservoir or vice versa. The point of the reservoir is to make concrete the idea of fixing the temperature and letting the energy fluctuate.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: System + Heat Reservoir</h4>
+<div class="figure-label">Interactive 1: System + Heat Reservoir</div>
+<p class="vis-caption">A small system in thermal contact with a large heat reservoir. Drag the temperature slider to see equilibration.</p>
 <canvas id="vis-reservoir" width="600" height="400"></canvas>
 <div class="controls">
 <label>Reservoir T: <input type="range" id="res-temp" min="0.5" max="5" step="0.1" value="2.0"><span id="res-temp-val">2.0</span></label>
 <button id="hres-reset">Reset</button>
 </div>
-<figcaption>A small system (inner box) in thermal contact with a large heat reservoir. Drag the temperature slider to heat or cool the reservoir &mdash; the reservoir particles adjust immediately, but the system particles only equilibrate through wall collisions. The right panel shows the Boltzmann distribution P(&epsilon;) &prop; e<sup>&minus;&epsilon;/kT</sup> with each system particle's energy as a blue tick and their mean as a green dot.</figcaption>
+<p style="font-size:0.85em; color:var(--text-muted); margin-top:6px;">The reservoir particles adjust immediately, but the system particles only equilibrate through wall collisions. The right panel shows the Boltzmann distribution P(&epsilon;) &prop; e<sup>&minus;&epsilon;/kT</sup> with each system particle's energy as a blue tick and their mean as a green dot.</p>
 </div>
 
 <p>We do not allow particles to go from the system to the reservoir, only energy. The number of particles in the system can be small -- we can have a single atom even -- it won't matter. This is important because the canonical ensemble will allow us to discuss systems with a limited number of quantum states, in contrast to the microcanonical ensemble where we really did need to expand at large $N$ to make progress. Although the system can be small, the reservoir must be large, so that it has much much more energy than the system. But this is not a constraint, just a conceptual trick, since the reservoir does not actually need to exist. As we will see, the actual computation of the partition function for the canonical ensemble does not involve the reservoir at all.</p>
@@ -119,15 +120,15 @@ $$Z = \int g(E) \, dE \, e^{-\beta E}$$
 
 <p>where $g(E)$ is called the <span class="tooltip-trigger">density of states<span class="tooltip-content">$g(E)dE$ gives the number of states with energies between $E$ and $E + dE$. The set of energies along with the density of states is called the spectrum of a theory.</span></span>: $g(E)dE$ gives the number of states with energies between $E$ and $E + dE$. The set of energies of a system along with the density of states is called the spectrum of a theory.</p>
 
-<h3>Interactive: Boltzmann Distribution</h3>
 <div class="interactive-container">
+<div class="figure-label">Interactive 2: Boltzmann Distribution</div>
+<p class="vis-caption">80 particles occupy discrete energy levels and hop stochastically. The histogram tracks occupancy vs. the Boltzmann prediction.</p>
 <canvas id="vis-boltzmann" width="600" height="450"></canvas>
 <div class="slider-container">
 <label for="boltz-temp">Temperature $k_BT/\varepsilon$:</label>
 <input type="range" id="boltz-temp" min="0.2" max="5" step="0.05" value="1">
 <span class="slider-value" id="boltz-temp-val">1.00</span>
 </div>
-<p class="vis-caption">80 particles occupy discrete energy levels $\varepsilon_i = i\,\varepsilon$ and stochastically hop between them. The live histogram (right) tracks the fraction of particles at each level, compared to the theoretical Boltzmann prediction $P_i = e^{-\beta \varepsilon_i}/Z$ (white dots). At low temperature, nearly all particles crowd into the ground state. At high temperature, particles spread across many levels.</p>
 </div>
 
 <h3>Thermodynamic quantities from $Z$</h3>
@@ -333,9 +334,9 @@ $$C_V = \frac{\partial E}{\partial T} = k_B \left(\frac{\hbar\omega}{k_BT}\right
 
 <!-- INTERACTIVE: Harmonic Oscillator E and Cv -->
 <div class="interactive-container">
-  <h3>Quantum Harmonic Oscillator: Energy &amp; Heat Capacity</h3>
+  <div class="figure-label">Interactive 3: Quantum Harmonic Oscillator</div>
+  <p class="vis-caption">Energy and heat capacity of a quantum harmonic oscillator as a function of temperature. Hover to read values.</p>
   <canvas id="vis-ho-ecv" width="600" height="350"></canvas>
-  <p class="vis-caption">Hover to read values along the curves. Blue: energy. Green: heat capacity.</p>
 </div>
 
 <p>For H$_2$, the vibrational mode has $\tilde{\nu}_{\text{vib}} = 4342\;\text{cm}^{-1}$ corresponding to $T_{\text{vib}} = \frac{ch\tilde{\nu}}{k_B} = \frac{\hbar\omega}{k_B} = 6300\;\text{K}$. So at low energies, the vibrational mode cannot be excited which is why the heat capacity for hydrogen is $C_V = \frac{5}{2}Nk_BT$ rather than $\frac{7}{2}Nk_BT$. We discussed this in Lecture 4, but now we have explained it and can make more precise quantitative predictions of how the heat capacity changes with temperature. Including the kinetic contribution, and a factor of $N$ for the $N$ molecules that can be excited in the vibration mode we see</p>
@@ -347,12 +348,12 @@ $$C_V = \frac{5}{2}Nk_B + Nk_B\left(\frac{T_{\text{vib}}}{T}\right)^2 \frac{e^{-
 
 <!-- INTERACTIVE: H2 Heat Capacity — Degrees of Freedom Unfreezing -->
 <div class="interactive-container">
-  <h3>H&#8322; Heat Capacity: Unfreezing Degrees of Freedom</h3>
+  <div class="figure-label">Interactive 4: H&#8322; Heat Capacity</div>
+  <p class="vis-caption">Raise the temperature to unfreeze degrees of freedom one by one, matching the experimental heat capacity data.</p>
   <div class="vis-controls">
     <label>Temperature (K): <input type="range" id="h2vib-temp" min="10" max="10000" value="300" step="10"> <span class="slider-value" id="h2vib-temp-val">300</span></label>
   </div>
   <canvas id="vis-h2vib" width="600" height="420"></canvas>
-  <p class="vis-caption">Raise the temperature to unfreeze degrees of freedom one by one. Left: C<sub>V</sub> curve with experimental data. Right: contribution from each mode at the current temperature.</p>
 </div>
 
 <p>Sweep the temperature from low to high. At $T \lesssim 50$ K only translation contributes and $C_V = \frac{3}{2}Nk_B$. Around $T \sim \theta_{\text{rot}} = 85$ K, rotation unfreezes and $C_V$ rises to $\frac{5}{2}Nk_B$. Vibration only kicks in at $T \sim \theta_{\text{vib}} = 6300$ K, pushing $C_V$ toward $\frac{7}{2}Nk_B$. Note that each mode starts contributing well below its characteristic temperature. The stacked bar shows the quantitative contribution of each mode at the selected temperature, matching the experimental data (dots) beautifully.</p>
@@ -386,14 +387,14 @@ $$0 = \frac{\partial S_1(E)}{\partial E} + \frac{\partial S_2(E_{\text{tot}} - E
 </div>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Volume Exchange (Gibbs Ensemble)</h4>
+<div class="figure-label">Interactive 5: Volume Exchange (Gibbs Ensemble)</div>
+<p class="vis-caption">Two gases separated by a moveable wall. Changing the temperature pushes the wall until pressures equilibrate.</p>
 <canvas id="vis-volume-exchange" width="600" height="300"></canvas>
 <div class="controls">
 <label>T<sub>left</sub>: <input type="range" id="vex-tleft" min="0.5" max="5" step="0.1" value="2.0"><span id="vex-tleft-val">2.0</span></label>
 <label>T<sub>right</sub>: <input type="range" id="vex-tright" min="0.5" max="5" step="0.1" value="2.0"><span id="vex-tright-val">2.0</span></label>
 <button id="vex-reset">Reset</button>
 </div>
-<figcaption>Two gases separated by a moveable wall. Changing the temperature on one side increases the pressure, pushing the wall until pressures equilibrate. At equilibrium, P₁ = P₂ so that ∂S₁/∂V = ∂S₂/∂V.</figcaption>
 </div>
 
 <p>Now let's consider an ensemble that lets $V$ vary. In the Gibbs ensemble you have two systems in equilibrium that can exchange energy and volume. The total volume is conserved. The entropy is the sum of the entropy of the two sides, and the total volume is fixed: $V_1 + V_2 = V_{\text{tot}}$. Maximizing entropy gives that the temperature $\frac{1}{T} = \frac{\partial S}{\partial E}$ is the same on both sides, and that</p>
@@ -565,7 +566,8 @@ $$n = \frac{1}{\lambda^3} \exp\left(\frac{\mu}{k_BT}\right)$$
 <p>This says that the number density is related exponentially to the chemical potential. As the system gets denser and denser, the chemical potential rises towards 0. When the chemical potential is negative, the gas is not too crowded and can be considered dilute.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Chemical Potential Equilibration</h4>
+<div class="figure-label">Interactive 6: Chemical Potential Equilibration</div>
+<p class="vis-caption">Two bulbs connected by a narrow tube. After release, particles flow until chemical potentials equilibrate.</p>
 <canvas id="vis-chem-equil" width="600" height="350"></canvas>
 <div class="controls">
 <label>N<sub>left</sub>: <input type="range" id="ceq-nleft" min="5" max="50" step="1" value="40"><span id="ceq-nleft-val">40</span></label>
@@ -573,7 +575,6 @@ $$n = \frac{1}{\lambda^3} \exp\left(\frac{\mu}{k_BT}\right)$$
 <button id="ceq-release">Release</button>
 <button id="ceq-reset">Reset</button>
 </div>
-<figcaption>Two bulbs connected by a narrow tube. Before release, each bulb is sealed with its own particles. After release, particles flow through the tube from high density to low density until the chemical potentials equilibrate: μ₁ ≈ μ₂, i.e. n₁ ≈ n₂.</figcaption>
 </div>
 
 <h3>7.7.2 Ground-State Energy</h3>
@@ -624,7 +625,8 @@ $$\frac{[\text{NH}_3]^2}{[\text{H}_2]^3[\text{N}_2]} \approx \frac{\lambda_{\tex
 
 <!-- INTERACTIVE: Dissociation Equilibrium -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">⚗️</span> Interactive: Dissociation Equilibrium</div>
+  <div class="figure-label">Interactive 7: Dissociation Equilibrium</div>
+  <p class="vis-caption">Free atoms (blue) bind into dimers (orange) on collision; dimers dissociate at a rate set by the Boltzmann factor.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-chempot" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <label>Temperature $T$: <input type="range" id="chempot-temp" min="0.3" max="4.0" step="0.05" value="1.5"> <span class="slider-value" id="chempot-temp-val">1.5</span></label>

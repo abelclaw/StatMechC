@@ -48,12 +48,12 @@
 <p>All of these ways of thinking about entropy are useful. They are all ways of understanding entropy as <strong>disorder</strong>: the more microstates there are, the less organized are the particles. A solid has lower entropy than a gas because the molecules are more ordered.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Free Expansion</h4>
+<div class="figure-label">Interactive 1: Free Expansion</div>
+<p class="vis-caption">Gas expands freely into vacuum when the partition is removed, increasing entropy even though no work is done.</p>
 <canvas id="vis-free-expansion" width="600" height="300"></canvas>
 <div class="controls">
 <button id="freeexp-toggle">Remove Partition</button>
 </div>
-<figcaption>Gas expands freely into vacuum when the partition is removed. The entropy increases by ΔS = Nk<sub>B</sub> ln(V₂/V₁) even though no work is done and temperature stays constant.</figcaption>
 </div>
 
 <p>In the second half of the 20th century, it was realized that a more general and useful way of thinking about entropy than entropy as disorder is <strong>entropy as uncertainty</strong>. That is, we associate entropy with our ignorance of the system, or our lack of information about what microstate it's in. A solid has lower entropy than a gas because we have more information about the location of the atoms.</p>
@@ -113,7 +113,8 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <p>In chemistry and biology, <strong>concentration gradients</strong> are very important. A concentration gradient means the concentration of some ion, like $\text{Na}^+$ or $\text{K}^+$, is not constant in space. When there is a concentration gradient, the system is not completely homogeneous, so entropy can be increased by mixing. Concentration gradients are critical for life. Neurons fire when the concentration of certain chemicals or ions passes a threshold. Cells use energy to produce concentration gradients &mdash; there are proteins in the cell wall that pump sodium and potassium from areas of low concentration to areas of high concentration.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Na⁺/K⁺ ATPase Pump</h4>
+<div class="figure-label">Interactive 2: Na⁺/K⁺ ATPase Pump</div>
+<p class="vis-caption">Use Pump! to build a concentration gradient, then Fire Neuron! to see how the gradient produces an action potential.</p>
 <canvas id="vis-nak-pump" width="600" height="500"></canvas>
 <div class="controls" style="flex-wrap: wrap; gap: 8px;">
 <button id="nak-pump-btn" style="font-weight:bold;">Pump! (costs 1 ATP)</button>
@@ -121,7 +122,7 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <button id="nak-reset">Reset</button>
 <span id="nak-atp-display" style="color:#ffee58; font-size:13px;">ATP: 10 / 10</span>
 </div>
-<figcaption>First use <strong>Pump!</strong> to build a concentration gradient (low-entropy state) by spending ATP. Then click <strong>Fire Neuron!</strong> to open Na⁺ channels &mdash; Na⁺ rushes in down its gradient, producing a voltage spike (action potential). This is how the gradient does useful work. Each firing partially depletes the gradient; without pumping to restore it, the neuron cannot fire again. The voltage trace at bottom shows the membrane potential.</figcaption>
+<p style="font-size:0.85em; color:var(--text-muted); margin-top:6px;">Pumping builds a concentration gradient (low-entropy state) by spending ATP. Firing opens Na⁺ channels &mdash; Na⁺ rushes in down its gradient, producing a voltage spike. Each firing partially depletes the gradient; without pumping to restore it, the neuron cannot fire again.</p>
 </div>
 
 <p>Another familiar effect due to entropy of mixing is how salt is able to melt ice. The salt draws water out of the ice (i.e. melts it) because saltwater has higher entropy than salt and ice separately.</p>
@@ -145,13 +146,13 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <p>To resolve the Gibbs paradox, let's think about why the entropy is changing. When xenon and helium mix, the new microstates we add don't look like the old ones. When helium mixes with helium, the new microstates are indistinguishable from the old ones, so we are overcounting.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Partition Toggle</h4>
+<div class="figure-label">Interactive 3: Partition Toggle</div>
+<p class="vis-caption">Toggle the partition to mix or separate gases. For indistinguishable particles, no new microstates are created.</p>
 <canvas id="vis-mixing" width="600" height="400"></canvas>
 <div class="controls">
 <label>Case: <select id="mixing-case"><option value="distinguishable">Distinguishable (colored balls)</option><option value="identical">Indistinguishable (He + He)</option><option value="different">Different species (He + Xe)</option></select></label>
 <button id="mixing-toggle">Remove Partition</button>
 </div>
-<figcaption>Toggle the partition to mix or separate the gases. For indistinguishable particles, the partition does nothing &mdash; no new microstates are created. For distinguishable particles or different species, removing the partition increases entropy.</figcaption>
 </div>
 
 <p>In a large volume with every particle in a different position, we can simply divide by $N!$ for permuting those positions. This leads to:</p>
@@ -222,13 +223,14 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <!-- INTERACTIVE: Letter Frequency Bar Chart -->
 <div class="interactive-container">
-  <h3>Interactive: Letter Frequencies in English</h3>
+  <div class="figure-label">Interactive 4: Letter Frequencies in English</div>
+  <p class="vis-caption">Hover over bars to see individual letter probabilities and information content in bits. Shannon entropy H = 4.17 bits/letter.</p>
   <canvas id="vis-letterfreq" width="600" height="300"></canvas>
   <div class="vis-controls" style="margin-top:6px;">
     <label for="letterfreq-text" style="font-size:13px;color:var(--text-dim);">Paste or type text to compare:</label>
     <textarea id="letterfreq-text" rows="3" placeholder="Type or paste text here to see its letter frequencies overlaid on the chart..." style="width:100%;margin-top:4px;background:var(--bg-card);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;"></textarea>
   </div>
-  <p class="vis-caption">Hover over bars to see individual letter probabilities and information content in bits. Shannon entropy H = 4.17 bits/letter. <span id="letterfreq-user-entropy"></span></p>
+  <span id="letterfreq-user-entropy"></span>
 </div>
 
 <p>What is the minimal number of bits you need to encode a given type of data? Shannon's answer was:</p>
@@ -312,7 +314,8 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <p>A key observation was made by Rolf Landauer in 1961. Landauer considered a model of a bit with a classical double well: ball on the left is 0, ball on the right is 1.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Landauer's Erasure Protocol</h4>
+<div class="figure-label">Interactive 5: Landauer's Erasure Protocol</div>
+<p class="vis-caption">Setting a known bit is free, but setting an unknown bit requires at least k<sub>B</sub>T ln 2 of heat dissipation.</p>
 <canvas id="vis-landauer" width="600" height="360"></canvas>
 <div class="controls" style="flex-wrap: wrap; gap: 6px; align-items: center;">
 <span style="color:#4fc3f7;font-size:11px;font-weight:600;">Known bit:</span>
@@ -328,7 +331,6 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <span style="border-left:1px solid rgba(255,255,255,0.15);height:18px;margin:0 4px;display:inline-block;vertical-align:middle;"></span>
 <button id="lb-reset">Reset</button>
 </div>
-<figcaption>Left: a bit whose value you can see. Right: a bit hidden behind a screen. Setting a <em>known</em> bit is always free (reversible). Setting an <em>unknown</em> bit requires at least k<sub>B</sub>T ln 2 of heat. Flipping is always free &mdash; it maps one state to one state, so no information is lost.</figcaption>
 </div>
 
 <p>But what if we don't know what state the bit is in? Can we build an automated "SetToZero" mechanism? The answer is <strong>no</strong> for any reversible (frictionless) mechanism. Since Newton's laws are time-reversible, the function $F$ acting on phase space must be invertible. We want $F(\vec{q}_0,\vec{p}_0) = (\vec{q}_0,\vec{p}_0)$ and $F(\vec{q}_1,\vec{p}_1) = (\vec{q}_0,\vec{p}_0)$. But this is impossible if $F$ is invertible. This argument holds even in quantum mechanics since the Schrodinger equation can also be run backwards.</p>
@@ -346,7 +348,8 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <p>The connection was pushed further by Charles Bennett in the 1980s. Bennett considered a digital tape where information is stored in the position of gas molecules: molecule in the bottom half is 0, top half is 1.</p>
 
 <div class="visualization">
-<div class="vis-header"><span class="vis-icon">⚙</span> Interactive: Szilard Engine</div>
+<div class="figure-label">Interactive 6: Szilard Engine</div>
+<p class="vis-caption">A single molecule can do work if we know which side of a partition it is on. Click through the steps to see how.</p>
 <div class="vis-canvas-wrap"><canvas id="vis-szilard" width="600" height="350"></canvas></div>
 <div class="vis-controls">
 <button id="szilard-step">Next Step</button>
@@ -399,13 +402,13 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <!-- INTERACTIVE: Maxwell's Demon -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">😈</span> Interactive: Maxwell's Demon</div>
+  <div class="figure-label">Interactive 7: Maxwell's Demon</div>
+  <p class="vis-caption">Watch the demon sort fast (red) and slow (blue) particles, apparently violating the second law.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-demon" width="600" height="350"></canvas></div>
   <div class="vis-controls">
     <button id="demon-start">Start</button>
     <button id="demon-toggle">Enable Demon</button>
     <button id="demon-reset">Reset</button>
-    <span style="color:var(--text-muted)">Watch the demon sort fast (red) and slow (blue) particles</span>
   </div>
 </div>
 
