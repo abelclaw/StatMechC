@@ -22565,26 +22565,41 @@ function initCh14Vis() {
         ctx.beginPath(); ctx.arc(hoveredPort.x, hoveredPort.y, 8, 0, Math.PI * 2); ctx.stroke();
       }
 
-      // Delete mode: draw wire cutter icon at cursor
+      // Cut mode: draw wire cutter icon at cursor
       if (selectedTool === 'DELETE') {
-        const cx = mouseX, cy = mouseY;
+        var cx = mouseX, cy = mouseY;
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(-0.3);
-        // Scissors icon
-        ctx.strokeStyle = '#e53935'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-        // Left blade
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-10, -12); ctx.stroke();
-        // Right blade
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(10, -12); ctx.stroke();
-        // Left handle (circle)
-        ctx.beginPath(); ctx.arc(-10, -16, 5, 0, Math.PI * 2); ctx.stroke();
-        // Right handle (circle)
-        ctx.beginPath(); ctx.arc(10, -16, 5, 0, Math.PI * 2); ctx.stroke();
-        // Snip lines
-        ctx.strokeStyle = 'rgba(229,57,53,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([2,2]);
-        ctx.beginPath(); ctx.moveTo(-6, 2); ctx.lineTo(6, 2); ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.rotate(-0.6);
+        ctx.strokeStyle = '#e53935'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        // Left jaw (angled cutting blade)
+        ctx.beginPath();
+        ctx.moveTo(-1, -2);
+        ctx.lineTo(-6, -16);
+        ctx.lineTo(-2, -14);
+        ctx.lineTo(-1, -2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(229,57,53,0.3)'; ctx.fill();
+        // Right jaw
+        ctx.beginPath();
+        ctx.moveTo(1, -2);
+        ctx.lineTo(6, -16);
+        ctx.lineTo(2, -14);
+        ctx.lineTo(1, -2);
+        ctx.stroke();
+        ctx.fill();
+        // Pivot bolt
+        ctx.fillStyle = '#e53935';
+        ctx.beginPath(); ctx.arc(0, -2, 2.5, 0, Math.PI * 2); ctx.fill();
+        // Left handle
+        ctx.strokeStyle = '#b71c1c'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-1, 0); ctx.lineTo(-8, 14); ctx.stroke();
+        // Right handle
+        ctx.beginPath(); ctx.moveTo(1, 0); ctx.lineTo(8, 14); ctx.stroke();
+        // Handle grips
+        ctx.strokeStyle = '#e53935'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-7, 10); ctx.lineTo(-9, 16); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(7, 10); ctx.lineTo(9, 16); ctx.stroke();
         ctx.restore();
       }
 
@@ -22598,7 +22613,7 @@ function initCh14Vis() {
 
       // Tool indicator + hint
       ctx.fillStyle = '#888'; ctx.font = FONT_SM; ctx.textAlign = 'right';
-      ctx.fillText('Tool: ' + selectedTool, W - 10, H - 8);
+      ctx.fillText('Tool: ' + (selectedTool === 'DELETE' ? 'CUT' : selectedTool), W - 10, H - 8);
       ctx.textAlign = 'left';
       ctx.fillText('Click INPUT switches to toggle (any mode)', 10, H - 8);
     }
