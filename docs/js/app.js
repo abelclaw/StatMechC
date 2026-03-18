@@ -26523,7 +26523,31 @@ function initCh15Vis() {
         const isHover = hoverStar === v.i;
         if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
         else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
-        else if (v.s.cat === 'Black Hole') drawPlanetImg(sgrAImg, v.sx, v.sy, v.rPx);
+        else if (v.s.cat === 'Black Hole') {
+          drawPlanetImg(sgrAImg, v.sx, v.sy, v.rPx);
+          // Indicator rings: event horizon and photon ring
+          const ehPx = v.s.R * scale; // event horizon in pixels
+          const shadowPx = v.rPx;     // shadow/ring radius in pixels
+          if (shadowPx > 20) {
+            ctxS.setLineDash([4, 4]);
+            // Event horizon
+            ctxS.strokeStyle = 'rgba(100,180,255,0.6)'; ctxS.lineWidth = 1.5;
+            ctxS.beginPath(); ctxS.arc(v.sx, v.sy, ehPx, 0, 2 * Math.PI); ctxS.stroke();
+            // Photon ring (outer edge of bright ring)
+            ctxS.strokeStyle = 'rgba(255,200,80,0.5)'; ctxS.lineWidth = 1.5;
+            ctxS.beginPath(); ctxS.arc(v.sx, v.sy, shadowPx, 0, 2 * Math.PI); ctxS.stroke();
+            ctxS.setLineDash([]);
+            // Labels on the rings
+            ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'left';
+            if (ehPx > 12) {
+              ctxS.fillStyle = 'rgba(100,180,255,0.85)';
+              ctxS.fillText('Event horizon (' + v.s.R + ' R\u2609)', v.sx + ehPx + 4, v.sy - 2);
+            }
+            ctxS.fillStyle = 'rgba(255,200,80,0.85)';
+            ctxS.fillText('Photon ring (' + v.s.shadow + ' R\u2609)', v.sx + shadowPx + 4, v.sy - shadowPx * 0.3);
+            ctxS.textAlign = 'center';
+          }
+        }
         else drawStar(v.s, v.sx, v.sy, v.rPx, isHover);
 
         // Labels above the star
