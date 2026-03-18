@@ -1,0 +1,176 @@
+<div class="chapter-solutions" id="ch5-solutions">
+<h2>Chapter 5: Thermodynamics &mdash; Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Free Expansion</div>
+<p>Answer: <strong>(b)</strong>. In free expansion, no work is done ($W = 0$, since the gas pushes against vacuum) and no heat is transferred ($Q = 0$, since the walls are assumed insulating). By the first law, $\Delta E = Q + W = 0$, so the energy is unchanged. For an ideal gas, $E = C_V T$, so the temperature is also unchanged.</p>
+<p>However, entropy increases. From Eq. (30): $\Delta S = Nk_B \ln(V_2/V_1) = Nk_B \ln 2 > 0$. The process is irreversible: restoring the original state requires work to compress the gas.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Heat vs. Work</div>
+<p>Answer: <strong>(b)</strong>. The chapter emphasizes (Section 1) that the distinction between heat and work is about the surroundings, not the system. The example given is a falling weight turning a pinwheel in water (work) versus heating water over a fire (heat). Both leave the system in the same final state. The key difference is whether the energy transfer mechanism involves organized motion (work) or chaotic molecular motion (heat).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Brownian Ratchet</div>
+<p>Answer: <strong>(b)</strong>. When $T_1 = T_2 = T$, the probability of the pawl being lifted by thermal fluctuations is the same on both sides: $P_{\text{forward}} = e^{-\epsilon/(k_BT)} = P_{\text{backward}}$. The ratchet turns forward and backward equally often, so no net work is extracted. If it could extract work from a single heat bath, it would violate the second law of thermodynamics.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Carnot Efficiency Calculation</div>
+<p>Answer: <strong>(c)</strong>. $\eta_{\text{Carnot}} = \frac{T_H - T_C}{T_H} = \frac{600 - 300}{600} = \frac{300}{600} = 0.50 = 50\%$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: Adiabatic Expansion Pressure</div>
+<p>From Eq. (39), $PV^\gamma = \text{const}$, so $P_1 V_1^\gamma = P_2 V_2^\gamma$.</p>
+<p>$$P_2 = P_1 \left(\frac{V_1}{V_2}\right)^\gamma = 3 \left(\frac{2}{6}\right)^{5/3} = 3 \left(\frac{1}{3}\right)^{5/3} = 3^{1} \cdot 3^{-5/3} = 3^{-2/3}$$</p>
+<p>$$P_2 = \frac{1}{3^{2/3}} = \frac{1}{(9)^{1/3}} = \frac{1}{2.080} \approx 0.48\;\text{atm}$$</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: Isothermal Entropy Change</div>
+<p>Answer: <strong>(b)</strong>. From Eq. (30), the entropy change for a volume change at constant energy (or equivalently constant temperature for an ideal gas) is:</p>
+<p>$$\Delta S = Nk_B \ln\frac{V_2}{V_1}$$</p>
+<p>For one mole, $Nk_B = N_A k_B = R = 8.3\;\text{J/(K·mol)}$:</p>
+<p>$$\Delta S = R \ln 3 = 8.3 \times 1.099 = 9.12\;\text{J/K}$$</p>
+<p>Note that this result is independent of temperature. The entropy change depends only on the volume ratio.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Speed of Sound in Nitrogen</div>
+<p>First, find $\gamma$. For a diatomic gas at room temperature, $C_V = \frac{5}{2}Nk_B$, so by Eq. (25):</p>
+<p>$$C_P = C_V + Nk_B = \frac{7}{2}Nk_B$$</p>
+<p>$$\gamma = \frac{C_P}{C_V} = \frac{7/2}{5/2} = \frac{7}{5} = 1.4$$</p>
+<p>The speed of sound (from Section 3.3) is:</p>
+<p>$$c_{\text{sound}} = \sqrt{\frac{\gamma k_B T}{m}} = \sqrt{\frac{1.4 \times 1.38 \times 10^{-23} \times 300}{4.65 \times 10^{-26}}}$$</p>
+<p>$$= \sqrt{\frac{5.796 \times 10^{-21}}{4.65 \times 10^{-26}}} = \sqrt{1.2464 \times 10^5} = 353\;\text{m/s}$$</p>
+<p>This agrees well with the measured speed of sound in air (~343 m/s at 20&deg;C).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Reservoir Entropy</div>
+<p>Answer: <strong>(b)</strong>. From Eq. (5), the entropy change of a heat reservoir is simply:</p>
+<p>$$\Delta S_{\text{reservoir}} = \frac{Q}{T} = \frac{2000\;\text{J}}{500\;\text{K}} = 4.0\;\text{J/K}$$</p>
+<p>A heat reservoir is defined as a system whose temperature does not change when heat flows in or out, but its entropy certainly does change. The reservoir's entropy increases when it absorbs heat.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Coal Power Plant</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The maximum efficiency is the Carnot efficiency:</p>
+<p>$$\eta_{\text{Carnot}} = \frac{T_H - T_C}{T_H} = \frac{840 - 300}{840} = \frac{540}{840} = \frac{9}{14} \approx 0.643$$</p>
+<p>Maximum power output:</p>
+<p>$$\dot{W}_{\max} = \eta_{\text{Carnot}} \cdot \dot{Q}_{\text{in}} = 0.643 \times 1500\;\text{MW} = 964\;\text{MW}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>By energy conservation, $\dot{Q}_{\text{out}} = \dot{Q}_{\text{in}} - \dot{W}$:</p>
+<p>$$\dot{Q}_{\text{out}} = 1500 - 964 = 536\;\text{MW}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>The rate of heat absorption by the river equals $\dot{Q}_{\text{out}}$. The mass flow rate is $\dot{m} = \rho \dot{V} = 1000 \times 50 = 50{,}000\;\text{kg/s}$.</p>
+<p>$$\dot{Q}_{\text{out}} = \dot{m}\,c\,\Delta T$$</p>
+<p>$$\Delta T = \frac{\dot{Q}_{\text{out}}}{\dot{m}\,c} = \frac{536 \times 10^6}{50{,}000 \times 4186} = \frac{536 \times 10^6}{2.093 \times 10^8} \approx 2.6\;\text{K}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>At 38% efficiency: $\dot{W}_{\text{real}} = 0.38 \times 1500 = 570\;\text{MW}$ and $\dot{Q}_{\text{out,real}} = 1500 - 570 = 930\;\text{MW}$.</p>
+<p>The rate of entropy production is:</p>
+<p>$$\dot{S}_{\text{total}} = -\frac{\dot{Q}_{\text{in}}}{T_H} + \frac{\dot{Q}_{\text{out,real}}}{T_C} = -\frac{1500 \times 10^6}{840} + \frac{930 \times 10^6}{300}$$</p>
+<p>$$= -1.786 \times 10^6 + 3.100 \times 10^6 = 1.31 \times 10^6\;\text{W/K} = 1.31\;\text{MW/K}$$</p>
+<p>This is positive, as required by the second law. For comparison, a Carnot engine would give $\dot{S}_{\text{total}} = 0$.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: Refrigerator</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>From the Carnot condition for a reversible cycle: $Q_H / T_H = Q_C / T_C$, so $Q_H = Q_C \cdot T_H / T_C$.</p>
+<p>Energy conservation gives $W = Q_H - Q_C = Q_C\left(\frac{T_H}{T_C} - 1\right) = Q_C \cdot \frac{T_H - T_C}{T_C}$.</p>
+<p>Therefore:</p>
+<p>$$\text{COP}_{\max} = \frac{Q_C}{W} = \frac{T_C}{T_H - T_C}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>$$\text{COP}_{\max} = \frac{270}{300 - 270} = \frac{270}{30} = 9$$</p>
+<p>For every joule of work input, up to 9 joules of heat can be removed from the cold reservoir. COP can exceed 1 because a refrigerator is not converting heat to work; it is using work to move heat.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>To maintain steady state, the refrigerator must remove heat at the same rate it leaks in: $\dot{Q}_C = 60\;\text{W}$.</p>
+<p>$$\dot{W}_{\min} = \frac{\dot{Q}_C}{\text{COP}_{\max}} = \frac{60}{9} = 6.7\;\text{W}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>With the door open, the cold and hot reservoirs are the same room. The refrigerator removes heat $Q_C$ from the room through its interior and dumps $Q_H = Q_C + W$ back into the room through its coils. The net effect is that the room gains energy $W$ from the electrical work input. The room gets warmer, not cooler. This is a direct consequence of the second law: you cannot transfer heat from cold to hot without doing work, and the work itself becomes additional heat in the room.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: Adiabatic Atmosphere</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The adiabatic relation $TP^{(1-\gamma)/\gamma} = \text{const}$ gives:</p>
+<p>$$T(z) \cdot P(z)^{(1-\gamma)/\gamma} = T_0 \cdot P_0^{(1-\gamma)/\gamma}$$</p>
+<p>$$T(z) = T_0 \left(\frac{P(z)}{P_0}\right)^{(\gamma-1)/\gamma}$$</p>
+<p>Substituting $P(z) = P_0 e^{-z/H}$:</p>
+<p>$$T(z) = T_0 \left(e^{-z/H}\right)^{(\gamma-1)/\gamma} = T_0 \exp\!\left[-\frac{\gamma-1}{\gamma}\frac{z}{H}\right]$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>For $z \ll H$, expand the exponential to first order: $e^{-x} \approx 1 - x$.</p>
+<p>$$T(z) \approx T_0\left(1 - \frac{\gamma-1}{\gamma}\frac{z}{H}\right)$$</p>
+<p>Taking the derivative:</p>
+<p>$$\frac{dT}{dz} = -\frac{\gamma-1}{\gamma}\frac{T_0}{H}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>With $\gamma = 7/5$, $T_0 = 300\;\text{K}$, and $H = 8.5\;\text{km}$:</p>
+<p>$$\frac{dT}{dz} = -\frac{2/5}{7/5}\frac{300}{8.5} = -\frac{2}{7}\frac{300}{8.5} = -\frac{600}{59.5} \approx -10.1\;\text{K/km}$$</p>
+<p>The observed average lapse rate in the troposphere is about $6.5\;\text{K/km}$, which is significantly less than the adiabatic prediction of $10.1\;\text{K/km}$.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>The adiabatic lapse rate overestimates the actual temperature drop because it ignores the latent heat released when water vapor condenses as air rises and cools. As moist air rises, water condenses and releases latent heat, partially warming the air parcel and reducing the rate of temperature decrease. This effect is captured in the "moist adiabatic lapse rate," which is typically $5$&ndash;$6\;\text{K/km}$, closer to the observed average. The actual tropospheric lapse rate falls between the dry and moist adiabatic values because the atmosphere is only partially saturated.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Otto Cycle</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>For an adiabatic process, $TV^{\gamma-1} = \text{const}$.</p>
+<p>Stage 1 (adiabatic compression, $V_1 \to V_2$):</p>
+<p>$$T_1 V_1^{\gamma-1} = T_2 V_2^{\gamma-1} \implies T_2 = T_1\left(\frac{V_1}{V_2}\right)^{\gamma-1} = T_1\,r^{\gamma-1}$$</p>
+<p>Stage 3 (adiabatic expansion, $V_2 \to V_1$):</p>
+<p>$$T_3 V_2^{\gamma-1} = T_4 V_1^{\gamma-1} \implies T_4 = T_3\left(\frac{V_2}{V_1}\right)^{\gamma-1} = \frac{T_3}{r^{\gamma-1}}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The efficiency is:</p>
+<p>$$\eta = \frac{W}{Q_{\text{in}}} = \frac{Q_{\text{in}} - Q_{\text{out}}}{Q_{\text{in}}} = 1 - \frac{Q_{\text{out}}}{Q_{\text{in}}} = 1 - \frac{C_V(T_4 - T_1)}{C_V(T_3 - T_2)}$$</p>
+<p>Substituting $T_2 = T_1 r^{\gamma-1}$ and $T_4 = T_3/r^{\gamma-1}$:</p>
+<p>$$\eta = 1 - \frac{T_3/r^{\gamma-1} - T_1}{T_3 - T_1 r^{\gamma-1}} = 1 - \frac{1}{r^{\gamma-1}} \cdot \frac{T_3 - T_1 r^{\gamma-1}}{T_3 - T_1 r^{\gamma-1}}$$</p>
+<p>$$\boxed{\eta_{\text{Otto}} = 1 - \frac{1}{r^{\gamma-1}}}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>With $r = 10$ and $\gamma = 1.4$:</p>
+<p>$$\eta_{\text{Otto}} = 1 - \frac{1}{10^{0.4}} = 1 - \frac{1}{2.512} = 1 - 0.398 = 0.602 \approx 60.2\%$$</p>
+<p>The Carnot efficiency between $T_1 = 300\;\text{K}$ and $T_3 = 2500\;\text{K}$:</p>
+<p>$$\eta_{\text{Carnot}} = 1 - \frac{T_C}{T_H} = 1 - \frac{300}{2500} = 1 - 0.12 = 88\%$$</p>
+<p>The Otto efficiency (60%) is significantly less than the Carnot efficiency (88%).</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>The Otto efficiency is less than the Carnot efficiency because the Otto cycle does not operate between just two temperatures. In the isochoric (constant volume) stages, the gas temperature changes continuously, meaning heat is absorbed and rejected over a range of temperatures rather than at fixed $T_H$ and $T_C$. This is thermodynamically less efficient than the Carnot cycle, which exchanges heat only at the extreme temperatures.</p>
+<p>The Otto cycle is reversible in the idealized form presented here: both adiabatic stages are isentropic, and the isochoric stages can in principle be carried out reversibly by contact with a series of reservoirs at incrementally different temperatures. However, the real Otto cycle in a car engine is highly irreversible due to friction, turbulence, and the rapid combustion process.</p>
+</div>
+</div>
+
+</div>

@@ -332,3 +332,215 @@
 <li><strong>Brownian Ratchet:</strong> A mechanical system that seems to violate the second law, but actually operates at Carnot efficiency.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch5-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>A gas undergoes free expansion into a vacuum, doubling its volume. Which of the following is true?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch5-rq1" value="a"> (a) The temperature increases and entropy increases.</label>
+  <label><input type="radio" name="ch5-rq1" value="b"> (b) The temperature stays the same and entropy increases.</label>
+  <label><input type="radio" name="ch5-rq1" value="c"> (c) The temperature decreases and entropy stays the same.</label>
+  <label><input type="radio" name="ch5-rq1" value="d"> (d) The temperature stays the same and entropy stays the same.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="In free expansion, no work is done and no heat is transferred, so $E$ and $T$ are unchanged. But the gas occupies more volume, so $\Delta S = Nk_B\ln(V_2/V_1) > 0$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>The distinction between heat and work is about:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch5-rq2" value="a"> (a) The system only &mdash; heat raises temperature, work does not.</label>
+  <label><input type="radio" name="ch5-rq2" value="b"> (b) The surroundings &mdash; whether energy transfer involves organized or chaotic motion.</label>
+  <label><input type="radio" name="ch5-rq2" value="c"> (c) The total energy change &mdash; heat changes energy, work does not.</label>
+  <label><input type="radio" name="ch5-rq2" value="d"> (d) The system's entropy &mdash; heat changes entropy, work never does.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="As discussed in Section 1, a falling weight turning a pinwheel in water (work) and heating the water over a fire (heat) leave the system in the same state. The distinction is in the surroundings: organized vs. chaotic energy transfer.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>For the Brownian ratchet at equal temperatures $T_1 = T_2$, the net work extracted per cycle is:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch5-rq3" value="a"> (a) Positive, because the ratchet only turns one way.</label>
+  <label><input type="radio" name="ch5-rq3" value="b"> (b) Zero, because the pawl also experiences thermal fluctuations.</label>
+  <label><input type="radio" name="ch5-rq3" value="c"> (c) Negative, because friction always dissipates energy.</label>
+  <label><input type="radio" name="ch5-rq3" value="d"> (d) It depends on the energy $\epsilon$ required to push past the pawl.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The pawl itself is subject to thermal fluctuations at temperature $T_2$. When $T_1 = T_2$, the probability of forward and backward slipping are equal ($e^{-\epsilon/k_BT}$), so no net work is produced. Extracting work from a single temperature reservoir would violate the second law.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>A Carnot engine operates between $T_H = 600\;\text{K}$ and $T_C = 300\;\text{K}$. What is its efficiency?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch5-rq4" value="a"> (a) 100%</label>
+  <label><input type="radio" name="ch5-rq4" value="b"> (b) 75%</label>
+  <label><input type="radio" name="ch5-rq4" value="c"> (c) 50%</label>
+  <label><input type="radio" name="ch5-rq4" value="d"> (d) 25%</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="$\eta_{\text{Carnot}} = \frac{T_H - T_C}{T_H} = \frac{600 - 300}{600} = 0.50 = 50\%$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>A monatomic ideal gas ($\gamma = 5/3$) at initial pressure $P_1 = 3\;\text{atm}$ and volume $V_1 = 2\;\text{L}$ expands adiabatically to a final volume $V_2 = 6\;\text{L}$. Using $PV^\gamma = \text{const}$ (Eq. 39), what is the final pressure $P_2$? Give your answer in atm, rounded to two decimal places.</p>
+<div class="sa-input"><input type="text" placeholder="Your answer in atm..."></div>
+<button class="check-answer-btn" data-answer="0.48" data-explanation="$P_2 = P_1\left(\frac{V_1}{V_2}\right)^\gamma = 3\left(\frac{2}{6}\right)^{5/3} = 3\left(\frac{1}{3}\right)^{5/3} = 3^{1-5/3} = 3^{-2/3} \approx 0.48\;\text{atm}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>One mole of an ideal gas expands isothermally at $T = 400\;\text{K}$ from volume $V_1$ to $V_2 = 3V_1$. What is the entropy change of the gas? (Use $R = 8.3\;\text{J/(K·mol)}$.)</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch5-sa1" value="a"> (a) $\Delta S = 0$</label>
+  <label><input type="radio" name="ch5-sa1" value="b"> (b) $\Delta S = R\ln 3 \approx 9.1\;\text{J/K}$</label>
+  <label><input type="radio" name="ch5-sa1" value="c"> (c) $\Delta S = \frac{3}{2}R\ln 3 \approx 13.7\;\text{J/K}$</label>
+  <label><input type="radio" name="ch5-sa1" value="d"> (d) $\Delta S = R\ln 3 / T \approx 0.023\;\text{J/K}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (30), $\Delta S = Nk_B\ln(V_2/V_1)$. For one mole, $Nk_B = R$, so $\Delta S = R\ln 3 \approx 8.3 \times 1.099 \approx 9.1\;\text{J/K}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>A diatomic ideal gas at room temperature has $C_V = \frac{5}{2}Nk_B$. What is the speed of sound if $T = 300\;\text{K}$ and the molecular mass is $m = 4.65 \times 10^{-26}\;\text{kg}$ (nitrogen)? Use $k_B = 1.38 \times 10^{-23}\;\text{J/K}$. Give $c_{\text{sound}}$ in m/s, rounded to the nearest integer.</p>
+<div class="sa-input"><input type="text" placeholder="Speed of sound in m/s..."></div>
+<button class="check-answer-btn" data-answer="353" data-explanation="$C_P = C_V + Nk_B = \frac{7}{2}Nk_B$, so $\gamma = 7/5 = 1.4$. Then $c_{\text{sound}} = \sqrt{\gamma k_BT/m} = \sqrt{1.4 \times 1.38 \times 10^{-23} \times 300 / (4.65 \times 10^{-26})} = \sqrt{1.247 \times 10^5} \approx 353\;\text{m/s}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>A heat reservoir at $T = 500\;\text{K}$ absorbs $Q = 2000\;\text{J}$ of heat. What is the entropy change of the reservoir?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch5-sa2" value="a"> (a) $\Delta S = 0$ (reservoirs don't change entropy)</label>
+  <label><input type="radio" name="ch5-sa2" value="b"> (b) $\Delta S = 4.0\;\text{J/K}$</label>
+  <label><input type="radio" name="ch5-sa2" value="c"> (c) $\Delta S = 10^6\;\text{J/K}$</label>
+  <label><input type="radio" name="ch5-sa2" value="d"> (d) $\Delta S = -4.0\;\text{J/K}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (5), $\Delta S_{\text{reservoir}} = Q/T = 2000/500 = 4.0\;\text{J/K}$. A reservoir's temperature doesn't change, but its entropy does change when heat flows in or out.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Coal Power Plant</div>
+<p>A coal-fired power plant burns coal to produce steam at $T_H = 840\;\text{K}$ and exhausts waste heat to a river at $T_C = 300\;\text{K}$. The plant consumes thermal energy at a rate of $\dot{Q}_{\text{in}} = 1500\;\text{MW}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>What is the maximum electrical power output of this plant?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>At what rate is waste heat dumped into the river?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>If the river flows at $50\;\text{m}^3/\text{s}$ and the specific heat of water is $c = 4186\;\text{J/(kg·K)}$ with density $\rho = 1000\;\text{kg/m}^3$, by how many degrees does the river temperature rise?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>A real plant achieves only 38% efficiency. What is its rate of entropy production (i.e., $\dot{S}_{\text{total}}$)?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Refrigerator</div>
+<p>A refrigerator keeps its interior at $T_C = 270\;\text{K}$ and exhausts heat to a kitchen at $T_H = 300\;\text{K}$. A refrigerator is a heat engine run in reverse: work $W$ is put in, heat $Q_C$ is removed from the cold reservoir, and heat $Q_H = Q_C + W$ is dumped into the hot reservoir.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Define the <strong>coefficient of performance</strong> as $\text{COP} = Q_C / W$. Using the Carnot condition $Q_H/T_H = Q_C/T_C$ and energy conservation, show that the maximum COP is:
+$$\text{COP}_{\max} = \frac{T_C}{T_H - T_C}$$</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Calculate the maximum COP for this refrigerator.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>If heat leaks into the refrigerator at a rate of $60\;\text{W}$, what is the minimum electrical power needed to maintain $T_C = 270\;\text{K}$?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Explain why a refrigerator with its door open cannot cool the kitchen, even in principle.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Adiabatic Atmosphere</div>
+<p>The temperature of the atmosphere decreases with altitude. We can model this by assuming air rises and falls adiabatically. Consider a parcel of air (diatomic gas, $\gamma = 7/5$) that rises slowly enough to remain in pressure equilibrium with the surrounding atmosphere. The pressure varies with height as $P(z) = P_0 e^{-z/H}$, where $H \approx 8.5\;\text{km}$ is the scale height.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Using the adiabatic relation $TP^{(1-\gamma)/\gamma} = \text{const}$, show that the temperature of the rising parcel varies as:
+$$T(z) = T_0 \exp\!\left[-\frac{\gamma - 1}{\gamma}\frac{z}{H}\right]$$</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>For small $z/H$, show this gives a linear temperature decrease (the <strong>lapse rate</strong>):
+$$\frac{dT}{dz} \approx -\frac{\gamma - 1}{\gamma}\frac{T_0}{H}$$</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute the lapse rate numerically for $T_0 = 300\;\text{K}$ in units of K/km. Compare to the observed average tropospheric lapse rate of about $6.5\;\text{K/km}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Why might the observed lapse rate be smaller than the adiabatic prediction? (Hint: think about water vapor.)</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Otto Cycle</div>
+<p>The Otto cycle models a gasoline engine. It consists of four stages operating on $N$ molecules of gas with adiabatic index $\gamma$:</p>
+<ol>
+<li><strong>Adiabatic compression</strong> from volume $V_1$ to $V_2$ (compression ratio $r = V_1/V_2$).</li>
+<li><strong>Isochoric (constant volume) heating</strong> at $V_2$: temperature rises from $T_2$ to $T_3$ as fuel burns.</li>
+<li><strong>Adiabatic expansion</strong> (power stroke) from $V_2$ back to $V_1$.</li>
+<li><strong>Isochoric cooling</strong> at $V_1$: exhaust removes heat, returning to $T_1$.</li>
+</ol>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Using the adiabatic relation $TV^{\gamma-1} = \text{const}$, express $T_2$ in terms of $T_1$, $r$, and $\gamma$. Similarly express $T_4$ in terms of $T_3$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>No work is done in the isochoric stages, so the heat input is $Q_{\text{in}} = C_V(T_3 - T_2)$ and the heat output is $Q_{\text{out}} = C_V(T_4 - T_1)$. Show that the efficiency is:
+$$\eta_{\text{Otto}} = 1 - \frac{1}{r^{\gamma-1}}$$</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>A typical car engine has $r = 10$ and uses a gas with $\gamma = 1.4$. Calculate $\eta_{\text{Otto}}$. Compare to the Carnot efficiency if $T_1 = 300\;\text{K}$ and $T_3 = 2500\;\text{K}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Why is the Otto efficiency less than the Carnot efficiency between $T_1$ and $T_3$? Is the Otto cycle reversible?</p>
+</div>
+</div>
+
+</div>
+</details>
