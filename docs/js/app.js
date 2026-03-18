@@ -13814,7 +13814,7 @@ function initCh11Vis() {
         const val = xi * xi * xi / (Math.exp(xi) - 1);
         if (val > planckMaxRef) planckMaxRef = val;
       }
-      const normFactor = Math.max(planckMax, planckMaxRef) * 1.15;
+      const normFactor = Math.max(planckMax, planckMaxRef) * 1.8;
 
       // UV catastrophe shading region (high-frequency end)
       const uvStartXi = 7;
@@ -13894,18 +13894,19 @@ function initCh11Vis() {
         ctxUV.fillText('Wien\u2019s peak', peakPx, oy - 6);
       }
 
-      // Legend
+      // Legend (below temperature label, left side)
+      const legX = ox + 5, legY = oy + 32;
       ctxUV.font = FONT_SM;
       ctxUV.textAlign = 'left';
       ctxUV.strokeStyle = COLORS.blue; ctxUV.lineWidth = 2.5; ctxUV.setLineDash([]);
-      ctxUV.beginPath(); ctxUV.moveTo(WUV - 198, 38); ctxUV.lineTo(WUV - 173, 38); ctxUV.stroke();
+      ctxUV.beginPath(); ctxUV.moveTo(legX, legY); ctxUV.lineTo(legX + 25, legY); ctxUV.stroke();
       ctxUV.fillStyle = COLORS.blue;
-      ctxUV.fillText('Planck (quantum)', WUV - 169, 42);
+      ctxUV.fillText('Planck (quantum)', legX + 29, legY + 4);
       ctxUV.strokeStyle = COLORS.red; ctxUV.lineWidth = 2.5; ctxUV.setLineDash([8, 5]);
-      ctxUV.beginPath(); ctxUV.moveTo(WUV - 198, 58); ctxUV.lineTo(WUV - 173, 58); ctxUV.stroke();
+      ctxUV.beginPath(); ctxUV.moveTo(legX, legY + 18); ctxUV.lineTo(legX + 25, legY + 18); ctxUV.stroke();
       ctxUV.setLineDash([]);
       ctxUV.fillStyle = COLORS.red;
-      ctxUV.fillText('Rayleigh-Jeans (classical)', WUV - 169, 62);
+      ctxUV.fillText('Rayleigh-Jeans (classical)', legX + 29, legY + 22);
 
       // UV catastrophe annotation
       ctxUV.fillStyle = 'rgba(239,83,80,0.80)';
