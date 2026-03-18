@@ -11510,28 +11510,14 @@ function initCh9Vis() {
         var iPts = sample(p.iVal);
         var mPts = showMF ? sample(p.mfVal) : [];
 
-        // Determine y scale from sampled data.
-        // For diverging quantities, use the 97th percentile of sampled values
-        // so the curve is almost entirely visible with only the very tip at Tc
-        // exiting the top. For vanishing quantities, use the max × 1.15.
+        // Determine y scale: use the maximum of all sampled values × 1.15
+        // so the entire curve is always fully visible within the panel.
         var yMax = 0;
-        if (p.diverges) {
-          var allY = iPts.map(function(d) { return d.y; }).sort(function(a,b) { return a - b; });
-          var p97 = allY[Math.floor(allY.length * 0.97)] || 10;
-          yMax = p97 * 1.1;
-        } else {
-          var yEdge = p.fn(tMin, p.iVal);
-          yMax = (yEdge !== null && yEdge > 0) ? yEdge * 1.15 : 1.5;
-        }
-        // Also ensure MF curve fits when shown
-        if (showMF) {
-          var mAllY = mPts.map(function(d) { return d.y; }).sort(function(a,b) { return a - b; });
-          var mP97 = mAllY[Math.floor(mAllY.length * (p.diverges ? 0.97 : 1.0))] || 0;
-          var mfMax = mP97 * (p.diverges ? 1.1 : 1.15);
-          if (mfMax > yMax) yMax = mfMax;
-        }
-        // Safety: never let yMax be 0
-        if (yMax < 0.01) yMax = 1;
+        iPts.forEach(function(d) { if (d.y > yMax) yMax = d.y; });
+        if (showMF) mPts.forEach(function(d) { if (d.y > yMax) yMax = d.y; });
+        // Also ensure data points fit
+        p.data.forEach(function(d) { if (d.y > yMax) yMax = d.y; });
+        yMax = yMax > 0 ? yMax * 1.15 : 1;
 
         function toPixel(t, y) {
           return {
