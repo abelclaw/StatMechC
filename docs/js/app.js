@@ -14603,13 +14603,13 @@ function initCh12Vis() {
       ctxBA.strokeStyle = COLORS.blue; ctxBA.setLineDash([8, 4]);
       ctxBA.beginPath(); ctxBA.moveTo(lx, ly + 18); ctxBA.lineTo(lx + 20, ly + 18); ctxBA.stroke();
       ctxBA.fillStyle = COLORS.blue;
-      ctxBA.fillText('Low-T approx (Eq. 11)', lx + 25, ly + 22);
+      ctxBA.fillText('Low-T approx (Eq. 12)', lx + 25, ly + 22);
 
       ctxBA.strokeStyle = COLORS.green; ctxBA.setLineDash([4, 4]);
       ctxBA.beginPath(); ctxBA.moveTo(lx, ly + 36); ctxBA.lineTo(lx + 20, ly + 36); ctxBA.stroke();
       ctxBA.setLineDash([]);
       ctxBA.fillStyle = COLORS.green;
-      ctxBA.fillText('High-T approx (Eq. 12)', lx + 25, ly + 40);
+      ctxBA.fillText('High-T approx (Eq. 11)', lx + 25, ly + 40);
 
       ctxBA.fillStyle = COLORS.text; ctxBA.font = FONT_LG; ctxBA.textAlign = 'left';
       ctxBA.fillText('BEC Two-State Approximations (N = ' + N + ')', ox + 5, oy - 8);
