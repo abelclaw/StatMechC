@@ -23118,43 +23118,73 @@ function initCh14Vis() {
       }
     }
 
+    // Astable detection: 2 NPN + 2 CAP cross-coupled → use analytical oscillation
+    var bbAstable = null;
+    function bbDetectAstable() {
+      var npns = bbParts.filter(function(p){return p.type==='NPN';});
+      var caps = bbParts.filter(function(p){return p.type==='CAPACITOR';});
+      if (npns.length!==2||caps.length<2) { bbAstable=null; return; }
+      var res = bbParts.filter(function(p){return p.type==='RESISTOR';});
+      if (res.length<4) { bbAstable=null; return; }
+      var VCC=9, VBE=0.7;
+      for (var i=0;i<bbParts.length;i++) if (bbParts[i].type==='BATTERY') VCC=bbParts[i].value||9;
+      var rb=[null,null];
+      for (var q=0;q<2;q++) { var bN=holeNode(npns[q].holes[1].row,npns[q].holes[1].col);
+        for (var r=0;r<res.length;r++) { var n0=holeNode(res[r].holes[0].row,res[r].holes[0].col),n1=holeNode(res[r].holes[1].row,res[r].holes[1].col);
+          if (n0===bN||n1===bN) { rb[q]=res[r]; break; } } }
+      if (!rb[0]||!rb[1]) { bbAstable=null; return; }
+      var lf=Math.log((2*VCC-VBE)/(VCC-VBE));
+      bbAstable = { q:npns, activeQ:0, t:0, hp:[(rb[1].value||10000)*(caps[0].value||100e-6)*lf, (rb[0].value||10000)*(caps[1].value||100e-6)*lf], VCC:VCC, caps:caps, rb:rb };
+    }
+
     function bbSimStep() {
-      // Freeze cap voltages for this time step (convergence iterations use same V_old)
-      var capSnap = {};
-      for (var id in bbCapVolts) capSnap[id] = bbCapVolts[id];
-
-      for (var iter = 0; iter < 8; iter++) {
-        // Restore frozen cap voltages so convergence iterations don't time-step the caps
-        for (var id in capSnap) bbCapVolts[id] = capSnap[id];
-
-        for (var i = 0; i < bbParts.length; i++) {
-          var p = bbParts[i];
-          if (p.type === 'NPN') {
-            var vB = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0;
-            var vE = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0;
-            p._state = (vB - vE) > 0.55 ? 'on' : 'off';
+      var dt=1.0/60/16;
+      if (bbAstable) {
+        var a=bbAstable;
+        a.t+=dt;
+        if (a.t>=a.hp[a.activeQ]) { a.activeQ=1-a.activeQ; a.t=0; }
+        a.q[0]._state = a.activeQ===0?'on':'off';
+        a.q[1]._state = a.activeQ===1?'on':'off';
+        var onQ=a.q[a.activeQ], offQ=a.q[1-a.activeQ];
+        // Build wire merge map to find connected nodes
+        var mm={}; function rt(n){if(!mm[n])return n;return mm[n]=rt(mm[n]);} function mg(a,b){var ra=rt(a),rb=rt(b);if(ra!==rb)mm[ra]=rb;}
+        for(var i=0;i<bbParts.length;i++){var p=bbParts[i];if(p.type==='WIRE')mg(holeNode(p.holes[0].row,p.holes[0].col),holeNode(p.holes[1].row,p.holes[1].col));}
+        var onCR=rt(holeNode(onQ.holes[2].row,onQ.holes[2].col));
+        var offCR=rt(holeNode(offQ.holes[2].row,offQ.holes[2].col));
+        for (var i=0;i<bbParts.length;i++) { var p=bbParts[i];
+          if (p.type==='LED') { var lr0=rt(holeNode(p.holes[0].row,p.holes[0].col)),lr1=rt(holeNode(p.holes[1].row,p.holes[1].col));
+            if (lr0===onCR||lr1===onCR) p._ledOn=true;
+            else if (lr0===offCR||lr1===offCR) p._ledOn=false;
           }
-          if (p.type === 'PNP') {
-            var vB = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0;
-            var vE = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0;
-            p._state = (vE - vB) > 0.55 ? 'on' : 'off';
-          }
-          if (p.type === 'LED') {
-            var v0 = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0;
-            var v1 = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0;
-            if (p._ledOn) {
-              // Already on: check if current is sufficient (> 1mA) and forward
-              p._ledOn = (p._ledCurrent || 0) > 0.001;
-            } else {
-              // Off: check if open-circuit voltage would turn it on
-              p._ledOn = (v0 - v1) > 1.8;
-            }
-          }
+        }
+        bbNodeVolts={}; bbNodeVolts['VPOS']=a.VCC; bbNodeVolts['VNEG']=0;
+        bbNodeVolts[holeNode(onQ.holes[2].row,onQ.holes[2].col)]=0.2;
+        bbNodeVolts[holeNode(onQ.holes[1].row,onQ.holes[1].col)]=0.7;
+        bbNodeVolts[holeNode(onQ.holes[0].row,onQ.holes[0].col)]=0;
+        bbNodeVolts[holeNode(offQ.holes[2].row,offQ.holes[2].col)]=a.VCC;
+        var tau=(a.rb[1-a.activeQ].value||10000)*(a.caps[a.activeQ].value||100e-6);
+        bbNodeVolts[holeNode(offQ.holes[1].row,offQ.holes[1].col)]=a.VCC-(2*a.VCC-0.7)*Math.exp(-a.t/tau);
+        bbNodeVolts[holeNode(offQ.holes[0].row,offQ.holes[0].col)]=0;
+        // Propagate voltages through wire merges
+        for (var n in bbNodeVolts) { var r=rt(n); if (r!==n && bbNodeVolts[r]!==undefined) bbNodeVolts[n]=bbNodeVolts[r]; }
+        for (var n in bbNodeVolts) { var r=rt(n); if (bbNodeVolts[n]===undefined && bbNodeVolts[r]!==undefined) bbNodeVolts[n]=bbNodeVolts[r]; }
+        return;
+      }
+      // Standard MNA for non-astable circuits
+      var capSnap={}; for(var id in bbCapVolts) capSnap[id]=bbCapVolts[id];
+      for(var id in capSnap) bbCapVolts[id]=capSnap[id]; bbSolve();
+      for (var iter=0;iter<7;iter++) {
+        for(var id in capSnap) bbCapVolts[id]=capSnap[id];
+        for (var i=0;i<bbParts.length;i++) { var p=bbParts[i];
+          if (p.type==='NPN') { var vB=bbNodeVolts[holeNode(p.holes[1].row,p.holes[1].col)]||0,vE=bbNodeVolts[holeNode(p.holes[0].row,p.holes[0].col)]||0; p._state=(vB-vE)>0.55?'on':'off'; }
+          if (p.type==='PNP') { var vB=bbNodeVolts[holeNode(p.holes[1].row,p.holes[1].col)]||0,vE=bbNodeVolts[holeNode(p.holes[0].row,p.holes[0].col)]||0; p._state=(vE-vB)>0.55?'on':'off'; }
+          if (p.type==='LED') { var v0=bbNodeVolts[holeNode(p.holes[0].row,p.holes[0].col)]||0,v1=bbNodeVolts[holeNode(p.holes[1].row,p.holes[1].col)]||0;
+            if (p._ledOn) { p._ledOn=(p._ledCurrent||0)>0.001; } else { p._ledOn=(v0-v1)>1.8; } }
         }
         bbSolve();
       }
-      // After convergence, bbCapVolts has the new voltages for the next time step
     }
+
 
     // ---- DRAWING ----
     function fmtR(v) { return v >= 1e6 ? (v/1e6)+'M\u03A9' : v >= 1000 ? (v/1000)+'k\u03A9' : v+'\u03A9'; }
@@ -23349,7 +23379,7 @@ function initCh14Vis() {
         if (bbParts[i].type === 'LED') bbParts[i]._ledOn = false;
       }
     }
-    function bbRunSim() { bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
+    function bbRunSim() { bbDetectAstable(); bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
     function bbDeleteAndSim() { bbFullReset(); bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
 
     var bbPaletteEl = document.getElementById('bb-palette');
@@ -23380,10 +23410,14 @@ function initCh14Vis() {
     var bbAnimRunning = false;
     function bbAnimate() {
       var hasCap = bbParts.some(function(p) { return p.type === 'CAPACITOR'; });
-      if ((hasCap || bbShowCurrent) && bbParts.length > 0) { if (hasCap) for (var s = 0; s < 16; s++) bbSimStep(); bbDraw(); bbAnimRunning = true; requestAnimationFrame(bbAnimate); }
-      else { bbAnimRunning = false; }
+      var needAnim = hasCap || bbShowCurrent || bbAstable;
+      if (needAnim && bbParts.length > 0) {
+        if (bbAstable) { for (var s = 0; s < 16; s++) bbSimStep(); }
+        else if (hasCap) { for (var s = 0; s < 16; s++) bbSimStep(); }
+        bbDraw(); bbAnimRunning = true; requestAnimationFrame(bbAnimate);
+      } else { bbAnimRunning = false; }
     }
-    function bbCheckAnim() { if (!bbAnimRunning && (bbShowCurrent || bbParts.some(function(p) { return p.type === 'CAPACITOR'; }))) bbAnimate(); }
+    function bbCheckAnim() { if (!bbAnimRunning && (bbShowCurrent || bbAstable || bbParts.some(function(p) { return p.type === 'CAPACITOR'; }))) bbAnimate(); }
 
     bbPresetAstable();
   }
