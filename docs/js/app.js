@@ -23405,48 +23405,21 @@ function initCh15Vis() {
     const jeansResetBtn = document.getElementById('jeans-reset');
     const jeansTempSlider = document.getElementById('jeans-temp');
 
-    // Particles representing gas
-    const N = 600;
+    // Grid-based density field + SPH-like particles
+    // Real Jeans instability: uniform gas -> tiny perturbations grow -> filaments -> dense cores -> protostars
+    // Most gas remains diffuse throughout the process
+    const N = 900;
     let particles = [];
     let jeansPlaying = false, jeansTime = 0;
-    let protostars = []; // collapsed clumps become glowing protostars
+    let protostars = [];
 
-    function initParticles() {
-      particles = [];
-      protostars = [];
-      jeansTime = 0;
-      // Seed several density perturbations (overdense regions)
-      const seeds = [];
-      const rng = mulberry32(17);
-      const nSeeds = 3 + Math.floor(rng() * 3);
-      for (let i = 0; i < nSeeds; i++) {
-        seeds.push({
-          x: 80 + rng() * (WJ - 160),
-          y: 60 + rng() * (HJ - 140),
-          strength: 0.3 + rng() * 0.5
-        });
-      }
-      for (let i = 0; i < N; i++) {
-        let x, y;
-        // 40% of particles clustered near seeds, 60% uniform
-        if (rng() < 0.4 && seeds.length > 0) {
-          const s = seeds[Math.floor(rng() * seeds.length)];
-          x = s.x + (rng() - 0.5) * 120 * (1 - s.strength);
-          y = s.y + (rng() - 0.5) * 120 * (1 - s.strength);
-        } else {
-          x = 20 + rng() * (WJ - 40);
-          y = 20 + rng() * (HJ - 60);
-        }
-        particles.push({
-          x, y,
-          vx: (rng() - 0.5) * 0.3,
-          vy: (rng() - 0.5) * 0.3,
-          mass: 0.8 + rng() * 0.4
-        });
-      }
-    }
+    // Density field grid for smooth background rendering
+    const GRID_RES = 8; // pixels per cell
+    const gridW = Math.ceil(WJ / GRID_RES);
+    const gridH = Math.ceil((HJ - 20) / GRID_RES);
+    let densityField = new Float32Array(gridW * gridH);
 
-    // Seeded RNG (same as in HR diagram)
+    // Seeded RNG
     function mulberry32(a) {
       return function() {
         a |= 0; a = a + 0x6D2B79F5 | 0;
@@ -23456,17 +23429,103 @@ function initCh15Vis() {
       };
     }
 
+    function initParticles() {
+      particles = [];
+      protostars = [];
+      jeansTime = 0;
+      const rng = mulberry32(42);
+
+      // Nearly uniform distribution with very subtle (~5%) density perturbations
+      // These tiny seeds are what Jeans instability amplifies
+      const perturbSeeds = [];
+      const nSeeds = 4 + Math.floor(rng() * 3);
+      for (let i = 0; i < nSeeds; i++) {
+        perturbSeeds.push({
+          x: 60 + rng() * (WJ - 120),
+          y: 40 + rng() * (HJ - 100),
+          strength: 0.03 + rng() * 0.04 // very subtle: 3-7% overdensity
+        });
+      }
+
+      for (let i = 0; i < N; i++) {
+        let x = 15 + rng() * (WJ - 30);
+        let y = 15 + rng() * (HJ - 50);
+
+        // Subtle bias: ~10% of particles get nudged slightly toward seeds
+        if (rng() < 0.10 && perturbSeeds.length > 0) {
+          const s = perturbSeeds[Math.floor(rng() * perturbSeeds.length)];
+          x = x * 0.7 + s.x * 0.3 + (rng() - 0.5) * 80;
+          y = y * 0.7 + s.y * 0.3 + (rng() - 0.5) * 80;
+        }
+        x = Math.max(10, Math.min(WJ - 10, x));
+        y = Math.max(10, Math.min(HJ - 30, y));
+
+        particles.push({
+          x, y,
+          vx: (rng() - 0.5) * 0.15,
+          vy: (rng() - 0.5) * 0.15,
+          mass: 0.9 + rng() * 0.2,
+          absorbed: false
+        });
+      }
+      computeDensityField();
+    }
+
+    function computeDensityField() {
+      densityField.fill(0);
+      const kernelR = 4;
+      particles.forEach(p => {
+        if (p.absorbed) return;
+        const gx0 = Math.floor(p.x / GRID_RES);
+        const gy0 = Math.floor(p.y / GRID_RES);
+        for (let dx = -kernelR; dx <= kernelR; dx++) {
+          for (let dy = -kernelR; dy <= kernelR; dy++) {
+            const gx = gx0 + dx, gy = gy0 + dy;
+            if (gx < 0 || gx >= gridW || gy < 0 || gy >= gridH) continue;
+            const cx = (gx + 0.5) * GRID_RES, cy = (gy + 0.5) * GRID_RES;
+            const dist2 = (p.x - cx) * (p.x - cx) + (p.y - cy) * (p.y - cy);
+            const h = kernelR * GRID_RES;
+            const q = Math.sqrt(dist2) / h;
+            if (q < 1) {
+              const w = (1 - q * q) * (1 - q * q);
+              densityField[gy * gridW + gx] += p.mass * w;
+            }
+          }
+        }
+      });
+      protostars.forEach(ps => {
+        const gx0 = Math.floor(ps.x / GRID_RES);
+        const gy0 = Math.floor(ps.y / GRID_RES);
+        const pR = Math.ceil(ps.R * 2 / GRID_RES);
+        for (let dx = -pR; dx <= pR; dx++) {
+          for (let dy = -pR; dy <= pR; dy++) {
+            const gx = gx0 + dx, gy = gy0 + dy;
+            if (gx < 0 || gx >= gridW || gy < 0 || gy >= gridH) continue;
+            const cx = (gx + 0.5) * GRID_RES, cy = (gy + 0.5) * GRID_RES;
+            const dist = Math.sqrt((ps.x - cx) * (ps.x - cx) + (ps.y - cy) * (ps.y - cy));
+            const h = ps.R * 2;
+            if (dist < h) {
+              const q = dist / h;
+              densityField[gy * gridW + gx] += ps.mass * 0.5 * (1 - q) * (1 - q);
+            }
+          }
+        }
+      });
+    }
+
     initParticles();
 
     function stepJeans(dt) {
       const temp = parseFloat(jeansTempSlider?.value || 30);
-      const thermalPressure = 0.008 + temp * 0.003; // thermal velocity kicks
-      const gravity = 0.12; // gravitational coupling
+      const thermalPressure = 0.005 + temp * 0.0025;
+      const gravity = 0.08;
 
-      // Build grid for neighbor finding (spatial hash)
-      const cellSize = 40;
+      const cellSize = 35;
       const grid = {};
+      const activeParticles = [];
       particles.forEach((p, i) => {
+        if (p.absorbed) return;
+        activeParticles.push(i);
         const gx = Math.floor(p.x / cellSize);
         const gy = Math.floor(p.y / cellSize);
         const key = gx + ',' + gy;
@@ -23474,12 +23533,12 @@ function initCh15Vis() {
         grid[key].push(i);
       });
 
-      // Compute forces
-      particles.forEach((p, i) => {
+      activeParticles.forEach(i => {
+        const p = particles[i];
         let fx = 0, fy = 0;
-        // Gravity from nearby particles
         const gx = Math.floor(p.x / cellSize);
         const gy = Math.floor(p.y / cellSize);
+
         for (let dx = -2; dx <= 2; dx++) {
           for (let dy = -2; dy <= 2; dy++) {
             const key = (gx+dx) + ',' + (gy+dy);
@@ -23489,11 +23548,10 @@ function initCh15Vis() {
               if (j === i) return;
               const q = particles[j];
               const ddx = q.x - p.x, ddy = q.y - p.y;
-              const r2 = ddx*ddx + ddy*ddy + 25; // softening
+              const r2 = ddx*ddx + ddy*ddy + 16;
               const r = Math.sqrt(r2);
-              // Gravity (attractive) with short-range repulsion (pressure)
               const fGrav = gravity * p.mass * q.mass / r2;
-              const fPressure = r < 8 ? thermalPressure * 5 / (r + 1) : 0;
+              const fPressure = r < 10 ? thermalPressure * 6 / (r + 0.5) : 0;
               const fNet = (fGrav - fPressure) / r;
               fx += ddx * fNet;
               fy += ddy * fNet;
@@ -23501,127 +23559,186 @@ function initCh15Vis() {
           }
         }
 
-        // Thermal random kicks
-        fx += (Math.random() - 0.5) * thermalPressure * 2;
-        fy += (Math.random() - 0.5) * thermalPressure * 2;
+        fx += (Math.random() - 0.5) * thermalPressure * 1.5;
+        fy += (Math.random() - 0.5) * thermalPressure * 1.5;
 
-        // Damping
-        p.vx = p.vx * 0.995 + fx * dt;
-        p.vy = p.vy * 0.995 + fy * dt;
+        p.vx = p.vx * 0.997 + fx * dt;
+        p.vy = p.vy * 0.997 + fy * dt;
 
-        // Clamp velocity
         const speed = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
-        if (speed > 3) { p.vx *= 3/speed; p.vy *= 3/speed; }
+        if (speed > 2.5) { p.vx *= 2.5/speed; p.vy *= 2.5/speed; }
       });
 
-      // Move
-      particles.forEach(p => {
+      activeParticles.forEach(i => {
+        const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
-        // Soft boundary
-        if (p.x < 10) { p.x = 10; p.vx *= -0.5; }
-        if (p.x > WJ - 10) { p.x = WJ - 10; p.vx *= -0.5; }
-        if (p.y < 10) { p.y = 10; p.vy *= -0.5; }
-        if (p.y > HJ - 30) { p.y = HJ - 30; p.vy *= -0.5; }
+        if (p.x < 8) { p.x = 8; p.vx *= -0.3; }
+        if (p.x > WJ - 8) { p.x = WJ - 8; p.vx *= -0.3; }
+        if (p.y < 8) { p.y = 8; p.vy *= -0.3; }
+        if (p.y > HJ - 28) { p.y = HJ - 28; p.vy *= -0.3; }
       });
 
-      // Detect collapsed clumps: if many particles are very close, form a protostar
-      jeansTime += dt;
-      if (jeansTime > 2 && Math.random() < 0.05) {
-        // Find densest point
-        let maxDensity = 0, maxX = 0, maxY = 0;
-        particles.forEach(p => {
-          let density = 0;
-          particles.forEach(q => {
-            const d2 = (p.x-q.x)*(p.x-q.x) + (p.y-q.y)*(p.y-q.y);
-            if (d2 < 400) density += q.mass;
-          });
-          if (density > maxDensity) { maxDensity = density; maxX = p.x; maxY = p.y; }
+      protostars.forEach(ps => {
+        activeParticles.forEach(i => {
+          const p = particles[i];
+          const ddx = ps.x - p.x, ddy = ps.y - p.y;
+          const r2 = ddx*ddx + ddy*ddy + 100;
+          const r = Math.sqrt(r2);
+          const f = ps.mass * 0.02 / r2;
+          p.vx += ddx * f;
+          p.vy += ddy * f;
+          if (r < ps.R * 0.6 && Math.random() < 0.02) {
+            ps.mass += p.mass * 0.3;
+            ps.R = Math.min(18, 3 + Math.sqrt(ps.mass) * 0.8);
+            p.absorbed = true;
+          }
         });
-        // If dense enough and not near existing protostar, form one
-        const nearExisting = protostars.some(ps => Math.hypot(ps.x - maxX, ps.y - maxY) < 50);
-        if (maxDensity > 15 && !nearExisting) {
-          protostars.push({x: maxX, y: maxY, birth: jeansTime, mass: maxDensity, R: 3 + maxDensity * 0.3});
-          // Absorb nearby particles
-          particles = particles.filter(p => {
+      });
+
+      jeansTime += dt;
+      if (jeansTime > 5 && Math.random() < 0.03) {
+        const sampleSize = Math.min(activeParticles.length, 80);
+        let maxDensity = 0, maxX = 0, maxY = 0;
+        for (let s = 0; s < sampleSize; s++) {
+          const idx = activeParticles[Math.floor(Math.random() * activeParticles.length)];
+          const p = particles[idx];
+          let density = 0;
+          const gx = Math.floor(p.x / cellSize);
+          const gy = Math.floor(p.y / cellSize);
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const key = (gx+dx) + ',' + (gy+dy);
+              const cell = grid[key];
+              if (!cell) continue;
+              cell.forEach(j => {
+                const q = particles[j];
+                const d2 = (p.x-q.x)*(p.x-q.x) + (p.y-q.y)*(p.y-q.y);
+                if (d2 < 500) density += q.mass / (1 + d2 * 0.01);
+              });
+            }
+          }
+          if (density > maxDensity) { maxDensity = density; maxX = p.x; maxY = p.y; }
+        }
+        const nearExisting = protostars.some(ps => Math.hypot(ps.x - maxX, ps.y - maxY) < 60);
+        if (maxDensity > 20 && !nearExisting) {
+          protostars.push({
+            x: maxX, y: maxY, birth: jeansTime,
+            mass: maxDensity * 0.5,
+            R: 3 + Math.sqrt(maxDensity * 0.5) * 0.8
+          });
+          let absorbed = 0;
+          activeParticles.forEach(i => {
+            const p = particles[i];
             const d = Math.hypot(p.x - maxX, p.y - maxY);
-            return d > 15;
+            if (d < 8 && absorbed < 6) {
+              p.absorbed = true;
+              absorbed++;
+            }
           });
         }
       }
 
-      // Protostars attract remaining particles
-      protostars.forEach(ps => {
-        particles.forEach(p => {
-          const ddx = ps.x - p.x, ddy = ps.y - p.y;
-          const r2 = ddx*ddx + ddy*ddy + 100;
-          const r = Math.sqrt(r2);
-          const f = ps.mass * 0.05 / r2;
-          p.vx += ddx * f;
-          p.vy += ddy * f;
-          // Absorb if very close
-          if (r < ps.R + 5) {
-            ps.mass += p.mass * 0.1;
-            ps.R = 3 + ps.mass * 0.3;
-            p.x = -100; // remove
-          }
-        });
-      });
-      particles = particles.filter(p => p.x > -50);
+      computeDensityField();
     }
 
     function drawJeans() {
-      ctxJ.fillStyle = '#060a10';
+      ctxJ.fillStyle = '#050810';
       ctxJ.fillRect(0, 0, WJ, HJ);
 
-      // Gas particles
+      // Draw smooth density field as diffuse nebula background
+      let maxD = 0;
+      for (let i = 0; i < densityField.length; i++) {
+        if (densityField[i] > maxD) maxD = densityField[i];
+      }
+      if (maxD < 0.01) maxD = 1;
+
+      const imgData = ctxJ.createImageData(gridW, gridH);
+      for (let gy = 0; gy < gridH; gy++) {
+        for (let gx = 0; gx < gridW; gx++) {
+          const d = densityField[gy * gridW + gx] / maxD;
+          const idx = (gy * gridW + gx) * 4;
+          const sqd = Math.sqrt(d);
+          const r = Math.floor(30 + 160 * sqd * sqd + 65 * d);
+          const g = Math.floor(15 + 60 * sqd + 100 * d * d * d);
+          const b = Math.floor(50 + 120 * sqd + 85 * d * d);
+          const a = Math.floor(Math.min(255, 20 + 235 * sqd));
+          imgData.data[idx] = Math.min(255, r);
+          imgData.data[idx+1] = Math.min(255, g);
+          imgData.data[idx+2] = Math.min(255, b);
+          imgData.data[idx+3] = Math.min(255, a);
+        }
+      }
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = gridW;
+      tmpCanvas.height = gridH;
+      tmpCanvas.getContext('2d').putImageData(imgData, 0, 0);
+      ctxJ.imageSmoothingEnabled = true;
+      ctxJ.imageSmoothingQuality = 'high';
+      ctxJ.drawImage(tmpCanvas, 0, 0, WJ, HJ - 20);
+
+      // Background stars
+      const rng2 = mulberry32(99);
+      ctxJ.fillStyle = 'rgba(255,255,255,0.15)';
+      for (let i = 0; i < 30; i++) {
+        const sx = rng2() * WJ, sy = rng2() * (HJ - 20);
+        ctxJ.beginPath();
+        ctxJ.arc(sx, sy, 0.5 + rng2() * 0.5, 0, 2 * Math.PI);
+        ctxJ.fill();
+      }
+
+      // Particles as subtle bright points
       particles.forEach(p => {
-        // Color by local density (approximate)
-        const alpha = 0.4 + Math.min(0.5, Math.abs(p.vx) + Math.abs(p.vy));
-        ctxJ.fillStyle = `rgba(180,140,200,${alpha.toFixed(2)})`;
-        ctxJ.beginPath(); ctxJ.arc(p.x, p.y, 2.2, 0, 2*Math.PI); ctxJ.fill();
-        // Glow for dense feeling
-        ctxJ.fillStyle = `rgba(150,120,180,${(alpha*0.15).toFixed(2)})`;
-        ctxJ.beginPath(); ctxJ.arc(p.x, p.y, 6, 0, 2*Math.PI); ctxJ.fill();
+        if (p.absorbed) return;
+        const speed = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+        const alpha = 0.15 + Math.min(0.35, speed * 0.2);
+        ctxJ.fillStyle = 'rgba(220,200,240,' + alpha.toFixed(2) + ')';
+        ctxJ.beginPath();
+        ctxJ.arc(p.x, p.y, 1.3, 0, 2 * Math.PI);
+        ctxJ.fill();
       });
 
       // Protostars
       protostars.forEach(ps => {
         const age = jeansTime - ps.birth;
-        const glow = Math.min(1, age * 0.5);
-        const r = Math.min(ps.R, 20);
+        const glow = Math.min(1, age * 0.3);
+        const r = Math.min(ps.R, 18);
 
-        // Outer glow
-        const grd = ctxJ.createRadialGradient(ps.x, ps.y, 0, ps.x, ps.y, r * 3);
-        grd.addColorStop(0, `rgba(255,200,100,${(0.4*glow).toFixed(2)})`);
-        grd.addColorStop(0.5, `rgba(255,150,50,${(0.15*glow).toFixed(2)})`);
-        grd.addColorStop(1, 'rgba(255,100,30,0)');
-        ctxJ.fillStyle = grd;
-        ctxJ.beginPath(); ctxJ.arc(ps.x, ps.y, r * 3, 0, 2*Math.PI); ctxJ.fill();
+        const envR = r * 4;
+        const env = ctxJ.createRadialGradient(ps.x, ps.y, 0, ps.x, ps.y, envR);
+        env.addColorStop(0, 'rgba(255,220,150,' + (0.25*glow).toFixed(2) + ')');
+        env.addColorStop(0.3, 'rgba(255,160,80,' + (0.12*glow).toFixed(2) + ')');
+        env.addColorStop(0.7, 'rgba(200,100,60,' + (0.04*glow).toFixed(2) + ')');
+        env.addColorStop(1, 'rgba(150,60,40,0)');
+        ctxJ.fillStyle = env;
+        ctxJ.beginPath(); ctxJ.arc(ps.x, ps.y, envR, 0, 2*Math.PI); ctxJ.fill();
 
-        // Core
-        const coreGrd = ctxJ.createRadialGradient(ps.x, ps.y, 0, ps.x, ps.y, r);
-        coreGrd.addColorStop(0, `rgba(255,255,230,${(0.9*glow).toFixed(2)})`);
-        coreGrd.addColorStop(0.5, `rgba(255,200,100,${(0.7*glow).toFixed(2)})`);
-        coreGrd.addColorStop(1, `rgba(200,100,50,${(0.3*glow).toFixed(2)})`);
-        ctxJ.fillStyle = coreGrd;
+        const core = ctxJ.createRadialGradient(ps.x, ps.y, 0, ps.x, ps.y, r);
+        core.addColorStop(0, 'rgba(255,255,240,' + (0.95*glow).toFixed(2) + ')');
+        core.addColorStop(0.4, 'rgba(255,230,170,' + (0.8*glow).toFixed(2) + ')');
+        core.addColorStop(0.8, 'rgba(255,180,100,' + (0.4*glow).toFixed(2) + ')');
+        core.addColorStop(1, 'rgba(220,120,60,' + (0.15*glow).toFixed(2) + ')');
+        ctxJ.fillStyle = core;
         ctxJ.beginPath(); ctxJ.arc(ps.x, ps.y, r, 0, 2*Math.PI); ctxJ.fill();
 
-        // Label
-        if (glow > 0.5) {
-          ctxJ.fillStyle = `rgba(255,255,255,${(glow*0.7).toFixed(2)})`;
-          ctxJ.font = '10px Inter, system-ui, sans-serif';
+        if (glow > 0.6) {
+          ctxJ.fillStyle = 'rgba(255,255,255,' + (glow*0.6).toFixed(2) + ')';
+          ctxJ.font = '9px Inter, system-ui, sans-serif';
           ctxJ.textAlign = 'center';
-          ctxJ.fillText('protostar', ps.x, ps.y - r - 6);
+          ctxJ.fillText('protostar', ps.x, ps.y - r - 5);
         }
       });
 
-      // Info
+      // Info bar
+      const nActive = particles.filter(p => !p.absorbed).length;
       ctxJ.fillStyle = COLORS.textDim; ctxJ.font = FONT_SM; ctxJ.textAlign = 'left';
-      ctxJ.fillText('Particles: ' + particles.length + '   Protostars: ' + protostars.length, 10, HJ - 8);
+      ctxJ.fillText('Gas particles: ' + nActive + '   Protostars: ' + protostars.length, 10, HJ - 6);
       const temp = parseFloat(jeansTempSlider?.value || 30);
       ctxJ.textAlign = 'right';
-      ctxJ.fillText('T ~ ' + (temp < 30 ? 'low (easy collapse)' : temp < 70 ? 'moderate' : 'high (resists collapse)'), WJ - 10, HJ - 8);
+      ctxJ.fillText(
+        'T ~ ' + (temp < 30 ? 'low — collapse favored' : temp < 70 ? 'moderate' : 'high — pressure resists collapse'),
+        WJ - 10, HJ - 6
+      );
     }
 
     function jeansAnimate() {
@@ -23652,6 +23769,7 @@ function initCh15Vis() {
       if (label) label.textContent = '';
     });
 
+    drawJeans();
     drawJeans();
   }
 
