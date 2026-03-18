@@ -22237,6 +22237,9 @@ function initCh14Vis() {
           // Bubble
           ctx.beginPath(); ctx.arc(g.x + g.w - 6, cy, 5, 0, Math.PI * 2);
           ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+          // Label
+          ctx.fillStyle = '#333'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('NOT', g.x + g.w * 0.35, cy + 3);
         } else if (g.type === 'AND' || g.type === 'NAND') {
           // Flat left, rounded right (D shape)
           const bodyW = g.type === 'NAND' ? g.w - 10 : g.w;
@@ -22251,6 +22254,9 @@ function initCh14Vis() {
             ctx.beginPath(); ctx.arc(g.x + bodyW / 2 + hh - 2 + 6, cy, 5, 0, Math.PI * 2);
             ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
           }
+          // Label
+          ctx.fillStyle = '#333'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(g.type, g.x + bodyW * 0.4, cy + 3);
         } else if (g.type === 'OR' || g.type === 'NOR') {
           // Curved OR shape
           const bodyW = g.type === 'NOR' ? g.w - 10 : g.w;
@@ -22265,6 +22271,9 @@ function initCh14Vis() {
             ctx.beginPath(); ctx.arc(g.x + bodyW + 3, cy, 5, 0, Math.PI * 2);
             ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
           }
+          // Label
+          ctx.fillStyle = '#333'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(g.type, g.x + bodyW * 0.42, cy + 3);
         } else if (g.type === 'XOR') {
           // OR shape with extra curve on input side
           ctx.fillStyle = 'rgba(240,240,255,0.95)'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
@@ -22279,6 +22288,9 @@ function initCh14Vis() {
           ctx.moveTo(g.x + 2, g.y + 2);
           ctx.quadraticCurveTo(g.x + g.w * 0.17, cy, g.x + 2, g.y + g.h - 2);
           ctx.stroke();
+          // Label
+          ctx.fillStyle = '#333'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('XOR', g.x + g.w * 0.42, cy + 3);
         }
 
         // Input port circles
@@ -22306,6 +22318,29 @@ function initCh14Vis() {
       if (hoveredPort && (selectedTool === 'WIRE' || wireStart)) {
         ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(hoveredPort.x, hoveredPort.y, 8, 0, Math.PI * 2); ctx.stroke();
+      }
+
+      // Delete mode: draw wire cutter icon at cursor
+      if (selectedTool === 'DELETE') {
+        const cx = mouseX, cy = mouseY;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-0.3);
+        // Scissors icon
+        ctx.strokeStyle = '#e53935'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        // Left blade
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-10, -12); ctx.stroke();
+        // Right blade
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(10, -12); ctx.stroke();
+        // Left handle (circle)
+        ctx.beginPath(); ctx.arc(-10, -16, 5, 0, Math.PI * 2); ctx.stroke();
+        // Right handle (circle)
+        ctx.beginPath(); ctx.arc(10, -16, 5, 0, Math.PI * 2); ctx.stroke();
+        // Snip lines
+        ctx.strokeStyle = 'rgba(229,57,53,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([2,2]);
+        ctx.beginPath(); ctx.moveTo(-6, 2); ctx.lineTo(6, 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
       }
 
       // Empty state message
@@ -22337,8 +22372,9 @@ function initCh14Vis() {
       mouseX = pos.x; mouseY = pos.y;
 
       // Always check: toggle INPUT gates regardless of tool mode
+      // But in WIRE mode, check if we're clicking on a port first
       const clickedGate = findGateAt(pos.x, pos.y);
-      if (clickedGate && clickedGate.type === 'INPUT' && selectedTool !== 'DELETE') {
+      if (clickedGate && clickedGate.type === 'INPUT' && selectedTool !== 'DELETE' && selectedTool !== 'WIRE') {
         // Only toggle if not starting a drag (check if it looks like a click vs drag start)
         inputClickCandidate = clickedGate;
         inputClickPos = { x: pos.x, y: pos.y };
@@ -22397,6 +22433,11 @@ function initCh14Vis() {
           }
         } else {
           wireStart = null;
+          // In WIRE mode, clicking body of INPUT gate toggles it
+          if (clickedGate && clickedGate.type === 'INPUT') {
+            inputClickCandidate = clickedGate;
+            inputClickPos = { x: pos.x, y: pos.y };
+          }
         }
         drawCircuit();
         return;
@@ -22437,6 +22478,7 @@ function initCh14Vis() {
       hoveredPort = findPort(pos.x, pos.y);
       if (wireStart) drawCircuit();
       else if (hoveredPort && selectedTool === 'WIRE') drawCircuit();
+      else if (selectedTool === 'DELETE') drawCircuit();
     });
 
     cBuilder.addEventListener('mouseup', function(e) {
@@ -22495,6 +22537,7 @@ function initCh14Vis() {
         btn.classList.add('active');
         selectedTool = btn.dataset.gate;
         wireStart = null;
+        cBuilder.style.cursor = selectedTool === 'DELETE' ? 'none' : '';
         drawCircuit();
       });
 
