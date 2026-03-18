@@ -622,6 +622,27 @@ li { margin-bottom: 6px; }
   transition: background 0.15s;
 }
 .interactive-wrapper .controls button:hover { background: var(--accent-light); }
+.interactive-wrapper .controls .button-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.interactive-wrapper .controls .button-group .control-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.interactive-wrapper .controls .button-group .control-btn:hover {
+  border-color: var(--accent-light);
+  color: #fff;
+}
+.interactive-wrapper .controls .button-group .control-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
 .interactive-wrapper .controls select {
   padding: 4px 8px;
   border: 1px solid var(--border);

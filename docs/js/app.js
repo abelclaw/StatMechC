@@ -17936,7 +17936,8 @@ function initCh14Vis() {
   const cMO = document.getElementById('vis-mo-diagram');
   if (cMO) {
     const { ctx: ctxMO, W: WMO, H: HMO } = setupCanvas(cMO);
-    const molSelect = document.getElementById('mo-molecule');
+    const molButtons = document.getElementById('mo-molecule-buttons');
+    let selectedMolecule = 'H2';
 
     const molecules = {
       'H2': {
@@ -17978,7 +17979,7 @@ function initCh14Vis() {
 
     function drawMODiagram() {
       clearCanvas(ctxMO, WMO, HMO);
-      const mol = molecules[molSelect?.value || 'H2'];
+      const mol = molecules[selectedMolecule];
 
       const colW = WMO / 3;
       const oy = 40, ph = HMO - 80;
@@ -18060,7 +18061,14 @@ function initCh14Vis() {
       ctxMO.fillStyle = COLORS.yellow; ctxMO.fillText('↑↓ = electrons', WMO - 150, oy + 46);
     }
 
-    molSelect?.addEventListener('change', drawMODiagram);
+    molButtons?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      molButtons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedMolecule = btn.dataset.value;
+      drawMODiagram();
+    });
     drawMODiagram();
   }
 
@@ -18068,7 +18076,6 @@ function initCh14Vis() {
   const cIon = document.getElementById('vis-ionization');
   if (cIon) {
     const { ctx: ctxIon, W: WIon, H: HIon } = setupCanvas(cIon);
-    const periodSelect = document.getElementById('ion-period');
 
     // First ionization energies in eV (Z=1..54)
     const ionData = [
@@ -18092,7 +18099,6 @@ function initCh14Vis() {
 
     function drawIonization() {
       clearCanvas(ctxIon, WIon, HIon);
-      const selPeriod = parseInt(periodSelect?.value || 0);
 
       const ox = 60, oy = 25, pw = WIon - 80, ph = HIon - 70;
       const maxE = 26;
@@ -18133,7 +18139,7 @@ function initCh14Vis() {
         for (let p = 0; p < periodBounds.length; p++) {
           if (z >= periodBounds[p][0] && z <= periodBounds[p][1]) { pIdx = p; break; }
         }
-        const highlight = selPeriod === 0 || selPeriod === pIdx + 1;
+        const highlight = true;
         const px = ox + (z / 54) * pw;
         const py = oy + ph - (ionData[z - 1] / maxE) * ph;
 
@@ -18168,7 +18174,7 @@ function initCh14Vis() {
       ctxIon.font = FONT_SM; ctxIon.textAlign = 'left';
       periodBounds.forEach((pb, i) => {
         ctxIon.fillStyle = periodColors[i];
-        ctxIon.globalAlpha = selPeriod === 0 || selPeriod === i + 1 ? 1 : 0.3;
+        ctxIon.globalAlpha = 1;
         ctxIon.fillText('Period ' + (i + 1), ox + pw - 80, oy + 14 + i * 14);
         ctxIon.globalAlpha = 1;
       });
@@ -18185,7 +18191,6 @@ function initCh14Vis() {
       drawIonization();
     });
     cIon.addEventListener('mouseleave', () => { hoverIon = -1; drawIonization(); });
-    periodSelect?.addEventListener('change', drawIonization);
     drawIonization();
   }
 

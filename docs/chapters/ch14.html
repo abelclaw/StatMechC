@@ -245,11 +245,16 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <div class="interactive-wrapper">
 <h4>Interactive: Double Well Splitting</h4>
-<canvas id="vis-well-splitting" width="600" height="300"></canvas>
+<canvas id="vis-well-splitting" width="700" height="420"></canvas>
 <div class="controls">
-<label>Well separation: <input type="range" id="well-sep" min="10" max="100" step="1" value="80"><span id="well-sep-val">80</span></label>
+<label>Well separation: <input type="range" id="well-sep" min="-40" max="120" step="1" value="90"><span id="well-sep-val">90</span></label>
+<label style="margin-left:18px">Show: <select id="well-show">
+<option value="both" selected>Potential + Wavefunctions</option>
+<option value="potential">Potential only</option>
+<option value="psi">Wavefunctions only</option>
+</select></label>
 </div>
-<figcaption>Bring two potential wells together. As they approach, the degenerate energy levels split into bonding ($\psi_+$, lower) and antibonding ($\psi_-$, higher) states with splitting $2\Delta$.</figcaption>
+<figcaption>Bring two potential wells together. As they approach, the degenerate energy levels split into bonding ($\psi_+$, lower) and antibonding ($\psi_-$, higher) states with splitting $2\Delta$. Wells can pass through each other.</figcaption>
 </div>
 
 <p>The same thing happens when we bring two atoms together. Consider two hydrogen atoms. Each separately has two $1s$ orbitals (the two spin states) with energies $\epsilon_0$. When we bring them together, two states get higher in energy and two get lower in energy, so their new energies are $\epsilon_\pm = \epsilon_0 \pm \Delta$ just like in 1D quantum mechanics. We call the lower energy states the <span class="tooltip-trigger">bonding orbitals<span class="tooltip-content">Molecular orbitals formed from the symmetric combination of atomic orbitals. They have lower energy than the isolated atomic orbitals.</span></span> and the higher energy states the <span class="tooltip-trigger">antibonding orbitals<span class="tooltip-content">Molecular orbitals formed from the antisymmetric combination of atomic orbitals. They have higher energy than the isolated atomic orbitals.</span></span>. This idea of constructing orbitals for the molecules by taking linear combinations of the atomic orbitals is called <span class="tooltip-trigger">molecular orbital theory<span class="tooltip-content">A method for determining the electronic structure of molecules by combining atomic orbitals into molecular bonding and antibonding orbitals.</span></span>. It works pretty well and can explain a lot of chemistry.</p>
@@ -258,7 +263,12 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <h4>Interactive: Molecular Orbital Diagrams</h4>
 <canvas id="vis-mo-diagram" width="700" height="380"></canvas>
 <div class="controls">
-<label>Molecule: <select id="mo-molecule"><option value="H2">H₂ (symmetric)</option><option value="HF">HF (asymmetric)</option><option value="He2">He₂ (no bond)</option><option value="N2">N₂ (triple bond)</option></select></label>
+<div class="button-group" id="mo-molecule-buttons">
+<button class="control-btn active" data-value="H2">H₂ (symmetric)</button>
+<button class="control-btn" data-value="HF">HF (asymmetric)</button>
+<button class="control-btn" data-value="He2">He₂ (no bond)</button>
+<button class="control-btn" data-value="N2">N₂ (triple bond)</button>
+</div>
 </div>
 <figcaption>Figure 5. Molecular orbital energy diagram. Atomic orbitals combine into bonding (lower energy, $\sigma$) and antibonding (higher energy, $\sigma^*$) molecular orbitals. Electrons fill from the bottom up. Select different molecules to compare.</figcaption>
 </div>
@@ -280,7 +290,6 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <h4>Interactive: Ionization Energies</h4>
 <canvas id="vis-ionization" width="700" height="350"></canvas>
 <div class="controls">
-<label>Highlight period: <select id="ion-period"><option value="0">All</option><option value="1">Period 1</option><option value="2">Period 2</option><option value="3">Period 3</option><option value="4">Period 4</option><option value="5">Period 5</option></select></label>
 </div>
 <figcaption>Figure 6. First ionization energies of the elements. Noble gases (He, Ne, Ar, etc.) have the highest values; alkali metals (Li, Na, K, etc.) the lowest. Hover over points for element details.</figcaption>
 </div>
