@@ -15849,7 +15849,7 @@ function initCh12Vis() {
           if (arg > 30) break;
           Z += mult * Math.exp(-arg);
         }
-        return Math.min(1, N / Z);
+        return Math.min(1, 1 / Z);
       }
 
       // Helper: get per-level occupations for BE
@@ -16008,14 +16008,14 @@ function initCh12Vis() {
         const barX = bx + barPad + i * (barW + barPad);
         const barY = by + bh - barH;
 
-        // Ground state green (distinct from BE/MB legend), others blue
+        // Ground state red (highlight), others blue
         const isGround = (i === 0);
-        ctxBE.fillStyle = isGround ? COLORS.green : COLORS.blue;
+        ctxBE.fillStyle = isGround ? COLORS.red : COLORS.blue;
         ctxBE.globalAlpha = isGround ? 1.0 : 0.7;
         ctxBE.fillRect(barX, barY, barW, barH);
         ctxBE.globalAlpha = 1.0;
 
-        ctxBE.strokeStyle = isGround ? COLORS.green : COLORS.blue;
+        ctxBE.strokeStyle = isGround ? COLORS.red : COLORS.blue;
         ctxBE.lineWidth = 1;
         ctxBE.strokeRect(barX, barY, barW, barH);
 
