@@ -11759,10 +11759,6 @@ function initCh9Vis() {
         ly += 16;
       });
 
-      ctxCS.fillStyle = COLORS.text;
-      ctxCS.font = FONT;
-      ctxCS.textAlign = 'left';
-      ctxCS.fillText('Law of Corresponding States', ox + 5, oy + 16);
       ctxCS.fillStyle = COLORS.textDim;
       ctxCS.font = FONT_SM;
       ctxCS.textAlign = 'right';
