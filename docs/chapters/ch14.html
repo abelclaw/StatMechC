@@ -672,7 +672,40 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <p>This object called an SR latch (for Set-Reset) has two stable states. Either $Q = 1$ and $\bar{Q} = 0$ or $Q = 0$ and $\bar{Q} = 1$. To change states, we can pulse the $R$ or $S$ input. In this way, we can store a bit, and toggle it back and forth through the Set and Reset switches.</p>
 
-<p>Now that we have memory and can compute things, it's just a matter of putting them together in ever more complex combinations. Note that NAND has 2 transistors, XOR has 8, AND and OR have 3, so the full adder has 25 transistors. A 4$\times$4 bit adder should have roughly 400 transistors. In early computers, the transistors were vacuum tubes. The Mark 1 computer in the Science Center has around 1000 mechanical relay transistors. It operated on 24-bit numbers and took about 0.3s to add two such numbers. An iPhone X has 4 billion transistors and can add two 24-bit numbers in around $\frac{1}{\text{GHz}} = 10^{-9}\;\text{s}$.</p>
+<p>Now that we have memory and can compute things, it's just a matter of putting them together in ever more complex combinations. Try it yourself: the circuit builder below lets you place logic gates, wire them together, and test your creations with input switches.</p>
+
+<!-- INTERACTIVE: Circuit Builder -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔧</span> Interactive: Circuit Builder</div>
+  <div style="display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--border); border-radius:6px; overflow:hidden; background:var(--bg-alt, #f5f5f5);">
+    <div id="circuit-palette" style="width:100%; padding:8px 12px; background:var(--bg-alt, #eee); border-bottom:1px solid var(--border); display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+      <span style="font-size:0.8rem; font-weight:600; margin-right:4px; color:var(--text-muted);">Place:</span>
+      <button class="control-btn active" data-gate="INPUT" title="Toggle switch">INPUT</button>
+      <button class="control-btn" data-gate="OUTPUT" title="LED output">OUTPUT</button>
+      <button class="control-btn" data-gate="NOT" title="Inverter">NOT</button>
+      <button class="control-btn" data-gate="AND" title="AND gate">AND</button>
+      <button class="control-btn" data-gate="NAND" title="NAND gate">NAND</button>
+      <button class="control-btn" data-gate="OR" title="OR gate">OR</button>
+      <button class="control-btn" data-gate="NOR" title="NOR gate">NOR</button>
+      <button class="control-btn" data-gate="XOR" title="XOR gate">XOR</button>
+      <span style="flex:1;"></span>
+      <span style="font-size:0.8rem; font-weight:600; margin-right:4px; color:var(--text-muted);">Tools:</span>
+      <button class="control-btn" data-gate="WIRE" title="Draw wires between ports">WIRE</button>
+      <button class="control-btn" data-gate="DELETE" title="Delete gates or wires">DELETE</button>
+      <button class="control-btn" id="circuit-clear-btn" title="Clear all">CLEAR</button>
+      <span style="flex:1;"></span>
+      <span style="font-size:0.8rem; font-weight:600; margin-right:4px; color:var(--text-muted);">Presets:</span>
+      <button class="control-btn" id="preset-adder">Full Adder</button>
+      <button class="control-btn" id="preset-sr-latch">SR Latch</button>
+    </div>
+    <div class="vis-canvas-wrap" style="width:100%;"><canvas id="vis-circuit-builder" width="800" height="500"></canvas></div>
+  </div>
+  <div style="padding:6px 12px; font-size:0.8rem; color:var(--text-muted);">
+    Click a gate type then click the canvas to place it. Use WIRE mode to connect output ports (right) to input ports (left). Click INPUT switches to toggle them. Drag gates to move them.
+  </div>
+</div>
+
+<p>Note that NAND has 2 transistors, XOR has 8, AND and OR have 3, so the full adder has 25 transistors. A 4$\times$4 bit adder should have roughly 400 transistors. In early computers, the transistors were vacuum tubes. The Mark 1 computer in the Science Center has around 1000 mechanical relay transistors. It operated on 24-bit numbers and took about 0.3s to add two such numbers. An iPhone X has 4 billion transistors and can add two 24-bit numbers in around $\frac{1}{\text{GHz}} = 10^{-9}\;\text{s}$.</p>
 
 <!-- Explore Further -->
 <div class="info-box explore">
