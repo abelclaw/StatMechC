@@ -109,11 +109,11 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <canvas id="vis-well-splitting" width="700" height="420"></canvas>
 <div class="controls">
 <label>Well separation: <input type="range" id="well-sep" min="-40" max="120" step="1" value="90"><span id="well-sep-val">90</span></label>
-<label style="margin-left:18px">Show: <select id="well-show">
-<option value="both" selected>Potential + Wavefunctions</option>
-<option value="potential">Potential only</option>
-<option value="psi">Wavefunctions only</option>
-</select></label>
+<div class="button-group" id="well-show" style="margin-left:18px">
+<button class="control-btn active" data-value="both">Both</button>
+<button class="control-btn" data-value="potential">Potential</button>
+<button class="control-btn" data-value="psi">Wavefunctions</button>
+</div>
 </div>
 <p class="vis-caption">Degenerate energy levels split into bonding ($\psi_+$, lower) and antibonding ($\psi_-$, higher) states with splitting $2\Delta$.</p>
 </div>
@@ -736,6 +736,38 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 </div>
 
 <p>Note that NAND has 2 transistors, XOR has 8, AND and OR have 3, so the full adder has 25 transistors. A 4$\times$4 bit adder should have roughly 400 transistors. In early computers, the transistors were vacuum tubes. The Mark 1 computer in the Science Center has around 1000 mechanical relay transistors. It operated on 24-bit numbers and took about 0.3s to add two such numbers. An iPhone X has 4 billion transistors and can add two 24-bit numbers in around $\frac{1}{\text{GHz}} = 10^{-9}\;\text{s}$.</p>
+
+<p>The logic gates and circuit builder above deal with digital (0 or 1) signals. But transistors can also be used in <strong>analog circuits</strong> where voltages vary continuously. The breadboard simulator below lets you build real circuits with resistors, LEDs, capacitors, and transistors. Try the astable multivibrator preset to see two transistors oscillating back and forth, making LEDs blink alternately.</p>
+
+<!-- INTERACTIVE: Breadboard Simulator -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔧</span> Interactive: Breadboard Simulator</div>
+  <div style="display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--border); border-radius:6px; overflow:hidden; background:var(--bg-alt, #f5f5f5);">
+    <div id="bb-palette" style="width:100%; padding:8px 12px; background:var(--bg-alt, #eee); border-bottom:1px solid var(--border); display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+      <span style="font-size:0.8rem; font-weight:600; margin-right:4px; color:var(--text-muted);">Parts:</span>
+      <button class="control-btn" data-part="WIRE" title="Jumper wire">Wire</button>
+      <button class="control-btn" data-part="RESISTOR" title="Resistor">Resistor</button>
+      <button class="control-btn" data-part="LED" title="Light-emitting diode">LED</button>
+      <button class="control-btn" data-part="CAPACITOR" title="Capacitor">Capacitor</button>
+      <button class="control-btn" data-part="SWITCH" title="Toggle switch">Switch</button>
+      <button class="control-btn" data-part="NPN" title="NPN transistor (E-B-C)">Transistor</button>
+      <button class="control-btn" data-part="BATTERY" title="9V battery">Battery</button>
+      <span style="flex:1;"></span>
+      <button class="control-btn" data-part="DELETE" title="Remove a component">Delete</button>
+      <button class="control-btn" id="bb-clear-btn" title="Clear all">Clear</button>
+      <span style="flex:1;"></span>
+      <span style="font-size:0.8rem; font-weight:600; margin-right:4px; color:var(--text-muted);">Presets:</span>
+      <button class="control-btn" id="bb-preset-led">LED Circuit</button>
+      <button class="control-btn" id="bb-preset-switch">Transistor Switch</button>
+      <button class="control-btn active" id="bb-preset-astable">Astable Multivibrator</button>
+    </div>
+    <div class="vis-canvas-wrap" style="width:100%;"><canvas id="vis-breadboard" width="800" height="480"></canvas></div>
+  </div>
+  <div id="bb-value-bar" style="padding:6px 12px; font-size:0.8rem; color:var(--text-muted); display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+    <span>Click two holes to place a part. Click switches to toggle. Hover for voltage.</span>
+    <span id="bb-status" style="margin-left:auto;"></span>
+  </div>
+</div>
 
 <!-- Explore Further -->
 <div class="info-box explore">

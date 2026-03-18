@@ -451,8 +451,12 @@ function initCh1Vis() {
     let lastBinIdx = -1; // last bin that changed on right
 
     // Show/hide custom function input
-    distSelect?.addEventListener('change', () => {
-      if (customInput) customInput.style.display = distSelect.value === 'custom' ? 'inline-block' : 'none';
+    distSelect?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      distSelect.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (customInput) customInput.style.display = btn.dataset.value === 'custom' ? 'inline-block' : 'none';
       resetCLT();
     });
 
@@ -465,7 +469,7 @@ function initCh1Vis() {
 
     // Distribution samplers — each returns a sample value + PDF for display
     function getDistribution() {
-      const name = distSelect?.value || 'uniform';
+      const name = distSelect?.querySelector('.active')?.dataset.value || 'uniform';
       if (name === 'uniform') {
         return {
           sample: () => Math.random(),
@@ -3479,12 +3483,12 @@ function initCh4Vis() {
   if (cDI) {
     const di = setupCanvas(cDI);
     const ctxDI = di.ctx, WDI = di.W, HDI = di.H;
-    const modeSelect = document.getElementById('diatomic-mode');
+    const modeGroup = document.getElementById('diatomic-mode');
     let diTime = 0, diRunning = false;
 
     function drawDiatomic() {
       clearCanvas(ctxDI, WDI, HDI);
-      const mode = modeSelect?.value || 'all';
+      const mode = modeGroup?.querySelector('.active')?.dataset.value || 'all';
       const t = diTime;
 
       // Three panels: translate, rotate, vibrate
@@ -3553,7 +3557,13 @@ function initCh4Vis() {
       if (diRunning) animateDiatomic();
     });
 
-    modeSelect?.addEventListener('change', drawDiatomic);
+    modeGroup?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      modeGroup.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      drawDiatomic();
+    });
     drawDiatomic();
   }
 
@@ -3589,8 +3599,8 @@ function initCh4Vis() {
 
     function getGKTemp() { return parseFloat(document.getElementById('gk-temp')?.value || 400); }
     function getGKSpeed() { return parseInt(document.getElementById('gk-speed')?.value || 2); }
-    function getGKInit() { return document.getElementById('gk-init')?.value || 'random'; }
-    function getGKTypes() { return parseInt(document.getElementById('gk-types')?.value || 1); }
+    function getGKInit() { return document.getElementById('gk-init')?.querySelector('.active')?.dataset.value || 'random'; }
+    function getGKTypes() { return parseInt(document.getElementById('gk-types')?.querySelector('.active')?.dataset.value || 1); }
 
     function initGKParticles() {
       const T = getGKTemp();
@@ -3876,23 +3886,22 @@ function initCh4Vis() {
     });
 
     // Re-init when initial condition or particle type changes
-    document.getElementById('gk-init')?.addEventListener('change', () => {
-      gkRunning = false;
-      const btn = document.getElementById('gk-start');
-      if (btn) btn.textContent = 'Start';
-      if (activeAnimations['gaskinetic']) cancelAnimationFrame(activeAnimations['gaskinetic']);
-      initGKParticles();
-      drawGK();
-    });
-
-    document.getElementById('gk-types')?.addEventListener('change', () => {
-      gkRunning = false;
-      const btn = document.getElementById('gk-start');
-      if (btn) btn.textContent = 'Start';
-      if (activeAnimations['gaskinetic']) cancelAnimationFrame(activeAnimations['gaskinetic']);
-      initGKParticles();
-      drawGK();
-    });
+    function handleGKButtonGroup(groupId) {
+      document.getElementById(groupId)?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.control-btn');
+        if (!btn) return;
+        e.currentTarget.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        gkRunning = false;
+        const startBtn = document.getElementById('gk-start');
+        if (startBtn) startBtn.textContent = 'Start';
+        if (activeAnimations['gaskinetic']) cancelAnimationFrame(activeAnimations['gaskinetic']);
+        initGKParticles();
+        drawGK();
+      });
+    }
+    handleGKButtonGroup('gk-init');
+    handleGKButtonGroup('gk-types');
 
     initGKParticles();
     drawGK();
@@ -5222,7 +5231,7 @@ function initCh6Vis() {
   const cMix = document.getElementById('vis-mixing');
   if (cMix) {
     const {ctx: ctxM, W: WM, H: HM} = setupCanvas(cMix);
-    const caseSelect = document.getElementById('mixing-case');
+    const caseGroup = document.getElementById('mixing-case');
     const toggleBtn = document.getElementById('mixing-toggle');
 
     const NM = 20; // per side
@@ -5263,7 +5272,7 @@ function initCh6Vis() {
     }
 
     function getParticleColor(p) {
-      const mode = caseSelect?.value || 'distinguishable';
+      const mode = caseGroup?.querySelector('.active')?.dataset.value || 'distinguishable';
       if (mode === 'distinguishable') {
         return uniqueColor(p.colorIndex);
       } else if (mode === 'identical') {
@@ -5293,7 +5302,7 @@ function initCh6Vis() {
       }
 
       // Counts when partitioned
-      const mode = caseSelect?.value || 'distinguishable';
+      const mode = caseGroup?.querySelector('.active')?.dataset.value || 'distinguishable';
       const midX = WM / 2;
       if (partitioned) {
         const leftP = particles.filter(p => p.currentSide === 'left');
@@ -5372,7 +5381,11 @@ function initCh6Vis() {
         }
       }
     });
-    caseSelect?.addEventListener('change', () => {
+    caseGroup?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      caseGroup.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
       initMixing();
     });
     initMixing();
@@ -20139,12 +20152,12 @@ function initCh14Vis() {
   if (cWell) {
     const { ctx: ctxW, W: WW, H: HW } = setupCanvas(cWell);
     const sepSlider = document.getElementById('well-sep');
-    const showSelect = document.getElementById('well-show');
+    const showGroup = document.getElementById('well-show');
 
     function drawWellSplitting() {
       clearCanvas(ctxW, WW, HW);
       const sep = parseFloat(sepSlider?.value || 90);
-      const showMode = showSelect?.value || 'both';
+      const showMode = showGroup?.querySelector('.active')?.dataset.value || 'both';
       document.getElementById('well-sep-val')?.replaceChildren(document.createTextNode(sep));
 
       const cx = WW / 2;
@@ -20356,7 +20369,13 @@ function initCh14Vis() {
     }
 
     sepSlider?.addEventListener('input', drawWellSplitting);
-    showSelect?.addEventListener('change', drawWellSplitting);
+    showGroup?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      showGroup.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      drawWellSplitting();
+    });
     drawWellSplitting();
   }
 
@@ -23447,6 +23466,13 @@ function initCh15Vis() {
     const oxSP = 70, oySP = 35, pwSP = WSP - 110, phSP = HSP - 75;
 
     const spToggle = document.getElementById('stellar-profile-toggle');
+    spToggle?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      spToggle.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      drawStellarProfiles();
+    });
 
     // Integrate Lane-Emden:  θ'' + (2/ξ)θ' + θⁿ = 0,  θ(0)=1, θ'(0)=0
     // Returns array of {xi, theta} from 0 to surface (θ=0) or ξ=20.
@@ -23486,7 +23512,7 @@ function initCh15Vis() {
     });
 
     function drawStellarProfiles() {
-      const showMode = spToggle?.value || 'both';  // 'density', 'temperature', or 'both'
+      const showMode = spToggle?.querySelector('.active')?.dataset.value || 'both';
 
       clearCanvas(ctxSP, WSP, HSP);
       drawAxes(ctxSP, oxSP, oySP, pwSP, phSP, {
@@ -23559,7 +23585,7 @@ function initCh15Vis() {
       ctxSP.fillText('Polytropic Stellar Profiles (Lane-Emden)', oxSP + 5, oySP - 6);
     }
 
-    spToggle?.addEventListener('change', drawStellarProfiles);
+    // click listener already attached above
     drawStellarProfiles();
   }
 
@@ -23727,7 +23753,7 @@ function initCh15Vis() {
   const cWDD = document.getElementById('vis-wd-density');
   if (cWDD) {
     const {ctx: ctxWD, W: WWD, H: HWD} = setupCanvas(cWDD);
-    const plotSelect = document.getElementById('wdd-plot');
+    const plotGroup = document.getElementById('wdd-plot');
     const nSliderWD = document.getElementById('wdd-n');
 
     // Lane-Emden solutions (precomputed via RK4)
@@ -23797,7 +23823,7 @@ function initCh15Vis() {
 
     function drawWDDensity() {
       clearCanvas(ctxWD, WWD, HWD);
-      const plotType = plotSelect?.value || 'rho';
+      const plotType = plotGroup?.querySelector('.active')?.dataset.value || 'rho';
       const n = parseFloat(nSliderWD?.value || 3);
 
       const ox = 60, oy = 30, pw = WWD - 100, ph = HWD - 80;
@@ -23867,7 +23893,13 @@ function initCh15Vis() {
       document.getElementById('wdd-n-val')?.replaceChildren(document.createTextNode(n.toFixed(1)));
     }
 
-    plotSelect?.addEventListener('change', drawWDDensity);
+    plotGroup?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      plotGroup.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      drawWDDensity();
+    });
     nSliderWD?.addEventListener('input', drawWDDensity);
     drawWDDensity();
   }

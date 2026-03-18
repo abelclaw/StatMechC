@@ -150,7 +150,11 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 <p class="vis-caption">Toggle the partition to mix or separate gases. For indistinguishable particles, no new microstates are created.</p>
 <canvas id="vis-mixing" width="600" height="400"></canvas>
 <div class="controls">
-<label>Case: <select id="mixing-case"><option value="distinguishable">Distinguishable (colored balls)</option><option value="identical">Indistinguishable (He + He)</option><option value="different">Different species (He + Xe)</option></select></label>
+<div class="button-group" id="mixing-case">
+<button class="control-btn active" data-value="distinguishable">Distinguishable</button>
+<button class="control-btn" data-value="identical">Identical (He + He)</button>
+<button class="control-btn" data-value="different">Different (He + Xe)</button>
+</div>
 <button id="mixing-toggle">Remove Partition</button>
 </div>
 </div>

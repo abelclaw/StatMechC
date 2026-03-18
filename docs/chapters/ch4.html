@@ -211,20 +211,18 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
   <p class="vis-caption">Gas particles collide elastically and their speed distribution converges to the Maxwell-Boltzmann distribution regardless of initial conditions.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-gaskinetic" width="700" height="400"></canvas></div>
   <div class="vis-controls">
-    <label>Initial velocities:
-      <select id="gk-init">
-        <option value="random">Random (thermal)</option>
-        <option value="one">One particle moving</option>
-        <option value="equal">All equal speeds</option>
-      </select>
-    </label>
-    <label>Particle types:
-      <select id="gk-types">
-        <option value="1">One type</option>
-        <option value="2">Two types (light &amp; heavy)</option>
-        <option value="3">Three types</option>
-      </select>
-    </label>
+    <span>Initial velocities:</span>
+    <div class="button-group" id="gk-init">
+      <button class="control-btn active" data-value="random">Random</button>
+      <button class="control-btn" data-value="one">One moving</button>
+      <button class="control-btn" data-value="equal">Equal speeds</button>
+    </div>
+    <span>Particle types:</span>
+    <div class="button-group" id="gk-types">
+      <button class="control-btn active" data-value="1">1 type</button>
+      <button class="control-btn" data-value="2">2 types</button>
+      <button class="control-btn" data-value="3">3 types</button>
+    </div>
     <label>Temperature: <input type="range" id="gk-temp" min="100" max="1500" step="50" value="400"> <span class="value-display" id="gk-temp-val">400</span> K</label>
     <label>Speed: <input type="range" id="gk-speed" min="1" max="8" step="1" value="2"> <span class="value-display" id="gk-speed-val">2</span>&times;</label>
     <button id="gk-start">Start</button>
@@ -249,7 +247,12 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
   <div class="vis-canvas-wrap"><canvas id="vis-diatomic" width="600" height="250"></canvas></div>
   <div class="vis-controls">
     <button id="diatomic-start">Animate</button>
-    <label>Mode: <select id="diatomic-mode"><option value="all">All</option><option value="translate">Translation</option><option value="rotate">Rotation</option><option value="vibrate">Vibration</option></select></label>
+    <div class="button-group" id="diatomic-mode">
+      <button class="control-btn active" data-value="all">All</button>
+      <button class="control-btn" data-value="translate">Translation</button>
+      <button class="control-btn" data-value="rotate">Rotation</button>
+      <button class="control-btn" data-value="vibrate">Vibration</button>
+    </div>
   </div>
 </div>
 

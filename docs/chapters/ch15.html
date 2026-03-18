@@ -385,12 +385,12 @@ $$T_c = (1-\beta)\frac{\mu}{k_B}\pi G\frac{M_\odot m_p}{\xi_{\max}^2 C_3 R_\odot
 <p class="vis-caption">Density and temperature profiles from polytropic stellar models for different indices $n$.</p>
 <canvas id="vis-stellar-profiles" width="600" height="400"></canvas>
 <div class="slider-container">
-<label for="stellar-profile-toggle">Show:</label>
-<select id="stellar-profile-toggle">
-<option value="both">Both</option>
-<option value="density">Density only</option>
-<option value="temperature">Temperature only</option>
-</select>
+<span>Show:</span>
+<div class="button-group" id="stellar-profile-toggle">
+<button class="control-btn active" data-value="both">Both</button>
+<button class="control-btn" data-value="density">Density</button>
+<button class="control-btn" data-value="temperature">Temperature</button>
+</div>
 </div>
 <p class="vis-caption">Solid lines: $\rho/\rho_c = \theta^n$; dashed: $T/T_c = \theta$.</p>
 </div>
@@ -531,7 +531,10 @@ $$E_{\text{grav}} = -D_n\frac{GM^2}{R}$$
 <p class="vis-caption">Density profiles for different equations of state, showing how mass is distributed within a white dwarf.</p>
 <canvas id="vis-wd-density" width="600" height="300"></canvas>
 <div class="controls">
-<label>Plot: <select id="wdd-plot"><option value="rho">ρ(r) density</option><option value="shell">4πr²ρ(r) shell mass</option></select></label>
+<div class="button-group" id="wdd-plot">
+<button class="control-btn active" data-value="rho">ρ(r) density</button>
+<button class="control-btn" data-value="shell">4πr²ρ(r) shell mass</button>
+</div>
 <label>Polytropic index n: <input type="range" id="wdd-n" min="0" max="4.5" step="0.5" value="3"><span id="wdd-n-val">3</span></label>
 </div>
 <p class="vis-caption">The $n = 3$ polytrope (ultrarelativistic degenerate electrons) is more centrally concentrated than constant density.</p>
