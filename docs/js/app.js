@@ -13305,24 +13305,20 @@ function initCh11Vis() {
     const stellarSelect = document.getElementById('stellar-select');
 
     const STARS = {
+      lava:       { name: 'Lava', type: 'Molten rock', T: 1200,
+        img: 'images/stars/lava.jpg' },
+      candle:     { name: 'Candle Flame', type: 'Combustion', T: 1800,
+        img: 'images/stars/candle.jpg' },
+      bulb:       { name: 'Incandescent Bulb', type: 'Tungsten filament', T: 2700,
+        img: 'images/stars/bulb.jpg' },
       betelgeuse: { name: 'Betelgeuse', type: 'Red supergiant (M1-2 Ia)', T: 3500,
         img: 'images/stars/betelgeuse.jpg' },
-      antares:    { name: 'Antares', type: 'Red supergiant (M1.5 Iab)', T: 3400,
-        img: 'images/stars/antares.jpg' },
-      aldebaran:  { name: 'Aldebaran', type: 'Orange giant (K5 III)', T: 3900,
-        img: 'images/stars/aldebaran.jpg' },
       sun:        { name: 'Sun', type: 'Yellow dwarf (G2 V)', T: 5778,
         img: 'images/stars/sun.jpg' },
-      procyon:    { name: 'Procyon', type: 'Yellow-white subgiant (F5 IV-V)', T: 6530,
-        img: 'images/stars/procyon.jpg' },
       sirius:     { name: 'Sirius', type: 'White main-sequence (A1 V)', T: 9940,
         img: 'images/stars/sirius.jpg' },
-      vega:       { name: 'Vega', type: 'White main-sequence (A0 V)', T: 9602,
-        img: 'images/stars/vega.jpg' },
       rigel:      { name: 'Rigel', type: 'Blue supergiant (B8 Ia)', T: 12100,
-        img: 'images/stars/rigel.jpg' },
-      spica:      { name: 'Spica', type: 'Blue giant (B1 III-IV)', T: 25400,
-        img: 'images/stars/spica.jpg' }
+        img: 'images/stars/rigel.jpg' }
     };
 
     // Preload images
@@ -13375,7 +13371,7 @@ function initCh11Vis() {
 
       drawAxes(ctxS, ox, oy, pw, ph, { xLabel: 'Wavelength (nm)' });
 
-      const lamMin = 100, lamMax = 2500;
+      const lamMin = 100, lamMax = 4000;
 
       function planck(lam, Tk) {
         const l = lam * 1e-9;
@@ -13455,7 +13451,7 @@ function initCh11Vis() {
       ctxS.fillStyle = COLORS.textDim;
       ctxS.font = FONT_SM;
       ctxS.textAlign = 'center';
-      for (let lam = 0; lam <= 2500; lam += 500) {
+      for (let lam = 0; lam <= 4000; lam += 500) {
         if (lam < lamMin) continue;
         const px = ox + ((lam - lamMin) / (lamMax - lamMin)) * pw;
         ctxS.fillText(lam.toString(), px, oy + ph + 14);
@@ -15977,14 +15973,14 @@ function initCh12Vis() {
         const barX = bx + barPad + i * (barW + barPad);
         const barY = by + bh - barH;
 
-        // Ground state red, others blue
+        // Ground state green (distinct from BE/MB legend), others blue
         const isGround = (i === 0);
-        ctxBE.fillStyle = isGround ? COLORS.red : COLORS.blue;
+        ctxBE.fillStyle = isGround ? COLORS.green : COLORS.blue;
         ctxBE.globalAlpha = isGround ? 1.0 : 0.7;
         ctxBE.fillRect(barX, barY, barW, barH);
         ctxBE.globalAlpha = 1.0;
 
-        ctxBE.strokeStyle = isGround ? COLORS.red : COLORS.blue;
+        ctxBE.strokeStyle = isGround ? COLORS.green : COLORS.blue;
         ctxBE.lineWidth = 1;
         ctxBE.strokeRect(barX, barY, barW, barH);
 
