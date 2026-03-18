@@ -379,7 +379,7 @@ $$\left(\frac{\partial G}{\partial T}\right)_{P,N} = -S;\qquad \left(\frac{\part
 <p>For an ideal monatomic gas, using $V = Nk_BT/P$:</p>
 
 <div class="equation">
-$$G = -Nk_BT\left(\ln\frac{k_BT}{P} + \frac{3}{2}\ln\left(\frac{2\pi mT}{h^2}\right)\right)$$
+$$G = -Nk_BT\left(\ln\frac{k_BT}{P} + \frac{3}{2}\ln\left(\frac{2\pi mk_BT}{h^2}\right)\right)$$
 <span class="eq-number">(24)</span>
 </div>
 
@@ -562,7 +562,7 @@ $$\Pi = k_BT\sum_s \frac{N_s}{V}$$
 <div class="info-box example">
 <div class="box-title">Example: Blood Osmolarity</div>
 <p>The osmotic pressure in blood is 7.65 atm at 37$^\circ$C = 310 K. The net concentration of dissolved solvents is:</p>
-$$n_s = \frac{\Pi}{RT} = \frac{7.65\;\text{atm}}{0.08314\;\frac{\text{L}\cdot\text{atm}}{\text{mol}\cdot\text{K}} \times 310\;\text{K}} = 296\;\text{mmol/L}$$
+$$n_s = \frac{\Pi}{RT} = \frac{7.65\;\text{atm}}{0.08206\;\frac{\text{L}\cdot\text{atm}}{\text{mol}\cdot\text{K}} \times 310\;\text{K}} = 301\;\text{mmol/L}$$
 <p>Mixing a little more than 50 g of sugar (about 2 tablespoons) with a liter of water gives 277 mmol/L, below this threshold, and will not increase your blood pressure.</p>
 </div>
 
@@ -717,7 +717,7 @@ $$\Omega = -PV$$
   <label><input type="radio" name="ch8-sa8" value="c"> (c) 17.3 g/L</label>
   <label><input type="radio" name="ch8-sa8" value="d"> (d) 0.30 g/L</label>
 </div>
-<button class="check-answer-btn" data-answer="b" data-explanation="The total solute concentration is $n_s = \Pi/(RT) = 7.65/(0.08314 \times 310) = 0.297\;\text{mol/L}$. Since each NaCl gives 2 particles, the NaCl concentration is $0.297/2 = 0.148\;\text{mol/L}$. The mass is $0.148 \times 58.4 = 8.7\;\text{g/L}$, consistent with the standard 0.9% saline solution.">Check Answer</button>
+<button class="check-answer-btn" data-answer="b" data-explanation="The total solute concentration is $n_s = \Pi/(RT) = 7.65/(0.08206 \times 310) = 0.301\;\text{mol/L}$. Since each NaCl gives 2 particles, the NaCl concentration is $0.301/2 = 0.150\;\text{mol/L}$. The mass is $0.150 \times 58.4 = 8.8\;\text{g/L}$, consistent with the standard 0.9% saline solution.">Check Answer</button>
 <div class="answer-feedback"></div>
 </div>
 
@@ -765,7 +765,7 @@ $$\Omega = -PV$$
 <div class="problem-part">
 <div class="part-label">(b)</div>
 <p>Find the average occupancy $\langle n \rangle$ of a single site as a function of $\mu$, $\epsilon$, and $T$. Show that it can be written in the form
-$$\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$$
+$$\langle n \rangle = \frac{1}{e^{-\beta(\epsilon + \mu)} + 1}$$
 which is a Fermi-Dirac distribution (because each site holds at most one particle).</p>
 </div>
 

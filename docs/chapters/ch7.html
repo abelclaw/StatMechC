@@ -330,7 +330,7 @@ $$C_V = \frac{\partial E}{\partial T} = k_B \left(\frac{\hbar\omega}{k_BT}\right
 <span class="eq-number">(37)</span>
 </div>
 
-<p>Note that heat capacity is very small until the first energy state can be excited, then it grows linearly.</p>
+<p>Note that heat capacity is very small until the first energy state can be excited, then the energy grows linearly while the heat capacity approaches a constant.</p>
 
 <!-- INTERACTIVE: Harmonic Oscillator E and Cv -->
 <div class="interactive-container">
@@ -339,7 +339,7 @@ $$C_V = \frac{\partial E}{\partial T} = k_B \left(\frac{\hbar\omega}{k_BT}\right
   <canvas id="vis-ho-ecv" width="600" height="350"></canvas>
 </div>
 
-<p>For H$_2$, the vibrational mode has $\tilde{\nu}_{\text{vib}} = 4342\;\text{cm}^{-1}$ corresponding to $T_{\text{vib}} = \frac{ch\tilde{\nu}}{k_B} = \frac{\hbar\omega}{k_B} = 6300\;\text{K}$. So at low energies, the vibrational mode cannot be excited which is why the heat capacity for hydrogen is $C_V = \frac{5}{2}Nk_BT$ rather than $\frac{7}{2}Nk_BT$. We discussed this in Lecture 4, but now we have explained it and can make more precise quantitative predictions of how the heat capacity changes with temperature. Including the kinetic contribution, and a factor of $N$ for the $N$ molecules that can be excited in the vibration mode we see</p>
+<p>For H$_2$, the vibrational mode has $\tilde{\nu}_{\text{vib}} = 4342\;\text{cm}^{-1}$ corresponding to $T_{\text{vib}} = \frac{ch\tilde{\nu}}{k_B} = \frac{\hbar\omega}{k_B} = 6300\;\text{K}$. So at low energies, the vibrational mode cannot be excited which is why the heat capacity for hydrogen is $C_V = \frac{5}{2}Nk_B$ rather than $\frac{7}{2}Nk_B$. We discussed this in Lecture 4, but now we have explained it and can make more precise quantitative predictions of how the heat capacity changes with temperature. Including the kinetic contribution, and a factor of $N$ for the $N$ molecules that can be excited in the vibration mode we see</p>
 
 <div class="equation">
 $$C_V = \frac{5}{2}Nk_B + Nk_B\left(\frac{T_{\text{vib}}}{T}\right)^2 \frac{e^{-T_{\text{vib}}/T}}{\left(1 - e^{-T_{\text{vib}}/T}\right)^2}$$
@@ -645,7 +645,7 @@ $$p^+ + p^- \rightleftharpoons \gamma + \gamma$$
 <p>Since photon number is not conserved, $\mu_\gamma = 0$, and therefore $\mu_{p^+} + \mu_{p^-} = 0$. Assuming equal concentrations of protons and antiprotons (and hence $\mu_{p^+} = \mu_{p^-} = 0$), using $T = 3\;\text{K}$ (the temperature of outer space), we find</p>
 
 <div class="equation">
-$$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h}\right)^{3/2} e^{-m_pc^2/k_BT} = 4\times 10^{-843112945335}\;\frac{1}{\text{m}^3} \approx 0$$
+$$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h^2}\right)^{3/2} e^{-m_pc^2/k_BT} = 4\times 10^{-843112945335}\;\frac{1}{\text{m}^3} \approx 0$$
 <span class="eq-number">(94)</span>
 </div>
 
@@ -842,7 +842,7 @@ $$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h}\right)^{3/2} e^{-m_pc^2/k_BT} = 
 </div>
 <div class="problem-part">
 <div class="part-label">(c)</div>
-<p>Show that the fractional coverage $\theta = \langle N \rangle / M$ can be written as $\theta = \frac{1}{e^{\beta(\epsilon + \mu)} + 1}$. This is the <em>Langmuir adsorption isotherm</em>.</p>
+<p>Show that the fractional coverage $\theta = \langle N \rangle / M$ can be written as $\theta = \frac{1}{e^{-\beta(\epsilon + \mu)} + 1}$. This is the <em>Langmuir adsorption isotherm</em>.</p>
 </div>
 <div class="problem-part">
 <div class="part-label">(d)</div>
