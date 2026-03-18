@@ -22612,24 +22612,76 @@ function initCh14Vis() {
       };
     }
 
+
+    // Smart port finder: prefers opposite type from wireStart, picks unconnected inputs
+    function findBestPort(gate, preferType) {
+      var cdef = GATE_DEFS[gate.type];
+      if (preferType === 'input' && cdef.inputs > 0) {
+        for (var pi = 0; pi < cdef.inputs; pi++) {
+          var connected = wires.some(function(w) { return w.toId === gate.id && w.toPort === pi; });
+          if (!connected) {
+            var pp = getPortPos(gate, 'input', pi);
+            return { gateId: gate.id, portType: 'input', portIdx: pi, x: pp.x, y: pp.y, gate: gate };
+          }
+        }
+        var pp = getPortPos(gate, 'input', 0);
+        return { gateId: gate.id, portType: 'input', portIdx: 0, x: pp.x, y: pp.y, gate: gate };
+      }
+      if (preferType === 'output' && cdef.outputs > 0) {
+        var pp = getPortPos(gate, 'output', 0);
+        return { gateId: gate.id, portType: 'output', portIdx: 0, x: pp.x, y: pp.y, gate: gate };
+      }
+      if (cdef.outputs > 0) {
+        var pp = getPortPos(gate, 'output', 0);
+        return { gateId: gate.id, portType: 'output', portIdx: 0, x: pp.x, y: pp.y, gate: gate };
+      }
+      if (cdef.inputs > 0) {
+        var pp = getPortPos(gate, 'input', 0);
+        return { gateId: gate.id, portType: 'input', portIdx: 0, x: pp.x, y: pp.y, gate: gate };
+      }
+      return null;
+    }
+
+    function completeWire(portA, portB) {
+      if (!portA || !portB || portA.gateId === portB.gateId) return false;
+      var from, to;
+      if (portA.portType === 'output' && portB.portType === 'input') {
+        from = portA; to = portB;
+      } else if (portA.portType === 'input' && portB.portType === 'output') {
+        from = portB; to = portA;
+      } else if (portA.portType === 'output') {
+        from = portA;
+        to = findBestPort(portB.gate, 'input');
+        if (!to || to.portType !== 'input') return false;
+      } else {
+        var srcGate = gates.find(function(g) { return g.id === portA.gateId; });
+        if (!srcGate) return false;
+        from = findBestPort(srcGate, 'output');
+        to = portB;
+        if (!from || from.portType !== 'output') return false;
+      }
+      var existing = wires.findIndex(function(w) { return w.toId === to.gateId && w.toPort === to.portIdx; });
+      if (existing >= 0) wires.splice(existing, 1);
+      wires.push({ fromId: from.gateId, fromPort: from.portIdx, toId: to.gateId, toPort: to.portIdx });
+      propagate();
+      return true;
+    }
+
+    var inputClickCandidate = null;
+    var mouseDownPos = null;
+    var mouseDidDrag = false;
+
     cBuilder.addEventListener('mousedown', function(e) {
       const pos = getCanvasPos(e);
       mouseX = pos.x; mouseY = pos.y;
+      mouseDownPos = { x: pos.x, y: pos.y };
+      mouseDidDrag = false;
+      inputClickCandidate = null;
 
-      // Always check: toggle INPUT gates regardless of tool mode
-      // But in WIRE mode, check if we're clicking on a port first
       const clickedGate = findGateAt(pos.x, pos.y);
-      if (clickedGate && clickedGate.type === 'INPUT' && selectedTool !== 'DELETE' && selectedTool !== 'WIRE') {
-        // Only toggle if not starting a drag (check if it looks like a click vs drag start)
-        inputClickCandidate = clickedGate;
-        inputClickPos = { x: pos.x, y: pos.y };
-        dragGate = clickedGate;
-        dragOffset = { x: pos.x - clickedGate.x, y: pos.y - clickedGate.y };
-        return;
-      }
 
+      // DELETE mode
       if (selectedTool === 'DELETE') {
-        // Delete gate under cursor
         if (clickedGate) {
           for (let i = wires.length - 1; i >= 0; i--) {
             if (wires[i].fromId === clickedGate.id || wires[i].toId === clickedGate.id) wires.splice(i, 1);
@@ -22638,7 +22690,6 @@ function initCh14Vis() {
           propagate(); drawCircuit();
           return;
         }
-        // Delete wire near cursor
         for (let i = wires.length - 1; i >= 0; i--) {
           const w = wires[i];
           const fromGate = gates.find(function(gg) { return gg.id === w.fromId; });
@@ -22660,59 +22711,50 @@ function initCh14Vis() {
         return;
       }
 
+      // WIRE mode: clicking a port directly starts/completes wire
       if (selectedTool === 'WIRE') {
-        // Generous port hit radius
-        var port = findPort(pos.x, pos.y, 20);
-        // If clicking on a gate body but missed a port, auto-snap to nearest port
-        if (!port && clickedGate) {
-          var bestDist = Infinity, bestPort = null;
-          var cdef = GATE_DEFS[clickedGate.type];
-          for (var pi = 0; pi < cdef.outputs; pi++) {
-            var pp = getPortPos(clickedGate, 'output', pi);
-            var dd = Math.hypot(pos.x - pp.x, pos.y - pp.y);
-            if (dd < bestDist) { bestDist = dd; bestPort = { gateId: clickedGate.id, portType: 'output', portIdx: pi, x: pp.x, y: pp.y, gate: clickedGate }; }
-          }
-          for (var pi = 0; pi < cdef.inputs; pi++) {
-            var pp = getPortPos(clickedGate, 'input', pi);
-            var dd = Math.hypot(pos.x - pp.x, pos.y - pp.y);
-            if (dd < bestDist) { bestDist = dd; bestPort = { gateId: clickedGate.id, portType: 'input', portIdx: pi, x: pp.x, y: pp.y, gate: clickedGate }; }
-          }
-          if (bestPort) port = bestPort;
-        }
-        if (port) {
+        var directPort = findPort(pos.x, pos.y, 20);
+        if (directPort) {
           if (!wireStart) {
-            wireStart = port;
+            wireStart = directPort;
           } else {
-            if (wireStart.portType !== port.portType && wireStart.gateId !== port.gateId) {
-              const from = wireStart.portType === 'output' ? wireStart : port;
-              const to = wireStart.portType === 'input' ? wireStart : port;
-              const existing = wires.findIndex(function(w) { return w.toId === to.gateId && w.toPort === to.portIdx; });
-              if (existing >= 0) wires.splice(existing, 1);
-              wires.push({ fromId: from.gateId, fromPort: from.portIdx, toId: to.gateId, toPort: to.portIdx });
-              propagate();
-            }
+            completeWire(wireStart, directPort);
             wireStart = null;
           }
-        } else {
-          // Clicking empty space cancels wire
-          if (clickedGate && clickedGate.type === 'INPUT') {
-            inputClickCandidate = clickedGate;
-            inputClickPos = { x: pos.x, y: pos.y };
-          }
-          wireStart = null;
+          drawCircuit();
+          return;
         }
-        drawCircuit();
-        return;
+        // Clicking on a gate body while wiring: complete the wire
+        if (wireStart && clickedGate) {
+          var preferType = wireStart.portType === 'output' ? 'input' : 'output';
+          var snapPort = findBestPort(clickedGate, preferType);
+          if (snapPort) {
+            completeWire(wireStart, snapPort);
+            wireStart = null;
+            drawCircuit();
+            return;
+          }
+        }
+        // Clicking empty space: cancel wire in progress
+        if (wireStart && !clickedGate) {
+          wireStart = null;
+          drawCircuit();
+          return;
+        }
+        // Not wiring yet — fall through to allow dragging
       }
 
-      // Drag existing gate
+      // Drag any gate (works in ALL modes including WIRE)
       if (clickedGate) {
         dragGate = clickedGate;
         dragOffset = { x: pos.x - clickedGate.x, y: pos.y - clickedGate.y };
+        if (clickedGate.type === 'INPUT') {
+          inputClickCandidate = clickedGate;
+        }
         return;
       }
 
-      // Place new gate from selected tool
+      // Place new gate
       if (GATE_DEFS[selectedTool]) {
         const def = GATE_DEFS[selectedTool];
         const snap = function(v) { return Math.round(v / 20) * 20; };
@@ -22721,13 +22763,13 @@ function initCh14Vis() {
       }
     });
 
-    // Track whether an INPUT click was actually a drag or a toggle
-    var inputClickCandidate = null;
-    var inputClickPos = null;
-
     cBuilder.addEventListener('mousemove', function(e) {
       const pos = getCanvasPos(e);
       mouseX = pos.x; mouseY = pos.y;
+
+      if (mouseDownPos && Math.hypot(pos.x - mouseDownPos.x, pos.y - mouseDownPos.y) > 5) {
+        mouseDidDrag = true;
+      }
 
       if (dragGate) {
         const snap = function(v) { return Math.round(v / 20) * 20; };
@@ -22744,19 +22786,27 @@ function initCh14Vis() {
     });
 
     cBuilder.addEventListener('mouseup', function(e) {
-      // If we had an INPUT click candidate and didn't drag far, toggle it
-      if (inputClickCandidate && inputClickPos) {
-        const pos = getCanvasPos(e);
-        const dist = Math.hypot(pos.x - inputClickPos.x, pos.y - inputClickPos.y);
-        if (dist < 5) {
-          inputClickCandidate.value = inputClickCandidate.value ? 0 : 1;
-          inputClickCandidate.outputValues[0] = inputClickCandidate.value;
-          propagate(); drawCircuit();
+      var pos = getCanvasPos(e);
+
+      // INPUT toggle on click (not drag)
+      if (inputClickCandidate && !mouseDidDrag) {
+        inputClickCandidate.value = inputClickCandidate.value ? 0 : 1;
+        inputClickCandidate.outputValues[0] = inputClickCandidate.value;
+        propagate(); drawCircuit();
+      }
+
+      // WIRE mode: click-release on gate body (no drag) starts a wire from its output
+      if (selectedTool === 'WIRE' && dragGate && !mouseDidDrag && !wireStart) {
+        var snapPort = findBestPort(dragGate, 'output');
+        if (snapPort) {
+          wireStart = snapPort;
+          drawCircuit();
         }
       }
+
       inputClickCandidate = null;
-      inputClickPos = null;
       dragGate = null;
+      mouseDownPos = null;
     });
 
     // Touch support
