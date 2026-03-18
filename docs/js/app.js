@@ -21138,7 +21138,7 @@ function initCh14Vis() {
       ctx.fillText('+', mBatCx - mBatGap - 10, mTopY + 4);
       ctx.fillText('\u2212', mBatCx + mBatGap + 10, mTopY + 4);
       ctx.font = FONT_SM;
-      ctx.fillText('V_supply', mBatCx, mTopY - 16);
+      ctx.fillText('V_supply = 5 V', mBatCx, mTopY - 16);
 
       // Left wire: top → LED → collector
       var ledY = (mTopY + ty) / 2;
@@ -21261,10 +21261,71 @@ function initCh14Vis() {
       // Wire from junction to base
       ctx.strokeStyle = baseCol; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(brx, baseY); ctx.lineTo(tx, baseY); ctx.stroke();
-      // Voltage label
+
+      // ══════════════════════════════
+      // VOLTAGE & CURRENT ANNOTATIONS
+      // ══════════════════════════════
+      var V_SUPPLY = 5;
+      var annFont = '10px sans-serif';
+      var vCol = '#6ec6ff';   // voltage labels
+      var iCol = '#81c784';   // current labels
+      var offCol = '#666';
+
+      // Compute base-circuit values
+      var iDiv = 1.5 / (st.rVar + 1);             // mA through divider
+      var vRvar = 1.5 * st.rVar / (st.rVar + 1);  // V across R_var
+      var vRfixed = st.vBase;                      // V across R_fixed = V_base
+
+      // Compute main-circuit values
+      var vLED, vCE, iC;
+      if (st.baseOn) {
+        vLED = 2.0; vCE = 0.2; iC = 20;  // typical ON values (mA)
+      } else {
+        vLED = 0; vCE = V_SUPPLY; iC = 0;
+      }
+
+      // ── Base circuit ──
+
+      // V_base at junction (prominent label on base wire)
       ctx.fillStyle = st.vBase >= 0.7 ? '#ff9800' : '#888';
       ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(st.vBase.toFixed(2) + ' V', (brx + tx) / 2, baseY - 10);
+      ctx.fillText('V_base = ' + st.vBase.toFixed(2) + ' V', (brx + tx) / 2, baseY - 10);
+
+      // I_divider on left wire (between top corner and battery +)
+      ctx.fillStyle = iCol; ctx.font = annFont; ctx.textAlign = 'left';
+      ctx.fillText('I = ' + iDiv.toFixed(2) + ' mA', blx + 8, (bTopY + bBatY - bBatGap) / 2 + 2);
+
+      // V across R_var (below R_var label)
+      ctx.fillStyle = vCol; ctx.font = annFont; ctx.textAlign = 'center';
+      ctx.fillText(vRvar.toFixed(2) + ' V', (rvLeft + rvRight) / 2, bTopY + rvH / 2 + 27);
+
+      // V across R_fixed (above R_fixed box)
+      ctx.fillText(vRfixed.toFixed(2) + ' V', (rfLeft + rfRight) / 2, bBotY - rfH / 2 - 5);
+
+      // I on right wire of base loop
+      ctx.fillStyle = iCol; ctx.font = annFont; ctx.textAlign = 'left';
+      ctx.fillText(iDiv.toFixed(2) + ' mA', brx + 6, (bTopY + baseY) / 2);
+
+      // ── Main circuit ──
+
+      // V across LED (left of left wire, near LED)
+      ctx.fillStyle = vCol; ctx.font = annFont; ctx.textAlign = 'right';
+      ctx.fillText(vLED.toFixed(1) + ' V', mcx - 15, ledY + 3);
+
+      // V_CE across transistor (left of transistor)
+      ctx.fillText('V_CE = ' + vCE.toFixed(1) + ' V', tx - 5, ty + th / 2 + 3);
+
+      // I_C on left wire between emitter and bottom corner
+      ctx.fillStyle = st.baseOn ? iCol : offCol; ctx.font = annFont; ctx.textAlign = 'right';
+      ctx.fillText('I_C = ' + iC + ' mA', mcx - 15, (ty + th + mBotY) / 2);
+
+      // I on right wire of main loop
+      ctx.fillStyle = st.baseOn ? iCol : offCol; ctx.font = annFont; ctx.textAlign = 'left';
+      ctx.fillText(iC + ' mA', mrx + 6, (mTopY + mBotY) / 2);
+
+      // I on bottom wire of main loop
+      ctx.fillStyle = st.baseOn ? iCol : offCol; ctx.textAlign = 'center';
+      ctx.fillText(iC + ' mA', (mcx + mrx) / 2, mBotY + 14);
 
       // ══════════════════
       // CURRENT ARROWS
