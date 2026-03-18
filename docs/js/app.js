@@ -23614,24 +23614,53 @@ function initCh15Vis() {
       });
 
       protostars.forEach(ps => {
+        // At high temperature, thermal pressure evaporates protostars
+        // This is the Jeans criterion: if thermal energy > gravitational binding, collapse reverses
+        if (temp > 50) {
+          const evapRate = (temp - 50) * 0.006; // stronger evaporation at higher T
+          if (Math.random() < evapRate && ps.mass > 2) {
+            // Eject a particle back into the gas
+            const angle = Math.random() * 2 * Math.PI;
+            const speed = 0.5 + Math.random() * 1.5;
+            const ejIdx = particles.findIndex(p => p.absorbed);
+            if (ejIdx >= 0) {
+              const p = particles[ejIdx];
+              p.absorbed = false;
+              p.x = ps.x + Math.cos(angle) * (ps.R + 5);
+              p.y = ps.y + Math.sin(angle) * (ps.R + 5);
+              p.vx = Math.cos(angle) * speed;
+              p.vy = Math.sin(angle) * speed;
+              ps.mass -= p.mass;
+              ps.R = Math.min(18, 3 + Math.sqrt(Math.max(0, ps.mass)) * 0.8);
+            }
+          }
+        }
+
         activeParticles.forEach(i => {
           const p = particles[i];
           const ddx = ps.x - p.x, ddy = ps.y - p.y;
           const r2 = ddx*ddx + ddy*ddy + 100;
           const r = Math.sqrt(r2);
-          const f = ps.mass * 0.02 / r2;
+          // Weaker attraction at high temperature
+          const attractScale = temp < 50 ? 1 : Math.max(0.1, 1 - (temp - 50) * 0.015);
+          const f = ps.mass * 0.02 * attractScale / r2;
           p.vx += ddx * f;
           p.vy += ddy * f;
-          if (r < ps.R * 0.6 && Math.random() < 0.02) {
+          // No accretion at high temperature
+          if (temp < 60 && r < ps.R * 0.6 && Math.random() < 0.02) {
             ps.mass += p.mass * 0.3;
             ps.R = Math.min(18, 3 + Math.sqrt(ps.mass) * 0.8);
             p.absorbed = true;
           }
         });
       });
+      // Remove fully evaporated protostars
+      protostars = protostars.filter(ps => ps.mass > 1.5);
 
       jeansTime += dt;
-      if (jeansTime > 5 && Math.random() < 0.03) {
+      // Density threshold scales with temperature — harder to collapse when hot
+      const densityThreshold = 20 + temp * 0.4;
+      if (jeansTime > 5 && temp < 70 && Math.random() < 0.03) {
         const sampleSize = Math.min(activeParticles.length, 80);
         let maxDensity = 0, maxX = 0, maxY = 0;
         for (let s = 0; s < sampleSize; s++) {
@@ -23655,7 +23684,7 @@ function initCh15Vis() {
           if (density > maxDensity) { maxDensity = density; maxX = p.x; maxY = p.y; }
         }
         const nearExisting = protostars.some(ps => Math.hypot(ps.x - maxX, ps.y - maxY) < 60);
-        if (maxDensity > 20 && !nearExisting) {
+        if (maxDensity > densityThreshold && !nearExisting) {
           protostars.push({
             x: maxX, y: maxY, birth: jeansTime,
             mass: maxDensity * 0.5,
