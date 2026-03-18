@@ -12683,6 +12683,7 @@ function initCh9Vis() {
     tvPressureSlider?.addEventListener('input', drawTVDiagram);
     drawTVDiagram();
   }
+}
 
 
 // =============================================================================
@@ -13124,8 +13125,9 @@ function initCh10Vis() {
 // =============================================================================
 function initCh11Vis() {
   const c = document.getElementById('vis-blackbody');
-  if (!c) return;
+  if (!c) { console.error('CH11: vis-blackbody not found'); return; }
   const { ctx, W, H } = setupCanvas(c);
+  console.log('CH11 blackbody canvas:', W, 'x', H);
 
   const tempSlider = document.getElementById('bb-temp');
 
@@ -13158,7 +13160,9 @@ function initCh11Vis() {
   }
 
   function draw() {
+    try {
     const T = parseFloat(tempSlider?.value || 5000);
+    console.log('CH11 draw: T=', T, 'W=', W, 'H=', H);
     clearCanvas(ctx, W, H);
 
     const ox = 65, oy = 30;
@@ -20047,5 +20051,4 @@ function initCh15Vis() {
     zoomSlider?.addEventListener('input', drawSizes);
     drawSizes();
   }
-}
 }
