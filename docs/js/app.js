@@ -19958,7 +19958,7 @@ function initCh14Vis() {
 
   // ----- Interactive Periodic Table with Electron Configurations -----
   const ptContainer = document.getElementById('vis-periodic-table');
-  if (ptContainer) {
+  if (ptContainer && !ptContainer.hasChildNodes()) {
     const SYM = ['','H','He','Li','Be','B','C','N','O','F','Ne',
       'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca',
       'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',
