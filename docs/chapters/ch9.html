@@ -7,9 +7,9 @@
 <p>Solid H$_2$O (ice) melting into liquid H$_2$O (water) is an example of a phase transition. You may have heard somewhere that there are 4 phases of matter: solid, liquid, gas and plasma. A plasma is an ionized gas, like the sun. I don't know why plasmas get special treatment though -- perhaps it's the old idea of the "four elements." In fact, there are thousands of phases. For example, ferromagnetic is a phase, like a permanent iron magnet. When you heat such a magnet to high enough temperature, it undergoes a phase transition and stops being magnetic. Conductors, insulators, and semi-conductors are also phases of matter. At very very high temperatures, nuclei break apart into a quark-gluon phase. Solids generally have lots of phases, determined by crystal structure or topological properties. For example, diamond and graphite are two phases of carbon with different lattice structure:</p>
 
 <div class="interactive-container">
-  <h3>Crystal Structures of Carbon</h3>
+  <div class="figure-label">Interactive 1: Crystal Structures of Carbon</div>
+  <p class="vis-caption">Two phases of solid carbon. Drag to rotate each structure.</p>
   <canvas id="vis-carbon-crystals" width="600" height="340"></canvas>
-  <p class="vis-caption">Figure 1. Two phases of solid carbon. Drag to rotate each structure.</p>
 </div>
 
 <p>It's actually quite hard to come up with a precise definition of a phase. Some textbooks say:</p>
@@ -46,8 +46,8 @@ $$\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$$
 
 <!-- INTERACTIVE: Surface Tension -->
 <div class="interactive-container">
-  <h3>Interactive: Surface Tension of Water</h3>
-  <p class="vis-caption">Liquid water in a beaker with vapor above. Each H$_2$O is drawn as an oxygen (red) bonded to two hydrogens (white). Dashed blue lines are hydrogen bonds — they hold the liquid together but occasionally break and reform due to thermal motion. Molecules at the surface have fewer neighbors, leaving unsaturated bonds (orange dashes) — this energy cost per unit area is the surface tension $\sigma$. Raise the temperature to see more bonds break and molecules evaporate.</p>
+  <div class="figure-label">Interactive 2: Surface Tension of Water</div>
+  <p class="vis-caption">Liquid water in a beaker with vapor above, showing hydrogen bonds and surface tension effects. Raise the temperature to see bonds break and molecules evaporate.</p>
   <div class="vis-controls">
     <label>Temperature: <input type="range" id="st-temp" min="0.1" max="5.0" step="0.05" value="1.0"> <span class="slider-value" id="st-temp-val">1.00</span></label>
     <button id="st-reset">Reset</button>
@@ -76,7 +76,8 @@ $$\Delta G = (\mu_2 - \mu_1)\Delta N$$
 
 <!-- INTERACTIVE: P-T Phase Diagram -->
 <div class="interactive-container">
-  <h3>Interactive: P-T Phase Diagram</h3>
+  <div class="figure-label">Interactive 3: P-T Phase Diagram</div>
+  <p class="vis-caption">Phase diagram showing solid, liquid, and gas regions with log-scale pressure axis. Hover to read coordinates; STP marked in yellow.</p>
   <div class="vis-controls">
     <button id="pt-sub-co2" class="active">CO₂</button>
     <button id="pt-sub-ar">Ar</button>
@@ -87,7 +88,6 @@ $$\Delta G = (\mu_2 - \mu_1)\Delta N$$
     <button id="pt-sub-ch4">CH₄</button>
   </div>
   <canvas id="vis-pt-phase" width="600" height="400"></canvas>
-  <p class="vis-caption">Phase diagram showing solid, liquid, and gas regions with log-scale pressure axis. Water has an anomalous negative slope for the solid-liquid boundary because ice is less dense than water. Hover to read (T, P) coordinates. STP marked in yellow.</p>
 </div>
 
 <p>The thick lines in the phase diagram are the phase boundaries, determined by $\mu_1 = \mu_2$. We define:</p>
@@ -219,7 +219,8 @@ $$\Delta T = \frac{N_s}{N_w}\frac{RT_0^2}{L}$$
 
 <!-- INTERACTIVE: Colligative Properties -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🧂</span> Interactive: Colligative Properties — Boiling Point Elevation</div>
+  <div class="figure-label">Interactive 6: Colligative Properties</div>
+  <p class="vis-caption">Boiling point elevation due to adding solute. Adjust the solute fraction and temperature to see the effect on vapor pressure and boiling point.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-colligative" width="700" height="420"></canvas></div>
   <div class="vis-controls" style="flex-direction:column; align-items:stretch; gap:6px;">
     <label>Solute fraction $N_s/N_w$: <input type="range" id="col-frac" min="0" max="0.20" step="0.005" value="0" style="width:180px"> <span class="value-display" id="col-frac-val">0.000</span></label>
@@ -247,8 +248,8 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 <p>We know that $\left(\frac{\partial \mu}{\partial T}\right)_P = -S/N < 0$, so slopes are always negative. Since $S_{\text{solid}} < S_{\text{liquid}} < S_{\text{gas}}$, the gas has the steepest chemical potential curve. By the 3rd law of thermodynamics, the solid line starts off horizontal at $T = 0$.</p>
 
 <div class="interactive-container">
-<h3>Interactive: Chemical Potential Phase Diagram</h3>
-<p class="vis-caption">Each phase has its own $\mu(T)$ curve with slope $-S/N$. The gas curve is steepest (highest entropy). The stable phase at each temperature is the one with the lowest $\mu$ — shown as the bold envelope. Crossing points are phase transitions. The P–T diagram on the right shows the corresponding phase boundaries and your current position.</p>
+<div class="figure-label">Interactive 4: Chemical Potential Phase Diagram</div>
+<p class="vis-caption">Each phase has its own $\mu(T)$ curve with slope $-S/N$. The stable phase at each temperature is the one with the lowest $\mu$.</p>
 <canvas id="vis-chem-potential" width="700" height="380"></canvas>
 <div class="vis-controls" style="flex-direction:column; align-items:stretch; gap:6px;">
   <div style="display:flex; gap:12px; justify-content:center;">
@@ -263,8 +264,8 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 <p>When we change the pressure: $\left(\frac{\partial \mu}{\partial P}\right)_T = V/N = 1/n > 0$. The less dense the phase, the more its chemical potential changes. The gas curve shifts up the most. For water, the liquid is denser than the solid so its chemical potential changes less -- leading to a lower melting temperature at higher pressure.</p>
 
 <div class="interactive-container">
-  <h3>Interactive: QCD Phase Diagram</h3>
-  <p class="vis-caption">The phase diagram of nuclear matter as a function of temperature $T$ and baryon chemical potential $\mu_B$. Hover over each region to learn about the phase and where it is found in nature. The baryon chemical potential measures the energy cost of adding one baryon (proton or neutron) to the system — ordinary nuclear matter sits at $\mu_B \approx 940\;\text{MeV}$.</p>
+  <div class="figure-label">Interactive 5: QCD Phase Diagram</div>
+  <p class="vis-caption">Phase diagram of nuclear matter as a function of temperature $T$ and baryon chemical potential $\mu_B$. Hover over each region to learn about the phase.</p>
   <canvas id="vis-qcd-phase" width="700" height="480"></canvas>
 </div>
 
@@ -289,14 +290,14 @@ $$\Delta T = -\frac{8.7}{55}\frac{8.3\;\text{J/(mol}\cdot\text{K)} \times (273\;
 <p><span class="tooltip-trigger">Paramagnetic<span class="tooltip-content">A material attracted to an applied magnetic field, typically with unpaired electrons free to align with the field</span></span> means that a material is attracted to an applied magnetic field. The opposite is <span class="tooltip-trigger">diamagnetic<span class="tooltip-content">A material repelled by an applied magnetic field</span></span>. A third type is <span class="tooltip-trigger">ferromagnetism<span class="tooltip-content">A material that can produce a coherent magnetic field on its own, like an iron refrigerator magnet</span></span>, whereby a material can produce a coherent magnetic field, as in an ordinary iron refrigerator magnet. If you heat an iron magnet above 1043 K it will lose its magnetism and become paramagnetic.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Ferromagnetic Phase Transition</h4>
+<div class="figure-label">Interactive 7: Ferromagnetic Phase Transition</div>
+<p class="vis-caption">Below $T_c$, spins spontaneously align (ferromagnetic). Above $T_c$, thermal fluctuations destroy the order (paramagnetic). Adjust the external field $B$ and temperature to explore the competition.</p>
 <canvas id="vis-ferromagnet" width="600" height="310"></canvas>
 <div class="controls">
 <label>Temperature T/T<sub>c</sub>: <input type="range" id="ferro-temp" min="0.1" max="2.5" step="0.05" value="0.5"><span id="ferro-temp-val">0.50</span></label>
 <label>External field B: <input type="range" id="ferro-field" min="-2.0" max="2.0" step="0.05" value="0.0"><span id="ferro-field-val">0.00</span></label>
 <button id="ferro-randomize">Randomize Spins</button>
 </div>
-<figcaption>Below T<sub>c</sub>, spins spontaneously align (ferromagnetic). Above T<sub>c</sub>, thermal fluctuations destroy the order (paramagnetic). The external field B competes with temperature: it tries to align all spins, while T tries to randomize them. Slide B to see how even above T<sub>c</sub>, a strong field can partially order the spins.</figcaption>
 </div>
 
 <p>In a crude model, each pair has energy $-\epsilon$ if they are aligned and $+\epsilon$ if they are not aligned. The difference between the fully aligned (ferromagnetic) state and disordered (paramagnetic) state is roughly $E = 2N\epsilon$. The disordered state has $\Omega = 2^N$ configurations and entropy $S = Nk_B\ln 2$. The free energies are:</p>
@@ -334,12 +335,12 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
 
 <!-- INTERACTIVE: PV Diagram with Van der Waals Isotherms -->
 <div class="interactive-container">
-  <h3>Interactive: P-V Diagram (Van der Waals Isotherms)</h3>
+  <div class="figure-label">Interactive 8: P-V Diagram</div>
+  <p class="vis-caption">Van der Waals isotherms showing the coexistence region, critical point, and supercritical fluid regime.</p>
   <div class="vis-controls">
     <label>$T / T_c$: <input type="range" id="pv-temp" min="0.7" max="1.4" step="0.01" value="1.0"> <span class="slider-value" id="pv-temp-val">1.00</span></label>
   </div>
   <canvas id="vis-pv-diagram" width="600" height="400"></canvas>
-  <p class="vis-caption">Below $T_c$: flat coexistence region (Maxwell construction). At $T_c$: inflection point = critical point. Above $T_c$: supercritical fluid.</p>
 </div>
 
 <p>The lines in this plot are isotherms. During a phase transition, pressure and temperature are fixed, so we move horizontally ($\partial P/\partial v = 0$). As temperature increases, the difference in specific volume between liquid and gas at constant temperature gets smaller. Eventually the latent heat vanishes: it takes no energy to convert a liquid to a gas. This happens at the <strong>critical temperature</strong> $T_c$, at the <strong>critical pressure</strong> $P_c$ and <strong>critical specific volume</strong> $v_c$.</p>
@@ -349,25 +350,25 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
 <p>At the critical point, $\frac{\partial P}{\partial v}\bigg|_T = 0$ and $\frac{\partial^2 P}{\partial v^2}\bigg|_T = 0$. In fact, all derivatives vanish: $\frac{\partial^n P}{\partial v^n}\bigg|_T = 0$. This means $P(v)$ is a non-analytic function at the critical point.</p>
 
 <div class="visualization">
-<div class="vis-header"><span class="vis-icon">📊</span> Interactive: T-v Diagram with Isobars</div>
+<div class="figure-label">Interactive 9: T-v Diagram with Isobars</div>
+<p class="vis-caption">The coexistence dome encloses the two-phase region. Isobars are horizontal inside the dome; above $P_c$ no phase transition occurs.</p>
 <div class="vis-canvas-wrap"><canvas id="vis-tv-diagram" width="600" height="400"></canvas></div>
 <div class="vis-controls">
 <label>$P / P_c$: <input type="range" id="tv-pressure" min="0.1" max="2.0" step="0.01" value="0.60"> <span class="slider-value" id="tv-pressure-val">0.60</span></label>
 </div>
-<p class="vis-caption">The coexistence dome (fixed curve) encloses the two-phase region. Each isobar (constant-$P$ curve) is horizontal inside the dome: during the phase transition, temperature stays constant while the mixture shifts from liquid to vapor. As pressure approaches $P_c$, the horizontal segment shrinks to zero at the critical point. Above $P_c$, the isobar passes smoothly through with no phase transition.</p>
 </div>
 
 <p>Because all the derivatives vanish, all dimensionful physical quantities we use to characterize a material either vanish or are infinite at the critical point:</p>
 
 <!-- INTERACTIVE: Critical Divergences -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🌡️</span> Interactive: Divergences at the Critical Point</div>
+  <div class="figure-label">Interactive 10: Divergences at the Critical Point</div>
+  <p class="vis-caption">Drag the temperature toward $T_c$ to see how the order parameter, latent heat, heat capacity, and compressibility behave with universal critical exponents.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-cp-critical" width="600" height="500"></canvas></div>
   <div class="vis-controls">
     <label>Temperature: <input type="range" id="cpc-temp" min="0.55" max="1.3" step="0.001" value="0.85"> <span class="value-display" id="cpc-temp-val">T/Tc = 0.850</span></label>
     <label style="margin-left:16px"><input type="checkbox" id="cpc-meanfield"> Compare mean-field</label>
   </div>
-  <figcaption>Drag the temperature toward $T_c$. The order parameter $\Delta \rho$ and latent heat $L$ both vanish as $\varepsilon^\beta$ with $\beta = 0.326$ (the latent heat inherits $\beta$ from Clausius–Clapeyron: $L = T\Delta v\, dP/dT$ and $\Delta v \sim \varepsilon^\beta$). The heat capacity $C_p$ diverges weakly ($\alpha = 0.11$) while the compressibility $\kappa_T$ diverges strongly ($\gamma = 1.24$). Data from CO$_2$, Xe, and SF$_6$ all collapse onto the same power laws — the exponents are universal.</figcaption>
 </div>
 
 <p>We say that the theory near the critical point is <span class="tooltip-trigger">scale-invariant<span class="tooltip-content">Having no characteristic scale. At a critical point, all dimensionful quantities vanish or diverge, and the system looks the same at all length scales.</span></span> or conformal. Choosing reduced units:</p>
@@ -381,7 +382,8 @@ $$\hat{T} = \frac{T}{T_c},\qquad \hat{P} = \frac{P}{P_c},\qquad \hat{v} = \frac{
 
 <!-- INTERACTIVE: Law of Corresponding States -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔬</span> Interactive: Law of Corresponding States <span style="font-weight:normal; font-size:0.85em; opacity:0.7;">(real coexistence data from NIST)</span></div>
+  <div class="figure-label">Interactive 11: Law of Corresponding States</div>
+  <p class="vis-caption">Liquid-gas coexistence curves for eight substances in reduced coordinates $T/T_c$ vs $n/n_c$, showing universal collapse onto a single curve.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-corresponding" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <label><input type="checkbox" id="cs-ne" checked> Ne</label>
@@ -393,7 +395,6 @@ $$\hat{T} = \frac{T}{T_c},\qquad \hat{P} = \frac{P}{P_c},\qquad \hat{v} = \frac{
     <label><input type="checkbox" id="cs-co2"> CO₂</label>
     <label><input type="checkbox" id="cs-h2o" checked> H₂O</label>
   </div>
-  <p class="vis-caption">Liquid–gas coexistence curves for eight substances, plotted in reduced coordinates \(T/T_c\) vs \(n/n_c\). Each substance has very different critical constants (shown in legend), yet all collapse onto a single universal curve. ~19 points per substance, subsampled from NIST Chemistry WebBook saturation tables. Density uncertainties from the underlying equations of state are 0.02–0.05% for Ar, N₂, O₂, CO₂ and 0.2% for Ne, Kr, Xe (too small to display as error bars at this scale). H₂O deviates most from universality due to hydrogen bonding.</p>
 </div>
 
 <p>Remarkably, in the vicinity of the critical point, the $\hat{T}$-$\hat{n}$ phase boundaries all have exactly the same shape! This powerful observation is known as the <span class="tooltip-trigger">law of corresponding states<span class="tooltip-content">Near their critical points, all simple fluids have the same thermodynamic behavior when expressed in reduced units</span></span>.</p>
@@ -412,8 +413,8 @@ $$\hat{n}_g(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) - \frac{7}{4}(1 - \hat{T})^{
 
 <!-- Interactive: Ising Model -->
 <div class="interactive-container">
-  <h3>Interactive: 2D Ising Model</h3>
-  <p class="vis-caption">The Ising model treats a material as a square lattice of spins, each pointing up or down, with energy $-J$ for aligned neighbors and $+J$ for anti-aligned ones. Despite its simplicity, it captures the essential physics of phase transitions. Below the critical temperature $T_c \approx 2.27\,J/k_B$ (solved exactly by Onsager in 1944), large domains of aligned spins form spontaneously — this is the ordered, ferromagnetic phase. Above $T_c$, thermal fluctuations destroy long-range order and the spins appear random. Near $T_c$, you can see clusters of all sizes: the system becomes scale-invariant, with no characteristic domain size. The critical exponents of this model agree with real fluid data to one part in 1000.</p>
+  <div class="figure-label">Interactive 12: 2D Ising Model</div>
+  <p class="vis-caption">Square lattice of spins with nearest-neighbor interactions. Below $T_c \approx 2.27\,J/k_B$, domains of aligned spins form spontaneously; above $T_c$, thermal fluctuations destroy long-range order.</p>
   <div class="vis-controls">
     <label>$T / (J/k_B)$: <input type="range" id="ising-temp" min="0.5" max="5" step="0.05" value="2.27"> <span class="slider-value" id="ising-temp-val">2.27</span></label>
     <button id="ising-reset">Reset</button>

@@ -180,13 +180,13 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 
 <!-- INTERACTIVE: Bose-Einstein Distribution -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#9881;</span> Interactive: Bose-Einstein Distribution</div>
+  <div class="figure-label">Interactive 1: Bose-Einstein Distribution</div>
+  <p class="vis-caption">Average occupation number $\langle n \rangle$ vs energy for bosons. Drag $\mu$ toward zero to see low-energy states become heavily occupied, a precursor to Bose-Einstein condensation.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-be-dist" width="700" height="420"></canvas></div>
   <div class="vis-controls">
     <label>Temperature $k_BT$: <input type="range" id="be-dist-temp" min="0.1" max="3" step="0.05" value="1" style="width:200px"> <span class="value-display" id="be-dist-temp-val">1.00</span></label>
     <label>Chemical potential $\mu$: <input type="range" id="be-dist-mu" min="-3" max="-0.05" step="0.05" value="-0.5" style="width:200px"> <span class="value-display" id="be-dist-mu-val">&minus;0.50</span></label>
   </div>
-  <p class="vis-caption" style="padding:0 16px 12px;">The Bose-Einstein distribution $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ gives the average number of bosons in a state at energy $\epsilon$. Unlike fermions, bosons can pile up without limit: as $\epsilon \to \mu$ from above, the occupation diverges. The chemical potential $\mu$ must always stay below all energy levels ($\mu < 0$ when $\epsilon_0 = 0$). Drag $\mu$ toward zero to see low-energy states become heavily occupied &mdash; this is the precursor to Bose-Einstein condensation. The dashed green line shows the classical Maxwell-Boltzmann approximation for comparison.</p>
 </div>
 
 <p>Note that if $\epsilon_i < \mu$ then $\langle n_i \rangle$ is negative, which is impossible. This means that $\mu < \epsilon_i$ for all $\epsilon_i$, i.e. the chemical potential for any Bose system will be less than all of the energies. Often we set the ground state energy to zero in which case</p>
@@ -218,12 +218,12 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 
 <!-- INTERACTIVE: Fermi-Dirac Distribution -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#9881;</span> Interactive: Fermi-Dirac Distribution</div>
+  <div class="figure-label">Interactive 2: Fermi-Dirac Distribution</div>
+  <p class="vis-caption">Occupation probability vs energy for fermions. At $T = 0$ it is a sharp step at $\epsilon_F$; finite temperature smears the step over a window of width $\sim k_BT$.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-fd-dist" width="700" height="420"></canvas></div>
   <div class="vis-controls">
     <label>Temperature $k_BT / \epsilon_F$: <input type="range" id="fd-dist-temp" min="0.01" max="1.0" step="0.01" value="0.1" style="width:200px"> <span class="value-display" id="fd-dist-temp-val">0.10</span></label>
   </div>
-  <p class="vis-caption" style="padding:0 16px 12px;">The Fermi-Dirac distribution $f(\epsilon) = \frac{1}{e^{(\epsilon - \epsilon_F)/k_BT} + 1}$ gives the probability that a state at energy $\epsilon$ is occupied. At $T = 0$ it is a sharp step: all states below $\epsilon_F$ are filled, all above are empty. At finite $T$, the step smears over a window of width $\sim k_BT$ around $\epsilon_F$, and the occupation at $\epsilon = \epsilon_F$ is always exactly $\frac{1}{2}$. Drag the slider to see how temperature opens up partially occupied states near the Fermi surface.</p>
 </div>
 
 <p>The chemical potential at $T = 0$ is called the <span class="tooltip-trigger">Fermi energy<span class="tooltip-content">$\epsilon_F = \mu(T=0)$: the energy of the highest occupied state at zero temperature. All states below $\epsilon_F$ are filled; all above are empty. The Fermi energy sets the scale for quantum effects in metals.</span></span>, $\epsilon_F = \mu(T = 0)$. At $T = 0$, all states below the Fermi energy are filled and the ones above the Fermi energy are empty. Thus the chemical potential for Fermi systems is positive at low temperature and corresponds to the highest occupied energy level of the system. We'll use the Fermi energy extensively to discuss fermionic systems in the quantum regime, in Lectures 13, 14 and 15.</p>
@@ -286,13 +286,13 @@ $$\mathcal{Z} = \sum_N \frac{1}{N!}Z_1^N e^{\beta N\mu} = \exp\!\left[Z_1 e^{\be
 
 <!-- INTERACTIVE: Quantum statistics comparison -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#9883;&#65039;</span> Interactive: Quantum vs Classical Statistics</div>
+  <div class="figure-label">Interactive 3: Quantum vs Classical Statistics</div>
+  <p class="vis-caption">All three distribution functions compared at the same $\mu$ and $k_BT$. At high energy they converge; near $\epsilon = \mu$, quantum effects appear.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-quantum" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <label>$k_BT$: <input type="range" id="qs-temp" min="0.1" max="5" step="0.05" value="1"> <span class="value-display" id="qs-temp-val">1.00</span></label>
     <label>$\mu$: <input type="range" id="qs-mu" min="-4" max="-0.1" step="0.05" value="-1"> <span class="value-display" id="qs-mu-val">&minus;1.00</span></label>
   </div>
-  <p class="vis-caption">All three distributions with the same $\mu$ and $k_BT$. At high energy ($\epsilon - \mu \gg k_BT$), all three converge to the classical regime where $\langle n \rangle \ll 1$. Near $\epsilon = \mu$, quantum effects appear: bosons pile into low-energy states while fermions are capped at $\langle n \rangle = 1$. Increase $k_BT$ or make $\mu$ more negative to see the distributions converge.</p>
 </div>
 
 <h2>4. Quantum and Classical Regime</h2>
