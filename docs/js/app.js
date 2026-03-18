@@ -23401,7 +23401,44 @@ function initCh14Vis() {
       bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'});
       bbRunSim();
     }
-    function bbPresetAstable() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:28},{row:'r+b',col:28}],{color:'#e53935'}); bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:4},{row:'a',col:8}],{value:1000}); bbAddPart('LED',[{row:'b',col:8},{row:'b',col:11}]); bbAddPart('NPN',[{row:'f',col:11},{row:'f',col:12},{row:'f',col:13}]); bbAddPart('WIRE',[{row:'d',col:11},{row:'g',col:13}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:11},{row:'r-b',col:11}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r+t',col:17},{row:'a',col:17}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:17},{row:'a',col:20}],{value:1000}); bbAddPart('LED',[{row:'b',col:20},{row:'b',col:23}]); bbAddPart('NPN',[{row:'f',col:23},{row:'f',col:24},{row:'f',col:25}]); bbAddPart('WIRE',[{row:'d',col:23},{row:'g',col:25}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:23},{row:'r-b',col:23}],{color:'#1e88e5'}); bbAddPart('CAPACITOR',[{row:'c',col:11},{row:'h',col:24}],{value:100e-6}); bbAddPart('CAPACITOR',[{row:'c',col:23},{row:'h',col:12}],{value:100e-6}); bbAddPart('WIRE',[{row:'r+b',col:7},{row:'j',col:7}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'j',col:7},{row:'j',col:12}],{value:10000}); bbAddPart('WIRE',[{row:'r+b',col:19},{row:'j',col:19}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'j',col:19},{row:'j',col:24}],{value:10000}); for (var i = 0; i < bbParts.length; i++) if (bbParts[i].type === 'NPN' && bbParts[i].holes[1].col === 12) bbParts[i]._state = 'on'; bbRunSim(); }
+    function bbPresetAstable() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r+t',col:28},{row:'r+b',col:28}],{color:'#e53935'});
+      bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'});
+      // LEFT: VCC → R1(1k) → LED1 → Q1
+      bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:4},{row:'a',col:8}],{value:1000});
+      bbAddPart('LED',[{row:'b',col:8},{row:'b',col:11}]);
+      bbAddPart('NPN',[{row:'f',col:11},{row:'f',col:12},{row:'f',col:13}]);
+      bbAddPart('WIRE',[{row:'d',col:11},{row:'g',col:13}],{color:'#ff9800'});
+      bbAddPart('WIRE',[{row:'g',col:11},{row:'r-b',col:11}],{color:'#1e88e5'});
+      // RIGHT: VCC → R2(1k) → LED2 → Q2
+      bbAddPart('WIRE',[{row:'r+t',col:17},{row:'a',col:17}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:17},{row:'a',col:20}],{value:1000});
+      bbAddPart('LED',[{row:'b',col:20},{row:'b',col:23}]);
+      bbAddPart('NPN',[{row:'f',col:23},{row:'f',col:24},{row:'f',col:25}]);
+      bbAddPart('WIRE',[{row:'d',col:23},{row:'g',col:25}],{color:'#ff9800'});
+      bbAddPart('WIRE',[{row:'g',col:23},{row:'r-b',col:23}],{color:'#1e88e5'});
+      // Cross-coupling: C1 from Q1 collector to Q2 base (via purple wire + short cap + purple wire)
+      bbAddPart('WIRE',[{row:'c',col:11},{row:'c',col:14}],{color:'#8e24aa'});  // from Q1 collector node
+      bbAddPart('CAPACITOR',[{row:'c',col:14},{row:'c',col:16}],{value:100e-6}); // short cap
+      bbAddPart('WIRE',[{row:'c',col:16},{row:'h',col:24}],{color:'#8e24aa'});  // to Q2 base node
+      // Cross-coupling: C2 from Q2 collector to Q1 base (via cyan wire + short cap + cyan wire)
+      bbAddPart('WIRE',[{row:'d',col:23},{row:'d',col:16}],{color:'#00acc1'});  // from Q2 collector node (d,23=T23)
+      bbAddPart('CAPACITOR',[{row:'e',col:16},{row:'e',col:14}],{value:100e-6}); // short cap on row e
+      bbAddPart('WIRE',[{row:'d',col:14},{row:'h',col:12}],{color:'#00acc1'});  // to Q1 base node
+      // Wire to connect cap rows: d,16→e,16 (same column = already connected in top half)
+      // and d,14→e,14 (same column = already connected)
+      // Base bias resistors
+      bbAddPart('WIRE',[{row:'r+b',col:7},{row:'j',col:7}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'j',col:7},{row:'j',col:12}],{value:10000});
+      bbAddPart('WIRE',[{row:'r+b',col:19},{row:'j',col:19}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'j',col:19},{row:'j',col:24}],{value:10000});
+      for (var i = 0; i < bbParts.length; i++)
+        if (bbParts[i].type === 'NPN' && bbParts[i].holes[1].col === 12) bbParts[i]._state = 'on';
+      bbRunSim();
+    }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
     document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
