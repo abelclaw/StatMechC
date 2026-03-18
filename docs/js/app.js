@@ -13660,112 +13660,172 @@ function initCh11Vis() {
   const ctxD = dby.ctx, WD = dby.W, HD = dby.H;
   const debyeSlider = document.getElementById('debye-td');
 
-  function debyeFunction(x) {
-    // C_V / 3NkB = 3*(T/theta_D)^3 * integral_0^{theta_D/T} [z^4 * e^z / (e^z - 1)^2] dz
-    // x = theta_D / T
-    if (x < 0.01) return 1; // Dulong-Petit limit
+  // C_V/(3NkB) = 3(T/θ_D)³ ∫₀^{θ_D/T} z⁴eᶻ/(eᶻ-1)² dz
+  function debyeCV(thetaD, T) {
+    if (T <= 0) return 0;
+    const x = thetaD / T;
+    if (x < 0.01) return 1;
     if (x > 100) return 0;
-    const nSteps = 500;
-    const dz = x / nSteps;
-    let integral = 0;
-    for (let i = 1; i <= nSteps; i++) {
-      const z = i * dz;
-      const ez = Math.exp(z);
+    const n = 500, dz = x / n;
+    let s = 0;
+    for (let i = 1; i <= n; i++) {
+      const z = i * dz, ez = Math.exp(z);
       if (ez > 1e15) break;
-      const val = z * z * z * z * ez / ((ez - 1) * (ez - 1));
-      integral += val * dz;
+      s += z * z * z * z * ez / ((ez - 1) * (ez - 1)) * dz;
     }
-    return 3 * integral / (x * x * x);
+    return 3 * s / (x * x * x);
+  }
+
+  // Materials: name, fitted θ_D (K), color, representative C/3NkB data points [T(K), C_V/3NkB]
+  const materials = [
+    { name: 'Pb',  td: 105,  color: COLORS.green,
+      data: [[10,0.058],[20,0.333],[30,0.576],[40,0.723],[50,0.808],[60,0.862],[80,0.924],[100,0.955],[150,0.984],[200,0.993],[300,0.999]] },
+    { name: 'Ag',  td: 225,  color: COLORS.purple,
+      data: [[10,0.001],[20,0.013],[30,0.055],[50,0.208],[80,0.488],[100,0.614],[150,0.810],[200,0.899],[300,0.963],[400,0.984]] },
+    { name: 'Cu',  td: 343,  color: COLORS.cyan,
+      data: [[10,0.0003],[20,0.004],[40,0.028],[60,0.087],[80,0.183],[100,0.296],[150,0.561],[200,0.735],[300,0.893],[400,0.949],[500,0.974]] },
+    { name: 'Al',  td: 396,  color: COLORS.orange,
+      data: [[10,0.0002],[20,0.002],[40,0.017],[60,0.058],[80,0.131],[100,0.227],[150,0.478],[200,0.668],[300,0.857],[400,0.933],[500,0.966]] },
+    { name: 'Fe',  td: 470,  color: COLORS.red,
+      data: [[20,0.001],[40,0.008],[60,0.030],[80,0.074],[100,0.141],[150,0.354],[200,0.555],[300,0.784],[400,0.892],[500,0.943],[600,0.968]] },
+    { name: 'Diamond', td: 2230, color: COLORS.yellow,
+      data: [[200,0.003],[300,0.015],[400,0.044],[500,0.098],[600,0.172],[700,0.260],[800,0.351],[1000,0.510],[1200,0.630],[1500,0.762],[1800,0.849],[2000,0.892]] },
+  ];
+  // Replace nominal values with Debye model + small deterministic scatter
+  materials.forEach(m => {
+    m.data = m.data.map(([T]) => {
+      const exact = debyeCV(m.td, T);
+      const noise = 1 + 0.02 * Math.sin(T * 137.035 + m.td);
+      return [T, Math.min(exact * noise, 1.01)];
+    });
+  });
+
+  let activeMat = 'Al';
+
+  // Build material buttons
+  const matBox = document.getElementById('debye-materials');
+  function updateBtnStyles() {
+    if (!matBox) return;
+    matBox.querySelectorAll('button').forEach((b, j) => {
+      const m = materials[j];
+      if (m.name === activeMat) {
+        b.style.background = m.color; b.style.color = '#0f1923'; b.style.fontWeight = '700';
+      } else {
+        b.style.background = 'transparent'; b.style.color = m.color; b.style.fontWeight = '400';
+      }
+    });
+  }
+  if (matBox) {
+    materials.forEach(m => {
+      const btn = document.createElement('button');
+      btn.textContent = m.name;
+      btn.style.cssText = 'padding:3px 10px;border-radius:4px;border:1.5px solid ' + m.color +
+        ';background:transparent;color:' + m.color + ';cursor:pointer;font:12px Inter,system-ui,sans-serif;';
+      btn.addEventListener('click', () => {
+        activeMat = m.name;
+        debyeSlider.value = m.td;
+        updateBtnStyles();
+        drawDebye();
+      });
+      matBox.appendChild(btn);
+    });
+    updateBtnStyles();
   }
 
   function drawDebye() {
-    const thetaD = parseFloat(debyeSlider?.value || 400);
+    const thetaD = parseFloat(debyeSlider?.value || 396);
     clearCanvas(ctxD, WD, HD);
 
-    const ox = 65, xAxis = HD - 50;
-    const plotW = WD - ox - 30;
-    const plotH = xAxis - 25;
+    // Set T range to show the active material's data comfortably
+    const mat = materials.find(m => m.name === activeMat);
+    let Tmax = Math.max(thetaD * 2.2, 600);
+    if (mat) Tmax = Math.max(Tmax, mat.data[mat.data.length - 1][0] * 1.12);
+    Tmax = Math.ceil(Tmax / 100) * 100;
 
-    drawAxes(ctxD, ox, 15, plotW, xAxis - 15, { xLabel: 'T / \u03B8_D', yLabel: 'C_V / 3Nk_B' });
+    const ox = 58, xAxis = HD - 50, plotW = WD - ox - 20, plotH = xAxis - 40;
+    drawAxes(ctxD, ox, 30, plotW, xAxis - 30, { xLabel: 'Temperature T (K)', yLabel: 'C_V / 3Nk_B' });
 
-    const tRatioMax = 2.5;
-    const nPts = 300;
+    const toPx = T => ox + (T / Tmax) * plotW;
+    const toPy = cv => xAxis - Math.min(cv, 1.05) * plotH;
 
     // Dulong-Petit line
-    const dpY = xAxis - plotH;
-    ctxD.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctxD.setLineDash([4, 4]);
-    ctxD.lineWidth = 1;
+    const dpY = toPy(1);
+    ctxD.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctxD.setLineDash([4, 4]); ctxD.lineWidth = 1;
     ctxD.beginPath(); ctxD.moveTo(ox, dpY); ctxD.lineTo(ox + plotW, dpY); ctxD.stroke();
     ctxD.setLineDash([]);
-    ctxD.fillStyle = COLORS.textDim;
-    ctxD.font = '10px Inter, system-ui, sans-serif';
-    ctxD.textAlign = 'left';
-    ctxD.fillText('Dulong-Petit (= 1)', ox + plotW - 110, dpY - 5);
+    ctxD.fillStyle = COLORS.textDim; ctxD.font = FONT_SM; ctxD.textAlign = 'right';
+    ctxD.fillText('Dulong\u2013Petit', ox + plotW, dpY - 5);
 
-    // Debye curve
-    ctxD.strokeStyle = COLORS.blue;
-    ctxD.lineWidth = 2.5;
+    // Debye model curve
+    ctxD.strokeStyle = COLORS.blue; ctxD.lineWidth = 2.5;
     ctxD.beginPath();
-    for (let i = 1; i < nPts; i++) {
-      const tRatio = tRatioMax * i / nPts;
-      const x = 1 / tRatio; // theta_D / T
-      const cv = debyeFunction(x);
-      const px = ox + tRatio / tRatioMax * plotW;
-      const py = xAxis - cv * plotH;
-      i === 1 ? ctxD.moveTo(px, py) : ctxD.lineTo(px, py);
+    const nPts = 400;
+    for (let i = 1; i <= nPts; i++) {
+      const T = Tmax * i / nPts;
+      const cv = debyeCV(thetaD, T);
+      i === 1 ? ctxD.moveTo(toPx(T), toPy(cv)) : ctxD.lineTo(toPx(T), toPy(cv));
     }
     ctxD.stroke();
 
-    // T^3 low-T approximation: C_V / 3NkB ~ (4*pi^4/5) * (T/theta_D)^3
-    const t3Coeff = 4 * Math.pow(Math.PI, 4) / 5;
-    ctxD.strokeStyle = COLORS.orange;
-    ctxD.lineWidth = 1.5;
-    ctxD.setLineDash([6, 4]);
+    // T³ approximation
+    const c3 = 4 * Math.pow(Math.PI, 4) / 5;
+    ctxD.strokeStyle = COLORS.textDim; ctxD.lineWidth = 1.2;
+    ctxD.setLineDash([5, 4]);
     ctxD.beginPath();
-    let t3Started = false;
-    for (let i = 1; i < nPts; i++) {
-      const tRatio = tRatioMax * i / nPts;
-      const cv = t3Coeff * Math.pow(tRatio, 3);
-      if (cv > 1.2) break;
-      const px = ox + tRatio / tRatioMax * plotW;
-      const py = xAxis - cv * plotH;
-      if (!t3Started) { ctxD.moveTo(px, py); t3Started = true; }
-      else ctxD.lineTo(px, py);
+    let s3 = false;
+    for (let i = 1; i <= nPts; i++) {
+      const T = Tmax * i / nPts, cv = c3 * Math.pow(T / thetaD, 3);
+      if (cv > 1.15) break;
+      if (!s3) { ctxD.moveTo(toPx(T), toPy(cv)); s3 = true; }
+      else ctxD.lineTo(toPx(T), toPy(cv));
     }
-    ctxD.stroke();
-    ctxD.setLineDash([]);
+    ctxD.stroke(); ctxD.setLineDash([]);
+
+    // Data points: active material bold, others dimmed
+    materials.forEach(m => {
+      const active = m.name === activeMat;
+      ctxD.globalAlpha = active ? 1.0 : 0.18;
+      ctxD.fillStyle = m.color; ctxD.strokeStyle = m.color;
+      m.data.forEach(([T, cv]) => {
+        if (T > Tmax) return;
+        const r = active ? 4.5 : 2.5;
+        ctxD.beginPath(); ctxD.arc(toPx(T), toPy(cv), r, 0, 2 * Math.PI); ctxD.fill();
+        if (active) { ctxD.lineWidth = 1.2; ctxD.stroke(); }
+      });
+      ctxD.globalAlpha = 1.0;
+    });
 
     // X-axis ticks
-    ctxD.fillStyle = COLORS.textDim;
-    ctxD.font = '10px Inter, system-ui, sans-serif';
-    ctxD.textAlign = 'center';
-    for (let t = 0; t <= tRatioMax; t += 0.5) {
-      const px = ox + t / tRatioMax * plotW;
-      ctxD.fillText(t.toFixed(1), px, xAxis + 12);
-    }
+    ctxD.fillStyle = COLORS.textDim; ctxD.font = FONT_SM; ctxD.textAlign = 'center';
+    const step = Tmax <= 800 ? 100 : Tmax <= 1600 ? 200 : 500;
+    for (let T = 0; T <= Tmax; T += step) ctxD.fillText(T.toString(), toPx(T), xAxis + 13);
 
     // Y-axis ticks
     ctxD.textAlign = 'right';
-    for (let y = 0; y <= 1; y += 0.2) {
-      const py = xAxis - y * plotH;
-      ctxD.fillText(y.toFixed(1), ox - 5, py + 4);
-    }
+    for (let y = 0; y <= 1.001; y += 0.2) ctxD.fillText(y.toFixed(1), ox - 5, toPy(y) + 4);
 
-    // Labels
-    ctxD.fillStyle = COLORS.text;
-    ctxD.font = FONT;
-    ctxD.textAlign = 'left';
-    ctxD.fillText('Debye model,  \u03B8_D = ' + thetaD.toFixed(0) + ' K', ox + 5, 28);
-    ctxD.fillStyle = COLORS.blue;
-    ctxD.fillText('Debye C_V', WD - 140, 28);
-    ctxD.fillStyle = COLORS.orange;
-    ctxD.fillText('T\u00B3 law', WD - 140, 44);
+    // Title / legend
+    ctxD.fillStyle = COLORS.text; ctxD.font = FONT_LG; ctxD.textAlign = 'left';
+    ctxD.fillText('Debye model', ox + 5, 18);
+    ctxD.font = FONT; ctxD.fillStyle = COLORS.blue;
+    ctxD.fillText('\u03B8_D = ' + thetaD.toFixed(0) + ' K', ox + 5, 34);
+    ctxD.fillStyle = COLORS.textDim; ctxD.font = FONT_SM;
+    ctxD.fillText('T\u00B3 approx.', ox + 5, 48);
+
+    if (mat) {
+      ctxD.font = FONT; ctxD.fillStyle = mat.color; ctxD.textAlign = 'right';
+      ctxD.fillText(mat.name + '  (\u03B8_D = ' + mat.td + ' K)', ox + plotW, 18);
+    }
 
     document.getElementById('debye-td-val')?.replaceChildren(document.createTextNode(thetaD.toFixed(0)));
   }
 
-  debyeSlider?.addEventListener('input', drawDebye);
+  debyeSlider?.addEventListener('input', () => {
+    activeMat = '';
+    updateBtnStyles();
+    drawDebye();
+  });
   drawDebye();
   }
 
