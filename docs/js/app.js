@@ -24156,12 +24156,11 @@ function initCh15Vis() {
     drawLE();
   }
 
-  // ----- White Dwarf Mass-Radius Relation -----
+  // ----- White Dwarf Mass-Radius Relation (static figure) -----
   const cWD = document.getElementById('vis-wd-mr');
   if (cWD) {
     const wdS = setupCanvas(cWD);
     const ctxWD = wdS.ctx, WWD = wdS.W, HWD = wdS.H;
-    let hoverWD = -1;
     const Mch = 1.44, R0s = 1.8;
 
     function drawWD() {
@@ -24178,15 +24177,20 @@ function initCh15Vis() {
       // NR limit dashed
       ctxWD.strokeStyle = COLORS.textDim; ctxWD.lineWidth = 1; ctxWD.setLineDash([4, 4]);
       ctxWD.beginPath();
+      let nrLabelPx = 0, nrLabelPy = 0;
       for (let px = 5; px < pwWD; px++) {
         const m = px / pwWD * mMax;
         if (m < 0.1) continue;
         const r = R0s * Math.pow(0.5 / m, 1/3);
         if (r > rMax) continue;
         const pyv = oyWD + phWD - r / rMax * phWD;
+        if (m >= 0.25 && m < 0.27) { nrLabelPx = oxWD + px; nrLabelPy = pyv; }
         px === 5 ? ctxWD.moveTo(oxWD + px, pyv) : ctxWD.lineTo(oxWD + px, pyv);
       }
       ctxWD.stroke(); ctxWD.setLineDash([]);
+      // Label for NR limit
+      ctxWD.fillStyle = COLORS.textDim; ctxWD.font = FONT_SM; ctxWD.textAlign = 'left';
+      ctxWD.fillText('Non-relativistic limit', nrLabelPx + 4, nrLabelPy - 8);
 
       // Relativistic curve
       ctxWD.strokeStyle = COLORS.blue; ctxWD.lineWidth = 3; ctxWD.beginPath();
@@ -24215,32 +24219,21 @@ function initCh15Vis() {
       ctxWD.fillStyle = COLORS.red; ctxWD.font = FONT_SM; ctxWD.textAlign = 'center';
       ctxWD.fillText('M_Ch \u2248 1.44 M\u2609', mchX, oyWD + 15);
 
-      // Known white dwarfs
-      [{ name: 'Sirius B', m: 1.018, r: 0.92 }, { name: 'Procyon B', m: 0.604, r: 1.23 }, { name: '40 Eri B', m: 0.573, r: 1.36 }].forEach(d => {
+      // Known white dwarfs with values shown
+      const wdStars = [
+        { name: 'Sirius B', m: 1.018, r: 0.92, labelDx: 6, labelDy: -6 },
+        { name: 'Procyon B', m: 0.604, r: 1.23, labelDx: 6, labelDy: -6 },
+        { name: '40 Eri B', m: 0.573, r: 1.36, labelDx: 6, labelDy: 14 }
+      ];
+      wdStars.forEach(d => {
         const px = oxWD + d.m / mMax * pwWD;
         const pyv = oyWD + phWD - d.r / rMax * phWD;
         ctxWD.fillStyle = COLORS.yellow;
-        ctxWD.beginPath(); ctxWD.arc(px, pyv, 4, 0, 2 * Math.PI); ctxWD.fill();
+        ctxWD.beginPath(); ctxWD.arc(px, pyv, 5, 0, 2 * Math.PI); ctxWD.fill();
         ctxWD.fillStyle = COLORS.text; ctxWD.font = '10px Inter, system-ui, sans-serif'; ctxWD.textAlign = 'left';
-        ctxWD.fillText(d.name, px + 6, pyv - 4);
+        ctxWD.fillText(d.name + ' (' + d.m.toFixed(2) + ' M\u2609, ' + d.r.toFixed(2) + ' R\u2295)', px + d.labelDx, pyv + d.labelDy);
       });
-
-      ctxWD.fillStyle = COLORS.text; ctxWD.font = FONT_LG; ctxWD.textAlign = 'left';
-      ctxWD.fillText('White Dwarf Mass-Radius Relation', oxWD + 5, oyWD + 12);
-
-      // Hover
-      if (hoverWD >= oxWD && hoverWD <= oxWD + pwWD) {
-        ctxWD.strokeStyle = 'rgba(255,255,255,0.2)'; ctxWD.lineWidth = 1;
-        ctxWD.beginPath(); ctxWD.moveTo(hoverWD, oyWD); ctxWD.lineTo(hoverWD, oyWD + phWD); ctxWD.stroke();
-        const m = (hoverWD - oxWD) / pwWD * mMax;
-        const arg = 1 - Math.pow(Math.min(m / Mch, 0.999), 2/3);
-        const r = arg > 0 ? R0s * Math.sqrt(arg) : 0;
-        ctxWD.fillStyle = COLORS.text; ctxWD.font = FONT_SM; ctxWD.textAlign = 'center';
-        ctxWD.fillText('M = ' + m.toFixed(2) + ' M\u2609,  R = ' + r.toFixed(2) + ' R_Earth', oxWD + pwWD / 2, oyWD + phWD + 38);
-      }
     }
-    cWD.addEventListener('mousemove', (e) => { hoverWD = e.clientX - cWD.getBoundingClientRect().left; drawWD(); });
-    cWD.addEventListener('mouseleave', () => { hoverWD = -1; drawWD(); });
     drawWD();
   }
 
