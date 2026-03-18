@@ -14565,7 +14565,7 @@ function initCh12Vis() {
       }
       ctxBA.stroke();
 
-      // Low-T approximation (Eq. 11): <N_g>/N ≈ 1 - kT/(N*eps)
+      // Low-T approximation (Eq. 12): <N_g>/N ≈ 1 - kT/(N*eps)
       ctxBA.strokeStyle = COLORS.blue; ctxBA.lineWidth = 2;
       ctxBA.setLineDash([8, 4]);
       ctxBA.beginPath();
@@ -14579,15 +14579,13 @@ function initCh12Vis() {
       ctxBA.stroke();
       ctxBA.setLineDash([]);
 
-      // High-T approximation (Eq. 12): <N_g>/N ≈ 1/(N*(1 - e^{-beta*eps})) ≈ kT/(N*eps) ...
-      // Actually Eq 12: <N_g>/N ≈ 1/N * 1/(1 - e^{-eps/kT})
+      // High-T approximation (Eq. 11): <N_g>/N ≈ 1/2 + Nε/(12kBT)
       ctxBA.strokeStyle = COLORS.green; ctxBA.lineWidth = 2;
       ctxBA.setLineDash([4, 4]);
       ctxBA.beginPath();
       for (let i = 1; i <= 300; i++) {
         const t = (i / 300) * tMax;
-        const beta_eps = 1.0 / t;
-        const frac = Math.min(1.0 / (N * (1 - Math.exp(-beta_eps))), 1);
+        const frac = Math.min(0.5 + N / (12 * t), 1);
         const px = ox + (t / tMax) * pw;
         const py = oy + ph * (1 - frac);
         if (i === 1) ctxBA.moveTo(px, py); else ctxBA.lineTo(px, py);
@@ -14702,7 +14700,24 @@ function initCh12Vis() {
       drawAxes(ctxBE, ox, oy, pw, ph, {xLabel: 'kT / Nε₁', yLabel: '⟨N_ground⟩ / N'});
 
       const tMax = 2.0;
-      const nStates = 30; // number of excited states for numerical sum
+      const nStates = 15; // number of excited states for numerical sum
+
+      // Precompute energy levels and their multiplicities for the 3D box
+      // Energy = nx^2 + ny^2 + nz^2, with nx,ny,nz = 0..nStates
+      const energyMap = new Map();
+      for (let nx = 0; nx <= nStates; nx++) {
+        for (let ny = 0; ny <= nStates; ny++) {
+          for (let nz = 0; nz <= nStates; nz++) {
+            const eps = nx * nx + ny * ny + nz * nz;
+            energyMap.set(eps, (energyMap.get(eps) || 0) + 1);
+          }
+        }
+      }
+      // Remove ground state (eps=0) for excited-state sum
+      const groundMult = energyMap.get(0) || 1;
+      energyMap.delete(0);
+      // Convert to sorted arrays for fast iteration
+      const excitedEnergies = Array.from(energyMap.entries()).sort((a, b) => a[0] - b[0]);
 
       // BE exact (numerical): solve sum_i 1/(e^{beta(eps_i - mu)} - 1) = N for mu
       // Then N_ground = 1/(e^{-beta*mu} - 1)
@@ -14718,23 +14733,16 @@ function initCh12Vis() {
         for (let iter = 0; iter < 60; iter++) {
           const muMid = (muLo + muHi) / 2;
           let Nsum = 0;
-          for (let nx = 0; nx <= nStates; nx++) {
-            for (let ny = 0; ny <= nStates; ny++) {
-              for (let nz = 0; nz <= nStates; nz++) {
-                if (nx === 0 && ny === 0 && nz === 0) continue;
-                const eps = (nx * nx + ny * ny + nz * nz);
-                const arg = betaEps * eps - muMid * betaEps;
-                if (arg > 30) continue;
-                Nsum += 1.0 / (Math.exp(arg) - 1);
-                if (Nsum > N * 2) break;
-              }
-              if (Nsum > N * 2) break;
-            }
+          for (let j = 0; j < excitedEnergies.length; j++) {
+            const [eps, mult] = excitedEnergies[j];
+            const arg = betaEps * eps - muMid * betaEps;
+            if (arg > 30) break; // sorted by energy, so all higher energies also > 30
+            Nsum += mult / (Math.exp(arg) - 1);
             if (Nsum > N * 2) break;
           }
           const Ng = 1.0 / (Math.exp(-muMid * betaEps) - 1);
           const Ntot = Ng + Nsum;
-          if (Ntot < N) muHi = muMid; else muLo = muMid;
+          if (Ntot > N) muHi = muMid; else muLo = muMid;
         }
         const muFinal = (muLo + muHi) / 2;
         const Ng = 1.0 / (Math.exp(-muFinal * betaEps) - 1);
@@ -14746,24 +14754,20 @@ function initCh12Vis() {
       }
       ctxBE.stroke();
 
-      // MB result: N_ground/N = 1/(sum e^{-beta*eps_i} / e^{-beta*eps_0})
+      // MB result: N_ground/N = e^{-beta*0} / Z = 1/Z
       ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 2;
       ctxBE.setLineDash([6, 4]);
       ctxBE.beginPath();
       for (let it = 1; it <= 300; it++) {
         const tScaled = (it / 300) * tMax;
         const betaEps = 1.0 / (tScaled * N);
-        let Z = 0;
-        for (let nx = 0; nx <= nStates; nx++) {
-          for (let ny = 0; ny <= nStates; ny++) {
-            for (let nz = 0; nz <= nStates; nz++) {
-              const eps = nx * nx + ny * ny + nz * nz;
-              Z += Math.exp(-betaEps * eps);
-            }
-          }
+        let Z = groundMult; // ground state contribution (eps=0, mult typically 1)
+        for (let j = 0; j < excitedEnergies.length; j++) {
+          const [eps, mult] = excitedEnergies[j];
+          const arg = betaEps * eps;
+          if (arg > 30) break;
+          Z += mult * Math.exp(-arg);
         }
-        const frac = Math.max(0, Math.min(1, 1.0 / Z * N / N)); // N_ground/N = e^{-beta*0}/Z = 1/Z ... wait
-        // For MB: <N_ground> = N * e^{0} / Z = N/Z
         const fracMB = Math.min(1, 1.0 / Z);
         const px = ox + (tScaled / tMax) * pw;
         const py = oy + ph * (1 - fracMB);
