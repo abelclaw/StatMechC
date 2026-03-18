@@ -14374,63 +14374,247 @@ function initCh12Vis() {
   tempSlider?.addEventListener('input', draw);
   draw();
 
-  // ----- Two-State BEC: BE vs MB -----
+  // ----- Two-State BEC: BE vs MB (Redesigned with particle viz) -----
   const c2s = document.getElementById('vis-bec-twostate');
   if (c2s) {
     const tsS = setupCanvas(c2s);
     const ctx2s = tsS.ctx, W2s = tsS.W, H2s = tsS.H;
     const nSlider2s = document.getElementById('bec2-N');
+    const tSlider2s = document.getElementById('bec2-T');
+
+    // Seeded PRNG for deterministic particle positions
+    function bec2Rand(seed) {
+      let s = seed | 0;
+      return function() { s = (s * 1664525 + 1013904223) & 0x7fffffff; return s / 0x7fffffff; };
+    }
+
+    // BE ground fraction: Eq.(10)
+    function bec2BEfrac(N, kT) {
+      if (kT < 0.001) return 1;
+      const b = 1 / kT;
+      const t1 = 1 / (Math.exp(-b) - 1);
+      const ex = Math.exp(-(N + 1) * b);
+      const t2 = (N + 1) / (1 - ex);
+      let nG = t1 + t2;
+      if (!isFinite(nG) || nG < 0) nG = N;
+      if (nG > N) nG = N;
+      return nG / N;
+    }
+    // MB ground fraction: Eq.(7)
+    function bec2MBfrac(kT) {
+      if (kT < 0.001) return 1;
+      return 1 / (Math.exp(-1 / kT) + 1);
+    }
+
+    // Animation lerp state
+    const bec2Anim = { mb: 0.5, be: 0.5 };
 
     function draw2state() {
       const N = parseInt(nSlider2s?.value || 100);
+      let kT = parseFloat(tSlider2s?.value || 10);
+      const tMax = N * 4;
+      if (tSlider2s) { tSlider2s.max = tMax; if (kT > tMax) { kT = tMax; tSlider2s.value = tMax; } }
+
+      const mbTarget = bec2MBfrac(kT);
+      const beTarget = bec2BEfrac(N, kT);
+      bec2Anim.mb += (mbTarget - bec2Anim.mb) * 0.25;
+      bec2Anim.be += (beTarget - bec2Anim.be) * 0.25;
+      const needsAnim = Math.abs(bec2Anim.mb - mbTarget) > 0.002 || Math.abs(bec2Anim.be - beTarget) > 0.002;
+
       clearCanvas(ctx2s, W2s, H2s);
-      const ox = 70, oy = 30, pw = W2s - 120, ph = H2s - 80;
-      const xMax = N * 4;
-      drawAxes(ctx2s, ox, oy, pw, ph, { xLabel: 'k_BT / \u03B5', yLabel: 'N_ground / N', yLabelOffset: 45 });
 
+      // Layout: left 42% particle viz, right 58% plot
+      const divX = Math.floor(W2s * 0.42);
+
+      // ===== LEFT: Particle visualization =====
+      const vizTop = 38, vizBot = H2s - 25;
+      const vizH = vizBot - vizTop;
+      const colW = (divX - 40) / 2;
+      const mbX0 = 10, beX0 = 10 + colW + 20;
+      const groundY = vizTop + vizH * 0.72;
+      const excitedY = vizTop + vizH * 0.20;
+      const levelH = vizH * 0.26;
+
+      // Column titles
+      ctx2s.fillStyle = COLORS.text; ctx2s.font = FONT_LG; ctx2s.textAlign = 'center';
+      ctx2s.fillText('Maxwell-Boltzmann', mbX0 + colW / 2, vizTop - 8);
+      ctx2s.fillText('Bose-Einstein', beX0 + colW / 2, vizTop - 8);
+
+      // Draw energy level lines
+      function drawEnergyLevels(cx, cw) {
+        ctx2s.strokeStyle = 'rgba(255,255,255,0.3)'; ctx2s.lineWidth = 1;
+        ctx2s.beginPath(); ctx2s.moveTo(cx, groundY); ctx2s.lineTo(cx + cw, groundY); ctx2s.stroke();
+        ctx2s.beginPath(); ctx2s.moveTo(cx, excitedY); ctx2s.lineTo(cx + cw, excitedY); ctx2s.stroke();
+        ctx2s.fillStyle = COLORS.textDim; ctx2s.font = FONT_SM; ctx2s.textAlign = 'center';
+        ctx2s.fillText('\u03B5 = 0', cx + cw / 2, groundY + 11);
+        ctx2s.fillText('\u03B5', cx + cw / 2, excitedY - 5);
+      }
+      drawEnergyLevels(mbX0, colW);
+      drawEnergyLevels(beX0, colW);
+
+      // Draw particles as packed circles
+      const dispN = Math.min(N, 200);
+      const scale = N / dispN;
+
+      function drawParticles(cx, cw, frac, seed) {
+        const nGnd = Math.round(frac * dispN);
+        const nExc = dispN - nGnd;
+        const rng = bec2Rand(seed);
+        const r = Math.max(2, Math.min(6, Math.sqrt((cw * levelH * 0.55) / (dispN * Math.PI))));
+
+        function pack(count, rx, rw, rTopY, rBotY, color) {
+          if (count === 0) return;
+          const cols = Math.max(1, Math.floor((rw - 4) / (r * 2.15)));
+          const spX = (rw - 4) / cols;
+          const spY = Math.min(r * 2.15, (rBotY - rTopY - 2) / Math.max(1, Math.ceil(count / cols)));
+          for (let i = 0; i < count; i++) {
+            const c = i % cols, row = Math.floor(i / cols);
+            const px = rx + 2 + spX * (c + 0.5) + (rng() - 0.5) * r * 0.3;
+            const py = rBotY - 2 - spY * (row + 0.5) + (rng() - 0.5) * r * 0.3;
+            ctx2s.beginPath(); ctx2s.arc(px, py, r * 0.85, 0, Math.PI * 2);
+            ctx2s.fillStyle = color; ctx2s.fill();
+            ctx2s.strokeStyle = 'rgba(0,0,0,0.3)'; ctx2s.lineWidth = 0.5; ctx2s.stroke();
+          }
+        }
+
+        pack(nGnd, cx, cw, groundY - levelH, groundY, COLORS.red);
+        pack(nExc, cx, cw, excitedY, excitedY + levelH, COLORS.blue);
+
+        // Count labels
+        const actGnd = Math.round(frac * N), actExc = N - actGnd;
+        ctx2s.font = FONT_SM; ctx2s.textAlign = 'center';
+        ctx2s.fillStyle = COLORS.red; ctx2s.fillText('N\u2080 = ' + actGnd, cx + cw / 2, groundY + 23);
+        ctx2s.fillStyle = COLORS.blue; ctx2s.fillText('N\u2081 = ' + actExc, cx + cw / 2, excitedY - 17);
+        ctx2s.fillStyle = COLORS.text; ctx2s.font = FONT;
+        ctx2s.fillText((frac * 100).toFixed(1) + '% ground', cx + cw / 2, vizBot + 5);
+      }
+
+      drawParticles(mbX0, colW, bec2Anim.mb, 42 + N);
+      drawParticles(beX0, colW, bec2Anim.be, 137 + N);
+
+      // Divider
+      ctx2s.strokeStyle = 'rgba(255,255,255,0.1)'; ctx2s.lineWidth = 1;
+      ctx2s.beginPath(); ctx2s.moveTo(divX, 10); ctx2s.lineTo(divX, H2s - 10); ctx2s.stroke();
+
+      // ===== RIGHT: Comparison plot =====
+      const pox = divX + 50, poy = 40;
+      const pw = W2s - pox - 30, ph = H2s - poy - 55;
+
+      drawAxes(ctx2s, pox, poy, pw, ph, { xLabel: 'k\u2082T / \u03B5', yLabel: 'N\u2080 / N', yLabelOffset: 35 });
+
+      // Y ticks + grid
       ctx2s.fillStyle = COLORS.textDim; ctx2s.font = FONT_SM; ctx2s.textAlign = 'right';
-      for (let y = 0; y <= 1; y += 0.2) ctx2s.fillText(y.toFixed(1), ox - 5, oy + ph - y * ph + 4);
+      for (let y = 0; y <= 1; y += 0.2) {
+        ctx2s.fillText(y.toFixed(1), pox - 4, poy + ph - y * ph + 4);
+        if (y > 0 && y < 1) {
+          ctx2s.strokeStyle = 'rgba(255,255,255,0.05)'; ctx2s.lineWidth = 0.5;
+          ctx2s.beginPath(); ctx2s.moveTo(pox, poy + ph - y * ph); ctx2s.lineTo(pox + pw, poy + ph - y * ph); ctx2s.stroke();
+        }
+      }
+      // X ticks
       ctx2s.textAlign = 'center';
-      const xStep = xMax > 200 ? Math.round(xMax / 5 / 100) * 100 : Math.round(xMax / 5);
-      for (let x = 0; x <= xMax; x += (xStep || 1)) ctx2s.fillText(x.toFixed(0), ox + x / xMax * pw, oy + ph + 14);
+      let xStep = tMax > 200 ? Math.round(tMax / 5 / 100) * 100 : (tMax > 40 ? Math.round(tMax / 5 / 10) * 10 : Math.round(tMax / 5));
+      if (xStep < 1) xStep = 1;
+      for (let x = xStep; x <= tMax; x += xStep) {
+        ctx2s.fillText(x.toFixed(0), pox + (x / tMax) * pw, poy + ph + 14);
+      }
 
-      // MB curve
+      // Shaded BEC-advantage region
+      ctx2s.fillStyle = 'rgba(239,83,80,0.08)'; ctx2s.beginPath();
+      let started = false;
+      for (let px = 1; px < pw; px++) {
+        const t = (px / pw) * tMax; if (t < 0.05) continue;
+        const v = bec2BEfrac(N, t);
+        const py = poy + ph - v * ph;
+        if (!started) { ctx2s.moveTo(pox + px, py); started = true; } else ctx2s.lineTo(pox + px, py);
+      }
+      for (let px = pw - 1; px >= 1; px--) {
+        const t = (px / pw) * tMax; if (t < 0.05) continue;
+        ctx2s.lineTo(pox + px, poy + ph - bec2MBfrac(t) * ph);
+      }
+      ctx2s.closePath(); ctx2s.fill();
+
+      // MB curve (green)
       ctx2s.strokeStyle = COLORS.green; ctx2s.lineWidth = 2; ctx2s.beginPath();
       for (let px = 1; px < pw; px++) {
-        const kT = (px / pw) * xMax;
-        if (kT < 0.01) continue;
-        const frac = 1 / (Math.exp(-1 / kT) + 1);
-        const pyv = oy + ph - frac * ph;
-        px < 3 ? ctx2s.moveTo(ox + px, pyv) : ctx2s.lineTo(ox + px, pyv);
+        const t = (px / pw) * tMax; if (t < 0.01) continue;
+        const py = poy + ph - bec2MBfrac(t) * ph;
+        px < 3 ? ctx2s.moveTo(pox + px, py) : ctx2s.lineTo(pox + px, py);
       }
       ctx2s.stroke();
 
-      // BE curve
-      ctx2s.strokeStyle = COLORS.red; ctx2s.lineWidth = 2.5; ctx2s.beginPath();
-      let beSt = false;
+      // BE curve (red)
+      ctx2s.strokeStyle = COLORS.red; ctx2s.lineWidth = 2.5; ctx2s.beginPath(); started = false;
       for (let px = 1; px < pw; px++) {
-        const kT = (px / pw) * xMax;
-        if (kT < 0.01) continue;
-        const betaEps = 1 / kT;
-        const t1 = 1 / (Math.exp(-betaEps) - 1);
-        const expNp1 = Math.exp(-(N + 1) * betaEps);
-        const t2 = (N + 1) / (1 - expNp1);
-        let nG = t1 + t2;
-        if (!isFinite(nG) || nG < 0) nG = N;
-        if (nG > N) nG = N;
-        const pyv = oy + ph - (nG / N) * ph;
-        if (!beSt) { ctx2s.moveTo(ox + px, pyv); beSt = true; } else ctx2s.lineTo(ox + px, pyv);
+        const t = (px / pw) * tMax; if (t < 0.01) continue;
+        const py = poy + ph - bec2BEfrac(N, t) * ph;
+        if (!started) { ctx2s.moveTo(pox + px, py); started = true; } else ctx2s.lineTo(pox + px, py);
       }
       ctx2s.stroke();
 
+      // Tc marker at N/6
+      const Tc2 = N / 6;
+      if (Tc2 < tMax) {
+        const tcPx = pox + (Tc2 / tMax) * pw;
+        ctx2s.strokeStyle = 'rgba(255,255,255,0.25)'; ctx2s.setLineDash([4, 4]); ctx2s.lineWidth = 1;
+        ctx2s.beginPath(); ctx2s.moveTo(tcPx, poy); ctx2s.lineTo(tcPx, poy + ph); ctx2s.stroke();
+        ctx2s.setLineDash([]);
+        ctx2s.fillStyle = COLORS.textDim; ctx2s.font = FONT_SM; ctx2s.textAlign = 'center';
+        ctx2s.fillText('T\u2099 \u2248 N\u03B5/6', tcPx, poy + ph + 14);
+      }
+
+      // Current temperature marker
+      const curPx = pox + (kT / tMax) * pw;
+      if (curPx >= pox && curPx <= pox + pw) {
+        ctx2s.strokeStyle = 'rgba(255,255,255,0.6)'; ctx2s.lineWidth = 1.5; ctx2s.setLineDash([]);
+        ctx2s.beginPath(); ctx2s.moveTo(curPx, poy); ctx2s.lineTo(curPx, poy + ph); ctx2s.stroke();
+        ctx2s.fillStyle = COLORS.text; ctx2s.beginPath();
+        ctx2s.moveTo(curPx, poy - 2); ctx2s.lineTo(curPx - 4, poy - 8); ctx2s.lineTo(curPx + 4, poy - 8);
+        ctx2s.closePath(); ctx2s.fill();
+
+        // Dots on curves
+        const mbDotY = poy + ph - mbTarget * ph;
+        ctx2s.beginPath(); ctx2s.arc(curPx, mbDotY, 4, 0, Math.PI * 2);
+        ctx2s.fillStyle = COLORS.green; ctx2s.fill(); ctx2s.strokeStyle = '#fff'; ctx2s.lineWidth = 1; ctx2s.stroke();
+        const beDotY = poy + ph - beTarget * ph;
+        ctx2s.beginPath(); ctx2s.arc(curPx, beDotY, 4, 0, Math.PI * 2);
+        ctx2s.fillStyle = COLORS.red; ctx2s.fill(); ctx2s.strokeStyle = '#fff'; ctx2s.lineWidth = 1; ctx2s.stroke();
+      }
+
+      // Legend with live values
       ctx2s.font = FONT_SM; ctx2s.textAlign = 'left';
-      ctx2s.fillStyle = COLORS.red; ctx2s.fillText('Bose-Einstein', W2s - 150, 40);
-      ctx2s.fillStyle = COLORS.green; ctx2s.fillText('Maxwell-Boltzmann', W2s - 150, 56);
-      ctx2s.fillStyle = COLORS.text; ctx2s.font = FONT_LG; ctx2s.textAlign = 'left';
-      ctx2s.fillText('Two-state system, N = ' + N, ox + 5, oy + 12);
+      ctx2s.fillStyle = COLORS.red;  ctx2s.fillText('BE: ' + (beTarget * 100).toFixed(1) + '%', pox + 5, poy + 14);
+      ctx2s.fillStyle = COLORS.green; ctx2s.fillText('MB: ' + (mbTarget * 100).toFixed(1) + '%', pox + 5, poy + 28);
+
+      // Temperature readout
+      ctx2s.fillStyle = COLORS.text; ctx2s.font = FONT; ctx2s.textAlign = 'right';
+      ctx2s.fillText('k\u2082T/\u03B5 = ' + kT.toFixed(1) + '   N = ' + N, pox + pw, poy + 14);
+
+      // "BEC advantage" label in shaded region
+      const labelT = Math.min(tMax * 0.45, N * 0.5);
+      const beL = bec2BEfrac(N, labelT), mbL = bec2MBfrac(labelT);
+      if (beL - mbL > 0.06) {
+        const lx = pox + (labelT / tMax) * pw;
+        const ly = poy + ph - ((beL + mbL) / 2) * ph;
+        ctx2s.fillStyle = 'rgba(239,83,80,0.35)'; ctx2s.font = FONT_SM; ctx2s.textAlign = 'center';
+        ctx2s.fillText('BEC advantage', lx, ly);
+      }
+
+      // Update slider readouts
       document.getElementById('bec2-N-val')?.replaceChildren(document.createTextNode(N.toString()));
+      document.getElementById('bec2-T-val')?.replaceChildren(document.createTextNode(kT.toFixed(1)));
+
+      if (needsAnim) requestAnimationFrame(draw2state);
     }
-    nSlider2s?.addEventListener('input', draw2state);
+
+    nSlider2s?.addEventListener('input', function() {
+      const N = parseInt(nSlider2s.value || 100);
+      const kT = parseFloat(tSlider2s?.value || 10);
+      bec2Anim.mb = bec2MBfrac(kT);
+      bec2Anim.be = bec2BEfrac(N, kT);
+      draw2state();
+    });
+    tSlider2s?.addEventListener('input', draw2state);
     draw2state();
   }
 

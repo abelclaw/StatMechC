@@ -61,10 +61,11 @@
 <div class="interactive-container">
   <h3>Interactive: Two-State BEC (BE vs MB)</h3>
   <div class="vis-controls">
+    <label>Temperature $k_BT/\epsilon$: <input type="range" id="bec2-T" min="0.1" max="400" step="0.1" value="10"> <span class="slider-value" id="bec2-T-val">10.0</span></label>
     <label>$N$: <input type="range" id="bec2-N" min="10" max="1000" step="10" value="100"> <span class="slider-value" id="bec2-N-val">100</span></label>
   </div>
-  <canvas id="vis-bec-twostate" width="600" height="380"></canvas>
-  <p class="vis-caption">BE condensation occurs at $k_BT \sim N\epsilon$, far above the MB crossover at $k_BT \sim \epsilon$.</p>
+  <canvas id="vis-bec-twostate" width="600" height="450"></canvas>
+  <p class="vis-caption">BE condensation occurs at $k_BT \sim N\epsilon$, far above the MB crossover at $k_BT \sim \epsilon$. Drag the temperature slider to see particles redistribute between energy levels.</p>
 </div>
 
 <p>This plot demonstrates Bose-Einstein condensation. With Maxwell-Boltzmann statistics, the temperature has to be very low to get the lowest state to have an appreciable filling fraction. At temperature $k_BT \gtrsim \epsilon$ both the ground state and the first excited state are around equally populated so $\langle N_\text{ground}\rangle = \frac{N}{2}$. In contrast, with Bose-Einstein statistics, a significant fraction of the particles are in the ground state even well above the temperature $k_BT = \epsilon$. For example, at $k_BT = 10\epsilon$ we find 90% of the atoms are in the ground state for Bose-Einstein statistics, but only 52% for Maxwell-Boltzmann statistics. This demonstrates Bose-Einstein condensation.</p>
@@ -86,11 +87,11 @@
 
 <div class="interactive-wrapper">
 <h4>Interactive: BEC Approximation Curves</h4>
-<canvas id="vis-bec-approx" width="600" height="300"></canvas>
+<canvas id="vis-bec-approx" width="600" height="420"></canvas>
 <div class="controls">
 <label>N particles: <input type="range" id="beca-N" min="10" max="500" step="10" value="100"><span id="beca-N-val">100</span></label>
 </div>
-<figcaption>Comparison of the low-T approximation (Eq. 11, blue) and high-T approximation (Eq. 12, green) to the exact two-state result (white). The crossover region defines T<sub>c</sub>.</figcaption>
+<figcaption>Top: exact two-state ground-state fraction (white) with low-T (Eq. 12, blue) and high-T (Eq. 11, green) approximations. Shaded regions show where each approximation is valid; the crossover band marks the phase transition. Bottom: relative error of each approximation. Drag the N slider to see T<sub>c</sub> shift linearly with N.</figcaption>
 </div>
 
 <p>The crossover point is roughly where the approximations used for our expansions break down. The first term is the same order as the second term in Eq. (11) when $k_BT = \frac{N\epsilon}{6}$. For Eq. (12) the crossover is at $k_BT = N\epsilon$. Thus we find a critical temperature $T_c \sim \frac{N\epsilon}{6k_B} \sim \frac{N\epsilon}{k_B}$ for this two state model indicating the onset of Bose-Einstein condensation. (The crossover point in this 2-state example is not at a precise temperature, as you can see from the plot. $T_c$ will become precise when we consider a realistic system with a large number of states in the next section.)</p>
@@ -108,12 +109,13 @@
 <div class="equation">$$\langle N_\text{ground}\rangle = \frac{1}{e^{-\beta\mu} - 1}$$<span class="eq-number">(14)</span></div>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Ground State Occupation vs Chemical Potential</h4>
-<canvas id="vis-bec-mu" width="600" height="300"></canvas>
+<h4>Interactive: Why Only the Ground State Condenses</h4>
+<canvas id="vis-bec-mu" width="600" height="420"></canvas>
 <div class="controls">
-<label>Temperature kT/ε: <input type="range" id="becmu-temp" min="0.1" max="5" step="0.1" value="1.0"><span id="becmu-temp-val">1.0</span></label>
+<label>Chemical potential μ/ε: <input type="range" id="becmu-mu" min="-5" max="-0.01" step="0.01" value="-2.0"><span id="becmu-mu-val">−2.0</span></label>
+<label>Temperature kT/ε: <input type="range" id="becmu-temp" min="0.5" max="5" step="0.1" value="1.0"><span id="becmu-temp-val">1.0</span></label>
 </div>
-<figcaption>The ground state occupation diverges as μ → 0. For bosons, μ must always be below the ground state energy.</figcaption>
+<figcaption>As μ → 0⁻, only the ground state occupation diverges. Excited states stay finite because the gap ε<sub>i</sub> − μ never closes. Drag μ toward zero to see Bose-Einstein condensation.</figcaption>
 </div>
 
 <p>Recall that for Bose gases, $\mu$ will always be lower than all the energies (i.e. $\mu < 0$ when $\epsilon_0 = 0$). We can see this explicitly from the plot since there is a singularity at $\mu = 0$. This singularity, that $N_\text{ground} \to \infty$ as $\mu \to 0$ is not physical. Recall that in the grand canonical ensemble we do not fix $N$, so the same distribution has to allow for arbitrarily large $N$. If we know $N$ then we have to trade $\mu$ for $N$ by imposing the constraint $\sum_i \langle N_i \rangle = N$. This is not so easy, but we can do it.</p>
@@ -161,11 +163,13 @@ $$\langle N_1 \rangle = \frac{1}{e^{\beta(\epsilon_1 - \mu)} - 1} = \frac{1}{e^{
 
 <div class="interactive-wrapper">
 <h4>Interactive: BEC Ground State (Exact Numerical)</h4>
-<canvas id="vis-bec-exact" width="600" height="300"></canvas>
+<canvas id="vis-bec-exact" width="600" height="420"></canvas>
 <div class="controls">
-<label>N particles: <input type="range" id="bece-N" min="10" max="500" step="10" value="100"><span id="bece-N-val">100</span></label>
+<label>Temperature kT/(N<sup>2/3</sup>ε₁): <input type="range" id="bece-T" min="0.1" max="2.0" step="0.01" value="0.5"><span id="bece-T-val">0.50</span></label>
+<label>N particles: <input type="range" id="bece-N" min="50" max="500" step="10" value="100"><span id="bece-N-val">100</span></label>
 </div>
-<figcaption>Exact numerical result for ground state occupancy vs temperature in a Bose system, compared to Maxwell-Boltzmann statistics. Adjust N to see how the condensation transition sharpens.</figcaption>
+<div id="bece-info" style="font-family: 'Inter', system-ui, sans-serif; font-size: 13px; color: #b0bec5; margin-top: 4px;"></div>
+<figcaption>Exact numerical solution for ground state occupancy in a 3D box, comparing Bose-Einstein and Maxwell-Boltzmann statistics. The left plot shows N<sub>ground</sub>/N vs temperature (with N<sup>2/3</sup> scaling that collapses curves). The right panel shows occupation numbers for the lowest energy levels at the current temperature — watch the ground state bar explode below T<sub>c</sub>.</figcaption>
 </div>
 
 <p>I added to the plot the prediction using Maxwell-Boltzmann statistics. For MB statistics, we drop all the factors of $\pm 1$. So, $\langle N_\text{ground}\rangle = e^{\beta\mu}$ and so Eq. (22) becomes</p>
@@ -177,8 +181,19 @@ $$\langle N_1 \rangle = \frac{1}{e^{\beta(\epsilon_1 - \mu)} - 1} = \frac{1}{e^{
 <p>For different $N$ the curve shifts, but looks qualitatively the same. After a little fiddling (inspired by the analytic result below), we see that if we plot the ground state occupancy as a function of $\frac{k_BT}{N^{2/3}\epsilon_1}$ the result is essentially independent of $N$ for the Bose-Einstein case:</p>
 
 <div class="interactive-container">
-<canvas id="vis-bec-nground" width="600" height="400"></canvas>
-<p class="vis-caption">Figure 4. Ground state occupancy $N_0/N$ vs $T/T_c$ for different system sizes. As $N \to \infty$, the transition sharpens into the thermodynamic limit $N_0/N = 1 - (T/T_c)^{3/2}$.</p>
+  <div class="vis-controls" style="margin-bottom:8px; display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+    <button id="nground-toggle" style="padding:4px 14px; border-radius:4px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#e8ecf1; cursor:pointer; font-size:13px;">Show scaled (T/T<sub>c</sub>)</button>
+    <span style="color:rgba(255,255,255,0.35); font-size:12px;">|</span>
+    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n10" checked> N=10</label>
+    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n50" checked> N=50</label>
+    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n100" checked> N=100</label>
+    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n500" checked> N=500</label>
+    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n1000" checked> N=1000</label>
+    <span style="color:rgba(255,255,255,0.35); font-size:12px;">|</span>
+    <label style="font-size:12px; color:#e8ecf1;">Custom N: <input type="number" id="nground-custom" min="5" max="5000" step="1" placeholder="e.g. 200" style="width:70px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:#e8ecf1; border-radius:3px; padding:2px 4px; font-size:12px;"></label>
+  </div>
+  <canvas id="vis-bec-nground" width="600" height="420"></canvas>
+  <p class="vis-caption">Figure 4. Ground state occupancy $N_0/N$ for different system sizes. Toggle between raw ($kT/\epsilon_1$) and scaled ($kT/N^{2/3}\epsilon_1$) axes to see all curves collapse onto the thermodynamic limit $N_0/N = 1 - (T/T_c)^{3/2}$.</p>
 </div>
 
 <p>The kink in the graph, at around $T_c \approx 0.8\frac{N^{2/3}\epsilon_1}{k_B}$ indicates the phase transition. Above this temperature, the ground state is basically empty, having only its fair share of particles. Below this temperature, $\langle N_\text{ground}\rangle$ starts growing linearly with $T$. The rescaling of our numerical result from the left to the right plot indicates that the critical temperature $T_c$ scales like $N^{2/3}$, a result that we will next confirm analytically.</p>
@@ -236,8 +251,11 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 <!-- INTERACTIVE: Condensate Fraction -->
 <div class="interactive-container">
   <h3>Interactive: Condensate Fraction</h3>
-  <canvas id="vis-bec-fraction" width="600" height="380"></canvas>
-  <p class="vis-caption">Red: analytic $1 - (T/T_c)^{3/2}$. Dashed: finite-$N$ numerical results showing rounding near $T_c$.</p>
+  <div class="vis-controls">
+    <label>T / T<sub>c</sub>: <input type="range" id="becfrac-temp" min="0" max="2.0" step="0.01" value="0.6"> <span class="slider-value" id="becfrac-temp-val">0.60</span></label>
+  </div>
+  <canvas id="vis-bec-fraction" width="600" height="420"></canvas>
+  <p class="vis-caption">Drag the temperature slider to explore the condensate fraction $N_0/N = 1 - (T/T_c)^{3/2}$. Red = condensate (ground state), blue = excited particles. The sharp transition at $T_c$ is the BEC phase transition.</p>
 </div>
 
 <p>Comparing to our exact numerical results from Section 3.1 we find good agreement.</p>
