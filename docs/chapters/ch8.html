@@ -627,3 +627,210 @@ $$\Omega = -PV$$
 </ul>
 </div>
 
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch8-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>The Helmholtz free energy $F = E - TS$ is minimized at equilibrium when which variables are held constant?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch8-rq1" value="a"> (a) $S$ and $V$</label>
+  <label><input type="radio" name="ch8-rq1" value="b"> (b) $T$ and $V$</label>
+  <label><input type="radio" name="ch8-rq1" value="c"> (c) $T$ and $P$</label>
+  <label><input type="radio" name="ch8-rq1" value="d"> (d) $S$ and $P$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The natural variables of $F$ are $T$, $V$, and $N$. Since $dF = -SdT - PdV + \mu dN$, at constant $T$ and $V$ the system evolves to minimize $F$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>The Euler equation $E = TS - PV + \mu N$ relies on which fundamental property of the entropy?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch8-rq2" value="a"> (a) Entropy is always increasing</label>
+  <label><input type="radio" name="ch8-rq2" value="b"> (b) Entropy is a concave function of energy</label>
+  <label><input type="radio" name="ch8-rq2" value="c"> (c) Entropy is extensive</label>
+  <label><input type="radio" name="ch8-rq2" value="d"> (d) Entropy is bounded from below</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="The derivation uses $S(cE, cV, cN) = cS(E, V, N)$, which is the statement that entropy is extensive (scales linearly with system size).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>A chemical reaction at constant $T$ and $P$ has $\Delta_r H = -50\;\text{kJ/mol}$ and $\Delta_r S = +100\;\text{J/(mol}\cdot\text{K)}$. At $T = 300\;\text{K}$, what can you conclude?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch8-rq3" value="a"> (a) The reaction is spontaneous because $\Delta_r G < 0$</label>
+  <label><input type="radio" name="ch8-rq3" value="b"> (b) The reaction is non-spontaneous because $\Delta_r G > 0$</label>
+  <label><input type="radio" name="ch8-rq3" value="c"> (c) The reaction is at equilibrium</label>
+  <label><input type="radio" name="ch8-rq3" value="d"> (d) Cannot determine without knowing the pressure</label>
+</div>
+<button class="check-answer-btn" data-answer="a" data-explanation="$\Delta_r G = \Delta_r H - T\Delta_r S = -50 - 300 \times 0.100 = -80\;\text{kJ/mol} < 0$. Both the enthalpy decrease and entropy increase favor the forward reaction.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>The grand free energy $\Omega$ satisfies $\Omega = -PV$. This result follows from the fact that $\Omega$ is extensive and depends on only one extensive variable. Which variable is it?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch8-rq4" value="a"> (a) $N$</label>
+  <label><input type="radio" name="ch8-rq4" value="b"> (b) $S$</label>
+  <label><input type="radio" name="ch8-rq4" value="c"> (c) $V$</label>
+  <label><input type="radio" name="ch8-rq4" value="d"> (d) $E$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="$\Omega = \Omega(T, V, \mu)$ where $T$ and $\mu$ are intensive. The only extensive natural variable is $V$, so $\Omega$ must be proportional to $V$, giving $\Omega = V(\partial\Omega/\partial V) = -PV$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>Starting from the Gibbs-Duhem equation $SdT - VdP + Nd\mu = 0$, show that for a monatomic ideal gas at constant temperature, the chemical potential depends on pressure as $\mu(P) = \mu(P_0) + k_BT\ln(P/P_0)$.</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>A monatomic ideal gas of $N$ particles at temperature $T$ occupies volume $V_1$. It is compressed isothermally to volume $V_2 < V_1$. Compute the change in Helmholtz free energy $\Delta F$ and verify that $\Delta F$ equals the work done <em>on</em> the gas during a reversible isothermal compression.</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>Consider the formation of ammonia: $3\text{H}_2 + \text{N}_2 \to 2\text{NH}_3$. Using the bond enthalpy table in this chapter, estimate $\Delta_r H$ from bond enthalpies alone. The experimental value is $\Delta_r H = -92\;\text{kJ/mol}$. Comment on the accuracy.</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>A saline IV drip must be isotonic with blood (osmotic pressure $\Pi = 7.65\;\text{atm}$ at $T = 310\;\text{K}$). NaCl dissociates into Na$^+$ and Cl$^-$, so each formula unit produces 2 solute particles. What mass of NaCl per liter of solution is required? (Molar mass of NaCl is 58.4 g/mol.)</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch8-sa8" value="a"> (a) 4.3 g/L</label>
+  <label><input type="radio" name="ch8-sa8" value="b"> (b) 8.7 g/L</label>
+  <label><input type="radio" name="ch8-sa8" value="c"> (c) 17.3 g/L</label>
+  <label><input type="radio" name="ch8-sa8" value="d"> (d) 0.30 g/L</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The total solute concentration is $n_s = \Pi/(RT) = 7.65/(0.08314 \times 310) = 0.297\;\text{mol/L}$. Since each NaCl gives 2 particles, the NaCl concentration is $0.297/2 = 0.148\;\text{mol/L}$. The mass is $0.148 \times 58.4 = 8.7\;\text{g/L}$, consistent with the standard 0.9% saline solution.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Rubber Band Thermodynamics</div>
+<p>A rubber band can be modeled as a one-dimensional system where the fundamental relation is $dE = TdS + \mathcal{F}dL$, with $\mathcal{F}$ the tension and $L$ the length (analogous to $-PdV$ replaced by $\mathcal{F}dL$).</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Define the appropriate Helmholtz free energy $F(T, L)$ for the rubber band and write its differential $dF$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Derive the Maxwell relation that relates $\left(\frac{\partial S}{\partial L}\right)_T$ to a derivative of the tension $\mathcal{F}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Experimentally, rubber bands become stiffer when heated: $\left(\frac{\partial\mathcal{F}}{\partial T}\right)_L > 0$. Using your Maxwell relation, determine the sign of $\left(\frac{\partial S}{\partial L}\right)_T$. Explain physically why stretching a rubber band decreases its entropy.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Predict what happens to the temperature of a rubber band when it is suddenly (adiabatically) stretched. Verify your prediction by holding a thick rubber band against your lip and quickly stretching it.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Langmuir Adsorption</div>
+<p>Consider a surface with $M$ identical adsorption sites, each of which can bind at most one gas molecule. The binding energy per molecule is $-\epsilon$ (with $\epsilon > 0$). The surface is in contact with an ideal gas at temperature $T$ and chemical potential $\mu$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Each site is an independent system that can be empty (energy 0) or occupied (energy $-\epsilon$). Using the grand canonical ensemble, write the grand partition function $\mathcal{Z}_1$ for a single site.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Find the average occupancy $\langle n \rangle$ of a single site as a function of $\mu$, $\epsilon$, and $T$. Show that it can be written in the form
+$$\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$$
+which is a Fermi-Dirac distribution (because each site holds at most one particle).</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>For an ideal gas, $\mu = k_BT\ln(P\lambda^3/k_BT)$ where $\lambda$ is the thermal wavelength. Define $P_0 = (k_BT/\lambda^3)e^{-\beta\epsilon}$ and show that the fraction of occupied sites simplifies to
+$$\theta = \frac{P}{P + P_0}$$
+This is the <em>Langmuir isotherm</em>.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Compute the grand free energy $\Omega$ for all $M$ sites, and verify that $\langle N \rangle = -\partial\Omega/\partial\mu$ reproduces your result from part (b).</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Clausius-Clapeyron from Gibbs</div>
+<p>At a first-order phase transition (e.g. boiling), two phases coexist along a curve $P(T)$ in the $T$-$P$ plane. Along this curve, the Gibbs free energies of the two phases are equal: $G_1(T,P) = G_2(T,P)$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>By taking the total differential of $G_1 = G_2$ along the coexistence curve, and using $dG = -SdT + VdP$ (at constant $N$), derive the Clausius-Clapeyron equation:
+$$\frac{dP}{dT} = \frac{S_2 - S_1}{V_2 - V_1} = \frac{L}{T\Delta V}$$
+where $L = T(S_2 - S_1)$ is the latent heat.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>For the liquid-gas transition, $V_{\text{gas}} \gg V_{\text{liquid}}$, and the gas is approximately ideal. Show that the coexistence curve becomes
+$$P(T) = P_0\,\exp\left(-\frac{L}{k_BT}\right)$$
+where $P_0$ is a constant, assuming $L$ is approximately independent of $T$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The latent heat of vaporization of water is $L = 40.7\;\text{kJ/mol}$. If the boiling point at 1 atm is 373 K, estimate the boiling point at the top of Mount Everest where the pressure is about 0.34 atm.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Thermodynamic Potentials of a Magnetic System</div>
+<p>For a magnetic system, the fundamental relation is $dE = TdS + BdM + \mu dN$, where $B$ is the external magnetic field and $M$ is the total magnetization (replacing the $-PdV$ term).</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Construct the "magnetic Helmholtz free energy" $F(T, M, N) = E - TS$ and the "magnetic Gibbs free energy" $G(T, B, N) = E - TS - BM$. Write the differential of each and identify the natural variables.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>From $G(T, B, N)$, derive a Maxwell relation that relates $\left(\frac{\partial S}{\partial B}\right)_{T,N}$ to a derivative of the magnetization.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>For a paramagnet, increasing the field at constant $T$ increases the magnetization: $\left(\frac{\partial M}{\partial T}\right)_B < 0$ (spins become less aligned as $T$ rises). Use this to determine the sign of $\left(\frac{\partial S}{\partial B}\right)_T$. Explain physically why increasing $B$ at constant $T$ decreases the entropy.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>In <em>adiabatic demagnetization</em>, a paramagnet is first magnetized at constant $T$ (in contact with a heat bath), then thermally isolated, and finally the field is slowly reduced to zero. Using your result from (c), explain why this process cools the paramagnet. This technique is used to reach temperatures below 1 mK.</p>
+</div>
+</div>
+
+</div>
+</details>
+

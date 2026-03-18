@@ -1,0 +1,258 @@
+<div class="chapter-solutions" id="ch8-solutions">
+<h2>Chapter 8: Free Energy — Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Helmholtz Natural Variables (Q1)</div>
+<p>Answer: (b). The natural variables of $F$ are $T$, $V$, $N$, since $dF = -SdT - PdV + \mu dN$. At constant $T$ and $V$, the system evolves to minimize $F$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Euler Equation Derivation (Q2)</div>
+<p>Answer: (c). The Euler equation is derived by requiring $S(cE, cV, cN) = cS(E,V,N)$ -- i.e., that entropy is extensive (homogeneous of degree 1). Differentiating with respect to $c$ and setting $c=1$ gives $E = TS - PV + \mu N$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Spontaneity (Q3)</div>
+<p>Answer: (a). $\Delta_r G = \Delta_r H - T\Delta_r S = -50\;\text{kJ/mol} - (300\;\text{K})(0.100\;\text{kJ/(mol}\cdot\text{K)}) = -50 - 30 = -80\;\text{kJ/mol}$. Since $\Delta_r G < 0$, the reaction is spontaneous. Both the exothermicity ($\Delta_r H < 0$) and the entropy increase ($\Delta_r S > 0$) favor the forward direction.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Grand Free Energy (Q4)</div>
+<p>Answer: (c). $\Omega(T, V, \mu)$ has natural variables $T$, $V$, $\mu$. Of these, only $V$ is extensive. Since $\Omega$ is extensive, it must scale linearly with $V$: $\Omega = V \cdot f(T,\mu)$. Then $\partial\Omega/\partial V = f(T,\mu) = -P$, so $\Omega = -PV$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: Chemical Potential and Pressure (Q5)</div>
+<div class="solution-part">
+<p>Starting from the Gibbs-Duhem equation at constant $T$ ($dT = 0$):
+$$-VdP + Nd\mu = 0 \implies d\mu = \frac{V}{N}dP$$
+For an ideal gas, $V/N = k_BT/P$, so:
+$$d\mu = \frac{k_BT}{P}dP$$
+Integrating from $P_0$ to $P$:
+$$\mu(P) - \mu(P_0) = k_BT\int_{P_0}^{P}\frac{dP'}{P'} = k_BT\ln\frac{P}{P_0}$$
+Therefore $\mu(P) = \mu(P_0) + k_BT\ln(P/P_0)$.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: Isothermal Compression (Q6)</div>
+<div class="solution-part">
+<p>From Eq. (13), the Helmholtz free energy of an ideal gas contains a $-Nk_BT\ln V$ term (all other terms depend only on $T$ and $N$). Therefore:
+$$\Delta F = F(V_2) - F(V_1) = -Nk_BT\ln\frac{V_2}{V_1} = Nk_BT\ln\frac{V_1}{V_2}$$
+Since $V_2 < V_1$, we have $\Delta F > 0$.</p>
+
+<p>For a reversible isothermal compression, the work done on the gas is:
+$$W_{\text{on}} = -\int_{V_1}^{V_2}PdV = -\int_{V_1}^{V_2}\frac{Nk_BT}{V}dV = -Nk_BT\ln\frac{V_2}{V_1} = Nk_BT\ln\frac{V_1}{V_2}$$
+This equals $\Delta F$, consistent with Eq. (11): $W \leq -\Delta F$, with equality for a reversible process. Here $W = -W_{\text{on}}$ is the work done by the gas, and $-\Delta F = -Nk_BT\ln(V_1/V_2) < 0$, confirming $W = -\Delta F$.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Ammonia Bond Enthalpies (Q7)</div>
+<div class="solution-part">
+<p>The reaction $3\text{H}_2 + \text{N}_2 \to 2\text{NH}_3$ involves breaking:
+<ul>
+<li>3 H-H bonds: $3 \times 436 = 1308\;\text{kJ/mol}$</li>
+<li>1 N$\equiv$N bond: $1 \times 941 = 941\;\text{kJ/mol}$</li>
+</ul>
+Total energy to break bonds: $1308 + 941 = 2249\;\text{kJ/mol}$.</p>
+
+<p>And forming:
+<ul>
+<li>6 N-H bonds (2 NH$_3$ molecules, each with 3 N-H bonds): $6 \times 391 = 2346\;\text{kJ/mol}$</li>
+</ul></p>
+
+<p>$\Delta_r H \approx 2249 - 2346 = -97\;\text{kJ/mol}$.</p>
+
+<p>This is remarkably close to the experimental value of $-92\;\text{kJ/mol}$, within about 5%. Bond enthalpy estimates are typically accurate to 10-20%, so this agreement is better than average. The small discrepancy arises because bond enthalpies are averages over many different molecular environments.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Isotonic Saline (Q8)</div>
+<div class="solution-part">
+<p>Answer: (b) 8.7 g/L.</p>
+
+<p>Using van 't Hoff's formula in molar form, $\Pi = n_s RT$:
+$$n_s = \frac{\Pi}{RT} = \frac{7.65\;\text{atm}}{0.08314\;\text{L}\cdot\text{atm}/(\text{mol}\cdot\text{K}) \times 310\;\text{K}} = \frac{7.65}{25.77} = 0.297\;\text{mol/L}$$</p>
+
+<p>Since each NaCl dissociates into 2 ions:
+$$n_{\text{NaCl}} = \frac{0.297}{2} = 0.148\;\text{mol/L}$$</p>
+
+<p>Mass per liter:
+$$m = 0.148\;\text{mol/L} \times 58.4\;\text{g/mol} = 8.7\;\text{g/L}$$</p>
+
+<p>This is consistent with the standard 0.9% saline solution used in medicine ($9\;\text{g/L}$).</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Rubber Band Thermodynamics (Q9)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Define $F = E - TS$. Taking the differential:
+$$dF = dE - TdS - SdT = (TdS + \mathcal{F}dL) - TdS - SdT = -SdT + \mathcal{F}dL$$
+So $F = F(T, L)$ with natural variables $T$ and $L$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>From $dF = -SdT + \mathcal{F}dL$, we have $\partial F/\partial T = -S$ and $\partial F/\partial L = \mathcal{F}$. Equating the mixed second partial derivatives:
+$$-\left(\frac{\partial S}{\partial L}\right)_T = \left(\frac{\partial\mathcal{F}}{\partial T}\right)_L$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Since $(\partial\mathcal{F}/\partial T)_L > 0$ (rubber bands stiffen when heated), the Maxwell relation gives:
+$$\left(\frac{\partial S}{\partial L}\right)_T = -\left(\frac{\partial\mathcal{F}}{\partial T}\right)_L < 0$$
+Stretching the rubber band at constant $T$ decreases its entropy.</p>
+
+<p>Physical explanation: A rubber band is made of long polymer chains. When relaxed, the chains are coiled up in many possible configurations (high entropy). When stretched, the chains are forced to align along the stretching direction, dramatically reducing the number of accessible configurations and hence the entropy.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>In an adiabatic (isentropic) stretch, $dS = 0$. We can write:
+$$0 = dS = \left(\frac{\partial S}{\partial T}\right)_L dT + \left(\frac{\partial S}{\partial L}\right)_T dL$$
+So:
+$$dT = -\frac{(\partial S/\partial L)_T}{(\partial S/\partial T)_L}dL$$
+Since $(\partial S/\partial L)_T < 0$ from part (c), and $(\partial S/\partial T)_L = C_L/T > 0$ (heat capacity is positive), we get $dT > 0$ when $dL > 0$. The rubber band heats up when stretched adiabatically.</p>
+
+<p>This is easily verified experimentally: hold a thick rubber band against your lip (which is sensitive to temperature), quickly stretch it, and you will feel it warm up. Releasing it quickly causes cooling.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: Langmuir Adsorption (Q10)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>A single site has two states: empty (energy 0, particle number 0) or occupied (energy $-\epsilon$, particle number 1). The grand partition function is:
+$$\mathcal{Z}_1 = 1 + e^{-\beta(-\epsilon) + \beta\mu} = 1 + e^{\beta(\epsilon + \mu)}$$
+Wait -- the binding energy is $-\epsilon$, so the energy of the occupied state is $-\epsilon$:
+$$\mathcal{Z}_1 = 1 + e^{\beta(\mu + \epsilon)} = 1 + e^{\beta(\mu + \epsilon)}$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The average occupancy is:
+$$\langle n \rangle = \frac{0 \cdot 1 + 1 \cdot e^{\beta(\mu+\epsilon)}}{\mathcal{Z}_1} = \frac{e^{\beta(\mu+\epsilon)}}{1 + e^{\beta(\mu+\epsilon)}}$$
+Dividing numerator and denominator by $e^{\beta(\mu+\epsilon)}$:
+$$\langle n \rangle = \frac{1}{e^{-\beta(\mu+\epsilon)} + 1} = \frac{1}{e^{\beta(-\epsilon - \mu)} + 1}$$
+This can be rewritten as:
+$$\langle n \rangle = \frac{1}{e^{\beta(\epsilon_{\text{eff}} - \mu)} + 1}$$
+where $\epsilon_{\text{eff}} = -\epsilon$ is the single-particle energy of the occupied state. This is the Fermi-Dirac distribution, which arises because each site can hold at most one particle (like a fermion).</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>For an ideal gas, $\mu = k_BT\ln(P\lambda^3/k_BT)$, so $e^{\beta\mu} = P\lambda^3/k_BT$. Then:
+$$\langle n \rangle = \frac{e^{\beta\mu}e^{\beta\epsilon}}{1 + e^{\beta\mu}e^{\beta\epsilon}} = \frac{(P\lambda^3/k_BT)e^{\beta\epsilon}}{1 + (P\lambda^3/k_BT)e^{\beta\epsilon}}$$
+Define $P_0 = (k_BT/\lambda^3)e^{-\beta\epsilon}$, so $e^{\beta\mu}e^{\beta\epsilon} = P/P_0$. Then:
+$$\theta = \langle n \rangle = \frac{P/P_0}{1 + P/P_0} = \frac{P}{P + P_0}$$
+This is the Langmuir isotherm. At low pressure ($P \ll P_0$), $\theta \approx P/P_0$ (linear). At high pressure ($P \gg P_0$), $\theta \to 1$ (saturation).</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>For $M$ independent sites:
+$$\mathcal{Z} = \mathcal{Z}_1^M = (1 + e^{\beta(\mu + \epsilon)})^M$$
+$$\Omega = -k_BT\ln\mathcal{Z} = -Mk_BT\ln(1 + e^{\beta(\mu+\epsilon)})$$
+Then:
+$$\langle N \rangle = -\frac{\partial\Omega}{\partial\mu} = M\frac{e^{\beta(\mu+\epsilon)}}{1 + e^{\beta(\mu+\epsilon)}} = M\langle n \rangle$$
+This correctly gives the total number of adsorbed molecules as $M$ times the single-site occupancy from part (b).</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: Clausius-Clapeyron from Gibbs (Q11)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Along the coexistence curve, $G_1(T,P) = G_2(T,P)$. Taking the total differential of both sides:
+$$dG_1 = dG_2$$
+Using $dG = -SdT + VdP$ for each phase:
+$$-S_1 dT + V_1 dP = -S_2 dT + V_2 dP$$
+Rearranging:
+$$(S_2 - S_1)dT = (V_2 - V_1)dP$$
+$$\frac{dP}{dT} = \frac{S_2 - S_1}{V_2 - V_1} = \frac{\Delta S}{\Delta V}$$
+The latent heat is $L = T\Delta S$ (the heat absorbed during the phase transition at constant $T$ and $P$), so:
+$$\frac{dP}{dT} = \frac{L}{T\Delta V}$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>For the liquid-gas transition with $V_{\text{gas}} \gg V_{\text{liquid}}$:
+$$\Delta V \approx V_{\text{gas}} = \frac{Nk_BT}{P} \quad \text{(per mole: } \frac{RT}{P}\text{)}$$
+Substituting into the Clausius-Clapeyron equation (per mole):
+$$\frac{dP}{dT} = \frac{LP}{RT^2}$$
+Separating variables:
+$$\frac{dP}{P} = \frac{L}{R}\frac{dT}{T^2}$$
+Integrating (with $L$ approximately constant):
+$$\ln P = -\frac{L}{RT} + \text{const}$$
+$$P(T) = P_0\exp\left(-\frac{L}{RT}\right) = P_0\exp\left(-\frac{L}{k_BT}\right)$$
+where the last form uses $L$ per molecule rather than per mole.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Using $P(T) = P_0 e^{-L/(RT)}$, at two different temperatures:
+$$\frac{P_2}{P_1} = \exp\left[-\frac{L}{R}\left(\frac{1}{T_2} - \frac{1}{T_1}\right)\right]$$
+We know $P_1 = 1\;\text{atm}$, $T_1 = 373\;\text{K}$, $P_2 = 0.34\;\text{atm}$, $L/R = 40700/8.314 = 4894\;\text{K}$. Solving for $T_2$:
+$$\ln(0.34) = -4894\left(\frac{1}{T_2} - \frac{1}{373}\right)$$
+$$-1.079 = -4894\left(\frac{1}{T_2} - 0.002681\right)$$
+$$\frac{1}{T_2} = 0.002681 + \frac{1.079}{4894} = 0.002681 + 0.000220 = 0.002901$$
+$$T_2 = 345\;\text{K} = 72\;^\circ\text{C}$$
+Water boils at about $72\;^\circ\text{C}$ on Everest (the actual value is about $70\;^\circ\text{C}$; the small difference comes from the temperature dependence of $L$).</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Magnetic Thermodynamic Potentials (Q12)</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p><strong>Magnetic Helmholtz free energy:</strong> $F = E - TS$, so:
+$$dF = dE - TdS - SdT = (TdS + BdM + \mu dN) - TdS - SdT = -SdT + BdM + \mu dN$$
+Natural variables: $T$, $M$, $N$.</p>
+
+<p><strong>Magnetic Gibbs free energy:</strong> $G = E - TS - BM$, so:
+$$dG = dE - TdS - SdT - BdM - MdB$$
+$$= (TdS + BdM + \mu dN) - TdS - SdT - BdM - MdB$$
+$$= -SdT - MdB + \mu dN$$
+Natural variables: $T$, $B$, $N$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>From $dG = -SdT - MdB + \mu dN$, we have $\partial G/\partial T = -S$ and $\partial G/\partial B = -M$. Equating mixed second derivatives:
+$$-\left(\frac{\partial S}{\partial B}\right)_{T,N} = -\left(\frac{\partial M}{\partial T}\right)_{B,N}$$
+$$\left(\frac{\partial S}{\partial B}\right)_{T,N} = \left(\frac{\partial M}{\partial T}\right)_{B,N}$$</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>For a paramagnet, $(\partial M/\partial T)_B < 0$ (magnetization decreases as temperature increases because thermal fluctuations disorder the spins). From the Maxwell relation:
+$$\left(\frac{\partial S}{\partial B}\right)_{T,N} = \left(\frac{\partial M}{\partial T}\right)_{B,N} < 0$$
+Increasing $B$ at constant $T$ decreases the entropy.</p>
+
+<p>Physical explanation: When the magnetic field is increased, the spins tend to align with the field. This reduces the number of accessible microstates (a fully aligned state has $\Omega = 1$, $S = 0$), so the entropy decreases. The field creates order, reducing randomness.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p><strong>Step 1 (isothermal magnetization):</strong> The field is increased at constant $T$. From part (c), $(\partial S/\partial B)_T < 0$, so entropy decreases. The entropy decrease is compensated by heat flowing out to the bath.</p>
+
+<p><strong>Step 2 (adiabatic demagnetization):</strong> The system is thermally isolated ($dQ = 0$, so $dS = 0$) and the field is slowly reduced. At constant $S$, we need:
+$$0 = dS = \left(\frac{\partial S}{\partial T}\right)_B dT + \left(\frac{\partial S}{\partial B}\right)_T dB$$
+$$dT = -\frac{(\partial S/\partial B)_T}{(\partial S/\partial T)_B}dB$$
+Since $(\partial S/\partial B)_T < 0$ and $(\partial S/\partial T)_B = C_B/T > 0$, and $dB < 0$ (field is being reduced):
+$$dT = -\frac{(\text{negative})}{(\text{positive})} \times (\text{negative}) = \text{negative}$$
+The temperature decreases. The entropy that was "squeezed out" by the field must now be accommodated at lower $B$, and the only way to maintain constant $S$ with lower $B$ is to decrease $T$.</p>
+
+<p>This process, adiabatic demagnetization, is one of the primary techniques for reaching sub-millikelvin temperatures in the laboratory.</p>
+</div>
+</div>
+
+</div>
