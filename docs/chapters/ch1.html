@@ -674,3 +674,224 @@ $$P_N(x) = \int_{-\infty}^{\infty} \frac{dk}{2\pi}\, e^{-\frac{k^2}{2}\frac{\sig
 
 </div></div>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch1-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>A probability distribution $P(x)$ has mean $\bar{x}$ and standard deviation $\sigma$. If we construct a new distribution $P_N(x)$ by averaging $N$ independent draws from $P(x)$, what is the standard deviation of $P_N(x)$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch1-rq1" value="a"> (a) $\sigma$</label>
+  <label><input type="radio" name="ch1-rq1" value="b"> (b) $\sigma / N$</label>
+  <label><input type="radio" name="ch1-rq1" value="c"> (c) $\sigma / \sqrt{N}$</label>
+  <label><input type="radio" name="ch1-rq1" value="d"> (d) $\sqrt{N}\,\sigma$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="The law of large numbers states that the standard deviation of the average of $N$ draws shrinks as $\sigma_N = \sigma/\sqrt{N}$ (Eq. 31).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>The central limit theorem says that as $N \to \infty$, the distribution of the average of $N$ draws from <em>any</em> distribution approaches:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch1-rq2" value="a"> (a) A Poisson distribution</label>
+  <label><input type="radio" name="ch1-rq2" value="b"> (b) A Lorentzian distribution</label>
+  <label><input type="radio" name="ch1-rq2" value="c"> (c) A flat (uniform) distribution</label>
+  <label><input type="radio" name="ch1-rq2" value="d"> (d) A Gaussian distribution</label>
+</div>
+<button class="check-answer-btn" data-answer="d" data-explanation="The central limit theorem states that the distribution of the average of $N$ independent draws approaches a Gaussian as $N \to \infty$, regardless of the shape of the original distribution (Eq. 53).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>The Poisson distribution $P_m(t) = \frac{(\lambda t)^m}{m!}e^{-\lambda t}$ has mean $\langle m \rangle = \lambda t$. What is its standard deviation?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch1-rq3" value="a"> (a) $\lambda t$</label>
+  <label><input type="radio" name="ch1-rq3" value="b"> (b) $\sqrt{\lambda t}$</label>
+  <label><input type="radio" name="ch1-rq3" value="c"> (c) $(\lambda t)^2$</label>
+  <label><input type="radio" name="ch1-rq3" value="d"> (d) $1/\sqrt{\lambda t}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The standard deviation of the Poisson distribution is $\sigma = \sqrt{\lambda t}$ (Eq. 71).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>Why is it useful to take the logarithm of probability distributions in statistical mechanics?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch1-rq4" value="a"> (a) It converts the distribution into a Poisson distribution</label>
+  <label><input type="radio" name="ch1-rq4" value="b"> (b) A Gaussian becomes a simple quadratic, making Taylor expansion exact with finitely many terms</label>
+  <label><input type="radio" name="ch1-rq4" value="c"> (c) It eliminates the need for normalization</label>
+  <label><input type="radio" name="ch1-rq4" value="d"> (d) It makes the variance equal to the mean</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The Taylor expansion of a Gaussian has infinitely many terms, but $\ln e^{-x^2/(2\sigma^2)} = -x^2/(2\sigma^2)$ is just a quadratic &mdash; a single term (Eq. 58). This makes logarithms extremely convenient in stat mech.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>A particle moves freely in a 1D box of length $L = 10$ cm centered at the origin. What is the standard deviation of its position, in cm? Round to one decimal place.</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer (in cm)...">
+</div>
+<button class="check-answer-btn" data-answer="2.9" data-hint="For a flat distribution on $[-L/2, L/2]$, the standard deviation is $\sigma = L/\sqrt{12}$ (Eq. 20).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>A radioactive sample has a decay rate $\lambda = 5\,\text{s}^{-1}$. What is the half-life $t_{1/2}$ in seconds? Round to two decimal places.</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer (in seconds)...">
+</div>
+<button class="check-answer-btn" data-answer="0.14" data-hint="Use $t_{1/2} = \frac{\ln 2}{\lambda} \approx \frac{0.693}{\lambda}$ (Eq. 64).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>A Gaussian distribution has mean $\bar{x} = 0$ and standard deviation $\sigma$. What is its kurtosis $K = \langle x^4 \rangle / \sigma^4$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch1-sa3" value="a"> (a) 1</label>
+  <label><input type="radio" name="ch1-sa3" value="b"> (b) 2</label>
+  <label><input type="radio" name="ch1-sa3" value="c"> (c) 3</label>
+  <label><input type="radio" name="ch1-sa3" value="d"> (d) 4</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="From Eq. (37), the kurtosis of a Gaussian is $K = 3$. This can also be computed from the general formula $M_n = 2^{-n/2}\,n! / (n/2)!$ (Eq. 38) with $n=4$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>You observe a Poisson process (e.g. radioactive decays) and count $m = 400$ events in a given time window. Using the Gaussian approximation for the Poisson distribution at large $m$, estimate the 1-$\sigma$ uncertainty in this count.</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer...">
+</div>
+<button class="check-answer-btn" data-answer="20" data-hint="For a Poisson distribution, $\sigma = \sqrt{\lambda t}$. Since $\langle m \rangle = \lambda t \approx 400$, we get $\sigma \approx \sqrt{400} = 20$ (Eq. 71).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Problem 1: Dice and the Central Limit Theorem</div>
+<p>A fair six-sided die has outcomes $x \in \{1, 2, 3, 4, 5, 6\}$, each with probability $\frac{1}{6}$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Compute the mean $\langle x \rangle$ and standard deviation $\sigma$ for a single die roll.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>You roll $N = 100$ dice and compute their average $\bar{x}$. Using the law of large numbers, what is the expected value of $\bar{x}$ and its standard deviation $\sigma_{100}$?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Using the central limit theorem, write down the approximate probability distribution $P_{100}(\bar{x})$ for the average of 100 dice rolls. What is the probability that $\bar{x}$ falls between 3.3 and 3.7? You may use the fact that for a Gaussian, 68% of the probability lies within $\pm 1\sigma$ of the mean and 95% within $\pm 2\sigma$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Compute the skewness $S$ of the single-die distribution. What is the skewness $S_{100}$ of the distribution of the average of 100 dice? Explain why this is consistent with the central limit theorem.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 2: Photon Counting</div>
+<p>A faint star delivers photons to a telescope detector at an average rate of $\lambda = 3$ photons per second.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>What is the probability of detecting exactly 0 photons in a 1-second exposure? Exactly 1 photon? Exactly 3 photons?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>What is the probability of detecting 5 or more photons in a 1-second exposure? <em>Hint:</em> compute $1 - \sum_{m=0}^{4} P_m$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>You take a 100-second exposure. What are the mean number and standard deviation of detected photons? What is the fractional uncertainty $\sigma/\langle m \rangle$?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>How long must you expose to achieve a fractional uncertainty (signal-to-noise ratio $\langle m \rangle / \sigma$) of 100? Express your answer in seconds.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 3: Exponential Distribution and Convolutions</div>
+<p>Consider the exponential probability distribution $P(x) = \lambda\, e^{-\lambda x}$ for $x \geq 0$ (and $P(x) = 0$ for $x < 0$). This describes, for example, the waiting time between successive radioactive decays.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Verify that $P(x)$ is normalized. Compute the mean $\langle x \rangle$, the variance $\langle x^2 \rangle - \langle x \rangle^2$, and the standard deviation $\sigma$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Compute the skewness $S = \langle (x - \bar{x})^3 \rangle / \sigma^3$ of this distribution. Is it symmetric?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The distribution of the total waiting time for two successive decays is the convolution $P_2(z) = (P * P)(z) = \int_0^z dx\, P(x)\, P(z - x)$. Compute $P_2(z)$ explicitly. Verify that it is normalized and compute its mean.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Using the central limit theorem, what does the distribution of the total waiting time for $N$ decays approach at large $N$? Write down the explicit Gaussian form (mean and standard deviation in terms of $\lambda$ and $N$). Use the summation form of the CLT (Eq. 54).</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 4: Stirling and the Binomial Distribution</div>
+<p>A system of $N$ independent spins can each point up or down with equal probability $\frac{1}{2}$. The number of up-spins $m$ follows the binomial distribution $B_N(m) = \frac{1}{2^N}\binom{N}{m}$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Show that $B_N(m)$ is normalized: $\sum_{m=0}^{N} B_N(m) = 1$. Compute the mean $\langle m \rangle$ and standard deviation $\sigma$ of $m$. <em>Hint:</em> each spin is an independent Bernoulli trial with mean $\frac{1}{2}$ and variance $\frac{1}{4}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Use Stirling's approximation $\ln N! \approx N \ln N - N$ to show that near the peak ($m = N/2 + \delta$ with $\delta \ll N$), the binomial distribution can be written as</p>
+$$B_N(m) \approx \sqrt{\frac{2}{\pi N}}\, \exp\!\left(-\frac{2\delta^2}{N}\right)$$
+<p><em>Hint:</em> expand $\ln B_N(m)$ to second order in $\delta/N$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Identify the standard deviation $\sigma$ of the Gaussian from part (b) and verify it matches your result from part (a).</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>For $N = 10^{23}$ spins (roughly Avogadro's number), what is the fractional fluctuation $\sigma / \langle m \rangle$ in the number of up-spins? If this were a bar magnet with each spin contributing a magnetic moment $\mu_B = 9.3 \times 10^{-24}\,\text{J/T}$, the net magnetization is proportional to $2m - N$. What is the standard deviation of the net magnetization (in units of $\mu_B$), and how does it compare to the maximum possible magnetization $N\mu_B$?</p>
+</div>
+</div>
+
+</div>
+</details>

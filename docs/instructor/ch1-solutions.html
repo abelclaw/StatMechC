@@ -1,0 +1,238 @@
+<div class="chapter-solutions" id="ch1-solutions">
+<h2>Chapter 1: Probability &mdash; Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Dice and the Central Limit Theorem</div>
+
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>The mean of a single fair die is</p>
+$$\langle x \rangle = \frac{1}{6}(1 + 2 + 3 + 4 + 5 + 6) = \frac{21}{6} = \frac{7}{2} = 3.5$$
+
+<p>The mean of $x^2$ is</p>
+$$\langle x^2 \rangle = \frac{1}{6}(1 + 4 + 9 + 16 + 25 + 36) = \frac{91}{6}$$
+
+<p>The variance is</p>
+$$\text{Var} = \langle x^2 \rangle - \langle x \rangle^2 = \frac{91}{6} - \frac{49}{4} = \frac{182 - 147}{12} = \frac{35}{12}$$
+
+<p>The standard deviation is</p>
+$$\sigma = \sqrt{\frac{35}{12}} \approx 1.708$$
+</div>
+
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>By the law of large numbers, the mean of the average is unchanged:</p>
+$$\langle \bar{x} \rangle_{100} = \langle x \rangle = 3.5$$
+
+<p>The standard deviation shrinks by $1/\sqrt{N}$:</p>
+$$\sigma_{100} = \frac{\sigma}{\sqrt{100}} = \frac{1.708}{10} \approx 0.171$$
+</div>
+
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>By the central limit theorem (Eq. 53), the distribution of the average is approximately</p>
+$$P_{100}(\bar{x}) \approx \sqrt{\frac{100}{2\pi \cdot 35/12}} \exp\!\left(-\frac{100(\bar{x} - 3.5)^2}{2 \cdot 35/12}\right) = \sqrt{\frac{600}{70\pi}} \exp\!\left(-\frac{600(\bar{x} - 3.5)^2}{70}\right)$$
+
+<p>which simplifies to a Gaussian with mean $3.5$ and $\sigma_{100} \approx 0.171$.</p>
+
+<p>The interval $[3.3, 3.7]$ spans $\bar{x} \pm 0.2$, which is $\pm 0.2/0.171 \approx \pm 1.17\sigma$. Since $\pm 1\sigma$ contains 68% and $\pm 2\sigma$ contains 95%, by interpolation roughly <strong>76%</strong> of the probability lies in this interval. (More precisely, $\text{erf}(1.17/\sqrt{2}) \approx 0.758$, so about 76%.)</p>
+</div>
+
+<div class="solution-part"><div class="part-label">(d)</div>
+<p>The skewness is $S = \langle (x - \bar{x})^3 \rangle / \sigma^3$. Computing the numerator:</p>
+$$\langle (x - 3.5)^3 \rangle = \frac{1}{6}\left[(-2.5)^3 + (-1.5)^3 + (-0.5)^3 + (0.5)^3 + (1.5)^3 + (2.5)^3\right]$$
+
+<p>Since the distribution is symmetric about $3.5$, each negative term cancels with its positive counterpart:</p>
+$$\langle (x - 3.5)^3 \rangle = 0$$
+
+<p>Therefore $S = 0$ for a single die.</p>
+
+<p>By Eq. (41), the skewness of the average of $N$ draws is $S_N = S_1/\sqrt{N} = 0/\sqrt{100} = 0$. This is consistent with the CLT: since the single-die distribution is already symmetric, the skewness is zero at all $N$. For an asymmetric distribution, the CLT would drive $S_N \to 0$ as $1/\sqrt{N}$.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Photon Counting</div>
+
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>Using the Poisson distribution $P_m(t) = \frac{(\lambda t)^m}{m!}e^{-\lambda t}$ with $\lambda t = 3$:</p>
+
+$$P_0 = e^{-3} \approx 0.0498$$
+$$P_1 = 3\, e^{-3} \approx 0.1494$$
+$$P_3 = \frac{27}{6}\, e^{-3} = \frac{9}{2}\, e^{-3} \approx 0.2240$$
+
+<p>So there is about a 5% chance of seeing zero photons, 15% chance of seeing exactly one, and 22% chance of seeing exactly three.</p>
+</div>
+
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>We need $P(\geq 5) = 1 - \sum_{m=0}^{4} P_m$. Computing each term with $\lambda t = 3$:</p>
+
+$$P_0 = e^{-3} \approx 0.04979$$
+$$P_1 = 3e^{-3} \approx 0.14936$$
+$$P_2 = \frac{9}{2}e^{-3} \approx 0.22404$$
+$$P_3 = \frac{9}{2}e^{-3} \approx 0.22404$$
+$$P_4 = \frac{27}{8}e^{-3} \approx 0.16803$$
+
+$$\sum_{m=0}^{4} P_m \approx 0.8153$$
+
+$$P(\geq 5) = 1 - 0.8153 \approx 0.185$$
+
+<p>So there is about an 18.5% chance of detecting 5 or more photons in one second.</p>
+</div>
+
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>For a 100-second exposure, $\lambda t = 3 \times 100 = 300$.</p>
+
+$$\langle m \rangle = \lambda t = 300 \text{ photons}$$
+$$\sigma = \sqrt{\lambda t} = \sqrt{300} \approx 17.3 \text{ photons}$$
+$$\frac{\sigma}{\langle m \rangle} = \frac{1}{\sqrt{300}} \approx 0.058 \approx 5.8\%$$
+</div>
+
+<div class="solution-part"><div class="part-label">(d)</div>
+<p>The signal-to-noise ratio is $\langle m \rangle / \sigma = \sqrt{\lambda t}$. Setting this equal to 100:</p>
+
+$$\sqrt{\lambda t} = 100$$
+$$\lambda t = 10^4$$
+$$t = \frac{10^4}{\lambda} = \frac{10^4}{3} \approx 3333 \text{ seconds} \approx 56 \text{ minutes}$$
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Exponential Distribution and Convolutions</div>
+
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>Normalization:</p>
+$$\int_0^{\infty} \lambda\, e^{-\lambda x}\, dx = \lambda \cdot \frac{1}{\lambda} = 1 \quad \checkmark$$
+
+<p>Mean:</p>
+$$\langle x \rangle = \int_0^{\infty} x\, \lambda\, e^{-\lambda x}\, dx = \lambda \cdot \frac{1}{\lambda^2} = \frac{1}{\lambda}$$
+
+<p>(using $\int_0^\infty x\, e^{-\lambda x}\, dx = 1/\lambda^2$.)</p>
+
+<p>Second moment:</p>
+$$\langle x^2 \rangle = \int_0^{\infty} x^2\, \lambda\, e^{-\lambda x}\, dx = \lambda \cdot \frac{2}{\lambda^3} = \frac{2}{\lambda^2}$$
+
+<p>Variance:</p>
+$$\text{Var} = \langle x^2 \rangle - \langle x \rangle^2 = \frac{2}{\lambda^2} - \frac{1}{\lambda^2} = \frac{1}{\lambda^2}$$
+
+<p>Standard deviation:</p>
+$$\sigma = \frac{1}{\lambda}$$
+
+<p>Note that $\sigma = \langle x \rangle$ for the exponential distribution: the width equals the mean.</p>
+</div>
+
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>We need $\langle (x - \bar{x})^3 \rangle = \langle (x - 1/\lambda)^3 \rangle$. Expanding:</p>
+$$\langle (x - 1/\lambda)^3 \rangle = \langle x^3 \rangle - 3\langle x^2 \rangle/\lambda + 3\langle x \rangle/\lambda^2 - 1/\lambda^3$$
+
+<p>We need $\langle x^3 \rangle = \int_0^\infty x^3 \lambda e^{-\lambda x} dx = 6/\lambda^3$. Substituting:</p>
+$$\langle (x - 1/\lambda)^3 \rangle = \frac{6}{\lambda^3} - \frac{3 \cdot 2}{\lambda^3} + \frac{3}{\lambda^3} - \frac{1}{\lambda^3} = \frac{2}{\lambda^3}$$
+
+<p>The skewness is</p>
+$$S = \frac{\langle (x - \bar{x})^3 \rangle}{\sigma^3} = \frac{2/\lambda^3}{1/\lambda^3} = 2$$
+
+<p>The distribution is <strong>not symmetric</strong> &mdash; it has positive skewness ($S = 2$), meaning it has a long tail to the right. This makes sense since the exponential distribution extends to $+\infty$ but is bounded at $x = 0$.</p>
+</div>
+
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>The convolution is (for $z \geq 0$):</p>
+$$P_2(z) = \int_0^z dx\, \lambda e^{-\lambda x} \cdot \lambda e^{-\lambda(z-x)} = \lambda^2 e^{-\lambda z} \int_0^z dx = \lambda^2 z\, e^{-\lambda z}$$
+
+<p>Normalization check:</p>
+$$\int_0^{\infty} \lambda^2 z\, e^{-\lambda z}\, dz = \lambda^2 \cdot \frac{1}{\lambda^2} = 1 \quad \checkmark$$
+
+<p>Mean:</p>
+$$\langle z \rangle = \int_0^{\infty} z \cdot \lambda^2 z\, e^{-\lambda z}\, dz = \lambda^2 \cdot \frac{2}{\lambda^3} = \frac{2}{\lambda}$$
+
+<p>This makes sense: the mean waiting time for two decays is twice the mean waiting time for one decay.</p>
+
+<p>(This $P_2(z) = \lambda^2 z\, e^{-\lambda z}$ is a Gamma distribution with shape parameter 2.)</p>
+</div>
+
+<div class="solution-part"><div class="part-label">(d)</div>
+<p>By the summation form of the CLT (Eq. 54), the total waiting time $T = x_1 + x_2 + \cdots + x_N$ for $N$ decays has a distribution approaching a Gaussian with:</p>
+
+$$\text{Mean: } N \langle x \rangle = \frac{N}{\lambda}$$
+$$\text{Standard deviation: } \sqrt{N}\, \sigma = \frac{\sqrt{N}}{\lambda}$$
+
+<p>The explicit Gaussian form is</p>
+$$P_{\text{sum}}^N(T) \to \frac{1}{\sqrt{2\pi N/\lambda^2}} \exp\!\left(-\frac{(T - N/\lambda)^2}{2N/\lambda^2}\right) = \frac{\lambda}{\sqrt{2\pi N}} \exp\!\left(-\frac{\lambda^2(T - N/\lambda)^2}{2N}\right)$$
+
+<p>Note that the fractional width is $\sigma/\langle T \rangle = 1/\sqrt{N}$, which shrinks at large $N$ as expected.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Stirling and the Binomial Distribution</div>
+
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>Normalization follows from the binomial theorem:</p>
+$$\sum_{m=0}^{N} B_N(m) = \frac{1}{2^N} \sum_{m=0}^{N} \binom{N}{m} = \frac{1}{2^N}(1+1)^N = 1 \quad \checkmark$$
+
+<p>Each spin is an independent Bernoulli trial with probability $p = 1/2$ of being up. The number of up-spins is the sum of $N$ such trials. By the summation form of the law of large numbers:</p>
+
+$$\langle m \rangle = Np = \frac{N}{2}$$
+
+<p>Each trial has variance $p(1-p) = 1/4$. Since the spins are independent, variances add:</p>
+$$\text{Var}(m) = N \cdot \frac{1}{4} = \frac{N}{4}$$
+$$\sigma = \frac{\sqrt{N}}{2}$$
+</div>
+
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>Write $m = N/2 + \delta$, so $N - m = N/2 - \delta$. Take the logarithm:</p>
+$$\ln B_N(m) = -N\ln 2 + \ln N! - \ln m! - \ln(N - m)!$$
+
+<p>Apply Stirling's approximation $\ln k! \approx k\ln k - k$:</p>
+$$\ln B_N(m) \approx -N\ln 2 + N\ln N - N - m\ln m + m - (N-m)\ln(N-m) + (N-m)$$
+
+<p>The linear terms cancel ($-N + m + N - m = 0$) and we get:</p>
+$$\ln B_N(m) = -N\ln 2 + N\ln N - m\ln m - (N-m)\ln(N-m)$$
+
+<p>Now substitute $m = N/2 + \delta$ and $N - m = N/2 - \delta$:</p>
+$$m\ln m = \left(\frac{N}{2} + \delta\right)\ln\left(\frac{N}{2} + \delta\right) = \left(\frac{N}{2} + \delta\right)\left[\ln\frac{N}{2} + \ln\left(1 + \frac{2\delta}{N}\right)\right]$$
+
+<p>Similarly for $(N-m)\ln(N-m)$. Adding them:</p>
+$$m\ln m + (N-m)\ln(N-m) = N\ln\frac{N}{2} + \left(\frac{N}{2}+\delta\right)\ln\left(1+\frac{2\delta}{N}\right) + \left(\frac{N}{2}-\delta\right)\ln\left(1-\frac{2\delta}{N}\right)$$
+
+<p>Since $-N\ln 2 + N\ln N = N\ln(N/2)$, the first term cancels with the rest of $\ln B_N$. Taylor expanding the logarithms to second order ($\ln(1+\epsilon) \approx \epsilon - \epsilon^2/2$):</p>
+$$\left(\frac{N}{2}+\delta\right)\left(\frac{2\delta}{N} - \frac{2\delta^2}{N^2}\right) + \left(\frac{N}{2}-\delta\right)\left(-\frac{2\delta}{N} - \frac{2\delta^2}{N^2}\right)$$
+
+$$= \frac{2\delta^2}{N} + \frac{2\delta^2}{N^2}\cdot 2\delta - \frac{2\delta^2}{N} + \frac{2\delta^2}{N} - \frac{2\delta^2}{N^2}\cdot 2\delta - \frac{2\delta^2}{N}$$
+
+<p>Collecting carefully to leading order in $\delta^2/N$:</p>
+$$= \frac{2\delta^2}{N} + \text{higher order}$$
+
+<p>Therefore:</p>
+$$\ln B_N(m) \approx -\frac{2\delta^2}{N}$$
+
+<p>Including the prefactor from the more precise Stirling's formula (the $\sqrt{2\pi N}$ correction):</p>
+$$B_N(m) \approx \sqrt{\frac{2}{\pi N}}\, \exp\!\left(-\frac{2\delta^2}{N}\right)$$
+</div>
+
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>The Gaussian $\exp(-2\delta^2/N)$ can be written as $\exp(-\delta^2/(2\sigma^2))$ with</p>
+$$\frac{1}{2\sigma^2} = \frac{2}{N} \implies \sigma^2 = \frac{N}{4} \implies \sigma = \frac{\sqrt{N}}{2}$$
+
+<p>This matches the result from part (a) exactly. The Gaussian approximation to the binomial distribution is consistent with the exact moments.</p>
+</div>
+
+<div class="solution-part"><div class="part-label">(d)</div>
+<p>For $N = 10^{23}$:</p>
+$$\langle m \rangle = \frac{N}{2} = 5 \times 10^{22}$$
+$$\sigma = \frac{\sqrt{N}}{2} = \frac{\sqrt{10^{23}}}{2} \approx \frac{3.16 \times 10^{11}}{2} \approx 1.58 \times 10^{11}$$
+
+<p>The fractional fluctuation is</p>
+$$\frac{\sigma}{\langle m \rangle} = \frac{1}{\sqrt{N}} = \frac{1}{\sqrt{10^{23}}} \approx 3.16 \times 10^{-12}$$
+
+<p>This is extraordinarily small &mdash; the number of up-spins is determined to about one part in a trillion.</p>
+
+<p>The net magnetization is $M = (2m - N)\mu_B$. Since $\langle 2m - N \rangle = 0$, the mean magnetization is zero (as expected for an unmagnetized system at infinite temperature). The standard deviation of $2m - N$ is $2\sigma = \sqrt{N}$, so:</p>
+
+$$\sigma_M = \sqrt{N}\, \mu_B = \sqrt{10^{23}} \times 9.3 \times 10^{-24}\,\text{J/T} \approx 3.16 \times 10^{11.5} \times 9.3 \times 10^{-24}\,\text{J/T}$$
+$$\sigma_M \approx 2.9 \times 10^{-12}\,\text{J/T} \approx 2.9\,\text{pJ/T}$$
+
+<p>The maximum magnetization is $N\mu_B = 10^{23} \times 9.3 \times 10^{-24} \approx 0.93\,\text{J/T}$. The ratio is</p>
+$$\frac{\sigma_M}{N\mu_B} = \frac{\sqrt{N}\,\mu_B}{N\mu_B} = \frac{1}{\sqrt{N}} \approx 3 \times 10^{-12}$$
+
+<p>The thermal fluctuations in magnetization are only about one part in a trillion of the maximum &mdash; which is why macroscopic magnetization is a well-defined quantity (and why statistical mechanics works).</p>
+</div>
+</div>
+
+</div>
