@@ -20755,9 +20755,33 @@ function initCh14Vis() {
         var mol = stCO2[mi];
         var rc = stRotate(mol.c, ax, ay), ro1 = stRotate(mol.o1, ax, ay), ro2 = stRotate(mol.o2, ax, ay);
         var pc = stProject(rc, cx, cy, sc), po1 = stProject(ro1, cx, cy, sc), po2 = stProject(ro2, cx, cy, sc);
-        items.push({ pc: pc, po1: po1, po2: po2, z: (pc.z+po1.z+po2.z)/3 });
+        items.push({ pc: pc, po1: po1, po2: po2, z: (pc.z+po1.z+po2.z)/3, mi: mi });
       }
       items.sort(function(a,b) { return b.z - a.z; });
+
+      // Draw weak intermolecular forces (van der Waals) as dashed lines between nearby molecules
+      var intermolCutoff = sc * 0.85; // screen-space distance cutoff
+      ctxS.setLineDash([3, 4]);
+      for (var ii = 0; ii < items.length; ii++) {
+        for (var jj = ii+1; jj < items.length; jj++) {
+          var dx = items[ii].pc.x - items[jj].pc.x;
+          var dy = items[ii].pc.y - items[jj].pc.y;
+          var dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < intermolCutoff && dist > 15) {
+            var avgZ = (items[ii].z + items[jj].z) / 2;
+            var df = Math.max(0, Math.min(1, (avgZ+2)/4));
+            ctxS.strokeStyle = 'rgba(255,255,255,'+(0.06+0.08*df)+')';
+            ctxS.lineWidth = 0.8;
+            ctxS.beginPath();
+            ctxS.moveTo(items[ii].pc.x, items[ii].pc.y);
+            ctxS.lineTo(items[jj].pc.x, items[jj].pc.y);
+            ctxS.stroke();
+          }
+        }
+      }
+      ctxS.setLineDash([]);
+
+      // Draw molecules (on top of intermolecular lines)
       for (var ii = 0; ii < items.length; ii++) {
         var it = items[ii], pc = it.pc, po1 = it.po1, po2 = it.po2;
         var df = Math.max(0, Math.min(1, (it.z+2)/4));
