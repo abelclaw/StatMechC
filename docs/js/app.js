@@ -22408,80 +22408,72 @@ function initCh14Vis() {
       });
     }
 
+    // Preset builders
+    function clearAll() {
+      gates.length = 0; wires.length = 0; wireStart = null; nextId = 1;
+    }
+
+    function loadFullAdder() {
+      clearAll();
+      var inA  = createGate('INPUT', 40, 40);
+      var inB  = createGate('INPUT', 40, 120);
+      var inCin = createGate('INPUT', 40, 280);
+      var xor1 = createGate('XOR', 180, 60);
+      var and2 = createGate('AND', 180, 180);
+      var xor2 = createGate('XOR', 360, 100);
+      var and1 = createGate('AND', 360, 220);
+      var or1  = createGate('OR', 540, 160);
+      var outSum = createGate('OUTPUT', 520, 100);
+      var outCout = createGate('OUTPUT', 700, 160);
+      wires.push({fromId:inA.id, fromPort:0, toId:xor1.id, toPort:0});
+      wires.push({fromId:inA.id, fromPort:0, toId:and2.id, toPort:0});
+      wires.push({fromId:inB.id, fromPort:0, toId:xor1.id, toPort:1});
+      wires.push({fromId:inB.id, fromPort:0, toId:and2.id, toPort:1});
+      wires.push({fromId:xor1.id, fromPort:0, toId:xor2.id, toPort:0});
+      wires.push({fromId:xor1.id, fromPort:0, toId:and1.id, toPort:0});
+      wires.push({fromId:inCin.id, fromPort:0, toId:xor2.id, toPort:1});
+      wires.push({fromId:inCin.id, fromPort:0, toId:and1.id, toPort:1});
+      wires.push({fromId:xor2.id, fromPort:0, toId:outSum.id, toPort:0});
+      wires.push({fromId:and1.id, fromPort:0, toId:or1.id, toPort:0});
+      wires.push({fromId:and2.id, fromPort:0, toId:or1.id, toPort:1});
+      wires.push({fromId:or1.id, fromPort:0, toId:outCout.id, toPort:0});
+      propagate(); drawCircuit();
+    }
+
+    function loadSRLatch() {
+      clearAll();
+      var inS = createGate('INPUT', 40, 60);
+      var inR = createGate('INPUT', 40, 280);
+      var nor1 = createGate('NOR', 240, 80);
+      var nor2 = createGate('NOR', 240, 260);
+      var outQ = createGate('OUTPUT', 500, 80);
+      var outQb = createGate('OUTPUT', 500, 260);
+      wires.push({fromId:inS.id, fromPort:0, toId:nor1.id, toPort:0});
+      wires.push({fromId:inR.id, fromPort:0, toId:nor2.id, toPort:1});
+      wires.push({fromId:nor1.id, fromPort:0, toId:outQ.id, toPort:0});
+      wires.push({fromId:nor1.id, fromPort:0, toId:nor2.id, toPort:0});
+      wires.push({fromId:nor2.id, fromPort:0, toId:outQb.id, toPort:0});
+      wires.push({fromId:nor2.id, fromPort:0, toId:nor1.id, toPort:1});
+      propagate(); drawCircuit();
+    }
+
     // Clear button
     var clearBtn = document.getElementById('circuit-clear-btn');
     if (clearBtn) {
       clearBtn.addEventListener('click', function() {
-        gates.length = 0; wires.length = 0; wireStart = null; nextId = 1;
-        drawCircuit();
+        clearAll(); drawCircuit();
       });
     }
 
-    // Preset: Full Adder
+    // Preset buttons
     var presetAdder = document.getElementById('preset-adder');
-    if (presetAdder) {
-      presetAdder.addEventListener('click', function() {
-        gates.length = 0; wires.length = 0; wireStart = null; nextId = 1;
-        var inA  = createGate('INPUT', 40, 40);
-        var inB  = createGate('INPUT', 40, 120);
-        var inCin = createGate('INPUT', 40, 280);
-        var xor1 = createGate('XOR', 180, 60);
-        var and2 = createGate('AND', 180, 180);
-        var xor2 = createGate('XOR', 360, 100);
-        var and1 = createGate('AND', 360, 220);
-        var or1  = createGate('OR', 540, 160);
-        var outSum = createGate('OUTPUT', 520, 100);
-        var outCout = createGate('OUTPUT', 700, 160);
-        // A → XOR1.0, AND2.0
-        wires.push({fromId:inA.id, fromPort:0, toId:xor1.id, toPort:0});
-        wires.push({fromId:inA.id, fromPort:0, toId:and2.id, toPort:0});
-        // B → XOR1.1, AND2.1
-        wires.push({fromId:inB.id, fromPort:0, toId:xor1.id, toPort:1});
-        wires.push({fromId:inB.id, fromPort:0, toId:and2.id, toPort:1});
-        // XOR1 → XOR2.0, AND1.0
-        wires.push({fromId:xor1.id, fromPort:0, toId:xor2.id, toPort:0});
-        wires.push({fromId:xor1.id, fromPort:0, toId:and1.id, toPort:0});
-        // Cin → XOR2.1, AND1.1
-        wires.push({fromId:inCin.id, fromPort:0, toId:xor2.id, toPort:1});
-        wires.push({fromId:inCin.id, fromPort:0, toId:and1.id, toPort:1});
-        // XOR2 → Sum
-        wires.push({fromId:xor2.id, fromPort:0, toId:outSum.id, toPort:0});
-        // AND1 → OR.0
-        wires.push({fromId:and1.id, fromPort:0, toId:or1.id, toPort:0});
-        // AND2 → OR.1
-        wires.push({fromId:and2.id, fromPort:0, toId:or1.id, toPort:1});
-        // OR → Cout
-        wires.push({fromId:or1.id, fromPort:0, toId:outCout.id, toPort:0});
-        propagate(); drawCircuit();
-      });
-    }
+    if (presetAdder) presetAdder.addEventListener('click', loadFullAdder);
 
-    // Preset: SR Latch
     var presetSR = document.getElementById('preset-sr-latch');
-    if (presetSR) {
-      presetSR.addEventListener('click', function() {
-        gates.length = 0; wires.length = 0; wireStart = null; nextId = 1;
-        var inS = createGate('INPUT', 40, 60);
-        var inR = createGate('INPUT', 40, 280);
-        var nor1 = createGate('NOR', 240, 80);
-        var nor2 = createGate('NOR', 240, 260);
-        var outQ = createGate('OUTPUT', 500, 80);
-        var outQb = createGate('OUTPUT', 500, 260);
-        // S → NOR1.0
-        wires.push({fromId:inS.id, fromPort:0, toId:nor1.id, toPort:0});
-        // R → NOR2.1
-        wires.push({fromId:inR.id, fromPort:0, toId:nor2.id, toPort:1});
-        // NOR1 → outQ, and NOR2.0 (cross-coupling)
-        wires.push({fromId:nor1.id, fromPort:0, toId:outQ.id, toPort:0});
-        wires.push({fromId:nor1.id, fromPort:0, toId:nor2.id, toPort:0});
-        // NOR2 → outQb, and NOR1.1 (cross-coupling)
-        wires.push({fromId:nor2.id, fromPort:0, toId:outQb.id, toPort:0});
-        wires.push({fromId:nor2.id, fromPort:0, toId:nor1.id, toPort:1});
-        propagate(); drawCircuit();
-      });
-    }
+    if (presetSR) presetSR.addEventListener('click', loadSRLatch);
 
-    drawCircuit();
+    // Default: load full adder on init
+    loadFullAdder();
   }
 }
 
