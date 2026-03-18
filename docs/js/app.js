@@ -26442,8 +26442,8 @@ function initCh15Vis() {
 
     // --- Draw Earth ---
     // --- Planet images ---
-    const earthImg = new Image(); earthImg.src = '../images/earth_transparent.png';
-    const jupiterImg = new Image(); jupiterImg.src = '../images/jupiter_transparent.png';
+    const earthImg = new Image(); earthImg.src = 'images/earth_transparent.png';
+    const jupiterImg = new Image(); jupiterImg.src = 'images/jupiter_transparent.png';
     let planetsLoaded = 0;
     earthImg.onload = jupiterImg.onload = () => { if (++planetsLoaded >= 2) drawSizes(); };
 
