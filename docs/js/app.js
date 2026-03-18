@@ -13162,6 +13162,23 @@ function initCh11Vis() {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
   }
 
+  // Compute approximate blackbody color from spectrum
+  function bbColor(T) {
+    let R = 0, G = 0, B = 0, norm = 0;
+    for (let lam = 380; lam <= 700; lam += 5) {
+      const x = hc_over_k / (lam * T);
+      if (x > 500) continue;
+      const intensity = 1 / (Math.pow(lam, 5) * (Math.exp(x) - 1));
+      const [r, g, b] = bbWavelengthToRGB(lam);
+      R += intensity * r; G += intensity * g; B += intensity * b;
+      norm += intensity;
+    }
+    if (norm > 0) { R /= norm; G /= norm; B /= norm; }
+    const mx = Math.max(R, G, B);
+    if (mx > 0) { R /= mx; G /= mx; B /= mx; }
+    return [Math.round(R * 255), Math.round(G * 255), Math.round(B * 255)];
+  }
+
   function draw() {
     const T = parseFloat(tempSlider?.value || 5000);
     clearCanvas(ctx, W, H);
@@ -13179,19 +13196,15 @@ function initCh11Vis() {
     const lamMin = 100, lamMax = 3000;
     const nPts = 500;
 
-    const temps = [T * 0.6, T * 0.8, T, T * 1.4];
-    const colors = [COLORS.blue, COLORS.green, COLORS.orange, COLORS.red];
-
-    // Find global max for normalization
-    let globalMax = 0;
-    temps.forEach(Tk => {
-      for (let i = 1; i <= nPts; i++) {
-        const lam = lamMin + (lamMax - lamMin) * i / nPts;
-        const val = planckLambda(lam, Tk);
-        if (isFinite(val) && val > globalMax) globalMax = val;
-      }
-    });
-    if (globalMax === 0) globalMax = 1;
+    // Normalize to the current temperature's peak so the curve
+    // always fills the plot nicely
+    let peakMax = 0;
+    for (let i = 1; i <= nPts; i++) {
+      const lam = lamMin + (lamMax - lamMin) * i / nPts;
+      const val = planckLambda(lam, T);
+      if (isFinite(val) && val > peakMax) peakMax = val;
+    }
+    const scale = peakMax > 0 ? peakMax * 1.15 : 1;
 
     // Visible spectrum band (380-780 nm)
     const visLeft = ox + (380 - lamMin) / (lamMax - lamMin) * pw;
@@ -13203,29 +13216,44 @@ function initCh11Vis() {
       ctx.fillRect(px, oy, 1, ph);
     }
 
-    // Draw Planck curves
-    temps.forEach((Tk, idx) => {
-      ctx.strokeStyle = colors[idx];
-      ctx.lineWidth = idx === 2 ? 3 : 2;
-      ctx.beginPath();
-      for (let i = 0; i <= nPts; i++) {
-        const lam = lamMin + (lamMax - lamMin) * i / nPts;
-        const val = planckLambda(lam, Tk);
-        const normVal = val / globalMax;
-        const canvX = ox + (lam - lamMin) / (lamMax - lamMin) * pw;
-        const canvY = xAxis - normVal * ph * 0.92;
-        i === 0 ? ctx.moveTo(canvX, canvY) : ctx.lineTo(canvX, canvY);
-      }
-      ctx.stroke();
-    });
+    // Fill under the curve with blackbody color
+    const [cr, cg, cb] = bbColor(T);
+    ctx.beginPath();
+    ctx.moveTo(ox, xAxis);
+    for (let i = 0; i <= nPts; i++) {
+      const lam = lamMin + (lamMax - lamMin) * i / nPts;
+      const val = planckLambda(lam, T);
+      const normVal = Math.min(val / scale, 1);
+      const canvX = ox + (lam - lamMin) / (lamMax - lamMin) * pw;
+      const canvY = xAxis - normVal * ph;
+      ctx.lineTo(canvX, canvY);
+    }
+    ctx.lineTo(ox + pw, xAxis);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.12)';
+    ctx.fill();
 
-    // Wien peak for selected temperature
+    // Draw the Planck curve
+    ctx.strokeStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const lam = lamMin + (lamMax - lamMin) * i / nPts;
+      const val = planckLambda(lam, T);
+      const normVal = Math.min(val / scale, 1);
+      const canvX = ox + (lam - lamMin) / (lamMax - lamMin) * pw;
+      const canvY = xAxis - normVal * ph;
+      i === 0 ? ctx.moveTo(canvX, canvY) : ctx.lineTo(canvX, canvY);
+    }
+    ctx.stroke();
+
+    // Wien peak marker
     const lamPeak = 2898000 / T;
     if (lamPeak > lamMin && lamPeak < lamMax) {
       const peakX = ox + (lamPeak - lamMin) / (lamMax - lamMin) * pw;
-      const peakVal = planckLambda(lamPeak, T) / globalMax;
-      const peakY = xAxis - peakVal * ph * 0.92;
-      ctx.strokeStyle = COLORS.cyan;
+      const peakVal = Math.min(planckLambda(lamPeak, T) / scale, 1);
+      const peakY = xAxis - peakVal * ph;
+      ctx.strokeStyle = COLORS.text;
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 4]);
       ctx.beginPath();
@@ -13233,32 +13261,25 @@ function initCh11Vis() {
       ctx.lineTo(peakX, xAxis);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = COLORS.cyan;
+      ctx.fillStyle = COLORS.text;
       ctx.font = FONT_SM;
       ctx.textAlign = 'center';
-      ctx.fillText('\u03BB_peak = ' + lamPeak.toFixed(0) + ' nm', peakX, peakY - 8);
+      ctx.fillText('\u03BB_peak = ' + lamPeak.toFixed(0) + ' nm', peakX, Math.max(peakY - 8, oy + 10));
     }
 
-    // Legend
-    temps.forEach((Tk, idx) => {
-      const legY = oy + 8 + idx * 16;
-      ctx.strokeStyle = colors[idx];
-      ctx.lineWidth = idx === 2 ? 3 : 2;
-      ctx.beginPath();
-      ctx.moveTo(W - 145, legY);
-      ctx.lineTo(W - 120, legY);
-      ctx.stroke();
-      ctx.fillStyle = colors[idx];
-      ctx.font = FONT_SM;
-      ctx.textAlign = 'left';
-      ctx.fillText(Tk.toFixed(0) + ' K', W - 115, legY + 4);
-    });
-
-    // Title
+    // Blackbody color swatch + temperature
+    const swX = W - 130, swY = oy + 4, swS = 18;
+    ctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+    ctx.beginPath();
+    ctx.arc(swX + swS / 2, swY + swS / 2, swS / 2, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
     ctx.fillStyle = COLORS.text;
     ctx.font = FONT_LG;
     ctx.textAlign = 'left';
-    ctx.fillText('Blackbody Spectrum  I(\u03BB, T)', ox + 5, oy - 10);
+    ctx.fillText('T = ' + T + ' K', swX + swS + 6, swY + 14);
 
     // X-axis tick labels
     ctx.fillStyle = COLORS.textDim;
@@ -13285,23 +13306,23 @@ function initCh11Vis() {
 
     const STARS = {
       betelgeuse: { name: 'Betelgeuse', type: 'Red supergiant (M1-2 Ia)', T: 3500,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Betelgeuse_captured_by_ALMA.jpg/220px-Betelgeuse_captured_by_ALMA.jpg' },
+        img: 'images/stars/betelgeuse.jpg' },
       antares:    { name: 'Antares', type: 'Red supergiant (M1.5 Iab)', T: 3400,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Antares_near_Scorpius.jpg/220px-Antares_near_Scorpius.jpg' },
+        img: 'images/stars/antares.jpg' },
       aldebaran:  { name: 'Aldebaran', type: 'Orange giant (K5 III)', T: 3900,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Aldebaran-2MASS.jpg/220px-Aldebaran-2MASS.jpg' },
+        img: 'images/stars/aldebaran.jpg' },
       sun:        { name: 'Sun', type: 'Yellow dwarf (G2 V)', T: 5778,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/220px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg' },
+        img: 'images/stars/sun.jpg' },
       procyon:    { name: 'Procyon', type: 'Yellow-white subgiant (F5 IV-V)', T: 6530,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Procyon_seen_from_Hubble.jpg/220px-Procyon_seen_from_Hubble.jpg' },
+        img: 'images/stars/procyon.jpg' },
       sirius:     { name: 'Sirius', type: 'White main-sequence (A1 V)', T: 9940,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Sirius_A_and_B_artwork.jpg/220px-Sirius_A_and_B_artwork.jpg' },
+        img: 'images/stars/sirius.jpg' },
       vega:       { name: 'Vega', type: 'White main-sequence (A0 V)', T: 9602,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Vega_in_lyra.jpg/220px-Vega_in_lyra.jpg' },
+        img: 'images/stars/vega.jpg' },
       rigel:      { name: 'Rigel', type: 'Blue supergiant (B8 Ia)', T: 12100,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Rigel_in_Orion_%28with_armature_diffraction_spikes%29.jpg/220px-Rigel_in_Orion_%28with_armature_diffraction_spikes%29.jpg' },
+        img: 'images/stars/rigel.jpg' },
       spica:      { name: 'Spica', type: 'Blue giant (B1 III-IV)', T: 25400,
-        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Spica_star_%28Hubble%29.jpg/220px-Spica_star_%28Hubble%29.jpg' }
+        img: 'images/stars/spica.jpg' }
     };
 
     // Preload images
@@ -13468,12 +13489,36 @@ function initCh11Vis() {
     drawStellar();
   }
 
-  // ----- Lambert's Cosine Law -----
+  // ----- Lambert's Cosine Law (animated photon simulation) -----
   const cLambert = document.getElementById('vis-lambert');
   if (cLambert) {
     const lam = setupCanvas(cLambert);
     const ctxL = lam.ctx, WL = lam.W, HL = lam.H;
     const lambertSlider = document.getElementById('lambert-theta');
+
+    // Photon particle pool
+    const LB_MAX = 150;
+    const lbPhotons = [];
+    let lbEmitAccum = 0;
+    const LB_EMIT_RATE = 2.0;
+
+    // Layout
+    const lbSurfCx = WL * 0.35, lbSurfY = HL * 0.82;
+    const lbSurfHalf = 60;
+    const lbDetDist = 230, lbDetHalf = 48;
+
+    function lbEmit() {
+      const sx = lbSurfCx + (Math.random() - 0.5) * 2 * lbSurfHalf * 0.8;
+      const ang = (Math.random() - 0.5) * Math.PI;
+      const spd = 1.6 + Math.random();
+      return { x: sx, y: lbSurfY, vx: Math.sin(ang) * spd, vy: -Math.cos(ang) * spd, alive: true, age: 0, hit: false };
+    }
+
+    function lbPtSeg(px, py, ax, ay, bx, by) {
+      const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+      const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+      return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+    }
 
     function drawLambert() {
       const thetaDeg = parseFloat(lambertSlider?.value || 0);
@@ -13649,8 +13694,7 @@ function initCh11Vis() {
       document.getElementById('lambert-theta-val')?.replaceChildren(document.createTextNode(thetaDeg.toFixed(0)));
     }
 
-    lambertSlider?.addEventListener('input', drawLambert);
-    drawLambert();
+    // replaced below
   }
 
   // ----- Debye Model Heat Capacity -----
