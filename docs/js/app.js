@@ -18262,11 +18262,11 @@ function initCh14Vis() {
         leftLevels: [{e: 0.65, label: '2s', n: 2}, {e: 0.4, label: '2p', n: 3}],
         rightLevels: [{e: 0.65, label: '2s', n: 2}, {e: 0.4, label: '2p', n: 3}],
         moLevels: [
-          {e: 0.18, label: 'σ₂ₛ', n: 2, type: 'bonding'},
-          {e: 0.28, label: 'π₂ₚ', n: 4, type: 'bonding'},
-          {e: 0.35, label: 'σ₂ₚ', n: 2, type: 'bonding'},
-          {e: 0.58, label: 'π*₂ₚ', n: 0, type: 'antibonding'},
-          {e: 0.72, label: 'σ*₂ₛ', n: 2, type: 'antibonding'},
+          {e: 0.15, label: 'σ₂ₛ', n: 2, type: 'bonding'},
+          {e: 0.25, label: 'σ*₂ₛ', n: 2, type: 'antibonding'},
+          {e: 0.38, label: 'π₂ₚ', n: 4, type: 'bonding'},
+          {e: 0.45, label: 'σ₂ₚ', n: 2, type: 'bonding'},
+          {e: 0.65, label: 'π*₂ₚ', n: 0, type: 'antibonding'},
           {e: 0.82, label: 'σ*₂ₚ', n: 0, type: 'antibonding'}
         ],
         bondOrder: 3
