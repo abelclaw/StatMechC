@@ -16073,260 +16073,316 @@ function initCh12Vis() {
   }
 
 
-  // ----- Why does mu=0 break down? Energy level diagram -----
+  // ----- Why does mu=0 break down? Split: fraction plot + energy levels -----
   const cN1 = document.getElementById('vis-n1-compare');
   if (cN1) {
     const { ctx: ctxN1, W: WN1, H: HN1 } = setupCanvas(cN1);
     const n1TempSlider = document.getElementById('n1-temp');
 
-    const N_PARTICLES = 200;
+    const N_PART = 200;
+    const tMax = 2.0;
 
-    // Precompute 3D box energy levels and multiplicities
-    function buildEnergyLevels(maxQ) {
-      const emap = new Map();
-      for (let nx = 0; nx <= maxQ; nx++) {
-        for (let ny = 0; ny <= maxQ; ny++) {
-          for (let nz = 0; nz <= maxQ; nz++) {
-            const eps = nx * nx + ny * ny + nz * nz;
-            emap.set(eps, (emap.get(eps) || 0) + 1);
-          }
+    // Precompute 3D box energy levels
+    const emap = new Map();
+    for (let nx = 0; nx <= 15; nx++)
+      for (let ny = 0; ny <= 15; ny++)
+        for (let nz = 0; nz <= 15; nz++) {
+          const eps = nx * nx + ny * ny + nz * nz;
+          emap.set(eps, (emap.get(eps) || 0) + 1);
         }
-      }
-      emap.delete(0);
-      return Array.from(emap.entries()).sort((a, b) => a[0] - b[0]);
-    }
+    emap.delete(0);
+    const excLevels = Array.from(emap.entries()).sort((a, b) => a[0] - b[0]);
 
-    const excitedLevels = buildEnergyLevels(15);
-    // Collect distinct energy values for display (ground + first ~7 excited)
-    const displayEnergies = [0];
-    for (let j = 0; j < Math.min(excitedLevels.length, 7); j++) {
-      displayEnergies.push(excitedLevels[j][0]);
-    }
-    const displayMults = [1];
-    for (let j = 0; j < Math.min(excitedLevels.length, 7); j++) {
-      displayMults.push(excitedLevels[j][1]);
-    }
+    // Display levels for diagram: ground + first 6 excited
+    const dispEps = [0], dispMult = [1];
+    for (let j = 0; j < 6; j++) { dispEps.push(excLevels[j][0]); dispMult.push(excLevels[j][1]); }
 
-    function solveForMu(betaEps1) {
-      let muLo = -200 / betaEps1, muHi = -1e-8;
-      for (let iter = 0; iter < 100; iter++) {
-        const muMid = (muLo + muHi) / 2;
+    const TcScaled = 0.8 * Math.pow(N_PART, 2.0 / 3.0);
+
+    function solveMu(betaEps1) {
+      let lo = -200 / betaEps1, hi = -1e-8;
+      for (let i = 0; i < 100; i++) {
+        const mid = (lo + hi) / 2;
         let Nex = 0;
-        for (let j = 0; j < excitedLevels.length; j++) {
-          const [eps, mult] = excitedLevels[j];
-          const arg = betaEps1 * (eps - muMid);
+        for (let j = 0; j < excLevels.length; j++) {
+          const [eps, mult] = excLevels[j];
+          const arg = betaEps1 * (eps - mid);
           if (arg > 40) break;
-          if (arg < -40) { Nex += mult * 1e6; break; }
+          if (arg < -40) { Nex = N_PART * 5; break; }
           Nex += mult / (Math.exp(arg) - 1);
-          if (Nex > N_PARTICLES * 3) break;
+          if (Nex > N_PART * 3) break;
         }
-        const Ng = 1.0 / (Math.exp(-betaEps1 * muMid) - 1);
-        if (Ng + Nex > N_PARTICLES) muHi = muMid; else muLo = muMid;
+        const Ng = 1.0 / (Math.exp(-betaEps1 * mid) - 1);
+        if (Ng + Nex > N_PART) hi = mid; else lo = mid;
       }
-      return (muLo + muHi) / 2;
+      return (lo + hi) / 2;
     }
 
-    // Get per-level occupation for a given mu and betaEps1
-    function getOccupations(mu, betaEps1) {
-      const occs = [];
-      // Ground state (eps=0)
-      const argG = -betaEps1 * mu;
-      occs.push(argG > 40 ? 0 : Math.max(0, 1.0 / (Math.exp(argG) - 1)));
-      // Excited states
-      for (let j = 0; j < Math.min(excitedLevels.length, 7); j++) {
-        const [eps, mult] = excitedLevels[j];
-        const arg = betaEps1 * (eps - mu);
-        // Per-state (not per-level) occupation
-        occs.push(arg > 40 ? 0 : Math.max(0, 1.0 / (Math.exp(arg) - 1)));
+    // Precompute fraction curves (exact + approx)
+    const nPts = 200;
+    const exactFrac = [], approxFrac = [];
+    for (let i = 0; i <= nPts; i++) {
+      const tR = (i / nPts) * tMax;
+      if (tR < 0.01) { exactFrac.push(1); approxFrac.push(1); continue; }
+      const beta = 1.0 / (tR * TcScaled);
+      const mu = solveMu(beta);
+      const Ng = 1.0 / (Math.exp(-beta * mu) - 1);
+      exactFrac.push(Math.max(0, Math.min(1, Ng / N_PART)));
+
+      let Nex = 0;
+      for (let j = 0; j < excLevels.length; j++) {
+        const [eps, mult] = excLevels[j];
+        const arg = beta * eps;
+        if (arg > 40) break;
+        Nex += mult / (Math.exp(arg) - 1);
       }
-      return occs;
+      approxFrac.push((N_PART - Nex) / N_PART); // can go negative
     }
 
     function drawN1Compare() {
       clearCanvas(ctxN1, WN1, HN1);
-      const tRatio = parseFloat(n1TempSlider?.value || 0.5);
-      document.getElementById('n1-temp-val')?.replaceChildren(document.createTextNode(tRatio.toFixed(2)));
+      const tR = parseFloat(n1TempSlider?.value || 0.5);
+      document.getElementById('n1-temp-val')?.replaceChildren(document.createTextNode(tR.toFixed(2)));
 
-      const TcScaled = 0.8 * Math.pow(N_PARTICLES, 2.0 / 3.0);
-      const T_abs = Math.max(0.01, tRatio * TcScaled);
-      const betaEps1 = 1.0 / T_abs;
+      // ========== LAYOUT ==========
+      // Left: fraction plot; Right: energy level diagram
+      const gap = 20;
+      const leftW = Math.floor(WN1 * 0.52);
+      const rightW = WN1 - leftW - gap;
 
-      // Solve exact mu
-      const muExact = solveForMu(betaEps1);
+      // Left plot area
+      const ox = 52, oy = 36, pw = leftW - ox - 8, ph = HN1 - 82;
+      // Right diagram area
+      const rx = leftW + gap, ry = 36, rw = rightW - 8, rh = HN1 - 82;
 
-      // Get exact occupations (using true mu)
-      const exactOccs = getOccupations(muExact, betaEps1);
+      // ========== LEFT: FRACTION PLOT ==========
+      // Axes
+      ctxN1.strokeStyle = COLORS.axis; ctxN1.lineWidth = 1;
+      ctxN1.beginPath(); ctxN1.moveTo(ox, oy); ctxN1.lineTo(ox, oy + ph); ctxN1.lineTo(ox + pw, oy + ph); ctxN1.stroke();
 
-      // Get approximate occupations (mu=0 for excited states, N_ground = N - N_excited)
+      // Grid + Y labels
+      ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'right';
+      for (let y = 0; y <= 1.01; y += 0.25) {
+        const py = oy + ph - y * ph;
+        ctxN1.strokeStyle = COLORS.grid; ctxN1.lineWidth = 0.5;
+        ctxN1.beginPath(); ctxN1.moveTo(ox, py); ctxN1.lineTo(ox + pw, py); ctxN1.stroke();
+        ctxN1.fillText(y.toFixed(2), ox - 4, py + 4);
+      }
+      ctxN1.save(); ctxN1.translate(14, oy + ph / 2); ctxN1.rotate(-Math.PI / 2);
+      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
+      ctxN1.fillText('N\u2080 / N', 0, 0); ctxN1.restore();
+
+      // X labels
+      ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
+      for (let t = 0; t <= tMax; t += 0.5) {
+        const x = ox + (t / tMax) * pw;
+        ctxN1.fillText(t.toFixed(1), x, oy + ph + 13);
+      }
+      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT_SM;
+      ctxN1.fillText('T / T\u2091', ox + pw / 2, oy + ph + 27);
+
+      // Tc vertical
+      const tcPx = ox + (1 / tMax) * pw;
+      ctxN1.strokeStyle = 'rgba(255,238,88,0.3)'; ctxN1.lineWidth = 1; ctxN1.setLineDash([4, 3]);
+      ctxN1.beginPath(); ctxN1.moveTo(tcPx, oy); ctxN1.lineTo(tcPx, oy + ph); ctxN1.stroke();
+      ctxN1.setLineDash([]);
+      ctxN1.fillStyle = COLORS.yellow; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
+      ctxN1.fillText('T\u2091', tcPx, oy - 4);
+
+      // Validity shading
+      ctxN1.fillStyle = 'rgba(102,187,106,0.05)';
+      ctxN1.fillRect(ox, oy, tcPx - ox, ph);
+      ctxN1.fillStyle = 'rgba(239,83,80,0.05)';
+      ctxN1.fillRect(tcPx, oy, ox + pw - tcPx, ph);
+
+      // Clip to plot area for curves
+      ctxN1.save();
+      ctxN1.beginPath(); ctxN1.rect(ox, oy, pw, ph); ctxN1.clip();
+
+      // Approximate curve (dashed orange) — allow it to go negative to show the extrapolation
+      ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 2.5; ctxN1.setLineDash([8, 5]);
+      ctxN1.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const x = ox + (i / nPts) * pw;
+        const frac = Math.max(-0.2, approxFrac[i]);
+        const y = oy + ph - frac * ph;
+        i === 0 ? ctxN1.moveTo(x, y) : ctxN1.lineTo(x, y);
+      }
+      ctxN1.stroke(); ctxN1.setLineDash([]);
+
+      // Shaded error region between exact and approx
+      ctxN1.fillStyle = 'rgba(255,167,38,0.1)';
+      ctxN1.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const x = ox + (i / nPts) * pw;
+        const y = oy + ph - Math.max(-0.2, approxFrac[i]) * ph;
+        i === 0 ? ctxN1.moveTo(x, y) : ctxN1.lineTo(x, y);
+      }
+      for (let i = nPts; i >= 0; i--) {
+        const x = ox + (i / nPts) * pw;
+        const y = oy + ph - Math.max(0, exactFrac[i]) * ph;
+        ctxN1.lineTo(x, y);
+      }
+      ctxN1.closePath(); ctxN1.fill();
+
+      // Exact curve (solid blue)
+      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 2.5;
+      ctxN1.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const x = ox + (i / nPts) * pw;
+        const y = oy + ph - Math.max(0, exactFrac[i]) * ph;
+        i === 0 ? ctxN1.moveTo(x, y) : ctxN1.lineTo(x, y);
+      }
+      ctxN1.stroke();
+
+      ctxN1.restore(); // unclip
+
+      // Current temperature marker on plot
+      const curX = ox + (tR / tMax) * pw;
+      ctxN1.strokeStyle = COLORS.text; ctxN1.lineWidth = 1; ctxN1.setLineDash([3, 3]);
+      ctxN1.beginPath(); ctxN1.moveTo(curX, oy); ctxN1.lineTo(curX, oy + ph); ctxN1.stroke();
+      ctxN1.setLineDash([]);
+
+      // Dots at current T
+      const idx = Math.round((tR / tMax) * nPts);
+      const eF = Math.max(0, exactFrac[idx]);
+      const aF = approxFrac[idx];
+      ctxN1.fillStyle = COLORS.blue;
+      ctxN1.beginPath(); ctxN1.arc(curX, oy + ph - eF * ph, 4, 0, Math.PI * 2); ctxN1.fill();
+      if (aF >= -0.2 && aF <= 1) {
+        ctxN1.fillStyle = COLORS.orange;
+        ctxN1.beginPath(); ctxN1.arc(curX, oy + ph - Math.max(-0.2, aF) * ph, 4, 0, Math.PI * 2); ctxN1.fill();
+      }
+
+      // Legend
+      const lx = ox + 4, ly = oy + 4;
+      ctxN1.font = FONT_SM; ctxN1.textAlign = 'left';
+      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 2.5; ctxN1.setLineDash([]);
+      ctxN1.beginPath(); ctxN1.moveTo(lx, ly + 4); ctxN1.lineTo(lx + 16, ly + 4); ctxN1.stroke();
+      ctxN1.fillStyle = COLORS.blue; ctxN1.fillText('Exact', lx + 20, ly + 8);
+      ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 2; ctxN1.setLineDash([8, 5]);
+      ctxN1.beginPath(); ctxN1.moveTo(lx, ly + 17); ctxN1.lineTo(lx + 16, ly + 17); ctxN1.stroke();
+      ctxN1.setLineDash([]);
+      ctxN1.fillStyle = COLORS.orange; ctxN1.fillText('\u03BC = 0', lx + 20, ly + 21);
+
+      // ========== RIGHT: ENERGY LEVEL DIAGRAM ==========
+      const beta = 1.0 / Math.max(0.01, tR * TcScaled);
+      const muExact = solveMu(beta);
+
+      // Exact occupations
+      const exactOccs = [];
+      const argG = -beta * muExact;
+      exactOccs.push(argG > 40 ? 0 : Math.max(0, 1.0 / (Math.exp(argG) - 1)));
+      for (let j = 0; j < 6; j++) {
+        const [eps] = excLevels[j];
+        const arg = beta * (eps - muExact);
+        exactOccs.push(arg > 40 ? 0 : Math.max(0, 1.0 / (Math.exp(arg) - 1)));
+      }
+
+      // Approx occupations (mu=0: excited from formula, ground = N - N_excited)
       const approxOccs = [];
-      let approxNex = 0;
-      for (let j = 0; j < Math.min(excitedLevels.length, 7); j++) {
-        const [eps, mult] = excitedLevels[j];
-        const arg = betaEps1 * eps; // mu=0 so just beta*eps
+      let aNex = 0;
+      for (let j = 0; j < 6; j++) {
+        const [eps, mult] = excLevels[j];
+        const arg = beta * eps;
         const occ = arg > 40 ? 0 : Math.max(0, 1.0 / (Math.exp(arg) - 1));
         approxOccs.push(occ);
-        approxNex += occ * mult;
+        aNex += occ * mult;
       }
-      // Also count excited levels beyond the displayed ones
-      for (let j = 7; j < excitedLevels.length; j++) {
-        const [eps, mult] = excitedLevels[j];
-        const arg = betaEps1 * eps;
+      for (let j = 6; j < excLevels.length; j++) {
+        const [eps, mult] = excLevels[j];
+        const arg = beta * eps;
         if (arg > 40) break;
-        approxNex += mult / (Math.exp(arg) - 1);
+        aNex += mult / (Math.exp(arg) - 1);
       }
-      const approxN0 = Math.max(0, N_PARTICLES - approxNex);
-      approxOccs.unshift(approxN0); // ground state at index 0
+      approxOccs.unshift(Math.max(0, N_PART - aNex));
 
-      // Layout
-      const margin = { top: 50, bottom: 50, left: 40, right: 40 };
-      const centerGap = 90; // gap in the middle for energy labels
-      const panelW = (WN1 - margin.left - margin.right - centerGap) / 2;
-      const panelH = HN1 - margin.top - margin.bottom;
-      const leftX = margin.left;
-      const rightX = margin.left + panelW + centerGap;
-      const topY = margin.top;
-
-      // Energy range for vertical mapping
-      const maxEps = displayEnergies[displayEnergies.length - 1];
-      // Map energy to y: ground state at bottom, highest at top
+      // Vertical energy mapping
+      const maxEps = dispEps[dispEps.length - 1];
       function epsToY(eps) {
-        // Use sqrt scaling so lower levels are more spread out
         const frac = Math.sqrt(eps / maxEps);
-        return topY + panelH * 0.05 + (1 - frac) * panelH * 0.85;
+        return ry + rh * 0.05 + (1 - frac) * rh * 0.82;
       }
 
-      // Max occupation for circle sizing
+      // Max occupation for sizing
       let maxOcc = 1;
-      for (let i = 0; i < exactOccs.length; i++) {
-        maxOcc = Math.max(maxOcc, exactOccs[i], approxOccs[i]);
-      }
-      const maxRadius = Math.min(panelW * 0.35, 35);
-      function occToR(occ) {
-        if (occ < 0.01) return 0;
-        return Math.sqrt(occ / maxOcc) * maxRadius;
-      }
+      for (let i = 0; i < exactOccs.length; i++) maxOcc = Math.max(maxOcc, exactOccs[i], approxOccs[i]);
+      const maxR = Math.min(rw * 0.18, 26);
+      function occToR(occ) { return occ < 0.1 ? 0 : Math.sqrt(occ / maxOcc) * maxR; }
 
-      // ---- Panel labels ----
-      ctxN1.font = FONT_LG; ctxN1.textAlign = 'center';
+      // Panel headers
+      ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
       ctxN1.fillStyle = COLORS.blue;
-      ctxN1.fillText('Exact (\u03BC solved)', leftX + panelW / 2, topY - 20);
+      ctxN1.fillText('Exact \u03BC', rx + rw * 0.25, ry - 4);
       ctxN1.fillStyle = COLORS.orange;
-      ctxN1.fillText('\u03BC = 0 approximation', rightX + panelW / 2, topY - 20);
+      ctxN1.fillText('\u03BC = 0', rx + rw * 0.75, ry - 4);
 
-      // Temperature indicator
-      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT; ctxN1.textAlign = 'center';
-      const tempLabel = 'T/T\u2091 = ' + tRatio.toFixed(2);
-      const phaseLabel = tRatio <= 1.0 ? '  (BEC phase)' : '  (normal phase)';
-      ctxN1.fillText(tempLabel + phaseLabel, WN1 / 2, topY - 4);
+      // Draw energy levels
+      for (let i = 0; i < dispEps.length; i++) {
+        const y = epsToY(dispEps[i]);
+        // Level lines
+        ctxN1.strokeStyle = 'rgba(255,255,255,0.1)'; ctxN1.lineWidth = 1;
+        ctxN1.beginPath(); ctxN1.moveTo(rx, y); ctxN1.lineTo(rx + rw, y); ctxN1.stroke();
 
-      // ---- Draw energy levels as horizontal lines ----
-      for (let i = 0; i < displayEnergies.length; i++) {
-        const eps = displayEnergies[i];
-        const y = epsToY(eps);
+        // Energy label (center divider)
+        ctxN1.fillStyle = 'rgba(255,255,255,0.25)'; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
+        ctxN1.fillText(dispEps[i] === 0 ? '\u03B5=0' : dispEps[i], rx + rw / 2, y - 2);
 
-        // Left panel level line
-        ctxN1.strokeStyle = 'rgba(255,255,255,0.12)'; ctxN1.lineWidth = 1;
-        ctxN1.beginPath();
-        ctxN1.moveTo(leftX, y); ctxN1.lineTo(leftX + panelW, y);
-        ctxN1.stroke();
-
-        // Right panel level line
-        ctxN1.beginPath();
-        ctxN1.moveTo(rightX, y); ctxN1.lineTo(rightX + panelW, y);
-        ctxN1.stroke();
-
-        // Energy label in center
-        ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-        const epsLabel = eps === 0 ? '\u03B5 = 0' : '\u03B5 = ' + eps;
-        const multLabel = '(g = ' + displayMults[i] + ')';
-        ctxN1.fillText(epsLabel, WN1 / 2, y - 3);
-        ctxN1.fillStyle = 'rgba(255,255,255,0.2)';
-        ctxN1.fillText(multLabel, WN1 / 2, y + 10);
-      }
-
-      // ---- Draw mu lines ----
-      // Exact mu (on left panel)
-      const muClampedExact = Math.max(-maxEps * 0.3, muExact);
-      const muYExact = epsToY(Math.max(0, muExact));
-      // For negative mu, extrapolate below the ground state
-      let muYDraw;
-      if (muExact >= 0) {
-        muYDraw = epsToY(0);
-      } else {
-        const groundY = epsToY(0);
-        const firstY = epsToY(displayEnergies[1]);
-        const epsPerPx = displayEnergies[1] / (groundY - firstY);
-        muYDraw = Math.min(groundY + Math.abs(muExact) / epsPerPx, topY + panelH + 5);
-      }
-      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 2; ctxN1.setLineDash([6, 4]);
-      ctxN1.beginPath();
-      ctxN1.moveTo(leftX, muYDraw); ctxN1.lineTo(leftX + panelW, muYDraw);
-      ctxN1.stroke();
-      ctxN1.setLineDash([]);
-      ctxN1.fillStyle = COLORS.blue; ctxN1.font = FONT_SM; ctxN1.textAlign = 'left';
-      ctxN1.fillText('\u03BC = ' + muExact.toFixed(2), leftX + 2, muYDraw - 6);
-
-      // Approx mu (on right panel) — always at eps=0
-      const muYApprox = epsToY(0);
-      ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 2; ctxN1.setLineDash([6, 4]);
-      ctxN1.beginPath();
-      ctxN1.moveTo(rightX, muYApprox); ctxN1.lineTo(rightX + panelW, muYApprox);
-      ctxN1.stroke();
-      ctxN1.setLineDash([]);
-      ctxN1.fillStyle = COLORS.orange; ctxN1.font = FONT_SM; ctxN1.textAlign = 'right';
-      ctxN1.fillText('\u03BC = 0', rightX + panelW - 2, muYApprox - 6);
-
-      // ---- Draw occupation circles ----
-      for (let i = 0; i < displayEnergies.length; i++) {
-        const eps = displayEnergies[i];
-        const y = epsToY(eps);
-
-        // Exact (left, blue)
-        const rExact = occToR(exactOccs[i]);
-        if (rExact > 0.5) {
-          ctxN1.fillStyle = COLORS.blue; ctxN1.globalAlpha = 0.3;
-          ctxN1.beginPath(); ctxN1.arc(leftX + panelW / 2, y, rExact, 0, Math.PI * 2); ctxN1.fill();
-          ctxN1.globalAlpha = 1;
-          ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 1.5;
-          ctxN1.beginPath(); ctxN1.arc(leftX + panelW / 2, y, rExact, 0, Math.PI * 2); ctxN1.stroke();
-          // Occupation number
+        // Exact bubble (left half)
+        const rE = occToR(exactOccs[i]);
+        if (rE > 0.5) {
+          ctxN1.fillStyle = COLORS.blue; ctxN1.globalAlpha = 0.25;
+          ctxN1.beginPath(); ctxN1.arc(rx + rw * 0.25, y, rE, 0, Math.PI * 2); ctxN1.fill();
+          ctxN1.globalAlpha = 1; ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 1.5;
+          ctxN1.beginPath(); ctxN1.arc(rx + rw * 0.25, y, rE, 0, Math.PI * 2); ctxN1.stroke();
           ctxN1.fillStyle = COLORS.blue; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-          const eLabel = exactOccs[i] >= 1 ? Math.round(exactOccs[i]).toString() : exactOccs[i].toFixed(1);
-          ctxN1.fillText(eLabel, leftX + panelW / 2, y + 4);
+          ctxN1.fillText(exactOccs[i] >= 1 ? Math.round(exactOccs[i]).toString() : exactOccs[i].toFixed(1), rx + rw * 0.25, y + 4);
         }
 
-        // Approx (right, orange)
-        const rApprox = occToR(Math.max(0, approxOccs[i]));
-        if (rApprox > 0.5) {
-          ctxN1.fillStyle = COLORS.orange; ctxN1.globalAlpha = 0.3;
-          ctxN1.beginPath(); ctxN1.arc(rightX + panelW / 2, y, rApprox, 0, Math.PI * 2); ctxN1.fill();
-          ctxN1.globalAlpha = 1;
-          ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 1.5;
-          ctxN1.beginPath(); ctxN1.arc(rightX + panelW / 2, y, rApprox, 0, Math.PI * 2); ctxN1.stroke();
+        // Approx bubble (right half)
+        const rA = occToR(approxOccs[i]);
+        if (rA > 0.5) {
+          ctxN1.fillStyle = COLORS.orange; ctxN1.globalAlpha = 0.25;
+          ctxN1.beginPath(); ctxN1.arc(rx + rw * 0.75, y, rA, 0, Math.PI * 2); ctxN1.fill();
+          ctxN1.globalAlpha = 1; ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 1.5;
+          ctxN1.beginPath(); ctxN1.arc(rx + rw * 0.75, y, rA, 0, Math.PI * 2); ctxN1.stroke();
           ctxN1.fillStyle = COLORS.orange; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-          const aLabel = approxOccs[i] >= 1 ? Math.round(approxOccs[i]).toString() : approxOccs[i].toFixed(1);
-          ctxN1.fillText(aLabel, rightX + panelW / 2, y + 4);
+          ctxN1.fillText(approxOccs[i] >= 1 ? Math.round(approxOccs[i]).toString() : approxOccs[i].toFixed(1), rx + rw * 0.75, y + 4);
         }
       }
 
-      // ---- Bottom annotation ----
-      ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-      ctxN1.fillText('N\u2080 = ' + Math.round(exactOccs[0]) + ' / ' + N_PARTICLES, leftX + panelW / 2, topY + panelH + 20);
-      ctxN1.fillText('N\u2080 \u2248 ' + Math.round(approxOccs[0]) + ' / ' + N_PARTICLES, rightX + panelW / 2, topY + panelH + 20);
+      // mu lines
+      const groundY = epsToY(0);
+      const firstY = epsToY(dispEps[1]);
+      const epsPerPx = dispEps[1] / (groundY - firstY);
 
-      // Highlight mismatch above Tc
-      if (tRatio > 1.05) {
-        const err = Math.abs(approxOccs[0] - exactOccs[0]);
-        if (err > 1) {
-          ctxN1.fillStyle = COLORS.red; ctxN1.globalAlpha = 0.6;
-          ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-          ctxN1.fillText('\u2716 Approximation overestimates N\u2080 by ' + Math.round(err), WN1 / 2, topY + panelH + 38);
-          ctxN1.globalAlpha = 1;
-        }
-      } else if (tRatio < 0.95) {
-        ctxN1.fillStyle = COLORS.green; ctxN1.globalAlpha = 0.5;
-        ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-        ctxN1.fillText('\u2714 Good agreement below T\u2091', WN1 / 2, topY + panelH + 38);
+      // Exact mu
+      let muYDraw = groundY;
+      if (muExact < 0) muYDraw = Math.min(groundY + Math.abs(muExact) / epsPerPx, ry + rh + 2);
+      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 1.5; ctxN1.setLineDash([5, 3]);
+      ctxN1.beginPath(); ctxN1.moveTo(rx, muYDraw); ctxN1.lineTo(rx + rw * 0.48, muYDraw); ctxN1.stroke();
+      ctxN1.setLineDash([]);
+      if (muYDraw < ry + rh - 5) {
+        ctxN1.fillStyle = COLORS.blue; ctxN1.font = FONT_SM; ctxN1.textAlign = 'left';
+        ctxN1.fillText('\u03BC=' + muExact.toFixed(1), rx + 1, muYDraw + 12);
+      }
+
+      // Approx mu (always at ground state)
+      ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 1.5; ctxN1.setLineDash([5, 3]);
+      ctxN1.beginPath(); ctxN1.moveTo(rx + rw * 0.52, groundY); ctxN1.lineTo(rx + rw, groundY); ctxN1.stroke();
+      ctxN1.setLineDash([]);
+
+      // Status text
+      ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
+      if (tR < 0.95) {
+        ctxN1.fillStyle = 'rgba(102,187,106,0.6)';
+        ctxN1.fillText('\u2714 \u03BC \u2248 0 valid', rx + rw / 2, ry + rh + 14);
+      } else if (tR > 1.05) {
+        ctxN1.fillStyle = 'rgba(239,83,80,0.6)';
+        ctxN1.fillText('\u2716 \u03BC \u2248 0 breaks down', rx + rw / 2, ry + rh + 14);
+      } else {
+        ctxN1.fillStyle = COLORS.yellow; ctxN1.globalAlpha = 0.6;
+        ctxN1.fillText('~ T\u2091 transition region', rx + rw / 2, ry + rh + 14);
         ctxN1.globalAlpha = 1;
       }
     }
@@ -17261,7 +17317,8 @@ function initCh13Vis() {
     const fsS = setupCanvas(cFS);
     const ctxFS = fsS.ctx, WFS = fsS.W, HFS = fsS.H;
     let fsAX = -0.35, fsAY = 0.65, fsDrag = false, fsLX = 0, fsLY = 0, fsAuto = true;
-    const fsSel = document.getElementById('fermi-surface-select');
+    let fsMat = 'free';
+    const fsBtns = document.querySelectorAll('.fs-btn');
     const fsBZ = document.getElementById('fermi-surface-bz');
     const fsAxCb = document.getElementById('fermi-surface-axes');
     const fsAC = document.getElementById('fermi-surface-auto');
@@ -17278,51 +17335,70 @@ function initCh13Vis() {
       return { x: WFS / 2 + p.x * s * f, y: HFS / 2 + p.y * s * f, z: p.z };
     }
 
-    // Marching cubes edge table
-    const mcET = [0x0,0x109,0x203,0x30a,0x406,0x50f,0x605,0x70c,0x80c,0x905,0xa0f,0xb06,0xc0a,0xd03,0xe09,0xf00,0x190,0x99,0x393,0x29a,0x596,0x49f,0x795,0x69c,0x99c,0x895,0xb9f,0xa96,0xd9a,0xc93,0xf99,0xe90,0x230,0x339,0x33,0x13a,0x636,0x73f,0x435,0x53c,0xa3c,0xb35,0x83f,0x936,0xe3a,0xf33,0xc39,0xd30,0x3a0,0x2a9,0x1a3,0xaa,0x7a6,0x6af,0x5a5,0x4ac,0xbac,0xaa5,0x9af,0x8a6,0xfaa,0xea3,0xda9,0xca0,0x460,0x569,0x663,0x76a,0x66,0x16f,0x265,0x36c,0xc6c,0xd65,0xe6f,0xf66,0x86a,0x963,0xa69,0xb60,0x5f0,0x4f9,0x7f3,0x6fa,0x1f6,0xff,0x3f5,0x2fc,0xdfc,0xcf5,0xfff,0xef6,0x9fa,0x8f3,0xbf9,0xaf0,0x650,0x759,0x453,0x55a,0x256,0x35f,0x55,0x15c,0xe5c,0xf55,0xc5f,0xd56,0xa5a,0xb53,0x859,0x950,0x7c0,0x6c9,0x5c3,0x4ca,0x3c6,0x2cf,0x1c5,0xcc,0xfcc,0xec5,0xdcf,0xcc6,0xbca,0xac3,0x9c9,0x8c0,0x8c0,0x9c9,0xac3,0xbca,0xcc6,0xdcf,0xec5,0xfcc,0xcc,0x1c5,0x2cf,0x3c6,0x4ca,0x5c3,0x6c9,0x7c0,0x950,0x859,0xb53,0xa5a,0xd56,0xc5f,0xf55,0xe5c,0x15c,0x55,0x35f,0x256,0x55a,0x453,0x759,0x650,0xaf0,0xbf9,0x8f3,0x9fa,0xef6,0xfff,0xcf5,0xdfc,0x2fc,0x3f5,0xff,0x1f6,0x6fa,0x7f3,0x4f9,0x5f0,0xb60,0xa69,0x963,0x86a,0xf66,0xe6f,0xd65,0xc6c,0x36c,0x265,0x16f,0x66,0x76a,0x663,0x569,0x460,0xca0,0xda9,0xea3,0xfaa,0x8a6,0x9af,0xaa5,0xbac,0x4ac,0x5a5,0x6af,0x7a6,0xaa,0x1a3,0x2a9,0x3a0,0xd30,0xc39,0xf33,0xe3a,0x936,0x83f,0xb35,0xa3c,0x53c,0x435,0x73f,0x636,0x13a,0x33,0x339,0x230,0xe90,0xf99,0xc93,0xd9a,0xa96,0xb9f,0x895,0x99c,0x69c,0x795,0x49f,0x596,0x29a,0x393,0x99,0x190,0xf00,0xe09,0xd03,0xc0a,0xb06,0xa0f,0x905,0x80c,0x70c,0x605,0x50f,0x406,0x30a,0x203,0x109,0x0];
-    // Marching cubes tri table
-    const mcTT = [[-1],[0,8,3,-1],[0,1,9,-1],[1,8,3,9,8,1,-1],[1,2,10,-1],[0,8,3,1,2,10,-1],[9,2,10,0,2,9,-1],[2,8,3,2,10,8,10,9,8,-1],[3,11,2,-1],[0,11,2,8,11,0,-1],[1,9,0,2,3,11,-1],[1,11,2,1,9,11,9,8,11,-1],[3,10,1,11,10,3,-1],[0,10,1,0,8,10,8,11,10,-1],[3,9,0,3,11,9,11,10,9,-1],[9,8,10,10,8,11,-1],[4,7,8,-1],[4,3,0,7,3,4,-1],[0,1,9,8,4,7,-1],[4,1,9,4,7,1,7,3,1,-1],[1,2,10,8,4,7,-1],[3,4,7,3,0,4,1,2,10,-1],[9,2,10,9,0,2,8,4,7,-1],[2,10,9,2,9,7,2,7,3,7,9,4,-1],[8,4,7,3,11,2,-1],[11,4,7,11,2,4,2,0,4,-1],[9,0,1,8,4,7,2,3,11,-1],[4,7,11,9,4,11,9,11,2,9,2,1,-1],[3,10,1,3,11,10,7,8,4,-1],[1,11,10,1,4,11,1,0,4,7,11,4,-1],[4,7,8,9,0,11,9,11,10,11,0,3,-1],[4,7,11,4,11,9,9,11,10,-1],[9,5,4,-1],[9,5,4,0,8,3,-1],[0,5,4,1,5,0,-1],[8,5,4,8,3,5,3,1,5,-1],[1,2,10,9,5,4,-1],[3,0,8,1,2,10,4,9,5,-1],[5,2,10,5,4,2,4,0,2,-1],[2,10,5,3,2,5,3,5,4,3,4,8,-1],[9,5,4,2,3,11,-1],[0,11,2,0,8,11,4,9,5,-1],[0,5,4,0,1,5,2,3,11,-1],[2,1,5,2,5,8,2,8,11,4,8,5,-1],[10,3,11,10,1,3,9,5,4,-1],[4,9,5,0,8,1,8,10,1,8,11,10,-1],[5,4,0,5,0,11,5,11,10,11,0,3,-1],[5,4,8,5,8,10,10,8,11,-1],[9,7,8,5,7,9,-1],[9,3,0,9,5,3,5,7,3,-1],[0,7,8,0,1,7,1,5,7,-1],[1,5,3,3,5,7,-1],[9,7,8,9,5,7,10,1,2,-1],[10,1,2,9,5,0,5,3,0,5,7,3,-1],[8,0,2,8,2,5,8,5,7,10,5,2,-1],[2,10,5,2,5,3,3,5,7,-1],[7,9,5,7,8,9,3,11,2,-1],[9,5,7,9,7,2,9,2,0,2,7,11,-1],[2,3,11,0,1,8,1,7,8,1,5,7,-1],[11,2,1,11,1,7,7,1,5,-1],[9,5,8,8,5,7,10,1,3,10,3,11,-1],[5,7,0,5,0,9,7,11,0,1,0,10,11,10,0,-1],[11,10,0,11,0,3,10,5,0,8,0,7,5,7,0,-1],[11,10,5,7,11,5,-1],[10,6,5,-1],[0,8,3,5,10,6,-1],[9,0,1,5,10,6,-1],[1,8,3,1,9,8,5,10,6,-1],[1,6,5,2,6,1,-1],[1,6,5,1,2,6,3,0,8,-1],[9,6,5,9,0,6,0,2,6,-1],[5,9,8,5,8,2,5,2,6,3,2,8,-1],[2,3,11,10,6,5,-1],[11,0,8,11,2,0,10,6,5,-1],[0,1,9,2,3,11,5,10,6,-1],[5,10,6,1,9,2,9,11,2,9,8,11,-1],[6,3,11,6,5,3,5,1,3,-1],[0,8,11,0,11,5,0,5,1,5,11,6,-1],[3,11,6,0,3,6,0,6,5,0,5,9,-1],[6,5,9,6,9,11,11,9,8,-1],[5,10,6,4,7,8,-1],[4,3,0,4,7,3,6,5,10,-1],[1,9,0,5,10,6,8,4,7,-1],[10,6,5,1,9,7,1,7,3,7,9,4,-1],[6,1,2,6,5,1,4,7,8,-1],[1,2,5,5,2,6,3,0,4,3,4,7,-1],[8,4,7,9,0,5,0,6,5,0,2,6,-1],[7,3,9,7,9,4,3,2,9,5,9,6,2,6,9,-1],[3,11,2,7,8,4,10,6,5,-1],[5,10,6,4,7,2,4,2,0,2,7,11,-1],[0,1,9,4,7,8,2,3,11,5,10,6,-1],[9,2,1,9,11,2,9,4,11,7,11,4,5,10,6,-1],[8,4,7,3,11,5,3,5,1,5,11,6,-1],[5,1,11,5,11,6,1,0,11,7,11,4,0,4,11,-1],[0,5,9,0,6,5,0,3,6,11,6,3,8,4,7,-1],[6,5,9,6,9,11,4,7,9,7,11,9,-1],[10,4,9,6,4,10,-1],[4,10,6,4,9,10,0,8,3,-1],[10,0,1,10,6,0,6,4,0,-1],[8,3,1,8,1,6,8,6,4,6,1,10,-1],[1,4,9,1,2,4,2,6,4,-1],[3,0,8,1,2,9,2,4,9,2,6,4,-1],[0,2,4,4,2,6,-1],[8,3,2,8,2,4,4,2,6,-1],[10,4,9,10,6,4,11,2,3,-1],[0,8,2,2,8,11,4,9,10,4,10,6,-1],[3,11,2,0,1,6,0,6,4,6,1,10,-1],[6,4,1,6,1,10,4,8,1,2,1,11,8,11,1,-1],[9,6,4,9,3,6,9,1,3,11,6,3,-1],[8,11,1,8,1,0,11,6,1,9,1,4,6,4,1,-1],[3,11,6,3,6,0,0,6,4,-1],[6,4,8,11,6,8,-1],[7,10,6,7,8,10,8,9,10,-1],[0,7,3,0,10,7,0,9,10,6,7,10,-1],[10,6,7,1,10,7,1,7,8,1,8,0,-1],[10,6,7,10,7,1,1,7,3,-1],[1,2,6,1,6,8,1,8,9,8,6,7,-1],[2,6,9,2,9,1,6,7,9,0,9,3,7,3,9,-1],[7,8,0,7,0,6,6,0,2,-1],[7,3,2,6,7,2,-1],[2,3,11,10,6,8,10,8,9,8,6,7,-1],[2,0,7,2,7,11,0,9,7,6,7,10,9,10,7,-1],[1,8,0,1,7,8,1,10,7,6,7,10,2,3,11,-1],[11,2,1,11,1,7,10,6,1,6,7,1,-1],[8,9,6,8,6,7,9,1,6,11,6,3,1,3,6,-1],[0,9,1,11,6,7,-1],[7,8,0,7,0,6,3,11,0,11,6,0,-1],[7,11,6,-1],[7,6,11,-1],[3,0,8,11,7,6,-1],[0,1,9,11,7,6,-1],[8,1,9,8,3,1,11,7,6,-1],[10,1,2,6,11,7,-1],[1,2,10,3,0,8,6,11,7,-1],[2,9,0,2,10,9,6,11,7,-1],[6,11,7,2,10,3,10,8,3,10,9,8,-1],[7,2,3,6,2,7,-1],[7,0,8,7,6,0,6,2,0,-1],[2,7,6,2,3,7,0,1,9,-1],[1,6,2,1,8,6,1,9,8,8,7,6,-1],[10,7,6,10,1,7,1,3,7,-1],[10,7,6,1,7,10,1,8,7,1,0,8,-1],[0,3,7,0,7,10,0,10,9,6,10,7,-1],[7,6,10,7,10,8,8,10,9,-1],[6,8,4,11,8,6,-1],[3,6,11,3,0,6,0,4,6,-1],[8,6,11,8,4,6,9,0,1,-1],[9,4,6,9,6,3,9,3,1,11,3,6,-1],[6,8,4,6,11,8,2,10,1,-1],[1,2,10,3,0,11,0,6,11,0,4,6,-1],[4,11,8,4,6,11,0,2,9,2,10,9,-1],[10,9,3,10,3,2,9,4,3,11,3,6,4,6,3,-1],[8,2,3,8,4,2,4,6,2,-1],[0,4,2,4,6,2,-1],[1,9,0,2,3,4,2,4,6,4,3,8,-1],[1,9,4,1,4,2,2,4,6,-1],[8,1,3,8,6,1,8,4,6,6,10,1,-1],[10,1,0,10,0,6,6,0,4,-1],[4,6,3,4,3,8,6,10,3,0,3,9,10,9,3,-1],[10,9,4,6,10,4,-1],[4,9,5,7,6,11,-1],[0,8,3,4,9,5,11,7,6,-1],[5,0,1,5,4,0,7,6,11,-1],[11,7,6,8,3,4,3,5,4,3,1,5,-1],[9,5,4,10,1,2,7,6,11,-1],[6,11,7,1,2,10,0,8,3,4,9,5,-1],[7,6,11,5,4,10,4,2,10,4,0,2,-1],[3,4,8,3,5,4,3,2,5,10,5,2,11,7,6,-1],[7,2,3,7,6,2,5,4,9,-1],[9,5,4,0,8,6,0,6,2,6,8,7,-1],[3,6,2,3,7,6,1,5,0,5,4,0,-1],[6,2,8,6,8,7,2,1,8,4,8,5,1,5,8,-1],[9,5,4,10,1,6,1,7,6,1,3,7,-1],[1,6,10,1,7,6,1,0,7,8,7,0,9,5,4,-1],[4,0,10,4,10,5,0,3,10,6,10,7,3,7,10,-1],[7,6,10,7,10,8,5,4,10,4,8,10,-1],[6,9,5,6,11,9,11,8,9,-1],[3,6,11,0,6,3,0,5,6,0,9,5,-1],[0,11,8,0,5,11,0,1,5,5,6,11,-1],[6,11,3,6,3,5,5,3,1,-1],[1,2,10,9,5,11,9,11,8,11,5,6,-1],[0,11,3,0,6,11,0,9,6,5,6,9,1,2,10,-1],[11,8,5,11,5,6,8,0,5,10,5,2,0,2,5,-1],[6,11,3,6,3,5,2,10,3,10,5,3,-1],[5,8,9,5,2,8,5,6,2,3,8,2,-1],[9,5,6,9,6,0,0,6,2,-1],[1,5,8,1,8,0,5,6,8,3,8,2,6,2,8,-1],[1,5,6,2,1,6,-1],[1,3,6,1,6,10,3,8,6,5,6,9,8,9,6,-1],[10,1,0,10,0,6,9,5,0,5,6,0,-1],[0,3,8,5,6,10,-1],[10,5,6,-1],[11,5,10,7,5,11,-1],[11,5,10,11,7,5,8,3,0,-1],[5,11,7,5,10,11,1,9,0,-1],[10,7,5,10,11,7,9,8,1,8,3,1,-1],[11,1,2,11,7,1,7,5,1,-1],[0,8,3,1,2,7,1,7,5,7,2,11,-1],[9,7,5,9,2,7,9,0,2,2,11,7,-1],[7,5,2,7,2,11,5,9,2,3,2,8,9,8,2,-1],[2,5,10,2,3,5,3,7,5,-1],[8,2,0,8,5,2,8,7,5,10,2,5,-1],[9,0,1,5,10,3,5,3,7,3,10,2,-1],[9,8,2,9,2,1,8,7,2,10,2,5,7,5,2,-1],[1,3,5,3,7,5,-1],[0,8,7,0,7,1,1,7,5,-1],[9,0,3,9,3,5,5,3,7,-1],[9,8,7,5,9,7,-1],[5,8,4,5,10,8,10,11,8,-1],[5,0,4,5,11,0,5,10,11,11,3,0,-1],[0,1,9,8,4,10,8,10,11,10,4,5,-1],[10,11,4,10,4,5,11,3,4,9,4,1,3,1,4,-1],[2,5,1,2,8,5,2,11,8,4,5,8,-1],[0,4,11,0,11,3,4,5,11,2,11,1,5,1,11,-1],[0,2,5,0,5,9,2,11,5,4,5,8,11,8,5,-1],[9,4,5,2,11,3,-1],[2,5,10,3,5,2,3,4,5,3,8,4,-1],[5,10,2,5,2,4,4,2,0,-1],[3,10,2,3,5,10,3,8,5,4,5,8,0,1,9,-1],[5,10,2,5,2,4,1,9,2,9,4,2,-1],[8,4,5,8,5,3,3,5,1,-1],[0,4,5,1,0,5,-1],[8,4,5,8,5,3,9,0,5,0,3,5,-1],[9,4,5,-1],[4,11,7,4,9,11,9,10,11,-1],[0,8,3,4,9,7,9,11,7,9,10,11,-1],[1,10,11,1,11,4,1,4,0,7,4,11,-1],[3,1,4,3,4,8,1,10,4,7,4,11,10,11,4,-1],[4,11,7,9,11,4,9,2,11,9,1,2,-1],[9,7,4,9,11,7,9,1,11,2,11,1,0,8,3,-1],[11,7,4,11,4,2,2,4,0,-1],[11,7,4,11,4,2,8,3,4,3,2,4,-1],[2,9,10,2,7,9,2,3,7,7,4,9,-1],[9,10,7,9,7,4,10,2,7,8,7,0,2,0,7,-1],[3,7,10,3,10,2,7,4,10,1,10,0,4,0,10,-1],[1,10,2,8,7,4,-1],[4,9,1,4,1,7,7,1,3,-1],[4,9,1,4,1,7,0,8,1,8,7,1,-1],[4,0,3,7,4,3,-1],[4,8,7,-1],[9,10,8,10,11,8,-1],[3,0,9,3,9,11,11,9,10,-1],[0,1,10,0,10,8,8,10,11,-1],[3,1,10,11,3,10,-1],[1,2,11,1,11,9,9,11,8,-1],[3,0,9,3,9,11,1,2,9,2,11,9,-1],[0,2,11,8,0,11,-1],[3,2,11,-1],[2,3,8,2,8,10,10,8,9,-1],[9,10,2,0,9,2,-1],[2,3,8,2,8,10,0,1,8,1,10,8,-1],[1,10,2,-1],[1,3,8,9,1,8,-1],[0,9,1,-1],[0,3,8,-1],[-1]];
-    const mcEP = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    // Marching cubes tables
+    var mcET = [0x0,0x109,0x203,0x30a,0x406,0x50f,0x605,0x70c,0x80c,0x905,0xa0f,0xb06,0xc0a,0xd03,0xe09,0xf00,0x190,0x99,0x393,0x29a,0x596,0x49f,0x795,0x69c,0x99c,0x895,0xb9f,0xa96,0xd9a,0xc93,0xf99,0xe90,0x230,0x339,0x33,0x13a,0x636,0x73f,0x435,0x53c,0xa3c,0xb35,0x83f,0x936,0xe3a,0xf33,0xc39,0xd30,0x3a0,0x2a9,0x1a3,0xaa,0x7a6,0x6af,0x5a5,0x4ac,0xbac,0xaa5,0x9af,0x8a6,0xfaa,0xea3,0xda9,0xca0,0x460,0x569,0x663,0x76a,0x66,0x16f,0x265,0x36c,0xc6c,0xd65,0xe6f,0xf66,0x86a,0x963,0xa69,0xb60,0x5f0,0x4f9,0x7f3,0x6fa,0x1f6,0xff,0x3f5,0x2fc,0xdfc,0xcf5,0xfff,0xef6,0x9fa,0x8f3,0xbf9,0xaf0,0x650,0x759,0x453,0x55a,0x256,0x35f,0x55,0x15c,0xe5c,0xf55,0xc5f,0xd56,0xa5a,0xb53,0x859,0x950,0x7c0,0x6c9,0x5c3,0x4ca,0x3c6,0x2cf,0x1c5,0xcc,0xfcc,0xec5,0xdcf,0xcc6,0xbca,0xac3,0x9c9,0x8c0,0x8c0,0x9c9,0xac3,0xbca,0xcc6,0xdcf,0xec5,0xfcc,0xcc,0x1c5,0x2cf,0x3c6,0x4ca,0x5c3,0x6c9,0x7c0,0x950,0x859,0xb53,0xa5a,0xd56,0xc5f,0xf55,0xe5c,0x15c,0x55,0x35f,0x256,0x55a,0x453,0x759,0x650,0xaf0,0xbf9,0x8f3,0x9fa,0xef6,0xfff,0xcf5,0xdfc,0x2fc,0x3f5,0xff,0x1f6,0x6fa,0x7f3,0x4f9,0x5f0,0xb60,0xa69,0x963,0x86a,0xf66,0xe6f,0xd65,0xc6c,0x36c,0x265,0x16f,0x66,0x76a,0x663,0x569,0x460,0xca0,0xda9,0xea3,0xfaa,0x8a6,0x9af,0xaa5,0xbac,0x4ac,0x5a5,0x6af,0x7a6,0xaa,0x1a3,0x2a9,0x3a0,0xd30,0xc39,0xf33,0xe3a,0x936,0x83f,0xb35,0xa3c,0x53c,0x435,0x73f,0x636,0x13a,0x33,0x339,0x230,0xe90,0xf99,0xc93,0xd9a,0xa96,0xb9f,0x895,0x99c,0x69c,0x795,0x49f,0x596,0x29a,0x393,0x99,0x190,0xf00,0xe09,0xd03,0xc0a,0xb06,0xa0f,0x905,0x80c,0x70c,0x605,0x50f,0x406,0x30a,0x203,0x109,0x0];
+    var mcTT = [[-1],[0,8,3,-1],[0,1,9,-1],[1,8,3,9,8,1,-1],[1,2,10,-1],[0,8,3,1,2,10,-1],[9,2,10,0,2,9,-1],[2,8,3,2,10,8,10,9,8,-1],[3,11,2,-1],[0,11,2,8,11,0,-1],[1,9,0,2,3,11,-1],[1,11,2,1,9,11,9,8,11,-1],[3,10,1,11,10,3,-1],[0,10,1,0,8,10,8,11,10,-1],[3,9,0,3,11,9,11,10,9,-1],[9,8,10,10,8,11,-1],[4,7,8,-1],[4,3,0,7,3,4,-1],[0,1,9,8,4,7,-1],[4,1,9,4,7,1,7,3,1,-1],[1,2,10,8,4,7,-1],[3,4,7,3,0,4,1,2,10,-1],[9,2,10,9,0,2,8,4,7,-1],[2,10,9,2,9,7,2,7,3,7,9,4,-1],[8,4,7,3,11,2,-1],[11,4,7,11,2,4,2,0,4,-1],[9,0,1,8,4,7,2,3,11,-1],[4,7,11,9,4,11,9,11,2,9,2,1,-1],[3,10,1,3,11,10,7,8,4,-1],[1,11,10,1,4,11,1,0,4,7,11,4,-1],[4,7,8,9,0,11,9,11,10,11,0,3,-1],[4,7,11,4,11,9,9,11,10,-1],[9,5,4,-1],[9,5,4,0,8,3,-1],[0,5,4,1,5,0,-1],[8,5,4,8,3,5,3,1,5,-1],[1,2,10,9,5,4,-1],[3,0,8,1,2,10,4,9,5,-1],[5,2,10,5,4,2,4,0,2,-1],[2,10,5,3,2,5,3,5,4,3,4,8,-1],[9,5,4,2,3,11,-1],[0,11,2,0,8,11,4,9,5,-1],[0,5,4,0,1,5,2,3,11,-1],[2,1,5,2,5,8,2,8,11,4,8,5,-1],[10,3,11,10,1,3,9,5,4,-1],[4,9,5,0,8,1,8,10,1,8,11,10,-1],[5,4,0,5,0,11,5,11,10,11,0,3,-1],[5,4,8,5,8,10,10,8,11,-1],[9,7,8,5,7,9,-1],[9,3,0,9,5,3,5,7,3,-1],[0,7,8,0,1,7,1,5,7,-1],[1,5,3,3,5,7,-1],[9,7,8,9,5,7,10,1,2,-1],[10,1,2,9,5,0,5,3,0,5,7,3,-1],[8,0,2,8,2,5,8,5,7,10,5,2,-1],[2,10,5,2,5,3,3,5,7,-1],[7,9,5,7,8,9,3,11,2,-1],[9,5,7,9,7,2,9,2,0,2,7,11,-1],[2,3,11,0,1,8,1,7,8,1,5,7,-1],[11,2,1,11,1,7,7,1,5,-1],[9,5,8,8,5,7,10,1,3,10,3,11,-1],[5,7,0,5,0,9,7,11,0,1,0,10,11,10,0,-1],[11,10,0,11,0,3,10,5,0,8,0,7,5,7,0,-1],[11,10,5,7,11,5,-1],[10,6,5,-1],[0,8,3,5,10,6,-1],[9,0,1,5,10,6,-1],[1,8,3,1,9,8,5,10,6,-1],[1,6,5,2,6,1,-1],[1,6,5,1,2,6,3,0,8,-1],[9,6,5,9,0,6,0,2,6,-1],[5,9,8,5,8,2,5,2,6,3,2,8,-1],[2,3,11,10,6,5,-1],[11,0,8,11,2,0,10,6,5,-1],[0,1,9,2,3,11,5,10,6,-1],[5,10,6,1,9,2,9,11,2,9,8,11,-1],[6,3,11,6,5,3,5,1,3,-1],[0,8,11,0,11,5,0,5,1,5,11,6,-1],[3,11,6,0,3,6,0,6,5,0,5,9,-1],[6,5,9,6,9,11,11,9,8,-1],[5,10,6,4,7,8,-1],[4,3,0,4,7,3,6,5,10,-1],[1,9,0,5,10,6,8,4,7,-1],[10,6,5,1,9,7,1,7,3,7,9,4,-1],[6,1,2,6,5,1,4,7,8,-1],[1,2,5,5,2,6,3,0,4,3,4,7,-1],[8,4,7,9,0,5,0,6,5,0,2,6,-1],[7,3,9,7,9,4,3,2,9,5,9,6,2,6,9,-1],[3,11,2,7,8,4,10,6,5,-1],[5,10,6,4,7,2,4,2,0,2,7,11,-1],[0,1,9,4,7,8,2,3,11,5,10,6,-1],[9,2,1,9,11,2,9,4,11,7,11,4,5,10,6,-1],[8,4,7,3,11,5,3,5,1,5,11,6,-1],[5,1,11,5,11,6,1,0,11,7,11,4,0,4,11,-1],[0,5,9,0,6,5,0,3,6,11,6,3,8,4,7,-1],[6,5,9,6,9,11,4,7,9,7,11,9,-1],[10,4,9,6,4,10,-1],[4,10,6,4,9,10,0,8,3,-1],[10,0,1,10,6,0,6,4,0,-1],[8,3,1,8,1,6,8,6,4,6,1,10,-1],[1,4,9,1,2,4,2,6,4,-1],[3,0,8,1,2,9,2,4,9,2,6,4,-1],[0,2,4,4,2,6,-1],[8,3,2,8,2,4,4,2,6,-1],[10,4,9,10,6,4,11,2,3,-1],[0,8,2,2,8,11,4,9,10,4,10,6,-1],[3,11,2,0,1,6,0,6,4,6,1,10,-1],[6,4,1,6,1,10,4,8,1,2,1,11,8,11,1,-1],[9,6,4,9,3,6,9,1,3,11,6,3,-1],[8,11,1,8,1,0,11,6,1,9,1,4,6,4,1,-1],[3,11,6,3,6,0,0,6,4,-1],[6,4,8,11,6,8,-1],[7,10,6,7,8,10,8,9,10,-1],[0,7,3,0,10,7,0,9,10,6,7,10,-1],[10,6,7,1,10,7,1,7,8,1,8,0,-1],[10,6,7,10,7,1,1,7,3,-1],[1,2,6,1,6,8,1,8,9,8,6,7,-1],[2,6,9,2,9,1,6,7,9,0,9,3,7,3,9,-1],[7,8,0,7,0,6,6,0,2,-1],[7,3,2,6,7,2,-1],[2,3,11,10,6,8,10,8,9,8,6,7,-1],[2,0,7,2,7,11,0,9,7,6,7,10,9,10,7,-1],[1,8,0,1,7,8,1,10,7,6,7,10,2,3,11,-1],[11,2,1,11,1,7,10,6,1,6,7,1,-1],[8,9,6,8,6,7,9,1,6,11,6,3,1,3,6,-1],[0,9,1,11,6,7,-1],[7,8,0,7,0,6,3,11,0,11,6,0,-1],[7,11,6,-1],[7,6,11,-1],[3,0,8,11,7,6,-1],[0,1,9,11,7,6,-1],[8,1,9,8,3,1,11,7,6,-1],[10,1,2,6,11,7,-1],[1,2,10,3,0,8,6,11,7,-1],[2,9,0,2,10,9,6,11,7,-1],[6,11,7,2,10,3,10,8,3,10,9,8,-1],[7,2,3,6,2,7,-1],[7,0,8,7,6,0,6,2,0,-1],[2,7,6,2,3,7,0,1,9,-1],[1,6,2,1,8,6,1,9,8,8,7,6,-1],[10,7,6,10,1,7,1,3,7,-1],[10,7,6,1,7,10,1,8,7,1,0,8,-1],[0,3,7,0,7,10,0,10,9,6,10,7,-1],[7,6,10,7,10,8,8,10,9,-1],[6,8,4,11,8,6,-1],[3,6,11,3,0,6,0,4,6,-1],[8,6,11,8,4,6,9,0,1,-1],[9,4,6,9,6,3,9,3,1,11,3,6,-1],[6,8,4,6,11,8,2,10,1,-1],[1,2,10,3,0,11,0,6,11,0,4,6,-1],[4,11,8,4,6,11,0,2,9,2,10,9,-1],[10,9,3,10,3,2,9,4,3,11,3,6,4,6,3,-1],[8,2,3,8,4,2,4,6,2,-1],[0,4,2,4,6,2,-1],[1,9,0,2,3,4,2,4,6,4,3,8,-1],[1,9,4,1,4,2,2,4,6,-1],[8,1,3,8,6,1,8,4,6,6,10,1,-1],[10,1,0,10,0,6,6,0,4,-1],[4,6,3,4,3,8,6,10,3,0,3,9,10,9,3,-1],[10,9,4,6,10,4,-1],[4,9,5,7,6,11,-1],[0,8,3,4,9,5,11,7,6,-1],[5,0,1,5,4,0,7,6,11,-1],[11,7,6,8,3,4,3,5,4,3,1,5,-1],[9,5,4,10,1,2,7,6,11,-1],[6,11,7,1,2,10,0,8,3,4,9,5,-1],[7,6,11,5,4,10,4,2,10,4,0,2,-1],[3,4,8,3,5,4,3,2,5,10,5,2,11,7,6,-1],[7,2,3,7,6,2,5,4,9,-1],[9,5,4,0,8,6,0,6,2,6,8,7,-1],[3,6,2,3,7,6,1,5,0,5,4,0,-1],[6,2,8,6,8,7,2,1,8,4,8,5,1,5,8,-1],[9,5,4,10,1,6,1,7,6,1,3,7,-1],[1,6,10,1,7,6,1,0,7,8,7,0,9,5,4,-1],[4,0,10,4,10,5,0,3,10,6,10,7,3,7,10,-1],[7,6,10,7,10,8,5,4,10,4,8,10,-1],[6,9,5,6,11,9,11,8,9,-1],[3,6,11,0,6,3,0,5,6,0,9,5,-1],[0,11,8,0,5,11,0,1,5,5,6,11,-1],[6,11,3,6,3,5,5,3,1,-1],[1,2,10,9,5,11,9,11,8,11,5,6,-1],[0,11,3,0,6,11,0,9,6,5,6,9,1,2,10,-1],[11,8,5,11,5,6,8,0,5,10,5,2,0,2,5,-1],[6,11,3,6,3,5,2,10,3,10,5,3,-1],[5,8,9,5,2,8,5,6,2,3,8,2,-1],[9,5,6,9,6,0,0,6,2,-1],[1,5,8,1,8,0,5,6,8,3,8,2,6,2,8,-1],[1,5,6,2,1,6,-1],[1,3,6,1,6,10,3,8,6,5,6,9,8,9,6,-1],[10,1,0,10,0,6,9,5,0,5,6,0,-1],[0,3,8,5,6,10,-1],[10,5,6,-1],[11,5,10,7,5,11,-1],[11,5,10,11,7,5,8,3,0,-1],[5,11,7,5,10,11,1,9,0,-1],[10,7,5,10,11,7,9,8,1,8,3,1,-1],[11,1,2,11,7,1,7,5,1,-1],[0,8,3,1,2,7,1,7,5,7,2,11,-1],[9,7,5,9,2,7,9,0,2,2,11,7,-1],[7,5,2,7,2,11,5,9,2,3,2,8,9,8,2,-1],[2,5,10,2,3,5,3,7,5,-1],[8,2,0,8,5,2,8,7,5,10,2,5,-1],[9,0,1,5,10,3,5,3,7,3,10,2,-1],[9,8,2,9,2,1,8,7,2,10,2,5,7,5,2,-1],[1,3,5,3,7,5,-1],[0,8,7,0,7,1,1,7,5,-1],[9,0,3,9,3,5,5,3,7,-1],[9,8,7,5,9,7,-1],[5,8,4,5,10,8,10,11,8,-1],[5,0,4,5,11,0,5,10,11,11,3,0,-1],[0,1,9,8,4,10,8,10,11,10,4,5,-1],[10,11,4,10,4,5,11,3,4,9,4,1,3,1,4,-1],[2,5,1,2,8,5,2,11,8,4,5,8,-1],[0,4,11,0,11,3,4,5,11,2,11,1,5,1,11,-1],[0,2,5,0,5,9,2,11,5,4,5,8,11,8,5,-1],[9,4,5,2,11,3,-1],[2,5,10,3,5,2,3,4,5,3,8,4,-1],[5,10,2,5,2,4,4,2,0,-1],[3,10,2,3,5,10,3,8,5,4,5,8,0,1,9,-1],[5,10,2,5,2,4,1,9,2,9,4,2,-1],[8,4,5,8,5,3,3,5,1,-1],[0,4,5,1,0,5,-1],[8,4,5,8,5,3,9,0,5,0,3,5,-1],[9,4,5,-1],[4,11,7,4,9,11,9,10,11,-1],[0,8,3,4,9,7,9,11,7,9,10,11,-1],[1,10,11,1,11,4,1,4,0,7,4,11,-1],[3,1,4,3,4,8,1,10,4,7,4,11,10,11,4,-1],[4,11,7,9,11,4,9,2,11,9,1,2,-1],[9,7,4,9,11,7,9,1,11,2,11,1,0,8,3,-1],[11,7,4,11,4,2,2,4,0,-1],[11,7,4,11,4,2,8,3,4,3,2,4,-1],[2,9,10,2,7,9,2,3,7,7,4,9,-1],[9,10,7,9,7,4,10,2,7,8,7,0,2,0,7,-1],[3,7,10,3,10,2,7,4,10,1,10,0,4,0,10,-1],[1,10,2,8,7,4,-1],[4,9,1,4,1,7,7,1,3,-1],[4,9,1,4,1,7,0,8,1,8,7,1,-1],[4,0,3,7,4,3,-1],[4,8,7,-1],[9,10,8,10,11,8,-1],[3,0,9,3,9,11,11,9,10,-1],[0,1,10,0,10,8,8,10,11,-1],[3,1,10,11,3,10,-1],[1,2,11,1,11,9,9,11,8,-1],[3,0,9,3,9,11,1,2,9,2,11,9,-1],[0,2,11,8,0,11,-1],[3,2,11,-1],[2,3,8,2,8,10,10,8,9,-1],[9,10,2,0,9,2,-1],[2,3,8,2,8,10,0,1,8,1,10,8,-1],[1,10,2,-1],[1,3,8,9,1,8,-1],[0,9,1,-1],[0,3,8,-1],[-1]];
+    var mcEP = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
 
-    // Shape functions: negative = inside surface
+    // === Shape functions: negative = inside surface ===
+
+    // 1. Free electron gas — perfect sphere
     function sFree(x, y, z) { return x * x + y * y + z * z - 0.65; }
-    function sNa(x, y, z) {
-      return x * x + y * y + z * z + 0.03 * (Math.cos(Math.PI * x) * Math.cos(Math.PI * y) + Math.cos(Math.PI * y) * Math.cos(Math.PI * z) + Math.cos(Math.PI * x) * Math.cos(Math.PI * z)) - 0.55;
-    }
+
+    // 2. Copper — sphere with big necks reaching to L points (111 directions)
     function sCu(x, y, z) {
-      return x * x + y * y + z * z - 0.18 * Math.cos(Math.PI * x * 0.9) * Math.cos(Math.PI * y * 0.9) * Math.cos(Math.PI * z * 0.9) - 0.7;
-    }
-    function sAl(x, y, z) {
-      return x * x + y * y + z * z + 0.35 * (Math.cos(Math.PI * x * 2) + Math.cos(Math.PI * y * 2) + Math.cos(Math.PI * z * 2)) - 1.2;
-    }
-    function sPb(x, y, z) {
-      const r2 = x * x + y * y + z * z;
-      const c = Math.max(Math.abs(x), Math.abs(y), Math.abs(z));
-      return 0.5 * r2 + 0.5 * c * c - 0.45;
-    }
-    function sFe(x, y, z) {
-      const r2 = x * x + y * y + z * z;
-      return r2 - 0.12 * (x * x * x * x + y * y * y * y + z * z * z * z) / (r2 * r2 + 0.001) * r2 - 0.55;
+      var r2 = x * x + y * y + z * z;
+      // Strong necks along <111> via product of cosines
+      var neck = 0.45 * Math.cos(Math.PI * x * 0.85) * Math.cos(Math.PI * y * 0.85) * Math.cos(Math.PI * z * 0.85);
+      return r2 - neck - 0.6;
     }
 
-    const fsShapes = { free: sFree, sodium: sNa, copper: sCu, aluminum: sAl, lead: sPb, iron: sFe };
-    const fsMatInfo = {
-      free: 'Free electron gas: \u03B5 = \u210F\u00B2k\u00B2/2m gives a perfectly spherical Fermi surface.',
-      sodium: 'Sodium (Na): Nearly free electrons \u2014 almost a perfect sphere with tiny distortions near the BZ boundary.',
-      copper: 'Copper (Cu): A sphere with "necks" reaching toward the L points (\u27E8111\u27E9 directions) of the FCC Brillouin zone.',
-      aluminum: 'Aluminum (Al): 3 valence electrons extend the Fermi surface beyond the 1st BZ, creating a multiply-connected surface.',
-      lead: 'Lead (Pb): Rounded-cube shape due to strong spin-orbit coupling.',
-      iron: 'Iron (Fe): d-band sheets create a complex, bloated surface giving iron its magnetic properties.',
-      graphene: 'Graphene: 2D material with Dirac cones at K and K\u2032 points \u2014 electrons near the tips behave as massless ultrarelativistic particles.'
+    // 3. Tungsten — "jack" shape with arms along <100> directions
+    // H-centered electron pocket: octahedron with rounded edges
+    function sW(x, y, z) {
+      // Octahedral component: |x|+|y|+|z| = const
+      var octa = Math.abs(x) + Math.abs(y) + Math.abs(z);
+      // Spherical blend
+      var r2 = x * x + y * y + z * z;
+      // Arms along cube axes: subtract tubes along x, y, z
+      var arms = Math.exp(-18 * (y * y + z * z)) + Math.exp(-18 * (x * x + z * z)) + Math.exp(-18 * (x * x + y * y));
+      return 0.35 * octa + 0.25 * r2 - 0.6 * arms - 0.28;
+    }
+
+    // 4. Aluminum 2nd zone — Schwarz P minimal surface (triply periodic tubes)
+    function sAl(x, y, z) {
+      // Schwarz P: cos(pi*x) + cos(pi*y) + cos(pi*z) = threshold
+      return Math.cos(Math.PI * x) + Math.cos(Math.PI * y) + Math.cos(Math.PI * z) - 0.4;
+    }
+
+    // 5. Beryllium — hexagonal: elongated "cigar" along c-axis + coronet ring
+    function sBe(x, y, z) {
+      // Cigar: elongated ellipsoid along y (c-axis)
+      var cigar = x * x + z * z + 0.15 * y * y - 0.25;
+      // Coronet: torus in the xz plane at y=0
+      var rr = Math.sqrt(x * x + z * z) - 0.65;
+      var torus = rr * rr + y * y - 0.06;
+      // Union: take minimum (both surfaces shown)
+      return Math.min(cigar, torus);
+    }
+
+    var fsShapes = { free: sFree, copper: sCu, tungsten: sW, aluminum: sAl, beryllium: sBe };
+    var fsMatInfo = {
+      free: 'Free electron gas: \u03B5 = \u210F\u00B2k\u00B2/2m gives a perfectly spherical Fermi surface. This is the starting point for understanding all metals.',
+      copper: 'Copper (Cu): The sphere develops "necks" reaching toward the L points along \u27E8111\u27E9 directions, where the Fermi surface touches the Brillouin zone boundary.',
+      tungsten: 'Tungsten (W): d-band electrons create a complex shape with arms along \u27E8100\u27E9 directions, resembling a jack. The topology is very different from free-electron metals.',
+      aluminum: 'Aluminum (Al): With 3 valence electrons per atom, the Fermi surface extends into the 2nd Brillouin zone, creating a multiply-connected network of tubes \u2014 a Schwarz P minimal surface.',
+      beryllium: 'Beryllium (Be): A hexagonal metal with two distinct Fermi surface sheets \u2014 a central "cigar" elongated along the c-axis and a "coronet" ring in the basal plane.',
+      graphene: 'Graphene: A 2D material with Dirac cones at K and K\u2032 points \u2014 electrons near the tips behave as massless ultrarelativistic particles.'
     };
 
-    // Marching cubes isosurface extraction
+    // Marching cubes
     function fsMarching(fn, res, lo, hi) {
-      const step = (hi - lo) / res, tris = [], sz = res + 1;
-      const vals = new Float32Array(sz * sz * sz);
-      for (let iz = 0; iz < sz; iz++)
-        for (let iy = 0; iy < sz; iy++)
-          for (let ix = 0; ix < sz; ix++)
+      var step = (hi - lo) / res, tris = [], sz = res + 1;
+      var vals = new Float32Array(sz * sz * sz);
+      for (var iz = 0; iz < sz; iz++)
+        for (var iy = 0; iy < sz; iy++)
+          for (var ix = 0; ix < sz; ix++)
             vals[iz * sz * sz + iy * sz + ix] = fn(lo + ix * step, lo + iy * step, lo + iz * step);
       function gv(a, b, c) { return vals[c * sz * sz + b * sz + a]; }
       function gp(a, b, c) { return { x: lo + a * step, y: lo + b * step, z: lo + c * step }; }
@@ -17330,28 +17406,28 @@ function initCh13Vis() {
         if (Math.abs(v1) < 1e-6) return p1;
         if (Math.abs(v2) < 1e-6) return p2;
         if (Math.abs(v1 - v2) < 1e-6) return p1;
-        const t = -v1 / (v2 - v1);
+        var t = -v1 / (v2 - v1);
         return { x: p1.x + t * (p2.x - p1.x), y: p1.y + t * (p2.y - p1.y), z: p1.z + t * (p2.z - p1.z) };
       }
-      for (let iz = 0; iz < res; iz++) for (let iy = 0; iy < res; iy++) for (let ix = 0; ix < res; ix++) {
-        const v = [gv(ix, iy, iz), gv(ix + 1, iy, iz), gv(ix + 1, iy + 1, iz), gv(ix, iy + 1, iz),
+      for (var iz = 0; iz < res; iz++) for (var iy = 0; iy < res; iy++) for (var ix = 0; ix < res; ix++) {
+        var v = [gv(ix, iy, iz), gv(ix + 1, iy, iz), gv(ix + 1, iy + 1, iz), gv(ix, iy + 1, iz),
           gv(ix, iy, iz + 1), gv(ix + 1, iy, iz + 1), gv(ix + 1, iy + 1, iz + 1), gv(ix, iy + 1, iz + 1)];
-        let ci = 0;
-        for (let b = 0; b < 8; b++) if (v[b] < 0) ci |= (1 << b);
+        var ci = 0;
+        for (var b = 0; b < 8; b++) if (v[b] < 0) ci |= (1 << b);
         if (mcET[ci] === 0) continue;
-        const p = [gp(ix, iy, iz), gp(ix + 1, iy, iz), gp(ix + 1, iy + 1, iz), gp(ix, iy + 1, iz),
+        var p = [gp(ix, iy, iz), gp(ix + 1, iy, iz), gp(ix + 1, iy + 1, iz), gp(ix, iy + 1, iz),
           gp(ix, iy, iz + 1), gp(ix + 1, iy, iz + 1), gp(ix + 1, iy + 1, iz + 1), gp(ix, iy + 1, iz + 1)];
-        const ev = new Array(12), et = mcET[ci];
-        for (let e = 0; e < 12; e++) if (et & (1 << e)) ev[e] = lrp(p[mcEP[e][0]], p[mcEP[e][1]], v[mcEP[e][0]], v[mcEP[e][1]]);
-        const tl = mcTT[ci];
-        for (let i = 0; tl[i] !== -1; i += 3) {
-          const a = ev[tl[i]], b = ev[tl[i + 1]], c = ev[tl[i + 2]];
-          if (a && b && c) {
-            const ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z;
-            const vx = c.x - a.x, vy = c.y - a.y, vz = c.z - a.z;
-            const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
-            const nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-            tris.push({ v: [a, b, c], n: { x: nx / nl, y: ny / nl, z: nz / nl }, c: { x: (a.x + b.x + c.x) / 3, y: (a.y + b.y + c.y) / 3, z: (a.z + b.z + c.z) / 3 } });
+        var ev = new Array(12), et = mcET[ci];
+        for (var e = 0; e < 12; e++) if (et & (1 << e)) ev[e] = lrp(p[mcEP[e][0]], p[mcEP[e][1]], v[mcEP[e][0]], v[mcEP[e][1]]);
+        var tl = mcTT[ci];
+        for (var i = 0; tl[i] !== -1; i += 3) {
+          var a = ev[tl[i]], bb = ev[tl[i + 1]], cc = ev[tl[i + 2]];
+          if (a && bb && cc) {
+            var ux = bb.x - a.x, uy = bb.y - a.y, uz = bb.z - a.z;
+            var vx = cc.x - a.x, vy = cc.y - a.y, vz = cc.z - a.z;
+            var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+            var nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+            tris.push({ v: [a, bb, cc], n: { x: nx / nl, y: ny / nl, z: nz / nl }, c: { x: (a.x + bb.x + cc.x) / 3, y: (a.y + bb.y + cc.y) / 3, z: (a.z + bb.z + cc.z) / 3 } });
           }
         }
       }
@@ -17360,62 +17436,69 @@ function initCh13Vis() {
 
     // Dirac cones for graphene
     function fsDiracCones() {
-      const tris = [];
-      const kk = [{ x: -0.4, z: 0.23 }, { x: 0.4, z: -0.23 }, { x: 0, z: -0.46 }, { x: 0, z: 0.46 }, { x: -0.4, z: -0.23 }, { x: 0.4, z: 0.23 }];
-      const sg = 24, h = 0.5, r = 0.25;
-      for (const k of kk) for (let i = 0; i < sg; i++) {
-        const a1 = (i / sg) * 2 * Math.PI, a2 = ((i + 1) / sg) * 2 * Math.PI;
-        const tp = { x: k.x, y: 0, z: k.z };
-        const b1 = { x: k.x + r * Math.cos(a1), y: h, z: k.z + r * Math.sin(a1) };
-        const b2 = { x: k.x + r * Math.cos(a2), y: h, z: k.z + r * Math.sin(a2) };
-        let ux = b1.x - tp.x, uy = b1.y - tp.y, uz = b1.z - tp.z;
-        let vx = b2.x - tp.x, vy = b2.y - tp.y, vz = b2.z - tp.z;
-        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
-        let nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-        tris.push({ v: [tp, b1, b2], n: { x: nx / nl, y: ny / nl, z: nz / nl }, c: { x: (tp.x + b1.x + b2.x) / 3, y: (tp.y + b1.y + b2.y) / 3, z: (tp.z + b1.z + b2.z) / 3 } });
-        const d1 = { x: k.x + r * Math.cos(a1), y: -h, z: k.z + r * Math.sin(a1) };
-        const d2 = { x: k.x + r * Math.cos(a2), y: -h, z: k.z + r * Math.sin(a2) };
-        ux = d2.x - tp.x; uy = d2.y - tp.y; uz = d2.z - tp.z;
-        vx = d1.x - tp.x; vy = d1.y - tp.y; vz = d1.z - tp.z;
-        nx = uy * vz - uz * vy; ny = uz * vx - ux * vz; nz = ux * vy - uy * vx;
-        nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-        tris.push({ v: [tp, d2, d1], n: { x: nx / nl, y: ny / nl, z: nz / nl }, c: { x: (tp.x + d2.x + d1.x) / 3, y: (tp.y + d2.y + d1.y) / 3, z: (tp.z + d2.z + d1.z) / 3 } });
+      var tris = [];
+      var kk = [{ x: -0.4, z: 0.23 }, { x: 0.4, z: -0.23 }, { x: 0, z: -0.46 }, { x: 0, z: 0.46 }, { x: -0.4, z: -0.23 }, { x: 0.4, z: 0.23 }];
+      var sg = 24, h = 0.5, r = 0.25;
+      for (var ki = 0; ki < kk.length; ki++) {
+        var k = kk[ki];
+        for (var i = 0; i < sg; i++) {
+          var a1 = (i / sg) * 2 * Math.PI, a2 = ((i + 1) / sg) * 2 * Math.PI;
+          var tp = { x: k.x, y: 0, z: k.z };
+          var b1 = { x: k.x + r * Math.cos(a1), y: h, z: k.z + r * Math.sin(a1) };
+          var b2 = { x: k.x + r * Math.cos(a2), y: h, z: k.z + r * Math.sin(a2) };
+          var ux = b1.x - tp.x, uy = b1.y - tp.y, uz = b1.z - tp.z;
+          var vx = b2.x - tp.x, vy = b2.y - tp.y, vz = b2.z - tp.z;
+          var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+          var nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+          tris.push({ v: [tp, b1, b2], n: { x: nx / nl, y: ny / nl, z: nz / nl }, c: { x: (tp.x + b1.x + b2.x) / 3, y: (tp.y + b1.y + b2.y) / 3, z: (tp.z + b1.z + b2.z) / 3 } });
+          var d1 = { x: k.x + r * Math.cos(a1), y: -h, z: k.z + r * Math.sin(a1) };
+          var d2 = { x: k.x + r * Math.cos(a2), y: -h, z: k.z + r * Math.sin(a2) };
+          ux = d2.x - tp.x; uy = d2.y - tp.y; uz = d2.z - tp.z;
+          vx = d1.x - tp.x; vy = d1.y - tp.y; vz = d1.z - tp.z;
+          nx = uy * vz - uz * vy; ny = uz * vx - ux * vz; nz = ux * vy - uy * vx;
+          nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+          tris.push({ v: [tp, d2, d1], n: { x: nx / nl, y: ny / nl, z: nz / nl }, c: { x: (tp.x + d2.x + d1.x) / 3, y: (tp.y + d2.y + d1.y) / 3, z: (tp.z + d2.z + d1.z) / 3 } });
+        }
       }
       return tris;
     }
 
-    const fsMeshCache = {};
+    var fsMeshCache = {};
     function fsGetMesh(m) {
       if (fsMeshCache[m]) return fsMeshCache[m];
-      const r = m === 'graphene' ? fsDiracCones() : fsMarching(fsShapes[m], 40, -1.1, 1.1);
-      fsMeshCache[m] = r;
-      return r;
+      var mesh;
+      if (m === 'graphene') { mesh = fsDiracCones(); }
+      else { mesh = fsMarching(fsShapes[m], 44, -1.15, 1.15); }
+      fsMeshCache[m] = mesh;
+      return mesh;
     }
 
-    const fsCol = {
-      free: { r: 79, g: 195, b: 247 }, sodium: { r: 102, g: 187, b: 106 },
-      copper: { r: 255, g: 167, b: 38 }, aluminum: { r: 171, g: 71, b: 188 },
-      lead: { r: 158, g: 158, b: 158 }, iron: { r: 239, g: 83, b: 80 },
+    var fsCol = {
+      free: { r: 79, g: 195, b: 247 },
+      copper: { r: 255, g: 167, b: 38 },
+      tungsten: { r: 239, g: 83, b: 80 },
+      aluminum: { r: 171, g: 71, b: 188 },
+      beryllium: { r: 102, g: 187, b: 106 },
       graphene: { r: 38, g: 198, b: 218 }
     };
 
     function drawFS() {
-      const mat = fsSel?.value || 'copper';
-      const showBZ = fsBZ?.checked !== false;
-      const showAx = fsAxCb?.checked !== false;
-      const sc = 155;
+      var mat = fsMat;
+      var showBZ = fsBZ?.checked !== false;
+      var showAx = fsAxCb?.checked !== false;
+      var sc = 155;
       clearCanvas(ctxFS, WFS, HFS);
 
       ctxFS.fillStyle = COLORS.text; ctxFS.font = FONT_LG; ctxFS.textAlign = 'center';
-      const nm = { free: 'Free Electron Gas', sodium: 'Sodium (Na)', copper: 'Copper (Cu)', aluminum: 'Aluminum (Al)', lead: 'Lead (Pb)', iron: 'Iron (Fe)', graphene: 'Graphene (2D)' };
+      var nm = { free: 'Free Electron Gas', copper: 'Copper (Cu)', tungsten: 'Tungsten (W)', aluminum: 'Aluminum 2nd Zone', beryllium: 'Beryllium (Be)', graphene: 'Graphene (2D)' };
       ctxFS.fillText('Fermi Surface: ' + (nm[mat] || mat), WFS / 2, 22);
 
       // Axes
       if (showAx) {
         [{ p: { x: 1.3, y: 0, z: 0 }, l: 'kx' }, { p: { x: 0, y: 1.3, z: 0 }, l: 'ky' }, { p: { x: 0, y: 0, z: 1.3 }, l: 'kz' }].forEach(function (a) {
-          const o = proj3(rot3({ x: 0, y: 0, z: 0 }, fsAX, fsAY), sc);
-          const e = proj3(rot3(a.p, fsAX, fsAY), sc);
-          const n = proj3(rot3({ x: -a.p.x, y: -a.p.y, z: -a.p.z }, fsAX, fsAY), sc);
+          var o = proj3(rot3({ x: 0, y: 0, z: 0 }, fsAX, fsAY), sc);
+          var e = proj3(rot3(a.p, fsAX, fsAY), sc);
+          var n = proj3(rot3({ x: -a.p.x, y: -a.p.y, z: -a.p.z }, fsAX, fsAY), sc);
           ctxFS.lineWidth = 1;
           ctxFS.strokeStyle = 'rgba(255,255,255,0.15)'; ctxFS.beginPath(); ctxFS.moveTo(n.x, n.y); ctxFS.lineTo(o.x, o.y); ctxFS.stroke();
           ctxFS.strokeStyle = 'rgba(255,255,255,0.35)'; ctxFS.beginPath(); ctxFS.moveTo(o.x, o.y); ctxFS.lineTo(e.x, e.y); ctxFS.stroke();
@@ -17468,10 +17551,10 @@ function initCh13Vis() {
         var cx = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
         var dt = Math.abs(t.n.x * lx + t.n.y * ly + t.n.z * lz);
         var inten = Math.min(1, 0.25 + 0.65 * dt + Math.pow(Math.max(0, dt), 16) * 0.4);
-        var rr = Math.round(cl.r * inten), gg = Math.round(cl.g * inten), bb = Math.round(cl.b * inten);
+        var rr = Math.round(cl.r * inten), gg = Math.round(cl.g * inten), bbb = Math.round(cl.b * inten);
         var al = cx > 0 ? 0.85 : 0.35;
-        ctxFS.fillStyle = 'rgba(' + rr + ',' + gg + ',' + bb + ',' + al + ')';
-        ctxFS.strokeStyle = 'rgba(' + rr + ',' + gg + ',' + bb + ',' + Math.min(al + 0.1, 1) + ')';
+        ctxFS.fillStyle = 'rgba(' + rr + ',' + gg + ',' + bbb + ',' + al + ')';
+        ctxFS.strokeStyle = 'rgba(' + rr + ',' + gg + ',' + bbb + ',' + Math.min(al + 0.1, 1) + ')';
         ctxFS.lineWidth = 0.3;
         ctxFS.beginPath(); ctxFS.moveTo(p0.x, p0.y); ctxFS.lineTo(p1.x, p1.y); ctxFS.lineTo(p2.x, p2.y); ctxFS.closePath();
         ctxFS.fill(); ctxFS.stroke();
@@ -17493,6 +17576,16 @@ function initCh13Vis() {
       ctxFS.fillText('Drag to rotate', WFS - 12, HFS - 8);
     }
 
+    // Button handling
+    fsBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fsBtns.forEach(function (b) { b.classList.remove('fs-btn-active'); });
+        btn.classList.add('fs-btn-active');
+        fsMat = btn.getAttribute('data-fs');
+        drawFS();
+      });
+    });
+
     // Mouse drag
     cFS.addEventListener('mousedown', function (e) { fsDrag = true; fsLX = e.clientX; fsLY = e.clientY; fsAuto = false; if (fsAC) fsAC.checked = false; });
     window.addEventListener('mousemove', function (e) { if (!fsDrag) return; fsAY += (e.clientX - fsLX) * 0.008; fsAX += (e.clientY - fsLY) * 0.008; fsLX = e.clientX; fsLY = e.clientY; drawFS(); });
@@ -17502,7 +17595,6 @@ function initCh13Vis() {
     cFS.addEventListener('touchmove', function (e) { if (!fsDrag || e.touches.length !== 1) return; fsAY += (e.touches[0].clientX - fsLX) * 0.008; fsAX += (e.touches[0].clientY - fsLY) * 0.008; fsLX = e.touches[0].clientX; fsLY = e.touches[0].clientY; drawFS(); e.preventDefault(); }, { passive: false });
     cFS.addEventListener('touchend', function () { fsDrag = false; });
 
-    fsSel?.addEventListener('change', drawFS);
     fsBZ?.addEventListener('change', drawFS);
     fsAxCb?.addEventListener('change', drawFS);
     fsAC?.addEventListener('change', function () { fsAuto = fsAC.checked; });

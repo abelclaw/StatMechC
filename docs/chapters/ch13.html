@@ -515,17 +515,20 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 <h3>Interactive: 3D Fermi Surfaces</h3>
 <p>Select a material to see its Fermi surface in 3D momentum space. Drag to rotate. The wireframe cube shows the first Brillouin zone.</p>
 <canvas id="vis-fermi-surface" width="600" height="500"></canvas>
-<div class="slider-container" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
-  <label style="font-weight:600;">Material:</label>
-  <select id="fermi-surface-select" style="padding:4px 8px; border-radius:4px; background:#1a2733; color:#e8ecf1; border:1px solid rgba(255,255,255,0.2); font-size:13px;">
-    <option value="free">Free electron gas (sphere)</option>
-    <option value="sodium">Sodium — nearly free</option>
-    <option value="copper" selected>Copper — necks at L points</option>
-    <option value="aluminum">Aluminum — multiply connected</option>
-    <option value="lead">Lead — rounded cube</option>
-    <option value="iron">Iron — d-band bloated sphere</option>
-    <option value="graphene">Graphene — Dirac cones (2D)</option>
-  </select>
+<div id="fermi-surface-btns" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+  <button class="fs-btn fs-btn-active" data-fs="free">Free electron</button>
+  <button class="fs-btn" data-fs="copper">Copper</button>
+  <button class="fs-btn" data-fs="tungsten">Tungsten</button>
+  <button class="fs-btn" data-fs="aluminum">Aluminum 2nd zone</button>
+  <button class="fs-btn" data-fs="beryllium">Beryllium</button>
+  <button class="fs-btn" data-fs="graphene">Graphene</button>
+</div>
+<style>
+  .fs-btn { padding:5px 12px; border-radius:4px; background:#1a2733; color:#e8ecf1; border:1px solid rgba(255,255,255,0.18); font-size:12px; cursor:pointer; transition: all 0.15s; }
+  .fs-btn:hover { background:#243444; border-color:rgba(255,255,255,0.35); }
+  .fs-btn-active { background:#2a4a5e; border-color:#4fc3f7; color:#4fc3f7; }
+</style>
+<div style="display:flex; gap:14px; margin-top:6px; font-size:12px; color:rgba(255,255,255,0.5);">
   <label><input type="checkbox" id="fermi-surface-bz" checked> Brillouin zone</label>
   <label><input type="checkbox" id="fermi-surface-axes" checked> Axes</label>
   <label><input type="checkbox" id="fermi-surface-auto" checked> Auto-rotate</label>
