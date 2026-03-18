@@ -18466,95 +18466,7 @@ function initCh14Vis() {
     drawBandFilling3rd();
   }
 
-  const c = document.getElementById('vis-bands');
-  if (c) {
-  const { ctx, W, H } = setupCanvas(c);
-
-  const tempSlider = document.getElementById('band-temp');
-  const gapSlider = document.getElementById('band-gap');
-
-  function draw() {
-    const T = parseFloat(tempSlider?.value || 300);
-    const Eg = parseFloat(gapSlider?.value || 1);
-    clearCanvas(ctx, W, H);
-
-    const midY = H / 2;
-    const bandH = 80;
-    const gapPx = Eg * 40;
-
-    // Valence band
-    ctx.fillStyle = 'rgba(79,195,247,0.2)';
-    ctx.fillRect(50, midY + gapPx / 2, W - 100, bandH);
-    ctx.strokeStyle = COLORS.blue;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(50, midY + gapPx / 2, W - 100, bandH);
-
-    // Conduction band
-    ctx.fillStyle = 'rgba(239,83,80,0.1)';
-    ctx.fillRect(50, midY - gapPx / 2 - bandH, W - 100, bandH);
-    ctx.strokeStyle = COLORS.red;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(50, midY - gapPx / 2 - bandH, W - 100, bandH);
-
-    // Band gap
-    ctx.fillStyle = 'rgba(255,255,255,0.03)';
-    ctx.fillRect(50, midY - gapPx / 2, W - 100, gapPx);
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.setLineDash([3, 3]);
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(50, midY - gapPx / 2); ctx.lineTo(W - 50, midY - gapPx / 2);
-    ctx.moveTo(50, midY + gapPx / 2); ctx.lineTo(W - 50, midY + gapPx / 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Thermally excited electrons
-    const kT = T / 11600;
-    const nElectrons = Math.round(30 * Math.exp(-Eg / (2 * kT)));
-
-    ctx.fillStyle = COLORS.red;
-    for (let i = 0; i < nElectrons; i++) {
-      const x = 80 + Math.random() * (W - 160);
-      const y = midY - gapPx / 2 - 10 - Math.random() * (bandH - 20);
-      ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI); ctx.fill();
-    }
-
-    // Holes
-    ctx.strokeStyle = COLORS.blue;
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < nElectrons; i++) {
-      const x = 80 + Math.random() * (W - 160);
-      const y = midY + gapPx / 2 + 10 + Math.random() * (bandH - 20);
-      ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI); ctx.stroke();
-    }
-
-    // Labels
-    ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
-    ctx.fillText('Conduction Band', W / 2, midY - gapPx / 2 - bandH - 8);
-    ctx.fillText('Valence Band', W / 2, midY + gapPx / 2 + bandH + 18);
-
-    ctx.fillStyle = COLORS.orange;
-    ctx.font = FONT_SM;
-    ctx.fillText('Eg = ' + Eg.toFixed(2) + ' eV', W - 70, midY + 5);
-
-    // Gap arrows
-    ctx.strokeStyle = COLORS.orange;
-    ctx.lineWidth = 1;
-    drawArrow(ctx, W - 70, midY - gapPx / 2 + 5, W - 70, midY - gapPx / 2);
-    drawArrow(ctx, W - 70, midY + gapPx / 2 - 5, W - 70, midY + gapPx / 2);
-
-    ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'left';
-    ctx.fillText('T = ' + T + ' K, kT = ' + (kT * 1000).toFixed(1) + ' meV', 20, 25);
-    ctx.fillText('Excited electrons: ~' + nElectrons, 20, 45);
-
-    document.getElementById('band-temp-val')?.replaceChildren(document.createTextNode(T.toString()));
-    document.getElementById('band-gap-val')?.replaceChildren(document.createTextNode(Eg.toFixed(2)));
-  }
-
-  tempSlider?.addEventListener('input', draw);
-  gapSlider?.addEventListener('input', draw);
-  draw();
-  }
+  // vis-bands removed — merged into vis-band-compare below
 
   // ----- Diode I-V Characteristic -----
   const cIV = document.getElementById('vis-iv-curve');
@@ -18899,151 +18811,197 @@ function initCh14Vis() {
     drawBandSplitting();
   }
 
-  // ----- p-n Junction -----
+  // ----- p-n Junction (animated) -----
   const cPN = document.getElementById('vis-pn-junction');
   if (cPN) {
     const pn = setupCanvas(cPN);
     const ctxPN = pn.ctx, WPN = pn.W, HPN = pn.H;
     const voltageSlider = document.getElementById('pn-voltage');
 
+    const NUM_ELECTRONS = 14, NUM_HOLES = 14;
+    const pnElectrons = [], pnHoles = [];
+    const pnCx = WPN / 2, pnOy = 30, pnPh = HPN - 80;
+    const pnBandW = WPN / 2 - 40, pnEg = 60;
+
+    function initPNParticles() {
+      pnElectrons.length = 0;
+      pnHoles.length = 0;
+      for (let i = 0; i < NUM_ELECTRONS; i++) {
+        pnElectrons.push({
+          x: pnCx + 40 + Math.random() * (pnBandW - 60),
+          vy: (Math.random() - 0.5) * 0.3
+        });
+      }
+      for (let i = 0; i < NUM_HOLES; i++) {
+        pnHoles.push({
+          x: 40 + Math.random() * (pnBandW - 40),
+          vy: (Math.random() - 0.5) * 0.3
+        });
+      }
+    }
+    initPNParticles();
+
+    let pnAnimId = null;
+
     function drawPNJunction() {
       const V = parseFloat(voltageSlider?.value || 0);
       clearCanvas(ctxPN, WPN, HPN);
 
-      const cx = WPN / 2, oy = 30, ph = HPN - 80;
-
-      // Draw band diagram
-      const bandWidth = WPN / 2 - 40;
-
-      // p-side (left): valence band near top, conduction band above
-      // n-side (right): both bands shifted down
-      const Eg = 60; // band gap in pixels
-      const shift = V * 25; // voltage shifts bands
-
-      // p-side bands
-      const pValTop = oy + ph / 2;
-      const pCondBot = pValTop - Eg;
-
-      // n-side bands (shifted by voltage)
+      const shift = V * 25;
+      const pValTop = pnOy + pnPh / 2;
+      const pCondBot = pValTop - pnEg;
       const nValTop = pValTop + 30 - shift;
-      const nCondBot = nValTop - Eg;
+      const nCondBot = nValTop - pnEg;
 
-      // Draw p-side
-      ctxPN.fillStyle = 'rgba(239,83,80,0.15)';
-      ctxPN.fillRect(20, pValTop, bandWidth, ph - (pValTop - oy));
-      ctxPN.fillStyle = 'rgba(239,83,80,0.08)';
-      ctxPN.fillRect(20, oy, bandWidth, pCondBot - oy);
+      // Current magnitude from Shockley equation
+      const currentMag = Math.max(0, Math.exp(V) - 1);
+      const speed = Math.min(currentMag * 0.8, 3.0);
+      const depW = Math.max(8, 60 - shift);
 
-      // Draw n-side
-      ctxPN.fillStyle = 'rgba(79,195,247,0.15)';
-      ctxPN.fillRect(cx + 20, nValTop, bandWidth, oy + ph - nValTop);
-      ctxPN.fillStyle = 'rgba(79,195,247,0.08)';
-      ctxPN.fillRect(cx + 20, oy, bandWidth, nCondBot - oy);
+      // ---- Background fills ----
+      ctxPN.fillStyle = 'rgba(239,83,80,0.12)';
+      ctxPN.fillRect(20, pValTop, pnBandW, pnPh - (pValTop - pnOy));
+      ctxPN.fillStyle = 'rgba(239,83,80,0.06)';
+      ctxPN.fillRect(20, pnOy, pnBandW, pCondBot - pnOy);
+      ctxPN.fillStyle = 'rgba(79,195,247,0.12)';
+      ctxPN.fillRect(pnCx + 20, nValTop, pnBandW, pnOy + pnPh - nValTop);
+      ctxPN.fillStyle = 'rgba(79,195,247,0.06)';
+      ctxPN.fillRect(pnCx + 20, pnOy, pnBandW, nCondBot - pnOy);
 
-      // Band edges
+      // ---- Band edges ----
       ctxPN.lineWidth = 2.5;
-      // p-side conduction band
       ctxPN.strokeStyle = COLORS.red;
-      ctxPN.beginPath();
-      ctxPN.moveTo(20, pCondBot);
-      ctxPN.lineTo(cx - 20, pCondBot);
-      ctxPN.stroke();
-      // p-side valence band
-      ctxPN.beginPath();
-      ctxPN.moveTo(20, pValTop);
-      ctxPN.lineTo(cx - 20, pValTop);
-      ctxPN.stroke();
-
-      // n-side conduction band
+      ctxPN.beginPath(); ctxPN.moveTo(20, pCondBot); ctxPN.lineTo(pnCx - 20, pCondBot); ctxPN.stroke();
+      ctxPN.beginPath(); ctxPN.moveTo(20, pValTop); ctxPN.lineTo(pnCx - 20, pValTop); ctxPN.stroke();
       ctxPN.strokeStyle = COLORS.blue;
-      ctxPN.beginPath();
-      ctxPN.moveTo(cx + 20, nCondBot);
-      ctxPN.lineTo(WPN - 20, nCondBot);
-      ctxPN.stroke();
-      // n-side valence band
-      ctxPN.beginPath();
-      ctxPN.moveTo(cx + 20, nValTop);
-      ctxPN.lineTo(WPN - 20, nValTop);
-      ctxPN.stroke();
+      ctxPN.beginPath(); ctxPN.moveTo(pnCx + 20, nCondBot); ctxPN.lineTo(WPN - 20, nCondBot); ctxPN.stroke();
+      ctxPN.beginPath(); ctxPN.moveTo(pnCx + 20, nValTop); ctxPN.lineTo(WPN - 20, nValTop); ctxPN.stroke();
 
-      // Junction region - smooth connection
+      // Junction curves
       ctxPN.strokeStyle = COLORS.textDim;
       ctxPN.lineWidth = 1.5;
       ctxPN.setLineDash([4, 4]);
-      // Connect conduction bands
       ctxPN.beginPath();
-      ctxPN.moveTo(cx - 20, pCondBot);
-      ctxPN.bezierCurveTo(cx, pCondBot, cx, nCondBot, cx + 20, nCondBot);
+      ctxPN.moveTo(pnCx - 20, pCondBot);
+      ctxPN.bezierCurveTo(pnCx, pCondBot, pnCx, nCondBot, pnCx + 20, nCondBot);
       ctxPN.stroke();
-      // Connect valence bands
       ctxPN.beginPath();
-      ctxPN.moveTo(cx - 20, pValTop);
-      ctxPN.bezierCurveTo(cx, pValTop, cx, nValTop, cx + 20, nValTop);
+      ctxPN.moveTo(pnCx - 20, pValTop);
+      ctxPN.bezierCurveTo(pnCx, pValTop, pnCx, nValTop, pnCx + 20, nValTop);
       ctxPN.stroke();
       ctxPN.setLineDash([]);
 
       // Depletion region
       ctxPN.fillStyle = 'rgba(255,255,255,0.03)';
-      const depW = Math.max(20, 60 - Math.abs(shift));
-      ctxPN.fillRect(cx - depW, oy, 2 * depW, ph);
+      ctxPN.fillRect(pnCx - depW, pnOy, 2 * depW, pnPh);
       ctxPN.strokeStyle = COLORS.textDim;
       ctxPN.lineWidth = 1;
-      ctxPN.strokeRect(cx - depW, oy, 2 * depW, ph);
+      ctxPN.strokeRect(pnCx - depW, pnOy, 2 * depW, pnPh);
 
-      // Charge carriers
-      // p-side: holes (empty circles)
-      for (let i = 0; i < 8; i++) {
-        const x = 40 + Math.random() * (bandWidth - 40);
-        const y = pValTop + 10 + Math.random() * 30;
-        ctxPN.strokeStyle = COLORS.red;
-        ctxPN.lineWidth = 1.5;
-        ctxPN.beginPath();
-        ctxPN.arc(x, y, 4, 0, 2 * Math.PI);
-        ctxPN.stroke();
-      }
-      // n-side: electrons (filled circles)
-      for (let i = 0; i < 8; i++) {
-        const x = cx + 40 + Math.random() * (bandWidth - 40);
-        const y = nCondBot - 10 - Math.random() * 30;
+      // ---- Animate electrons (conduction band, n-side, flow left in forward bias) ----
+      for (let i = 0; i < pnElectrons.length; i++) {
+        const e = pnElectrons[i];
+        const bandY = nCondBot - 20;
+        e.vy += (Math.random() - 0.5) * 0.05;
+        e.vy *= 0.95;
+        const ey = bandY + e.vy * 15;
+
+        if (V > 0.3) {
+          e.x -= speed;
+          if (e.x < 20) { e.x = WPN - 30; e.vy = (Math.random() - 0.5) * 0.3; }
+        } else {
+          e.x += (Math.random() - 0.5) * 0.6;
+          if (e.x < pnCx + 30) e.x = pnCx + 30 + Math.random() * 20;
+          if (e.x > WPN - 25) e.x = WPN - 30;
+        }
+
         ctxPN.fillStyle = COLORS.blue;
-        ctxPN.beginPath();
-        ctxPN.arc(x, y, 4, 0, 2 * Math.PI);
-        ctxPN.fill();
+        ctxPN.beginPath(); ctxPN.arc(e.x, ey, 4, 0, 2 * Math.PI); ctxPN.fill();
+        ctxPN.strokeStyle = '#fff'; ctxPN.lineWidth = 1.2;
+        ctxPN.beginPath(); ctxPN.moveTo(e.x - 2.5, ey); ctxPN.lineTo(e.x + 2.5, ey); ctxPN.stroke();
       }
 
-      // Labels
-      ctxPN.fillStyle = COLORS.text;
-      ctxPN.font = FONT;
-      ctxPN.textAlign = 'center';
-      ctxPN.fillText('p-type', bandWidth / 2 + 20, HPN - 10);
-      ctxPN.fillText('n-type', cx + 20 + bandWidth / 2, HPN - 10);
-      ctxPN.fillText('V = ' + V.toFixed(1) + ' V_T', cx, HPN - 10);
+      // ---- Animate holes (valence band, p-side, flow right in forward bias) ----
+      for (let i = 0; i < pnHoles.length; i++) {
+        const h = pnHoles[i];
+        const bandY = pValTop + 20;
+        h.vy += (Math.random() - 0.5) * 0.05;
+        h.vy *= 0.95;
+        const hy = bandY + h.vy * 15;
 
-      // Forward/reverse bias indicator
+        if (V > 0.3) {
+          h.x += speed;
+          if (h.x > WPN - 20) { h.x = 30; h.vy = (Math.random() - 0.5) * 0.3; }
+        } else {
+          h.x += (Math.random() - 0.5) * 0.6;
+          if (h.x > pnCx - 30) h.x = pnCx - 30 - Math.random() * 20;
+          if (h.x < 25) h.x = 30;
+        }
+
+        ctxPN.strokeStyle = COLORS.red; ctxPN.lineWidth = 1.8;
+        ctxPN.beginPath(); ctxPN.arc(h.x, hy, 4, 0, 2 * Math.PI); ctxPN.stroke();
+        ctxPN.lineWidth = 1.2;
+        ctxPN.beginPath(); ctxPN.moveTo(h.x - 2.5, hy); ctxPN.lineTo(h.x + 2.5, hy); ctxPN.stroke();
+        ctxPN.beginPath(); ctxPN.moveTo(h.x, hy - 2.5); ctxPN.lineTo(h.x, hy + 2.5); ctxPN.stroke();
+      }
+
+      // ---- Current arrow ----
+      if (V > 0.3 && speed > 0.1) {
+        const arrowY = pnOy + pnPh + 18;
+        const arrowLen = Math.min(speed * 30, 100);
+        ctxPN.strokeStyle = COLORS.green; ctxPN.fillStyle = COLORS.green; ctxPN.lineWidth = 2.5;
+        ctxPN.beginPath();
+        ctxPN.moveTo(pnCx - arrowLen / 2, arrowY);
+        ctxPN.lineTo(pnCx + arrowLen / 2, arrowY);
+        ctxPN.stroke();
+        ctxPN.beginPath();
+        ctxPN.moveTo(pnCx + arrowLen / 2, arrowY);
+        ctxPN.lineTo(pnCx + arrowLen / 2 - 8, arrowY - 5);
+        ctxPN.lineTo(pnCx + arrowLen / 2 - 8, arrowY + 5);
+        ctxPN.closePath(); ctxPN.fill();
+        ctxPN.font = FONT_SM; ctxPN.textAlign = 'center';
+        ctxPN.fillText('I (conventional)', pnCx, arrowY + 14);
+      }
+
+      // ---- Labels ----
+      ctxPN.fillStyle = COLORS.text; ctxPN.font = FONT; ctxPN.textAlign = 'center';
+      ctxPN.fillText('p-type', pnBandW / 2 + 20, HPN - 10);
+      ctxPN.fillText('n-type', pnCx + 20 + pnBandW / 2, HPN - 10);
+      ctxPN.fillText('V = ' + V.toFixed(1) + ' V\u209C', pnCx, HPN - 10);
+
       ctxPN.font = FONT_SM;
       if (V > 0.5) {
         ctxPN.fillStyle = COLORS.green;
-        ctxPN.fillText('Forward bias — current flows', cx, oy - 10);
+        ctxPN.fillText('Forward bias \u2014 current flows \u2192', pnCx, pnOy - 10);
       } else if (V < -0.5) {
         ctxPN.fillStyle = COLORS.red;
-        ctxPN.fillText('Reverse bias — depletion widens', cx, oy - 10);
+        ctxPN.fillText('Reverse bias \u2014 depletion widens', pnCx, pnOy - 10);
       } else {
         ctxPN.fillStyle = COLORS.textDim;
-        ctxPN.fillText('No bias — equilibrium', cx, oy - 10);
+        ctxPN.fillText('No bias \u2014 equilibrium', pnCx, pnOy - 10);
       }
 
-      // Band labels
-      ctxPN.font = FONT_SM;
-      ctxPN.textAlign = 'left';
-      ctxPN.fillStyle = COLORS.textDim;
+      ctxPN.font = FONT_SM; ctxPN.textAlign = 'left'; ctxPN.fillStyle = COLORS.textDim;
       ctxPN.fillText('Ec', 22, pCondBot - 5);
       ctxPN.fillText('Ev', 22, pValTop + 14);
       ctxPN.fillText('Eg', 22, (pCondBot + pValTop) / 2 + 4);
 
+      ctxPN.textAlign = 'right';
+      ctxPN.fillStyle = COLORS.blue; ctxPN.fillText('\u25cf e\u207b', WPN - 22, nCondBot - 5);
+      ctxPN.fillStyle = COLORS.red; ctxPN.fillText('\u25cb h\u207a', WPN - 22, nValTop + 14);
+
       document.getElementById('pn-voltage-val')?.replaceChildren(document.createTextNode(V.toFixed(1)));
+      pnAnimId = requestAnimationFrame(drawPNJunction);
     }
 
-    voltageSlider?.addEventListener('input', drawPNJunction);
+    const pnObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (!pnAnimId) drawPNJunction();
+      } else {
+        if (pnAnimId) { cancelAnimationFrame(pnAnimId); pnAnimId = null; }
+      }
+    }, { threshold: 0.1 });
+    pnObserver.observe(cPN);
     drawPNJunction();
   }
 
