@@ -182,10 +182,11 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 <div class="interactive-container">
   <h3>Interactive: Bose-Einstein Distribution</h3>
   <div class="vis-controls">
-    <label>$k_BT$: <input type="range" id="be-dist-temp" min="0.2" max="5" step="0.05" value="1"> <span class="slider-value" id="be-dist-temp-val">1.00</span></label>
+    <label>$k_BT$: <input type="range" id="be-dist-temp" min="0.1" max="3" step="0.05" value="1"> <span class="slider-value" id="be-dist-temp-val">1.00</span></label>
+    <label>$\mu$: <input type="range" id="be-dist-mu" min="-3" max="-0.05" step="0.05" value="-0.5"> <span class="slider-value" id="be-dist-mu-val">&minus;0.50</span></label>
   </div>
-  <canvas id="vis-be-dist" width="600" height="350"></canvas>
-  <p class="vis-caption">$\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ at multiple temperatures. Note divergence as $\epsilon \to \mu$.</p>
+  <canvas id="vis-be-dist" width="600" height="400"></canvas>
+  <p class="vis-caption">The Bose-Einstein distribution $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ gives the average occupation of a state with energy $\epsilon$. Bosons can pile up: as $\epsilon \to \mu$ from above, the occupation diverges. Drag $\mu$ toward zero to see the onset of Bose-Einstein condensation. The dashed line shows the classical (Maxwell-Boltzmann) result for comparison.</p>
 </div>
 
 <p>Note that if $\epsilon_i < \mu$ then $\langle n_i \rangle$ is negative, which is impossible. This means that $\mu < \epsilon_i$ for all $\epsilon_i$, i.e. the chemical potential for any Bose system will be less than all of the energies. Often we set the ground state energy to zero in which case</p>
@@ -221,8 +222,8 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
   <div class="vis-controls">
     <label>$k_BT / \epsilon_F$: <input type="range" id="fd-dist-temp" min="0.01" max="2" step="0.01" value="0.1"> <span class="slider-value" id="fd-dist-temp-val">0.10</span></label>
   </div>
-  <canvas id="vis-fd-dist" width="600" height="350"></canvas>
-  <p class="vis-caption">At $T = 0$: sharp step at $\epsilon_F$. At finite $T$: smeared over width $\sim k_BT$.</p>
+  <canvas id="vis-fd-dist" width="600" height="400"></canvas>
+  <p class="vis-caption">The Fermi-Dirac distribution $f(\epsilon) = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$ gives the occupation probability for fermions. At $T = 0$ it is a sharp step: all states below $\epsilon_F$ are filled, all above are empty. At finite $T$, only states within $\sim k_BT$ of $\epsilon_F$ are affected &mdash; the shaded band shows this thermal window. Note that $f(\epsilon_F) = \frac{1}{2}$ at all temperatures.</p>
 </div>
 
 <p>The chemical potential at $T = 0$ is called the <span class="tooltip-trigger">Fermi energy<span class="tooltip-content">$\epsilon_F = \mu(T=0)$: the energy of the highest occupied state at zero temperature. All states below $\epsilon_F$ are filled; all above are empty. The Fermi energy sets the scale for quantum effects in metals.</span></span>, $\epsilon_F = \mu(T = 0)$. At $T = 0$, all states below the Fermi energy are filled and the ones above the Fermi energy are empty. Thus the chemical potential for Fermi systems is positive at low temperature and corresponds to the highest occupied energy level of the system. We'll use the Fermi energy extensively to discuss fermionic systems in the quantum regime, in Lectures 13, 14 and 15.</p>
@@ -286,10 +287,12 @@ $$\mathcal{Z} = \sum_N \frac{1}{N!}Z_1^N e^{\beta N\mu} = \exp\!\left[Z_1 e^{\be
 <!-- INTERACTIVE: Quantum statistics comparison -->
 <div class="visualization">
   <div class="vis-header"><span class="vis-icon">&#9883;&#65039;</span> Interactive: Quantum vs Classical Statistics</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-quantum" width="600" height="350"></canvas></div>
+  <div class="vis-canvas-wrap"><canvas id="vis-quantum" width="600" height="400"></canvas></div>
   <div class="vis-controls">
-    <label>kT: <input type="range" id="qs-temp" min="0.1" max="5" step="0.05" value="1"> <span class="value-display" id="qs-temp-val">1.00</span></label>
+    <label>$k_BT$: <input type="range" id="qs-temp" min="0.1" max="5" step="0.05" value="1"> <span class="value-display" id="qs-temp-val">1.00</span></label>
+    <label>$\mu$: <input type="range" id="qs-mu" min="-4" max="-0.1" step="0.05" value="-1"> <span class="value-display" id="qs-mu-val">&minus;1.00</span></label>
   </div>
+  <p class="vis-caption">All three distributions with the same $\mu$ and $k_BT$. At high energy ($\epsilon - \mu \gg k_BT$), all three converge to the classical regime where $\langle n \rangle \ll 1$. Near $\epsilon = \mu$, quantum effects appear: bosons pile into low-energy states while fermions are capped at $\langle n \rangle = 1$. Increase $k_BT$ or make $\mu$ more negative to see the distributions converge.</p>
 </div>
 
 <h2>4. Quantum and Classical Regime</h2>
