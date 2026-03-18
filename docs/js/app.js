@@ -24473,9 +24473,16 @@ function initCh15Vis() {
       {name: 'Very Massive', range: [25, 50], color: COLORS.purple, fate: 'Black hole', desc: 'Supergiant → Hypernova or direct collapse'}
     ];
 
+    // Log-scale slider: map 0-1000 → 0.08-50 M☉ logarithmically
+    const logMassMin = Math.log10(0.08), logMassMax = Math.log10(50);
+    function sliderToMass(v) {
+      const t = v / 1000;
+      return Math.pow(10, logMassMin + t * (logMassMax - logMassMin));
+    }
+
     function drawFate() {
       clearCanvas(ctxF, WF, HF);
-      const M = parseFloat(fateSlider?.value || 1.0);
+      const M = sliderToMass(parseFloat(fateSlider?.value || 371));
 
       // Mass scale bar at top
       const ox = 40, oy = 50, barW = WF - 80, barH = 30;
@@ -24503,7 +24510,7 @@ function initCh15Vis() {
       ctxF.fillStyle = COLORS.text;
       ctxF.beginPath(); ctxF.moveTo(mx, oy - 5); ctxF.lineTo(mx - 6, oy - 15); ctxF.lineTo(mx + 6, oy - 15); ctxF.closePath(); ctxF.fill();
       ctxF.font = FONT; ctxF.textAlign = 'center';
-      ctxF.fillText(M.toFixed(1) + ' M☉', mx, oy - 20);
+      ctxF.fillText((M < 1 ? M.toFixed(2) : M.toFixed(1)) + ' M☉', mx, oy - 20);
 
       // Tick marks
       ctxF.fillStyle = COLORS.textDim; ctxF.font = '10px Inter, system-ui, sans-serif'; ctxF.textAlign = 'center';
@@ -24531,7 +24538,7 @@ function initCh15Vis() {
       ctxF.fillStyle = COLORS.textDim; ctxF.font = FONT_SM;
       ctxF.fillText('Key thresholds:  0.08 M☉ (H fusion)  |  0.5 M☉ (He flash)  |  8 M☉ (supernova)  |  ~25 M☉ (black hole)', ox, infoY + 80);
 
-      document.getElementById('fate-mass-val')?.replaceChildren(document.createTextNode(M.toFixed(1)));
+      document.getElementById('fate-mass-val')?.replaceChildren(document.createTextNode(M < 1 ? M.toFixed(2) : M.toFixed(1)));
     }
 
     fateSlider?.addEventListener('input', drawFate);
