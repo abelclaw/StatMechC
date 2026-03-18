@@ -19143,108 +19143,229 @@ function initCh14Vis() {
     drawBandCompare();
   }
 
-  // ----- Double Well Splitting -----
+  // ----- Double Well Splitting (smooth wells) -----
   const cWell = document.getElementById('vis-well-splitting');
   if (cWell) {
     const { ctx: ctxW, W: WW, H: HW } = setupCanvas(cWell);
     const sepSlider = document.getElementById('well-sep');
+    const showSelect = document.getElementById('well-show');
 
     function drawWellSplitting() {
       clearCanvas(ctxW, WW, HW);
-      const sep = parseFloat(sepSlider?.value || 80);
+      const sep = parseFloat(sepSlider?.value || 90);
+      const showMode = showSelect?.value || 'both';
       document.getElementById('well-sep-val')?.replaceChildren(document.createTextNode(sep));
 
-      const cx = WW / 2, baseY = HW * 0.65;
-      const wellW = 30, wellD = 100;
-      const halfSep = sep * 1.5;
+      const cx = WW / 2;
+      // Layout: top for potential + wavefunctions, bottom for energy level diagram
+      const potTop = 45, potBot = HW * 0.58;
+      const diagTop = HW * 0.64, diagBot = HW - 15;
 
-      // Left well center, right well center
+      // Well parameters
+      const sigma = 40;         // Gaussian width in pixels
+      const wellDepth = 1.0;    // normalized depth
+      const halfSep = sep * 2;  // pixel half-separation
+
       const lx = cx - halfSep, rx = cx + halfSep;
+      const xMin = 20, xMax = WW - 20;
+      const nPts = 500;
 
-      // Draw wells
-      function drawWell(x0) {
-        ctxW.strokeStyle = COLORS.blue; ctxW.lineWidth = 2;
+      // Combined smooth potential: sum of two inverted Gaussians
+      function V(px) {
+        const gL = Math.exp(-Math.pow((px - lx) / sigma, 2) / 2);
+        const gR = Math.exp(-Math.pow((px - rx) / sigma, 2) / 2);
+        return -(gL + gR) * wellDepth;
+      }
+
+      // Find V range for scaling
+      let vMin = 0;
+      for (let i = 0; i <= nPts; i++) {
+        const v = V(xMin + (i / nPts) * (xMax - xMin));
+        if (v < vMin) vMin = v;
+      }
+
+      // Map V to y: V=0 at top, V=vMin at bottom of potential area
+      const vZeroY = potTop + 12;
+      const vScale = (potBot - 15 - vZeroY) / Math.abs(vMin || 1);
+      function vToY(v) { return vZeroY - v * vScale; }
+
+      const showPot = showMode === 'both' || showMode === 'potential';
+      const showPsi = showMode === 'both' || showMode === 'psi';
+
+      if (showPot) {
+        // Draw combined smooth potential
+        ctxW.strokeStyle = COLORS.blue; ctxW.lineWidth = 2.5;
         ctxW.beginPath();
-        // Left wall
-        ctxW.moveTo(x0 - wellW * 2, baseY - wellD * 0.3);
-        ctxW.lineTo(x0 - wellW, baseY - wellD * 0.3);
-        // Down into well
-        ctxW.lineTo(x0 - wellW, baseY + wellD * 0.5);
-        // Bottom
-        ctxW.lineTo(x0 + wellW, baseY + wellD * 0.5);
-        // Up
-        ctxW.lineTo(x0 + wellW, baseY - wellD * 0.3);
-        ctxW.lineTo(x0 + wellW * 2, baseY - wellD * 0.3);
+        for (let i = 0; i <= nPts; i++) {
+          const px = xMin + (i / nPts) * (xMax - xMin);
+          const y = vToY(V(px));
+          if (i === 0) ctxW.moveTo(px, y); else ctxW.lineTo(px, y);
+        }
         ctxW.stroke();
+
+        // Individual well contributions as dashed lines
+        ctxW.setLineDash([4, 4]); ctxW.lineWidth = 1; ctxW.globalAlpha = 0.3;
+        ctxW.strokeStyle = COLORS.cyan;
+        ctxW.beginPath();
+        for (let i = 0; i <= nPts; i++) {
+          const px = xMin + (i / nPts) * (xMax - xMin);
+          const y = vToY(-Math.exp(-Math.pow((px - lx) / sigma, 2) / 2) * wellDepth);
+          if (i === 0) ctxW.moveTo(px, y); else ctxW.lineTo(px, y);
+        }
+        ctxW.stroke();
+        ctxW.beginPath();
+        for (let i = 0; i <= nPts; i++) {
+          const px = xMin + (i / nPts) * (xMax - xMin);
+          const y = vToY(-Math.exp(-Math.pow((px - rx) / sigma, 2) / 2) * wellDepth);
+          if (i === 0) ctxW.moveTo(px, y); else ctxW.lineTo(px, y);
+        }
+        ctxW.stroke();
+        ctxW.setLineDash([]); ctxW.globalAlpha = 1;
+
+        // Zero line
+        ctxW.strokeStyle = COLORS.axis; ctxW.lineWidth = 0.5;
+        ctxW.beginPath(); ctxW.moveTo(xMin, vZeroY); ctxW.lineTo(xMax, vZeroY); ctxW.stroke();
+        ctxW.fillStyle = COLORS.textDim; ctxW.font = FONT_SM; ctxW.textAlign = 'left';
+        ctxW.fillText('V = 0', xMax + 3, vZeroY + 4);
+        ctxW.fillText('V(x)', 5, potTop + 10);
       }
 
-      drawWell(lx);
-      drawWell(rx);
+      // Splitting from wavefunction overlap
+      const dist = Math.abs(2 * halfSep);
+      const overlap = Math.exp(-dist * dist / (8 * sigma * sigma));
+      const DeltaMax = 50;
+      const Delta = DeltaMax * overlap;
 
-      // Energy level in isolated well
-      const e0Y = baseY + wellD * 0.15;
-      const Delta = Math.max(0, 40 * Math.exp(-sep / 20)); // splitting decreases with distance
+      // Ground state energy position (fraction of well depth)
+      const e0V = vMin * 0.55;
+      const e0PotY = vToY(e0V);
 
-      if (sep > 50) {
-        // Show degenerate levels
+      if (showPsi) {
+        const psiW = sigma * 0.65;
+        const psiScale = (potBot - potTop) * 0.2;
+
+        function psiL(px) { return Math.exp(-Math.pow((px - lx) / psiW, 2) / 2); }
+        function psiR(px) { return Math.exp(-Math.pow((px - rx) / psiW, 2) / 2); }
+
+        // Energy positions for drawing wavefunctions
+        const eBondY = e0PotY + Delta * 0.5;
+        const eAntibondY = e0PotY - Delta * 0.5;
+
+        // Energy level lines on potential
+        if (showPot && Delta > 1) {
+          ctxW.setLineDash([6, 4]); ctxW.globalAlpha = 0.4; ctxW.lineWidth = 1;
+          ctxW.strokeStyle = COLORS.green;
+          ctxW.beginPath(); ctxW.moveTo(xMin, eBondY); ctxW.lineTo(xMax, eBondY); ctxW.stroke();
+          ctxW.strokeStyle = COLORS.red;
+          ctxW.beginPath(); ctxW.moveTo(xMin, eAntibondY); ctxW.lineTo(xMax, eAntibondY); ctxW.stroke();
+          ctxW.setLineDash([]); ctxW.globalAlpha = 1;
+        }
+
+        // Normalization
+        const normB = Math.sqrt(1 + overlap);
+        const normA = Math.sqrt(Math.max(1 - overlap, 0.01));
+
+        // Bonding wavefunction (symmetric: ψ_L + ψ_R)
         ctxW.strokeStyle = COLORS.green; ctxW.lineWidth = 2;
-        ctxW.beginPath(); ctxW.moveTo(lx - wellW + 3, e0Y); ctxW.lineTo(lx + wellW - 3, e0Y); ctxW.stroke();
-        ctxW.beginPath(); ctxW.moveTo(rx - wellW + 3, e0Y); ctxW.lineTo(rx + wellW - 3, e0Y); ctxW.stroke();
+        ctxW.beginPath();
+        for (let i = 0; i <= nPts; i++) {
+          const px = xMin + (i / nPts) * (xMax - xMin);
+          const psi = (psiL(px) + psiR(px)) / normB;
+          const y = eBondY - psi * psiScale;
+          if (i === 0) ctxW.moveTo(px, y); else ctxW.lineTo(px, y);
+        }
+        ctxW.stroke();
+        // Shaded fill
+        ctxW.globalAlpha = 0.07; ctxW.fillStyle = COLORS.green;
+        ctxW.lineTo(xMax, eBondY); ctxW.lineTo(xMin, eBondY);
+        ctxW.closePath(); ctxW.fill(); ctxW.globalAlpha = 1;
 
-        ctxW.fillStyle = COLORS.green; ctxW.font = FONT_SM; ctxW.textAlign = 'left';
-        ctxW.fillText('ε₀', rx + wellW + 5, e0Y + 4);
-        ctxW.fillText('ε₀', lx - wellW - 20, e0Y + 4);
-      }
-
-      // When close: show split levels
-      if (Delta > 1) {
-        const ePlusY = e0Y + Delta;
-        const eMinusY = e0Y - Delta;
-
-        // Bonding (lower, symmetric)
-        ctxW.strokeStyle = COLORS.green; ctxW.lineWidth = 2;
-        ctxW.beginPath(); ctxW.moveTo(cx - 60, eMinusY); ctxW.lineTo(cx + 60, eMinusY); ctxW.stroke();
-        // Antibonding (higher, antisymmetric)
+        // Antibonding wavefunction (antisymmetric: ψ_L - ψ_R)
         ctxW.strokeStyle = COLORS.red; ctxW.lineWidth = 2;
-        ctxW.beginPath(); ctxW.moveTo(cx - 60, ePlusY); ctxW.lineTo(cx + 60, ePlusY); ctxW.stroke();
+        ctxW.beginPath();
+        for (let i = 0; i <= nPts; i++) {
+          const px = xMin + (i / nPts) * (xMax - xMin);
+          const psi = (psiL(px) - psiR(px)) / normA;
+          const y = eAntibondY - psi * psiScale;
+          if (i === 0) ctxW.moveTo(px, y); else ctxW.lineTo(px, y);
+        }
+        ctxW.stroke();
+        ctxW.globalAlpha = 0.05; ctxW.fillStyle = COLORS.red;
+        ctxW.lineTo(xMax, eAntibondY); ctxW.lineTo(xMin, eAntibondY);
+        ctxW.closePath(); ctxW.fill(); ctxW.globalAlpha = 1;
+
+        // Wavefunction labels
+        ctxW.font = FONT_SM; ctxW.textAlign = 'right';
+        ctxW.fillStyle = COLORS.green;
+        ctxW.fillText('ψ₊ (bonding)', xMax - 5, eBondY - psiScale * 0.65);
+        ctxW.fillStyle = COLORS.red;
+        ctxW.fillText('ψ₋ (antibonding)', xMax - 5, eAntibondY - psiScale * 0.55);
+      }
+
+      // ----- Energy level diagram (bottom section) -----
+      ctxW.strokeStyle = COLORS.grid; ctxW.lineWidth = 0.5;
+      ctxW.beginPath(); ctxW.moveTo(20, diagTop - 5); ctxW.lineTo(WW - 20, diagTop - 5); ctxW.stroke();
+      ctxW.fillStyle = COLORS.textDim; ctxW.font = FONT_SM; ctxW.textAlign = 'left';
+      ctxW.fillText('Energy levels', 10, diagTop + 8);
+
+      const diagMidY = (diagTop + diagBot) / 2 + 5;
+      const diagDelta = Delta * 0.6;
+
+      // ε₀ reference (dashed)
+      ctxW.strokeStyle = COLORS.axis; ctxW.lineWidth = 1; ctxW.setLineDash([3, 5]);
+      ctxW.beginPath(); ctxW.moveTo(cx - 100, diagMidY); ctxW.lineTo(cx + 100, diagMidY); ctxW.stroke();
+      ctxW.setLineDash([]);
+      ctxW.fillStyle = COLORS.textDim; ctxW.font = FONT_SM; ctxW.textAlign = 'right';
+      ctxW.fillText('ε₀', cx - 108, diagMidY + 4);
+
+      if (diagDelta > 0.5) {
+        const eBY = diagMidY + diagDelta;
+        const eAY = diagMidY - diagDelta;
+
+        // Bonding level
+        ctxW.strokeStyle = COLORS.green; ctxW.lineWidth = 2.5;
+        ctxW.beginPath(); ctxW.moveTo(cx - 80, eBY); ctxW.lineTo(cx + 80, eBY); ctxW.stroke();
+        // Antibonding level
+        ctxW.strokeStyle = COLORS.red; ctxW.lineWidth = 2.5;
+        ctxW.beginPath(); ctxW.moveTo(cx - 80, eAY); ctxW.lineTo(cx + 80, eAY); ctxW.stroke();
 
         // Labels
         ctxW.fillStyle = COLORS.green; ctxW.font = FONT_SM; ctxW.textAlign = 'left';
-        ctxW.fillText('ε₋ = ε₀ − Δ  (ψ₊, bonding)', cx + 65, eMinusY + 4);
+        ctxW.fillText('ε₀ − Δ  (bonding)', cx + 88, eBY + 4);
         ctxW.fillStyle = COLORS.red;
-        ctxW.fillText('ε₊ = ε₀ + Δ  (ψ₋, antibonding)', cx + 65, ePlusY + 4);
+        ctxW.fillText('ε₀ + Δ  (antibonding)', cx + 88, eAY + 4);
 
         // Splitting bracket
-        ctxW.strokeStyle = COLORS.yellow; ctxW.lineWidth = 1;
-        const bx = cx - 70;
-        ctxW.beginPath(); ctxW.moveTo(bx, eMinusY); ctxW.lineTo(bx, ePlusY); ctxW.stroke();
-        ctxW.beginPath(); ctxW.moveTo(bx - 4, eMinusY); ctxW.lineTo(bx + 4, eMinusY); ctxW.stroke();
-        ctxW.beginPath(); ctxW.moveTo(bx - 4, ePlusY); ctxW.lineTo(bx + 4, ePlusY); ctxW.stroke();
-        ctxW.fillStyle = COLORS.yellow; ctxW.font = FONT; ctxW.textAlign = 'right';
-        ctxW.fillText('2Δ', bx - 6, (eMinusY + ePlusY) / 2 + 5);
-      }
-
-      // Wavefunctions when close enough
-      if (sep < 40 && Delta > 5) {
-        ctxW.globalAlpha = 0.3;
-        // Symmetric (bonding) wavefunction
-        ctxW.strokeStyle = COLORS.green; ctxW.lineWidth = 1.5;
-        ctxW.beginPath();
-        for (let px = cx - 120; px <= cx + 120; px++) {
-          const psi = Math.exp(-Math.pow((px - lx) / 25, 2)) + Math.exp(-Math.pow((px - rx) / 25, 2));
-          ctxW.lineTo(px, e0Y - Delta - psi * 20);
+        if (diagDelta > 3) {
+          const bx = cx - 90;
+          ctxW.strokeStyle = COLORS.yellow; ctxW.lineWidth = 1;
+          ctxW.beginPath(); ctxW.moveTo(bx, eBY); ctxW.lineTo(bx, eAY); ctxW.stroke();
+          ctxW.beginPath(); ctxW.moveTo(bx - 4, eBY); ctxW.lineTo(bx + 4, eBY); ctxW.stroke();
+          ctxW.beginPath(); ctxW.moveTo(bx - 4, eAY); ctxW.lineTo(bx + 4, eAY); ctxW.stroke();
+          ctxW.fillStyle = COLORS.yellow; ctxW.font = FONT; ctxW.textAlign = 'right';
+          ctxW.fillText('2Δ', bx - 6, diagMidY + 5);
         }
-        ctxW.stroke();
-        ctxW.globalAlpha = 1;
+      } else {
+        // Degenerate
+        ctxW.strokeStyle = COLORS.green; ctxW.lineWidth = 2.5;
+        ctxW.beginPath(); ctxW.moveTo(cx - 80, diagMidY); ctxW.lineTo(cx + 80, diagMidY); ctxW.stroke();
+        ctxW.fillStyle = COLORS.green; ctxW.font = FONT_SM; ctxW.textAlign = 'left';
+        ctxW.fillText('ε₀  (2× degenerate)', cx + 88, diagMidY + 4);
       }
 
+      // Title
       ctxW.fillStyle = COLORS.text; ctxW.font = FONT_LG; ctxW.textAlign = 'left';
       ctxW.fillText('Double Well Energy Splitting', 10, 20);
       ctxW.fillStyle = COLORS.textDim; ctxW.font = FONT_SM;
-      ctxW.fillText('Separation: ' + sep, 10, 38);
+      const label = sep < 0 ? 'Wells crossed (d < 0)' : sep === 0 ? 'Wells overlapping' : 'Separation: ' + sep;
+      ctxW.fillText(label, 10, 36);
+      if (Delta > 0.5) {
+        ctxW.fillText('Δ/V₀ = ' + (Delta / DeltaMax).toFixed(3), 200, 36);
+      }
     }
 
     sepSlider?.addEventListener('input', drawWellSplitting);
+    showSelect?.addEventListener('change', drawWellSplitting);
     drawWellSplitting();
   }
 
