@@ -192,7 +192,8 @@ $$-\frac{4}{3\sqrt{\pi}}(\beta\epsilon_F)^{3/2} = \text{Li}_{3/2}(-e^{\beta\mu})
 
 <!-- INTERACTIVE: Chemical Potential and Energy vs Temperature -->
 <div class="interactive-container">
-  <h3>Interactive: Chemical Potential &amp; Energy of Free Electron Gas</h3>
+  <div class="figure-label">Interactive 1: Chemical Potential &amp; Energy of Free Electron Gas</div>
+  <p class="vis-caption">Chemical potential and total energy of the free electron gas as functions of temperature.</p>
   <canvas id="vis-mu-energy" width="600" height="350"></canvas>
   <p class="vis-caption">Blue: $\mu/\epsilon_F$ vs $T/T_F$. Green: $E/E_0$ vs $T/T_F$ where $E_0 = \frac{3}{5}N\epsilon_F$. Hover for values.</p>
 </div>
@@ -250,13 +251,14 @@ $$1 = \frac{1}{\epsilon_F^{3/2}}\int_0^\infty [-f'(\epsilon)]\,\epsilon^{3/2}\,d
 $$-f'(\epsilon) = \frac{\beta}{2}\frac{1}{1 + \cosh(\beta(\epsilon - \mu))}$$
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 2: Derivative of the Fermi Distribution</div>
+<p class="vis-caption">The derivative $-f'(\epsilon)$ is sharply peaked around $\epsilon = \mu$, becoming a delta function at $T = 0$.</p>
 <canvas id="vis-fermi-deriv" width="600" height="350"></canvas>
 <div class="slider-container">
 <label for="fermi-deriv-temp">Highlighted $T/T_F$:</label>
 <input type="range" id="fermi-deriv-temp" min="0.01" max="0.3" step="0.01" value="0.1">
 <span class="slider-value" id="fermi-deriv-temp-val">0.10</span>
 </div>
-<p class="vis-caption">$-f'(\epsilon)$ is sharply peaked around $\epsilon = \mu$. At $T = 0$ it becomes a delta function; at finite $T$ the peak broadens with width $\sim k_BT$.</p>
 </div>
 
 <p>The second trick is to observe that when $T \ll T_F$, the support of $f'(\epsilon)$ is for energies $|\epsilon - \mu| \lesssim k_B T$. In this region we can Taylor expand the function multiplying $f'(\epsilon)$ around $\epsilon = \mu$:</p>
@@ -407,8 +409,10 @@ $$\frac{C_V}{T} = \frac{\pi^2}{2}Nk_B\frac{1}{T_F} + \frac{12\pi^4}{5}Nk_B\frac{
 <p>The $y$-intercept of such a plot gives the electronic contribution and the slope gives the phonon contribution.</p>
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 3: Heat Capacity of Copper</div>
+<p class="vis-caption">Heat capacity of copper shown as a Debye plot: $C_V/T$ vs $T^2$.</p>
 <canvas id="vis-cv-copper" width="600" height="350"></canvas>
-<p class="vis-caption">Figure 1. Heat capacity of copper: $C_V/T$ vs $T^2$ (Debye plot). The $y$-intercept gives the electronic contribution $\gamma$ and the slope gives the phonon contribution.</p>
+<p class="vis-caption">The $y$-intercept gives the electronic contribution $\gamma$ and the slope gives the phonon contribution.</p>
 </div>
 
 <p>Measurements like this demonstrate an electronic contribution in good agreement with the prediction from the Sommerfeld free electron model.</p>
@@ -417,8 +421,8 @@ $$\frac{C_V}{T} = \frac{\pi^2}{2}Nk_B\frac{1}{T_F} + \frac{12\pi^4}{5}Nk_B\frac{
 
 <!-- Interactive visualization -->
 <div class="interactive-container">
-<h3>Interactive: Fermi-Dirac Distribution</h3>
-<p>Adjust the temperature to see how the Fermi-Dirac distribution changes. At low $T$, the distribution is nearly a step function; as $T$ increases, more states near $\epsilon_F$ become thermally accessible.</p>
+<div class="figure-label">Interactive 4: Fermi-Dirac Distribution</div>
+<p class="vis-caption">Adjust temperature to see how the Fermi-Dirac distribution changes from a step function to a smooth curve.</p>
 <canvas id="vis-fermi" width="600" height="400"></canvas>
 <div class="slider-container">
 <label for="fermi-temp">Temperature $T/T_F$:</label>
@@ -433,12 +437,12 @@ $$\frac{C_V}{T} = \frac{\pi^2}{2}Nk_B\frac{1}{T_F} + \frac{12\pi^4}{5}Nk_B\frac{
 <p>To improve on the free electron model, we can consider how electrons become free. If the atoms are far apart, then the electrons would have been in orbitals around their atom. There is thus some kind of attractive potential $V(r)$ trying to keep each electron bound to one atom. As atoms move closer together, their potentials start to overlap. In the limit that the potentials overlap a lot, the sum of the potentials can be very weakly position dependent:</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Atomic Potentials → Nearly Free Electrons</h4>
+<div class="figure-label">Interactive 5: Atomic Potentials and Nearly Free Electrons</div>
+<p class="vis-caption">Drag the slider to bring atoms closer together and see how overlapping potentials create the nearly free electron regime.</p>
 <canvas id="vis-atomic-potentials" width="600" height="300"></canvas>
 <div class="controls">
 <label>Atom spacing: <input type="range" id="atom-spacing" min="20" max="100" step="1" value="80"><span id="atom-spacing-val">80</span></label>
 </div>
-<figcaption>Drag the slider to bring atoms closer together. When far apart, electrons are bound in isolated wells. When close, the potentials overlap and the sum becomes nearly flat — the nearly free electron regime.</figcaption>
 </div>
 
 <p>Most metals have a very regular lattice structure. More precisely, these potentials are periodic, meaning that there exists a vector $\vec{a}$ such that $V(\vec{x} + \vec{a}) = V(\vec{x})$. It is interesting therefore to consider a weak periodic potential as a model of the atomic system. This is known as the <span class="tooltip-trigger">nearly free electron model<span class="tooltip-content">A model where electrons move in a weak periodic potential. It predicts the emergence of energy bands and band gaps.</span></span>. It is hard to calculate properties of periodic potentials in three dimensions exactly, but in one dimension we can actually find some exact solutions that are qualitatively similar to 3D systems and to real metals.</p>
@@ -479,7 +483,8 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 
 <!-- INTERACTIVE: Band Structure (Kronig-Penney Model) -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">📊</span> Interactive: Kronig-Penney Band Structure</div>
+  <div class="figure-label">Interactive 6: Kronig-Penney Band Structure</div>
+  <p class="vis-caption">Energy bands and gaps in the Kronig-Penney model as a function of potential strength.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-kronig-penney" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <label>Potential strength $\lambda$: <input type="range" id="kp-lambda" min="0" max="10" step="0.1" value="3"> <span class="value-display" id="kp-lambda-val">3.0</span></label>
@@ -497,7 +502,8 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 
 <!-- INTERACTIVE: Band Filling — Conductor vs Insulator -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">⚡</span> Interactive: Band Filling — Conductor vs Insulator</div>
+  <div class="figure-label">Interactive 7: Band Filling &mdash; Conductor vs Insulator</div>
+  <p class="vis-caption">See how electron count and applied field affect band filling, distinguishing conductors from insulators.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-band-filling" width="600" height="350"></canvas></div>
   <div class="vis-controls">
     <label>Electrons per atom: <input type="range" id="bf-electrons" min="0.1" max="2.0" step="0.1" value="1.0"> <span class="value-display" id="bf-electrons-val">1.0</span></label>
@@ -512,8 +518,8 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 <p>In three dimensions, the relationship $\epsilon(\vec{k}) = \epsilon_F$ defines a surface instead of two points. This surface is called the <span class="tooltip-trigger">Fermi surface<span class="tooltip-content">The surface in momentum space defined by $\epsilon(\vec{k}) = \epsilon_F$, which separates occupied from unoccupied states at $T = 0$.</span></span>. The Fermi surface is an abstract surface in momentum space, not the real surface of a metal in position space. It describes the boundary between occupied and unoccupied energy levels at $T = 0$. For the free-electron gas where $\epsilon = \frac{\hbar^2 \vec{k}^2}{2m_e}$ this is the surface of constant $|\vec{k}|$, namely a sphere. In metals such as sodium which have very weakly bound valence electrons, so the free-electron gas model is an excellent approximation, the Fermi surface is indeed spherical. For other metals, the Fermi surface can have a different shape.</p>
 
 <div class="interactive-container">
-<h3>Interactive: 3D Fermi Surfaces</h3>
-<p>Select a material to see its Fermi surface in 3D momentum space. Drag to rotate. The wireframe cube shows the first Brillouin zone.</p>
+<div class="figure-label">Interactive 8: 3D Fermi Surfaces</div>
+<p class="vis-caption">Fermi surfaces in 3D momentum space for various materials. Select a material to explore; drag to rotate.</p>
 <canvas id="vis-fermi-surface" width="600" height="500"></canvas>
 <div id="fermi-surface-btns" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
   <button class="fs-btn fs-btn-active" data-fs="free">Free electron</button>

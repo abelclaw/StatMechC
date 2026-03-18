@@ -15,8 +15,8 @@
 
 <!-- Interactive visualization -->
 <div class="interactive-container">
-<h3>Interactive: Hertzsprung-Russell Diagram</h3>
-<p>Explore the HR diagram. Stars are colored by their surface temperature. Diagonal lines show constant radius.</p>
+<div class="figure-label">Interactive 1: Hertzsprung-Russell Diagram</div>
+<p class="vis-caption">The HR diagram showing stars classified by luminosity and surface temperature. Diagonal lines show constant radius.</p>
 <canvas id="vis-hr" width="700" height="550"></canvas>
 <div class="controls" style="margin-top:4px;">
 <label><input type="checkbox" id="hr-show-labels" checked> Named stars</label>
@@ -33,14 +33,15 @@
 <p>After the big bang, the universe cooled into around 75% hydrogen and 25% helium, with trace amounts of lithium. Some patches of the universe started out denser and hotter than others (we think this is due to primordial quantum density fluctuations during inflation), and the denser patches became more dense over time due to gravitational attraction. When a region of gas becomes dense enough, the density increase accelerates rapidly, a process called a <span class="tooltip-trigger">Jeans instability<span class="tooltip-content">A gravitational instability that occurs when a region of gas is dense enough that self-gravity overwhelms thermal pressure, causing runaway collapse.</span></span>. After the instability is reached the gas continues to compress until stars form, and if the temperature gets high enough, hydrogen fusion begins.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Jeans Instability &mdash; Star Formation from Gas</h4>
+<div class="figure-label">Interactive 2: Jeans Instability &mdash; Star Formation from Gas</div>
+<p class="vis-caption">A hydrogen gas cloud collapses when dense regions exceed the Jeans mass, forming protostars.</p>
 <canvas id="vis-jeans" width="700" height="420"></canvas>
 <div class="controls">
 <button id="jeans-play">&#9654; Play</button>
 <button id="jeans-reset">Reset</button>
 <label style="margin-left:12px;">Temperature: <input type="range" id="jeans-temp" min="0" max="100" step="1" value="30"><span id="jeans-temp-val"></span></label>
 </div>
-<figcaption>A cloud of hydrogen gas with small density fluctuations. When a dense region exceeds the Jeans mass, gravity overwhelms thermal pressure and runaway collapse begins, eventually forming protostars. Higher temperature increases thermal pressure, resisting collapse.</figcaption>
+<p class="vis-caption">Higher temperature increases thermal pressure, resisting collapse.</p>
 </div>
 
 <p>Hydrogen fusion in stars refers to a collection of processes whose net effect is to turn hydrogen H into ${}^4\text{He}$. This fusion generates thermal pressure, keeping the stars from collapsing further under their own gravity. Thus for most of its lifetime, a star is in <span class="tooltip-trigger">hydrostatic equilibrium<span class="tooltip-content">The balance between the inward gravitational force and the outward pressure (thermal, radiation, or degeneracy) in a star.</span></span> and equilibrium statistical mechanics can be used.</p>
@@ -54,9 +55,11 @@
 <p>In the red giant phase the star continues to burn the remaining hydrogen, expanding and cooling, and fuses helium in the core. This stage is relatively fast, and less than 0.5% of stars are red giants. Eventually all the helium in the core is used up and core nuclear fusion stops. Then, once again, the thermal pressure stops and the star's core can contract under its own weight and heat up, allowing helium fusion to continue in shells around it. It has entered the asymptotic giant branch. There is a lot of convection in this phase, causing the heavy elements to be dredged up from the core in a series of bursts. The result is the formation of a set of shells of matter called a <span class="tooltip-trigger">planetary nebula<span class="tooltip-content">Shells of gas expelled from an aging star. Despite the name, they have nothing to do with planets -- the name is a historical misnomer.</span></span>:</p>
 
 <figure>
+<div class="figure-label">Figure 1: Planetary Nebulae</div>
+<p class="vis-caption">The Ring Nebula (left) and Cat's Eye Nebula (right) are planetary nebulae with white dwarfs at their centers.</p>
 <img src="images/ring_nebula_jwst.jpg" alt="Ring Nebula (M57)" style="max-width:48%; display:inline-block; vertical-align:top;">
 <img src="images/cats_eye_nebula_hubble.jpg" alt="Cat's Eye Nebula (NGC 6543)" style="max-width:48%; display:inline-block; vertical-align:top;">
-<figcaption>Figure 2. The Ring Nebula (left) and Cat's Eye Nebula (right) are planetary nebulae. The dot in the middle of each is a white dwarf. Planetary nebulae have nothing to do with planets. (Ring Nebula: NASA/ESA/CSA/STScI, JWST NIRCam. Cat's Eye Nebula: NASA/ESA/J.P. Harrington &amp; K.J. Borkowski, Hubble Space Telescope.)</figcaption>
+<figcaption>(Ring Nebula: NASA/ESA/CSA/STScI, JWST NIRCam. Cat's Eye Nebula: NASA/ESA/J.P. Harrington &amp; K.J. Borkowski, Hubble Space Telescope.)</figcaption>
 </figure>
 
 <p>Planetary nebulae are colorful because UV radiation from the core ionizes the atoms in the gas. This makes them some of the most beautiful objects in the sky. They have nothing to do with planets ("planetary" is a historical misnomer -- at low resolution, they look a bit like round, green or blue planets).</p>
@@ -66,12 +69,13 @@
 <p>The degeneracy pressure limits the mass of a white dwarf. The limit is called the <span class="tooltip-trigger">Chandrasekhar limit<span class="tooltip-content">The maximum mass of a white dwarf, $M_{\text{WD}} \lesssim 1.4\,M_\odot$. Above this mass, electron degeneracy pressure cannot support the star against gravitational collapse.</span></span>, $M_{\text{WD}} \lesssim 1.4\,M_\odot$. The corresponding bound on the original star's mass is $M \lesssim 8\,M_\odot$. If $M \gtrsim 8\,M_\odot$ then the electron degeneracy pressure in the core cannot prevent further contraction. These high-mass stars continue to collapse leading to additional stages of nuclear fusion: carbon fusion (producing Ne, Na, Mg), neon fusion (producing O, Mg), oxygen fusion, then silicon fusion. Eventually iron is produced. Iron is the endpoint of nuclear fusion since elements above iron have endothermic fusion reactions and exothermic fission reactions. Stars where these processes are happening are called supergiants.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Supergiant Onion-Shell Structure</h4>
+<div class="figure-label">Interactive 3: Supergiant Onion-Shell Structure</div>
+<p class="vis-caption">Cross-section of a supergiant star showing concentric shells of nuclear burning.</p>
 <canvas id="vis-onion" width="600" height="350"></canvas>
 <div class="controls">
 <label>Star mass (M☉): <input type="range" id="onion-mass" min="8" max="40" step="1" value="20"><span id="onion-mass-val">20</span></label>
 </div>
-<figcaption>Each stage of nuclear burning creates a new shell. More massive stars develop more layers before core collapse. Hover over shells to see fusion reactions and temperatures.</figcaption>
+<p class="vis-caption">Hover over shells to see fusion reactions and temperatures.</p>
 </div>
 
 <p>All this nuclear activity makes supergiant stars very bright. Some of the brightest stars in the sky are supergiants, including Betelgeuse, Rigel, and Antares.</p>
@@ -86,16 +90,17 @@ $$p^+ + e^- \to n + \nu$$
 <p>As the neutrinos produced by this fusion leave the star, the pressure drops further allowing additional contraction. The star begins collapsing catastrophically, at as much as 1/4 the speed of light. Eventually, the core of neutrons cannot collapse further due to the strong interactions and the neutron degeneracy pressure. The incoming waves of matter then bang into the neutron core and bounce outward. This leads to an enormous explosion called a <span class="tooltip-trigger">core-collapse supernova<span class="tooltip-content">The explosive death of a massive star when its iron core collapses and rebounds off the neutron-degenerate core, producing enormous energy and heavy elements.</span></span>. After the explosion, the core may be obliterated. Or there may be a remnant neutron star (made of neutrons stabilized by degeneracy pressure) or, if the core mass is too large, a black hole.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Stellar Fate by Mass</h4>
+<div class="figure-label">Interactive 4: Stellar Fate by Mass</div>
+<p class="vis-caption">The fate of a star depends on its initial mass. Drag the slider to explore different evolutionary endpoints.</p>
 <canvas id="vis-stellar-fate" width="600" height="300"></canvas>
 <div class="controls">
 <label>Initial mass (M☉): <input type="range" id="fate-mass" min="0.1" max="50" step="0.1" value="1.0"><span id="fate-mass-val">1.0</span></label>
 </div>
-<figcaption>The fate of a star depends on its initial mass. Drag the slider to explore the different evolutionary paths and endpoints.</figcaption>
 </div>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Stellar Lifecycle Animation</h4>
+<div class="figure-label">Interactive 5: Stellar Lifecycle Animation</div>
+<p class="vis-caption">Watch a star evolve through its entire life, with cross-sections showing internal composition at each phase.</p>
 <canvas id="vis-stellar-evo" width="700" height="480"></canvas>
 <div class="controls">
 <label>Initial mass (M☉): <input type="range" id="evo-mass" min="0.05" max="40" step="0.05" value="10"><span id="evo-mass-val">10</span></label>
@@ -103,16 +108,15 @@ $$p^+ + e^- \to n + \nu$$
 <button id="evo-reset">Reset</button>
 <span id="evo-stage-label" style="margin-left:12px; color: rgba(255,255,255,0.6);"></span>
 </div>
-<figcaption>Watch a star evolve through its entire life. The cross-section shows internal composition at each phase. Change the initial mass to see how different stars live and die.</figcaption>
 </div>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Star Size Comparison</h4>
+<div class="figure-label">Interactive 6: Star Size Comparison</div>
+<p class="vis-caption">Stars span an enormous range of sizes. Zoom in to reveal progressively smaller stars down to Earth scale.</p>
 <canvas id="vis-star-sizes" width="700" height="480"></canvas>
 <div class="controls">
 <label>Zoom: <input type="range" id="size-zoom" min="0" max="100" step="0.5" value="0"><span id="size-zoom-label"></span></label>
 </div>
-<figcaption>Stars span an enormous range of sizes. Use the slider or scroll wheel to zoom in and reveal progressively smaller stars. At full zoom-out, the Sun is invisible; at full zoom-in, you can see the Earth for scale.</figcaption>
 </div>
 
 <p>During a supernova, elements heavier than iron can be produced. Although the production of these elements by fusion is not energetically favorable, there is so much energy around in a supernova that it can still happen -- like thermal motion pushing a ball up a hill. It is not clear if enough heavy elements can be produced this way to explain their abundances. In particular, it seems hard to get enough gold. Interestingly, the discovery of neutron star mergers through gravitational waves suggests that neutron star mergers may be another important source of gold, potentially resolving this deficit (see Section 6).</p>
@@ -314,9 +318,9 @@ $$\frac{1}{\xi^2}\frac{d}{d\xi}\left(\xi^2\frac{d\theta}{d\xi}\right) = -\theta^
 
 <!-- INTERACTIVE: Lane-Emden Solutions -->
 <div class="interactive-container">
-  <h3>Interactive: Lane-Emden Solutions</h3>
+  <div class="figure-label">Interactive 7: Lane-Emden Solutions</div>
+  <p class="vis-caption">Density profiles $\theta(\xi)$ for different polytropic indices. The zero crossing determines the star's radius.</p>
   <canvas id="vis-lane-emden" width="600" height="380"></canvas>
-  <p class="vis-caption">Density profile $\theta(\xi)$ for polytropic index $n = 0, 1, 1.5, 3, 5$. The zero crossing determines the star's radius.</p>
 </div>
 
 <p>We see that the profiles are actually qualitatively similar. For $n < 5$ the curves all cross $\rho = 0$, which tells us the size of the star. That is, we define $\xi_{\max}$ as the scale where $\theta(\xi_{\max}) = 0$, then the radius of the star is $R = r_0\xi_{\max}$. In the Eddington model, $n = 3$, the zero crossing occurs at $\xi_{\max} = 6.9$.</p>
@@ -369,13 +373,16 @@ $$T_c = (1-\beta)\frac{\mu}{k_B}\pi G\frac{M_\odot m_p}{\xi_{\max}^2 C_3 R_\odot
 </div>
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 8: Gas Pressure Fraction vs Stellar Mass</div>
+<p class="vis-caption">The ratio $\beta = P_{\text{gas}}/P_{\text{tot}}$ as a function of stellar mass. Radiation pressure dominates for heavier stars.</p>
 <canvas id="vis-beta-mass" width="600" height="400"></canvas>
-<p class="vis-caption">The ratio $\beta = P_{\text{gas}}/P_{\text{tot}}$ as a function of stellar mass. Radiation pressure becomes dominant for heavier stars ($\beta \to 0$).</p>
 </div>
 
 <p>The density and temperature profiles predicted by the Eddington model compare well with more accurate numerical models:</p>
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 9: Stellar Density and Temperature Profiles</div>
+<p class="vis-caption">Density and temperature profiles from polytropic stellar models for different indices $n$.</p>
 <canvas id="vis-stellar-profiles" width="600" height="400"></canvas>
 <div class="slider-container">
 <label for="stellar-profile-toggle">Show:</label>
@@ -385,7 +392,7 @@ $$T_c = (1-\beta)\frac{\mu}{k_B}\pi G\frac{M_\odot m_p}{\xi_{\max}^2 C_3 R_\odot
 <option value="temperature">Temperature only</option>
 </select>
 </div>
-<p class="vis-caption">Density and temperature profiles from polytropic stellar models for different indices $n$. Solid lines: $\rho/\rho_c = \theta^n$; dashed: $T/T_c = \theta$.</p>
+<p class="vis-caption">Solid lines: $\rho/\rho_c = \theta^n$; dashed: $T/T_c = \theta$.</p>
 </div>
 
 <p>Whether or not the Eddington Model is correct, we can draw some general lessons. Since some equation of state exists for the star, there is some unique solution to the stellar structure equations and therefore some precise relation between the radiation pressure and the thermal gas pressure. This leads to a set of one-parameter families of solutions: given a single dimensionful parameter, such as the mass, then the temperature, size, luminosity, pressure and density are all determined. This is the origin of the Vogt-Russell theorem. Each type of star, with its appropriate nuclear physics and equations of state, leads to a 1D curve in the HR diagram.</p>
@@ -520,13 +527,14 @@ $$E_{\text{grav}} = -D_n\frac{GM^2}{R}$$
 <p>where $D_n$ is a dimensionless constant computed from the Lane-Emden solution. For $n = 3$ we find $D_3 = 0.68$.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: White Dwarf Density Profiles</h4>
+<div class="figure-label">Interactive 10: White Dwarf Density Profiles</div>
+<p class="vis-caption">Density profiles for different equations of state, showing how mass is distributed within a white dwarf.</p>
 <canvas id="vis-wd-density" width="600" height="300"></canvas>
 <div class="controls">
 <label>Plot: <select id="wdd-plot"><option value="rho">ρ(r) density</option><option value="shell">4πr²ρ(r) shell mass</option></select></label>
 <label>Polytropic index n: <input type="range" id="wdd-n" min="0" max="4.5" step="0.5" value="3"><span id="wdd-n-val">3</span></label>
 </div>
-<figcaption>Density profiles for different equations of state. The n = 3 polytrope (ultrarelativistic degenerate electrons) is more centrally concentrated than constant density. Toggle to see the shell mass distribution 4πr²ρ(r).</figcaption>
+<p class="vis-caption">The $n = 3$ polytrope (ultrarelativistic degenerate electrons) is more centrally concentrated than constant density.</p>
 </div>
 
 <p>The gravitational pressure is</p>
@@ -556,9 +564,9 @@ $$x_F = \frac{\hbar}{m_e c R}\left(\frac{9\pi M}{8m_p}\right)^{1/3} = 0.97\left(
 
 <!-- INTERACTIVE: White Dwarf Mass-Radius Relation -->
 <div class="interactive-container">
-  <h3>Interactive: White Dwarf Mass-Radius Relation</h3>
+  <div class="figure-label">Interactive 11: White Dwarf Mass-Radius Relation</div>
+  <p class="vis-caption">Mass-radius relation showing the Chandrasekhar limit at $M \approx 1.4\,M_\odot$. Hover for values.</p>
   <canvas id="vis-wd-mr" width="600" height="380"></canvas>
-  <p class="vis-caption">Mass-radius relation from degeneracy pressure vs gravity. Chandrasekhar limit at $M \approx 1.4\,M_\odot$. Hover for values.</p>
 </div>
 
 <p>We see from the plot that for $M \gtrsim 1.4\,M_\odot$ there are no solutions. Having included full relativistic corrections, we can also check our assumptions. Note that the bound comes from small $R$. As $R \to 0$ the gas gets denser and denser, so the electrons become faster and faster. We can see from $x_F \sim 1/R$ that as $R \to 0$, $x_F$ gets large. Expanding at large $x_F$ is exactly the ultrarelativistic limit. Therefore the bound is</p>
@@ -622,8 +630,10 @@ $$\rho_{\text{NS}} \approx \frac{M_\odot}{\frac{4}{3}\pi R_{\text{NS}}^3} = 3 \t
 <p>In July, 1054 AD, a Chinese astronomer observed a new "guest star", brighter than any other star in the sky. It lasted for about a month and then faded. Arab astronomers observed the same object, and perhaps Native American astronomers as well. We now know that this was a core-collapse supernova. 1000 years later, the supernova remnants are visible as the <span class="tooltip-trigger">Crab Nebula<span class="tooltip-content">A supernova remnant in the constellation Taurus, about 10 light-years across. It was created by a supernova observed by Chinese astronomers in 1054 AD. It contains a pulsar in its center.</span></span>, in the constellation Taurus. There is a neutron star in the middle of the Crab Nebula called the Crab Pulsar. The pulsar has a mass of $1.4\,M_\odot$ and period of 0.3s.</p>
 
 <figure>
+<div class="figure-label">Figure 2: The Crab Nebula</div>
+<p class="vis-caption">The Crab Nebula, a supernova remnant about 10 light years across with a neutron star pulsar at its center.</p>
 <img src="images/crab_nebula_hubble.jpg" alt="Crab Nebula (M1)">
-<figcaption>Figure 7. The Crab Nebula is around 10 light years across. In its center is a neutron star pulsar. The neutron star cannot be seen in the optical spectrum, but is clearly visible in the radio and x-ray bands. (NASA/ESA/J. Hester &amp; A. Loll, Hubble Space Telescope.)</figcaption>
+<figcaption>(NASA/ESA/J. Hester &amp; A. Loll, Hubble Space Telescope.)</figcaption>
 </figure>
 
 <p>In 2017, a binary neutron star system was discovered through its gravitational wave signal as the neutron stars merged. The neutron stars had masses around $1.5\,M_\odot$. One interesting mystery that such mergers might explain is where all the gold in the universe came from. It turns out it is very difficult to explain how gold might have come from supernovae. However, the nuclear physics of neutron star mergers seems like it gives a better explanation. This science is all very recent, and while early results seem promising, more data and more careful calculations and simulations are needed to draw any definite conclusions.</p>
