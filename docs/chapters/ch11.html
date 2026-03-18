@@ -25,7 +25,7 @@
 
 <p>where $g(\epsilon)$ is the measure on the integral over energies $\epsilon$, known as the <span class="tooltip-trigger">density of states<span class="tooltip-content">$g(\epsilon)$ gives the number of single-particle states with energies between $\epsilon$ and $\epsilon + d\epsilon$. It encodes the geometry and boundary conditions of the system and is the key input for computing thermodynamic quantities.</span></span>. Thus, the first step to studying any of these systems is working out the density of states, for which we need the distribution of energy levels of the system. Many quantities can be derived from $\Phi$ recalling that</p>
 
-<div class="equation">$$d\Phi = -SdT + PdV + Nd\mu$$<span class="eq-number">(5)</span></div>
+<div class="equation">$$d\Phi = -SdT - PdV - Nd\mu$$<span class="eq-number">(5)</span></div>
 
 <p>and that $\Phi = -PV$ (we showed this at the end of Lecture 8).</p>
 
@@ -208,7 +208,7 @@ $$S_1 = \int \frac{dQ}{T} = \int_0^{T_1}\frac{1}{T}\frac{dQ}{dT}\,dT = \int_0^{T
 
 <p>Electromagnetic waves also exert radiation pressure</p>
 
-<div class="equation">$$\vec{P} = \frac{1}{c}\vec{S} = \epsilon_0\,\vec{E} \times \vec{B}$$<span class="eq-number">(28)</span></div>
+<div class="equation">$$\vec{P} = \frac{1}{c}\vec{S} = c\epsilon_0\,\vec{E} \times \vec{B}$$<span class="eq-number">(28)</span></div>
 
 <p>where $\vec{S}$ is the Poynting vector that gives the energy flux (power/area). Radiation pressure is a vector. It gives the momentum per unit area of the classical radiation. Unlike pressure due to thermal motion of a gas, radiation pressure need not be uniform in all directions (the radiation pressure from the sun comes only in the direction away from the sun). If we confine radiation to a box with reflecting walls, then when the radiation bounces off a wall, its momentum/area changes by $-2\vec{P}$. If we allow for uniform radiation going towards or away from the wall in the $x$, $y$ or $z$ direction, it has a $\frac{1}{6}$ chance of going towards the wall, so the pressure from electromagnetic radiation is $P = \frac{1}{3}|\vec{P}| = \frac{1}{3c}|\vec{S}|$.</p>
 
@@ -500,8 +500,8 @@ $$\Phi_{\odot\to\oplus} = \frac{1}{4\pi R_{\odot\to\oplus}^2}P = 1358\,\frac{\te
 <div class="info-box example">
 <div class="box-title">The Cosmic Microwave Background</div>
 <p>The cosmic microwave background (CMB) is a photon gas (blackbody) at 2.73 K. The photon spectrum therefore has a peak at $\lambda_\text{max} = 1.05\,\text{mm}$ (microwave). The energy density of the CMB is $\frac{\langle E \rangle}{V} = 0.26\,\frac{\text{MeV}}{\text{m}^3}$. This is much smaller than the energy density of matter, which is around $0.2\,\text{proton/m}^3$ giving $\frac{\langle E \rangle}{V} \approx 200\,\frac{\text{MeV}}{\text{m}^3}$. In fact, both of these are much smaller than the total energy density of the universe, which we can deduce from the rate of expansion $\frac{E}{V} = \frac{3c^2 H_0^2}{8\pi G} = 5200\,\frac{\text{MeV}}{\text{m}^3}$. Thus matter is only 4% of the energy density of the universe and photons are a measly 0.005%. The missing 96% is called "dark", since we don't see it. It consists of dark energy and dark matter.</p>
-<p>The entropy density of the CMB is $\frac{S}{V} = (3 \times 10^9)\,\frac{k_B}{\text{m}^3}$. This is much greater than the entropy density of matter: 1 proton/m$^3$ gives around $k_B/\text{m}^3$ of entropy. So the entropy density of photons is a billion times greater than the entropy density for matter. The observable universe is around $10^{27}$ meters across, giving a total entropy of the universe of $S = 10^{90}\,k_B$ almost entirely contained in the photons of the CMB.</p>
-<p>The number density of CMB photons is $n = \frac{N}{V} = (8 \times 10^8)\,\frac{1}{\text{m}^3}$. The baryon-to-photon ratio is:</p>
+<p>The entropy density of the CMB is $\frac{S}{V} = (1.5 \times 10^9)\,\frac{k_B}{\text{m}^3}$. This is much greater than the entropy density of matter: 1 proton/m$^3$ gives around $k_B/\text{m}^3$ of entropy. So the entropy density of photons is a billion times greater than the entropy density for matter. The observable universe is around $10^{27}$ meters across, giving a total entropy of the universe of $S = 10^{90}\,k_B$ almost entirely contained in the photons of the CMB.</p>
+<p>The number density of CMB photons is $n = \frac{N}{V} = (4 \times 10^8)\,\frac{1}{\text{m}^3}$. The baryon-to-photon ratio is:</p>
 $$\eta = \frac{n_B}{n_\gamma} = 6 \times 10^{-10}$$
 <p>One important unsolved mystery is why this is not much smaller (the baryogenesis problem). Since both $n$ and $n_B$ scale like $T^3$, the baryon-to-photon ratio has remained essentially constant since the CMB photons were produced, 3 minutes after the big bang.</p>
 </div>
@@ -638,7 +638,7 @@ $$\eta = \frac{n_B}{n_\gamma} = 6 \times 10^{-10}$$
 
 <div class="problem">
 <div class="problem-label">Q8.</div>
-<p>In the Debye model, the energy at low temperature is $E \approx \frac{3\pi^4}{5}N\hbar\omega_D\left(\frac{T}{T_D}\right)^4$ (Eq. 22). Show that the entropy at low temperature is $S = \frac{4}{3}\frac{C_V}{1} = \frac{16\pi^4}{5}Nk_B\left(\frac{T}{T_D}\right)^3$, and verify that $S \to 0$ as $T \to 0$ in accord with the third law of thermodynamics. At what temperature does the entropy per atom reach $k_B$?</p>
+<p>In the Debye model, the energy at low temperature is $E \approx \frac{3\pi^4}{5}N\hbar\omega_D\left(\frac{T}{T_D}\right)^4$ (Eq. 22). Show that the entropy at low temperature is $S = \frac{1}{3}C_V = \frac{4\pi^4}{5}Nk_B\left(\frac{T}{T_D}\right)^3$, and verify that $S \to 0$ as $T \to 0$ in accord with the third law of thermodynamics. At what temperature does the entropy per atom reach $k_B$?</p>
 </div>
 
 </div>
