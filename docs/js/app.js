@@ -21760,92 +21760,133 @@ function initCh14Vis() {
 
     function drawSRLatch() {
       clearCanvas(ctx, W, H);
-      const onC = '#4caf50', offC = '#555', pulseC = '#ff9800';
+      const hiC = '#4caf50', loC = '#555', pulseC = '#ff9800';
       const qBar = srQ ? 0 : 1;
 
       ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
       ctx.fillText('SR Latch (Cross-Coupled NOR Gates)', W / 2, 22);
 
-      // NOR gate positions
-      const nor1X = 260, nor1Y = 90;  // top NOR → Q
-      const nor2X = 260, nor2Y = 210; // bot NOR → Q̄
-      const gw = 60, gh = 40;
+      // Legend: HIGH/LOW meaning
+      ctx.font = FONT_SM; ctx.textAlign = 'left';
+      ctx.fillStyle = hiC; ctx.fillText('\u2588 HIGH (1)', 15, H - 12);
+      ctx.fillStyle = loC; ctx.fillText('\u2588 LOW (0)', 110, H - 12);
+      ctx.fillStyle = '#888';
+      ctx.fillText('Wires carry voltage levels, not current. GREEN = HIGH, GRAY = LOW.', 200, H - 12);
 
-      // Draw NOR gates
-      function drawNOR(x, y) {
+      // NOR gate positions
+      const nor1X = 270, nor1Y = 100;  // top NOR → Q
+      const nor2X = 270, nor2Y = 210; // bot NOR → Q̄
+      const gw = 65, gh = 42;
+
+      // Draw NOR gate with standard OR shape + bubble
+      function drawNOR(x, y, label) {
+        const hw = gw / 2, hh = gh / 2;
         ctx.lineWidth = 2; ctx.strokeStyle = '#333'; ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.beginPath();
-        const hw = gw / 2, hh = gh / 2;
         ctx.moveTo(x - hw, y - hh);
         ctx.quadraticCurveTo(x, y - hh, x + hw * 0.8, y);
         ctx.quadraticCurveTo(x, y + hh, x - hw, y + hh);
         ctx.quadraticCurveTo(x - hw / 3, y, x - hw, y - hh);
         ctx.fill(); ctx.stroke();
-        // Bubble
+        // Bubble (NOT circle)
         ctx.beginPath(); ctx.arc(x + hw * 0.8 + 6, y, 5, 0, Math.PI * 2);
         ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#333'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('NOR', x - 3, y + 4);
+        // Label above
+        ctx.fillStyle = '#888'; ctx.font = FONT_SM; ctx.textAlign = 'center';
+        ctx.fillText(label, x, y - hh - 6);
       }
 
-      drawNOR(nor1X, nor1Y);
-      drawNOR(nor2X, nor2Y);
+      drawNOR(nor1X, nor1Y, 'NOR\u2081');
+      drawNOR(nor2X, nor2Y, 'NOR\u2082');
 
-      // Wire helper
-      function wire(pts, val, pulse) {
-        ctx.strokeStyle = pulse ? pulseC : (val ? onC : offC);
-        ctx.lineWidth = val || pulse ? 2.5 : 1.5;
+      // Wire helper — color indicates voltage level
+      function wire(pts, high, pulse) {
+        ctx.strokeStyle = pulse ? pulseC : (high ? hiC : loC);
+        ctx.lineWidth = high || pulse ? 2.5 : 1.5;
         ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
         for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
         ctx.stroke();
       }
+      function dot(x, y, high) {
+        ctx.fillStyle = high ? hiC : loC;
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+      }
 
-      // S input → NOR1 top
-      wire([[80, nor1Y - 13], [nor1X - gw/2, nor1Y - 13]], srS, srS);
-      ctx.fillStyle = srS ? pulseC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText('S=' + srS, 75, nor1Y - 8);
+      // S input → NOR1 top input
+      const inX = 90;
+      wire([[inX, nor1Y - 14], [nor1X - gw/2, nor1Y - 14]], srS, srS);
+      // S label with toggle-style box
+      ctx.fillStyle = srS ? pulseC : loC;
+      ctx.beginPath(); ctx.roundRect(40, nor1Y - 28, 45, 28, 4); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('S = ' + srS, 62, nor1Y - 10);
 
-      // R input → NOR2 bot
-      wire([[80, nor2Y + 13], [nor2X - gw/2, nor2Y + 13]], srR, srR);
-      ctx.fillStyle = srR ? pulseC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText('R=' + srR, 75, nor2Y + 18);
+      // R input → NOR2 bot input
+      wire([[inX, nor2Y + 14], [nor2X - gw/2, nor2Y + 14]], srR, srR);
+      ctx.fillStyle = srR ? pulseC : loC;
+      ctx.beginPath(); ctx.roundRect(40, nor2Y + 2, 45, 28, 4); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('R = ' + srR, 62, nor2Y + 20);
 
       // Q output from NOR1
       const qOutX = nor1X + gw/2 * 0.8 + 11;
-      wire([[qOutX, nor1Y], [W - 100, nor1Y]], srQ, false);
-      ctx.fillStyle = srQ ? onC : offC; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText('Q=' + srQ, W - 95, nor1Y + 6);
-      // Q indicator
+      wire([[qOutX, nor1Y], [W - 110, nor1Y]], srQ, false);
+      // Q LED indicator
+      ctx.fillStyle = srQ ? hiC : 'rgba(100,100,100,0.3)';
+      ctx.beginPath(); ctx.arc(W - 75, nor1Y, 14, 0, Math.PI * 2); ctx.fill();
       if (srQ) {
-        ctx.fillStyle = 'rgba(76,175,80,0.3)';
-        ctx.beginPath(); ctx.arc(W - 60, nor1Y, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(76,175,80,0.2)';
+        ctx.beginPath(); ctx.arc(W - 75, nor1Y, 22, 0, Math.PI * 2); ctx.fill();
       }
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(srQ.toString(), W - 75, nor1Y + 5);
+      ctx.fillStyle = srQ ? hiC : loC; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Q', W - 52, nor1Y + 6);
 
       // Q̄ output from NOR2
-      wire([[qOutX, nor2Y], [W - 100, nor2Y]], qBar, false);
-      ctx.fillStyle = qBar ? onC : offC; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText('Q\u0305=' + qBar, W - 95, nor2Y + 6);
+      wire([[qOutX, nor2Y], [W - 110, nor2Y]], qBar, false);
+      ctx.fillStyle = qBar ? hiC : 'rgba(100,100,100,0.3)';
+      ctx.beginPath(); ctx.arc(W - 75, nor2Y, 14, 0, Math.PI * 2); ctx.fill();
       if (qBar) {
-        ctx.fillStyle = 'rgba(76,175,80,0.3)';
-        ctx.beginPath(); ctx.arc(W - 60, nor2Y, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(76,175,80,0.2)';
+        ctx.beginPath(); ctx.arc(W - 75, nor2Y, 22, 0, Math.PI * 2); ctx.fill();
       }
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(qBar.toString(), W - 75, nor2Y + 5);
+      ctx.fillStyle = qBar ? hiC : loC; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Q\u0305', W - 52, nor2Y + 6);
 
-      // Cross-coupling: Q → NOR2 top input
-      const fbX1 = nor1X + gw/2 * 0.8 + 11 + 30;
-      wire([[qOutX + 25, nor1Y], [fbX1, nor1Y], [fbX1, nor2Y - 50], [160, nor2Y - 50], [160, nor2Y - 13], [nor2X - gw/2, nor2Y - 13]], srQ, false);
-      ctx.fillStyle = srQ ? onC : offC;
-      ctx.beginPath(); ctx.arc(qOutX + 25, nor1Y, 3, 0, Math.PI * 2); ctx.fill();
+      // Cross-coupling feedback wires
+      // Q output → NOR2 top input (feedback path going down-around)
+      const fbRight = qOutX + 30;
+      dot(qOutX + 25, nor1Y, srQ);
+      wire([[qOutX + 25, nor1Y], [fbRight, nor1Y], [fbRight, nor2Y - 50],
+            [165, nor2Y - 50], [165, nor2Y - 14], [nor2X - gw/2, nor2Y - 14]], srQ, false);
+      // Label
+      ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Q feeds back', (fbRight + 165) / 2, nor2Y - 55);
 
-      // Cross-coupling: Q̄ → NOR1 bot input
-      wire([[qOutX + 25, nor2Y], [fbX1 + 15, nor2Y], [fbX1 + 15, nor1Y + 50], [160, nor1Y + 50], [160, nor1Y + 13], [nor1X - gw/2, nor1Y + 13]], qBar, false);
-      ctx.fillStyle = qBar ? onC : offC;
-      ctx.beginPath(); ctx.arc(qOutX + 25, nor2Y, 3, 0, Math.PI * 2); ctx.fill();
+      // Q̄ output → NOR1 bot input (feedback path going up-around)
+      dot(qOutX + 25, nor2Y, qBar);
+      wire([[qOutX + 25, nor2Y], [fbRight + 15, nor2Y], [fbRight + 15, nor1Y + 50],
+            [165, nor1Y + 50], [165, nor1Y + 14], [nor1X - gw/2, nor1Y + 14]], qBar, false);
+      ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Q\u0305 feeds back', (fbRight + 15 + 165) / 2, nor1Y + 58);
 
-      // Status
+      // Status explanation
       ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
-      if (srS) ctx.fillText('SET pulse: Q → 1', W / 2, H - 12);
-      else if (srR) ctx.fillText('RESET pulse: Q → 0', W / 2, H - 12);
-      else ctx.fillText('Stable state: Q=' + srQ + ', Q\u0305=' + qBar + '. Pulse SET or RESET to change.', W / 2, H - 12);
+      if (srS) {
+        ctx.fillStyle = pulseC;
+        ctx.fillText('SET pulsed HIGH \u2192 NOR\u2081 output goes HIGH (Q=1)', W / 2, H - 32);
+      } else if (srR) {
+        ctx.fillStyle = pulseC;
+        ctx.fillText('RESET pulsed HIGH \u2192 NOR\u2082 output goes HIGH (Q\u0305=1, so Q=0)', W / 2, H - 32);
+      } else {
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('Stable: feedback holds Q=' + srQ + '. Pulse SET or RESET to flip the stored bit.', W / 2, H - 32);
+      }
 
       if (srOutput) srOutput.textContent = 'Q = ' + srQ + ', Q\u0305 = ' + qBar;
     }
@@ -21888,12 +21929,12 @@ function initCh14Vis() {
     const GATE_DEFS = {
       INPUT:  { inputs: 0, outputs: 1, w: 50, h: 36, label: 'IN' },
       OUTPUT: { inputs: 1, outputs: 0, w: 50, h: 36, label: 'OUT' },
-      NOT:    { inputs: 1, outputs: 1, w: 55, h: 36, label: 'NOT' },
-      AND:    { inputs: 2, outputs: 1, w: 55, h: 40, label: 'AND' },
-      NAND:   { inputs: 2, outputs: 1, w: 55, h: 40, label: 'NAND' },
-      OR:     { inputs: 2, outputs: 1, w: 55, h: 40, label: 'OR' },
-      NOR:    { inputs: 2, outputs: 1, w: 55, h: 40, label: 'NOR' },
-      XOR:    { inputs: 2, outputs: 1, w: 55, h: 40, label: 'XOR' }
+      NOT:    { inputs: 1, outputs: 1, w: 60, h: 40, label: 'NOT' },
+      AND:    { inputs: 2, outputs: 1, w: 60, h: 44, label: 'AND' },
+      NAND:   { inputs: 2, outputs: 1, w: 66, h: 44, label: 'NAND' },
+      OR:     { inputs: 2, outputs: 1, w: 60, h: 44, label: 'OR' },
+      NOR:    { inputs: 2, outputs: 1, w: 66, h: 44, label: 'NOR' },
+      XOR:    { inputs: 2, outputs: 1, w: 60, h: 44, label: 'XOR' }
     };
 
     const GATE_LOGIC = {
@@ -22031,49 +22072,93 @@ function initCh14Vis() {
         ctx.setLineDash([]);
       }
 
-      // Draw gates
+      // Draw gates with standard IEEE symbols
       for (let i = 0; i < gates.length; i++) {
         const g = gates[i];
         const def = GATE_DEFS[g.type];
+        const cx = g.x + g.w / 2, cy = g.y + g.h / 2;
+        const hw = g.w / 2, hh = g.h / 2;
 
-        // Gate body
         if (g.type === 'INPUT') {
+          // Toggle switch: rounded rect with slider appearance
           const val = g.value || 0;
           ctx.fillStyle = val ? 'rgba(76,175,80,0.3)' : 'rgba(100,100,100,0.2)';
-          ctx.strokeStyle = val ? onC : '#888';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.roundRect(g.x, g.y, g.w, g.h, 6);
-          ctx.fill(); ctx.stroke();
-          // Toggle switch appearance
-          ctx.fillStyle = val ? onC : '#888'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
-          ctx.fillText(val ? '1' : '0', g.x + g.w / 2, g.y + g.h / 2 + 5);
+          ctx.strokeStyle = val ? onC : '#888'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(g.x, g.y, g.w, g.h, 6); ctx.fill(); ctx.stroke();
+          // Slider knob
+          const knobX = val ? g.x + g.w - 14 : g.x + 14;
+          ctx.fillStyle = val ? onC : '#888';
+          ctx.beginPath(); ctx.arc(knobX, cy, 10, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(val ? '1' : '0', knobX, cy + 4);
         } else if (g.type === 'OUTPUT') {
-          const val = g.inputValues[0] || 0;
           // LED circle
+          const val = g.inputValues[0] || 0;
           ctx.fillStyle = val ? 'rgba(76,175,80,0.4)' : 'rgba(100,100,100,0.15)';
           ctx.strokeStyle = val ? onC : '#888'; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.arc(g.x + g.w / 2, g.y + g.h / 2, g.h / 2, 0, Math.PI * 2);
-          ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx, cy, hh, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
           if (val) {
             ctx.fillStyle = 'rgba(76,175,80,0.2)';
-            ctx.beginPath(); ctx.arc(g.x + g.w / 2, g.y + g.h / 2, g.h / 2 + 6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx, cy, hh + 6, 0, Math.PI * 2); ctx.fill();
           }
-          ctx.fillStyle = val ? onC : '#888'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-          ctx.fillText(val ? '1' : '0', g.x + g.w / 2, g.y + g.h / 2 + 4);
-        } else {
-          // Logic gate body
-          ctx.fillStyle = 'rgba(240,240,255,0.95)';
-          ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5;
+          ctx.fillStyle = val ? onC : '#888'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(val ? '1' : '0', cx, cy + 4);
+        } else if (g.type === 'NOT') {
+          // Triangle with bubble
+          ctx.fillStyle = 'rgba(240,240,255,0.95)'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.roundRect(g.x, g.y, g.w, g.h, 4);
+          ctx.moveTo(g.x + 4, g.y + 2);
+          ctx.lineTo(g.x + g.w - 12, cy);
+          ctx.lineTo(g.x + 4, g.y + g.h - 2);
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+          // Bubble
+          ctx.beginPath(); ctx.arc(g.x + g.w - 6, cy, 5, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+        } else if (g.type === 'AND' || g.type === 'NAND') {
+          // Flat left, rounded right (D shape)
+          const bodyW = g.type === 'NAND' ? g.w - 10 : g.w;
+          ctx.fillStyle = 'rgba(240,240,255,0.95)'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(g.x + 4, g.y + 2);
+          ctx.lineTo(g.x + bodyW / 2, g.y + 2);
+          ctx.arc(g.x + bodyW / 2, cy, hh - 2, -Math.PI / 2, Math.PI / 2);
+          ctx.lineTo(g.x + 4, g.y + g.h - 2);
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+          if (g.type === 'NAND') {
+            ctx.beginPath(); ctx.arc(g.x + bodyW / 2 + hh - 2 + 6, cy, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+          }
+        } else if (g.type === 'OR' || g.type === 'NOR') {
+          // Curved OR shape
+          const bodyW = g.type === 'NOR' ? g.w - 10 : g.w;
+          ctx.fillStyle = 'rgba(240,240,255,0.95)'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(g.x + 4, g.y + 2);
+          ctx.quadraticCurveTo(g.x + bodyW * 0.45, g.y + 2, g.x + bodyW - 2, cy);
+          ctx.quadraticCurveTo(g.x + bodyW * 0.45, g.y + g.h - 2, g.x + 4, g.y + g.h - 2);
+          ctx.quadraticCurveTo(g.x + bodyW * 0.2, cy, g.x + 4, g.y + 2);
           ctx.fill(); ctx.stroke();
-          // Label
-          ctx.fillStyle = '#333'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-          ctx.fillText(g.type, g.x + g.w / 2, g.y + g.h / 2 + 4);
+          if (g.type === 'NOR') {
+            ctx.beginPath(); ctx.arc(g.x + bodyW + 3, cy, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+          }
+        } else if (g.type === 'XOR') {
+          // OR shape with extra curve on input side
+          ctx.fillStyle = 'rgba(240,240,255,0.95)'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(g.x + 8, g.y + 2);
+          ctx.quadraticCurveTo(g.x + g.w * 0.45, g.y + 2, g.x + g.w - 2, cy);
+          ctx.quadraticCurveTo(g.x + g.w * 0.45, g.y + g.h - 2, g.x + 8, g.y + g.h - 2);
+          ctx.quadraticCurveTo(g.x + g.w * 0.22, cy, g.x + 8, g.y + 2);
+          ctx.fill(); ctx.stroke();
+          // Extra input curve
+          ctx.beginPath();
+          ctx.moveTo(g.x + 2, g.y + 2);
+          ctx.quadraticCurveTo(g.x + g.w * 0.17, cy, g.x + 2, g.y + g.h - 2);
+          ctx.stroke();
         }
 
-        // Input ports
+        // Input port circles
         for (let p = 0; p < def.inputs; p++) {
           const pos = getPortPos(g, 'input', p);
           const val = g.inputValues[p] || 0;
@@ -22083,7 +22168,7 @@ function initCh14Vis() {
           ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.stroke();
         }
 
-        // Output ports
+        // Output port circles
         for (let p = 0; p < def.outputs; p++) {
           const pos = getPortPos(g, 'output', p);
           const val = g.outputValues[p] || 0;
@@ -22103,13 +22188,16 @@ function initCh14Vis() {
       // Empty state message
       if (gates.length === 0) {
         ctx.fillStyle = '#888'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('Click a gate type above, then click here to place it.', W / 2, H / 2 - 10);
-        ctx.fillText('Use WIRE mode to connect gates. Click INPUT switches to toggle.', W / 2, H / 2 + 14);
+        ctx.fillText('Select a gate above and click here to place it, or drag it in.', W / 2, H / 2 - 20);
+        ctx.fillText('Use WIRE to connect output ports \u2192 input ports.', W / 2, H / 2 + 4);
+        ctx.fillText('Click any INPUT switch to toggle it ON/OFF (works in any mode).', W / 2, H / 2 + 28);
       }
 
-      // Tool indicator
+      // Tool indicator + hint
       ctx.fillStyle = '#888'; ctx.font = FONT_SM; ctx.textAlign = 'right';
       ctx.fillText('Tool: ' + selectedTool, W - 10, H - 8);
+      ctx.textAlign = 'left';
+      ctx.fillText('Click INPUT switches to toggle (any mode)', 10, H - 8);
     }
 
     // Mouse event handling
@@ -22125,15 +22213,24 @@ function initCh14Vis() {
       const pos = getCanvasPos(e);
       mouseX = pos.x; mouseY = pos.y;
 
+      // Always check: toggle INPUT gates regardless of tool mode
+      const clickedGate = findGateAt(pos.x, pos.y);
+      if (clickedGate && clickedGate.type === 'INPUT' && selectedTool !== 'DELETE') {
+        // Only toggle if not starting a drag (check if it looks like a click vs drag start)
+        inputClickCandidate = clickedGate;
+        inputClickPos = { x: pos.x, y: pos.y };
+        dragGate = clickedGate;
+        dragOffset = { x: pos.x - clickedGate.x, y: pos.y - clickedGate.y };
+        return;
+      }
+
       if (selectedTool === 'DELETE') {
         // Delete gate under cursor
-        const g = findGateAt(pos.x, pos.y);
-        if (g) {
-          // Remove connected wires
+        if (clickedGate) {
           for (let i = wires.length - 1; i >= 0; i--) {
-            if (wires[i].fromId === g.id || wires[i].toId === g.id) wires.splice(i, 1);
+            if (wires[i].fromId === clickedGate.id || wires[i].toId === clickedGate.id) wires.splice(i, 1);
           }
-          gates.splice(gates.indexOf(g), 1);
+          gates.splice(gates.indexOf(clickedGate), 1);
           propagate(); drawCircuit();
           return;
         }
@@ -22146,7 +22243,6 @@ function initCh14Vis() {
             const fp = getPortPos(fromGate, 'output', w.fromPort);
             const tp = getPortPos(toGate, 'input', w.toPort);
             const midX = (fp.x + tp.x) / 2;
-            // Check distance to wire segments
             if (distToSegment(pos, fp, {x:midX,y:fp.y}) < 8 ||
                 distToSegment(pos, {x:midX,y:fp.y}, {x:midX,y:tp.y}) < 8 ||
                 distToSegment(pos, {x:midX,y:tp.y}, tp) < 8) {
@@ -22166,11 +22262,9 @@ function initCh14Vis() {
           if (!wireStart) {
             wireStart = port;
           } else {
-            // Complete wire
             if (wireStart.portType !== port.portType && wireStart.gateId !== port.gateId) {
               const from = wireStart.portType === 'output' ? wireStart : port;
               const to = wireStart.portType === 'input' ? wireStart : port;
-              // Check if input already connected
               const existing = wires.findIndex(function(w) { return w.toId === to.gateId && w.toPort === to.portIdx; });
               if (existing >= 0) wires.splice(existing, 1);
               wires.push({ fromId: from.gateId, fromPort: from.portIdx, toId: to.gateId, toPort: to.portIdx });
@@ -22185,23 +22279,14 @@ function initCh14Vis() {
         return;
       }
 
-      // Check if clicking on an INPUT gate to toggle
-      const clickedGate = findGateAt(pos.x, pos.y);
-      if (clickedGate && clickedGate.type === 'INPUT') {
-        clickedGate.value = clickedGate.value ? 0 : 1;
-        clickedGate.outputValues[0] = clickedGate.value;
-        propagate(); drawCircuit();
-        return;
-      }
-
-      // Check if starting a drag on existing gate
-      if (clickedGate && selectedTool !== 'WIRE') {
+      // Drag existing gate
+      if (clickedGate) {
         dragGate = clickedGate;
         dragOffset = { x: pos.x - clickedGate.x, y: pos.y - clickedGate.y };
         return;
       }
 
-      // Place new gate
+      // Place new gate from selected tool
       if (GATE_DEFS[selectedTool]) {
         const def = GATE_DEFS[selectedTool];
         const snap = function(v) { return Math.round(v / 20) * 20; };
@@ -22209,6 +22294,10 @@ function initCh14Vis() {
         propagate(); drawCircuit();
       }
     });
+
+    // Track whether an INPUT click was actually a drag or a toggle
+    var inputClickCandidate = null;
+    var inputClickPos = null;
 
     cBuilder.addEventListener('mousemove', function(e) {
       const pos = getCanvasPos(e);
@@ -22227,7 +22316,19 @@ function initCh14Vis() {
       else if (hoveredPort && selectedTool === 'WIRE') drawCircuit();
     });
 
-    cBuilder.addEventListener('mouseup', function() {
+    cBuilder.addEventListener('mouseup', function(e) {
+      // If we had an INPUT click candidate and didn't drag far, toggle it
+      if (inputClickCandidate && inputClickPos) {
+        const pos = getCanvasPos(e);
+        const dist = Math.hypot(pos.x - inputClickPos.x, pos.y - inputClickPos.y);
+        if (dist < 5) {
+          inputClickCandidate.value = inputClickCandidate.value ? 0 : 1;
+          inputClickCandidate.outputValues[0] = inputClickCandidate.value;
+          propagate(); drawCircuit();
+        }
+      }
+      inputClickCandidate = null;
+      inputClickPos = null;
       dragGate = null;
     });
 
@@ -22259,8 +22360,10 @@ function initCh14Vis() {
       return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
     }
 
-    // Palette buttons
+    // Palette buttons — click to select tool, or drag onto canvas to place
     const paletteEl = document.getElementById('circuit-palette');
+    var paletteDragType = null;
+
     if (paletteEl) {
       paletteEl.addEventListener('click', function(e) {
         const btn = e.target.closest('[data-gate]');
@@ -22270,6 +22373,38 @@ function initCh14Vis() {
         selectedTool = btn.dataset.gate;
         wireStart = null;
         drawCircuit();
+      });
+
+      // Drag from palette: mousedown on button starts a drag
+      paletteEl.addEventListener('mousedown', function(e) {
+        const btn = e.target.closest('[data-gate]');
+        if (!btn) return;
+        const gateType = btn.dataset.gate;
+        if (GATE_DEFS[gateType]) {
+          paletteDragType = gateType;
+          // Select this tool too
+          paletteEl.querySelectorAll('[data-gate]').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          selectedTool = gateType;
+        }
+      });
+
+      // When dragging from palette and entering the canvas, place the gate
+      cBuilder.addEventListener('mouseenter', function(e) {
+        if (paletteDragType && GATE_DEFS[paletteDragType]) {
+          const pos = getCanvasPos(e);
+          const def = GATE_DEFS[paletteDragType];
+          const snap = function(v) { return Math.round(v / 20) * 20; };
+          var newGate = createGate(paletteDragType, snap(pos.x - def.w / 2), snap(pos.y - def.h / 2));
+          dragGate = newGate;
+          dragOffset = { x: def.w / 2, y: def.h / 2 };
+          paletteDragType = null;
+          propagate(); drawCircuit();
+        }
+      });
+
+      document.addEventListener('mouseup', function() {
+        paletteDragType = null;
       });
     }
 
