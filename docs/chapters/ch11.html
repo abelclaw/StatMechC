@@ -43,12 +43,12 @@
   <p class="vis-caption">A chain of atoms connected by springs showing standing wave normal modes. Higher modes have shorter wavelengths and oscillate faster.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-phonon-chain" width="600" height="340"></canvas></div>
   <div class="vis-controls">
-    <label>Mode $n$: <input type="range" id="phonon-mode" min="1" max="10" step="1" value="1"> <span class="value-display" id="phonon-mode-val">1</span></label>
+    <label>Mode <i>n</i>: <input type="range" id="phonon-mode" min="1" max="10" step="1" value="1"> <span class="value-display" id="phonon-mode-val">1</span></label>
     <label>Amplitude: <input type="range" id="phonon-amp" min="0.1" max="1.0" step="0.05" value="0.5"> <span class="value-display" id="phonon-amp-val">0.50</span></label>
     <button id="phonon-play">&#9654; Play</button>
     <button id="phonon-reset">Reset</button>
   </div>
-  <div class="vis-caption">Each normal mode $n$ is a standing wave $A(x,t) = A_0 \sin(k_n x)\cos(\omega_n t)$ with wavevector $k_n = \pi n / L$ and frequency $\omega_n = c_s k_n$. The gray dots show equilibrium positions; the dashed envelope shows the maximum displacement.</div>
+  <p class="vis-caption">Each normal mode $n$ is a standing wave $A(x,t) = A_0 \sin(k_n x)\cos(\omega_n t)$ with wavevector $k_n = \pi n / L$ and frequency $\omega_n = c_s k_n$. The gray dots show equilibrium positions; the dashed envelope shows the maximum displacement.</p>
 </div>
 
 <p>If you knock one side of the solid, a sound wave will propagate through by vibrating each successive molecule. The quanta of sound-wave excitations in solids are called phonons.</p>
@@ -98,7 +98,7 @@
 <p>What is the chemical potential for phonons? When you heat a solid for example by putting it in air, lots of phonons are produced from simply banging air molecules into the solid. That is, processes like $\text{air} \to \text{air} + \text{phonon}$ can happen. Since the sum of the chemical potentials on both sides of any reaction are the same in equilibrium, this implies that $\mu = 0$ for phonons. There is no conservation of phonon number.</p>
 
 <div class="info-box physical">
-<div class="box-title">Why $\mu = 0$ for Phonons and Photons</div>
+<div class="box-title">Why <i>μ</i> = 0 for Phonons and Photons</div>
 <p>Since phonons (and photons) can be freely created and destroyed, there is no conserved particle number. The equilibrium condition for a reaction like $\text{air} \to \text{air} + \text{phonon}$ requires the chemical potentials to balance, which forces $\mu_\text{phonon} = 0$.</p>
 </div>
 
@@ -179,7 +179,7 @@ $$\omega_D = c_s\!\left(\frac{6\pi^2 N}{V}\right)^{1/3}$$
   <div class="figure-label">Interactive 2: Debye Model Heat Capacity</div>
   <p class="vis-caption">Comparison of the Debye model prediction with experimental heat capacity data for various metals. Click a material to load its data, or drag the slider to fit by eye.</p>
   <div class="vis-controls">
-    <label>Debye temperature $\theta_D$: <input type="range" id="debye-td" min="50" max="2300" step="5" value="396"> <span class="slider-value" id="debye-td-val">396</span> K</label>
+    <label>Debye temperature <i>θ<sub>D</sub></i>: <input type="range" id="debye-td" min="50" max="2300" step="5" value="396"> <span class="slider-value" id="debye-td-val">396</span> K</label>
     <div id="debye-materials" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
   </div>
   <canvas id="vis-debye" width="600" height="380"></canvas>
@@ -275,7 +275,7 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 <p class="vis-caption">The classical Rayleigh-Jeans prediction (red, dashed) diverges at high frequencies, while Planck's quantum formula (blue, solid) correctly predicts the observed spectrum.</p>
 <canvas id="vis-uv-catastrophe" width="600" height="400"></canvas>
 <div class="slider-container">
-<label for="uv-temp">Temperature $T$ (K):</label>
+<label for="uv-temp">Temperature <i>T</i> (K):</label>
 <input type="range" id="uv-temp" min="1000" max="10000" step="100" value="5000">
 <span class="slider-value" id="uv-temp-val">5000</span>
 </div>
@@ -449,7 +449,7 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
     <button class="bb-obj-btn" data-obj="sirius">Sirius</button>
     <button class="bb-obj-btn" data-obj="rigel">Rigel</button>
   </div>
-  <div class="vis-caption">The peak wavelength is inversely proportional to the temperature: $\lambda_\text{peak} = 2.89\,\text{mm}\cdot\text{K}\,/\,T$ (Wien's law).</div>
+  <p class="vis-caption">The peak wavelength is inversely proportional to the temperature: $\lambda_\text{peak} = 2.89\,\text{mm}\cdot\text{K}\,/\,T$ (Wien's law).</p>
 </div>
 
 <div class="info-box example">

@@ -223,7 +223,7 @@ $$\Delta T = \frac{N_s}{N_w}\frac{RT_0^2}{L}$$
   <p class="vis-caption">Boiling point elevation due to adding solute. Adjust the solute fraction and temperature to see the effect on vapor pressure and boiling point.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-colligative" width="700" height="420"></canvas></div>
   <div class="vis-controls" style="flex-direction:column; align-items:stretch; gap:6px;">
-    <label>Solute fraction $N_s/N_w$: <input type="range" id="col-frac" min="0" max="0.20" step="0.005" value="0" style="width:180px"> <span class="value-display" id="col-frac-val">0.000</span></label>
+    <label>Solute fraction <i>N<sub>s</sub></i>/<i>N<sub>w</sub></i>: <input type="range" id="col-frac" min="0" max="0.20" step="0.005" value="0" style="width:180px"> <span class="value-display" id="col-frac-val">0.000</span></label>
     <div style="display:flex; align-items:center; gap:6px;">
       <label>Temperature: <input type="range" id="col-temp" min="340" max="400" step="0.5" value="373" style="width:180px"> <span class="value-display" id="col-temp-val">373</span> K</label>
       <span id="col-bp-display" style="margin-left:12px; font-size:0.8rem; color:var(--text-muted)"></span>
@@ -338,7 +338,7 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
   <div class="figure-label">Interactive 8: P-V Diagram</div>
   <p class="vis-caption">Van der Waals isotherms showing the coexistence region, critical point, and supercritical fluid regime.</p>
   <div class="vis-controls">
-    <label>$T / T_c$: <input type="range" id="pv-temp" min="0.7" max="1.4" step="0.01" value="1.0"> <span class="slider-value" id="pv-temp-val">1.00</span></label>
+    <label><i>T</i> / <i>T<sub>c</sub></i>: <input type="range" id="pv-temp" min="0.7" max="1.4" step="0.01" value="1.0"> <span class="slider-value" id="pv-temp-val">1.00</span></label>
   </div>
   <canvas id="vis-pv-diagram" width="600" height="400"></canvas>
 </div>
@@ -354,7 +354,7 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
 <p class="vis-caption">The coexistence dome encloses the two-phase region. Isobars are horizontal inside the dome; above $P_c$ no phase transition occurs.</p>
 <div class="vis-canvas-wrap"><canvas id="vis-tv-diagram" width="600" height="400"></canvas></div>
 <div class="vis-controls">
-<label>$P / P_c$: <input type="range" id="tv-pressure" min="0.1" max="2.0" step="0.01" value="0.60"> <span class="slider-value" id="tv-pressure-val">0.60</span></label>
+<label><i>P</i> / <i>P<sub>c</sub></i>: <input type="range" id="tv-pressure" min="0.1" max="2.0" step="0.01" value="0.60"> <span class="slider-value" id="tv-pressure-val">0.60</span></label>
 </div>
 </div>
 
@@ -416,7 +416,7 @@ $$\hat{n}_g(\hat{T}) = 1 + \frac{3}{4}(1 - \hat{T}) - \frac{7}{4}(1 - \hat{T})^{
   <div class="figure-label">Interactive 12: 2D Ising Model</div>
   <p class="vis-caption">Square lattice of spins with nearest-neighbor interactions. Below $T_c \approx 2.27\,J/k_B$, domains of aligned spins form spontaneously; above $T_c$, thermal fluctuations destroy long-range order.</p>
   <div class="vis-controls">
-    <label>$T / (J/k_B)$: <input type="range" id="ising-temp" min="0.5" max="5" step="0.05" value="2.27"> <span class="slider-value" id="ising-temp-val">2.27</span></label>
+    <label><i>T</i> / (<i>J</i>/<i>k</i><sub>B</sub>): <input type="range" id="ising-temp" min="0.5" max="5" step="0.05" value="2.27"> <span class="slider-value" id="ising-temp-val">2.27</span></label>
     <button id="ising-reset">Reset</button>
   </div>
   <canvas id="vis-ising" width="600" height="400"></canvas>

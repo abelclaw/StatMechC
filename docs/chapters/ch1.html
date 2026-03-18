@@ -166,8 +166,8 @@ $$\langle x \rangle = 0.59L; \qquad \langle x^2 \rangle = 0.42L^2; \qquad \sigma
   <div class="figure-label">Interactive 1: Gaussian Explorer</div>
   <p class="vis-caption">Adjust the mean and standard deviation to see how the Gaussian distribution changes shape.</p>
   <div class="vis-controls">
-    <label>Mean ($\mu$): <input type="range" id="gauss-mean" min="-3" max="3" step="0.1" value="0"><span class="slider-value" id="gauss-mean-val">0</span></label>
-    <label>Std Dev ($\sigma$): <input type="range" id="gauss-sigma" min="0.2" max="3" step="0.1" value="1"><span class="slider-value" id="gauss-sigma-val">1</span></label>
+    <label>Mean (<i>μ</i>): <input type="range" id="gauss-mean" min="-3" max="3" step="0.1" value="0"><span class="slider-value" id="gauss-mean-val">0</span></label>
+    <label>Std Dev (<i>σ</i>): <input type="range" id="gauss-sigma" min="0.2" max="3" step="0.1" value="1"><span class="slider-value" id="gauss-sigma-val">1</span></label>
   </div>
   <canvas id="vis-gaussian" width="600" height="300"></canvas>
 </div>
@@ -331,7 +331,7 @@ $$(M_r)_N \to \begin{cases} 0, & n\text{ odd} \\ \dfrac{2^{-r/2}\, r!}{\left(\fr
   <div class="figure-label">Interactive 2: Averaging and Convolution</div>
   <p class="vis-caption">Slide $N$ to see how the distribution of averages of $N$ uniform draws evolves from flat to triangular to Gaussian.</p>
   <div class="vis-controls">
-    <label>Number of particles $N$: <input type="range" id="conv-n" min="1" max="10" step="1" value="1"> <span class="slider-value" id="conv-n-val">1</span></label>
+    <label>Number of particles <i>N</i>: <input type="range" id="conv-n" min="1" max="10" step="1" value="1"> <span class="slider-value" id="conv-n-val">1</span></label>
   </div>
   <canvas id="vis-convolution" width="600" height="300"></canvas>
 </div>
@@ -530,7 +530,7 @@ $$\frac{\sigma}{\langle m \rangle} = \frac{1}{\sqrt{\lambda t}}$$
   <div class="figure-label">Interactive 4: Poisson Distribution Explorer</div>
   <p class="vis-caption">Adjust $\lambda t$ to see how the Poisson distribution evolves from asymmetric at small values to Gaussian at large values.</p>
   <div class="vis-controls">
-    <label>$\lambda t$: <input type="range" id="poisson-lambda" min="0.5" max="20" step="0.5" value="5"> <span class="slider-value" id="poisson-lambda-val">5</span></label>
+    <label><i>λt</i>: <input type="range" id="poisson-lambda" min="0.5" max="20" step="0.5" value="5"> <span class="slider-value" id="poisson-lambda-val">5</span></label>
   </div>
   <canvas id="vis-poisson" width="600" height="300"></canvas>
 </div>

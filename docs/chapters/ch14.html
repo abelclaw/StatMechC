@@ -517,7 +517,7 @@ $$n_e n_h = n_I^2 = 4\left(\frac{mk_B T}{2\pi\hbar^2}\right)^3 e^{-\frac{\epsilo
       <button class="control-btn" data-value="n-type">n-type (donor)</button>
       <button class="control-btn" data-value="p-type">p-type (acceptor)</button>
     </div>
-    <label>Temperature $T/T_0$: <input type="range" id="doping-temp" min="0.2" max="3" step="0.05" value="1"> <span class="value-display" id="doping-temp-val">1.00</span></label>
+    <label>Temperature <i>T</i>/<i>T</i><sub>0</sub>: <input type="range" id="doping-temp" min="0.2" max="3" step="0.05" value="1"> <span class="value-display" id="doping-temp-val">1.00</span></label>
   </div>
 </div>
 
@@ -534,7 +534,7 @@ $$n_e n_h = n_I^2 = 4\left(\frac{mk_B T}{2\pi\hbar^2}\right)^3 e^{-\frac{\epsilo
   <p class="vis-caption">A p-n junction under different bias conditions, showing charge carrier behavior and the depletion region.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-pn-junction" width="600" height="400"></canvas></div>
   <div class="vis-controls">
-    <label>Applied voltage $V/V_T$: <input type="range" id="pn-voltage" min="-3" max="3" step="0.1" value="0"> <span class="value-display" id="pn-voltage-val">0.0</span></label>
+    <label>Applied voltage <i>V</i>/<i>V<sub>T</sub></i>: <input type="range" id="pn-voltage" min="-3" max="3" step="0.1" value="0"> <span class="value-display" id="pn-voltage-val">0.0</span></label>
     <span style="color:var(--text-muted)">Positive = forward bias, negative = reverse bias</span>
   </div>
 </div>
@@ -566,7 +566,7 @@ $$\epsilon_{\text{junc}} = k_B T\ln\frac{n_h^{\text{p-type}}\,n_e^{\text{n-type}
 <p class="vis-caption">I-V characteristic of a p-n junction diode showing exponential current in forward bias.</p>
 <canvas id="vis-iv-curve" width="600" height="400"></canvas>
 <div class="slider-container">
-<label for="iv-temp">Temperature $T$ (K):</label>
+<label for="iv-temp">Temperature <i>T</i> (K):</label>
 <input type="range" id="iv-temp" min="200" max="500" step="10" value="300">
 <span class="slider-value" id="iv-temp-val">300</span>
 </div>

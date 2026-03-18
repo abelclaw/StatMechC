@@ -62,8 +62,8 @@
   <div class="figure-label">Interactive 1: Two-State BEC (BE vs MB)</div>
   <p class="vis-caption">Comparison of ground state occupancy for Bose-Einstein vs Maxwell-Boltzmann statistics in a two-state system. BE condensation occurs at $k_BT \sim N\epsilon$, far above the MB crossover.</p>
   <div class="vis-controls">
-    <label>Temperature $k_BT/\epsilon$: <input type="range" id="bec2-T" min="0.1" max="400" step="0.1" value="10"> <span class="slider-value" id="bec2-T-val">10.0</span></label>
-    <label>$N$: <input type="range" id="bec2-N" min="10" max="1000" step="10" value="100"> <span class="slider-value" id="bec2-N-val">100</span></label>
+    <label>Temperature <i>k</i><sub>B</sub><i>T/ε</i>: <input type="range" id="bec2-T" min="0.1" max="400" step="0.1" value="10"> <span class="slider-value" id="bec2-T-val">10.0</span></label>
+    <label><i>N</i>: <input type="range" id="bec2-N" min="10" max="1000" step="10" value="100"> <span class="slider-value" id="bec2-N-val">100</span></label>
   </div>
   <canvas id="vis-bec-twostate" width="600" height="450"></canvas>
 
@@ -277,7 +277,7 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 <p>We also checked the $\mu = 0$ approximation numerically. When does it break down? The approximation $\mu \approx 0$ is good in the BEC regime (low $T$), where the ground state is anomalously filled. It breaks down at higher $T$ when $\langle N_\text{ground}\rangle$ gets small, as you can see from Eq. (14): as $\langle N_\text{ground}\rangle \to 0$ then $\mu \to -\infty$.</p>
 
 <div class="interactive-container">
-  <div class="figure-label">Interactive 8: Why Does the $\mu = 0$ Approximation Break Down?</div>
+  <div class="figure-label">Interactive 8: Why Does the <i>μ</i> = 0 Approximation Break Down?</div>
   <p class="vis-caption">Comparing the exact solution (left, blue) with the $\mu = 0$ approximation (right, orange). Above $T_c$, the approximation incorrectly predicts large ground-state occupation.</p>
   <div class="vis-controls">
     <label>T / T<sub>c</sub>: <input type="range" id="n1-temp" min="0.05" max="2.0" step="0.01" value="0.5"> <span class="slider-value" id="n1-temp-val">0.50</span></label>

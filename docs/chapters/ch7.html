@@ -125,7 +125,7 @@ $$Z = \int g(E) \, dE \, e^{-\beta E}$$
 <p class="vis-caption">80 particles occupy discrete energy levels and hop stochastically. The histogram tracks occupancy vs. the Boltzmann prediction.</p>
 <canvas id="vis-boltzmann" width="600" height="450"></canvas>
 <div class="slider-container">
-<label for="boltz-temp">Temperature $k_BT/\varepsilon$:</label>
+<label for="boltz-temp">Temperature <i>k</i><sub>B</sub><i>T/ε</i>:</label>
 <input type="range" id="boltz-temp" min="0.2" max="5" step="0.05" value="1">
 <span class="slider-value" id="boltz-temp-val">1.00</span>
 </div>
@@ -629,8 +629,8 @@ $$\frac{[\text{NH}_3]^2}{[\text{H}_2]^3[\text{N}_2]} \approx \frac{\lambda_{\tex
   <p class="vis-caption">Free atoms (blue) bind into dimers (orange) on collision; dimers dissociate at a rate set by the Boltzmann factor.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-chempot" width="600" height="400"></canvas></div>
   <div class="vis-controls">
-    <label>Temperature $T$: <input type="range" id="chempot-temp" min="0.3" max="4.0" step="0.05" value="1.5"> <span class="slider-value" id="chempot-temp-val">1.5</span></label>
-    <label>Binding energy $\varepsilon$: <input type="range" id="chempot-eps" min="0.5" max="6.0" step="0.1" value="3.0"> <span class="slider-value" id="chempot-eps-val">3.0</span></label>
+    <label>Temperature <i>T</i>: <input type="range" id="chempot-temp" min="0.3" max="4.0" step="0.05" value="1.5"> <span class="slider-value" id="chempot-temp-val">1.5</span></label>
+    <label>Binding energy <i>ε</i>: <input type="range" id="chempot-eps" min="0.5" max="6.0" step="0.1" value="3.0"> <span class="slider-value" id="chempot-eps-val">3.0</span></label>
     <label>Speed: <input type="range" id="chempot-speed" min="0" max="1" step="0.01" value="0.5"> <span class="slider-value" id="chempot-speed-val">0.5</span></label>
     <button id="chempot-reset">Reset</button>
   </div>

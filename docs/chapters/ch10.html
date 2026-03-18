@@ -12,7 +12,7 @@
 <p>Recall that in classical statistical mechanics when we first computed $\Omega$ in the microcanonical ensemble, we had to arbitrarily break up position and momentum into sizes $\Delta q$ and $\Delta p$. Eq. (1) justifies the replacement $\Delta p\,\Delta q \to h$ that we previously inserted without proof in the Sackur-Tetrode equation and elsewhere. Note that the integral measure has a factor of $h$ not $\hbar$. We'll do conversions between sums and integrals like in Eq. (1) in more detail in deriving the density of states over the next several lectures.</p>
 
 <div class="info-box physical">
-<div class="box-title">Why $h$ and not $\hbar$?</div>
+<div class="box-title">Why <i>h</i> and not <i>ħ</i>?</div>
 <p>Eq. (1) makes the appearance of $dq$ seem like a trick. This is an artifact of using momentum eigenstates for our basis. If we used something symmetric in $p$ and $q$ like coherent states, the product $dp\,dq$ would appear more naturally.</p>
 </div>
 
@@ -184,8 +184,8 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
   <p class="vis-caption">Average occupation number $\langle n \rangle$ vs energy for bosons. Drag $\mu$ toward zero to see low-energy states become heavily occupied, a precursor to Bose-Einstein condensation.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-be-dist" width="700" height="420"></canvas></div>
   <div class="vis-controls">
-    <label>Temperature $k_BT$: <input type="range" id="be-dist-temp" min="0.1" max="3" step="0.05" value="1" style="width:200px"> <span class="value-display" id="be-dist-temp-val">1.00</span></label>
-    <label>Chemical potential $\mu$: <input type="range" id="be-dist-mu" min="-3" max="-0.05" step="0.05" value="-0.5" style="width:200px"> <span class="value-display" id="be-dist-mu-val">&minus;0.50</span></label>
+    <label>Temperature <i>k</i><sub>B</sub><i>T</i>: <input type="range" id="be-dist-temp" min="0.1" max="3" step="0.05" value="1" style="width:200px"> <span class="value-display" id="be-dist-temp-val">1.00</span></label>
+    <label>Chemical potential <i>μ</i>: <input type="range" id="be-dist-mu" min="-3" max="-0.05" step="0.05" value="-0.5" style="width:200px"> <span class="value-display" id="be-dist-mu-val">&minus;0.50</span></label>
   </div>
 </div>
 
@@ -222,7 +222,7 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
   <p class="vis-caption">Occupation probability vs energy for fermions. At $T = 0$ it is a sharp step at $\epsilon_F$; finite temperature smears the step over a window of width $\sim k_BT$.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-fd-dist" width="700" height="420"></canvas></div>
   <div class="vis-controls">
-    <label>Temperature $k_BT / \epsilon_F$: <input type="range" id="fd-dist-temp" min="0.01" max="1.0" step="0.01" value="0.1" style="width:200px"> <span class="value-display" id="fd-dist-temp-val">0.10</span></label>
+    <label>Temperature <i>k</i><sub>B</sub><i>T</i> / <i>ε<sub>F</sub></i>: <input type="range" id="fd-dist-temp" min="0.01" max="1.0" step="0.01" value="0.1" style="width:200px"> <span class="value-display" id="fd-dist-temp-val">0.10</span></label>
   </div>
 </div>
 
@@ -290,8 +290,8 @@ $$\mathcal{Z} = \sum_N \frac{1}{N!}Z_1^N e^{\beta N\mu} = \exp\!\left[Z_1 e^{\be
   <p class="vis-caption">All three distribution functions compared at the same $\mu$ and $k_BT$. At high energy they converge; near $\epsilon = \mu$, quantum effects appear.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-quantum" width="600" height="400"></canvas></div>
   <div class="vis-controls">
-    <label>$k_BT$: <input type="range" id="qs-temp" min="0.1" max="5" step="0.05" value="1"> <span class="value-display" id="qs-temp-val">1.00</span></label>
-    <label>$\mu$: <input type="range" id="qs-mu" min="-4" max="-0.1" step="0.05" value="-1"> <span class="value-display" id="qs-mu-val">&minus;1.00</span></label>
+    <label><i>k</i><sub>B</sub><i>T</i>: <input type="range" id="qs-temp" min="0.1" max="5" step="0.05" value="1"> <span class="value-display" id="qs-temp-val">1.00</span></label>
+    <label><i>μ</i>: <input type="range" id="qs-mu" min="-4" max="-0.1" step="0.05" value="-1"> <span class="value-display" id="qs-mu-val">&minus;1.00</span></label>
   </div>
 </div>
 
