@@ -23136,6 +23136,9 @@ function initCh14Vis() {
       function sR(ni, nj, g) { if (ni >= 0) A[ni][ni] += g; if (nj >= 0) A[nj][nj] += g; if (ni >= 0 && nj >= 0) { A[ni][nj] -= g; A[nj][ni] -= g; } }
       function sI(ni, v) { if (ni >= 0) b[ni] += v; }
 
+      // Add tiny leakage to ground on every node (prevents floating node issues)
+      for (var ni = 0; ni < N; ni++) A[ni][ni] += 1e-9;
+
       for (var i = 0; i < bbParts.length; i++) {
         var p = bbParts[i];
         if (p.type === 'RESISTOR') sR(nI(i,0), nI(i,1), 1.0 / (p.value || 1000));
@@ -23496,7 +23499,7 @@ function initCh14Vis() {
       bbAddPart('RESISTOR',[{row:'j',col:19},{row:'j',col:24}],{value:10000});
       for (var i = 0; i < bbParts.length; i++)
         if (bbParts[i].type === 'NPN' && bbParts[i].holes[1].col === 12) bbParts[i]._state = 'on';
-      bbRunSim(); bbDesc('<b>Astable Multivibrator.</b> Two NPN transistors cross-coupled through capacitors. When Q1 is ON, its collector is at 0V, and the <span style="color:#8e24aa;font-weight:bold;">purple</span> capacitor holds Q2\u2019s base negative, keeping Q2 OFF. The base charges toward VCC through the 10k\u03A9 bias resistor with time constant \u03C4 = RC. When it reaches 0.6V, Q2 turns ON and Q1 turns OFF via the <span style="color:#00acc1;font-weight:bold;">cyan</span> capacitor. The cycle repeats, making the LEDs blink alternately. Click the resistors or capacitors to change the frequency.');
+      bbRunSim(); bbDesc('<b>Astable Multivibrator \u2014 watch the LEDs blink!</b><br><br>Two transistors taking turns. Each one switches the other off through a capacitor (the <span style="color:#8e24aa;font-weight:bold;">purple</span> and <span style="color:#00acc1;font-weight:bold;">cyan</span> wires). Here\u2019s the cycle:<br><br>1. Left transistor is ON \u2192 left LED glows, right LED is dark<br>2. The capacitor slowly charges through the 10k\u03A9 resistor<br>3. When it charges enough, the right transistor turns ON<br>4. That instantly switches the left transistor OFF<br>5. Now the right LED glows and the cycle repeats<br><br>The blinking speed depends on the resistor and capacitor values. <b>Click the 10k\u03A9 resistors or 100\u00B5F capacitors to change them</b> and watch the blink rate change. Bigger values = slower blinking.<br><br>This is one of the simplest circuits that produces a repeating signal \u2014 the foundation of clocks, timers, and alarms.');
     }
 
     // ---- NOT GATE: switch → base resistor → NPN → LED inverts ----
@@ -23562,33 +23565,32 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:24},{row:'a',col:27}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:27},{row:'b',col:29}],{value:10000});
       bbAddPart('WIRE',[{row:'c',col:29},{row:'h',col:5}],{color:'#8e24aa'});
-      bbRunSim(); bbDesc('<b>NAND Gate.</b> Two NPN transistors in series between the output and ground. The LED (output) turns OFF only when <em>both</em> switches A and B are closed, because both transistors must conduct to pull the output low. Any other combination leaves the output HIGH (LED ON). Toggle the switches to verify the NAND truth table. This is the universal gate \u2014 you can build any logic circuit from NANDs alone.');
+      bbRunSim(); bbDesc('<b>NAND Gate \u2014 try both switches!</b><br><br>Two transistors stacked in series. Current can only flow through both to ground if <em>both</em> are turned on. The LED shows the output:<br><br>\u2022 Both switches OFF \u2192 LED ON<br>\u2022 Switch A only \u2192 LED ON<br>\u2022 Switch B only \u2192 LED ON<br>\u2022 <b>Both switches ON \u2192 LED OFF</b><br><br>The LED turns off <em>only</em> when both inputs are on. That\u2019s a NAND gate \u2014 it\u2019s the opposite of AND. Every computer chip is built from gates like this.');
     }
 
     // ---- RC CHARGE/DISCHARGE: switch charges cap, LED shows discharge ----
     function bbPresetDarlington() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
-      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
+      bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'});
       // Collector load: VCC → R(470Ω) → LED → Q1 collector
-      bbAddPart('WIRE',[{row:'r+t',col:10},{row:'a',col:10}],{color:'#e53935'});
-      bbAddPart('RESISTOR',[{row:'a',col:10},{row:'a',col:14}],{value:470});
-      bbAddPart('LED',[{row:'b',col:14},{row:'b',col:18}]);
+      bbAddPart('WIRE',[{row:'r+t',col:14},{row:'a',col:14}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:14},{row:'a',col:18}],{value:470});
+      bbAddPart('LED',[{row:'b',col:18},{row:'b',col:22}]);
       // Q1 (first stage): collector at LED output, emitter feeds Q2 base
-      bbAddPart('NPN',[{row:'f',col:18},{row:'f',col:19},{row:'f',col:20}]);
-      bbAddPart('WIRE',[{row:'d',col:18},{row:'g',col:20}],{color:'#ff9800'}); // LED to Q1 collector
+      bbAddPart('NPN',[{row:'f',col:22},{row:'f',col:23},{row:'f',col:24}]);
+      bbAddPart('WIRE',[{row:'d',col:22},{row:'g',col:24}],{color:'#ff9800'}); // LED cathode to Q1 collector
       // Q2 (second stage): base = Q1 emitter, collector tied to Q1 collector, emitter to GND
-      bbAddPart('NPN',[{row:'f',col:13},{row:'f',col:14},{row:'f',col:15}]);
-      bbAddPart('WIRE',[{row:'g',col:18},{row:'g',col:14}],{color:'#43a047'}); // Q1 emitter → Q2 base
-      bbAddPart('WIRE',[{row:'g',col:15},{row:'g',col:20}],{color:'#ff9800'}); // Q2 collector tied to Q1 collector
-      bbAddPart('WIRE',[{row:'g',col:13},{row:'r-b',col:13}],{color:'#1e88e5'}); // Q2 emitter to GND
-      // Input: VCC → huge resistor (100kΩ) → switch → Q1 base
-      // Even with 100kΩ, Darlington gain (beta²) drives the LED
+      bbAddPart('NPN',[{row:'f',col:16},{row:'f',col:17},{row:'f',col:18}]);
+      bbAddPart('WIRE',[{row:'g',col:22},{row:'g',col:17}],{color:'#43a047'}); // Q1 emitter → Q2 base
+      bbAddPart('WIRE',[{row:'g',col:18},{row:'g',col:24}],{color:'#ff9800'}); // Q2 collector tied to Q1 collector
+      bbAddPart('WIRE',[{row:'g',col:16},{row:'r-b',col:16}],{color:'#1e88e5'}); // Q2 emitter to GND
+      // Input: switch → huge resistor (100kΩ) → Q1 base
       bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
-      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:false});
-      bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:10}],{value:100000});
-      bbAddPart('WIRE',[{row:'c',col:10},{row:'h',col:19}],{color:'#8e24aa'}); // to Q1 base
-      bbRunSim(); bbDesc('<b>Darlington Pair.</b> Two NPN transistors cascaded: Q1\u2019s emitter drives Q2\u2019s base. The total current gain is \u03B2\u00B2 \u2014 if each transistor has \u03B2=100, the pair has gain 10,000. This is why a 100k\u03A9 input resistor (only 83\u00B5A base current!) can still drive the LED. A single transistor couldn\u2019t do this. Toggle the switch to see the extreme amplification.');
+      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:12}],{value:100000});
+      bbAddPart('WIRE',[{row:'c',col:12},{row:'h',col:23}],{color:'#8e24aa'}); // to Q1 base
+      bbRunSim(); bbDesc('<b>Darlington Pair \u2014 click the switch!</b><br><br>Two transistors working together as a team. The first transistor\u2019s output feeds directly into the second transistor\u2019s input, so the amplification multiplies: if each transistor amplifies 100\u00D7, the pair amplifies 10,000\u00D7.<br><br>The input goes through a <em>huge</em> 100k\u03A9 resistor (purple wire), which only lets a tiny trickle of current through (0.08mA). Normally that\u2019s far too little to light an LED. But the Darlington pair amplifies it enough to drive the LED brightly.<br><br><b>Switch OFF:</b> No input current \u2192 both transistors OFF \u2192 LED OFF.<br><b>Switch ON:</b> Tiny input current \u2192 first transistor amplifies it \u2192 second transistor amplifies it again \u2192 LED ON.<br><br>This is why transistors changed the world: they turn whisper-quiet signals into powerful ones.');
     }
 
     // ---- VOLTAGE DIVIDER: two resistors split VCC, LED shows midpoint ----
@@ -23615,7 +23617,7 @@ function initCh14Vis() {
       bbAddPart('LED',[{row:'i',col:18},{row:'i',col:22}]);
       bbAddPart('RESISTOR',[{row:'j',col:22},{row:'j',col:26}],{value:470});
       bbAddPart('WIRE',[{row:'i',col:26},{row:'r-b',col:26}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>Emitter Follower.</b> The base is biased at ~4.5V by a voltage divider. The collector connects directly to VCC (no load resistor). The output is taken from the emitter, which follows the base voltage minus one V<sub>BE</sub> drop (0.7V). Hover over the base and emitter holes to compare: V<sub>emitter</sub> \u2248 V<sub>base</sub> \u2212 0.7V. This circuit is a buffer \u2014 it doesn\u2019t amplify voltage but can supply much more current than the input.');
+      bbRunSim(); bbDesc('<b>Emitter Follower (Voltage Buffer)</b><br><br>The input voltage is set to about 4.5V by two equal resistors splitting the 9V supply. The transistor\u2019s output (at the emitter) copies the input but shifted down by 0.7V \u2014 the unavoidable voltage drop across the base-emitter junction.<br><br><b>Hover over the base and emitter holes to compare the voltages.</b> You should see the emitter is about 0.7V lower than the base.<br><br>Why bother? The input side can only provide a trickle of current (through 10k\u03A9 resistors). But the emitter side can supply much more current (through only 1k\u03A9) to drive things like LEDs or motors. The transistor acts like a power booster that copies the voltage while multiplying the available current.');
     }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
