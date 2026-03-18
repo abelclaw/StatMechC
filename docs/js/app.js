@@ -22344,7 +22344,8 @@ function initCh14Vis() {
         }
       }
 
-      // Draw wires
+      // Compute wire segments for drawing and crossing detection
+      var wireSegs = []; // [{segments: [{x1,y1,x2,y2},...], val, wireIdx}]
       for (let i = 0; i < wires.length; i++) {
         const w = wires[i];
         const fromGate = gates.find(function(g) { return g.id === w.fromId; });
@@ -22353,16 +22354,71 @@ function initCh14Vis() {
         const fp = getPortPos(fromGate, 'output', w.fromPort);
         const tp = getPortPos(toGate, 'input', w.toPort);
         const val = fromGate.outputValues[w.fromPort] || 0;
-
-        ctx.strokeStyle = val ? onC : offC;
-        ctx.lineWidth = val ? 2.5 : 1.5;
-        // Route: horizontal from output, then vertical, then horizontal to input
         const midX = (fp.x + tp.x) / 2;
+        wireSegs.push({
+          segments: [
+            {x1:fp.x, y1:fp.y, x2:midX, y2:fp.y},
+            {x1:midX, y1:fp.y, x2:midX, y2:tp.y},
+            {x1:midX, y1:tp.y, x2:tp.x, y2:tp.y}
+          ],
+          val: val, wireIdx: i, fp: fp, tp: tp, midX: midX
+        });
+      }
+
+      // Find crossing points between wire segments
+      function segIntersect(a, b) {
+        // Only check horizontal vs vertical crossings
+        var h, v;
+        if (a.y1 === a.y2 && b.x1 === b.x2) { h = a; v = b; }
+        else if (b.y1 === b.y2 && a.x1 === a.x2) { h = b; v = a; }
+        else return null;
+        var hMinX = Math.min(h.x1, h.x2), hMaxX = Math.max(h.x1, h.x2);
+        var vMinY = Math.min(v.y1, v.y2), vMaxY = Math.max(v.y1, v.y2);
+        if (v.x1 > hMinX + 2 && v.x1 < hMaxX - 2 && h.y1 > vMinY + 2 && h.y1 < vMaxY - 2) {
+          return {x: v.x1, y: h.y1};
+        }
+        return null;
+      }
+      var crossings = [];
+      for (var wi = 0; wi < wireSegs.length; wi++) {
+        for (var wj = wi + 1; wj < wireSegs.length; wj++) {
+          for (var si = 0; si < wireSegs[wi].segments.length; si++) {
+            for (var sj = 0; sj < wireSegs[wj].segments.length; sj++) {
+              var pt = segIntersect(wireSegs[wi].segments[si], wireSegs[wj].segments[sj]);
+              if (pt) crossings.push(pt);
+            }
+          }
+        }
+      }
+
+      // Draw wires
+      for (let i = 0; i < wireSegs.length; i++) {
+        var ws = wireSegs[i];
+        ctx.strokeStyle = ws.val ? onC : offC;
+        ctx.lineWidth = ws.val ? 2.5 : 1.5;
         ctx.beginPath();
-        ctx.moveTo(fp.x, fp.y);
-        ctx.lineTo(midX, fp.y);
-        ctx.lineTo(midX, tp.y);
-        ctx.lineTo(tp.x, tp.y);
+        ctx.moveTo(ws.fp.x, ws.fp.y);
+        ctx.lineTo(ws.midX, ws.fp.y);
+        ctx.lineTo(ws.midX, ws.tp.y);
+        ctx.lineTo(ws.tp.x, ws.tp.y);
+        ctx.stroke();
+      }
+
+      // Draw crossing bridges (little bumps)
+      var bridgeR = 6;
+      for (var ci = 0; ci < crossings.length; ci++) {
+        var cp = crossings[ci];
+        // Erase the crossing area with background
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, bridgeR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        // Draw the bridge arc (the horizontal wire hops over)
+        ctx.strokeStyle = offC; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, bridgeR, Math.PI, 0);
         ctx.stroke();
       }
 
@@ -22942,6 +22998,7 @@ function initCh14Vis() {
         var p = bbParts[i];
         if (p.type === 'BATTERY') vSources.push({ pi: i, tp: 0, tn: 1, v: p.value || 9 });
         if (p.type === 'NPN' && p._state === 'on') vSources.push({ pi: i, tp: 1, tn: 0, v: 0.7 });
+        if (p.type === 'PNP' && p._state === 'on') vSources.push({ pi: i, tp: 0, tn: 1, v: 0.7 }); // VEB=0.7
         if (p.type === 'LED' && p._ledOn) vSources.push({ pi: i, tp: 0, tn: 1, v: 1.8 });
       }
       var M = vSources.length, sz = N + M;
@@ -22956,11 +23013,12 @@ function initCh14Vis() {
         var p = bbParts[i];
         if (p.type === 'RESISTOR') sR(nI(i,0), nI(i,1), 1.0 / (p.value || 1000));
         if (p.type === 'NPN' && p._state === 'on') sR(nI(i,2), nI(i,0), 0.5);
+        if (p.type === 'PNP' && p._state === 'on') sR(nI(i,2), nI(i,0), 0.5);
         if (p.type === 'CAPACITOR') {
           var ni = nI(i,0), nj = nI(i,1), C = p.value || 100e-6, dt = 1.0/60/16, Geq = C/dt;
           sR(ni, nj, Geq);
           var vOld = bbCapVolts[p.id] || 0;
-          sI(ni, -Geq * vOld); sI(nj, Geq * vOld);
+          sI(ni, Geq * vOld); sI(nj, -Geq * vOld);
         }
       }
       for (var k = 0; k < M; k++) {
@@ -22991,14 +23049,35 @@ function initCh14Vis() {
     }
 
     function bbSimStep() {
+      // Freeze cap voltages for this time step (convergence iterations use same V_old)
+      var capSnap = {};
+      for (var id in bbCapVolts) capSnap[id] = bbCapVolts[id];
+
       for (var iter = 0; iter < 8; iter++) {
+        // Restore frozen cap voltages so convergence iterations don't time-step the caps
+        for (var id in capSnap) bbCapVolts[id] = capSnap[id];
+
         for (var i = 0; i < bbParts.length; i++) {
           var p = bbParts[i];
-          if (p.type === 'NPN') { var vB = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0, vE = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0; p._state = (vB-vE) > 0.55 ? 'on' : 'off'; }
-          if (p.type === 'LED') { var v0 = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0, v1 = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0; p._ledOn = (v0-v1) > 1.0; }
+          if (p.type === 'NPN') {
+            var vB = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0;
+            var vE = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0;
+            p._state = (vB - vE) > 0.55 ? 'on' : 'off';
+          }
+          if (p.type === 'PNP') {
+            var vB = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0;
+            var vE = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0;
+            p._state = (vE - vB) > 0.55 ? 'on' : 'off';
+          }
+          if (p.type === 'LED') {
+            var v0 = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0;
+            var v1 = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0;
+            p._ledOn = (v0 - v1) > 1.0;
+          }
         }
         bbSolve();
       }
+      // After convergence, bbCapVolts has the new voltages for the next time step
     }
 
     // ---- DRAWING ----
@@ -23101,16 +23180,19 @@ function initCh14Vis() {
           else { bbCtx.beginPath(); bbCtx.moveTo(mx-10, my); bbCtx.lineTo(mx+5, my-10); bbCtx.stroke(); }
           bbCtx.fillStyle = '#555'; bbCtx.beginPath(); bbCtx.arc(mx-10, my, 2.5, 0, Math.PI*2); bbCtx.fill(); bbCtx.beginPath(); bbCtx.arc(mx+10, my, 2.5, 0, Math.PI*2); bbCtx.fill();
           bbCtx.fillStyle = p.on ? '#43a047' : '#e53935'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center'; bbCtx.fillText(p.on ? 'ON' : 'OFF', mx, my-12);
-        } else if (p.type === 'NPN') {
+        } else if (p.type === 'NPN' || p.type === 'PNP') {
           var hE = holeXY(p.holes[0].row, p.holes[0].col), hB = holeXY(p.holes[1].row, p.holes[1].col), hC = holeXY(p.holes[2].row, p.holes[2].col), tx = hB.x, ty = hB.y;
           if (p._state === 'on') { bbCtx.fillStyle = 'rgba(76,175,80,0.3)'; bbCtx.beginPath(); bbCtx.arc(tx, ty, 14, 0, Math.PI*2); bbCtx.fill(); }
-          bbCtx.fillStyle = '#333'; bbCtx.beginPath(); bbCtx.arc(tx, ty, 10, 0, Math.PI*2); bbCtx.fill();
+          bbCtx.fillStyle = p.type === 'PNP' ? '#443' : '#333'; bbCtx.beginPath(); bbCtx.arc(tx, ty, 10, 0, Math.PI*2); bbCtx.fill();
+          bbCtx.strokeStyle = p.type === 'PNP' ? '#886' : '#666'; bbCtx.lineWidth = 1; bbCtx.beginPath(); bbCtx.arc(tx, ty, 10, 0, Math.PI*2); bbCtx.stroke();
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
           bbCtx.beginPath(); bbCtx.moveTo(hE.x, hE.y); bbCtx.lineTo(tx-10, ty); bbCtx.stroke();
           bbCtx.beginPath(); bbCtx.moveTo(hC.x, hC.y); bbCtx.lineTo(tx+10, ty); bbCtx.stroke();
           bbCtx.beginPath(); bbCtx.moveTo(hB.x, hB.y); bbCtx.lineTo(tx, ty+10); bbCtx.stroke();
           bbCtx.fillStyle = '#aaa'; bbCtx.font = '8px sans-serif'; bbCtx.textAlign = 'center';
           bbCtx.fillText('E', hE.x, hE.y-7); bbCtx.fillText('C', hC.x, hC.y-7); bbCtx.fillText('B', hB.x, hB.y+14);
+          bbCtx.fillStyle = p.type === 'PNP' ? '#cc9' : '#aaa'; bbCtx.font = 'bold 7px sans-serif';
+          bbCtx.fillText(p.type, tx, ty+3);
         } else if (p.type === 'BATTERY') {
           var h1 = holeXY(p.holes[1].row, p.holes[1].col), bx = Math.max(h0.x, h1.x)+30, by = (h0.y+h1.y)/2;
           bbCtx.strokeStyle = '#e53935'; bbCtx.lineWidth = 2; bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(bx-10, h0.y); bbCtx.lineTo(bx-10, by-12); bbCtx.stroke();
@@ -23134,7 +23216,7 @@ function initCh14Vis() {
           if (hovPart.type === 'RESISTOR') tipLines.push(fmtR(hovPart.value||1000) + ' (click to change)');
           else if (hovPart.type === 'CAPACITOR') tipLines.push(fmtC(hovPart.value||100e-6) + ' (click to change)');
           else if (hovPart.type === 'LED') tipLines.push('LED (Vf=1.8V)' + (hovPart._ledOn ? ' ON' : ' OFF'));
-          else if (hovPart.type === 'NPN') tipLines.push('NPN transistor' + (hovPart._state === 'on' ? ' ON' : ' OFF'));
+          else if (hovPart.type === 'NPN' || hovPart.type === 'PNP') tipLines.push(hovPart.type + ' transistor' + (hovPart._state === 'on' ? ' ON' : ' OFF'));
           else if (hovPart.type === 'BATTERY') tipLines.push('Battery ' + (hovPart.value||9) + 'V');
           else if (hovPart.type === 'SWITCH') tipLines.push('Switch ' + (hovPart.on ? 'CLOSED' : 'OPEN'));
         }
@@ -23169,8 +23251,8 @@ function initCh14Vis() {
         if (pa && pa.type === 'RESISTOR') { pa.value = RES_VALUES[(RES_VALUES.indexOf(pa.value)+1)%RES_VALUES.length]; bbRunSim(); return; }
         if (pa && pa.type === 'CAPACITOR') { pa.value = CAP_VALUES[(CAP_VALUES.indexOf(pa.value)+1)%CAP_VALUES.length]; bbCapVolts[pa.id] = 0; bbRunSim(); return; }
       }
-      if (bbTool === 'DELETE') { for (var i = bbParts.length-1; i >= 0; i--) { var p = bbParts[i]; for (var h = 0; h < p.holes.length; h++) if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) { if (p.type === 'CAPACITOR') delete bbCapVolts[p.id]; bbParts.splice(i, 1); bbRunSim(); return; } } return; }
-      if (bbTool === 'NPN') { if (hole.col+2 <= BB_COLS) { bbAddPart('NPN', [{row:hole.row,col:hole.col},{row:hole.row,col:hole.col+1},{row:hole.row,col:hole.col+2}]); bbRunSim(); } return; }
+      if (bbTool === 'DELETE') { for (var i = bbParts.length-1; i >= 0; i--) { var p = bbParts[i]; for (var h = 0; h < p.holes.length; h++) if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) { if (p.type === 'CAPACITOR') delete bbCapVolts[p.id]; bbParts.splice(i, 1); bbDeleteAndSim(); return; } } return; }
+      if (bbTool === 'NPN' || bbTool === 'PNP') { if (hole.col+2 <= BB_COLS) { bbAddPart(bbTool, [{row:hole.row,col:hole.col},{row:hole.row,col:hole.col+1},{row:hole.row,col:hole.col+2}]); bbRunSim(); } return; }
       if (!bbClick1) { bbClick1 = hole; bbDraw(); return; }
       var h0 = bbClick1, h1 = hole; bbClick1 = null;
       if (h0.row === h1.row && h0.col === h1.col) { bbDraw(); return; }
@@ -23184,13 +23266,15 @@ function initCh14Vis() {
     });
 
     function bbFullReset() {
-      bbNodeVolts = {};
+      // Only used after deleting a component — clears everything so solver starts fresh
+      bbNodeVolts = {}; bbCapVolts = {};
       for (var i = 0; i < bbParts.length; i++) {
-        if (bbParts[i].type === 'NPN') bbParts[i]._state = 'off';
+        if (bbParts[i].type === 'NPN' || bbParts[i].type === 'PNP') bbParts[i]._state = 'off';
         if (bbParts[i].type === 'LED') bbParts[i]._ledOn = false;
       }
     }
-    function bbRunSim() { bbFullReset(); bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
+    function bbRunSim() { bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
+    function bbDeleteAndSim() { bbFullReset(); bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
 
     var bbPaletteEl = document.getElementById('bb-palette');
     if (bbPaletteEl) bbPaletteEl.addEventListener('click', function(e) { var btn = e.target.closest('[data-part]'); if (!btn) return; bbPaletteEl.querySelectorAll('[data-part]').forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active'); bbTool = btn.dataset.part; bbClick1 = null; bbDraw(); });
@@ -23200,7 +23284,17 @@ function initCh14Vis() {
 
     function bbClear() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbWireColorIdx = 0; bbAnimRunning = false; }
     function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); }
-    function bbPresetSwitch() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'}); bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false}); bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:12}],{value:10000}); bbAddPart('NPN',[{row:'f',col:20},{row:'f',col:21},{row:'f',col:22}]); bbAddPart('WIRE',[{row:'d',col:12},{row:'g',col:21}],{color:'#43a047'}); bbAddPart('WIRE',[{row:'r+t',col:16},{row:'a',col:16}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:16},{row:'a',col:20}],{value:470}); bbAddPart('LED',[{row:'c',col:20},{row:'c',col:24}]); bbAddPart('WIRE',[{row:'d',col:24},{row:'g',col:22}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:20},{row:'r-b',col:20}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r-t',col:15},{row:'r-b',col:15}],{color:'#1e88e5'}); bbRunSim(); }
+    function bbPresetSwitch() {
+      // Simple: Battery → Switch → Resistor → LED → GND
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:5},{row:'a',col:10}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:10},{row:'b',col:15}],{value:470});
+      bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]);
+      bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'});
+      bbRunSim();
+    }
     function bbPresetAstable() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:28},{row:'r+b',col:28}],{color:'#e53935'}); bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:4},{row:'a',col:8}],{value:1000}); bbAddPart('LED',[{row:'b',col:8},{row:'b',col:11}]); bbAddPart('NPN',[{row:'f',col:11},{row:'f',col:12},{row:'f',col:13}]); bbAddPart('WIRE',[{row:'d',col:11},{row:'g',col:13}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:11},{row:'r-b',col:11}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r+t',col:17},{row:'a',col:17}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:17},{row:'a',col:20}],{value:1000}); bbAddPart('LED',[{row:'b',col:20},{row:'b',col:23}]); bbAddPart('NPN',[{row:'f',col:23},{row:'f',col:24},{row:'f',col:25}]); bbAddPart('WIRE',[{row:'d',col:23},{row:'g',col:25}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:23},{row:'r-b',col:23}],{color:'#1e88e5'}); bbAddPart('CAPACITOR',[{row:'c',col:11},{row:'h',col:24}],{value:100e-6}); bbAddPart('CAPACITOR',[{row:'c',col:23},{row:'h',col:12}],{value:100e-6}); bbAddPart('WIRE',[{row:'r+b',col:7},{row:'j',col:7}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'j',col:7},{row:'j',col:12}],{value:10000}); bbAddPart('WIRE',[{row:'r+b',col:19},{row:'j',col:19}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'j',col:19},{row:'j',col:24}],{value:10000}); for (var i = 0; i < bbParts.length; i++) if (bbParts[i].type === 'NPN' && bbParts[i].holes[1].col === 12) bbParts[i]._state = 'on'; bbRunSim(); }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
