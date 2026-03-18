@@ -19017,186 +19017,182 @@ function initCh14Vis() {
     drawIV();
   }
 
-  // ----- Energy Level Splitting into Bands -----
+  // ----- Energy Level Splitting into Bands (tight-binding) -----
   const cBS = document.getElementById('vis-band-splitting');
   if (cBS) {
     const bsS = setupCanvas(cBS);
     const ctxBS = bsS.ctx, WBS = bsS.W, HBS = bsS.H;
     const bsNSlider = document.getElementById('band-n-atoms');
 
-    // Three base energy levels (normalised 0..1 where 0=bottom, 1=top of plot area)
-    const baseLevels = [0.22, 0.52, 0.82];
-    const levelColors = [COLORS.blue, COLORS.green, COLORS.orange];
-    const levelNames = ['E\u2081 (1s)', 'E\u2082 (2s)', 'E\u2083 (2p)'];
+    // Three atomic energy levels with tight-binding parameters
+    // tMax = max hopping parameter (controls bandwidth = 4t at large N)
+    // Higher orbitals have more spatial extent → larger overlap → larger t
+    const atomicLevels = [
+      { e0: -3.0, label: '1s', color: COLORS.blue,   tMax: 0.35 },
+      { e0: -1.0, label: '2s', color: COLORS.green,  tMax: 0.70 },
+      { e0:  1.0, label: '2p', color: COLORS.orange,  tMax: 1.10 },
+    ];
 
-    // Spread factor per level (fraction of total plot height) as N grows
-    const spreads = [0.06, 0.10, 0.14];
+    // Tight-binding eigenvalues for N-atom chain:
+    //   ε_k = ε₀ - 2t cos(kπ/(N+1)),  k = 1..N
+    // Bandwidth = 2t·[cos(π/(N+1)) - cos(Nπ/(N+1))]
+    //   → 4t as N→∞
+    // t(d) ~ tMax·exp(-α(d - dMin)) models coupling vs interatomic distance
+
+    const nPts = 200;
+    const dMax = 5.0, dMin = 0.8;
+    const alpha = 1.8;
+
+    // Energy range for y-axis (chosen to fit all bands at max coupling)
+    const eMin = -4.5, eMax = 3.5;
+    const eRange = eMax - eMin;
 
     function drawBandSplitting() {
-      const N = parseInt(bsNSlider?.value || 5);
+      const N = parseInt(bsNSlider?.value || 1);
       clearCanvas(ctxBS, WBS, HBS);
 
-      const ox = 20, oy = 20;
-      const pw = WBS - ox - 20, ph = HBS - oy - 40;
+      // Plot area
+      const margin = { top: 14, bottom: 38, left: 52, right: 50 };
+      const pw = WBS - margin.left - margin.right;
+      const ph = HBS - margin.top - margin.bottom;
 
-      // Vertical axis label
+      function xForD(d) {
+        return margin.left + pw * (1 - (d - dMin) / (dMax - dMin));
+      }
+      function yForE(e) {
+        return margin.top + ph * (1 - (e - eMin) / eRange);
+      }
+
+      // Axes
+      ctxBS.strokeStyle = COLORS.axis;
+      ctxBS.lineWidth = 1;
+      ctxBS.beginPath();
+      ctxBS.moveTo(margin.left, margin.top);
+      ctxBS.lineTo(margin.left, margin.top + ph);
+      ctxBS.lineTo(margin.left + pw, margin.top + ph);
+      ctxBS.stroke();
+
+      // Y-axis label
       ctxBS.fillStyle = COLORS.textDim;
       ctxBS.font = FONT_SM;
       ctxBS.textAlign = 'center';
       ctxBS.save();
-      ctxBS.translate(12, oy + ph / 2);
+      ctxBS.translate(14, margin.top + ph / 2);
       ctxBS.rotate(-Math.PI / 2);
-      ctxBS.fillText('Energy E', 0, 0);
+      ctxBS.fillText('Energy', 0, 0);
       ctxBS.restore();
+
+      // X-axis annotations
+      ctxBS.fillStyle = COLORS.textDim;
+      ctxBS.font = FONT_SM;
+      ctxBS.textAlign = 'center';
+      ctxBS.fillText('Decreasing interatomic distance  \u2192', margin.left + pw / 2, margin.top + ph + 14);
+      ctxBS.fillText('Far apart', margin.left + 30, margin.top + ph + 28);
+      ctxBS.fillText('Close', margin.left + pw - 20, margin.top + ph + 28);
 
       // Title
       ctxBS.fillStyle = COLORS.text;
       ctxBS.font = FONT_LG;
-      ctxBS.textAlign = 'center';
-      ctxBS.fillText('N = ' + N + ' atom' + (N > 1 ? 's' : ''), WBS / 2, oy + 14);
+      ctxBS.textAlign = 'left';
+      ctxBS.fillText('N = ' + N + ' atom' + (N > 1 ? 's' : ''), margin.left + 4, margin.top + 4);
 
-      // Left label: isolated atom
-      ctxBS.fillStyle = COLORS.textDim;
-      ctxBS.font = FONT_SM;
-      ctxBS.textAlign = 'center';
-      ctxBS.fillText('Isolated atom', ox + pw * 0.12, oy + ph + 22);
-      ctxBS.fillText(N + ' atoms together', ox + pw * 0.78, oy + ph + 22);
-
-      // Divider
-      const divX = ox + pw * 0.42;
-      ctxBS.strokeStyle = 'rgba(255,255,255,0.08)';
-      ctxBS.lineWidth = 1;
-      ctxBS.setLineDash([4, 5]);
-      ctxBS.beginPath();
-      ctxBS.moveTo(divX, oy + 24);
-      ctxBS.lineTo(divX, oy + ph);
-      ctxBS.stroke();
-      ctxBS.setLineDash([]);
-
-      // Left section x-range
-      const lxMid = ox + pw * 0.12;
-      const lxHalf = pw * 0.10;
-
-      // Right section x-range
-      const rxLeft = ox + pw * 0.50;
-      const rxRight = ox + pw * 0.95;
-      const rxWidth = rxRight - rxLeft;
-
-      // Band opacity increases with N so lines merge
-      const lineAlpha = N <= 1 ? 1.0 : Math.max(0.18, 1.0 - (N - 1) * 0.04);
-
-      baseLevels.forEach((lvl, li) => {
-        const color = levelColors[li];
-        const spread = spreads[li];
-
-        // Y coordinate of base energy
-        const baseY = oy + ph - lvl * ph;
-
-        // Left: single level line
-        ctxBS.strokeStyle = color;
-        ctxBS.lineWidth = 2;
-        ctxBS.beginPath();
-        ctxBS.moveTo(lxMid - lxHalf, baseY);
-        ctxBS.lineTo(lxMid + lxHalf, baseY);
-        ctxBS.stroke();
-
-        // Level label
-        ctxBS.fillStyle = color;
-        ctxBS.font = FONT_SM;
+      // Bandwidth annotation
+      if (N >= 2) {
+        const bwFrac = Math.cos(Math.PI / (N + 1)) - Math.cos(N * Math.PI / (N + 1));
+        const bwRatio = bwFrac / 2; // ratio to 4t (the N→∞ bandwidth)
+        ctxBS.fillStyle = COLORS.textDim;
+        ctxBS.font = '10px Inter, system-ui, sans-serif';
         ctxBS.textAlign = 'left';
-        ctxBS.fillText(levelNames[li], lxMid + lxHalf + 4, baseY + 4);
+        ctxBS.fillText('Bandwidth = ' + (2 * bwRatio * 100).toFixed(0) + '% of 4t', margin.left + pw - 120, margin.top + 4);
+      }
 
-        // Right: N split levels
+      atomicLevels.forEach((lvl) => {
+        const { e0, label, color, tMax } = lvl;
+
         if (N === 1) {
-          // Single atom on right too
+          // Single atom: horizontal line at e0 across full width
           ctxBS.strokeStyle = color;
           ctxBS.lineWidth = 2;
           ctxBS.beginPath();
-          ctxBS.moveTo(rxLeft, baseY);
-          ctxBS.lineTo(rxRight, baseY);
+          ctxBS.moveTo(margin.left, yForE(e0));
+          ctxBS.lineTo(margin.left + pw, yForE(e0));
           ctxBS.stroke();
+
+          // Label
+          ctxBS.fillStyle = color;
+          ctxBS.font = FONT_SM;
+          ctxBS.textAlign = 'left';
+          ctxBS.fillText(label, margin.left + pw + 4, yForE(e0) + 4);
         } else {
-          const halfSpread = spread * ph / 2;
-          const lineSpacing = N > 1 ? (2 * halfSpread) / (N - 1) : 0;
-          // Band fill when many lines
-          if (N >= 8) {
-            const bandColor = color.startsWith('#') ? color : color;
-            ctxBS.fillStyle = color.replace(')', ', 0.12)').replace('rgb', 'rgba');
-            // simple rect for band
-            ctxBS.globalAlpha = 0.15;
-            ctxBS.fillStyle = color;
-            ctxBS.fillRect(rxLeft, baseY - halfSpread, rxWidth, halfSpread * 2);
-            ctxBS.globalAlpha = 1.0;
+          // For each mode k=1..N, draw energy curve ε_k(d) as d varies
+          const curves = [];
+          for (let k = 1; k <= N; k++) {
+            const pts = [];
+            for (let i = 0; i <= nPts; i++) {
+              const d = dMax - i * (dMax - dMin) / nPts;
+              const t = tMax * Math.exp(-alpha * (d - dMin));
+              const ek = e0 - 2 * t * Math.cos(k * Math.PI / (N + 1));
+              pts.push({ x: xForD(d), y: yForE(ek) });
+            }
+            curves.push(pts);
           }
 
-          for (let n = 0; n < N; n++) {
-            const offsetY = N === 1 ? 0 : -halfSpread + n * lineSpacing;
-            const lineY = baseY + offsetY;
-            const alpha = N <= 4 ? 1.0 : lineAlpha;
-            const lw = N <= 4 ? 1.8 : Math.max(0.6, 1.8 - N * 0.05);
+          // Shade band region between outermost curves
+          const botCurve = curves[0];
+          const topCurve = curves[N - 1];
+          ctxBS.globalAlpha = 0.10;
+          ctxBS.fillStyle = color;
+          ctxBS.beginPath();
+          ctxBS.moveTo(botCurve[0].x, botCurve[0].y);
+          for (let i = 0; i <= nPts; i++) ctxBS.lineTo(botCurve[i].x, botCurve[i].y);
+          for (let i = nPts; i >= 0; i--) ctxBS.lineTo(topCurve[i].x, topCurve[i].y);
+          ctxBS.closePath();
+          ctxBS.fill();
+          ctxBS.globalAlpha = 1.0;
 
-            ctxBS.globalAlpha = alpha;
+          // Draw individual level curves
+          const lineAlpha = N <= 6 ? 0.85 : Math.max(0.12, 0.85 - (N - 6) * 0.03);
+          const lw = N <= 6 ? 1.5 : Math.max(0.4, 1.5 - (N - 6) * 0.04);
+
+          curves.forEach((pts) => {
+            ctxBS.globalAlpha = lineAlpha;
             ctxBS.strokeStyle = color;
             ctxBS.lineWidth = lw;
             ctxBS.beginPath();
-            ctxBS.moveTo(rxLeft, lineY);
-            ctxBS.lineTo(rxRight, lineY);
+            pts.forEach((p, i) => i === 0 ? ctxBS.moveTo(p.x, p.y) : ctxBS.lineTo(p.x, p.y));
             ctxBS.stroke();
+          });
+          ctxBS.globalAlpha = 1.0;
+
+          // Right-side label at close distance showing band
+          const tClose = tMax;
+          const levelsClose = [];
+          for (let k = 1; k <= N; k++) {
+            levelsClose.push(e0 - 2 * tClose * Math.cos(k * Math.PI / (N + 1)));
+          }
+          const bandTop = Math.max(...levelsClose);
+          const bandBot = Math.min(...levelsClose);
+          const bandMidY = yForE((bandTop + bandBot) / 2);
+
+          ctxBS.fillStyle = color;
+          ctxBS.font = '10px Inter, system-ui, sans-serif';
+          ctxBS.textAlign = 'left';
+          ctxBS.globalAlpha = 0.9;
+          ctxBS.fillText(label + ' band', margin.left + pw + 4, bandMidY - 2);
+          if (N <= 12) {
+            ctxBS.font = '9px Inter, system-ui, sans-serif';
+            ctxBS.globalAlpha = 0.6;
+            ctxBS.fillText('(' + N + ' levels)', margin.left + pw + 4, bandMidY + 10);
           }
           ctxBS.globalAlpha = 1.0;
 
-          // Band boundary lines
-          if (N >= 2) {
-            ctxBS.strokeStyle = color;
-            ctxBS.lineWidth = 1.2;
-            ctxBS.setLineDash([3, 3]);
-            ctxBS.beginPath();
-            ctxBS.moveTo(rxLeft - 5, baseY - halfSpread);
-            ctxBS.lineTo(rxRight, baseY - halfSpread);
-            ctxBS.moveTo(rxLeft - 5, baseY + halfSpread);
-            ctxBS.lineTo(rxRight, baseY + halfSpread);
-            ctxBS.stroke();
-            ctxBS.setLineDash([]);
-          }
-
-          // Band label on right
-          if (N >= 3) {
-            ctxBS.fillStyle = color;
-            ctxBS.globalAlpha = 0.8;
-            ctxBS.font = '10px Inter, system-ui, sans-serif';
-            ctxBS.textAlign = 'right';
-            ctxBS.fillText(N + ' levels', rxRight - 2, baseY - halfSpread - 3);
-            ctxBS.globalAlpha = 1.0;
-          }
-        }
-
-        // Connecting dashed lines from isolated level to band edges
-        if (N >= 2) {
-          const halfSpread = spread * ph / 2;
-          ctxBS.strokeStyle = 'rgba(255,255,255,0.12)';
-          ctxBS.lineWidth = 0.8;
-          ctxBS.setLineDash([3, 6]);
-          ctxBS.beginPath();
-          ctxBS.moveTo(lxMid + lxHalf, baseY);
-          ctxBS.lineTo(rxLeft, baseY - halfSpread);
-          ctxBS.moveTo(lxMid + lxHalf, baseY);
-          ctxBS.lineTo(rxLeft, baseY + halfSpread);
-          ctxBS.stroke();
-          ctxBS.setLineDash([]);
+          // Left-side atomic level label
+          ctxBS.fillStyle = color;
+          ctxBS.font = FONT_SM;
+          ctxBS.textAlign = 'right';
+          ctxBS.fillText(label, margin.left - 6, yForE(e0) + 4);
         }
       });
-
-      // Caption
-      ctxBS.fillStyle = COLORS.textDim;
-      ctxBS.font = FONT_SM;
-      ctxBS.textAlign = 'center';
-      if (N === 1) {
-        ctxBS.fillText('Single atom: discrete levels', WBS / 2, HBS - 8);
-      } else if (N < 6) {
-        ctxBS.fillText('Each level splits into ' + N + ' closely-spaced levels', WBS / 2, HBS - 8);
-      } else {
-        ctxBS.fillText('Levels merge into quasi-continuous bands (N = ' + N + ')', WBS / 2, HBS - 8);
-      }
 
       document.getElementById('band-n-atoms-val')?.replaceChildren(document.createTextNode(N.toString()));
     }
