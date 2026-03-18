@@ -12888,66 +12888,177 @@ function initCh10Vis() {
     const ctxFD = fdS.ctx, WFD = fdS.W, HFD = fdS.H;
     const fdSlider = document.getElementById('fd-dist-temp');
 
+    function fermi(e, mu, T) {
+      if (T < 0.001) return e <= mu ? 1 : 0;
+      return 1 / (Math.exp((e - mu) / T) + 1);
+    }
+
     function drawFD() {
       const kTr = parseFloat(fdSlider?.value || 0.1);
       clearCanvas(ctxFD, WFD, HFD);
-      const ox = 70, oy = 25, pw = WFD - 110, ph = HFD - 70;
-      const eMax = 3, muFD = 1;
-      drawAxes(ctxFD, ox, oy, pw, ph, { xLabel: 'Energy \u03B5/\u03B5_F', yLabel: '\u27E8n\u27E9', yLabelOffset: 40 });
-      ctxFD.fillStyle = COLORS.textDim; ctxFD.font = FONT_SM; ctxFD.textAlign = 'center';
-      for (let e = 0; e <= eMax; e += 0.5) ctxFD.fillText(e.toFixed(1), ox + e / eMax * pw, oy + ph + 14);
+
+      const ox = 80, oy = 40, pw = WFD - 130, ph = HFD - 95;
+      const eMax = 2.5, muFD = 1;
+
+      // --- Axis tick labels ---
+      ctxFD.fillStyle = COLORS.textDim; ctxFD.font = FONT_SM;
+      ctxFD.textAlign = 'center';
+      for (let e = 0; e <= eMax; e += 0.5) {
+        const x = ox + e / eMax * pw;
+        ctxFD.fillText(e.toFixed(1), x, oy + ph + 16);
+        // small tick mark
+        ctxFD.strokeStyle = COLORS.axis; ctxFD.lineWidth = 1;
+        ctxFD.beginPath(); ctxFD.moveTo(x, oy + ph); ctxFD.lineTo(x, oy + ph + 4); ctxFD.stroke();
+      }
       ctxFD.textAlign = 'right';
-      for (let n = 0; n <= 1; n += 0.2) ctxFD.fillText(n.toFixed(1), ox - 5, oy + ph - n * ph + 4);
-
-      // Fermi energy line
-      const efX = ox + muFD / eMax * pw;
-      ctxFD.strokeStyle = 'rgba(255,255,255,0.15)'; ctxFD.setLineDash([3, 3]); ctxFD.lineWidth = 0.5;
-      ctxFD.beginPath(); ctxFD.moveTo(efX, oy); ctxFD.lineTo(efX, oy + ph); ctxFD.stroke(); ctxFD.setLineDash([]);
-      ctxFD.fillStyle = COLORS.textDim; ctxFD.textAlign = 'center'; ctxFD.fillText('\u03B5_F', efX, oy + ph + 14);
-
-      // f = 1/2 guideline at epsilon_F
-      const halfY = oy + ph - 0.5 * ph;
-      ctxFD.strokeStyle = 'rgba(255,255,255,0.1)'; ctxFD.setLineDash([2, 3]); ctxFD.lineWidth = 0.5;
-      ctxFD.beginPath(); ctxFD.moveTo(ox, halfY); ctxFD.lineTo(ox + pw, halfY); ctxFD.stroke();
-      ctxFD.setLineDash([]);
-      ctxFD.fillStyle = COLORS.textDim; ctxFD.font = '9px Inter, system-ui, sans-serif';
-      ctxFD.textAlign = 'left'; ctxFD.fillText('f = 1/2', ox + 3, halfY - 4);
-
-      // Thermal window shading around epsilon_F
-      if (kTr > 0.01) {
-        const eLeft = Math.max(0, (muFD - 2 * kTr));
-        const eRight = Math.min(eMax, (muFD + 2 * kTr));
-        const xL = ox + eLeft / eMax * pw;
-        const xR = ox + eRight / eMax * pw;
-        ctxFD.fillStyle = 'rgba(79, 195, 247, 0.08)';
-        ctxFD.fillRect(xL, oy, xR - xL, ph);
-        ctxFD.fillStyle = 'rgba(79, 195, 247, 0.3)'; ctxFD.font = '9px Inter, system-ui, sans-serif';
-        ctxFD.textAlign = 'center';
-        ctxFD.fillText('~kT window', (xL + xR) / 2, oy + ph - 8);
+      for (let n = 0; n <= 1; n += 0.25) {
+        const y = oy + ph - n * ph;
+        ctxFD.fillText(n.toFixed(2), ox - 8, y + 4);
+        ctxFD.strokeStyle = COLORS.axis; ctxFD.lineWidth = 1;
+        ctxFD.beginPath(); ctxFD.moveTo(ox - 4, y); ctxFD.lineTo(ox, y); ctxFD.stroke();
       }
 
-      const ratios = [0, kTr * 0.5, kTr, kTr * 2];
-      const cols = [COLORS.textDim, COLORS.blue, COLORS.red, COLORS.orange];
-      const labs = ['T = 0', 'kT/2\u03B5_F', 'kT/\u03B5_F', '2kT/\u03B5_F'];
-      ratios.forEach((T, idx) => {
-        ctxFD.strokeStyle = cols[idx]; ctxFD.lineWidth = idx === 2 ? 3 : (idx === 0 ? 1.5 : 2);
-        if (idx === 0) ctxFD.setLineDash([6, 4]);
-        ctxFD.beginPath();
-        for (let px = 0; px < pw; px++) {
-          const e = px / pw * eMax;
-          const n = T < 0.001 ? (e <= muFD ? 1 : 0) : 1 / (Math.exp((e - muFD) / T) + 1);
-          const pyv = oy + ph - n * ph;
-          px === 0 ? ctxFD.moveTo(ox + px, pyv) : ctxFD.lineTo(ox + px, pyv);
-        }
-        ctxFD.stroke(); ctxFD.setLineDash([]);
-      });
+      // Axis labels
+      ctxFD.fillStyle = COLORS.text; ctxFD.font = FONT;
+      ctxFD.textAlign = 'center';
+      ctxFD.fillText('Energy  \u03B5 / \u03B5_F', ox + pw / 2, oy + ph + 35);
+      ctxFD.save();
+      ctxFD.translate(ox - 50, oy + ph / 2);
+      ctxFD.rotate(-Math.PI / 2);
+      ctxFD.fillText('Occupation  f(\u03B5)', 0, 0);
+      ctxFD.restore();
 
-      ratios.forEach((T, idx) => {
-        ctxFD.fillStyle = cols[idx]; ctxFD.font = FONT_SM; ctxFD.textAlign = 'left';
-        ctxFD.fillText(idx === 0 ? 'T = 0' : labs[idx] + ' = ' + T.toFixed(2), WFD - 150, 35 + idx * 16);
-      });
-      ctxFD.fillStyle = COLORS.text; ctxFD.font = FONT_LG; ctxFD.textAlign = 'left';
-      ctxFD.fillText('Fermi-Dirac Distribution', ox + 5, oy + 12);
+      // Draw axes
+      ctxFD.strokeStyle = COLORS.axis; ctxFD.lineWidth = 1.5;
+      ctxFD.beginPath(); ctxFD.moveTo(ox, oy); ctxFD.lineTo(ox, oy + ph); ctxFD.lineTo(ox + pw, oy + ph); ctxFD.stroke();
+
+      // --- Shading: filled states (under the curve, left of Fermi energy) ---
+      // Fill the area under the FD curve to show occupied states
+      var grad = ctxFD.createLinearGradient(ox, oy, ox, oy + ph);
+      grad.addColorStop(0, 'rgba(79, 195, 247, 0.15)');
+      grad.addColorStop(1, 'rgba(79, 195, 247, 0.03)');
+      ctxFD.fillStyle = grad;
+      ctxFD.beginPath();
+      ctxFD.moveTo(ox, oy + ph);
+      for (let px = 0; px <= pw; px++) {
+        const e = px / pw * eMax;
+        const n = fermi(e, muFD, kTr);
+        ctxFD.lineTo(ox + px, oy + ph - n * ph);
+      }
+      ctxFD.lineTo(ox + pw, oy + ph);
+      ctxFD.closePath();
+      ctxFD.fill();
+
+      // --- Thermal window band around epsilon_F ---
+      if (kTr > 0.015) {
+        const bandHalf = 2 * kTr; // show +/- 2kT window
+        const eLeft = Math.max(0, muFD - bandHalf);
+        const eRight = Math.min(eMax, muFD + bandHalf);
+        const xL = ox + eLeft / eMax * pw;
+        const xR = ox + eRight / eMax * pw;
+        ctxFD.fillStyle = 'rgba(255, 167, 38, 0.10)';
+        ctxFD.fillRect(xL, oy, xR - xL, ph);
+
+        // Bracket annotations for thermal window
+        ctxFD.strokeStyle = 'rgba(255, 167, 38, 0.5)'; ctxFD.lineWidth = 1;
+        ctxFD.setLineDash([3, 3]);
+        ctxFD.beginPath(); ctxFD.moveTo(xL, oy + 4); ctxFD.lineTo(xL, oy + ph); ctxFD.stroke();
+        ctxFD.beginPath(); ctxFD.moveTo(xR, oy + 4); ctxFD.lineTo(xR, oy + ph); ctxFD.stroke();
+        ctxFD.setLineDash([]);
+
+        // Label the thermal window
+        ctxFD.fillStyle = COLORS.orange; ctxFD.font = '10px Inter, system-ui, sans-serif';
+        ctxFD.textAlign = 'center';
+        var bandLabelY = oy + 16;
+        // Draw double arrow
+        ctxFD.strokeStyle = COLORS.orange; ctxFD.lineWidth = 1;
+        ctxFD.beginPath(); ctxFD.moveTo(xL + 2, bandLabelY); ctxFD.lineTo(xR - 2, bandLabelY); ctxFD.stroke();
+        // arrowheads
+        ctxFD.beginPath(); ctxFD.moveTo(xL + 2, bandLabelY); ctxFD.lineTo(xL + 7, bandLabelY - 3); ctxFD.lineTo(xL + 7, bandLabelY + 3); ctxFD.fill();
+        ctxFD.beginPath(); ctxFD.moveTo(xR - 2, bandLabelY); ctxFD.lineTo(xR - 7, bandLabelY - 3); ctxFD.lineTo(xR - 7, bandLabelY + 3); ctxFD.fill();
+        ctxFD.fillText('~ 4k_BT', (xL + xR) / 2, bandLabelY - 6);
+      }
+
+      // --- f = 1/2 guideline ---
+      const halfY = oy + ph - 0.5 * ph;
+      ctxFD.strokeStyle = 'rgba(255,255,255,0.12)'; ctxFD.setLineDash([2, 4]); ctxFD.lineWidth = 0.8;
+      ctxFD.beginPath(); ctxFD.moveTo(ox, halfY); ctxFD.lineTo(ox + pw, halfY); ctxFD.stroke();
+      ctxFD.setLineDash([]);
+
+      // --- Fermi energy vertical line ---
+      const efX = ox + muFD / eMax * pw;
+      ctxFD.strokeStyle = 'rgba(255,255,255,0.2)'; ctxFD.setLineDash([4, 4]); ctxFD.lineWidth = 1;
+      ctxFD.beginPath(); ctxFD.moveTo(efX, oy); ctxFD.lineTo(efX, oy + ph); ctxFD.stroke();
+      ctxFD.setLineDash([]);
+
+      // Mark the intersection point f(epsilon_F) = 1/2
+      ctxFD.fillStyle = '#fff';
+      ctxFD.beginPath(); ctxFD.arc(efX, halfY, 4, 0, 2 * Math.PI); ctxFD.fill();
+      ctxFD.strokeStyle = COLORS.blue; ctxFD.lineWidth = 2;
+      ctxFD.beginPath(); ctxFD.arc(efX, halfY, 4, 0, 2 * Math.PI); ctxFD.stroke();
+
+      // Label: epsilon_F on x-axis
+      ctxFD.fillStyle = COLORS.text; ctxFD.font = '12px Inter, system-ui, sans-serif';
+      ctxFD.textAlign = 'center';
+      ctxFD.fillText('\u03B5_F', efX, oy + ph + 16);
+
+      // Label: f = 1/2 on y-axis side
+      ctxFD.fillStyle = COLORS.textDim; ctxFD.font = '10px Inter, system-ui, sans-serif';
+      ctxFD.textAlign = 'left';
+      ctxFD.fillText('f = \u00BD', efX + 8, halfY - 6);
+
+      // --- T = 0 reference curve (dashed) ---
+      ctxFD.strokeStyle = 'rgba(255,255,255,0.35)'; ctxFD.lineWidth = 1.5; ctxFD.setLineDash([6, 4]);
+      ctxFD.beginPath();
+      for (let px = 0; px <= pw; px++) {
+        const e = px / pw * eMax;
+        const n = e <= muFD ? 1 : 0;
+        const y = oy + ph - n * ph;
+        px === 0 ? ctxFD.moveTo(ox + px, y) : ctxFD.lineTo(ox + px, y);
+      }
+      ctxFD.stroke(); ctxFD.setLineDash([]);
+
+      // --- Main FD curve at selected temperature ---
+      ctxFD.strokeStyle = COLORS.blue; ctxFD.lineWidth = 3;
+      ctxFD.beginPath();
+      for (let px = 0; px <= pw; px++) {
+        const e = px / pw * eMax;
+        const n = fermi(e, muFD, kTr);
+        const y = oy + ph - n * ph;
+        px === 0 ? ctxFD.moveTo(ox + px, y) : ctxFD.lineTo(ox + px, y);
+      }
+      ctxFD.stroke();
+
+      // --- Annotations: "Filled states" and "Empty states" ---
+      ctxFD.font = '11px Inter, system-ui, sans-serif';
+      const filledX = ox + (muFD * 0.4) / eMax * pw;
+      const emptyX = ox + (muFD * 1.7) / eMax * pw;
+      ctxFD.fillStyle = 'rgba(79, 195, 247, 0.6)';
+      ctxFD.textAlign = 'center';
+      ctxFD.fillText('Filled states', filledX, oy + ph * 0.35);
+      ctxFD.fillText('f \u2248 1', filledX, oy + ph * 0.35 + 15);
+      ctxFD.fillStyle = 'rgba(255,255,255,0.3)';
+      ctxFD.fillText('Empty states', emptyX, oy + ph * 0.65);
+      ctxFD.fillText('f \u2248 0', emptyX, oy + ph * 0.65 + 15);
+
+      // --- Legend ---
+      const legX = WFD - 160, legY = oy + ph - 60;
+      // T=0 line
+      ctxFD.strokeStyle = 'rgba(255,255,255,0.35)'; ctxFD.lineWidth = 1.5; ctxFD.setLineDash([6, 4]);
+      ctxFD.beginPath(); ctxFD.moveTo(legX, legY); ctxFD.lineTo(legX + 25, legY); ctxFD.stroke();
+      ctxFD.setLineDash([]);
+      ctxFD.fillStyle = COLORS.textDim; ctxFD.font = FONT_SM; ctxFD.textAlign = 'left';
+      ctxFD.fillText('T = 0  (step function)', legX + 30, legY + 4);
+      // Current T line
+      ctxFD.strokeStyle = COLORS.blue; ctxFD.lineWidth = 3;
+      ctxFD.beginPath(); ctxFD.moveTo(legX, legY + 20); ctxFD.lineTo(legX + 25, legY + 20); ctxFD.stroke();
+      ctxFD.fillStyle = COLORS.blue; ctxFD.font = FONT_SM;
+      ctxFD.fillText('k_BT/\u03B5_F = ' + kTr.toFixed(2), legX + 30, legY + 24);
+
+      // --- Title ---
+      ctxFD.fillStyle = COLORS.text; ctxFD.font = '14px Inter, system-ui, sans-serif'; ctxFD.textAlign = 'left';
+      ctxFD.fillText('Fermi-Dirac Distribution  f(\u03B5) = 1 / (e^{(\u03B5-\u03B5_F)/k_BT} + 1)', ox + 5, oy - 10);
+
       document.getElementById('fd-dist-temp-val')?.replaceChildren(document.createTextNode(kTr.toFixed(2)));
     }
     fdSlider?.addEventListener('input', drawFD);
@@ -13343,30 +13454,40 @@ function initCh11Vis() {
       const xAxis = oy + ph;
 
       drawAxes(ctxUV, ox, oy, pw, ph, {
-        xLabel: 'Frequency \u03BD (arb. units,  h\u03BD/kT)',
+        xLabel: 'Angular frequency \u03C9 (10\u00B9\u2074 rad/s)',
         yLabel: 'Spectral energy density',
         yLabelOffset: 42
       });
 
-      // Dimensionless variable x = h*nu/kT; range 0..xMax
-      const xMax = 15;
+      // Plot in physical frequency units so T slider is meaningful.
+      // xi = hbar*omega / (k*Tref) with Tref = 5000K is a T-independent frequency axis.
+      // Planck: u ~ xi^3 / (exp(xi*Tref/T) - 1)
+      // RJ:     u ~ xi^2 * (T/Tref)
+      const xiMax = 12;
       const nPts = 600;
+      const Tref = 5000;
 
-      // Planck peak for normalisation
+      // Find Planck peak at current T for normalisation
       let planckMax = 0;
       for (let i = 1; i <= nPts; i++) {
-        const x = xMax * i / nPts;
-        const val = x * x * x / (Math.exp(x) - 1);
+        const xi = xiMax * i / nPts;
+        const arg = xi * Tref / T;
+        if (arg > 500) continue;
+        const val = xi * xi * xi / (Math.exp(arg) - 1);
         if (val > planckMax) planckMax = val;
       }
+      // Also find Planck peak at Tref for stable vertical scale
+      let planckMaxRef = 0;
+      for (let i = 1; i <= nPts; i++) {
+        const xi = xiMax * i / nPts;
+        const val = xi * xi * xi / (Math.exp(xi) - 1);
+        if (val > planckMaxRef) planckMaxRef = val;
+      }
+      const normFactor = Math.max(planckMax, planckMaxRef) * 1.15;
 
-      // Match RJ to Planck at x=1 (Rayleigh-Jeans limit): Planck ~ x^2 for small x
-      const planckAt1 = 1 / (Math.exp(1) - 1);
-      const rjNorm = planckAt1;  // RJ ~ rjNorm * x^2
-
-      // UV catastrophe shading
-      const uvStartX = 6;
-      const uvStartPx = ox + (uvStartX / xMax) * pw;
+      // UV catastrophe shading region (high-frequency end)
+      const uvStartXi = 7;
+      const uvStartPx = ox + (uvStartXi / xiMax) * pw;
       ctxUV.fillStyle = 'rgba(239,83,80,0.08)';
       ctxUV.fillRect(uvStartPx, oy, ox + pw - uvStartPx, ph);
       ctxUV.strokeStyle = 'rgba(239,83,80,0.35)';
@@ -13378,7 +13499,7 @@ function initCh11Vis() {
       ctxUV.stroke();
       ctxUV.setLineDash([]);
 
-      // Rayleigh-Jeans (classical) – dashed red, clamp & show upward arrow
+      // Rayleigh-Jeans (classical) - dashed red, clamp & show upward arrow
       ctxUV.strokeStyle = COLORS.red;
       ctxUV.lineWidth = 2.5;
       ctxUV.setLineDash([8, 5]);
@@ -13386,11 +13507,11 @@ function initCh11Vis() {
       let rjStarted = false;
       let rjArrowPx = -1;
       for (let i = 1; i <= nPts; i++) {
-        const x = xMax * i / nPts;
-        const rjVal = rjNorm * x * x;
-        const normVal = rjVal / planckMax;
-        const screenY = xAxis - normVal * ph * 0.82;
-        const canvX = ox + (x / xMax) * pw;
+        const xi = xiMax * i / nPts;
+        const rjVal = xi * xi * (T / Tref);
+        const normVal = rjVal / normFactor;
+        const screenY = xAxis - normVal * ph;
+        const canvX = ox + (xi / xiMax) * pw;
         if (screenY < oy + 4) {
           rjArrowPx = canvX;
           if (rjStarted) ctxUV.lineTo(canvX, oy + 4);
@@ -13407,35 +13528,40 @@ function initCh11Vis() {
         drawArrow(ctxUV, rjArrowPx, oy + 22, rjArrowPx, oy + 2, 7);
       }
 
-      // Planck curve – solid blue
+      // Planck curve - solid blue
       ctxUV.strokeStyle = COLORS.blue;
       ctxUV.lineWidth = 2.5;
       ctxUV.beginPath();
       for (let i = 1; i <= nPts; i++) {
-        const x = xMax * i / nPts;
-        const planckVal = x * x * x / (Math.exp(x) - 1);
-        const normVal = planckVal / planckMax;
-        const screenY = xAxis - normVal * ph * 0.82;
-        const canvX = ox + (x / xMax) * pw;
+        const xi = xiMax * i / nPts;
+        const arg = xi * Tref / T;
+        let planckVal;
+        if (arg > 500) { planckVal = 0; }
+        else { planckVal = xi * xi * xi / (Math.exp(arg) - 1); }
+        const normVal = planckVal / normFactor;
+        const screenY = xAxis - normVal * ph;
+        const canvX = ox + (xi / xiMax) * pw;
         i === 1 ? ctxUV.moveTo(canvX, screenY) : ctxUV.lineTo(canvX, screenY);
       }
       ctxUV.stroke();
 
-      // Wien peak marker
-      const xPeak = 2.821;
-      const peakPx = ox + (xPeak / xMax) * pw;
-      ctxUV.strokeStyle = COLORS.cyan;
-      ctxUV.lineWidth = 1;
-      ctxUV.setLineDash([3, 4]);
-      ctxUV.beginPath();
-      ctxUV.moveTo(peakPx, xAxis);
-      ctxUV.lineTo(peakPx, xAxis - ph * 0.82);
-      ctxUV.stroke();
-      ctxUV.setLineDash([]);
-      ctxUV.fillStyle = COLORS.cyan;
-      ctxUV.font = FONT_SM;
-      ctxUV.textAlign = 'center';
-      ctxUV.fillText('Wien\u2019s peak', peakPx, xAxis - ph * 0.82 - 6);
+      // Wien peak marker: peak of x^3/(e^x-1) at x=2.821, so xi_peak = 2.821*T/Tref
+      const xiPeak = 2.821 * T / Tref;
+      if (xiPeak < xiMax - 0.5) {
+        const peakPx = ox + (xiPeak / xiMax) * pw;
+        ctxUV.strokeStyle = COLORS.cyan;
+        ctxUV.lineWidth = 1;
+        ctxUV.setLineDash([3, 4]);
+        ctxUV.beginPath();
+        ctxUV.moveTo(peakPx, xAxis);
+        ctxUV.lineTo(peakPx, oy);
+        ctxUV.stroke();
+        ctxUV.setLineDash([]);
+        ctxUV.fillStyle = COLORS.cyan;
+        ctxUV.font = FONT_SM;
+        ctxUV.textAlign = 'center';
+        ctxUV.fillText('Wien\u2019s peak', peakPx, oy - 6);
+      }
 
       // Legend
       ctxUV.font = FONT_SM;
@@ -13464,13 +13590,15 @@ function initCh11Vis() {
       ctxUV.textAlign = 'left';
       ctxUV.fillText('T = ' + T.toFixed(0) + ' K', ox + 5, oy + 14);
 
-      // X-axis tick labels
+      // X-axis tick labels: xi -> omega in 10^14 rad/s
+      // omega = xi * k*Tref/hbar = xi * 6.54e14; in 10^14 units: xi * 6.54
       ctxUV.fillStyle = COLORS.textDim;
       ctxUV.font = '10px Inter, system-ui, sans-serif';
       ctxUV.textAlign = 'center';
-      for (let xt = 0; xt <= xMax; xt += 3) {
-        const canvX = ox + (xt / xMax) * pw;
-        ctxUV.fillText(xt.toString(), canvX, xAxis + 13);
+      for (let xt = 0; xt <= xiMax; xt += 2) {
+        const canvX = ox + (xt / xiMax) * pw;
+        const omegaLabel = (xt * 6.54).toFixed(0);
+        ctxUV.fillText(omegaLabel, canvX, xAxis + 13);
       }
 
       document.getElementById('uv-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(0)));
@@ -13480,7 +13608,7 @@ function initCh11Vis() {
     drawUV();
   }
 
-  // ----- Phonon Modes in 1D Chain -----
+  // ----- Phonon Normal Modes in 1D Chain -----
   const cPC = document.getElementById('vis-phonon-chain');
   if (cPC) {
     const pc = setupCanvas(cPC);
@@ -13489,78 +13617,205 @@ function initCh11Vis() {
     const ampSlider = document.getElementById('phonon-amp');
     let phononTime = 0, phononRunning = false;
 
-    const nAtoms = 20;
+    const nAtoms = 16;
+    const marginX = 50;
+    const chainY = HPC * 0.45;
+    const maxDisp = 45;
+    const chainLen = WPC - 2 * marginX;
+    const atomSpacing = chainLen / (nAtoms + 1);
 
     function drawPhononChain() {
       clearCanvas(ctxPC, WPC, HPC);
 
       const mode = parseInt(modeSlider?.value || 1);
       const amp = parseFloat(ampSlider?.value || 0.5);
-      const spacing = (WPC - 60) / (nAtoms + 1);
-      const cy = HPC / 2;
+      const timeFactor = Math.cos(phononTime * 0.04 * Math.sqrt(mode));
 
-      // Draw equilibrium positions (faint)
+      // --- Equilibrium line ---
       ctxPC.strokeStyle = COLORS.grid;
       ctxPC.lineWidth = 1;
-      for (let i = 0; i <= nAtoms + 1; i++) {
-        const x = 30 + i * spacing;
-        ctxPC.beginPath();
-        ctxPC.moveTo(x, cy - 40);
-        ctxPC.lineTo(x, cy + 40);
-        ctxPC.stroke();
-      }
+      ctxPC.setLineDash([4, 4]);
+      ctxPC.beginPath();
+      ctxPC.moveTo(marginX, chainY);
+      ctxPC.lineTo(marginX + chainLen, chainY);
+      ctxPC.stroke();
+      ctxPC.setLineDash([]);
 
-      // Compute displacements
+      // --- Standing wave envelope ---
+      ctxPC.strokeStyle = 'rgba(79,195,247,0.2)';
+      ctxPC.lineWidth = 1;
+      ctxPC.setLineDash([3, 3]);
+      ctxPC.beginPath();
+      for (let px = 0; px <= chainLen; px += 2) {
+        const frac = px / chainLen;
+        const envY = amp * maxDisp * Math.sin(Math.PI * mode * frac);
+        if (px === 0) ctxPC.moveTo(marginX + px, chainY - envY);
+        else ctxPC.lineTo(marginX + px, chainY - envY);
+      }
+      ctxPC.stroke();
+      ctxPC.beginPath();
+      for (let px = 0; px <= chainLen; px += 2) {
+        const frac = px / chainLen;
+        const envY = amp * maxDisp * Math.sin(Math.PI * mode * frac);
+        if (px === 0) ctxPC.moveTo(marginX + px, chainY + envY);
+        else ctxPC.lineTo(marginX + px, chainY + envY);
+      }
+      ctxPC.stroke();
+      ctxPC.setLineDash([]);
+
+      // --- Compute atom positions ---
+      // Fixed walls at i=0 and i=nAtoms+1 (displacement=0)
+      // Interior: sin(nπi/(N+1)) standing wave
       const positions = [];
       for (let i = 0; i <= nAtoms + 1; i++) {
-        const eqX = 30 + i * spacing;
-        // Standing wave: displacement ∝ cos(nπi/(N+1)) * cos(ωt)
-        const disp = amp * 30 * Math.cos(Math.PI * mode * i / (nAtoms + 1)) * Math.cos(phononTime * 0.05 * mode);
-        positions.push({ x: eqX, y: cy + disp, eq: eqX });
+        const eqX = marginX + i * atomSpacing;
+        const frac = i / (nAtoms + 1);
+        const disp = amp * maxDisp * Math.sin(Math.PI * mode * frac) * timeFactor;
+        positions.push({ x: eqX, y: chainY + disp, eqX: eqX, eqY: chainY });
       }
 
-      // Draw springs
-      ctxPC.strokeStyle = COLORS.textDim;
+      // --- Springs (zigzag) ---
+      ctxPC.strokeStyle = 'rgba(255,255,255,0.25)';
       ctxPC.lineWidth = 1.5;
       for (let i = 0; i < positions.length - 1; i++) {
         const p1 = positions[i], p2 = positions[i + 1];
-        // Draw zigzag spring
         const dx = p2.x - p1.x, dy = p2.y - p1.y;
         const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 0.1) continue;
         const nx = dx / len, ny = dy / len;
         const px = -ny, py = nx;
-        const nCoils = 6;
+        const nCoils = 5;
         ctxPC.beginPath();
         ctxPC.moveTo(p1.x, p1.y);
         for (let j = 1; j <= nCoils; j++) {
           const t = j / (nCoils + 1);
           const side = (j % 2 === 0) ? 1 : -1;
-          const sx = p1.x + dx * t + px * side * 6;
-          const sy = p1.y + dy * t + py * side * 6;
-          ctxPC.lineTo(sx, sy);
+          ctxPC.lineTo(p1.x + dx * t + px * side * 4, p1.y + dy * t + py * side * 4);
         }
         ctxPC.lineTo(p2.x, p2.y);
         ctxPC.stroke();
       }
 
-      // Draw atoms
-      for (let i = 0; i <= nAtoms + 1; i++) {
+      // --- Equilibrium markers ---
+      for (let i = 1; i <= nAtoms; i++) {
         const p = positions[i];
-        const isWall = (i === 0 || i === nAtoms + 1);
-        ctxPC.fillStyle = isWall ? COLORS.textDim : COLORS.blue;
+        ctxPC.fillStyle = 'rgba(255,255,255,0.15)';
         ctxPC.beginPath();
-        ctxPC.arc(p.x, p.y, isWall ? 8 : 10, 0, 2 * Math.PI);
+        ctxPC.arc(p.eqX, p.eqY, 3, 0, 2 * Math.PI);
         ctxPC.fill();
       }
 
-      // Labels
+      // --- Displacement arrows ---
+      for (let i = 1; i <= nAtoms; i++) {
+        const p = positions[i];
+        const dy = p.y - p.eqY;
+        if (Math.abs(dy) > 2) {
+          ctxPC.strokeStyle = 'rgba(255,167,38,0.5)';
+          ctxPC.lineWidth = 1;
+          ctxPC.beginPath();
+          ctxPC.moveTo(p.eqX, p.eqY);
+          ctxPC.lineTo(p.x, p.y);
+          ctxPC.stroke();
+        }
+      }
+
+      // --- Wall markers ---
+      for (const wi of [0, nAtoms + 1]) {
+        const p = positions[wi];
+        ctxPC.fillStyle = COLORS.textDim;
+        ctxPC.fillRect(p.x - 4, chainY - 20, 8, 40);
+      }
+
+      // --- Atoms ---
+      for (let i = 1; i <= nAtoms; i++) {
+        const p = positions[i];
+        const dispMag = Math.abs(p.y - p.eqY) / (amp * maxDisp + 0.01);
+        const r = Math.round(79 + (239 - 79) * dispMag);
+        const g = Math.round(195 - (195 - 83) * dispMag);
+        const b = Math.round(247 - (247 - 80) * dispMag);
+        ctxPC.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+        ctxPC.beginPath();
+        ctxPC.arc(p.x, p.y, 7, 0, 2 * Math.PI);
+        ctxPC.fill();
+        ctxPC.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctxPC.lineWidth = 0.5;
+        ctxPC.stroke();
+      }
+
+      // --- Node markers (diamonds) for modes > 1 ---
+      if (mode > 1) {
+        ctxPC.fillStyle = 'rgba(255,238,88,0.6)';
+        for (let k = 1; k < mode; k++) {
+          const nodeX = marginX + (k / mode) * chainLen;
+          ctxPC.beginPath();
+          ctxPC.moveTo(nodeX, chainY - 5);
+          ctxPC.lineTo(nodeX + 4, chainY);
+          ctxPC.lineTo(nodeX, chainY + 5);
+          ctxPC.lineTo(nodeX - 4, chainY);
+          ctxPC.closePath();
+          ctxPC.fill();
+        }
+        ctxPC.font = FONT_SM;
+        ctxPC.textAlign = 'right';
+        ctxPC.fillText((mode - 1) + ' node' + (mode > 2 ? 's' : ''), WPC - 10, chainY - maxDisp - 8);
+      }
+
+      // --- Wavelength annotation ---
+      if (mode <= 6) {
+        const halfWaveLen = chainLen / mode;
+        const annoY = chainY + maxDisp + 28;
+        ctxPC.strokeStyle = COLORS.orange;
+        ctxPC.lineWidth = 1.5;
+
+        if (2 * halfWaveLen <= chainLen + 1) {
+          // Full wavelength bracket
+          const wEnd = marginX + 2 * halfWaveLen;
+          ctxPC.beginPath();
+          ctxPC.moveTo(marginX, annoY - 4); ctxPC.lineTo(marginX, annoY);
+          ctxPC.lineTo(wEnd, annoY); ctxPC.lineTo(wEnd, annoY - 4);
+          ctxPC.stroke();
+          ctxPC.beginPath();
+          ctxPC.moveTo(marginX + 5, annoY - 3); ctxPC.lineTo(marginX, annoY); ctxPC.lineTo(marginX + 5, annoY + 3);
+          ctxPC.stroke();
+          ctxPC.beginPath();
+          ctxPC.moveTo(wEnd - 5, annoY - 3); ctxPC.lineTo(wEnd, annoY); ctxPC.lineTo(wEnd - 5, annoY + 3);
+          ctxPC.stroke();
+          ctxPC.fillStyle = COLORS.orange;
+          ctxPC.font = FONT_SM;
+          ctxPC.textAlign = 'center';
+          ctxPC.fillText('\u03BB = 2L/' + mode, (marginX + wEnd) / 2, annoY + 14);
+        } else {
+          // Half wavelength bracket
+          const hEnd = marginX + halfWaveLen;
+          ctxPC.beginPath();
+          ctxPC.moveTo(marginX, annoY - 4); ctxPC.lineTo(marginX, annoY);
+          ctxPC.lineTo(hEnd, annoY); ctxPC.lineTo(hEnd, annoY - 4);
+          ctxPC.stroke();
+          ctxPC.beginPath();
+          ctxPC.moveTo(marginX + 5, annoY - 3); ctxPC.lineTo(marginX, annoY); ctxPC.lineTo(marginX + 5, annoY + 3);
+          ctxPC.stroke();
+          ctxPC.beginPath();
+          ctxPC.moveTo(hEnd - 5, annoY - 3); ctxPC.lineTo(hEnd, annoY); ctxPC.lineTo(hEnd - 5, annoY + 3);
+          ctxPC.stroke();
+          ctxPC.fillStyle = COLORS.orange;
+          ctxPC.font = FONT_SM;
+          ctxPC.textAlign = 'center';
+          ctxPC.fillText('\u03BB/2 = L/' + mode, (marginX + hEnd) / 2, annoY + 14);
+        }
+      }
+
+      // --- Top labels ---
       ctxPC.fillStyle = COLORS.text;
       ctxPC.font = FONT;
       ctxPC.textAlign = 'left';
-      ctxPC.fillText('Mode n = ' + mode + ', ω = c_s πn/L', 10, 18);
+      ctxPC.fillText('Mode n = ' + mode, 10, 18);
       ctxPC.fillStyle = COLORS.textDim;
       ctxPC.font = FONT_SM;
-      ctxPC.fillText('k = πn/L, λ = 2L/n', 10, 34);
+      ctxPC.fillText('k = \u03C0n/L     \u03C9 = c\u209B\u03C0n/L     \u03BB = 2L/n', 10, 34);
+      ctxPC.textAlign = 'right';
+      ctxPC.fillStyle = COLORS.text;
+      ctxPC.font = FONT;
+      ctxPC.fillText('Frequency \u221D ' + mode, WPC - 10, 18);
 
       document.getElementById('phonon-mode-val')?.replaceChildren(document.createTextNode(mode));
       document.getElementById('phonon-amp-val')?.replaceChildren(document.createTextNode(amp.toFixed(2)));
@@ -13573,21 +13828,35 @@ function initCh11Vis() {
       activeAnimations['phonon'] = requestAnimationFrame(animatePhonon);
     }
 
-    document.getElementById('phonon-start')?.addEventListener('click', () => {
+    document.getElementById('phonon-play')?.addEventListener('click', () => {
       phononRunning = !phononRunning;
-      const btn = document.getElementById('phonon-start');
-      if (btn) btn.textContent = phononRunning ? 'Pause' : 'Animate';
+      const btn = document.getElementById('phonon-play');
+      if (btn) btn.textContent = phononRunning ? '\u23F8 Pause' : '\u25B6 Play';
       if (phononRunning) animatePhonon();
+    });
+
+    document.getElementById('phonon-reset')?.addEventListener('click', () => {
+      phononTime = 0;
+      phononRunning = false;
+      const btn = document.getElementById('phonon-play');
+      if (btn) btn.textContent = '\u25B6 Play';
+      if (activeAnimations['phonon']) cancelAnimationFrame(activeAnimations['phonon']);
+      drawPhononChain();
     });
 
     modeSlider?.addEventListener('input', drawPhononChain);
     ampSlider?.addEventListener('input', drawPhononChain);
+
+    // Auto-start animation
+    phononRunning = true;
+    const playBtn = document.getElementById('phonon-play');
+    if (playBtn) playBtn.textContent = '\u23F8 Pause';
     drawPhononChain();
+    animatePhonon();
   }
 }
 
 
-// =============================================================================
 // CH12: Bose-Einstein Condensation
 // =============================================================================
 function initCh12Vis() {

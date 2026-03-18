@@ -417,7 +417,36 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <p>For an example, the surface of the sun is 5800 K, so the peak of its blackbody spectrum is $\lambda_\text{max} = \frac{2.89\,\text{mm}\cdot\text{K}}{5780\,\text{K}} = 499\,\text{nm}$, which is right in the middle of the visible spectrum. What luck! Stars that are cooler peak at larger wavelength (lower frequency, lower energy). For example, Antares (a red giant) peaks in red wavelengths.</p>
 
-<figure><img src="images/11-PhononsPhotons_p12_img1.png" alt="Stars of different temperatures showing different colors"><figcaption>Figure 5. A cold star like Antares (left) might have a surface temperature of 3000 K. It looks red. The sun (middle) has a surface temperature around 5800 K, making it yellower. Sirius (right) has a surface temperature around 9,900 K, making it look blue to white.</figcaption></figure>
+<!-- INTERACTIVE: Stellar Blackbody Spectra -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">&#11088;</span> Interactive: Stellar Blackbody Spectra</div>
+  <div style="display:flex;align-items:stretch;min-height:340px;background:var(--bg-alt,#0f1923)">
+    <div style="flex:1;min-width:0">
+      <div class="vis-canvas-wrap" style="height:100%"><canvas id="vis-stellar-bb" width="600" height="340"></canvas></div>
+    </div>
+    <div id="stellar-info-panel" style="width:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:8px;border-left:1px solid rgba(255,255,255,0.08)">
+      <img id="stellar-img" src="" alt="" style="width:140px;height:140px;object-fit:cover;border-radius:8px;border:2px solid rgba(255,255,255,0.15)">
+      <div id="stellar-name" style="color:#e8ecf1;font-weight:700;font-size:1rem;text-align:center"></div>
+      <div id="stellar-type" style="color:rgba(255,255,255,0.5);font-size:0.75rem;text-align:center"></div>
+      <div id="stellar-temp-display" style="color:#ffa726;font-size:0.85rem;font-weight:600"></div>
+      <div id="stellar-peak-display" style="color:#4fc3f7;font-size:0.8rem"></div>
+    </div>
+  </div>
+  <div class="vis-controls">
+    <label>Star: <select id="stellar-select">
+      <option value="betelgeuse">Betelgeuse</option>
+      <option value="antares">Antares</option>
+      <option value="aldebaran">Aldebaran</option>
+      <option value="sun" selected>Sun</option>
+      <option value="procyon">Procyon</option>
+      <option value="sirius">Sirius</option>
+      <option value="vega">Vega</option>
+      <option value="rigel">Rigel</option>
+      <option value="spica">Spica</option>
+    </select></label>
+  </div>
+  <figcaption style="padding:8px 16px;font-size:0.82rem;color:rgba(255,255,255,0.5)">Figure 5. The blackbody spectrum of different stars. The shaded rainbow band marks the visible range (380&ndash;700 nm). Cooler stars like Betelgeuse peak in the infrared and appear red; the Sun peaks near 500 nm in the visible; hot stars like Rigel and Spica peak in the ultraviolet and appear blue-white.</figcaption>
+</div>
 
 <div class="info-box example">
 <div class="box-title">Solar Radiation</div>

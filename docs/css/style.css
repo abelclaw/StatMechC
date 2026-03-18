@@ -511,6 +511,15 @@ li { margin-bottom: 6px; }
   transition: background 0.15s;
 }
 .vis-controls button:hover { background: var(--accent-light); }
+.vis-controls select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  background: var(--bg);
+  color: var(--text);
+}
 .vis-controls .value-display {
   font-weight: 600;
   color: var(--accent);

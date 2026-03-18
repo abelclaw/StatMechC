@@ -217,13 +217,13 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 <p>This is known as the <span class="tooltip-trigger">Fermi-Dirac distribution<span class="tooltip-content">The average occupation of a state with energy $\epsilon$ for fermions. At $T = 0$, it's a step function: states below $\mu$ are completely filled, states above are empty. At finite $T$, the step is smeared over a width $\sim k_BT$.</span></span> or <strong>Fermi function</strong>, $f(\epsilon)$. We see that at low temperature, states with energy greater than $\mu$ are essentially unoccupied: $f(\epsilon > \mu) \approx 0$ and states with energies less than $\mu$ are completely filled.</p>
 
 <!-- INTERACTIVE: Fermi-Dirac Distribution -->
-<div class="interactive-container">
-  <h3>Interactive: Fermi-Dirac Distribution</h3>
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">&#9881;</span> Interactive: Fermi-Dirac Distribution</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-fd-dist" width="700" height="420"></canvas></div>
   <div class="vis-controls">
-    <label>$k_BT / \epsilon_F$: <input type="range" id="fd-dist-temp" min="0.01" max="2" step="0.01" value="0.1"> <span class="slider-value" id="fd-dist-temp-val">0.10</span></label>
+    <label>Temperature $k_BT / \epsilon_F$: <input type="range" id="fd-dist-temp" min="0.01" max="1.0" step="0.01" value="0.1" style="width:200px"> <span class="value-display" id="fd-dist-temp-val">0.10</span></label>
   </div>
-  <canvas id="vis-fd-dist" width="600" height="400"></canvas>
-  <p class="vis-caption">The Fermi-Dirac distribution $f(\epsilon) = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$ gives the occupation probability for fermions. At $T = 0$ it is a sharp step: all states below $\epsilon_F$ are filled, all above are empty. At finite $T$, only states within $\sim k_BT$ of $\epsilon_F$ are affected &mdash; the shaded band shows this thermal window. Note that $f(\epsilon_F) = \frac{1}{2}$ at all temperatures.</p>
+  <p class="vis-caption" style="padding:0 16px 12px;">The Fermi-Dirac distribution $f(\epsilon) = \frac{1}{e^{(\epsilon - \epsilon_F)/k_BT} + 1}$ gives the probability that a state at energy $\epsilon$ is occupied. At $T = 0$ it is a sharp step: all states below $\epsilon_F$ are filled, all above are empty. At finite $T$, the step smears over a window of width $\sim k_BT$ around $\epsilon_F$, and the occupation at $\epsilon = \epsilon_F$ is always exactly $\frac{1}{2}$. Drag the slider to see how temperature opens up partially occupied states near the Fermi surface.</p>
 </div>
 
 <p>The chemical potential at $T = 0$ is called the <span class="tooltip-trigger">Fermi energy<span class="tooltip-content">$\epsilon_F = \mu(T=0)$: the energy of the highest occupied state at zero temperature. All states below $\epsilon_F$ are filled; all above are empty. The Fermi energy sets the scale for quantum effects in metals.</span></span>, $\epsilon_F = \mu(T = 0)$. At $T = 0$, all states below the Fermi energy are filled and the ones above the Fermi energy are empty. Thus the chemical potential for Fermi systems is positive at low temperature and corresponds to the highest occupied energy level of the system. We'll use the Fermi energy extensively to discuss fermionic systems in the quantum regime, in Lectures 13, 14 and 15.</p>
