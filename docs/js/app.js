@@ -13302,7 +13302,7 @@ function initCh11Vis() {
   if (cStellar) {
     const sbb = setupCanvas(cStellar);
     const ctxS = sbb.ctx, WS = sbb.W, HS = sbb.H;
-    const stellarSelect = document.getElementById('stellar-select');
+    let selectedObj = 'sun';
 
     const STARS = {
       lava:       { name: 'Lava', type: 'Molten rock', T: 1200,
@@ -13361,7 +13361,7 @@ function initCh11Vis() {
     }
 
     function drawStellar() {
-      const key = stellarSelect.value;
+      const key = selectedObj;
       const star = STARS[key];
       const T = star.T;
       clearCanvas(ctxS, WS, HS);
@@ -13481,7 +13481,14 @@ function initCh11Vis() {
       if (peakEl) peakEl.textContent = '\u03BB_peak = ' + Math.round(2898000 / T) + ' nm';
     }
 
-    stellarSelect.addEventListener('change', drawStellar);
+    document.querySelectorAll('.bb-obj-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.bb-obj-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedObj = btn.dataset.obj;
+        drawStellar();
+      });
+    });
     drawStellar();
   }
 

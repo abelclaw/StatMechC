@@ -435,18 +435,16 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
       <div id="stellar-peak-display" style="color:#4fc3f7;font-size:0.8rem"></div>
     </div>
   </div>
-  <div class="vis-controls">
-    <label>Object: <select id="stellar-select">
-      <option value="lava">Lava (1200 K)</option>
-      <option value="candle">Candle Flame (1800 K)</option>
-      <option value="bulb">Incandescent Bulb (2700 K)</option>
-      <option value="betelgeuse">Betelgeuse (3500 K)</option>
-      <option value="sun" selected>Sun (5778 K)</option>
-      <option value="sirius">Sirius (9940 K)</option>
-      <option value="rigel">Rigel (12100 K)</option>
-    </select></label>
+  <div class="vis-controls" style="gap:6px">
+    <button class="bb-obj-btn" data-obj="lava">Lava</button>
+    <button class="bb-obj-btn" data-obj="candle">Candle</button>
+    <button class="bb-obj-btn" data-obj="bulb">Bulb</button>
+    <button class="bb-obj-btn" data-obj="betelgeuse">Betelgeuse</button>
+    <button class="bb-obj-btn active" data-obj="sun">Sun</button>
+    <button class="bb-obj-btn" data-obj="sirius">Sirius</button>
+    <button class="bb-obj-btn" data-obj="rigel">Rigel</button>
   </div>
-  <figcaption style="padding:8px 16px;font-size:0.82rem;color:rgba(255,255,255,0.5)">Figure 5. The blackbody spectrum of various hot objects. The shaded rainbow band marks the visible range (380&ndash;700 nm). Cooler objects like lava and candle flames peak in the infrared and glow red-orange; the Sun peaks near 500 nm in the visible; hot stars like Rigel peak in the ultraviolet and appear blue-white.</figcaption>
+  <figcaption style="padding:8px 16px;font-size:0.82rem;color:rgba(255,255,255,0.5)">Figure 5. The blackbody spectrum of various hot objects. The peak wavelength is inversely proportional to the temperature: $\lambda_\text{peak} = 2.89\,\text{mm}\cdot\text{K}\,/\,T$ (Wien's law). Cooler objects like lava and candle flames peak in the infrared and glow red-orange; the Sun peaks near 500 nm in the visible; hot stars like Rigel peak in the ultraviolet and appear blue-white.</figcaption>
 </div>
 
 <div class="info-box example">
