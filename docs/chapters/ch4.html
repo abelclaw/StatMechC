@@ -37,7 +37,8 @@
 
 <!-- INTERACTIVE: Energy Distribution P(E₁) -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">📊</span> Interactive: Energy Distribution $P(E_1)$</div>
+  <div class="figure-label">Interactive 1: Energy Distribution $P(E_1)$</div>
+  <p class="vis-caption">Distribution of energy between two ideal gases in thermal contact. The peak sharpens as particle numbers increase.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-energy-dist" width="600" height="300"></canvas></div>
   <div class="vis-controls">
     <label>$N_1$: <input type="range" id="edist-n1" min="2" max="100" step="1" value="10"> <span class="value-display" id="edist-n1-val">10</span></label>
@@ -195,7 +196,8 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <!-- INTERACTIVE: Gas particles -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔴</span> Interactive: Ideal Gas — Temperature and Speed</div>
+  <div class="figure-label">Interactive 2: Ideal Gas — Temperature and Speed</div>
+  <p class="vis-caption">Gas particles move with speeds determined by temperature. Higher temperature means faster average motion.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-equipartition" width="600" height="300"></canvas></div>
   <div class="vis-controls">
     <label>Temperature: <input type="range" id="ep-temp" min="50" max="1000" step="10" value="300"> <span class="value-display" id="ep-temp-val">300</span> K</label>
@@ -205,8 +207,8 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <!-- Interactive: Ideal Gas Kinetic Theory Simulator -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">💨</span> Interactive: Ideal Gas &mdash; Kinetic Theory in Action</div>
-  <p class="vis-caption">Gas particles collide elastically with each other and the walls. The histogram on the right shows the distribution of particle speeds, which converges to the Maxwell-Boltzmann distribution (green curve) regardless of the initial conditions.</p>
+  <div class="figure-label">Interactive 3: Ideal Gas — Kinetic Theory in Action</div>
+  <p class="vis-caption">Gas particles collide elastically and their speed distribution converges to the Maxwell-Boltzmann distribution regardless of initial conditions.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-gaskinetic" width="700" height="400"></canvas></div>
   <div class="vis-controls">
     <label>Initial velocities:
@@ -242,7 +244,8 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <!-- INTERACTIVE: Diatomic Molecule Modes -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">⚛️</span> Interactive: Diatomic Molecule Modes</div>
+  <div class="figure-label">Interactive 4: Diatomic Molecule Modes</div>
+  <p class="vis-caption">A diatomic molecule can translate, rotate, and vibrate. Each mode contributes independently to the energy.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-diatomic" width="600" height="250"></canvas></div>
   <div class="vis-controls">
     <button id="diatomic-start">Animate</button>
@@ -296,12 +299,14 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 <div class="equation">$$\epsilon_{\text{rot}} = hc\,\tilde{\nu}_{\text{rot}} = 7.4\;\text{meV}, \quad \frac{\epsilon_{\text{rot}}}{k_B} = 85\;\text{K}$$<span class="eq-number">(47)</span></div>
 
 <div class="interactive-container">
-  <h3>Interactive: Heat Capacity of H$_2$ vs Temperature</h3>
-  <p class="vis-caption">The heat capacity of a diatomic gas shows quantum freeze-out: at low $T$, only translational modes contribute ($C_V = \frac{3}{2}Nk_B$). Rotational modes activate near $\theta_\text{rot} \approx 85$ K ($\frac{5}{2}$), and vibrational modes near $\theta_\text{vib} \approx 6300$ K ($\frac{7}{2}$).</p>
+  <div class="figure-label">Interactive 5: Heat Capacity of H$_2$ vs Temperature</div>
+  <p class="vis-caption">Heat capacity of a diatomic gas showing quantum freeze-out of rotational and vibrational modes.</p>
   <canvas id="vis-heatcap" width="600" height="300"></canvas>
 </div>
 
 <figure>
+<div class="figure-label">Figure 1: Diatomic Molecule Constants</div>
+<p class="vis-caption">Rotational and vibrational temperature scales and bond lengths for common diatomic molecules.</p>
 <table style="width:100%; max-width:600px; margin:16px auto; border-collapse:collapse; font-size:0.9rem;">
 <thead>
 <tr>
@@ -322,7 +327,6 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 <tr><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">I&#8322;</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">0.054</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">310</td><td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">267</td></tr>
 </tbody>
 </table>
-<figcaption>Vibrational and rotational constants for various diatomic molecules.</figcaption>
 </figure>
 
 <p>To understand this data, we can think about the scaling of the rotational and vibrational energies with mass. From Eqs. (40) and (41) we see that a larger reduced mass decreases both the vibrational and rotational energies. A larger bond length decreases the rotational energy but does not affect vibration directly. For heavier molecules like $\text{I}_2$, both the rotational and vibrational temperatures are much lower, so more modes are active at room temperature.</p>
