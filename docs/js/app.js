@@ -23440,8 +23440,110 @@ function initCh14Vis() {
       bbRunSim();
     }
 
+    // ---- NOT GATE: switch → base resistor → NPN → LED inverts ----
+    function bbPresetNOT() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
+      // Pull-up resistor: VCC → R(1kΩ) → output node (col 15)
+      bbAddPart('WIRE',[{row:'r+t',col:12},{row:'a',col:12}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:12},{row:'a',col:15}],{value:1000});
+      // Output LED: output node → LED → GND
+      bbAddPart('LED',[{row:'b',col:15},{row:'b',col:19}]);
+      bbAddPart('WIRE',[{row:'c',col:19},{row:'r-t',col:19}],{color:'#1e88e5'});
+      // NPN: collector at output node, emitter to GND
+      bbAddPart('NPN',[{row:'f',col:15},{row:'f',col:16},{row:'f',col:17}]);
+      bbAddPart('WIRE',[{row:'d',col:15},{row:'g',col:17}],{color:'#ff9800'}); // output to collector
+      bbAddPart('WIRE',[{row:'g',col:15},{row:'r-b',col:15}],{color:'#1e88e5'}); // emitter to GND
+      // Input: switch → base resistor → base
+      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:10}],{value:10000});
+      bbAddPart('WIRE',[{row:'c',col:10},{row:'h',col:16}],{color:'#43a047'}); // to base
+      bbRunSim();
+    }
+
+    // ---- NAND GATE: two NPN in series, pull-up resistor ----
+    function bbPresetNAND() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
+      // Pull-up: VCC → R(1kΩ) → output node (col 15)
+      bbAddPart('WIRE',[{row:'r+t',col:12},{row:'a',col:12}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:12},{row:'a',col:15}],{value:1000});
+      // Output LED
+      bbAddPart('LED',[{row:'b',col:15},{row:'b',col:19}]);
+      bbAddPart('WIRE',[{row:'c',col:19},{row:'r-t',col:19}],{color:'#1e88e5'});
+      // Q1 (top): collector at output, emitter to Q2 collector
+      bbAddPart('NPN',[{row:'f',col:15},{row:'f',col:16},{row:'f',col:17}]);
+      bbAddPart('WIRE',[{row:'d',col:15},{row:'g',col:17}],{color:'#ff9800'}); // output to Q1 collector
+      // Q2 (bottom): collector = Q1 emitter, emitter to GND
+      bbAddPart('NPN',[{row:'f',col:20},{row:'f',col:21},{row:'f',col:22}]);
+      bbAddPart('WIRE',[{row:'g',col:15},{row:'g',col:22}],{color:'#ff9800'}); // Q1 emitter to Q2 collector
+      bbAddPart('WIRE',[{row:'g',col:20},{row:'r-b',col:20}],{color:'#1e88e5'}); // Q2 emitter to GND
+      // Switch A → base resistor → Q1 base
+      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:9}],{value:10000});
+      bbAddPart('WIRE',[{row:'c',col:9},{row:'h',col:16}],{color:'#43a047'}); // to Q1 base
+      // Switch B → base resistor → Q2 base
+      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:24}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:24},{row:'a',col:27}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:24},{row:'b',col:22}],{value:10000});
+      bbAddPart('WIRE',[{row:'c',col:22},{row:'h',col:21}],{color:'#8e24aa'}); // to Q2 base
+      bbRunSim();
+    }
+
+    // ---- RC CHARGE/DISCHARGE: switch charges cap, release discharges through LED ----
+    function bbPresetRC() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
+      // Charging path: VCC → switch → R(1kΩ) → capacitor → GND
+      bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:4},{row:'a',col:8}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:8},{row:'b',col:13}],{value:1000});
+      bbAddPart('CAPACITOR',[{row:'a',col:13},{row:'a',col:18}],{value:470e-6});
+      bbAddPart('WIRE',[{row:'b',col:18},{row:'r-t',col:18}],{color:'#1e88e5'});
+      // Discharge path: cap top → R(470Ω) → LED → GND
+      bbAddPart('RESISTOR',[{row:'c',col:13},{row:'c',col:18}],{value:470});
+      bbAddPart('LED',[{row:'d',col:18},{row:'d',col:22}]);
+      bbAddPart('WIRE',[{row:'e',col:22},{row:'r-t',col:22}],{color:'#1e88e5'});
+      bbRunSim();
+    }
+
+    // ---- DARLINGTON PAIR: two NPN cascaded for extreme gain ----
+    function bbPresetDarlington() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
+      // Collector load: VCC → R(470Ω) → LED → Q1 collector
+      bbAddPart('WIRE',[{row:'r+t',col:10},{row:'a',col:10}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:10},{row:'a',col:14}],{value:470});
+      bbAddPart('LED',[{row:'b',col:14},{row:'b',col:18}]);
+      // Q1 (first stage): collector at LED output, emitter feeds Q2 base
+      bbAddPart('NPN',[{row:'f',col:18},{row:'f',col:19},{row:'f',col:20}]);
+      bbAddPart('WIRE',[{row:'d',col:18},{row:'g',col:20}],{color:'#ff9800'}); // LED to Q1 collector
+      // Q2 (second stage): base = Q1 emitter, collector tied to Q1 collector, emitter to GND
+      bbAddPart('NPN',[{row:'f',col:13},{row:'f',col:14},{row:'f',col:15}]);
+      bbAddPart('WIRE',[{row:'g',col:18},{row:'g',col:14}],{color:'#43a047'}); // Q1 emitter → Q2 base
+      bbAddPart('WIRE',[{row:'g',col:15},{row:'g',col:20}],{color:'#ff9800'}); // Q2 collector tied to Q1 collector
+      bbAddPart('WIRE',[{row:'g',col:13},{row:'r-b',col:13}],{color:'#1e88e5'}); // Q2 emitter to GND
+      // Input: VCC → huge resistor (100kΩ) → switch → Q1 base
+      // Even with 100kΩ, Darlington gain (beta²) drives the LED
+      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:10}],{value:100000});
+      bbAddPart('WIRE',[{row:'c',col:10},{row:'h',col:19}],{color:'#8e24aa'}); // to Q1 base
+      bbRunSim();
+    }
+
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
     document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
+    document.getElementById('bb-preset-not')?.addEventListener('click', bbPresetNOT);
+    document.getElementById('bb-preset-nand')?.addEventListener('click', bbPresetNAND);
+    document.getElementById('bb-preset-rc')?.addEventListener('click', bbPresetRC);
+    document.getElementById('bb-preset-darlington')?.addEventListener('click', bbPresetDarlington);
     document.getElementById('bb-preset-astable')?.addEventListener('click', bbPresetAstable);
 
     var bbAnimRunning = false;
@@ -26032,8 +26134,10 @@ function initCh15Vis() {
     const zoomLabel = document.getElementById('size-zoom-label');
 
     const stars = [
-      {name:'UY Scuti',   R:1708, T:3365, type:'M4Ia',   cat:'Hypergiant'},
-      {name:'Betelgeuse', R:887,  T:3600, type:'M1Ia',   cat:'Supergiant'},
+      {name:'Stephenson 2-18',R:2150,T:3200, type:'M6Ia',  cat:'Hypergiant'},
+      {name:'WOH G64',    R:1540, T:3400, type:'M5I',    cat:'Hypergiant'},
+      {name:'UY Scuti',   R:755,  T:3365, type:'M4Ia',   cat:'Hypergiant'},
+      {name:'Betelgeuse', R:764,  T:3600, type:'M1Ia',   cat:'Supergiant'},
       {name:'Antares',    R:680,  T:3660, type:'M1Ib',   cat:'Supergiant'},
       {name:'Rigel',      R:79,   T:12100,type:'B8Ia',   cat:'Supergiant'},
       {name:'Aldebaran',  R:44,   T:3910, type:'K5III',  cat:'Giant'},
