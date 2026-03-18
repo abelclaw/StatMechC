@@ -570,3 +570,231 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 <li>The <strong>Fermi surface</strong> $\epsilon(\vec{k}) = \epsilon_F$ describes the boundary between occupied and unoccupied states in momentum space. Its shape depends on the band structure of the material.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch13-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>At $T = 0$, the average energy per electron in a free electron gas is:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-rq1" value="a"> (a) $0$</label>
+  <label><input type="radio" name="ch13-rq1" value="b"> (b) $\frac{1}{2}\epsilon_F$</label>
+  <label><input type="radio" name="ch13-rq1" value="c"> (c) $\frac{3}{5}\epsilon_F$</label>
+  <label><input type="radio" name="ch13-rq1" value="d"> (d) $\epsilon_F$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="From Eq. (13), $E_0 = \frac{3}{5}N\epsilon_F$, so $\langle\epsilon\rangle = E_0/N = \frac{3}{5}\epsilon_F$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>The electronic heat capacity of a metal at low temperature ($T \ll T_F$) scales as:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-rq2" value="a"> (a) $C_V \propto T^3$</label>
+  <label><input type="radio" name="ch13-rq2" value="b"> (b) $C_V \propto T$</label>
+  <label><input type="radio" name="ch13-rq2" value="c"> (c) $C_V \propto e^{-T_F/T}$</label>
+  <label><input type="radio" name="ch13-rq2" value="d"> (d) $C_V = \text{const}$ (Dulong&ndash;Petit)</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (43), $C_V^{\text{el}} = \frac{\pi^2}{2}Nk_B\frac{T}{T_F}$, which is linear in $T$. The $T^3$ scaling is for phonons, not electrons.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>In the nearly free electron model, band gaps appear because:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-rq3" value="a"> (a) The electrons interact repulsively with each other</label>
+  <label><input type="radio" name="ch13-rq3" value="b"> (b) The transmission coefficient $|t| &lt; 1$, so certain energies have no solution to the dispersion relation</label>
+  <label><input type="radio" name="ch13-rq3" value="c"> (c) The Pauli exclusion principle forbids certain energies</label>
+  <label><input type="radio" name="ch13-rq3" value="d"> (d) Electrons cannot have energies above $\epsilon_F$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (52), the left side involves $\cos(\cdots)/|t_k|$, which can exceed 1 since $|t_k| &lt; 1$, while $\cos(ka)$ on the right is bounded by 1. When the left side exceeds 1, there is no solution, creating a band gap.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>A material where each atom donates two electrons to the nearly-free electron gas (filling the lowest band completely) is expected to be:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-rq4" value="a"> (a) A conductor, because it has more electrons available</label>
+  <label><input type="radio" name="ch13-rq4" value="b"> (b) An insulator, because a filled band cannot carry net current</label>
+  <label><input type="radio" name="ch13-rq4" value="c"> (c) A superconductor, because the electrons form pairs</label>
+  <label><input type="radio" name="ch13-rq4" value="d"> (d) A semiconductor, because the gap is always small for divalent atoms</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="When a band is completely filled, a small perturbation (e.g. an applied electric field) cannot excite electrons since all nearby states are occupied. The electrons cannot gain net momentum, so the material does not conduct. This is the definition of a band insulator.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>Silver has a density of $10.5\;\text{g/cm}^3$ and atomic mass $107.9\;\text{g/mol}$. Treating silver as monovalent, compute the Fermi energy $\epsilon_F$ in eV and the Fermi temperature $T_F$ in kelvin.</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-sa1" value="a"> (a) $\epsilon_F \approx 3.5\;\text{eV}$, $T_F \approx 41{,}000\;\text{K}$</label>
+  <label><input type="radio" name="ch13-sa1" value="b"> (b) $\epsilon_F \approx 5.5\;\text{eV}$, $T_F \approx 64{,}000\;\text{K}$</label>
+  <label><input type="radio" name="ch13-sa1" value="c"> (c) $\epsilon_F \approx 7.0\;\text{eV}$, $T_F \approx 81{,}000\;\text{K}$</label>
+  <label><input type="radio" name="ch13-sa1" value="d"> (d) $\epsilon_F \approx 11\;\text{eV}$, $T_F \approx 130{,}000\;\text{K}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Number density: $n = (10.5/107.9) \times 6.022\times 10^{23} \times 10^6 = 5.86\times 10^{28}\;\text{m}^{-3}$. Using Eq. (10): $\epsilon_F = \frac{\hbar^2}{2m_e}(3\pi^2 n)^{2/3} \approx 5.5\;\text{eV}$. Then $T_F = \epsilon_F/k_B \approx 64{,}000\;\text{K}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>In the Sommerfeld expansion, the chemical potential of the free electron gas at finite temperature is $\mu = \epsilon_F\!\left[1 - \frac{\pi^2}{12}\!\left(\frac{k_B T}{\epsilon_F}\right)^{\!2} + \cdots\right]$. For aluminum with $T_F \approx 135{,}000\;\text{K}$, what is the fractional change $(\epsilon_F - \mu)/\epsilon_F$ at room temperature ($T = 300\;\text{K}$)?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-sa2" value="a"> (a) $\sim 4 \times 10^{-6}$</label>
+  <label><input type="radio" name="ch13-sa2" value="b"> (b) $\sim 4 \times 10^{-4}$</label>
+  <label><input type="radio" name="ch13-sa2" value="c"> (c) $\sim 2 \times 10^{-2}$</label>
+  <label><input type="radio" name="ch13-sa2" value="d"> (d) $\sim 0.5$</label>
+</div>
+<button class="check-answer-btn" data-answer="a" data-explanation="$(\epsilon_F - \mu)/\epsilon_F = \frac{\pi^2}{12}(T/T_F)^2 = \frac{\pi^2}{12}(300/135000)^2 \approx 4.1\times 10^{-6}$. The chemical potential barely moves from $\epsilon_F$ at room temperature.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>At room temperature ($T = 300\;\text{K}$), what is the ratio of the electronic heat capacity to the phonon heat capacity (Dulong&ndash;Petit) for copper ($T_F = 80{,}000\;\text{K}$)?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-sa3" value="a"> (a) $\sim 0.6\%$</label>
+  <label><input type="radio" name="ch13-sa3" value="b"> (b) $\sim 6\%$</label>
+  <label><input type="radio" name="ch13-sa3" value="c"> (c) $\sim 30\%$</label>
+  <label><input type="radio" name="ch13-sa3" value="d"> (d) $\sim 100\%$</label>
+</div>
+<button class="check-answer-btn" data-answer="a" data-explanation="From Eq. (44), $C_V^{\text{el}}/C_V^{\text{ph}} = \frac{\pi^2}{6}\frac{T}{T_F} = \frac{\pi^2}{6}\frac{300}{80000} \approx 0.006 = 0.6\%$. The electronic contribution is negligible at room temperature.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>A hole in the Fermi gas is an unoccupied state below $\mu$. Using the symmetry property $f(\mu + \Delta) = 1 - f(\mu - \Delta)$, what is the probability of finding a hole at energy $\mu - \Delta$ (where $\Delta > 0$)?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch13-sa4" value="a"> (a) $f(\mu + \Delta)$</label>
+  <label><input type="radio" name="ch13-sa4" value="b"> (b) $1 - f(\mu + \Delta)$</label>
+  <label><input type="radio" name="ch13-sa4" value="c"> (c) $e^{-\beta\Delta}$</label>
+  <label><input type="radio" name="ch13-sa4" value="d"> (d) $\frac{1}{2}$</label>
+</div>
+<button class="check-answer-btn" data-answer="a" data-explanation="The probability of a hole at energy $\mu - \Delta$ is $1 - f(\mu - \Delta) = f(\mu + \Delta)$ by Eq. (37). This is the same as the probability of finding an electron at energy $\mu + \Delta$, demonstrating the electron-hole symmetry (Eq. 38).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Problem 1: Fermi Energy of Metals</div>
+<p>Use the free electron gas model to compute the Fermi energy and related quantities for sodium and gold.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Sodium has density $\rho = 0.97\;\text{g/cm}^3$ and atomic mass $A = 23.0\;\text{g/mol}$. Treating sodium as monovalent, compute the number density of conduction electrons $n_e$ in $\text{m}^{-3}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using Eq. (10), compute the Fermi energy $\epsilon_F$ of sodium in eV and the Fermi temperature $T_F$ in kelvin. Verify that the non-relativistic approximation is justified by comparing $\epsilon_F$ to the electron rest energy $m_e c^2 = 511\;\text{keV}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute the Fermi velocity $v_F = \sqrt{2\epsilon_F/m_e}$ for sodium and express it as a fraction of the speed of light.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Gold has density $\rho = 19.3\;\text{g/cm}^3$ and atomic mass $A = 197.0\;\text{g/mol}$. Gold is also monovalent. Compute $\epsilon_F$ and $T_F$ for gold. Compare these values to sodium and explain why two metals with very different densities can have similar Fermi energies. <em>Hint:</em> think about what combination of $\rho$ and $A$ enters $\epsilon_F$.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 2: Low-Temperature Heat Capacity</div>
+<p>The total heat capacity of a metal at low temperature is the sum of electronic and phonon contributions, Eq. (47): $C_V = \gamma T + \alpha T^3$, where $\gamma = \frac{\pi^2 Nk_B}{2T_F}$ and $\alpha = \frac{12\pi^4 Nk_B}{5T_D^3}$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>For copper, $T_F = 80{,}000\;\text{K}$ and $T_D = 315\;\text{K}$. Compute the crossover temperature $T^*$ below which the electronic contribution exceeds the phonon contribution. Express your answer in kelvin.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>At $T = 1\;\text{K}$, compute the ratio $C_V^{\text{el}}/C_V^{\text{ph}}$ for copper. Which term dominates?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Experimentalists plot $C_V/T$ versus $T^2$ (a "Debye plot") to extract $\gamma$ and $\alpha$. Explain how the $y$-intercept and slope of this plot determine the Fermi temperature and Debye temperature, respectively.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Suppose measurements on a hypothetical metal give a $y$-intercept of $\gamma = 1.6\;\text{mJ}\,\text{mol}^{-1}\text{K}^{-2}$ and a slope of $\alpha = 0.12\;\text{mJ}\,\text{mol}^{-1}\text{K}^{-4}$. Determine $T_F$ and $T_D$ for this metal. Use $N = N_A = 6.022 \times 10^{23}\;\text{mol}^{-1}$.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 3: Degeneracy Pressure and the Bulk Modulus</div>
+<p>This problem explores the mechanical properties of metals predicted by the free electron gas model.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Starting from the zero-temperature energy $E_0 = \frac{3}{5}N\epsilon_F$ and the expression for $\epsilon_F$ in Eq. (10), show that the degeneracy pressure is $P = \frac{2}{3}\frac{E_0}{V} = \frac{2}{5}n\epsilon_F$ where $n = N/V$. Compute $P$ in atmospheres for copper ($n = 8.4 \times 10^{28}\;\text{m}^{-3}$, $\epsilon_F = 7\;\text{eV}$).</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Show that the bulk modulus of a free electron gas at $T = 0$ satisfies $B = \frac{5}{3}P = \frac{10}{9}\frac{E_0}{V}$, as in Eq. (18). <em>Hint:</em> write $P$ as a function of $V$ alone (with $N$ fixed), then differentiate.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute the predicted bulk modulus $B$ and speed of sound $c_s = \sqrt{B/\rho}$ for copper ($\rho = 9000\;\text{kg/m}^3$). The experimental value is $B_{\text{exp}} = 140\;\text{GPa}$. How does the free-electron prediction compare?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The bulk modulus goes as $B \propto n^{5/3}$. Explain physically why denser metals (with higher electron density) are stiffer. Connect your explanation to the concept of degeneracy pressure.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 4: Electron&ndash;Hole Symmetry and the Sommerfeld Expansion</div>
+<p>This problem develops the electron-hole picture and uses it to rederive the low-temperature energy.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Prove the Fermi function symmetry property Eq. (37): $f(\mu + \Delta) = 1 - f(\mu - \Delta)$ directly from the definition $f(\epsilon) = \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using the density of states $g(\epsilon_F) = \frac{3N}{2\epsilon_F}$ evaluated at the Fermi level (Eq. 39), compute the number of thermally excited electrons $N_{\text{exc}} = \int_{\mu}^{\infty}g(\epsilon)f(\epsilon)\,d\epsilon$. Approximate $g(\epsilon) \approx g(\epsilon_F)$ and take the lower limit to $-\infty$. You will need $\int_0^\infty \frac{dx}{e^x + 1} = \ln 2$. Express your answer as a fraction of $N$ in terms of $T/T_F$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>In the electron-hole picture, the total thermal energy is $E - E_0 = E_e + E_h = 2E_e$ by symmetry. Using Eq. (40), verify that $E_e = \frac{\pi^2 N}{8\epsilon_F}k_B^2 T^2$ by evaluating the integral $\int_0^\infty \frac{x}{e^x + 1}\,dx = \frac{\pi^2}{12}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>From the result $E = E_0 + \frac{\pi^2}{4}\frac{Nk_B^2 T^2}{\epsilon_F}$, derive the electronic heat capacity $C_V$ and show it matches Eq. (43). For copper at $T = 300\;\text{K}$, compute the fractional thermal energy $(E - E_0)/E_0$ from the Sommerfeld expansion and compare to the exact numerical value of $2.85 \times 10^{-5}$.</p>
+</div>
+</div>
+
+</div>
+</details>

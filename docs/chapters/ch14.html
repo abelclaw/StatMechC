@@ -803,3 +803,193 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 <li>Transistors can be combined into <strong>logic gates</strong> (NOT, AND, OR, NAND, XOR), which in turn build <strong>adders</strong>, <strong>memory</strong> (latches), and ultimately <strong>computers</strong>.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch14-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>In the tight-binding model, when $N$ atoms are brought together, each atomic energy level broadens into a band containing how many quantum states (including spin)?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch14-rq1" value="a"> (a) $N$</label>
+  <label><input type="radio" name="ch14-rq1" value="b"> (b) $2N$</label>
+  <label><input type="radio" name="ch14-rq1" value="c"> (c) $N^2$</label>
+  <label><input type="radio" name="ch14-rq1" value="d"> (d) $N/2$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Each atomic orbital produces $N$ energy levels when $N$ atoms combine into a band. Since each level is 2-fold degenerate due to spin, the band contains $2N$ quantum states total.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>Silicon has a bandgap of $\epsilon_{\text{bg}} = 1.08\;\text{eV}$. At room temperature ($k_BT = 0.025\;\text{eV}$), what is the approximate probability that an electron occupies a state at the bottom of the conduction band in an intrinsic semiconductor?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch14-rq2" value="a"> (a) $10^{-3}$</label>
+  <label><input type="radio" name="ch14-rq2" value="b"> (b) $10^{-9}$</label>
+  <label><input type="radio" name="ch14-rq2" value="c"> (c) $10^{-18}$</label>
+  <label><input type="radio" name="ch14-rq2" value="d"> (d) $0.5$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (2), $f \approx e^{-\epsilon_{\text{bg}}/(2k_BT)} = e^{-1.08/0.05} = e^{-21.6} \approx 10^{-9}$. The factor of 2 in the denominator appears because the Fermi level sits at the midpoint of the bandgap.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>In an n-type semiconductor (e.g. phosphorus-doped silicon), which of the following is true?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch14-rq3" value="a"> (a) The majority carriers are holes and the Fermi level shifts toward the valence band.</label>
+  <label><input type="radio" name="ch14-rq3" value="b"> (b) The majority carriers are electrons and the Fermi level shifts toward the conduction band.</label>
+  <label><input type="radio" name="ch14-rq3" value="c"> (c) The majority carriers are electrons but the Fermi level remains at the center of the bandgap.</label>
+  <label><input type="radio" name="ch14-rq3" value="d"> (d) Both electron and hole concentrations increase equally.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Donor atoms (like P) contribute extra electrons with energy levels just below the conduction band. This increases the electron concentration, making electrons the majority carriers, and shifts the Fermi level upward toward the conduction band. The law of mass action $n_e n_h = n_I^2$ ensures that the hole concentration decreases.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>A p-n junction diode is connected to a battery with the negative terminal on the n-side. What happens?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch14-rq4" value="a"> (a) This is reverse bias; the junction potential increases and no current flows.</label>
+  <label><input type="radio" name="ch14-rq4" value="b"> (b) This is reverse bias; current flows freely in the reverse direction.</label>
+  <label><input type="radio" name="ch14-rq4" value="c"> (c) This is forward bias; the junction potential is reduced and current flows once the applied voltage exceeds $\sim 0.6\;\text{V}$.</label>
+  <label><input type="radio" name="ch14-rq4" value="d"> (d) This is forward bias; current flows at any applied voltage.</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="Connecting the negative terminal to the n-side supplies electrons that diffuse toward the junction, neutralizing the charge barrier. This is forward bias. Current flows once the applied voltage exceeds the junction potential ($\sim 0.6\;\text{V}$ for silicon).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>A semiconductor has a bandgap of $\epsilon_{\text{bg}} = 0.67\;\text{eV}$ (germanium). Using Eq. (3), estimate the ratio of the intrinsic carrier concentration $n_I$ in germanium to that in silicon ($\epsilon_{\text{bg}} = 1.08\;\text{eV}$) at room temperature ($T = 300\;\text{K}$, $k_BT = 0.025\;\text{eV}$). Which material has more conduction electrons at room temperature?</p>
+<button class="check-answer-btn" data-answer="3600|3.6e3|3.6 × 10^3" data-explanation="Since the prefactor is approximately the same, $n_I^{\text{Ge}}/n_I^{\text{Si}} = e^{-(0.67 - 1.08)/(2 \times 0.025)} = e^{0.41/0.05} = e^{8.2} \approx 3600$. Germanium has roughly 3 orders of magnitude more intrinsic carriers than silicon at room temperature.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>An LED emits green light with wavelength $\lambda = 520\;\text{nm}$. Using $\lambda_{\text{LED}} = hc/\epsilon_{\text{bg}}$ (Eq. 9), what is the bandgap of the semiconductor material in eV? Use $hc = 1240\;\text{eV}\cdot\text{nm}$.</p>
+<button class="check-answer-btn" data-answer="2.38|2.4" data-explanation="$\epsilon_{\text{bg}} = hc/\lambda = 1240\;\text{eV}\cdot\text{nm} / 520\;\text{nm} = 2.38\;\text{eV}$. This is well above silicon's bandgap (1.08 eV), which is why silicon LEDs emit in the infrared rather than the visible spectrum.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>In a doped silicon sample at room temperature, the electron concentration is $n_e = 10^{17}\;\text{cm}^{-3}$. Using the law of mass action (Eq. 6) with $n_I = 1.5 \times 10^{10}\;\text{cm}^{-3}$, what is the hole concentration $n_h$? Is this an n-type or p-type semiconductor?</p>
+<button class="check-answer-btn" data-answer="2.25e3|2250|2.3e3" data-explanation="From $n_e n_h = n_I^2$, we get $n_h = n_I^2/n_e = (1.5 \times 10^{10})^2/10^{17} = 2.25 \times 10^{3}\;\text{cm}^{-3}$. Since $n_e \gg n_h$, electrons are the majority carriers, so this is n-type.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>Why does diamond (bandgap 5.4 eV) act as an insulator at room temperature while silicon (bandgap 1.08 eV) acts as a semiconductor? Give a quantitative argument using the occupation probability at the conduction band edge, Eq. (2).</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch14-sa4" value="a"> (a) Diamond has fewer valence electrons than silicon.</label>
+  <label><input type="radio" name="ch14-sa4" value="b"> (b) For diamond, $f \approx e^{-5.4/0.05} = e^{-108} \approx 10^{-47}$, which means essentially zero electrons are excited across the gap. For silicon, $f \approx 10^{-9}$, giving $\sim 10^{10}$ carriers per cm$^3$ from the $\sim 10^{22}$ atoms per cm$^3$.</label>
+  <label><input type="radio" name="ch14-sa4" value="c"> (c) Diamond is a molecular solid, not a covalent network solid, so bands do not form.</label>
+  <label><input type="radio" name="ch14-sa4" value="d"> (d) The density of states in diamond is much smaller than in silicon.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The occupation probability falls exponentially with the bandgap. For diamond, $e^{-\epsilon_{\text{bg}}/(2k_BT)} = e^{-108} \approx 10^{-47}$. Even multiplied by $\sim 10^{23}$ atoms per mole, the number of conduction electrons is negligibly small. For silicon, $e^{-21.6} \approx 10^{-9}$ gives a measurable carrier concentration of $\sim 10^{10}\;\text{cm}^{-3}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Intrinsic Carrier Concentration and Temperature</div>
+<p>The intrinsic carrier concentration of a semiconductor is given by Eq. (3): $n_I = 2\left(\frac{m_e k_B T}{2\pi\hbar^2}\right)^{3/2}e^{-\epsilon_{\text{bg}}/(2k_BT)}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Show that at temperature $T$, the ratio of intrinsic carrier concentrations for two semiconductors with bandgaps $\epsilon_1$ and $\epsilon_2$ is approximately $n_{I,1}/n_{I,2} \approx e^{-(\epsilon_1 - \epsilon_2)/(2k_BT)}$, assuming the prefactors are similar.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>For silicon ($\epsilon_{\text{bg}} = 1.08\;\text{eV}$), compute $n_I$ at $T = 300\;\text{K}$, $T = 400\;\text{K}$, and $T = 500\;\text{K}$. Use $2(m_e k_B T/2\pi\hbar^2)^{3/2} = 2.4 \times 10^{19}\;\text{cm}^{-3} \times (T/300)^{3/2}$. By what factor does $n_I$ increase from 300 K to 500 K?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>At what temperature would germanium ($\epsilon_{\text{bg}} = 0.67\;\text{eV}$) have the same intrinsic carrier concentration that silicon has at $T = 300\;\text{K}$? (You may ignore the $T^{3/2}$ prefactor variation for this estimate.)</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. The p-n Junction</div>
+<p>Consider a silicon p-n junction at room temperature ($T = 300\;\text{K}$, $k_BT = 25\;\text{meV}$) with intrinsic carrier concentration $n_I = 1.5 \times 10^{10}\;\text{cm}^{-3}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>The n-side is doped with phosphorus to an electron concentration of $n_e^{\text{n}} = 5 \times 10^{16}\;\text{cm}^{-3}$ and the p-side is doped with aluminum to a hole concentration of $n_h^{\text{p}} = 2 \times 10^{15}\;\text{cm}^{-3}$. Using the law of mass action (Eq. 6), compute the minority carrier concentrations $n_h^{\text{n}}$ and $n_e^{\text{p}}$ on each side.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Compute the junction potential $V_{\text{junc}}$ using Eq. (8): $\epsilon_{\text{junc}} = k_BT \ln\!\left(\frac{n_h^{\text{p}} n_e^{\text{n}}}{n_I^2}\right)$. Express your answer in volts.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>If the doping on the n-side is increased to $n_e^{\text{n}} = 10^{18}\;\text{cm}^{-3}$ while the p-side stays the same, how does the junction potential change? Explain physically why heavier doping increases the junction potential.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The diode current follows $I = I_s(e^{eV/k_BT} - 1)$ (see Interactive 14). At what forward-bias voltage does the current reach 1000 times the reverse saturation current $I_s$? (Take $T = 300\;\text{K}$.)</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Solar Cells and LEDs</div>
+<p>A solar cell is essentially a p-n junction operated in reverse: incoming photons excite electrons across the bandgap, generating a current. An LED is a p-n junction that emits photons when forward biased.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>The Sun's spectrum peaks at a wavelength of about $\lambda_{\text{peak}} \approx 500\;\text{nm}$. What photon energy does this correspond to? Using $hc = 1240\;\text{eV}\cdot\text{nm}$, explain why silicon ($\epsilon_{\text{bg}} = 1.08\;\text{eV}$) can absorb most of the solar spectrum but cannot absorb photons with $\lambda > 1150\;\text{nm}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>When a photon with energy $E_\gamma > \epsilon_{\text{bg}}$ is absorbed, the excess energy $E_\gamma - \epsilon_{\text{bg}}$ is lost as heat (thermalization). Estimate the fraction of energy lost to thermalization for a 500 nm photon absorbed by silicon. Why does this suggest that the optimal bandgap for solar cells is not too small?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>An LED manufacturer wants to produce LEDs emitting at $\lambda = 630\;\text{nm}$ (red), $520\;\text{nm}$ (green), and $460\;\text{nm}$ (blue). Compute the bandgap energy needed for each color. Why was manufacturing blue LEDs particularly challenging compared to red ones? (Hint: think about which semiconductor materials have bandgaps in the right range.)</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>A 10 W LED bulb produces the same visible light as a 60 W incandescent bulb. The incandescent filament operates at $T \approx 2700\;\text{K}$. Using Wien's law, $\lambda_{\text{peak}} = b/T$ with $b = 2.898 \times 10^6\;\text{nm}\cdot\text{K}$, find the peak wavelength of the incandescent bulb's emission. Explain qualitatively why so much energy is wasted compared to an LED.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Doping, Transistors, and Moore's Law</div>
+<p>This problem explores the physics of doping and transistor scaling.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Silicon has an atomic density of $5 \times 10^{22}\;\text{atoms/cm}^3$. If silicon is doped with phosphorus at a concentration of 1 part per million, what is the donor electron concentration $n_e$? Compare this to the intrinsic carrier concentration $n_I = 1.5 \times 10^{10}\;\text{cm}^{-3}$ and compute the resulting hole concentration using the law of mass action.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>The donor energy level in P-doped silicon is 45 meV below the conduction band. At room temperature ($k_BT = 25\;\text{meV}$), what fraction of donor electrons are thermally excited into the conduction band? (Treat the donor level as a single state and use the Boltzmann factor.)</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>An npn transistor has a base width of $w = 100\;\text{nm}$. If electrons diffuse across the base with a diffusion coefficient $D = 30\;\text{cm}^2/\text{s}$, estimate the transit time $\tau \sim w^2/D$ across the base. How does this set the maximum switching frequency of the transistor?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Moore's law states that the number of transistors on a chip roughly doubles every 2 years. An Intel 4004 processor (1971) had 2300 transistors. An Apple M2 chip (2022) has about $2 \times 10^{10}$ transistors. Is this consistent with Moore's law? (Compute the expected number of doublings in 51 years and compare.)</p>
+</div>
+</div>
+
+</div>
+</details>

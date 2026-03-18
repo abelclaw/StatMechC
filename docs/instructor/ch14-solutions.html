@@ -1,0 +1,192 @@
+<div class="chapter-solutions" id="ch14-solutions">
+<h2>Chapter 14: Semiconductors — Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Tight-Binding Band States</div>
+<p>Answer: (b) $2N$.</p>
+<p>When $N$ atoms are brought together in the tight-binding model, each atomic energy level splits into $N$ closely-spaced energy levels forming a band. Each energy level accommodates 2 electrons (spin up and spin down), so the total number of quantum states per band is $2N$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Occupation Probability at Conduction Band Edge</div>
+<p>Answer: (b) $10^{-9}$.</p>
+<p>The bottom of the conduction band is at energy $\epsilon_C = \epsilon_F + \frac{1}{2}\epsilon_{\text{bg}}$. Using Eq. (2):</p>
+<p>$$f(\epsilon_C) \approx e^{-\epsilon_{\text{bg}}/(2k_BT)} = e^{-1.08/(2 \times 0.025)} = e^{-21.6}$$</p>
+<p>Since $e^{-21.6} = e^{-21.6} \approx 10^{-21.6/2.303} = 10^{-9.38} \approx 4 \times 10^{-10} \sim 10^{-9}$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: n-type Semiconductor Properties</div>
+<p>Answer: (b).</p>
+<p>In n-type silicon doped with phosphorus, each P atom has 5 valence electrons compared to Si's 4. The extra electron occupies a donor level just 45 meV below the conduction band. At room temperature, these donors are easily ionized, increasing the electron concentration well above $n_I$. Since $n_e n_h = n_I^2$ (law of mass action), the increased $n_e$ forces $n_h$ to decrease. The Fermi level must shift upward (toward the conduction band) to be consistent with the higher electron concentration via the Fermi-Dirac distribution.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: p-n Junction Bias</div>
+<p>Answer: (c).</p>
+<p>When the negative terminal connects to the n-side, it supplies electrons to the n-side that diffuse toward the junction. These electrons neutralize the positive charge that had built up at the junction (the depletion region), reducing the junction potential. This is forward bias. However, current does not flow at arbitrarily small voltages; the applied voltage must overcome the junction potential ($\sim 0.6\;\text{V}$ for silicon) before significant current flows, as described by $I = I_s(e^{eV/k_BT} - 1)$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: Germanium vs Silicon Carrier Concentration</div>
+<p>From Eq. (3), the intrinsic carrier concentration is $n_I = 2(m_e k_B T / 2\pi\hbar^2)^{3/2} e^{-\epsilon_{\text{bg}}/(2k_BT)}$.</p>
+<p>The prefactor $2(m_e k_B T / 2\pi\hbar^2)^{3/2}$ depends on temperature and effective mass but not on the bandgap. Assuming similar prefactors:</p>
+<p>$$\frac{n_I^{\text{Ge}}}{n_I^{\text{Si}}} = \frac{e^{-0.67/(2 \times 0.025)}}{e^{-1.08/(2 \times 0.025)}} = e^{(1.08 - 0.67)/0.05} = e^{0.41/0.05} = e^{8.2}$$</p>
+<p>$$e^{8.2} = 3641 \approx 3600$$</p>
+<p>Germanium has roughly 3600 times more intrinsic carriers than silicon at room temperature. This makes germanium more conductive but also means it has higher leakage currents, which is one reason silicon is preferred for most semiconductor devices.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: Green LED Bandgap</div>
+<p>Using Eq. (9), $\epsilon_{\text{bg}} = hc/\lambda$:</p>
+<p>$$\epsilon_{\text{bg}} = \frac{1240\;\text{eV}\cdot\text{nm}}{520\;\text{nm}} = 2.38\;\text{eV}$$</p>
+<p>This bandgap is more than twice that of silicon (1.08 eV). Materials with bandgaps in this range include indium gallium nitride (InGaN), which is the semiconductor used in green LEDs.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Law of Mass Action</div>
+<p>From the law of mass action, Eq. (6): $n_e n_h = n_I^2$.</p>
+<p>$$n_h = \frac{n_I^2}{n_e} = \frac{(1.5 \times 10^{10})^2}{10^{17}} = \frac{2.25 \times 10^{20}}{10^{17}} = 2.25 \times 10^3\;\text{cm}^{-3}$$</p>
+<p>Since $n_e = 10^{17} \gg n_h = 2.25 \times 10^3$, electrons are the majority carriers and this is an n-type semiconductor. The electron concentration exceeds the intrinsic value by 7 orders of magnitude, while the hole concentration is suppressed by 7 orders of magnitude below $n_I$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Diamond vs Silicon</div>
+<p>Answer: (b).</p>
+<p>The key is the exponential dependence of the occupation probability on the bandgap, from Eq. (2):</p>
+<p>For silicon: $f \approx e^{-1.08/0.05} = e^{-21.6} \approx 10^{-9}$. With $\sim 5 \times 10^{22}$ atoms/cm$^3$, we get $n_I \sim 5 \times 10^{22} \times 10^{-9} \sim 10^{10}$ carriers/cm$^3$ (the exact value from Eq. (5) is $10^{10}$).</p>
+<p>For diamond: $f \approx e^{-5.4/0.05} = e^{-108} \approx 10^{-47}$. Even with $\sim 10^{23}$ atoms/cm$^3$, the number of conduction electrons is $\sim 10^{23} \times 10^{-47} = 10^{-24}$ per cm$^3$, which is essentially zero. Diamond is therefore an insulator.</p>
+<p>The exponential sensitivity to the bandgap is what makes the distinction between semiconductors and insulators so sharp. A factor of 5 in the bandgap produces a factor of $10^{38}$ in the carrier concentration.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Intrinsic Carrier Concentration and Temperature</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>From Eq. (3), $n_I = A(T) \cdot e^{-\epsilon_{\text{bg}}/(2k_BT)}$ where $A(T) = 2(m_e k_B T / 2\pi\hbar^2)^{3/2}$ is the prefactor. For two semiconductors at the same temperature:</p>
+<p>$$\frac{n_{I,1}}{n_{I,2}} = \frac{A_1(T)}{A_2(T)} \cdot e^{-(\epsilon_1 - \epsilon_2)/(2k_BT)}$$</p>
+<p>The prefactors $A_1$ and $A_2$ differ only through the effective masses, which are typically within a factor of 2 of each other. The exponential factor dominates, so to a good approximation:</p>
+<p>$$\frac{n_{I,1}}{n_{I,2}} \approx e^{-(\epsilon_1 - \epsilon_2)/(2k_BT)}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>Using $n_I = 2.4 \times 10^{19}(T/300)^{3/2} \cdot e^{-\epsilon_{\text{bg}}/(2k_BT)}$ with $\epsilon_{\text{bg}} = 1.08\;\text{eV}$ and $k_B = 8.617 \times 10^{-5}\;\text{eV/K}$:</p>
+<p>At $T = 300\;\text{K}$: $k_BT = 0.02585\;\text{eV}$, $\epsilon_{\text{bg}}/(2k_BT) = 20.89$</p>
+<p>$$n_I(300) = 2.4 \times 10^{19} \cdot e^{-20.89} = 2.4 \times 10^{19} \times 8.4 \times 10^{-10} = 2.0 \times 10^{10}\;\text{cm}^{-3}$$</p>
+<p>At $T = 400\;\text{K}$: $k_BT = 0.03447\;\text{eV}$, $(T/300)^{3/2} = 1.540$, $\epsilon_{\text{bg}}/(2k_BT) = 15.67$</p>
+<p>$$n_I(400) = 2.4 \times 10^{19} \times 1.540 \times e^{-15.67} = 3.70 \times 10^{19} \times 1.56 \times 10^{-7} = 5.8 \times 10^{12}\;\text{cm}^{-3}$$</p>
+<p>At $T = 500\;\text{K}$: $k_BT = 0.04309\;\text{eV}$, $(T/300)^{3/2} = 2.152$, $\epsilon_{\text{bg}}/(2k_BT) = 12.53$</p>
+<p>$$n_I(500) = 2.4 \times 10^{19} \times 2.152 \times e^{-12.53} = 5.16 \times 10^{19} \times 3.61 \times 10^{-6} = 1.9 \times 10^{14}\;\text{cm}^{-3}$$</p>
+<p>The ratio $n_I(500)/n_I(300) \approx 1.9 \times 10^{14} / 2.0 \times 10^{10} \approx 9500$. The carrier concentration increases by nearly 4 orders of magnitude for a temperature increase from 300 K to 500 K.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>We want $n_I^{\text{Ge}}(T) = n_I^{\text{Si}}(300\;\text{K})$. Ignoring the prefactor variation:</p>
+<p>$$e^{-0.67/(2k_BT)} = e^{-1.08/(2 \times 0.025)}$$</p>
+<p>$$\frac{0.67}{2k_BT} = \frac{1.08}{0.05} = 21.6$$</p>
+<p>$$k_BT = \frac{0.67}{2 \times 21.6} = 0.0155\;\text{eV}$$</p>
+<p>$$T = \frac{0.0155}{8.617 \times 10^{-5}} \approx 180\;\text{K}$$</p>
+<p>Germanium at about 180 K has the same intrinsic carrier concentration as silicon at 300 K. This reflects the smaller bandgap of germanium: fewer thermal excitations are needed.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: The p-n Junction</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Using $n_e n_h = n_I^2$ on each side separately:</p>
+<p>On the n-side: $n_h^{\text{n}} = n_I^2 / n_e^{\text{n}} = (1.5 \times 10^{10})^2 / (5 \times 10^{16}) = 2.25 \times 10^{20} / 5 \times 10^{16} = 4.5 \times 10^3\;\text{cm}^{-3}$</p>
+<p>On the p-side: $n_e^{\text{p}} = n_I^2 / n_h^{\text{p}} = (1.5 \times 10^{10})^2 / (2 \times 10^{15}) = 2.25 \times 10^{20} / 2 \times 10^{15} = 1.125 \times 10^5\;\text{cm}^{-3}$</p>
+<p>The minority carrier concentrations are many orders of magnitude smaller than the majority carriers.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>From Eq. (8):</p>
+<p>$$\epsilon_{\text{junc}} = k_BT \ln\!\left(\frac{n_h^{\text{p}} \cdot n_e^{\text{n}}}{n_I^2}\right) = 0.025\;\text{eV} \times \ln\!\left(\frac{2 \times 10^{15} \times 5 \times 10^{16}}{(1.5 \times 10^{10})^2}\right)$$</p>
+<p>$$= 0.025 \times \ln\!\left(\frac{10^{32}}{2.25 \times 10^{20}}\right) = 0.025 \times \ln(4.44 \times 10^{11})$$</p>
+<p>$$= 0.025 \times 26.82 = 0.670\;\text{eV}$$</p>
+<p>$$V_{\text{junc}} = \epsilon_{\text{junc}}/e = 0.670\;\text{V}$$</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>With $n_e^{\text{n}} = 10^{18}\;\text{cm}^{-3}$:</p>
+<p>$$\epsilon_{\text{junc}} = 0.025 \times \ln\!\left(\frac{2 \times 10^{15} \times 10^{18}}{2.25 \times 10^{20}}\right) = 0.025 \times \ln(8.89 \times 10^{12}) = 0.025 \times 29.82 = 0.745\;\text{eV}$$</p>
+<p>$$V_{\text{junc}} = 0.745\;\text{V}$$</p>
+<p>The junction potential increased from 0.670 V to 0.745 V. Physically, heavier doping means a larger concentration difference across the junction. More charge must transfer to establish equilibrium, building up a larger electric field and a higher junction potential.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>We need $I = 1000 I_s$, so:</p>
+<p>$$1000 I_s = I_s(e^{eV/k_BT} - 1) \implies e^{eV/k_BT} = 1001 \approx 1000$$</p>
+<p>$$\frac{eV}{k_BT} = \ln(1000) = 6.91$$</p>
+<p>$$V = \frac{k_BT}{e} \times 6.91 = 0.025 \times 6.91 = 0.173\;\text{V}$$</p>
+<p>A forward bias of only 0.17 V produces a current 1000 times the saturation current. This exponential sensitivity is characteristic of diode behavior.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: Solar Cells and LEDs</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The photon energy at $\lambda_{\text{peak}} = 500\;\text{nm}$:</p>
+<p>$$E_\gamma = \frac{hc}{\lambda} = \frac{1240\;\text{eV}\cdot\text{nm}}{500\;\text{nm}} = 2.48\;\text{eV}$$</p>
+<p>Silicon can absorb any photon with energy $E_\gamma > \epsilon_{\text{bg}} = 1.08\;\text{eV}$, corresponding to $\lambda < hc/\epsilon_{\text{bg}} = 1240/1.08 = 1148\;\text{nm} \approx 1150\;\text{nm}$. Since the peak of the solar spectrum (2.48 eV) is well above the bandgap, silicon absorbs most visible and near-UV photons. However, photons with $\lambda > 1150\;\text{nm}$ (infrared) have energies below the bandgap and pass through silicon without being absorbed. This represents a significant fraction of the solar spectrum that is lost.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>A 500 nm photon has energy $E_\gamma = 2.48\;\text{eV}$. Of this, only $\epsilon_{\text{bg}} = 1.08\;\text{eV}$ goes into creating an electron-hole pair; the rest is lost as heat:</p>
+<p>$$\text{Fraction lost} = \frac{E_\gamma - \epsilon_{\text{bg}}}{E_\gamma} = \frac{2.48 - 1.08}{2.48} = \frac{1.40}{2.48} = 0.565 \approx 56\%$$</p>
+<p>More than half the energy of a 500 nm photon is wasted as heat. If the bandgap were smaller, even more energy would be lost to thermalization for each photon. On the other hand, if the bandgap were larger, fewer photons would have enough energy to be absorbed. The optimal bandgap for a single-junction solar cell (the Shockley-Queisser limit) is around 1.1--1.4 eV, which balances these two losses. Silicon (1.08 eV) and GaAs (1.43 eV) are both near this optimum.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Using $\epsilon_{\text{bg}} = hc/\lambda$:</p>
+<p>Red ($\lambda = 630\;\text{nm}$): $\epsilon_{\text{bg}} = 1240/630 = 1.97\;\text{eV}$</p>
+<p>Green ($\lambda = 520\;\text{nm}$): $\epsilon_{\text{bg}} = 1240/520 = 2.38\;\text{eV}$</p>
+<p>Blue ($\lambda = 460\;\text{nm}$): $\epsilon_{\text{bg}} = 1240/460 = 2.70\;\text{eV}$</p>
+<p>Red LEDs require bandgaps around 2 eV, achievable with GaAsP (gallium arsenide phosphide) and similar III-V semiconductors, which were developed relatively early. Blue LEDs require bandgaps around 2.7 eV. Few semiconductor materials have bandgaps this large while still being amenable to doping and device fabrication. The breakthrough came with gallium nitride (GaN, $\epsilon_{\text{bg}} = 3.4\;\text{eV}$) and its alloy InGaN, whose bandgap can be tuned by varying the indium fraction. Growing high-quality GaN crystals proved extremely difficult, which is why the development of blue LEDs took decades longer and earned a Nobel Prize in 2014.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>From Wien's law:</p>
+<p>$$\lambda_{\text{peak}} = \frac{b}{T} = \frac{2.898 \times 10^6\;\text{nm}\cdot\text{K}}{2700\;\text{K}} = 1073\;\text{nm}$$</p>
+<p>The peak emission is at about 1073 nm, which is in the near-infrared (the visible range is roughly 380--700 nm). An incandescent bulb is essentially a blackbody radiator: it emits a broad Planck spectrum, and at 2700 K, most of the radiation is in the infrared. Only a small fraction (roughly 5--10%) of the total emitted power falls in the visible range. The rest is emitted as infrared radiation, which is perceived as heat, not light.</p>
+<p>An LED, by contrast, emits photons at a specific energy $\epsilon_{\text{bg}}$, so essentially all of its electrical power goes into producing photons at the desired wavelength. There is no broad thermal spectrum and no wasted infrared emission. This is why a 10 W LED can match the visible output of a 60 W incandescent bulb.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Doping, Transistors, and Moore's Law</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>At 1 part per million doping:</p>
+<p>$$n_e = 10^{-6} \times 5 \times 10^{22}\;\text{cm}^{-3} = 5 \times 10^{16}\;\text{cm}^{-3}$$</p>
+<p>This is $5 \times 10^{16} / 1.5 \times 10^{10} \approx 3.3 \times 10^6$ times larger than $n_I$. Even very dilute doping (1 ppm) overwhelms the intrinsic carrier concentration by 6 orders of magnitude.</p>
+<p>The hole concentration from the law of mass action:</p>
+<p>$$n_h = \frac{n_I^2}{n_e} = \frac{(1.5 \times 10^{10})^2}{5 \times 10^{16}} = \frac{2.25 \times 10^{20}}{5 \times 10^{16}} = 4.5 \times 10^3\;\text{cm}^{-3}$$</p>
+<p>The hole concentration is suppressed to just 4500 per cm$^3$, compared to $10^{10}$ in intrinsic silicon.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The donor level is 45 meV below the conduction band. The fraction of donors ionized (electrons excited into the conduction band) is governed by the Boltzmann factor:</p>
+<p>$$\frac{n_{\text{ionized}}}{n_{\text{total}}} \approx e^{-\Delta E / k_BT} = e^{-45/25} = e^{-1.8} = 0.165$$</p>
+<p>About 17% of donor electrons are thermally ionized at room temperature. (A more careful treatment using Fermi-Dirac statistics and accounting for the density of states in the conduction band gives a higher ionization fraction, typically close to 100% for these shallow donors. The simple Boltzmann estimate underestimates ionization because it does not account for the large number of available states in the conduction band relative to the single donor level.)</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>The transit time is:</p>
+<p>$$\tau \sim \frac{w^2}{D} = \frac{(100 \times 10^{-7}\;\text{cm})^2}{30\;\text{cm}^2/\text{s}} = \frac{10^{-10}}{30} = 3.3 \times 10^{-12}\;\text{s} \approx 3.3\;\text{ps}$$</p>
+<p>The maximum switching frequency is roughly:</p>
+<p>$$f_{\max} \sim \frac{1}{\tau} = \frac{1}{3.3 \times 10^{-12}} \approx 300\;\text{GHz}$$</p>
+<p>This sets an upper bound on how fast the transistor can switch. In practice, other factors (parasitic capacitances, interconnect delays, power dissipation) limit real transistors to somewhat lower frequencies, but this estimate shows that nanoscale transistors can in principle operate at hundreds of GHz.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>From 1971 to 2022 is 51 years. With doublings every 2 years:</p>
+<p>$$\text{Number of doublings} = \frac{51}{2} = 25.5$$</p>
+<p>$$\text{Expected transistors} = 2300 \times 2^{25.5} = 2300 \times 4.75 \times 10^7 = 1.1 \times 10^{11}$$</p>
+<p>The M2 has $2 \times 10^{10}$ transistors, which is about a factor of 5 below the naive Moore's law prediction but remarkably close given that this is a 51-year extrapolation. The agreement within one order of magnitude confirms that Moore's law has been approximately valid over this period, representing one of the most remarkable sustained exponential growth trends in technology. (Some of the discrepancy reflects the fact that Moore's law has been slowing down in recent years as transistor sizes approach fundamental physical limits.)</p>
+</div>
+</div>
+
+</div>

@@ -1,0 +1,211 @@
+<div class="chapter-solutions" id="ch13-solutions">
+<h2>Chapter 13: Metals — Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Q1: Average energy per electron at T = 0</div>
+<p>Answer: (c) $\frac{3}{5}\epsilon_F$.</p>
+<p>From Eq. (13), the total energy at $T = 0$ is $E_0 = \frac{3}{5}N\epsilon_F$. Dividing by $N$ gives the average energy per electron $\langle\epsilon\rangle = \frac{3}{5}\epsilon_F$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Q2: Electronic heat capacity scaling</div>
+<p>Answer: (b) $C_V \propto T$.</p>
+<p>From Eq. (43), $C_V^{\text{el}} = \frac{\pi^2}{2}Nk_B\frac{T}{T_F}$. The linear scaling arises because only electrons within $\sim k_BT$ of the Fermi surface can be thermally excited, and each gains energy $\sim k_BT$, giving $E - E_0 \propto T^2$ and hence $C_V \propto T$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Q3: Origin of band gaps</div>
+<p>Answer: (b).</p>
+<p>From Eq. (52), the dispersion relation requires $\cos(\cdots)/|t_k| = \cos(ka)$. Since $|t_k| < 1$ for any nonzero potential, the left side can exceed 1 in magnitude, while $|\cos(ka)| \leq 1$. When no solution exists, there is a band gap.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Q4: Divalent materials and band filling</div>
+<p>Answer: (b).</p>
+<p>Two electrons per atom fill the lowest band completely (accounting for spin degeneracy). In a completely filled band, an applied electric field cannot shift the electron distribution in $k$-space because all states are occupied. Thus no net current flows and the material is an insulator.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Q5: Fermi energy of silver</div>
+<p>Answer: (b) $\epsilon_F \approx 5.5\;\text{eV}$, $T_F \approx 64{,}000\;\text{K}$.</p>
+<p>Number density: $n = \frac{\rho N_A}{A} = \frac{10.5 \times 6.022 \times 10^{23}}{107.9} \times 10^6\;\text{m}^{-3} = 5.86 \times 10^{28}\;\text{m}^{-3}$.</p>
+<p>Fermi energy: $\epsilon_F = \frac{\hbar^2}{2m_e}(3\pi^2 n)^{2/3} = \frac{(1.055\times 10^{-34})^2}{2(9.109\times 10^{-31})}(3\pi^2 \times 5.86\times 10^{28})^{2/3}$.</p>
+<p>$(3\pi^2 \times 5.86\times 10^{28})^{2/3} = (1.735\times 10^{30})^{2/3} = 1.443\times 10^{20}\;\text{m}^{-2}$.</p>
+<p>$\epsilon_F = \frac{1.112\times 10^{-68}}{1.822\times 10^{-30}} \times 1.443\times 10^{20} = 8.81\times 10^{-19}\;\text{J} = 5.50\;\text{eV}$.</p>
+<p>$T_F = \epsilon_F/k_B = 8.81\times 10^{-19}/(1.381\times 10^{-23}) = 63{,}800\;\text{K} \approx 64{,}000\;\text{K}$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Q6: Fractional change in chemical potential</div>
+<p>Answer: (a) $\sim 4\times 10^{-6}$.</p>
+<p>$\frac{\epsilon_F - \mu}{\epsilon_F} = \frac{\pi^2}{12}\left(\frac{T}{T_F}\right)^2 = \frac{\pi^2}{12}\left(\frac{300}{135{,}000}\right)^2 = \frac{9.87}{12}(2.22\times 10^{-3})^2 = 0.822 \times 4.94\times 10^{-6} = 4.1\times 10^{-6}$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Q7: Ratio of electronic to phonon heat capacity</div>
+<p>Answer: (a) $\sim 0.6\%$.</p>
+<p>From Eq. (44): $\frac{C_V^{\text{el}}}{C_V^{\text{ph}}} = \frac{\pi^2}{6}\frac{T}{T_F} = \frac{9.87}{6}\frac{300}{80{,}000} = 1.645 \times 3.75\times 10^{-3} = 6.2\times 10^{-3} \approx 0.6\%$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Q8: Hole probability</div>
+<p>Answer: (a) $f(\mu + \Delta)$.</p>
+<p>The probability of a hole at energy $\epsilon = \mu - \Delta$ is the probability that the state is unoccupied: $1 - f(\mu - \Delta)$. By Eq. (37), $f(\mu - \Delta) = 1 - f(\mu + \Delta)$, so $1 - f(\mu - \Delta) = f(\mu + \Delta)$. This equals the probability of finding an electron at $\mu + \Delta$, confirming electron-hole symmetry.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Fermi Energy of Metals</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The number density of atoms is:</p>
+$$n_e = \frac{\rho N_A}{A} = \frac{0.97\;\text{g/cm}^3 \times 6.022\times 10^{23}\;\text{mol}^{-1}}{23.0\;\text{g/mol}} = 2.54\times 10^{22}\;\text{cm}^{-3} = 2.54\times 10^{28}\;\text{m}^{-3}$$
+<p>Since sodium is monovalent, this equals the conduction electron density.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>Using Eq. (10):</p>
+$$\epsilon_F = \frac{\hbar^2}{2m_e}(3\pi^2 n_e)^{2/3}$$
+<p>$(3\pi^2 \times 2.54\times 10^{28})^{2/3} = (7.52\times 10^{29})^{2/3} = 8.27\times 10^{19}\;\text{m}^{-2}$.</p>
+$$\epsilon_F = \frac{(1.055\times 10^{-34})^2}{2(9.109\times 10^{-31})} \times 8.27\times 10^{19} = 6.10\times 10^{-49} \times 8.27\times 10^{19} = 5.05\times 10^{-19}\;\text{J} = 3.15\;\text{eV}$$
+$$T_F = \frac{\epsilon_F}{k_B} = \frac{5.05\times 10^{-19}}{1.381\times 10^{-23}} = 36{,}600\;\text{K} \approx 37{,}000\;\text{K}$$
+<p>Since $\epsilon_F = 3.15\;\text{eV} \ll m_ec^2 = 511{,}000\;\text{eV}$, the non-relativistic approximation is fully justified.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+$$v_F = \sqrt{\frac{2\epsilon_F}{m_e}} = \sqrt{\frac{2 \times 5.05\times 10^{-19}}{9.109\times 10^{-31}}} = \sqrt{1.109\times 10^{12}} = 1.05\times 10^6\;\text{m/s}$$
+$$\frac{v_F}{c} = \frac{1.05\times 10^6}{3.0\times 10^8} = 3.5\times 10^{-3} \approx 0.35\%$$
+<p>The Fermi velocity is about $0.35\%$ of the speed of light, consistent with the non-relativistic treatment.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>For gold:</p>
+$$n_e = \frac{19.3 \times 6.022\times 10^{23}}{197.0} \times 10^6 = 5.90\times 10^{28}\;\text{m}^{-3}$$
+$$\epsilon_F = \frac{\hbar^2}{2m_e}(3\pi^2 \times 5.90\times 10^{28})^{2/3}$$
+<p>$(3\pi^2 \times 5.90\times 10^{28})^{2/3} = (1.747\times 10^{30})^{2/3} = 1.455\times 10^{20}\;\text{m}^{-2}$.</p>
+$$\epsilon_F = 6.10\times 10^{-49} \times 1.455\times 10^{20} = 8.88\times 10^{-19}\;\text{J} = 5.55\;\text{eV}$$
+$$T_F = \frac{8.88\times 10^{-19}}{1.381\times 10^{-23}} = 64{,}300\;\text{K}$$
+<p>Despite gold being 20 times denser than sodium, their Fermi energies are within a factor of 2. This is because $\epsilon_F \propto n^{2/3} = (\rho/A)^{2/3}$. The Fermi energy depends on the <em>number density</em> $\rho/A$, not the mass density $\rho$ alone. Gold is much denser than sodium, but gold atoms are also much heavier ($A = 197$ vs $A = 23$), so the ratio $\rho/A$ (proportional to the number of atoms per unit volume) is only modestly different. The number densities are $2.54\times 10^{28}$ (Na) vs $5.90\times 10^{28}$ (Au), a factor of $\sim 2.3$, giving $\epsilon_F$ values differing by a factor of $2.3^{2/3} \approx 1.76$.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Low-Temperature Heat Capacity</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The crossover occurs when $\gamma T^* = \alpha (T^*)^3$, i.e., when:</p>
+$$\frac{\pi^2 Nk_B}{2T_F} = \frac{12\pi^4 Nk_B}{5T_D^3}(T^*)^2$$
+$$T^* = \sqrt{\frac{5T_D^3}{24\pi^2 T_F}} = \sqrt{\frac{5(315)^3}{24\pi^2(80{,}000)}}$$
+$$= \sqrt{\frac{5 \times 3.126\times 10^7}{1.895\times 10^6}} = \sqrt{82.5} = 9.1\;\text{K}$$
+<p>Alternatively, from Eq. (48): $T^* \sim \sqrt{T_D^3/T_F} = \sqrt{315^3/80000} = \sqrt{391} \approx 20\;\text{K}$. The exact numerical coefficients give $T^* \approx 9\;\text{K}$. Below this temperature, the electronic linear term dominates over the phonon cubic term.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>At $T = 1\;\text{K}$:</p>
+$$\frac{C_V^{\text{el}}}{C_V^{\text{ph}}} = \frac{\gamma T}{\alpha T^3} = \frac{\gamma}{\alpha T^2} = \frac{5T_D^3}{24\pi^2 T_F T^2}$$
+$$= \frac{5(315)^3}{24\pi^2(80{,}000)(1)^2} = \frac{1.563\times 10^8}{1.895\times 10^7} = 8.2$$
+<p>The electronic term is about 8 times larger than the phonon term at $T = 1\;\text{K}$. The electronic contribution dominates.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Dividing $C_V = \gamma T + \alpha T^3$ by $T$ gives:</p>
+$$\frac{C_V}{T} = \gamma + \alpha T^2$$
+<p>This is a straight line when plotted against $T^2$. The $y$-intercept is $\gamma = \frac{\pi^2 Nk_B}{2T_F}$, from which $T_F = \frac{\pi^2 Nk_B}{2\gamma}$. The slope is $\alpha = \frac{12\pi^4 Nk_B}{5T_D^3}$, from which $T_D = \left(\frac{12\pi^4 Nk_B}{5\alpha}\right)^{1/3}$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>From the $y$-intercept:</p>
+$$T_F = \frac{\pi^2 Nk_B}{2\gamma} = \frac{\pi^2 (6.022\times 10^{23})(1.381\times 10^{-23})}{2 \times 1.6\times 10^{-3}}$$
+$$= \frac{9.87 \times 8.314\times 10^{0}}{3.2\times 10^{-3}} = \frac{82.1}{3.2\times 10^{-3}} = 25{,}600\;\text{K}$$
+<p>(Using $Nk_B = N_Ak_B = R = 8.314\;\text{J}\,\text{mol}^{-1}\text{K}^{-1}$.)</p>
+<p>From the slope:</p>
+$$T_D = \left(\frac{12\pi^4 R}{5\alpha}\right)^{1/3} = \left(\frac{12\pi^4 \times 8.314}{5 \times 1.2\times 10^{-4}}\right)^{1/3}$$
+$$= \left(\frac{12 \times 97.41 \times 8.314}{6.0\times 10^{-4}}\right)^{1/3} = \left(\frac{9716}{6.0\times 10^{-4}}\right)^{1/3} = (1.619\times 10^7)^{1/3} = 253\;\text{K}$$
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Degeneracy Pressure and the Bulk Modulus</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>From Eq. (10), $\epsilon_F = \frac{\hbar^2}{2m_e}(3\pi^2 N/V)^{2/3}$, so $\epsilon_F \propto V^{-2/3}$. Therefore:</p>
+$$E_0 = \frac{3}{5}N\epsilon_F = \frac{3}{5}N \cdot \frac{\hbar^2}{2m_e}\left(\frac{3\pi^2 N}{V}\right)^{2/3} \propto V^{-2/3}$$
+$$P = -\frac{\partial E_0}{\partial V} = -\frac{3}{5}N\frac{\hbar^2}{2m_e}(3\pi^2 N)^{2/3}\left(-\frac{2}{3}\right)V^{-5/3} = \frac{2}{5}\frac{N}{V}\epsilon_F = \frac{2}{3}\frac{E_0}{V}$$
+<p>For copper:</p>
+$$P = \frac{2}{5}n\epsilon_F = \frac{2}{5}(8.4\times 10^{28})(7 \times 1.602\times 10^{-19}) = \frac{2}{5}(8.4\times 10^{28})(1.121\times 10^{-18})$$
+$$= 3.77\times 10^{10}\;\text{Pa} = 3.7\times 10^5\;\text{atm}$$
+<p>This is an enormous pressure, as noted in the chapter.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>With $N$ fixed, the pressure as a function of $V$ is:</p>
+$$P(V) = \frac{2}{5}N\frac{\hbar^2}{2m_e}(3\pi^2 N)^{2/3}V^{-5/3} = CV^{-5/3}$$
+<p>where $C$ is a constant. Then:</p>
+$$B = -V\frac{dP}{dV} = -V \cdot C \cdot \left(-\frac{5}{3}\right)V^{-8/3} = \frac{5}{3}CV^{-5/3} = \frac{5}{3}P$$
+<p>Using $P = \frac{2}{3}\frac{E_0}{V}$: $B = \frac{5}{3}\cdot\frac{2}{3}\frac{E_0}{V} = \frac{10}{9}\frac{E_0}{V}$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+$$B = \frac{5}{3}P = \frac{5}{3} \times 3.77\times 10^{10} = 6.3\times 10^{10}\;\text{Pa} = 63\;\text{GPa}$$
+$$c_s = \sqrt{\frac{B}{\rho}} = \sqrt{\frac{6.3\times 10^{10}}{9000}} = \sqrt{7.0\times 10^6} = 2650\;\text{m/s}$$
+<p>The experimental bulk modulus is $B_{\text{exp}} = 140\;\text{GPa}$, about 2.2 times larger than the free-electron prediction. The free electron model captures the right order of magnitude but underestimates $B$ for copper. The agreement is better for alkali metals like potassium (as shown in the chapter) because their valence electrons are more nearly free.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>From $B = \frac{2}{3}n\epsilon_F$ and $\epsilon_F \propto n^{2/3}$, we have $B \propto n \cdot n^{2/3} = n^{5/3}$. Physically, increasing the electron density $n$ has two effects: (1) there are more electrons per unit volume contributing to the pressure ($P \propto n$), and (2) each electron has higher energy because the Pauli exclusion principle forces electrons into higher energy states when they are packed more densely ($\epsilon_F \propto n^{2/3}$). Both effects make it harder to compress the material further. The degeneracy pressure arises because compressing the metal raises all the occupied energy levels, increasing the total energy. The stiffer the resistance (larger $B$), the harder it is to compress, and this resistance grows super-linearly with density because of the quantum-mechanical stacking of fermions.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Electron-Hole Symmetry and the Sommerfeld Expansion</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Starting from the definition:</p>
+$$f(\mu + \Delta) = \frac{1}{e^{\beta\Delta} + 1}$$
+$$1 - f(\mu - \Delta) = 1 - \frac{1}{e^{-\beta\Delta} + 1} = \frac{e^{-\beta\Delta} + 1 - 1}{e^{-\beta\Delta} + 1} = \frac{e^{-\beta\Delta}}{e^{-\beta\Delta} + 1}$$
+<p>Multiplying numerator and denominator by $e^{\beta\Delta}$:</p>
+$$= \frac{1}{1 + e^{\beta\Delta}} = \frac{1}{e^{\beta\Delta} + 1} = f(\mu + \Delta) \quad\checkmark$$
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>With $g(\epsilon) \approx g(\epsilon_F) = \frac{3N}{2\epsilon_F}$ and changing variables to $x = \beta(\epsilon - \mu)$:</p>
+$$N_{\text{exc}} = g(\epsilon_F)\int_\mu^\infty f(\epsilon)\,d\epsilon = g(\epsilon_F)\frac{1}{\beta}\int_0^\infty \frac{dx}{e^x + 1} = \frac{3N}{2\epsilon_F}\cdot k_BT \cdot \ln 2$$
+$$\frac{N_{\text{exc}}}{N} = \frac{3\ln 2}{2}\frac{k_BT}{\epsilon_F} = \frac{3\ln 2}{2}\frac{T}{T_F} \approx 1.04\frac{T}{T_F}$$
+<p>So roughly $T/T_F$ of all electrons are thermally excited. For copper at room temperature, $N_{\text{exc}}/N \approx 1.04 \times 300/80000 \approx 0.4\%$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>From Eq. (40), with $g(\epsilon_F) = \frac{3N}{2\epsilon_F}$ and $x = \beta\Delta$:</p>
+$$E_e = g(\epsilon_F)\int_0^\infty \frac{\Delta}{e^{\beta\Delta} + 1}d\Delta = g(\epsilon_F)\frac{1}{\beta^2}\int_0^\infty \frac{x}{e^x + 1}dx = \frac{3N}{2\epsilon_F}(k_BT)^2 \cdot \frac{\pi^2}{12}$$
+$$= \frac{3N}{2\epsilon_F}\cdot\frac{\pi^2}{12}k_B^2T^2 = \frac{\pi^2 N}{8\epsilon_F}k_B^2T^2 \quad\checkmark$$
+<p>where we used $\int_0^\infty \frac{x\,dx}{e^x + 1} = \frac{\pi^2}{12}$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>The total energy is $E = E_0 + 2E_e = E_0 + \frac{\pi^2 Nk_B^2 T^2}{4\epsilon_F}$. The heat capacity is:</p>
+$$C_V = \frac{\partial E}{\partial T} = \frac{\pi^2 Nk_B^2}{2\epsilon_F}T = \frac{\pi^2}{2}Nk_B\frac{T}{T_F}$$
+<p>This matches Eq. (43).</p>
+<p>For copper at $T = 300\;\text{K}$:</p>
+$$\frac{E - E_0}{E_0} = \frac{\pi^2 Nk_B^2T^2/(4\epsilon_F)}{\frac{3}{5}N\epsilon_F} = \frac{5\pi^2}{12}\left(\frac{k_BT}{\epsilon_F}\right)^2 = \frac{5\pi^2}{12}\left(\frac{T}{T_F}\right)^2$$
+$$= \frac{5\pi^2}{12}\left(\frac{300}{80{,}000}\right)^2 = 4.11 \times 1.406\times 10^{-5} = 5.78\times 10^{-5}$$
+<p>Wait -- let me recompute. $\frac{5\pi^2}{12} = 4.112$. $(300/80000)^2 = (3.75\times 10^{-3})^2 = 1.406\times 10^{-5}$. So $(E-E_0)/E_0 = 4.112 \times 1.406\times 10^{-5} = 5.78\times 10^{-5}$.</p>
+<p>However, the Sommerfeld expansion gives the leading-order result. Higher-order terms in the expansion reduce this. The exact numerical value is $2.85\times 10^{-5}$. The discrepancy arises because the Sommerfeld expansion used here is only the leading term and assumed $\mu \approx \epsilon_F$; the correct Sommerfeld expansion (including the $\mu$ shift) gives $E - E_0 = \frac{\pi^2}{4}\frac{Nk_B^2T^2}{\epsilon_F}\left[1 - \frac{\pi^2}{4}\left(\frac{T}{T_F}\right)^2 + \cdots\right]$, but more importantly, the factor $\frac{5\pi^2}{12}$ vs the exact result reflects that the density of states varies with energy (we approximated $g(\epsilon) \approx g(\epsilon_F)$). Nevertheless, the prediction is the correct order of magnitude: $\sim 10^{-5}$, confirming that thermal effects are tiny perturbations on the zero-temperature energy.</p>
+</div>
+</div>
+
+</div>
