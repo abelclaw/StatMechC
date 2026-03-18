@@ -18198,7 +18198,8 @@ function initCh14Vis() {
   const cBF3 = document.getElementById('vis-band-filling-3rd');
   if (cBF3) {
     const { ctx: ctxBF3, W: WBF3, H: HBF3 } = setupCanvas(cBF3);
-    const bf3Select = document.getElementById('bf3-element');
+    const bf3Buttons = document.getElementById('bf3-element-buttons');
+    let bf3Selected = 'Na';
 
     const elemData = {
       'Na': { name: 'Na', config: '[Ne] 3s¹', valence: 1, total: 8, fill3s: 0.5, fill3p: 0 },
@@ -18209,7 +18210,7 @@ function initCh14Vis() {
 
     function drawBandFilling3rd() {
       clearCanvas(ctxBF3, WBF3, HBF3);
-      const elem = elemData[bf3Select?.value || 'Na'];
+      const elem = elemData[bf3Selected];
 
       const ox = 80, pw = WBF3 - 160;
       const bandH = 50, gap = 15;
@@ -18290,7 +18291,14 @@ function initCh14Vis() {
       ctxBF3.fillText(classLabel, ox, HBF3 - 15);
     }
 
-    bf3Select?.addEventListener('change', drawBandFilling3rd);
+    bf3Buttons?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      bf3Buttons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      bf3Selected = btn.dataset.value;
+      drawBandFilling3rd();
+    });
     drawBandFilling3rd();
   }
 
