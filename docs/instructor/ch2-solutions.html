@@ -1,0 +1,160 @@
+<div class="chapter-solutions" id="ch2-solutions">
+<h2>Chapter 2: Diffusion &mdash; Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1 (Q1): RMS Displacement</div>
+<p>Answer: <strong>(b)</strong> $\sqrt{N}\,\ell$.</p>
+<p>From Eq. (19), $\langle \vec{s}_N^2 \rangle = N\ell^2$, so $x_{\text{rms}} = \sqrt{N}\,\ell$. The cross terms $\langle \vec{\ell}_j \cdot \vec{\ell}_k \rangle$ vanish for $j \neq k$ because the steps are uncorrelated.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2 (Q2): Fick's First Law</div>
+<p>Answer: <strong>(b)</strong> $\vec{J} = -D\,\vec{\nabla}n$.</p>
+<p>Fick's first law (Eq. 37) states that the diffusive flux is proportional to the negative concentration gradient. The minus sign ensures that particles flow from high to low concentration. Option (a) has the wrong sign. Option (c) is Fick's second law / the diffusion equation (Eq. 38). Option (d) is the continuity equation (Eq. 36).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3 (Q3): Diffusive Scaling</div>
+<p>Answer: <strong>(c)</strong> $\Delta x \propto \sqrt{t}$.</p>
+<p>From Eq. (39), $x_{\text{rms}} = \sqrt{2Dt} \propto \sqrt{t}$. This is the hallmark of diffusive transport, in contrast to ballistic motion where $\Delta x \propto t$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4 (Q4): Einstein and Avogadro's Number</div>
+<p>Answer: <strong>(b)</strong> The drag coefficient $\mu$.</p>
+<p>From Eq. (52), $N_A = 3RT/(\mu D)$. Temperature is measured with a thermometer, $D$ is extracted from the Brownian motion trajectory, and $\mu$ is measured by applying an external force and observing the terminal velocity.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5 (Q5): Coin-Flip Standard Deviation</div>
+<p>Answer: <strong>\$20</strong></p>
+<p>For a fair game with $a = b = 1/2$, the standard deviation of winnings after $N$ rounds is (from Eq. 12):</p>
+$$\sigma = \sqrt{N} = \sqrt{400} = 20$$
+<p>So the standard deviation of winnings is \$20.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6 (Q6): Diffusion Constant of Air</div>
+<p>Answer: <strong>6.1</strong> (in units of $10^{-5}\,\text{m}^2/\text{s}$)</p>
+<p>Using the Einstein-Smoluchowski equation (Eq. 29):</p>
+$$D = \frac{1}{2}\ell\bar{v} = \frac{1}{2}(2.6 \times 10^{-7}\,\text{m})(467\,\text{m/s}) = 6.07 \times 10^{-5}\,\text{m}^2/\text{s}$$
+<p>Rounded to one decimal place in the requested units: $6.1 \times 10^{-5}\,\text{m}^2/\text{s}$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7 (Q7): Protein Diffusion Time</div>
+<p>Answer: <strong>(b)</strong> 5 seconds.</p>
+<p>From $x_{\text{rms}} = \sqrt{2Dt}$, solving for $t$:</p>
+$$t = \frac{x_{\text{rms}}^2}{2D} = \frac{(10 \times 10^{-6})^2}{2 \times 10^{-11}} = \frac{10^{-10}}{2 \times 10^{-11}} = 5\,\text{s}$$
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8 (Q8): Doubling Density</div>
+<p>Answer: <strong>(a)</strong> $D$ is halved.</p>
+<p>From Eq. (22), $\ell = 1/(n\sigma)$. Doubling $n$ halves $\ell$. Since $D = \frac{1}{2}\ell\bar{v}$ (Eq. 29) and $\bar{v}$ depends on temperature (not density), halving $\ell$ halves $D$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9 (Q9): Gambler's Ruin</div>
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>For a fair game ($a = b = 1/2$) with $N = 2500$ rounds, the standard deviation of net winnings is:</p>
+$$\sigma = \sqrt{N} = \sqrt{2500} = 50$$
+<p>So $\sigma = \$50$.</p>
+</div>
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>In the Gaussian approximation, the net winnings $W$ have mean 0 and standard deviation $\sigma = 50$. We want $P(W > 50) = P(W/\sigma > 1)$.</p>
+<p>For a standard Gaussian, the probability of exceeding $+1\sigma$ on one side is:</p>
+$$P(z > 1) = \frac{1}{2}\left[1 - \text{erf}\!\left(\frac{1}{\sqrt{2}}\right)\right] \approx 0.159$$
+<p>So there is approximately a <strong>16%</strong> chance that the gambler's net winnings exceed \$50 after 2500 rounds.</p>
+</div>
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>With $a = 0.49$ and $b = 0.51$, the expected net winnings after $N = 2500$ rounds are (from Eq. 10):</p>
+$$\langle W \rangle = N(a - b) = 2500(0.49 - 0.51) = 2500 \times (-0.02) = -\$50$$
+<p>The standard deviation is $\sigma = 2\sqrt{Nab} = 2\sqrt{2500 \times 0.49 \times 0.51} \approx 2\sqrt{624.75} \approx 50.0$.</p>
+<p>So the gambler expects to <em>lose</em> \$50 on average, with a standard deviation of about \$50. To double her money she needs $W > +50$, which is $2\sigma$ above the mean. The probability is $P(z > 2) \approx 2.3\%$. It is very unlikely she doubles her money with even a small house edge.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10 (Q10): Diffusion of Neurotransmitters</div>
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>Using $x_{\text{rms}} = \sqrt{2Dt}$ with $x_{\text{rms}} = d = 20\,\text{nm} = 2 \times 10^{-8}\,\text{m}$:</p>
+$$t = \frac{d^2}{2D} = \frac{(2 \times 10^{-8})^2}{2 \times 6 \times 10^{-10}} = \frac{4 \times 10^{-16}}{1.2 \times 10^{-9}} = 3.3 \times 10^{-7}\,\text{s} \approx 0.33\,\mu\text{s}$$
+<p>The crossing time is about <strong>0.33 microseconds</strong>.</p>
+</div>
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>From Eq. (24):</p>
+$$P_t(x) = \frac{1}{\sqrt{4\pi D t}}\exp\!\left[-\frac{x^2}{4Dt}\right]$$
+<p>This is a Gaussian centered at $x = 0$ with variance $\sigma^2 = 2Dt$.</p>
+</div>
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>At $t = d^2/(2D)$, the standard deviation is $\sigma = \sqrt{2Dt} = d = 20\,\text{nm}$. The question asks for the fraction with $x > d = \sigma$. For a Gaussian, the fraction beyond $+1\sigma$ is about <strong>16%</strong>.</p>
+<p>Note: this is the fraction that has crossed the full cleft width. The actual fraction arriving at the receptor side is somewhat higher since we are looking at a half-space, but in this 1D model 16% is the correct answer for the fraction beyond $+1\sigma$.</p>
+</div>
+<div class="solution-part"><div class="part-label">(d)</div>
+<p>In $t \approx 3.3 \times 10^{-7}\,\text{s}$, a nerve signal traveling at $100\,\text{m/s}$ covers:</p>
+$$\Delta x = v \cdot t = 100 \times 3.3 \times 10^{-7} = 3.3 \times 10^{-5}\,\text{m} = 33\,\mu\text{m}$$
+<p>This is about $33\,\mu\text{m}$, which is comparable to the size of a few cell bodies. The synaptic delay is very short &mdash; about 0.3 microseconds &mdash; so diffusion across the synaptic cleft is <strong>not a significant bottleneck</strong> in neural signaling. The dominant delays come from the electrochemical processes of depolarization, vesicle fusion, and receptor binding, which take on the order of 0.5&ndash;1 ms total.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11 (Q11): Polymer as a Random Walk</div>
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>Each monomer segment $\vec{\ell}_j$ has length $b$ and points in a random direction. The end-to-end vector is $\vec{R} = \sum_{j=1}^N \vec{\ell}_j$. From Eq. (19):</p>
+$$\langle \vec{R}^2 \rangle = N b^2$$
+<p>Therefore:</p>
+$$R_{\text{rms}} = \sqrt{\langle \vec{R}^2 \rangle} = b\sqrt{N}$$
+</div>
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>The fully stretched length (contour length) of DNA is:</p>
+$$L = 6 \times 10^9 \times 0.34\,\text{nm} = 2.04 \times 10^9\,\text{nm} = 2.04\,\text{m}$$
+<p>A cell nucleus is about $6\,\mu\text{m} = 6 \times 10^{-6}\,\text{m}$. The stretched DNA is about $\mathbf{3.4 \times 10^5}$ times longer than the nucleus diameter. Clearly it cannot fit stretched out.</p>
+</div>
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>With a Kuhn length of $b = 100\,\text{nm}$ corresponding to 300 base pairs, the number of effective segments is:</p>
+$$N_{\text{eff}} = \frac{6 \times 10^9}{300} = 2 \times 10^7$$
+<p>The RMS end-to-end distance is:</p>
+$$R_{\text{rms}} = b\sqrt{N_{\text{eff}}} = 100\,\text{nm} \times \sqrt{2 \times 10^7} = 100 \times 4472 \,\text{nm} \approx 4.5 \times 10^5\,\text{nm} = 450\,\mu\text{m}$$
+</div>
+<div class="solution-part"><div class="part-label">(d)</div>
+<p>The RMS end-to-end distance of $\sim 450\,\mu\text{m}$ is still much larger than the $6\,\mu\text{m}$ nucleus &mdash; by about a factor of 75. However, the random-walk model gives the end-to-end distance, not the overall spatial extent. The actual DNA is further compacted by winding around histone proteins (forming chromatin) and higher-order folding, which reduces its effective size dramatically.</p>
+<p>The key insight is that random-walk coiling reduces the spatial extent from $2\,\text{m}$ (stretched) to $\sim 450\,\mu\text{m}$ (random coil) &mdash; a reduction by a factor of $\sim 4500$. Additional biological compaction mechanisms then reduce this further to fit within the nucleus. Without the random-walk coiling as the first stage, fitting DNA into cells would be far more difficult.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12 (Q12): Measuring Viscosity from Brownian Motion</div>
+<div class="solution-part"><div class="part-label">(a)</div>
+<p>From $x_{\text{rms}} = \sqrt{2Dt}$, solving for $D$:</p>
+$$D = \frac{x_{\text{rms}}^2}{2t} = \frac{(3.2 \times 10^{-6})^2}{2 \times 10} = \frac{1.024 \times 10^{-11}}{20} = 5.12 \times 10^{-13}\,\text{m}^2/\text{s}$$
+</div>
+<div class="solution-part"><div class="part-label">(b)</div>
+<p>The Einstein-Stokes relation (combining Eqs. 51 and 57, using the equipartition result $\langle m\vec{v}^2\rangle = 3k_BT$) gives:</p>
+$$D = \frac{k_B T}{6\pi\eta R}$$
+<p>Solving for $\eta$:</p>
+$$\eta = \frac{k_B T}{6\pi R D} = \frac{1.38 \times 10^{-23} \times 300}{6\pi \times 10^{-6} \times 5.12 \times 10^{-13}}$$
+$$= \frac{4.14 \times 10^{-21}}{9.65 \times 10^{-18}} = 4.3 \times 10^{-4}\,\text{Pa}\cdot\text{s}$$
+<p>This is within a factor of about 2 of the known value $\eta \approx 10^{-3}\,\text{Pa}\cdot\text{s}$. The discrepancy is reasonable given that we are using a single Brownian motion measurement (real experiments average over many measurements and longer observation times).</p>
+</div>
+<div class="solution-part"><div class="part-label">(c)</div>
+<p>At terminal velocity, buoyancy-corrected gravity balances Stokes drag:</p>
+$$\frac{4}{3}\pi R^3 (\rho_{\text{bead}} - \rho_{\text{water}})g = 6\pi\eta R\, v_{\text{term}}$$
+<p>Solving for $v_{\text{term}}$:</p>
+$$v_{\text{term}} = \frac{2R^2(\rho_{\text{bead}} - \rho_{\text{water}})g}{9\eta}$$
+$$= \frac{2 \times (10^{-6})^2 \times 50 \times 9.8}{9 \times 10^{-3}}$$
+$$= \frac{2 \times 10^{-12} \times 490}{9 \times 10^{-3}} = \frac{9.8 \times 10^{-10}}{9 \times 10^{-3}} = 1.09 \times 10^{-7}\,\text{m/s}$$
+<p>The terminal velocity is about $v_{\text{term}} \approx 0.11\,\mu\text{m/s}$.</p>
+</div>
+<div class="solution-part"><div class="part-label">(d)</div>
+<p><strong>Sedimentation time:</strong> To fall $1\,\text{cm} = 10^{-2}\,\text{m}$ at $v_{\text{term}} = 1.09 \times 10^{-7}\,\text{m/s}$:</p>
+$$t_{\text{sed}} = \frac{0.01}{1.09 \times 10^{-7}} \approx 9.2 \times 10^{4}\,\text{s} \approx 25\,\text{hours}$$
+
+<p><strong>Diffusion time:</strong> To diffuse $1\,\text{cm}$:</p>
+$$t_{\text{diff}} = \frac{x^2}{2D} = \frac{(10^{-2})^2}{2 \times 5.12 \times 10^{-13}} = \frac{10^{-4}}{1.024 \times 10^{-12}} \approx 9.8 \times 10^{7}\,\text{s} \approx 3.1\,\text{years}$$
+
+<p>At the 1 cm scale, <strong>sedimentation is far faster</strong> &mdash; about 1000 times faster than diffusion. This makes sense: sedimentation is a ballistic process ($\Delta x \propto t$) which always wins over diffusion ($\Delta x \propto \sqrt{t}$) at large enough distances. At shorter distances (sub-micron), diffusion would dominate because of its faster short-time scaling.</p>
+</div>
+</div>
+
+</div>

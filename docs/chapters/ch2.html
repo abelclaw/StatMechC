@@ -541,3 +541,205 @@ $$D = \frac{1}{6\pi\eta R}\langle m\vec{v}^2\rangle$$
 <li>The drag coefficient is also related to viscosity $\eta$ by $\mu = 6\pi\eta R$. Then $D = \frac{1}{6\pi\eta R}\langle m\vec{v}^2\rangle$. This is the <strong>Einstein-Stokes relation</strong>.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch2-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>In an unbiased 1D random walk with step size $\ell$, the RMS displacement after $N$ steps is:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch2-rq1" value="a"> (a) $N\ell$</label>
+  <label><input type="radio" name="ch2-rq1" value="b"> (b) $\sqrt{N}\,\ell$</label>
+  <label><input type="radio" name="ch2-rq1" value="c"> (c) $N^2\ell$</label>
+  <label><input type="radio" name="ch2-rq1" value="d"> (d) $\ell / \sqrt{N}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The RMS displacement grows as $\sqrt{N}\,\ell$ (Eq. 19). The key cross terms vanish on average, so $\langle \vec{s}_N^2 \rangle = N\ell^2$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>Which of the following is Fick's first law?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch2-rq2" value="a"> (a) $\vec{J} = D\,\vec{\nabla}n$</label>
+  <label><input type="radio" name="ch2-rq2" value="b"> (b) $\vec{J} = -D\,\vec{\nabla}n$</label>
+  <label><input type="radio" name="ch2-rq2" value="c"> (c) $\partial n / \partial t = D\,\nabla^2 n$</label>
+  <label><input type="radio" name="ch2-rq2" value="d"> (d) $\partial n / \partial t + \vec{\nabla}\cdot\vec{J} = 0$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Fick's first law (Eq. 37) states that diffusive flux is proportional to the negative concentration gradient: $\vec{J} = -D\vec{\nabla}n$. Option (c) is Fick's second law (the diffusion equation), and option (d) is the continuity equation.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>The characteristic scaling of displacement with time in a diffusion process is:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch2-rq3" value="a"> (a) $\Delta x \propto t$</label>
+  <label><input type="radio" name="ch2-rq3" value="b"> (b) $\Delta x \propto t^2$</label>
+  <label><input type="radio" name="ch2-rq3" value="c"> (c) $\Delta x \propto \sqrt{t}$</label>
+  <label><input type="radio" name="ch2-rq3" value="d"> (d) $\Delta x \propto 1/t$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="The hallmark of diffusion is that displacement scales as the square root of time: $x_{\text{rms}} = \sqrt{2Dt}$ (Eq. 39). This is much slower than ballistic motion ($\Delta x \propto t$).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>Einstein proposed to measure Avogadro's number from Brownian motion by combining measurements of the diffusion constant $D$, temperature $T$, and which other quantity?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch2-rq4" value="a"> (a) The mean free path $\ell$</label>
+  <label><input type="radio" name="ch2-rq4" value="b"> (b) The drag coefficient $\mu$</label>
+  <label><input type="radio" name="ch2-rq4" value="c"> (c) The number density $n$</label>
+  <label><input type="radio" name="ch2-rq4" value="d"> (d) The collisional cross section $\sigma$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The Einstein relation (Eq. 52) gives $N_A = 3RT/(\mu D)$. The drag coefficient $\mu$ can be measured macroscopically by applying an external force and measuring the resulting velocity.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>You play 400 rounds of a fair coin-flip game, gaining or losing \$1 each round. What is the standard deviation of your winnings, in dollars?</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer...">
+</div>
+<button class="check-answer-btn" data-answer="20" data-hint="For a fair game ($a = b = 1/2$), use Eq. (12): $\sigma = \sqrt{N}$. With $N = 400$, what is $\sqrt{400}$?">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>Air molecules at room temperature have a mean free path $\ell \approx 0.26\,\mu\text{m}$ and a mean speed $\bar{v} \approx 467\,\text{m/s}$. Using the Einstein-Smoluchowski equation (Eq. 29), estimate the diffusion constant $D$ for a molecule in air, in units of $10^{-5}\,\text{m}^2/\text{s}$. Round to one decimal place.</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer...">
+</div>
+<button class="check-answer-btn" data-answer="6.1" data-hint="Use $D = \frac{1}{2}\ell\bar{v}$ with $\ell = 2.6 \times 10^{-7}\,\text{m}$ and $\bar{v} = 467\,\text{m/s}$. Then express in units of $10^{-5}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>A protein has diffusion constant $D = 10^{-11}\,\text{m}^2/\text{s}$ in water. Approximately how long does it take to diffuse a distance of $10\,\mu\text{m}$? Use Eq.&nbsp;(39).</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch2-sa3" value="a"> (a) 0.005 seconds</label>
+  <label><input type="radio" name="ch2-sa3" value="b"> (b) 5 seconds</label>
+  <label><input type="radio" name="ch2-sa3" value="c"> (c) 50 seconds</label>
+  <label><input type="radio" name="ch2-sa3" value="d"> (d) 500 seconds</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From $x_{\text{rms}} = \sqrt{2Dt}$, we get $t = x_{\text{rms}}^2/(2D) = (10^{-5})^2/(2 \times 10^{-11}) = 5\,\text{s}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>The mean free path is given by $\ell = 1/(n\sigma)$ (Eq. 22). If you double the number density $n$ of a gas while keeping the molecular size and temperature the same, how does the diffusion constant $D$ change?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch2-sa4" value="a"> (a) $D$ is halved</label>
+  <label><input type="radio" name="ch2-sa4" value="b"> (b) $D$ is quartered</label>
+  <label><input type="radio" name="ch2-sa4" value="c"> (c) $D$ is unchanged</label>
+  <label><input type="radio" name="ch2-sa4" value="d"> (d) $D$ is doubled</label>
+</div>
+<button class="check-answer-btn" data-answer="a" data-explanation="Doubling $n$ halves $\ell = 1/(n\sigma)$. Since $D = \frac{1}{2}\ell\bar{v}$ and $\bar{v}$ depends on temperature (not density), $D$ is halved.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Gambler's Ruin</div>
+<p>A gambler starts with \$50 and plays a fair coin-flip game, betting \$1 per round. She will stop when she either reaches \$100 or goes broke (\$0).</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>After $N = 2500$ rounds (if she hasn't stopped yet), what is the standard deviation of her net winnings? Use the result $\sigma = \sqrt{N}$ from Eq.&nbsp;(12).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using the Gaussian approximation (Eq. 9), estimate the probability that her net winnings after 2500 rounds exceed +\$50 (i.e., she would have doubled her money). Express your answer in terms of the error function or give a numerical value. <em>Hint:</em> You need $P(x > 50)$ for a Gaussian with mean 0 and $\sigma = 50$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Now suppose the game is slightly unfair: the gambler has a 49% chance of winning each round. What are her expected net winnings after $N = 2500$ rounds? Is it realistic for her to double her money?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Diffusion of Neurotransmitters</div>
+<p>When a neuron fires, neurotransmitter molecules are released from vesicles into the synaptic cleft (the gap between two neurons). The cleft has a width of about $d = 20\,\text{nm}$. The diffusion constant for a small neurotransmitter molecule like acetylcholine in the synaptic fluid is approximately $D = 6 \times 10^{-10}\,\text{m}^2/\text{s}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Estimate how long it takes a neurotransmitter molecule to diffuse across the synaptic cleft using $x_{\text{rms}} = \sqrt{2Dt}$ (Eq. 39).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>The neurotransmitter is released as a concentrated burst at one side of the cleft. Write down the 1D probability distribution $P_t(x)$ for the position of a molecule at time $t$, treating the release point as $x = 0$ (Eq. 24).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>At the time you computed in part (a), what fraction of molecules have reached positions $x > d = 20\,\text{nm}$? Use the fact that for a Gaussian, the fraction beyond $1\sigma$ on one side is about 16%.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The nerve signal propagates at roughly $100\,\text{m/s}$ along the axon. How far does the signal travel along the axon in the time it takes a neurotransmitter to cross the cleft? Comment on whether diffusion is a bottleneck in neural signaling.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Polymer as a Random Walk</div>
+<p>A polymer chain can be modeled as a random walk: each monomer unit of length $b$ (the Kuhn length) points in a random direction. Consider a polymer with $N$ monomer units.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Using the 3D random walk result (Eq. 19), show that the RMS end-to-end distance of the polymer is $R_{\text{rms}} = b\sqrt{N}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>DNA has approximately $6 \times 10^9$ base pairs, each of length $0.34\,\text{nm}$. If DNA were fully stretched out, how long would it be? Compare this to the size of a cell nucleus ($\sim 6\,\mu\text{m}$).</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>DNA is not a freely jointed chain; it has a persistence length (Kuhn length) of $b \approx 100\,\text{nm}$, which corresponds to about 300 base pairs. How many effective random-walk segments $N_{\text{eff}}$ does a DNA molecule have? Estimate the RMS end-to-end distance using the random walk model.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Does your answer to (c) fit inside a cell nucleus? Comment on the role of the random-walk coiling in allowing DNA to fit inside cells.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Measuring Viscosity from Brownian Motion</div>
+<p>An experimenter observes a polystyrene bead of radius $R = 1\,\mu\text{m}$ and density $\rho_{\text{bead}} = 1050\,\text{kg/m}^3$ undergoing Brownian motion in water at $T = 300\,\text{K}$. She tracks the bead's position and measures that in 10 seconds, its RMS displacement is $x_{\text{rms}} = 3.2\,\mu\text{m}$. Use $k_B = 1.38 \times 10^{-23}\,\text{J/K}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>From $x_{\text{rms}} = \sqrt{2Dt}$ (Eq. 39), determine the diffusion constant $D$ for the bead.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using the Einstein-Stokes relation $D = k_B T / (6\pi\eta R)$ (from Eqs. 51 and 57, with $\frac{1}{2}\langle m\vec{v}^2\rangle = \frac{3}{2}k_BT$ per particle in 3D), solve for the viscosity $\eta$ of water. Compare your answer to the known value $\eta \approx 10^{-3}\,\text{Pa}\cdot\text{s}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute the terminal velocity of this bead settling under gravity in water (density $\rho_{\text{water}} = 1000\,\text{kg/m}^3$). At terminal velocity, the net gravitational force (corrected for buoyancy) balances the Stokes drag: $\frac{4}{3}\pi R^3(\rho_{\text{bead}} - \rho_{\text{water}})g = 6\pi\eta R v_{\text{term}}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>How long would it take for the bead to sediment $1\,\text{cm}$ at terminal velocity? Compare this timescale to the time it would take the bead to diffuse $1\,\text{cm}$. Which process dominates at this length scale?</p>
+</div>
+</div>
+
+</div>
+</details>
