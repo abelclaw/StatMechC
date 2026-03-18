@@ -188,7 +188,7 @@ $$\frac{e^2}{4\pi\epsilon_0 r_{\min}} = \frac{1}{2}m_p v^2$$
 <p>Taking the velocity to be that of a thermal ideal gas, $\frac{1}{2}m_p v^2 = \frac{3}{2}k_B T$, and asking for the protons to get within a proton radius of each other, $r_{\min} = r_p \approx 10^{-15}\;\text{m}$, gives</p>
 
 <div class="equation">
-$$T_{\min}^{\text{classical}} = \frac{1}{3k_B}\frac{e^2}{4\pi\epsilon_0 r_p} = 4.2 \times 10^9\;\text{K}$$
+$$T_{\min}^{\text{classical}} = \frac{2}{3k_B}\frac{e^2}{4\pi\epsilon_0 r_p} = 1.1 \times 10^{10}\;\text{K}$$
 <span class="eq-number">(11)</span>
 </div>
 
@@ -285,7 +285,7 @@ $$T = \left(\frac{3ck_B}{4\mu m_p\sigma}\frac{\beta}{1 - \beta}\right)^{1/3}\rho
 <p>Then</p>
 
 <div class="equation">
-$$P = \left(\frac{3ck_B^4}{4\pi^4\mu^4 m_p^4\sigma(1 - \beta)^4}\right)^{1/3}\rho^{4/3}$$
+$$P = \left(\frac{3ck_B^4\beta}{4\mu^4 m_p^4\sigma(1 - \beta)^4}\right)^{1/3}\rho^{4/3}$$
 <span class="eq-number">(26)</span>
 </div>
 
@@ -339,7 +339,7 @@ $$M = 4\pi\int_0^R \rho(r)r^2\,dr = C_n R^3 \rho_c$$
 <table>
 <tr><th>$n$</th><th>1</th><th>3/2</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
 <tr><td>$\xi_{\max}$</td><td>$\pi$</td><td>3.7</td><td>4.4</td><td>6.9</td><td>15.0</td><td>$\infty$</td></tr>
-<tr><td>$C_n$</td><td>12.6</td><td>9.3</td><td>7.0</td><td>0.077</td><td>1.5</td><td>$\infty$</td></tr>
+<tr><td>$C_n$</td><td>1.27</td><td>0.70</td><td>0.37</td><td>0.077</td><td>0.0067</td><td>0</td></tr>
 </table>
 </div>
 
@@ -374,7 +374,7 @@ $$T_c = (1-\beta)\frac{\mu}{k_B}\pi G\frac{M_\odot m_p}{\xi_{\max}^2 C_3 R_\odot
 
 <div class="interactive-container">
 <div class="figure-label">Interactive 8: Gas Pressure Fraction vs Stellar Mass</div>
-<p class="vis-caption">The ratio $\beta = P_{\text{gas}}/P_{\text{tot}}$ as a function of stellar mass. Radiation pressure dominates for heavier stars.</p>
+<p class="vis-caption">The ratio $\beta = P_{\text{rad}}/P_{\text{tot}}$ as a function of stellar mass. Radiation pressure dominates for heavier stars.</p>
 <canvas id="vis-beta-mass" width="600" height="400"></canvas>
 </div>
 
@@ -407,11 +407,11 @@ $$T_c = (1-\beta)\frac{\mu}{k_B}\pi G\frac{M_\odot m_p}{\xi_{\max}^2 C_3 R_\odot
 <p>The chemical composition of white dwarfs can vary, depending on what collapsed to form them. Most white dwarfs are mostly carbon and oxygen, from red giants or supergiants that have fused helium but could not compress enough to fuse carbon. At a temperature of $T = 10^7\;\text{K}$ the typical thermal energy is $k_B T = 850\;\text{eV}$. This is well above the typical ionization energies of atoms ($\sim 10\;\text{eV}$), so white dwarfs should be thought of as fully ionized. Thus for each proton there is one free electron. The elements that can compose a white dwarf (He, C, O) all have roughly equal numbers of neutrons and protons, so there is around 1 electron for every $2m_p$ of stellar mass. With a density of $\rho = 10^{10}\;\text{kg/m}^3$ the number density of electrons is then</p>
 
 <div class="equation">
-$$n_e = \frac{\rho}{2m_p} = 2 \times 10^{36}\;\frac{1}{\text{m}^3}$$
+$$n_e = \frac{\rho}{2m_p} = 3 \times 10^{36}\;\frac{1}{\text{m}^3}$$
 <span class="eq-number">(44)</span>
 </div>
 
-<p>The Fermi energy evaluates to $\epsilon_F = 450\;\text{keV}$ corresponding to a Fermi temperature of $T_F = \epsilon_F/k_B = 5 \times 10^9\;\text{K}$. This is much much higher than typical white dwarf temperature of $10^7\;\text{K}$, so we can assume the white dwarf is completely degenerate. Note also that $\epsilon_F$ is the same order as the electron rest mass $m_e c^2 = 511\;\text{keV}$. Thus the electron gas in a white dwarf can be relativistic.</p>
+<p>The Fermi energy evaluates to $\epsilon_F = 580\;\text{keV}$ corresponding to a Fermi temperature of $T_F = \epsilon_F/k_B = 7 \times 10^9\;\text{K}$. This is much much higher than typical white dwarf temperature of $10^7\;\text{K}$, so we can assume the white dwarf is completely degenerate. Note also that $\epsilon_F$ is the same order as the electron rest mass $m_e c^2 = 511\;\text{keV}$. Thus the electron gas in a white dwarf can be relativistic.</p>
 
 <p>We begin by considering the limit where the electrons are ultrarelativistic ($\epsilon \gg m_e c^2$). For an electron gas, the allowed momenta are the usual $\vec{p} = \hbar\frac{\pi}{L}\vec{n}$ with $\vec{n}$ a triplet of whole numbers. If the gas is ultrarelativistic the dispersion relation is $\epsilon = c|\vec{p}| = c\hbar\frac{\pi}{L}n$. The density of states is</p>
 
@@ -502,7 +502,7 @@ $$f(x) = 8\int_0^{x}\sqrt{1+t^2}\;t^2\,dt = \sqrt{1+x^2}(x + 2x^3) - \ln\!\left(
 <p>The degeneracy pressure is</p>
 
 <div class="equation">
-$$P_{\text{degen}} = \frac{m_e^4 c^5}{8\pi^2\hbar^3}\left[\frac{1}{3}x_F^3\sqrt{1+x_F^2}(2x_F^3 - 3) + \ln\!\left(x_F + \sqrt{1+x_F^2}\right)\right]$$
+$$P_{\text{degen}} = \frac{m_e^4 c^5}{8\pi^2\hbar^3}\left[\frac{1}{3}x_F\sqrt{1+x_F^2}(2x_F^2 - 3) + \ln\!\left(x_F + \sqrt{1+x_F^2}\right)\right]$$
 <span class="eq-number">(68)</span>
 </div>
 
@@ -584,7 +584,7 @@ $$M \leq \frac{9\sqrt{3\pi}}{64 D_3^{3/2}}\sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 
 <div class="info-box physical">
 <div class="box-title">Characteristic Scales</div>
 <p>It is a remarkable fact that combinations of fundamental constants happen to match astrophysical scales:</p>
-$$\sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 1.8\,M_\odot\,;\qquad \sqrt{\frac{\hbar^3}{cG^3 m_e^2 m_p^2}} = 0.78\,R_E$$
+$$\sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 1.8\,M_\odot\,;\qquad \sqrt{\frac{\hbar^3}{cG m_e^2 m_p^2}} = 0.78\,R_E$$
 <p>For example, Sirius B has mass $1.02\,M_\odot$. Solving for its radius gives $R = 0.54\,R_E$, confirming our density estimates. Most white dwarfs are around $0.5\,M_\odot$; for these, $R \approx R_E$.</p>
 </div>
 
@@ -596,7 +596,7 @@ $$\sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 1.8\,M_\odot\,;\qquad \sqrt{\frac{\hbar^
 <p>Neutrons are fermions, and the core of neutrons in a neutron star is a Fermi gas, like a white dwarf. We can determine the characteristic size and mass of a neutron star by substituting in the appropriate scale, namely, replacing $m_e$ by $m_n = m_p$. For a white dwarf, recall the characteristic mass and radius:</p>
 
 <div class="equation">
-$$M_{\text{WD}} \approx \sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 3.6 \times 10^{30}\;\text{kg} = 1.8\,M_\odot\,;\qquad R_{\text{WD}} \approx \sqrt{\frac{\hbar^3}{cG^3 m_e^2 m_p^2}} = 4970\;\text{km} = 0.78\,R_E$$
+$$M_{\text{WD}} \approx \sqrt{\frac{c^3\hbar^3}{G^3 m_p^4}} = 3.6 \times 10^{30}\;\text{kg} = 1.8\,M_\odot\,;\qquad R_{\text{WD}} \approx \sqrt{\frac{\hbar^3}{cG m_e^2 m_p^2}} = 4970\;\text{km} = 0.78\,R_E$$
 <span class="eq-number">(85)</span>
 </div>
 
@@ -612,7 +612,7 @@ $$M_{\text{NS}} \lesssim 4 \times 1.4\,M_\odot = 5.6\,M_\odot$$
 <p>The characteristic size of a neutron star is</p>
 
 <div class="equation">
-$$R_{\text{NS}} \approx \sqrt{\frac{4\hbar^3}{cG^3 m_p^4}} = 5\;\text{km}$$
+$$R_{\text{NS}} \approx \sqrt{\frac{4\hbar^3}{cG m_p^4}} = 5\;\text{km}$$
 <span class="eq-number">(87)</span>
 </div>
 
