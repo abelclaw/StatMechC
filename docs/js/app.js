@@ -26249,6 +26249,7 @@ function initCh15Vis() {
     const zoomLabel = document.getElementById('size-zoom-label');
 
     const stars = [
+      {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:450},
       {name:'Stephenson 2-18',R:2150,T:3200, type:'M6Ia',  cat:'Hypergiant'},
       {name:'WOH G64',    R:1540, T:3400, type:'M5I',    cat:'Hypergiant'},
       {name:'UY Scuti',   R:755,  T:3365, type:'M4Ia',   cat:'Hypergiant'},
@@ -26301,6 +26302,9 @@ function initCh15Vis() {
       ctxS.font = font; // restore
     }
 
+    // Display radius: use shadow size for black holes, else R
+    function displayR(s) { return s.shadow || s.R; }
+
     // --- Camera system ---
     // Place stars along a horizontal line in world-space (units: R_sun).
     const worldX = [];
@@ -26309,7 +26313,7 @@ function initCh15Vis() {
       let cx = 0;
       for (let i = 0; i < stars.length; i++) {
         if (i === 0) { cx = 0; }
-        else { cx += (stars[i-1].R + stars[i].R) * 1.4; }
+        else { cx += (displayR(stars[i-1]) + displayR(stars[i])) * 1.4; }
         worldX.push(cx);
       }
     }
@@ -26325,8 +26329,8 @@ function initCh15Vis() {
       const i = Math.min(Math.floor(tRev), n - 2);
       const j = i + 1;
       const frac = tRev - i;
-      const scaleI = targetPx / stars[i].R;
-      const scaleJ = targetPx / stars[j].R;
+      const scaleI = targetPx / displayR(stars[i]);
+      const scaleJ = targetPx / displayR(stars[j]);
       const scale = Math.exp(Math.log(scaleI) + frac * (Math.log(scaleJ) - Math.log(scaleI)));
       const camX = worldX[i] + frac * (worldX[j] - worldX[i]);
       return { scale, camX };
@@ -26448,12 +26452,13 @@ function initCh15Vis() {
       ctxS.restore();
     }
 
-    // --- Draw Earth ---
-    // --- Planet images ---
+    // --- Planet & black hole images ---
     const earthImg = new Image(); earthImg.src = 'images/earth_transparent.png';
     const jupiterImg = new Image(); jupiterImg.src = 'images/jupiter_transparent.png';
-    let planetsLoaded = 0;
-    earthImg.onload = jupiterImg.onload = () => { if (++planetsLoaded >= 2) drawSizes(); };
+    const sgrAImg = new Image(); sgrAImg.src = 'images/sgr_a_star_eht.jpg';
+    let imgLoaded = 0;
+    const totalImgs = 3;
+    earthImg.onload = jupiterImg.onload = sgrAImg.onload = () => { if (++imgLoaded >= totalImgs) drawSizes(); };
 
     function drawPlanetImg(img, sx, sy, rPx) {
       const r = Math.max(rPx, 1.2);
@@ -26488,7 +26493,7 @@ function initCh15Vis() {
 
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
-        const rPx = s.R * scale;
+        const rPx = displayR(s) * scale;
         const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
 
         if (rPx > HS * 2) {
@@ -26516,6 +26521,7 @@ function initCh15Vis() {
         const isHover = hoverStar === v.i;
         if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
         else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
+        else if (v.s.cat === 'Black Hole') drawPlanetImg(sgrAImg, v.sx, v.sy, v.rPx);
         else drawStar(v.s, v.sx, v.sy, v.rPx, isHover);
 
         // Labels above the star
@@ -26538,15 +26544,15 @@ function initCh15Vis() {
           const labelBelow = v.sy + v.rPx + 20;
           if (labelBelow < HS - 10) {
             const sizeFont = '12px Inter, system-ui, sans-serif';
-            ctxS.font = sizeFont;
-            const sizeText = v.s.R + ' R';
-            const sunText = '\u2609';
-            const sunFont = '9px Inter, system-ui, sans-serif';
-            const sizeW = ctxS.measureText(sizeText).width;
-            ctxS.font = sunFont;
-            const sunW = ctxS.measureText(sunText).width;
-            const totalW = sizeW + sunW + 2;
-            const pillW = totalW + 16;
+            ctxS.font = sizeFont; ctxS.textAlign = 'center';
+            // Build label text
+            let pillLabel;
+            if (v.s.shadow) {
+              pillLabel = 'Shadow \u2248 ' + v.s.shadow + ' R\u2609  |  R\u209b = ' + v.s.R + ' R\u2609';
+            } else {
+              pillLabel = v.s.R + ' R\u2609';
+            }
+            const pillW = ctxS.measureText(pillLabel).width + 16;
             const pillH = 20;
             const pillX = v.sx - pillW / 2;
             const pillY = labelBelow - 14;
@@ -26554,14 +26560,8 @@ function initCh15Vis() {
             ctxS.beginPath(); ctxS.roundRect(pillX, pillY, pillW, pillH, 4); ctxS.fill();
             ctxS.strokeStyle = 'rgba(255,255,255,0.15)'; ctxS.lineWidth = 1;
             ctxS.beginPath(); ctxS.roundRect(pillX, pillY, pillW, pillH, 4); ctxS.stroke();
-            // Draw R_sun with subscript
-            const textLeft = v.sx - totalW / 2;
             ctxS.fillStyle = 'rgba(255,255,200,0.95)'; ctxS.font = sizeFont;
-            ctxS.textAlign = 'left';
-            ctxS.fillText(sizeText, textLeft, labelBelow);
-            ctxS.font = sunFont;
-            ctxS.fillText(sunText, textLeft + sizeW + 1, labelBelow + 2);
-            ctxS.textAlign = 'center';
+            ctxS.fillText(pillLabel, v.sx, labelBelow);
           }
         }
       }
@@ -26648,7 +26648,7 @@ function initCh15Vis() {
       const { scale, camX } = getCamera(z);
       let closest = -1, closestDist = Infinity;
       for (let i = 0; i < stars.length; i++) {
-        const rPx = stars[i].R * scale;
+        const rPx = displayR(stars[i]) * scale;
         if (rPx < 0.8) continue;
         const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
         const d = Math.hypot(mx - sx, my - sy);
@@ -26659,7 +26659,7 @@ function initCh15Vis() {
       }
       // Also check horizon stars — hit if mouse is within the arc area
       for (let i = 0; i < stars.length; i++) {
-        const rPx = stars[i].R * scale;
+        const rPx = displayR(stars[i]) * scale;
         if (rPx <= HS * 2) continue;
         const [sx, sy] = worldToScreen(worldX[i], worldY, camX, scale);
         const d = Math.hypot(mx - sx, my - sy);
