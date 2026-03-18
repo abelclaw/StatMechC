@@ -24,7 +24,7 @@
 <p>In quantum mechanics, you (hopefully) solved the Schrodinger equation to find the energy states of the hydrogen atom. These satisfy</p>
 
 <div class="equation">
-$$\left[-\frac{1}{2m}\nabla^2 - \frac{e^2}{4\pi\epsilon_0 r}\right]\psi_{nm\ell\sigma} = \epsilon_n\,\psi_{nm\ell\sigma}$$
+$$\left[-\frac{\hbar^2}{2m}\nabla^2 - \frac{e^2}{4\pi\epsilon_0 r}\right]\psi_{n\ell m\sigma} = \epsilon_n\,\psi_{n\ell m\sigma}$$
 </div>
 
 <p>The eigenfunctions are separable: $\psi_{n\ell m\sigma} = R_{n\ell}(r)Y_\ell^m(\theta, \varphi)$ with $R(r)$ given by Laguerre polynomials and $Y_\ell^m(\theta, \varphi)$ are spherical harmonics. The energy levels depend only on the principle quantum number $n \geq 1$:</p>
@@ -33,7 +33,7 @@ $$\left[-\frac{1}{2m}\nabla^2 - \frac{e^2}{4\pi\epsilon_0 r}\right]\psi_{nm\ell\
 $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 </div>
 
-<p>where $\text{Ry} = \frac{m_e e^4}{8h^2\epsilon_0^2} = 13.6\;\text{eV}$ is the <span class="tooltip-trigger">Rydberg constant<span class="tooltip-content">The binding energy of the hydrogen atom ground state, $13.6\;\text{eV}$.</span></span>. The other quantum numbers are the angular momentum $\ell$ and the projection $m$ of angular momentum on the $z$ axis. $\ell$ is a whole number from 0 to $n - 1$ and $m = -\ell, -\ell + 1, \ldots, \ell$. Thus there are $n - 1$ values of $\ell$ for every $n$ and $2\ell + 1$ values of $m$ for every $\ell$. The final quantum number is the spin $\sigma = \pm \frac{1}{2}$. The energy levels of hydrogen don't depend on $\ell$, $m$ or $\sigma$, only on $n$.</p>
+<p>where $\text{Ry} = \frac{m_e e^4}{8h^2\epsilon_0^2} = 13.6\;\text{eV}$ is the <span class="tooltip-trigger">Rydberg constant<span class="tooltip-content">The binding energy of the hydrogen atom ground state, $13.6\;\text{eV}$.</span></span>. The other quantum numbers are the angular momentum $\ell$ and the projection $m$ of angular momentum on the $z$ axis. $\ell$ is a whole number from 0 to $n - 1$ and $m = -\ell, -\ell + 1, \ldots, \ell$. Thus there are $n$ values of $\ell$ for every $n$ and $2\ell + 1$ values of $m$ for every $\ell$. The final quantum number is the spin $\sigma = \pm \frac{1}{2}$. The energy levels of hydrogen don't depend on $\ell$, $m$ or $\sigma$, only on $n$.</p>
 
 <p>The quantum number $\ell$ gives the shape of the orbital, and $m$ its orientation. We associate letters to $\ell$ values: $\ell = 0$ is the letter $s$, $\ell = 1$ is the letter $p$, $\ell = 2$ is the letter $d$, $\ell = 3$ is the letter $f$. (By the way, these letters originated from properties of associated spectral lines: sharp, principal, diffuse and fundamental.) The $s$ orbitals are spherically symmetric. There is only one $s$ orbital for each $n$ since $2\ell + 1 = 1$ when $\ell = 0$. The $p$ orbitals have two lobes, one with $\psi < 0$ and one with $\psi > 0$. There are three $p$ orbitals for each $n$ since $2\ell + 1 = 3$ when $\ell = 1$. The three $p$ orbitals have different orientations, with the lobes pointing in the $x$, $y$ or $z$ direction. There are five $d$ orbitals and seven $f$ orbitals.</p>
 
@@ -53,13 +53,13 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p class="vis-caption">The distance from the origin at each angle gives $|Y_\ell^m|$, with color denoting the sign (blue positive, red negative).</p>
 </div>
 
-<p>The radial wavefunction is determined mostly by the principal quantum number $n$. For $n = 1$, $R_{10}(r) \sim \exp\left(-\frac{r}{a_0}\right)$ with $a_0 = \frac{\hbar}{m_e c} = 5 \times 10^{-11}\;\text{m}$ the <span class="tooltip-trigger">Bohr radius<span class="tooltip-content">The characteristic size of the hydrogen atom, $a_0 = 5 \times 10^{-11}\;\text{m}$.</span></span>. Thus the size of the hydrogen atom itself is around $a_0$. With $n = 2$, $R_{20}(r) \sim \left(2 - \frac{r}{a_0}\right)\exp\left(-\frac{r}{2a_0}\right)$. So the $n = 2$ wavefunction also dies exponentially, but has a node at $r = 2a_0$ after which it flips sign. In general, the radial dependence looks like $R_{n\ell}(r) \sim \exp\left(-\frac{r}{na_0}\right)$. So for bigger $n$ the orbitals get bigger and bigger, with the atomic radius scaling as $\langle r \rangle \sim na_0$.</p>
+<p>The radial wavefunction is determined mostly by the principal quantum number $n$. For $n = 1$, $R_{10}(r) \sim \exp\left(-\frac{r}{a_0}\right)$ with $a_0 = \frac{4\pi\epsilon_0\hbar^2}{m_e e^2} = 5 \times 10^{-11}\;\text{m}$ the <span class="tooltip-trigger">Bohr radius<span class="tooltip-content">The characteristic size of the hydrogen atom, $a_0 = 5 \times 10^{-11}\;\text{m}$.</span></span>. Thus the size of the hydrogen atom itself is around $a_0$. With $n = 2$, $R_{20}(r) \sim \left(2 - \frac{r}{a_0}\right)\exp\left(-\frac{r}{2a_0}\right)$. So the $n = 2$ wavefunction also dies exponentially, but has a node at $r = 2a_0$ after which it flips sign. In general, the radial dependence looks like $R_{n\ell}(r) \sim \exp\left(-\frac{r}{na_0}\right)$. So for bigger $n$ the orbitals get bigger and bigger, with the atomic radius scaling as $\langle r \rangle \sim n^2 a_0$.</p>
 
 <p>The spin $\sigma$ doesn't affect the shape of the wavefunction. The only relevant fact is that since $\sigma$ has two possible values, there are two degenerate orbitals (same energy) at each $n\ell m$. Thus for $n = 1$ there are two possible states, $1s^1$ and $1s^2$. For $n = 2$ there are two $2s$ states and six $2p$ states. For $n = 3$ there are ten $3d$ states, and so on.</p>
 
 <h3 id="ch14-sec2-2">14.2.2 Hydrogenic atoms</h3>
 
-<p>That may be where you left off in quantum mechanics. What do the orbitals of other elements look like? If there is only one electron and the nucleus has charge $Z$ then we have the exact solution: the potential is $Z$ times as big and states for the electron have energies $\epsilon_n = -\text{Ry}\frac{Z^2}{n^2}$ and sizes $\langle r \rangle \sim \frac{n}{Z}a_0$. The challenge comes when there is more than one electron, since the previous electrons screen the nuclear charge, and can do so asymmetrically. The screening also breaks the degeneracy of the energy levels and distorts the wavefunctions away from the hydrogenic form.</p>
+<p>That may be where you left off in quantum mechanics. What do the orbitals of other elements look like? If there is only one electron and the nucleus has charge $Z$ then we have the exact solution: the potential is $Z$ times as big and states for the electron have energies $\epsilon_n = -\text{Ry}\frac{Z^2}{n^2}$ and sizes $\langle r \rangle \sim \frac{n^2}{Z}a_0$. The challenge comes when there is more than one electron, since the previous electrons screen the nuclear charge, and can do so asymmetrically. The screening also breaks the degeneracy of the energy levels and distorts the wavefunctions away from the hydrogenic form.</p>
 
 <p>To a first approximation, we can treat the orbitals of the additional electrons as similar to those of one-electron atoms. In fact, the orbital shapes for the electrons in multiple-electron atoms are often similar to those of one-electron atoms, even if the energies of those orbitals are very different. Thus we label the multi-electron atoms using the notation for hydrogen-atom orbitals. For example, we write boron as $1s^2 2s^2 2p^1$, meaning the $n = 1, \ell = 0$ orbital has two electrons in it (the $1s^2$ part), the $n = 2, \ell = 0$ orbital has two electrons, and the $n = 2, \ell = 1$ orbital has 1 electron.</p>
 
@@ -551,7 +551,7 @@ $$n_h^{\text{n-type}} = n_h^{\text{p-type}}\,e^{-\frac{\epsilon_{\text{junc}}}{k
 <p>This implies</p>
 
 <div class="equation">
-$$\epsilon_{\text{junc}} = k_B T\ln\frac{n_h^{\text{p-type}}\,n_e^{\text{n-type}}}{n_I^2} = 25\;\text{meV} \times \ln\frac{10^{15} \cdot 10^{16}}{10^{20}} = 0.61\;\text{eV}$$
+$$\epsilon_{\text{junc}} = k_B T\ln\frac{n_h^{\text{p-type}}\,n_e^{\text{n-type}}}{n_I^2} = 25\;\text{meV} \times \ln\frac{10^{15} \cdot 10^{16}}{2.25 \times 10^{20}} = 0.61\;\text{eV}$$
 <span class="eq-number">(8)</span>
 </div>
 
