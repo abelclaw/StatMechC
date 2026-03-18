@@ -25781,21 +25781,9 @@ function initCh15Vis() {
     }
 
     // --- Camera system ---
-    // Scale = pixels per solar radius. Logarithmic zoom.
-    // At zoom=0: UY Scuti radius ~ 35% of canvas height
-    const scaleMin = (HS * 0.35) / 1708;
-    // At zoom=100: Proxima Cen radius ~ 40px
-    const scaleMax = 40 / 0.15;
-
-    function getScale(z) {
-      return Math.exp(Math.log(scaleMin) + (z / 100) * (Math.log(scaleMax) - Math.log(scaleMin)));
-    }
-
     // Place stars along a horizontal line in world-space (units: R_sun).
-    // Each star's center x = cumulative spacing so they don't overlap at any zoom.
-    // We space them so centers are separated by sum of radii * 1.3 for breathing room.
     const worldX = [];
-    const worldY = 0; // all stars at y=0 in world space (center of canvas)
+    const worldY = 0;
     {
       let cx = 0;
       for (let i = 0; i < stars.length; i++) {
@@ -25805,12 +25793,21 @@ function initCh15Vis() {
       }
     }
 
-    // Camera: zoom slider directly controls both scale AND horizontal position.
-    // zoom=0 → centered on UY Scuti (leftmost), zoom=100 → centered on Proxima Cen (rightmost).
-    // Simple linear interpolation in world-space for smooth scrolling.
-    function getCameraX(z) {
-      const t = z / 100;
-      return worldX[0] * (1 - t) + worldX[worldX.length - 1] * t;
+    // Zoom maps through the star list: at each star's position the scale is set
+    // so that star has a comfortable pixel radius (~100px). Between stars we
+    // log-interpolate scale and linearly interpolate camera position.
+    const targetPx = 100;
+    function getCamera(z) {
+      const n = stars.length;
+      const t = (z / 100) * (n - 1); // 0 → n-1
+      const i = Math.min(Math.floor(t), n - 2);
+      const j = i + 1;
+      const frac = t - i;
+      const scaleI = targetPx / stars[i].R;
+      const scaleJ = targetPx / stars[j].R;
+      const scale = Math.exp(Math.log(scaleI) + frac * (Math.log(scaleJ) - Math.log(scaleI)));
+      const camX = worldX[i] + frac * (worldX[j] - worldX[i]);
+      return { scale, camX };
     }
 
     // --- Background star field (static random) ---
@@ -25949,9 +25946,8 @@ function initCh15Vis() {
 
     // --- Main draw ---
     function drawSizes() {
-      const z = parseFloat(zoomSlider?.value || 30);
-      const scale = getScale(z);
-      const camX = getCameraX(z);
+      const z = parseFloat(zoomSlider?.value || 0);
+      const { scale, camX } = getCamera(z);
 
       // Background
       ctxS.fillStyle = '#060a10';
@@ -26139,21 +26135,19 @@ function initCh15Vis() {
         ctxS.fillText(info, tx + 10, ty + 16);
       }
 
-      // Zoom label
+      // Zoom label — show focused star
       if (zoomLabel) {
-        if (scale >= 1) {
-          zoomLabel.textContent = '1 px = ' + (1 / scale).toFixed(3) + ' R\u2609';
-        } else {
-          zoomLabel.textContent = '1 px = ' + (1 / scale).toFixed(1) + ' R\u2609';
-        }
+        const n = stars.length;
+        const t = (z / 100) * (n - 1);
+        const focusIdx = Math.min(Math.round(t), n - 1);
+        zoomLabel.textContent = ' ' + stars[focusIdx].name;
       }
     }
 
     // --- Hit testing ---
     function hitTest(mx, my) {
-      const z = parseFloat(zoomSlider?.value || 30);
-      const scale = getScale(z);
-      const camX = getCameraX(z);
+      const z = parseFloat(zoomSlider?.value || 0);
+      const { scale, camX } = getCamera(z);
       let closest = -1, closestDist = Infinity;
       for (let i = 0; i < stars.length; i++) {
         const rPx = stars[i].R * scale;
@@ -26192,7 +26186,7 @@ function initCh15Vis() {
 
     cSizes.addEventListener('wheel', e => {
       e.preventDefault();
-      let z = parseFloat(zoomSlider?.value || 30);
+      let z = parseFloat(zoomSlider?.value || 0);
       z -= e.deltaY * 0.1;
       z = Math.max(0, Math.min(100, z));
       if (zoomSlider) zoomSlider.value = z;
