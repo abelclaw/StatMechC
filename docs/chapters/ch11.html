@@ -542,3 +542,195 @@ $$\eta = \frac{n_B}{n_\gamma} = 6 \times 10^{-10}$$
 <li>Both phonons and photons have $\mu = 0$ because particle number is not conserved.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch11-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>Why is the chemical potential $\mu = 0$ for both phonons and photons?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch11-rq1" value="a"> (a) They are massless particles, and massless particles always have $\mu = 0$.</label>
+  <label><input type="radio" name="ch11-rq1" value="b"> (b) They can be freely created and destroyed, so particle number is not conserved.</label>
+  <label><input type="radio" name="ch11-rq1" value="c"> (c) They are bosons, and all bosons have $\mu = 0$.</label>
+  <label><input type="radio" name="ch11-rq1" value="d"> (d) The grand partition function diverges unless $\mu = 0$.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Processes like atom → atom + phonon or atom → atom + photon are allowed, so equilibrium requires $\mu_\text{phonon} = \mu_\text{photon} = 0$. Massless bosons with conserved particle number (like in BEC) can have $\mu \neq 0$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>In the Debye model, the density of states is $g(\omega) = \frac{9N}{\omega_D^3}\omega^2$. What is the physical origin of the upper cutoff frequency $\omega_D$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch11-rq2" value="a"> (a) Sound waves cannot travel faster than the speed of light, so $\omega_D = c/a$ where $a$ is the lattice spacing.</label>
+  <label><input type="radio" name="ch11-rq2" value="b"> (b) There are only $3N$ normal modes in a solid of $N$ atoms, so the integral of $g(\omega)$ must equal $3N$.</label>
+  <label><input type="radio" name="ch11-rq2" value="c"> (c) The Bose-Einstein distribution diverges for frequencies above $\omega_D$.</label>
+  <label><input type="radio" name="ch11-rq2" value="d"> (d) Quantum mechanics forbids oscillations with energy greater than $k_B T_D$.</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="A solid with $N$ atoms has $3N$ degrees of freedom, hence $3N$ independent normal modes. The condition $\int_0^{\omega_D} g(\omega)\,d\omega = 3N$ fixes the Debye cutoff frequency $\omega_D$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>What resolved the ultraviolet catastrophe in classical blackbody radiation?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch11-rq3" value="a"> (a) Including relativistic corrections to the electromagnetic field energy.</label>
+  <label><input type="radio" name="ch11-rq3" value="b"> (b) Recognizing that electromagnetic waves are transverse, reducing the density of states by a factor of $2/3$.</label>
+  <label><input type="radio" name="ch11-rq3" value="c"> (c) Quantizing the energy of each mode as $\epsilon = \hbar\omega$, so the Bose-Einstein distribution exponentially suppresses high-frequency modes.</label>
+  <label><input type="radio" name="ch11-rq3" value="d"> (d) Imposing a maximum frequency cutoff analogous to the Debye frequency.</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="Classically, equipartition assigns $k_BT$ to every mode regardless of frequency, giving the divergent Rayleigh-Jeans spectrum $I \propto \omega^2 k_BT$. Quantization means high-frequency modes with $\hbar\omega \gg k_BT$ are exponentially suppressed by the Bose-Einstein factor $1/(e^{\beta\hbar\omega} - 1)$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>The density of states for photons differs from that for phonons (Debye model) in two ways. Which of the following correctly identifies both differences?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch11-rq4" value="a"> (a) Photons have 2 polarizations instead of 3, and $c_s$ is replaced by $c$.</label>
+  <label><input type="radio" name="ch11-rq4" value="b"> (b) Photons have 3 polarizations instead of 2, and there is no upper frequency cutoff.</label>
+  <label><input type="radio" name="ch11-rq4" value="c"> (c) Photons have 2 polarizations instead of 3, and the density of states scales as $\omega^3$ instead of $\omega^2$.</label>
+  <label><input type="radio" name="ch11-rq4" value="d"> (d) Photons have no frequency cutoff, and $c_s$ is replaced by $c$, but the number of polarizations is the same.</label>
+</div>
+<button class="check-answer-btn" data-answer="a" data-explanation="Phonons have 3 polarizations (1 longitudinal + 2 transverse) while photons have only 2 (both transverse), since the longitudinal polarization is forbidden by Maxwell's equations ($\vec{k} \cdot \vec{E}_0 = 0$). Additionally, the sound speed $c_s$ is replaced by the speed of light $c$. Both have $g(\omega) \propto \omega^2$. The lack of an upper cutoff is a third difference not listed in option (a), but the question asks about the density of states formula $g(\omega)$ itself.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>The Debye temperature of diamond is $T_D = 2230\,\text{K}$, while for lead it is $T_D = 105\,\text{K}$. At room temperature ($T = 300\,\text{K}$), which solid has a molar heat capacity closer to the classical Dulong-Petit value of $3R$, and why? Estimate $C_V$ for each using the appropriate limiting form of the Debye model.</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>Use Wien's displacement law (Eq. 65) to estimate the surface temperature of a star whose blackbody spectrum peaks at $\lambda_\text{peak} = 960\,\text{nm}$ (near-infrared). What color would this star appear to the human eye? Then compute the total radiative flux $\Phi$ from its surface using the Stefan-Boltzmann law.</p>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>A blackbody cavity of volume $V = 1\,\text{m}^3$ is at temperature $T = 3000\,\text{K}$. Using the results from Section 3.5, compute:</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>The total energy $E$ stored in the radiation field.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>The average number of photons $\langle N \rangle$ in the cavity.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The average energy per photon $E/N$, expressed in eV.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>In the Debye model, the energy at low temperature is $E \approx \frac{3\pi^4}{5}N\hbar\omega_D\left(\frac{T}{T_D}\right)^4$ (Eq. 22). Show that the entropy at low temperature is $S = \frac{4}{3}\frac{C_V}{1} = \frac{16\pi^4}{5}Nk_B\left(\frac{T}{T_D}\right)^3$, and verify that $S \to 0$ as $T \to 0$ in accord with the third law of thermodynamics. At what temperature does the entropy per atom reach $k_B$?</p>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. The Debye Model in Detail</div>
+<p>Consider a monatomic solid with $N$ atoms, Debye temperature $T_D$, and speed of sound $c_s$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Starting from the energy integral (Eq. 20), $E = \frac{9N\hbar}{\omega_D^3}\int_0^{\omega_D}\frac{\omega^3}{e^{\beta\hbar\omega} - 1}\,d\omega$, make the substitution $x = \beta\hbar\omega$ to write the energy as $E = 9Nk_BT\left(\frac{T}{T_D}\right)^3 \int_0^{T_D/T}\frac{x^3}{e^x - 1}\,dx$. Define the Debye function $f_D(y) = \frac{3}{y^3}\int_0^y \frac{x^3}{e^x - 1}\,dx$ and express the energy as $E = 3Nk_BT\,f_D(T_D/T)$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Show that in the high-temperature limit ($T \gg T_D$), $f_D(T_D/T) \to 1$ by expanding $e^x - 1 \approx x$ for small $x$. Verify this gives the Dulong-Petit result $E = 3Nk_BT$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Show that in the low-temperature limit ($T \ll T_D$), the upper limit of the integral can be sent to infinity, and use $\int_0^{\infty}\frac{x^3}{e^x - 1}\,dx = \frac{\pi^4}{15}$ to derive $C_V = \frac{12\pi^4}{5}Nk_B\left(\frac{T}{T_D}\right)^3$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The Einstein model treats all $3N$ oscillators as having the same frequency $\omega_E$. Show that the Einstein model heat capacity is $C_V = 3Nk_B\left(\frac{\theta_E}{T}\right)^2\frac{e^{\theta_E/T}}{(e^{\theta_E/T} - 1)^2}$ where $\theta_E = \hbar\omega_E/k_B$. How does $C_V$ behave as $T \to 0$? Compare with the Debye $T^3$ law and explain which is more physical at low temperatures.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Blackbody Thermodynamics</div>
+<p>In this problem you will derive several thermodynamic properties of blackbody radiation from the partition function.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Starting from $\ln\mathcal{Z} = \frac{\pi^2 V}{45 c^3 \hbar^3 \beta^3}$ (Eq. 69), compute the Helmholtz free energy $F = -k_BT\ln\mathcal{Z}$, the entropy $S = -\left(\frac{\partial F}{\partial T}\right)_V$, and the pressure $P = -\left(\frac{\partial F}{\partial V}\right)_T$. Verify that $E = F + TS = 3PV$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>A blackbody cavity undergoes a reversible adiabatic expansion from volume $V_1$ to $V_2$. Using the fact that $S$ is constant, find how $T$ depends on $V$ during the expansion. If the initial temperature is $T_1 = 6000\,\text{K}$ and the volume doubles, what is the final temperature?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute the isothermal compressibility $\kappa_T = -\frac{1}{V}\left(\frac{\partial V}{\partial P}\right)_T$ for a photon gas. Compare this with the compressibility of an ideal gas ($\kappa_T = 1/P$). Why is the photon gas result so different?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Show that the heat capacity at constant pressure $C_P$ is formally infinite for a photon gas, and explain physically why this is the case. (Hint: what happens to $V$ if you try to add heat at constant $P$?)</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. The Cosmic Microwave Background</div>
+<p>The cosmic microwave background (CMB) is a nearly perfect blackbody at $T_\text{CMB} = 2.725\,\text{K}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Compute the peak wavelength $\lambda_\text{peak}$ and peak frequency $\nu_\text{peak}$ of the CMB spectrum. In what part of the electromagnetic spectrum does the CMB peak?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Compute the energy density $E/V$, the photon number density $N/V$ (using Eq. 73 with $\zeta(3) = 1.202$), and the entropy density $S/V$ of the CMB. Express the energy density in $\text{eV/cm}^3$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The observable universe has a radius of approximately $4.4 \times 10^{26}\,\text{m}$. Estimate the total number of CMB photons and the total entropy of the CMB in the observable universe.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Due to the expansion of the universe, the CMB temperature decreases as $T \propto 1/a(t)$ where $a(t)$ is the scale factor. At the time of recombination (when the CMB photons were released), $T_\text{rec} \approx 3000\,\text{K}$. By what factor has the universe expanded since recombination? Show that the entropy of the CMB is conserved during this expansion, even though the temperature changes. (Hint: how does the volume scale with $a$?)</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Thermal Radiation and Planetary Temperatures</div>
+<p>This problem uses Stefan-Boltzmann law and blackbody radiation to estimate planetary surface temperatures.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>The Sun has surface temperature $T_\odot = 5780\,\text{K}$ and radius $R_\odot = 6.96 \times 10^8\,\text{m}$. A planet at distance $d$ from the Sun intercepts radiation over its cross-sectional area $\pi R_p^2$ and absorbs a fraction $(1 - \alpha)$, where $\alpha$ is the albedo (reflectivity). Assuming the planet re-radiates as a blackbody over its full surface area $4\pi R_p^2$, show that the equilibrium temperature is $T_p = T_\odot\sqrt{\frac{R_\odot}{2d}}(1 - \alpha)^{1/4}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Compute $T_p$ for Earth ($d = 1.50 \times 10^{11}\,\text{m}$, $\alpha = 0.30$) and Mars ($d = 2.28 \times 10^{11}\,\text{m}$, $\alpha = 0.25$). Compare with the actual average surface temperatures (288 K for Earth, 210 K for Mars). What explains the discrepancy for Earth?</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>A simple greenhouse model treats the atmosphere as a single layer that is transparent to visible light (from the Sun) but absorbs and re-emits all infrared radiation (from the ground). The atmospheric layer radiates equally upward and downward. Show that the ground temperature in this model is $T_\text{ground} = 2^{1/4}\,T_p$, where $T_p$ is the bare equilibrium temperature from part (a). Evaluate this for Earth.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The peak wavelength of the Sun's emission is in the visible range. What is the peak wavelength of Earth's thermal emission (at 288 K)? In what part of the electromagnetic spectrum does this fall? This difference in wavelengths is the physical basis for the greenhouse effect.</p>
+</div>
+</div>
+
+</div>
+</details>
