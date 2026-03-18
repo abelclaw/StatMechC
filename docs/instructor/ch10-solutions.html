@@ -1,0 +1,287 @@
+<div class="chapter-solutions" id="ch10-solutions">
+<h2>Chapter 10: Quantum Statistical Mechanics — Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Boson Exchange Phase</div>
+<p>Answer: (c) $\eta = +1$.</p>
+<p>From Eq. (3), $\psi(x_1, s_1, x_2, s_2) = \eta\,\psi(x_2, s_2, x_1, s_1)$ with $\eta^2 = 1$. Bosons have symmetric wavefunctions, so $\eta = +1$. Fermions have antisymmetric wavefunctions with $\eta = -1$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Grand Canonical Ensemble Factorization</div>
+<p>Answer: (b).</p>
+<p>The grand canonical ensemble allows both $N$ and $E$ to fluctuate, fixing $\mu$ and $T$ instead. For non-interacting particles, the constraint $\sum_i n_i = N$ (which couples all the states) is automatically handled by the sum over $N$ in $\mathcal{Z} = \sum_{N,E} e^{-\beta(E - N\mu)}$. This allows the grand partition function to factorize as $\mathcal{Z} = \prod_i \mathcal{Z}_i$ (Eq. 18), where each single-particle state $i$ is independent. In the canonical ensemble at fixed $N$, the states are coupled by the constraint and the partition function involves difficult constrained sums like Eq. (13).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Quantum Statistics Regime</div>
+<p>Answer: (b).</p>
+<p>Quantum statistics are important when the thermal de Broglie wavelength $\lambda = \sqrt{h^2/(2\pi m k_BT)}$ becomes comparable to or larger than the interparticle spacing $(V/N)^{1/3}$, i.e. $n\lambda^3 \gtrsim 1$ (Eq. 48). This is when states have a significant probability of being multiply occupied, making the distinction between Bose and Fermi statistics important. Option (a) is wrong because high temperature pushes toward the classical regime. Option (d) is wrong because $\mu \ll 0$ corresponds to the classical limit.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Boson Chemical Potential</div>
+<p>Answer: (c) $\mu < 0$.</p>
+<p>The Bose-Einstein distribution $\langle n_i \rangle = 1/(e^{\beta(\epsilon_i - \mu)} - 1)$ requires $\epsilon_i > \mu$ for all states to give positive occupation numbers. With $\epsilon_0 = 0$ as the ground state energy, this requires $\mu < 0$. If $\mu \geq 0$, the ground state occupation $\langle n_0 \rangle$ would be negative or divergent.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: Counting States</div>
+<p>Answer: (a) FD: 4, BE: 20, MB: $64/6$.</p>
+<p><strong>Fermi-Dirac:</strong> Each level holds at most 1 particle. We choose 3 levels out of 4: $\binom{4}{3} = 4$.</p>
+<p><strong>Bose-Einstein:</strong> We use stars and bars. Distributing $N = 3$ identical particles among $m = 4$ levels gives $\binom{m + N - 1}{N} = \binom{6}{3} = 20$ states.</p>
+<p><strong>Maxwell-Boltzmann:</strong> Each of 3 distinguishable particles can be in any of 4 levels: $n_\text{class} = 4^3 = 64$. With the $N!$ correction: $n_\text{MB} = 64/3! = 64/6 \approx 10.67$.</p>
+<p>Note that $n_\text{FD} < n_\text{MB} < n_\text{BE}$, as expected: Fermi exclusion reduces states, Bose bunching increases them, and the classical approximation lies between.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: Numerical Occupation Numbers</div>
+<p>Answer: (a) BE: 0.157, FD: 0.119, MB: 0.135.</p>
+<p>We have $\beta(\epsilon - \mu) = (0.3 - 0.1)/0.1 = 2$, so $e^{\beta(\epsilon-\mu)} = e^2 \approx 7.389$.</p>
+<p><strong>Bose-Einstein:</strong> $\langle n \rangle = \frac{1}{e^2 - 1} = \frac{1}{6.389} \approx 0.1565 \approx 0.157$.</p>
+<p><strong>Fermi-Dirac:</strong> $\langle n \rangle = \frac{1}{e^2 + 1} = \frac{1}{8.389} \approx 0.1192 \approx 0.119$.</p>
+<p><strong>Maxwell-Boltzmann:</strong> $\langle n \rangle = e^{-2} \approx 0.1353 \approx 0.135$.</p>
+<p>All three values are close because $\langle n \rangle \ll 1$, meaning we are near the classical regime where all statistics converge. The Bose value is slightly higher (bosons bunch), the Fermi value is slightly lower (fermions avoid each other), and the classical value is in between.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Composite Particles</div>
+<p>Answer: (b) A boson, because the total spin is integer.</p>
+<p>The spin-statistics theorem says that integer-spin particles are bosons and half-integer-spin particles are fermions. A composite particle's overall exchange phase is the product of the exchange phases of its constituents: $\eta_\text{total} = \prod_k \eta_k$. For $^4$He with 6 fermions (2p + 2n + 2e), $\eta_\text{total} = (-1)^6 = +1$, so it is a boson. More generally, composites with an even number of fermions are bosons; those with an odd number are fermions. This is why $^4$He (boson) becomes a superfluid via Bose-Einstein condensation, while $^3$He (fermion, with 5 constituents) has very different low-temperature behavior.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Fermi Occupation Variance</div>
+<p>Answer: (c) $f(1-f)$.</p>
+<p>For a single fermionic state, the occupation number $n$ can only be 0 or 1. Therefore $n^2 = n$ (since $0^2 = 0$ and $1^2 = 1$), which gives $\langle n^2 \rangle = \langle n \rangle = f$.</p>
+<p>The variance is:</p>
+$$\text{Var}(n) = \langle n^2 \rangle - \langle n \rangle^2 = f - f^2 = f(1-f)$$
+<p>Properties of this result:</p>
+<ul>
+<li>At $T = 0$: $f = 0$ or $f = 1$ for all states, so $\text{Var}(n) = 0$. The occupation is certain.</li>
+<li>At $\epsilon = \mu$: $f = 1/2$, giving $\text{Var}(n) = 1/4$. This is the maximum uncertainty.</li>
+<li>This is the variance of a Bernoulli random variable with probability $f$.</li>
+</ul>
+<p>For comparison, a bosonic state with occupation $\bar{n} = \langle n \rangle$ has $\text{Var}(n) = \bar{n}(1 + \bar{n})$, which is always larger than the classical (Poisson) result $\text{Var}(n) = \bar{n}$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Quantum Statistics of a Two-Level System</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>For bosons, each level can hold $n = 0, 1, 2, \ldots$ particles. Using $\mathcal{Z} = \prod_i \mathcal{Z}_i$ with the Bose single-state partition function (Eq. 24):</p>
+$$\mathcal{Z}_\text{BE} = \mathcal{Z}_1 \cdot \mathcal{Z}_2 = \frac{1}{1 - e^{\beta\mu}} \cdot \frac{1}{1 - e^{-\beta(\epsilon - \mu)}}$$
+<p>where we used $\epsilon_1 = 0$ and $\epsilon_2 = \epsilon$. Convergence requires $\mu < 0$ (since $\epsilon_1 = 0$) and $\mu < \epsilon$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>For fermions, each level holds $n = 0$ or $1$. Using Eq. (28):</p>
+$$\mathcal{Z}_\text{FD} = \mathcal{Z}_1 \cdot \mathcal{Z}_2 = (1 + e^{\beta\mu})(1 + e^{-\beta(\epsilon - \mu)})$$
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Using the occupation numbers from Eqs. (27) and (31):</p>
+<p><strong>Bose:</strong></p>
+$$\langle N \rangle_\text{BE} = \frac{1}{e^{-\beta\mu} - 1} + \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$$
+
+<p><strong>Fermi:</strong></p>
+$$\langle N \rangle_\text{FD} = \frac{1}{e^{-\beta\mu} + 1} + \frac{1}{e^{\beta(\epsilon - \mu)} + 1}$$
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>With $\mu = -\epsilon/2$, we have $-\beta\mu = \beta\epsilon/2$ and $\beta(\epsilon - \mu) = 3\beta\epsilon/2$. In the limit $\beta\epsilon \to \infty$:</p>
+<p><strong>Bose:</strong></p>
+$$\langle N \rangle_\text{BE} = \frac{1}{e^{\beta\epsilon/2} - 1} + \frac{1}{e^{3\beta\epsilon/2} - 1} \to 0 + 0 = 0$$
+<p>Both terms vanish exponentially as $\beta\epsilon \to \infty$.</p>
+
+<p><strong>Fermi:</strong></p>
+$$\langle N \rangle_\text{FD} = \frac{1}{e^{\beta\epsilon/2} + 1} + \frac{1}{e^{3\beta\epsilon/2} + 1} \to 0 + 0 = 0$$
+<p>Both terms also vanish exponentially.</p>
+
+<p>Both go to zero because at low temperature with $\mu < 0$, there is not enough energy (from the reservoir) to populate either level. However, the approach to zero differs. To leading order:</p>
+$$\langle N \rangle_\text{BE} \approx e^{-\beta\epsilon/2} + e^{-3\beta\epsilon/2} \approx e^{-\beta\epsilon/2}$$
+$$\langle N \rangle_\text{FD} \approx e^{-\beta\epsilon/2} - e^{-\beta\epsilon} + e^{-3\beta\epsilon/2} \approx e^{-\beta\epsilon/2}$$
+<p>To leading order they agree. The difference appears at next order: the Bose gas has $\langle N \rangle$ slightly larger because bosons can bunch into the ground state (multiple occupancy enhances the occupation), while the Fermi gas has $\langle N \rangle$ slightly smaller due to the exclusion principle.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: Classical Limit of Quantum Gases</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The general occupation number is (Eq. 43):</p>
+$$\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} + c}$$
+<p>where $c = -1$ (BE), $c = 0$ (MB), $c = +1$ (FD). When $e^{\beta(\epsilon_i - \mu)} \gg 1$, the $c$ in the denominator is negligible:</p>
+$$\langle n_i \rangle = \frac{1}{e^{\beta(\epsilon_i - \mu)} + c} \approx \frac{1}{e^{\beta(\epsilon_i - \mu)}} = e^{-\beta(\epsilon_i - \mu)}$$
+<p>This is the Maxwell-Boltzmann result (Eq. 42).</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>Let $x = e^{-\beta(\epsilon_i - \mu)} \ll 1$. Then $e^{\beta(\epsilon_i - \mu)} = 1/x$.</p>
+<p><strong>Bose-Einstein:</strong></p>
+$$\langle n_i \rangle = \frac{1}{1/x - 1} = \frac{x}{1 - x} = x(1 + x + x^2 + \cdots) \approx x + x^2$$
+
+<p><strong>Fermi-Dirac:</strong></p>
+$$\langle n_i \rangle = \frac{1}{1/x + 1} = \frac{x}{1 + x} = x(1 - x + x^2 - \cdots) \approx x - x^2$$
+
+<p>So $\langle n_i \rangle \approx x \mp x^2$ where $-$ for BE and $+$ for FD (note: the correction has opposite signs). More explicitly:</p>
+$$\langle n_i \rangle_\text{BE} \approx x + x^2 > x = \langle n_i \rangle_\text{MB}$$
+$$\langle n_i \rangle_\text{FD} \approx x - x^2 < x = \langle n_i \rangle_\text{MB}$$
+
+<p><strong>Physical interpretation:</strong> Bosons exhibit bunching &mdash; the tendency for identical bosons to occupy the same state is enhanced relative to classical particles. This is because the symmetric wavefunction has constructive interference when particles are in the same state. Fermions exhibit anti-bunching due to the Pauli exclusion principle, which forbids double occupancy and suppresses the occupation below the classical value.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>The condition $n\lambda^3 \sim 1$ with $\lambda = \sqrt{h^2/(2\pi m k_BT)}$ gives:</p>
+$$n\lambda^3 = n\left(\frac{h^2}{2\pi m k_BT}\right)^{3/2} = 1$$
+
+<p>For an ideal gas at pressure $P$, $n = N/V = P/(k_BT)$, so:</p>
+$$\frac{P}{k_BT}\left(\frac{h^2}{2\pi m k_BT}\right)^{3/2} = 1$$
+
+<p>Solving for $T$:</p>
+$$T^{5/2} = \frac{P}{k_B}\left(\frac{h^2}{2\pi m k_B}\right)^{3/2}$$
+
+<p>Plugging in $P = 1.013 \times 10^5\,\text{Pa}$, $m = 6.64 \times 10^{-27}\,\text{kg}$, $k_B = 1.381 \times 10^{-23}\,\text{J/K}$, $h = 6.626 \times 10^{-34}\,\text{J}\cdot\text{s}$:</p>
+$$\frac{h^2}{2\pi m k_B} = \frac{(6.626 \times 10^{-34})^2}{2\pi (6.64 \times 10^{-27})(1.381 \times 10^{-23})} = 7.63 \times 10^{-19}\,\text{m}^2\cdot\text{K}$$
+
+$$T^{5/2} = \frac{1.013 \times 10^5}{1.381 \times 10^{-23}} \times (7.63 \times 10^{-19})^{3/2} = 7.33 \times 10^{27} \times 6.67 \times 10^{-28} = 4.89\,\text{K}^{5/2}$$
+
+$$T \approx (4.89)^{2/5} \approx 2.0\,\text{K}$$
+
+<p>This estimate of $\sim 2\,\text{K}$ is remarkably close to the actual superfluid transition temperature $T_\lambda = 2.17\,\text{K}$. The agreement is somewhat fortuitous since $^4$He at these temperatures is a liquid (not an ideal gas), but the estimate captures the right order of magnitude because the transition is fundamentally about $\lambda \sim n^{-1/3}$.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: Grand Thermodynamic Potential and Pressure</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The grand potential is $\Phi = -k_BT \ln \mathcal{Z} = -k_BT \sum_i \ln \mathcal{Z}_i$.</p>
+
+<p><strong>Bose-Einstein:</strong> Using $\mathcal{Z}_i = (1 - e^{-\beta(\epsilon_i - \mu)})^{-1}$ from Eq. (50):</p>
+$$\Phi_\text{BE} = -k_BT \sum_i \ln\frac{1}{1 - e^{-\beta(\epsilon_i - \mu)}} = k_BT \sum_i \ln\!\left(1 - e^{-\beta(\epsilon_i - \mu)}\right)$$
+<p>This matches the formula with upper signs (minus): $\Phi = -k_BT \sum_i \ln(1 - e^{-\beta(\epsilon_i-\mu)})$ with the convention that $-\ln(1 - x) = +|\ln(1-x)|$ since $\ln(1-x) < 0$. More precisely, $\Phi = +k_BT\sum_i \ln(1 - e^{-\beta(\epsilon_i - \mu)})$.</p>
+
+<p><strong>Fermi-Dirac:</strong> Using $\mathcal{Z}_i = 1 + e^{-\beta(\epsilon_i - \mu)}$ from Eq. (51):</p>
+$$\Phi_\text{FD} = -k_BT \sum_i \ln\!\left(1 + e^{-\beta(\epsilon_i - \mu)}\right)$$
+
+<p>Both can be written as $\Phi = \mp k_BT \sum_i \ln(1 \mp e^{-\beta(\epsilon_i - \mu)})$ with upper signs for bosons, lower signs for fermions.</p>
+
+<p><strong>Maxwell-Boltzmann:</strong> Using $\mathcal{Z}_i = \exp[e^{-\beta(\epsilon_i-\mu)}]$ from Eq. (52):</p>
+$$\Phi_\text{MB} = -k_BT \sum_i e^{-\beta(\epsilon_i - \mu)}$$
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p><strong>Bose-Einstein:</strong></p>
+$$-\frac{\partial \Phi_\text{BE}}{\partial \mu} = -k_BT \sum_i \frac{-\beta e^{-\beta(\epsilon_i - \mu)}}{1 - e^{-\beta(\epsilon_i - \mu)}} \cdot (-1) \cdot (-1)$$
+<p>Let's compute carefully:</p>
+$$-\frac{\partial}{\partial \mu}\left[k_BT \sum_i \ln(1 - e^{-\beta(\epsilon_i - \mu)})\right] = -k_BT \sum_i \frac{\beta e^{-\beta(\epsilon_i-\mu)} \cdot (-1)}{1 - e^{-\beta(\epsilon_i-\mu)}}$$
+<p>The derivative of $e^{-\beta(\epsilon_i - \mu)}$ with respect to $\mu$ is $\beta e^{-\beta(\epsilon_i - \mu)}$. So:</p>
+$$= -k_BT \sum_i \frac{-\beta e^{-\beta(\epsilon_i-\mu)}}{1 - e^{-\beta(\epsilon_i-\mu)}} \cdot (-1)$$
+<p>Actually, let me redo this cleanly. $\Phi_\text{BE} = k_BT \sum_i \ln(1 - e^{-\beta(\epsilon_i - \mu)})$.</p>
+$$\langle N \rangle = -\frac{\partial \Phi}{\partial \mu} = -k_BT \sum_i \frac{1}{1 - e^{-\beta(\epsilon_i-\mu)}} \cdot \frac{\partial}{\partial \mu}(1 - e^{-\beta(\epsilon_i-\mu)})$$
+$$= -k_BT \sum_i \frac{-(-\beta)e^{-\beta(\epsilon_i-\mu)}}{1 - e^{-\beta(\epsilon_i-\mu)}} = k_BT\beta \sum_i \frac{e^{-\beta(\epsilon_i-\mu)}}{1 - e^{-\beta(\epsilon_i-\mu)}}$$
+$$= \sum_i \frac{1}{e^{\beta(\epsilon_i-\mu)} - 1}$$
+<p>which is $\sum_i \langle n_i \rangle_\text{BE}$, confirming Eq. (53).</p>
+
+<p><strong>Fermi-Dirac:</strong> $\Phi_\text{FD} = -k_BT \sum_i \ln(1 + e^{-\beta(\epsilon_i-\mu)})$.</p>
+$$\langle N \rangle = -\frac{\partial \Phi}{\partial \mu} = k_BT \sum_i \frac{\beta e^{-\beta(\epsilon_i-\mu)}}{1 + e^{-\beta(\epsilon_i-\mu)}} = \sum_i \frac{1}{e^{\beta(\epsilon_i-\mu)} + 1}$$
+<p>confirming Eq. (54).</p>
+
+<p><strong>Maxwell-Boltzmann:</strong> $\Phi_\text{MB} = -k_BT \sum_i e^{-\beta(\epsilon_i-\mu)}$.</p>
+$$\langle N \rangle = -\frac{\partial \Phi}{\partial \mu} = k_BT \sum_i \beta e^{-\beta(\epsilon_i-\mu)} = \sum_i e^{-\beta(\epsilon_i-\mu)}$$
+<p>confirming Eq. (55).</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>We need to show $\langle E \rangle = -\frac{\partial \ln \mathcal{Z}}{\partial \beta}\Big|_{\beta\mu}$.</p>
+
+<p>For Bose-Einstein: $\ln \mathcal{Z} = -\sum_i \ln(1 - e^{-\beta(\epsilon_i - \mu)})$. Take the derivative with respect to $\beta$ holding $\beta\mu$ fixed. Since $\beta\mu$ is held fixed, $\beta\epsilon_i - \beta\mu$ changes only through $\beta\epsilon_i$:</p>
+$$-\frac{\partial \ln \mathcal{Z}}{\partial \beta}\bigg|_{\beta\mu} = -\sum_i \frac{-\epsilon_i e^{-\beta(\epsilon_i - \mu)}}{1 - e^{-\beta(\epsilon_i - \mu)}} \cdot (-1) = \sum_i \frac{\epsilon_i e^{-\beta(\epsilon_i-\mu)}}{1 - e^{-\beta(\epsilon_i-\mu)}} \cdot (-1)$$
+
+<p>Wait, let me be more careful. $\ln \mathcal{Z}_\text{BE} = -\sum_i \ln(1 - e^{-\beta\epsilon_i + \beta\mu})$. Holding $\alpha = \beta\mu$ fixed and differentiating with respect to $\beta$:</p>
+$$\frac{\partial}{\partial\beta}\bigg|_\alpha [-\ln(1 - e^{-\beta\epsilon_i + \alpha})] = \frac{\epsilon_i e^{-\beta\epsilon_i + \alpha}}{1 - e^{-\beta\epsilon_i + \alpha}} = \frac{\epsilon_i}{e^{\beta(\epsilon_i - \mu)} - 1} = \epsilon_i \langle n_i \rangle_\text{BE}$$
+
+<p>Therefore:</p>
+$$-\frac{\partial \ln \mathcal{Z}}{\partial \beta}\bigg|_{\beta\mu} = -\sum_i (-\epsilon_i \langle n_i \rangle) = \sum_i \epsilon_i \langle n_i \rangle = \langle E \rangle$$
+
+<p>Wait, I need to track signs. $\frac{\partial \ln\mathcal{Z}}{\partial\beta}\big|_{\beta\mu} = \sum_i \frac{\partial}{\partial\beta}[-\ln(1 - e^{-\beta\epsilon_i + \alpha})]$. The argument of the log is $1 - e^{-\beta\epsilon_i + \alpha}$, and $\frac{\partial}{\partial\beta}(-\beta\epsilon_i + \alpha) = -\epsilon_i$ (since $\alpha$ is held fixed). So:</p>
+
+$$\frac{\partial}{\partial\beta}[-\ln(1 - e^{-\beta\epsilon_i + \alpha})] = -\frac{-(-\epsilon_i)e^{-\beta\epsilon_i + \alpha}}{1 - e^{-\beta\epsilon_i+\alpha}} = -\frac{\epsilon_i e^{-\beta(\epsilon_i-\mu)}}{1 - e^{-\beta(\epsilon_i-\mu)}} = -\epsilon_i \langle n_i \rangle_\text{BE}$$
+
+<p>Thus $\frac{\partial \ln\mathcal{Z}}{\partial\beta}\big|_{\beta\mu} = -\sum_i \epsilon_i \langle n_i \rangle = -\langle E \rangle$, giving $\langle E \rangle = -\frac{\partial \ln\mathcal{Z}}{\partial\beta}\big|_{\beta\mu}$.</p>
+
+<p>The same calculation works for Fermi-Dirac (replace $-1 \to +1$ in denominator) and Maxwell-Boltzmann (where $\ln\mathcal{Z} = \sum_i e^{-\beta(\epsilon_i-\mu)}$ and $\frac{\partial}{\partial\beta}\big|_{\beta\mu} e^{-\beta\epsilon_i+\alpha} = -\epsilon_i e^{-\beta(\epsilon_i-\mu)}$). In all cases, $\langle E \rangle = -\frac{\partial \ln\mathcal{Z}}{\partial\beta}\big|_{\beta\mu}$.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>Using $\Phi = -PV$ and the result from part (a) for bosons:</p>
+$$PV = -\Phi_\text{BE} = k_BT \sum_i \left[-\ln\!\left(1 - e^{-\beta(\epsilon_i - \mu)}\right)\right] = -k_BT \sum_i \ln\!\left(1 - e^{-\beta(\epsilon_i - \mu)}\right)$$
+
+<p>In the classical limit, $e^{-\beta(\epsilon_i - \mu)} \ll 1$ for all $i$, so $\ln(1 - x) \approx -x$ for small $x$:</p>
+$$PV \approx -k_BT \sum_i \left[-e^{-\beta(\epsilon_i-\mu)}\right] = k_BT \sum_i e^{-\beta(\epsilon_i-\mu)} = k_BT \sum_i \langle n_i \rangle_\text{MB} = k_BT \langle N \rangle$$
+
+<p>This is the ideal gas law $PV = Nk_BT$.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Quantum Statistics on a Lattice</div>
+
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>For fermions with $\epsilon = 0$, each site has the single-state partition function $\mathcal{Z}_i = 1 + e^{-\beta(0 - \mu)} = 1 + e^{\beta\mu}$. Since the $M$ sites are independent:</p>
+$$\mathcal{Z} = \prod_{i=1}^{M} (1 + e^{\beta\mu}) = (1 + e^{\beta\mu})^M$$
+
+<p>The average particle number is:</p>
+$$\langle N \rangle = \frac{1}{\beta}\frac{\partial \ln\mathcal{Z}}{\partial\mu} = \frac{M}{\beta} \cdot \frac{\beta e^{\beta\mu}}{1 + e^{\beta\mu}} = \frac{Me^{\beta\mu}}{1 + e^{\beta\mu}} = \frac{M}{e^{-\beta\mu} + 1}$$
+
+<p>This is $M$ times the Fermi function $f(0)$ evaluated at $\epsilon = 0$, as expected.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>For bosons with $\epsilon = 0$, each site has $\mathcal{Z}_i = \sum_{n=0}^{\infty} e^{n\beta\mu} = \frac{1}{1 - e^{\beta\mu}}$. This geometric series converges only if $e^{\beta\mu} < 1$, i.e. $\mu < 0$ (since $\beta > 0$). Then:</p>
+$$\mathcal{Z} = (1 - e^{\beta\mu})^{-M}$$
+
+$$\langle N \rangle = \frac{1}{\beta}\frac{\partial \ln\mathcal{Z}}{\partial\mu} = \frac{M}{\beta} \cdot \frac{\beta e^{\beta\mu}}{1 - e^{\beta\mu}} = \frac{Me^{\beta\mu}}{1 - e^{\beta\mu}} = \frac{M}{e^{-\beta\mu} - 1}$$
+
+<p>This is $M$ times the Bose-Einstein distribution at $\epsilon = 0$. Note that $\langle N \rangle \to \infty$ as $\mu \to 0^-$, confirming that $\mu < 0$ is required and that $\mu \to 0$ corresponds to a macroscopic accumulation of particles.</p>
+</div>
+
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>For Maxwell-Boltzmann statistics, the single-state partition function is $\mathcal{Z}_i = \exp(e^{-\beta(0-\mu)}) = \exp(e^{\beta\mu})$. So:</p>
+$$\mathcal{Z} = \exp(Me^{\beta\mu}) = e^{Me^{\beta\mu}}$$
+
+$$\langle N \rangle = \frac{1}{\beta}\frac{\partial \ln\mathcal{Z}}{\partial \mu} = \frac{1}{\beta} \cdot M\beta e^{\beta\mu} = Me^{\beta\mu}$$
+</div>
+
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>Let $z = e^{\beta\mu}$. In the limit $z \ll 1$ (i.e. $\mu \ll -k_BT$):</p>
+
+<p><strong>Fermi:</strong> $\langle N \rangle = \frac{Mz}{1+z} = Mz(1 - z + z^2 - \cdots) \approx Mz - Mz^2$</p>
+
+<p><strong>Bose:</strong> $\langle N \rangle = \frac{Mz}{1-z} = Mz(1 + z + z^2 + \cdots) \approx Mz + Mz^2$</p>
+
+<p><strong>Maxwell-Boltzmann:</strong> $\langle N \rangle = Mz$</p>
+
+<p>To leading order, all three give $\langle N \rangle \approx Mz = Me^{\beta\mu}$, confirming that they agree in the classical limit $z \ll 1$.</p>
+
+<p>The leading correction is $\pm Mz^2$: positive for bosons (more particles than classical, due to bunching) and negative for fermions (fewer particles than classical, due to exclusion). This is consistent with Q10(b): at fixed $\mu$, the bosonic occupation exceeds the classical value by $+x^2$ while the fermionic occupation falls below it by $-x^2$. Here $x = z = e^{\beta\mu}$ since $\epsilon = 0$.</p>
+</div>
+</div>
+
+</div>
