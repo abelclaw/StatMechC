@@ -23059,7 +23059,7 @@ function initCh14Vis() {
 
     var bbParts = [], bbNextId = 1, bbTool = 'WIRE', bbClick1 = null, bbHover = null;
     var bbNodeVolts = {}, bbCapVolts = {};
-    var bbShowCurrent = false, bbAnimT = 0;
+    var bbShowCurrent = true, bbAnimT = 0;
     var bbResValue = 1000, bbCapValue = 100e-6;
     var RES_VALUES = [220, 470, 1000, 4700, 10000, 47000, 100000];
     var CAP_VALUES = [1e-6, 10e-6, 47e-6, 100e-6, 470e-6];
@@ -23401,10 +23401,10 @@ function initCh14Vis() {
         }
       }
       bbCtx.fillStyle = '#888'; bbCtx.font = FONT_SM; bbCtx.textAlign = 'left';
-      bbCtx.fillText('Click placed R/C to change value. Click status bar to toggle current.', 10, bbH-8);
+      bbCtx.fillText('Click switches to toggle. Click resistors/capacitors to change value.', 10, bbH-8);
       bbCtx.textAlign = 'right';
       var tt = bbTool; if (bbTool === 'RESISTOR') tt += ' ('+fmtR(bbResValue)+')'; if (bbTool === 'CAPACITOR') tt += ' ('+fmtC(bbCapValue)+')';
-      bbCtx.fillText(tt + (bbShowCurrent ? ' | Current ON' : ''), bbW-10, bbH-8);
+      bbCtx.fillText(tt, bbW-10, bbH-8);
     }
 
     function bbGetPos(e) { var rect = cBB.getBoundingClientRect(); return { x: (e.clientX-rect.left)*(bbW/rect.width), y: (e.clientY-rect.top)*(bbH/rect.height) }; }
@@ -23413,13 +23413,21 @@ function initCh14Vis() {
     cBB.addEventListener('click', function(e) {
       var pos = bbGetPos(e), hole = bbFindHole(pos.x, pos.y);
       if (!hole) return;
-      if (bbTool !== 'DELETE') { for (var i = 0; i < bbParts.length; i++) { var p = bbParts[i]; if (p.type === 'SWITCH') for (var h = 0; h < p.holes.length; h++) if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) { p.on = !p.on; bbRunSim(); return; } } }
-      if (bbTool !== 'DELETE' && !bbClick1) {
-        var pa = bbFindPartAt(pos.x, pos.y);
-        if (pa && pa.type === 'RESISTOR') { pa.value = RES_VALUES[(RES_VALUES.indexOf(pa.value)+1)%RES_VALUES.length]; bbRunSim(); return; }
-        if (pa && pa.type === 'CAPACITOR') { pa.value = CAP_VALUES[(CAP_VALUES.indexOf(pa.value)+1)%CAP_VALUES.length]; bbCapVolts[pa.id] = 0; bbRunSim(); return; }
+      var partAt = bbFindPartAt(pos.x, pos.y);
+      // Toggle switches by clicking anywhere on them (any tool except DELETE)
+      if (bbTool !== 'DELETE' && partAt && partAt.type === 'SWITCH') { partAt.on = !partAt.on; bbRunSim(); return; }
+      // Click resistors/capacitors to cycle values (any tool except DELETE, and not mid-placement)
+      if (bbTool !== 'DELETE' && !bbClick1 && partAt) {
+        if (partAt.type === 'RESISTOR') { partAt.value = RES_VALUES[(RES_VALUES.indexOf(partAt.value)+1)%RES_VALUES.length]; bbRunSim(); return; }
+        if (partAt.type === 'CAPACITOR') { partAt.value = CAP_VALUES[(CAP_VALUES.indexOf(partAt.value)+1)%CAP_VALUES.length]; bbCapVolts[partAt.id] = 0; bbRunSim(); return; }
       }
-      if (bbTool === 'DELETE') { for (var i = bbParts.length-1; i >= 0; i--) { var p = bbParts[i]; for (var h = 0; h < p.holes.length; h++) if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) { if (p.type === 'CAPACITOR') delete bbCapVolts[p.id]; bbParts.splice(i, 1); bbDeleteAndSim(); return; } } return; }
+      // DELETE: remove any component clicked on
+      if (bbTool === 'DELETE') {
+        if (partAt) { var idx = bbParts.indexOf(partAt); if (idx >= 0) { if (partAt.type === 'CAPACITOR') delete bbCapVolts[partAt.id]; bbParts.splice(idx, 1); bbDeleteAndSim(); return; } }
+        // Also try by hole match for components not found by center
+        for (var i = bbParts.length-1; i >= 0; i--) { var p = bbParts[i]; for (var h = 0; h < p.holes.length; h++) if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) { if (p.type === 'CAPACITOR') delete bbCapVolts[p.id]; bbParts.splice(i, 1); bbDeleteAndSim(); return; } }
+        return;
+      }
       if (bbTool === 'NPN' || bbTool === 'PNP') { if (hole.col+2 <= BB_COLS) { bbAddPart(bbTool, [{row:hole.row,col:hole.col},{row:hole.row,col:hole.col+1},{row:hole.row,col:hole.col+2}]); bbRunSim(); } return; }
       if (!bbClick1) { bbClick1 = hole; bbDraw(); return; }
       var h0 = bbClick1, h1 = hole; bbClick1 = null;
@@ -23448,7 +23456,7 @@ function initCh14Vis() {
     if (bbPaletteEl) bbPaletteEl.addEventListener('click', function(e) { var btn = e.target.closest('[data-part]'); if (!btn) return; bbPaletteEl.querySelectorAll('[data-part]').forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active'); bbTool = btn.dataset.part; bbClick1 = null; bbDraw(); });
     document.getElementById('bb-clear-btn')?.addEventListener('click', function() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbAnimRunning = false; bbDraw(); bbDesc('Empty breadboard. Select a part and click two holes to place it, or choose a preset.'); });
     var bbStatusEl = document.getElementById('bb-status');
-    if (bbStatusEl) { bbStatusEl.style.cursor = 'pointer'; bbStatusEl.addEventListener('click', function() { if (bbTool === 'RESISTOR') bbResValue = RES_VALUES[(RES_VALUES.indexOf(bbResValue)+1)%RES_VALUES.length]; else if (bbTool === 'CAPACITOR') bbCapValue = CAP_VALUES[(CAP_VALUES.indexOf(bbCapValue)+1)%CAP_VALUES.length]; else { bbShowCurrent = !bbShowCurrent; bbCheckAnim(); } bbDraw(); }); }
+    if (bbStatusEl) { bbStatusEl.style.cursor = 'pointer'; bbStatusEl.addEventListener('click', function() { if (bbTool === 'RESISTOR') bbResValue = RES_VALUES[(RES_VALUES.indexOf(bbResValue)+1)%RES_VALUES.length]; else if (bbTool === 'CAPACITOR') bbCapValue = CAP_VALUES[(CAP_VALUES.indexOf(bbCapValue)+1)%CAP_VALUES.length]; bbDraw(); }); }
 
     function bbClear() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbWireColorIdx = 0; bbAnimRunning = false; }
     function bbDesc(html) { var el = document.getElementById('bb-description'); if (el) el.innerHTML = html; }
