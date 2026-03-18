@@ -23500,6 +23500,18 @@ function initCh14Vis() {
     }
 
     // ---- NOT GATE: switch → base resistor → NPN → LED inverts ----
+    function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); bbDesc('<b>LED Circuit.</b> 9V battery \u2192 470\u03A9 resistor \u2192 LED \u2192 ground. The resistor limits current so the LED doesn\u2019t burn out. Click the resistor to change its value and see the effect.'); }
+    function bbPresetSwitch() {
+      bbClear(); bbShowCurrent = true;
+      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
+      bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:5},{row:'a',col:10}],{on:false});
+      bbAddPart('RESISTOR',[{row:'b',col:10},{row:'b',col:15}],{value:470});
+      bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]);
+      bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'});
+      bbRunSim(); bbDesc('<b>Switch Circuit.</b> Same as the LED circuit but with a switch. Click the switch to open/close it and turn the LED on/off.');
+    }
+
     function bbPresetNOT() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
@@ -23606,6 +23618,8 @@ function initCh14Vis() {
       bbRunSim(); bbDesc('<b>Emitter Follower.</b> The base is biased at ~4.5V by a voltage divider. The collector connects directly to VCC (no load resistor). The output is taken from the emitter, which follows the base voltage minus one V<sub>BE</sub> drop (0.7V). Hover over the base and emitter holes to compare: V<sub>emitter</sub> \u2248 V<sub>base</sub> \u2212 0.7V. This circuit is a buffer \u2014 it doesn\u2019t amplify voltage but can supply much more current than the input.');
     }
 
+    document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
+    document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
     document.getElementById('bb-preset-not')?.addEventListener('click', bbPresetNOT);
     document.getElementById('bb-preset-nand')?.addEventListener('click', bbPresetNAND);
     document.getElementById('bb-preset-darlington')?.addEventListener('click', bbPresetDarlington);
