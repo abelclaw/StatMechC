@@ -26266,13 +26266,13 @@ function initCh15Vis() {
 
     const stars = [
       {name:'Solar System',R:6450, T:0,    type:'to Neptune', cat:'Orbits', imgScale:1.11},
-      {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:44},
       {name:'Stephenson 2-18',R:2150,T:3200, type:'M6Ia',  cat:'Hypergiant'},
       {name:'WOH G64',    R:1540, T:3400, type:'M5I',    cat:'Hypergiant'},
       {name:'UY Scuti',   R:755,  T:3365, type:'M4Ia',   cat:'Hypergiant'},
       {name:'Betelgeuse', R:764,  T:3600, type:'M1Ia',   cat:'Supergiant'},
       {name:'Antares',    R:680,  T:3660, type:'M1Ib',   cat:'Supergiant'},
       {name:'Rigel',      R:79,   T:12100,type:'B8Ia',   cat:'Supergiant'},
+      {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:44},
       {name:'Aldebaran',  R:44,   T:3910, type:'K5III',  cat:'Giant'},
       {name:'Arcturus',   R:25,   T:4286, type:'K1III',  cat:'Giant'},
       {name:'Pollux',     R:9.1,  T:4666, type:'K0III',  cat:'Giant'},
