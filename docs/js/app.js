@@ -17776,44 +17776,9 @@ function initCh14Vis() {
   if (cOrb) {
     const { ctx: ctxOE, W: WOE, H: HOE } = setupCanvas(cOrb);
     const zSlider = document.getElementById('orbital-z');
+    const tooltipEl = document.getElementById('orbital-tooltip');
 
-    // Approximate orbital energies (in eV, negative) as function of Z
-    // Based on screened hydrogen model with empirical corrections
-    const orbitalNames = ['1s','2s','2p','3s','3p','3d','4s','4p','4d','4f','5s','5p','5d','6s','6p'];
-    const orbitalColors = [COLORS.blue, COLORS.green, COLORS.green, COLORS.cyan, COLORS.cyan, COLORS.cyan,
-                           COLORS.orange, COLORS.orange, COLORS.orange, COLORS.orange,
-                           COLORS.purple, COLORS.purple, COLORS.purple, COLORS.red, COLORS.red];
-    const orbitalN = [1,2,2,3,3,3,4,4,4,4,5,5,5,6,6];
-    const orbitalL = [0,0,1,0,1,2,0,1,2,3,0,1,2,0,1];
-
-    // Screening parameters (Slater's rules approximation)
-    function orbitalEnergy(Z, n, l) {
-      if (Z < 1) return 0;
-      // Effective nuclear charge using simplified Slater rules
-      let sigma = 0;
-      // Very simplified model that captures the key crossings
-      if (n === 1) sigma = 0.3 * Math.min(Z - 1, 1);
-      else if (n === 2 && l === 0) sigma = 2 + 0.85 * Math.min(Z - 3, 5);
-      else if (n === 2 && l === 1) sigma = 2.05 + 0.85 * Math.min(Z - 3, 5);
-      else if (n === 3 && l === 0) sigma = 4.15 + 0.85 * Math.max(0, Z - 11) * 0.7 + 2 * 0.85;
-      else if (n === 3 && l === 1) sigma = 4.5 + 0.85 * Math.max(0, Z - 11) * 0.7 + 2 * 0.85;
-      else if (n === 3 && l === 2) sigma = 5.5 + 0.85 * Math.max(0, Z - 21) * 0.5 + 8;
-      else if (n === 4 && l === 0) sigma = 11 + 0.85 * Math.max(0, Z - 19) * 0.5 + 4;
-      else if (n === 4 && l === 1) sigma = 14 + 0.85 * Math.max(0, Z - 31) * 0.5 + 4;
-      else if (n === 4 && l === 2) sigma = 22 + 0.85 * Math.max(0, Z - 39) * 0.4;
-      else if (n === 4 && l === 3) sigma = 32 + 0.85 * Math.max(0, Z - 57) * 0.35;
-      else if (n === 5 && l === 0) sigma = 28 + 0.85 * Math.max(0, Z - 37) * 0.45;
-      else if (n === 5 && l === 1) sigma = 32 + 0.85 * Math.max(0, Z - 49) * 0.45;
-      else if (n === 5 && l === 2) sigma = 40 + 0.85 * Math.max(0, Z - 57) * 0.4;
-      else if (n === 6 && l === 0) sigma = 46 + 0.85 * Math.max(0, Z - 55) * 0.4;
-      else if (n === 6 && l === 1) sigma = 52 + 0.85 * Math.max(0, Z - 81) * 0.4;
-      else sigma = Z * 0.65;
-
-      const Zeff = Math.max(0.5, Z - sigma);
-      return -13.6 * Zeff * Zeff / (n * n);
-    }
-
-    // Element symbols for labels
+    // Element symbols
     const elements = ['','H','He','Li','Be','B','C','N','O','F','Ne',
       'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca',
       'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',
@@ -17824,109 +17789,316 @@ function initCh14Vis() {
       'Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg',
       'Tl','Pb','Bi','Po','At','Rn'];
 
-    let hoverOE = -1;
+    // Orbital definitions with color coding by type (s/p/d/f)
+    const orbitals = [
+      { name: '1s', type: 's', minZ: 1 },
+      { name: '2s', type: 's', minZ: 3 },
+      { name: '2p', type: 'p', minZ: 5 },
+      { name: '3s', type: 's', minZ: 11 },
+      { name: '3p', type: 'p', minZ: 13 },
+      { name: '3d', type: 'd', minZ: 21 },
+      { name: '4s', type: 's', minZ: 19 },
+      { name: '4p', type: 'p', minZ: 31 },
+      { name: '4d', type: 'd', minZ: 39 },
+      { name: '4f', type: 'f', minZ: 58 },
+      { name: '5s', type: 's', minZ: 37 },
+      { name: '5p', type: 'p', minZ: 49 },
+      { name: '5d', type: 'd', minZ: 72 },
+      { name: '6s', type: 's', minZ: 55 },
+      { name: '6p', type: 'p', minZ: 81 },
+    ];
+
+    const typeColors = {
+      s: '#ef5350',  // warm red/coral
+      p: '#4fc3f7',  // blue
+      d: '#66bb6a',  // green
+      f: '#ffa726',  // orange/amber
+    };
+
+    // Tabulated empirical orbital energies (eV, negative) at key Z values
+    // Interpolated via monotone cubic Hermite spline in log-energy space
+    const energyData = {
+      '1s': [[1,-13.6],[2,-24.6],[3,-64],[5,-188],[10,-870],[15,-2050],[20,-4040],[30,-9800],[36,-14300],[46,-26000],[54,-35600],[70,-60000],[86,-98000]],
+      '2s': [[3,-5.4],[4,-9.3],[5,-14],[7,-25],[10,-48],[14,-150],[20,-440],[30,-1200],[36,-1930],[46,-4000],[54,-5700],[70,-11500],[86,-19500]],
+      '2p': [[5,-8.3],[6,-11.3],[7,-14.5],[8,-18],[10,-21.6],[14,-100],[20,-350],[30,-1050],[36,-1730],[46,-3700],[54,-5100],[70,-10500],[86,-18500]],
+      '3s': [[11,-5.1],[12,-7.6],[13,-11],[15,-18],[18,-30],[20,-52],[25,-110],[30,-190],[36,-290],[46,-700],[54,-1100],[70,-2600],[86,-4500]],
+      '3p': [[13,-6.0],[14,-8.2],[15,-10.5],[18,-19],[20,-30],[25,-80],[30,-150],[36,-220],[46,-570],[54,-940],[70,-2300],[86,-3900]],
+      '3d': [[21,-8],[23,-9.5],[25,-12],[28,-16],[30,-18],[33,-30],[36,-60],[40,-100],[46,-220],[54,-600],[65,-1400],[75,-2200],[86,-2800]],
+      '4s': [[19,-4.3],[20,-6.1],[22,-6.7],[25,-7.7],[28,-8.5],[30,-9.0],[33,-12],[36,-27],[40,-45],[46,-100],[54,-230],[65,-480],[75,-720],[86,-1000]],
+      '4p': [[31,-6.0],[33,-8],[35,-12],[36,-14],[40,-25],[46,-65],[54,-170],[65,-380],[75,-600],[86,-800]],
+      '4d': [[39,-7.0],[40,-8],[42,-10],[45,-14],[48,-18],[50,-22],[54,-50],[60,-100],[70,-250],[80,-400],[86,-500]],
+      '4f': [[58,-8],[60,-10],[63,-14],[66,-18],[70,-25],[75,-50],[80,-120],[86,-300]],
+      '5s': [[37,-4.2],[38,-5.7],[40,-6.2],[45,-8],[48,-10],[50,-12],[54,-25],[60,-50],[70,-100],[80,-170],[86,-210]],
+      '5p': [[49,-6.0],[50,-7],[52,-9],[54,-12],[58,-20],[65,-45],[72,-75],[80,-120],[86,-150]],
+      '5d': [[72,-7.0],[74,-9],[76,-12],[78,-16],[80,-25],[82,-40],[84,-60],[86,-80]],
+      '6s': [[55,-3.9],[56,-5.2],[58,-5.5],[62,-6.0],[70,-8],[75,-12],[78,-16],[80,-20],[82,-24],[84,-29],[86,-35]],
+      '6p': [[81,-6.0],[82,-7],[83,-8.3],[84,-9.5],[85,-10.7],[86,-12]],
+    };
+
+    // Monotone cubic Hermite spline in log10(-E) space for smooth interpolation
+    function buildSpline(pts) {
+      const n = pts.length;
+      if (n < 2) return null;
+      const x = pts.map(function(p) { return p[0]; });
+      const y = pts.map(function(p) { return Math.log10(-p[1]); });
+      const delta = [];
+      for (let i = 0; i < n - 1; i++) delta.push((y[i+1] - y[i]) / (x[i+1] - x[i]));
+      // Fritsch-Carlson monotone tangents
+      const m = new Array(n);
+      m[0] = delta[0]; m[n-1] = delta[n-2];
+      for (let i = 1; i < n - 1; i++) {
+        if (delta[i-1] * delta[i] <= 0) m[i] = 0;
+        else m[i] = (delta[i-1] + delta[i]) / 2;
+      }
+      for (let i = 0; i < n - 1; i++) {
+        if (Math.abs(delta[i]) < 1e-12) { m[i] = 0; m[i+1] = 0; continue; }
+        const alpha = m[i] / delta[i], beta = m[i+1] / delta[i];
+        const tau = alpha * alpha + beta * beta;
+        if (tau > 9) {
+          const t = 3 / Math.sqrt(tau);
+          m[i] = t * alpha * delta[i];
+          m[i+1] = t * beta * delta[i];
+        }
+      }
+      return function(zq) {
+        if (zq <= x[0]) return -Math.pow(10, y[0]);
+        if (zq >= x[n-1]) return -Math.pow(10, y[n-1]);
+        let lo = 0, hi = n - 1;
+        while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (x[mid] <= zq) lo = mid; else hi = mid; }
+        const h = x[hi] - x[lo], t = (zq - x[lo]) / h;
+        const t2 = t * t, t3 = t2 * t;
+        const h00 = 2*t3 - 3*t2 + 1, h10 = t3 - 2*t2 + t, h01 = -2*t3 + 3*t2, h11 = t3 - t2;
+        const logE = h00*y[lo] + h10*h*m[lo] + h01*y[hi] + h11*h*m[hi];
+        return -Math.pow(10, logE);
+      };
+    }
+
+    // Build splines for all orbitals
+    const splines = {};
+    for (const orb of orbitals) splines[orb.name] = buildSpline(energyData[orb.name]);
+
+    function getEnergy(name, z) {
+      const orb = orbitals.find(function(o) { return o.name === name; });
+      if (!orb || z < orb.minZ) return 0;
+      return splines[name](z);
+    }
+
+    // Plot layout
+    const ox = 70, oy = 40, pw = WOE - 110, ph = HOE - 90;
+    const logMin = Math.log10(1);      // -1 eV at top
+    const logMax = Math.log10(100000); // -100000 eV at bottom
+
+    function zToX(z) { return ox + ((z - 1) / 85) * pw; }
+    function eToY(E) { return oy + ((Math.log10(-E) - logMin) / (logMax - logMin)) * ph; }
+    function xToZ(px) { return Math.round(1 + ((px - ox) / pw) * 85); }
+
+    // Hex color to RGB components
+    function hexRGB(hex) {
+      return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+    }
+
+    // Mouse state
+    let hoverOrb = -1, hoverZ = -1;
+
+    function formatEnergy(E) {
+      const a = Math.abs(E);
+      if (a >= 1000) return Math.round(E).toLocaleString() + ' eV';
+      if (a >= 100) return Math.round(E) + ' eV';
+      if (a >= 10) return E.toFixed(1) + ' eV';
+      return E.toFixed(2) + ' eV';
+    }
 
     function drawOrbitalEnergies() {
       clearCanvas(ctxOE, WOE, HOE);
-      const Z = parseInt(zSlider?.value || 14);
+      const Z = parseInt(zSlider?.value || 26);
       const sym = Z <= 86 ? elements[Z] : 'Z=' + Z;
       document.getElementById('orbital-z-val')?.replaceChildren(document.createTextNode(Z + ' (' + sym + ')'));
 
-      const ox = 65, oy = 25, pw = WOE - 85, ph = HOE - 70;
-      const logEmin = -5, logEmax = 0.5; // log10(-E/Ry) range
-
-      // Axes
-      drawAxes(ctxOE, ox, oy, pw, ph, { xLabel: 'Atomic Number Z' });
-      ctxOE.fillStyle = COLORS.textDim; ctxOE.font = FONT_SM; ctxOE.textAlign = 'center';
-      for (let z = 10; z <= 80; z += 10) {
-        ctxOE.fillText(z.toString(), ox + (z / 86) * pw, oy + ph + 14);
-      }
-      ctxOE.fillText('1', ox + (1 / 86) * pw, oy + ph + 14);
-
-      // Y-axis label
-      ctxOE.save(); ctxOE.translate(15, oy + ph / 2); ctxOE.rotate(-Math.PI / 2);
-      ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_SM; ctxOE.textAlign = 'center';
-      ctxOE.fillText('Orbital Energy (log scale)', 0, 0); ctxOE.restore();
-
-      // Y ticks
-      ctxOE.textAlign = 'right';
-      const yLabels = ['-0.1','-1','-10','-100','-1000','-10000'];
-      const yVals = [-0.1, -1, -10, -100, -1000, -10000];
-      yVals.forEach((v, i) => {
-        const logV = Math.log10(-v / 13.6);
-        const py = oy + ph - ((logV - logEmin) / (logEmax - logEmin)) * ph;
-        if (py > oy && py < oy + ph) {
-          ctxOE.fillStyle = COLORS.textDim; ctxOE.font = '10px Inter, system-ui, sans-serif';
-          ctxOE.fillText(yLabels[i] + ' eV', ox - 4, py + 3);
-          ctxOE.strokeStyle = COLORS.grid; ctxOE.lineWidth = 0.5;
-          ctxOE.beginPath(); ctxOE.moveTo(ox, py); ctxOE.lineTo(ox + pw, py); ctxOE.stroke();
+      // --- Grid ---
+      ctxOE.strokeStyle = COLORS.grid; ctxOE.lineWidth = 0.5;
+      [1, 10, 100, 1000, 10000, 100000].forEach(function(e) {
+        const y = eToY(-e);
+        if (y >= oy && y <= oy + ph) {
+          ctxOE.beginPath(); ctxOE.moveTo(ox, y); ctxOE.lineTo(ox + pw, y); ctxOE.stroke();
         }
       });
+      for (let z = 10; z <= 80; z += 10) {
+        const x = zToX(z);
+        ctxOE.beginPath(); ctxOE.moveTo(x, oy); ctxOE.lineTo(x, oy + ph); ctxOE.stroke();
+      }
 
-      // Draw orbital curves
-      for (let oi = 0; oi < orbitalNames.length; oi++) {
-        const n = orbitalN[oi], l = orbitalL[oi];
-        // Only draw where orbital exists (Z large enough to have this orbital occupied or relevant)
-        const minZ = n === 1 ? 1 : (n === 2 ? 2 : (n === 3 ? 11 : (n === 4 ? 19 : (n === 5 ? 37 : 55))));
+      // --- Axes ---
+      ctxOE.strokeStyle = COLORS.axis; ctxOE.lineWidth = 1;
+      ctxOE.beginPath();
+      ctxOE.moveTo(ox, oy); ctxOE.lineTo(ox, oy + ph); ctxOE.lineTo(ox + pw, oy + ph);
+      ctxOE.stroke();
 
-        ctxOE.strokeStyle = orbitalColors[oi]; ctxOE.lineWidth = 1.8;
-        ctxOE.beginPath();
-        let started = false;
-        for (let z = Math.max(1, minZ - 2); z <= 86; z++) {
-          const E = orbitalEnergy(z, n, l);
-          if (E >= -0.01) continue;
-          const logE = Math.log10(-E / 13.6);
-          const px = ox + (z / 86) * pw;
-          const py = oy + ph - ((logE - logEmin) / (logEmax - logEmin)) * ph;
-          if (py < oy || py > oy + ph) continue;
-          !started ? (ctxOE.moveTo(px, py), started = true) : ctxOE.lineTo(px, py);
+      // X-axis labels
+      ctxOE.fillStyle = COLORS.textDim; ctxOE.font = FONT_SM; ctxOE.textAlign = 'center';
+      ctxOE.fillText('1', zToX(1), oy + ph + 15);
+      for (let z = 10; z <= 80; z += 10) ctxOE.fillText(z.toString(), zToX(z), oy + ph + 15);
+      ctxOE.fillText('86', zToX(86), oy + ph + 15);
+      ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_SM;
+      ctxOE.fillText('Atomic Number Z', ox + pw / 2, oy + ph + 38);
+
+      // Noble gas markers
+      var nobles = [{z:2,s:'He'},{z:10,s:'Ne'},{z:18,s:'Ar'},{z:36,s:'Kr'},{z:54,s:'Xe'},{z:86,s:'Rn'}];
+      ctxOE.fillStyle = 'rgba(255,238,88,0.45)'; ctxOE.font = '9px Inter, system-ui, sans-serif';
+      nobles.forEach(function(ng) { ctxOE.fillText(ng.s, zToX(ng.z), oy + ph + 27); });
+
+      // Y-axis labels
+      ctxOE.fillStyle = COLORS.textDim; ctxOE.font = '10px Inter, system-ui, sans-serif'; ctxOE.textAlign = 'right';
+      [{e:-1,l:'-1 eV'},{e:-10,l:'-10'},{e:-100,l:'-100'},{e:-1000,l:'-1000'},{e:-10000,l:'-10\u2074'},{e:-100000,l:'-10\u2075'}].forEach(function(t) {
+        const y = eToY(t.e);
+        if (y >= oy && y <= oy + ph) {
+          ctxOE.fillText(t.l, ox - 5, y + 4);
+          ctxOE.strokeStyle = COLORS.axis; ctxOE.lineWidth = 1;
+          ctxOE.beginPath(); ctxOE.moveTo(ox - 3, y); ctxOE.lineTo(ox, y); ctxOE.stroke();
+        }
+      });
+      ctxOE.save(); ctxOE.translate(14, oy + ph / 2); ctxOE.rotate(-Math.PI / 2);
+      ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_SM; ctxOE.textAlign = 'center';
+      ctxOE.fillText('Orbital Energy (eV)', 0, 0); ctxOE.restore();
+
+      // --- Draw orbital curves ---
+      // Pass 1: glow
+      for (let oi = 0; oi < orbitals.length; oi++) {
+        const orb = orbitals[oi], isH = (oi === hoverOrb);
+        const rgb = hexRGB(typeColors[orb.type]);
+        ctxOE.strokeStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + (isH ? 0.3 : 0.12) + ')';
+        ctxOE.lineWidth = isH ? 8 : 5;
+        ctxOE.beginPath(); let started = false;
+        for (let z = orb.minZ; z <= 86; z++) {
+          const E = getEnergy(orb.name, z);
+          if (E >= -0.5) continue;
+          const px = zToX(z), py = eToY(E);
+          if (py < oy - 5 || py > oy + ph + 5) continue;
+          if (!started) { ctxOE.moveTo(px, py); started = true; } else ctxOE.lineTo(px, py);
         }
         ctxOE.stroke();
-
+      }
+      // Pass 2: main curves
+      for (let oi = 0; oi < orbitals.length; oi++) {
+        const orb = orbitals[oi], isH = (oi === hoverOrb);
+        const rgb = hexRGB(typeColors[orb.type]);
+        ctxOE.strokeStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + (isH ? 1 : 0.8) + ')';
+        ctxOE.lineWidth = isH ? 3 : 2;
+        ctxOE.beginPath(); let started = false;
+        for (let z = orb.minZ; z <= 86; z++) {
+          const E = getEnergy(orb.name, z);
+          if (E >= -0.5) continue;
+          const px = zToX(z), py = eToY(E);
+          if (py < oy - 5 || py > oy + ph + 5) continue;
+          if (!started) { ctxOE.moveTo(px, py); started = true; } else ctxOE.lineTo(px, py);
+        }
+        ctxOE.stroke();
         // Label at right end
-        const E86 = orbitalEnergy(86, n, l);
-        if (E86 < -0.01) {
-          const logE = Math.log10(-E86 / 13.6);
-          const py = oy + ph - ((logE - logEmin) / (logEmax - logEmin)) * ph;
-          if (py > oy && py < oy + ph) {
-            ctxOE.fillStyle = orbitalColors[oi]; ctxOE.font = '10px Inter, system-ui, sans-serif';
+        const E86 = getEnergy(orb.name, 86);
+        if (E86 < -0.5) {
+          const py86 = eToY(E86);
+          if (py86 >= oy && py86 <= oy + ph) {
+            ctxOE.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + (isH ? 1 : 0.85) + ')';
+            ctxOE.font = isH ? '12px Inter, system-ui, sans-serif' : '10px Inter, system-ui, sans-serif';
             ctxOE.textAlign = 'left';
-            ctxOE.fillText(orbitalNames[oi], ox + pw + 4, py + 3);
+            ctxOE.fillText(orb.name, ox + pw + 5, py86 + 4);
           }
         }
       }
 
-      // Highlight selected Z with vertical line
-      const zPx = ox + (Z / 86) * pw;
-      ctxOE.strokeStyle = COLORS.yellow; ctxOE.lineWidth = 1.5; ctxOE.setLineDash([4, 4]);
+      // --- Highlight line at selected Z ---
+      const zPx = zToX(Z);
+      ctxOE.strokeStyle = 'rgba(255,238,88,0.5)'; ctxOE.lineWidth = 1;
+      ctxOE.setLineDash([5, 4]);
       ctxOE.beginPath(); ctxOE.moveTo(zPx, oy); ctxOE.lineTo(zPx, oy + ph); ctxOE.stroke();
       ctxOE.setLineDash([]);
 
-      // Mark energy levels at selected Z
-      ctxOE.fillStyle = COLORS.yellow;
-      for (let oi = 0; oi < orbitalNames.length; oi++) {
-        const E = orbitalEnergy(Z, orbitalN[oi], orbitalL[oi]);
-        if (E >= -0.01) continue;
-        const logE = Math.log10(-E / 13.6);
-        const py = oy + ph - ((logE - logEmin) / (logEmax - logEmin)) * ph;
-        if (py > oy && py < oy + ph) {
-          ctxOE.beginPath(); ctxOE.arc(zPx, py, 3.5, 0, 2 * Math.PI); ctxOE.fill();
-        }
+      // Dots on each orbital at selected Z
+      for (let oi = 0; oi < orbitals.length; oi++) {
+        const orb = orbitals[oi];
+        if (Z < orb.minZ) continue;
+        const E = getEnergy(orb.name, Z);
+        if (E >= -0.5) continue;
+        const py = eToY(E);
+        if (py < oy || py > oy + ph) continue;
+        const rgb = hexRGB(typeColors[orb.type]);
+        // Glow
+        ctxOE.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.3)';
+        ctxOE.beginPath(); ctxOE.arc(zPx, py, 6, 0, 2 * Math.PI); ctxOE.fill();
+        // Dot
+        ctxOE.fillStyle = COLORS.yellow;
+        ctxOE.beginPath(); ctxOE.arc(zPx, py, 3.5, 0, 2 * Math.PI); ctxOE.fill();
       }
 
-      ctxOE.fillStyle = COLORS.yellow; ctxOE.font = FONT; ctxOE.textAlign = 'center';
-      ctxOE.fillText(sym + ' (Z = ' + Z + ')', zPx, oy - 5);
+      // Element label
+      ctxOE.fillStyle = COLORS.yellow; ctxOE.font = '14px Inter, system-ui, sans-serif'; ctxOE.textAlign = 'center';
+      ctxOE.fillText(sym + '  (Z = ' + Z + ')', zPx, oy - 10);
 
-      // Noble gas markers
-      const nobles = [{z:2,s:'He'},{z:10,s:'Ne'},{z:18,s:'Ar'},{z:36,s:'Kr'},{z:54,s:'Xe'},{z:86,s:'Rn'}];
-      ctxOE.fillStyle = COLORS.textDim; ctxOE.font = '9px Inter, system-ui, sans-serif'; ctxOE.textAlign = 'center';
-      nobles.forEach(ng => {
-        ctxOE.fillText(ng.s, ox + (ng.z / 86) * pw, oy + ph + 26);
+      // --- Title ---
+      ctxOE.fillStyle = COLORS.text; ctxOE.font = '15px Inter, system-ui, sans-serif'; ctxOE.textAlign = 'left';
+      ctxOE.fillText('Orbital Energies vs Atomic Number', ox + 5, oy - 10);
+
+      // --- Legend ---
+      const lx = ox + pw - 140, ly = oy + 10;
+      ctxOE.fillStyle = 'rgba(15,25,35,0.7)'; ctxOE.fillRect(lx - 6, ly - 4, 92, 76);
+      ctxOE.strokeStyle = 'rgba(255,255,255,0.1)'; ctxOE.lineWidth = 1; ctxOE.strokeRect(lx - 6, ly - 4, 92, 76);
+      [['s orbitals','s'],['p orbitals','p'],['d orbitals','d'],['f orbitals','f']].forEach(function(item, i) {
+        const iy = ly + 8 + i * 17;
+        ctxOE.strokeStyle = typeColors[item[1]]; ctxOE.lineWidth = 2.5;
+        ctxOE.beginPath(); ctxOE.moveTo(lx, iy); ctxOE.lineTo(lx + 18, iy); ctxOE.stroke();
+        ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_SM; ctxOE.textAlign = 'left';
+        ctxOE.fillText(item[0], lx + 24, iy + 4);
       });
-
-      ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_LG; ctxOE.textAlign = 'left';
-      ctxOE.fillText('Orbital Energies vs Z', ox + 5, oy + 14);
     }
+
+    // --- Hover and click ---
+    function findNearestOrb(mx, my) {
+      let bestDist = 20, bestOrb = -1, bestZ = -1;
+      const z = xToZ(mx);
+      if (z < 1 || z > 86) return { orb: -1, z: -1 };
+      for (let oi = 0; oi < orbitals.length; oi++) {
+        const orb = orbitals[oi];
+        if (z < orb.minZ) continue;
+        const E = getEnergy(orb.name, z);
+        if (E >= -0.5) continue;
+        const py = eToY(E);
+        const dist = Math.abs(my - py);
+        if (dist < bestDist) { bestDist = dist; bestOrb = oi; bestZ = z; }
+      }
+      return { orb: bestOrb, z: bestZ };
+    }
+
+    cOrb.addEventListener('mousemove', function(e) {
+      const rect = cOrb.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const res = findNearestOrb(mx, my);
+      const changed = (res.orb !== hoverOrb || res.z !== hoverZ);
+      hoverOrb = res.orb; hoverZ = res.z;
+      if (tooltipEl) {
+        if (res.orb >= 0 && res.z >= 1) {
+          const E = getEnergy(orbitals[res.orb].name, res.z);
+          const c = typeColors[orbitals[res.orb].type];
+          tooltipEl.style.display = 'block';
+          tooltipEl.style.left = (mx + 14) + 'px'; tooltipEl.style.top = (my - 10) + 'px';
+          tooltipEl.style.borderColor = c;
+          tooltipEl.innerHTML = '<span style="color:' + c + ';font-weight:600;">' + orbitals[res.orb].name + '</span>: ' + formatEnergy(E) + ' at Z=' + res.z + ' (' + elements[res.z] + ')';
+        } else { tooltipEl.style.display = 'none'; }
+      }
+      cOrb.style.cursor = (mx >= ox && mx <= ox + pw && my >= oy && my <= oy + ph) ? 'crosshair' : 'default';
+      if (changed) drawOrbitalEnergies();
+    });
+
+    cOrb.addEventListener('mouseleave', function() {
+      hoverOrb = -1; hoverZ = -1;
+      if (tooltipEl) tooltipEl.style.display = 'none';
+      cOrb.style.cursor = 'default';
+      drawOrbitalEnergies();
+    });
+
+    cOrb.addEventListener('click', function(e) {
+      const rect = cOrb.getBoundingClientRect();
+      const z = xToZ(e.clientX - rect.left);
+      if (z >= 1 && z <= 86 && zSlider) { zSlider.value = z; drawOrbitalEnergies(); }
+    });
 
     zSlider?.addEventListener('input', drawOrbitalEnergies);
     drawOrbitalEnergies();
@@ -18198,8 +18370,7 @@ function initCh14Vis() {
   const cBF3 = document.getElementById('vis-band-filling-3rd');
   if (cBF3) {
     const { ctx: ctxBF3, W: WBF3, H: HBF3 } = setupCanvas(cBF3);
-    const bf3Buttons = document.getElementById('bf3-element-buttons');
-    let bf3Selected = 'Na';
+    const bf3Select = document.getElementById('bf3-element');
 
     const elemData = {
       'Na': { name: 'Na', config: '[Ne] 3s¹', valence: 1, total: 8, fill3s: 0.5, fill3p: 0 },
@@ -18210,7 +18381,7 @@ function initCh14Vis() {
 
     function drawBandFilling3rd() {
       clearCanvas(ctxBF3, WBF3, HBF3);
-      const elem = elemData[bf3Selected];
+      const elem = elemData[bf3Select?.value || 'Na'];
 
       const ox = 80, pw = WBF3 - 160;
       const bandH = 50, gap = 15;
@@ -18291,14 +18462,7 @@ function initCh14Vis() {
       ctxBF3.fillText(classLabel, ox, HBF3 - 15);
     }
 
-    bf3Buttons?.addEventListener('click', (e) => {
-      const btn = e.target.closest('.control-btn');
-      if (!btn) return;
-      bf3Buttons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      bf3Selected = btn.dataset.value;
-      drawBandFilling3rd();
-    });
+    bf3Select?.addEventListener('change', drawBandFilling3rd);
     drawBandFilling3rd();
   }
 
@@ -18547,234 +18711,191 @@ function initCh14Vis() {
     drawIV();
   }
 
-  // ----- Energy Level Splitting into Bands (tight-binding) -----
+  // ----- Energy Level Splitting into Bands -----
   const cBS = document.getElementById('vis-band-splitting');
   if (cBS) {
     const bsS = setupCanvas(cBS);
     const ctxBS = bsS.ctx, WBS = bsS.W, HBS = bsS.H;
     const bsNSlider = document.getElementById('band-n-atoms');
 
-    // Three atomic energy levels (in eV, arbitrary but spaced to look right)
-    // 1s is lowest, 2s middle, 2p highest
-    const atomicLevels = [
-      { e0: -3.0, label: '1s', color: COLORS.blue,   tMax: 0.25 },
-      { e0: -1.2, label: '2s', color: COLORS.green,  tMax: 0.55 },
-      { e0:  0.8, label: '2p', color: COLORS.orange,  tMax: 0.90 },
-    ];
+    // Three base energy levels (normalised 0..1 where 0=bottom, 1=top of plot area)
+    const baseLevels = [0.22, 0.52, 0.82];
+    const levelColors = [COLORS.blue, COLORS.green, COLORS.orange];
+    const levelNames = ['E\u2081 (1s)', 'E\u2082 (2s)', 'E\u2083 (2p)'];
 
-    // Tight-binding eigenvalues for N-atom chain:
-    // ε_k = ε₀ - 2t * cos(k*π / (N+1)),  k = 1, 2, ..., N
-    // Bandwidth = 4t (for large N)
-    // t(d) ~ tMax * exp(-α*(d - d_eq)) models coupling vs distance
-    // We parameterise x-axis as interatomic distance d from large (right=far) to small (left=close)
+    // Spread factor per level (fraction of total plot height) as N grows
+    const spreads = [0.06, 0.10, 0.14];
 
-    function tightBindingLevels(e0, t, N) {
-      const levels = [];
-      for (let k = 1; k <= N; k++) {
-        levels.push(e0 - 2 * t * Math.cos(k * Math.PI / (N + 1)));
-      }
-      return levels;
-    }
-
-    // Animation state
-    let bsAnimId = null;
-    let bsAnimTarget = null;
-    let bsAnimCurrent = null;
-
-    function drawBandSplitting(animN) {
-      const N = animN !== undefined ? animN : parseInt(bsNSlider?.value || 1);
+    function drawBandSplitting() {
+      const N = parseInt(bsNSlider?.value || 5);
       clearCanvas(ctxBS, WBS, HBS);
 
-      // Plot area
-      const margin = { top: 12, bottom: 38, left: 52, right: 20 };
-      const pw = WBS - margin.left - margin.right;
-      const ph = HBS - margin.top - margin.bottom;
+      const ox = 20, oy = 20;
+      const pw = WBS - ox - 20, ph = HBS - oy - 40;
 
-      // Energy range
-      const eMin = -4.0, eMax = 2.8;
-      const eRange = eMax - eMin;
-
-      // x-axis: interatomic distance from d_max (left, far apart) to d_min (right, close)
-      // We sample 200 points. Coupling t grows exponentially as d shrinks.
-      const nPts = 200;
-      const dMax = 5.0, dMin = 0.8;
-      const alpha = 1.8; // decay constant
-
-      function xForD(d) {
-        // d goes from dMax (far apart) on the left to dMin (close) on the right
-        return margin.left + pw * (1 - (d - dMin) / (dMax - dMin));
-      }
-      function yForE(e) {
-        return margin.top + ph * (1 - (e - eMin) / eRange);
-      }
-
-      // Axes
-      ctxBS.strokeStyle = COLORS.axis;
-      ctxBS.lineWidth = 1;
-      ctxBS.beginPath();
-      ctxBS.moveTo(margin.left, margin.top);
-      ctxBS.lineTo(margin.left, margin.top + ph);
-      ctxBS.lineTo(margin.left + pw, margin.top + ph);
-      ctxBS.stroke();
-
-      // Y-axis label
+      // Vertical axis label
       ctxBS.fillStyle = COLORS.textDim;
       ctxBS.font = FONT_SM;
       ctxBS.textAlign = 'center';
       ctxBS.save();
-      ctxBS.translate(14, margin.top + ph / 2);
+      ctxBS.translate(12, oy + ph / 2);
       ctxBS.rotate(-Math.PI / 2);
-      ctxBS.fillText('Energy', 0, 0);
+      ctxBS.fillText('Energy E', 0, 0);
       ctxBS.restore();
-
-      // X-axis labels
-      ctxBS.fillStyle = COLORS.textDim;
-      ctxBS.font = FONT_SM;
-      ctxBS.textAlign = 'center';
-      ctxBS.fillText('Far apart', margin.left + 40, margin.top + ph + 28);
-      ctxBS.fillText('Close together', margin.left + pw - 50, margin.top + ph + 28);
-
-      // Arrow along x-axis
-      ctxBS.strokeStyle = COLORS.textDim;
-      ctxBS.lineWidth = 1;
-      ctxBS.beginPath();
-      ctxBS.moveTo(margin.left + 80, margin.top + ph + 22);
-      ctxBS.lineTo(margin.left + pw - 100, margin.top + ph + 22);
-      ctxBS.stroke();
-      // Arrowhead
-      ctxBS.beginPath();
-      ctxBS.moveTo(margin.left + pw - 100, margin.top + ph + 22);
-      ctxBS.lineTo(margin.left + pw - 108, margin.top + ph + 18);
-      ctxBS.moveTo(margin.left + pw - 100, margin.top + ph + 22);
-      ctxBS.lineTo(margin.left + pw - 108, margin.top + ph + 26);
-      ctxBS.stroke();
-
-      // X-axis label (below arrow)
-      ctxBS.fillStyle = COLORS.textDim;
-      ctxBS.font = FONT_SM;
-      ctxBS.textAlign = 'center';
-      ctxBS.fillText('Decreasing interatomic distance', margin.left + pw / 2, margin.top + ph + 14);
 
       // Title
       ctxBS.fillStyle = COLORS.text;
       ctxBS.font = FONT_LG;
-      ctxBS.textAlign = 'left';
-      ctxBS.fillText('N = ' + N + ' atom' + (N > 1 ? 's' : ''), margin.left + 4, margin.top + 4);
+      ctxBS.textAlign = 'center';
+      ctxBS.fillText('N = ' + N + ' atom' + (N > 1 ? 's' : ''), WBS / 2, oy + 14);
 
-      // For each atomic level, draw energy curves vs distance
-      atomicLevels.forEach((lvl) => {
-        const { e0, label, color, tMax } = lvl;
+      // Left label: isolated atom
+      ctxBS.fillStyle = COLORS.textDim;
+      ctxBS.font = FONT_SM;
+      ctxBS.textAlign = 'center';
+      ctxBS.fillText('Isolated atom', ox + pw * 0.12, oy + ph + 22);
+      ctxBS.fillText(N + ' atoms together', ox + pw * 0.78, oy + ph + 22);
 
+      // Divider
+      const divX = ox + pw * 0.42;
+      ctxBS.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctxBS.lineWidth = 1;
+      ctxBS.setLineDash([4, 5]);
+      ctxBS.beginPath();
+      ctxBS.moveTo(divX, oy + 24);
+      ctxBS.lineTo(divX, oy + ph);
+      ctxBS.stroke();
+      ctxBS.setLineDash([]);
+
+      // Left section x-range
+      const lxMid = ox + pw * 0.12;
+      const lxHalf = pw * 0.10;
+
+      // Right section x-range
+      const rxLeft = ox + pw * 0.50;
+      const rxRight = ox + pw * 0.95;
+      const rxWidth = rxRight - rxLeft;
+
+      // Band opacity increases with N so lines merge
+      const lineAlpha = N <= 1 ? 1.0 : Math.max(0.18, 1.0 - (N - 1) * 0.04);
+
+      baseLevels.forEach((lvl, li) => {
+        const color = levelColors[li];
+        const spread = spreads[li];
+
+        // Y coordinate of base energy
+        const baseY = oy + ph - lvl * ph;
+
+        // Left: single level line
+        ctxBS.strokeStyle = color;
+        ctxBS.lineWidth = 2;
+        ctxBS.beginPath();
+        ctxBS.moveTo(lxMid - lxHalf, baseY);
+        ctxBS.lineTo(lxMid + lxHalf, baseY);
+        ctxBS.stroke();
+
+        // Level label
+        ctxBS.fillStyle = color;
+        ctxBS.font = FONT_SM;
+        ctxBS.textAlign = 'left';
+        ctxBS.fillText(levelNames[li], lxMid + lxHalf + 4, baseY + 4);
+
+        // Right: N split levels
         if (N === 1) {
-          // Single atom: just a horizontal line at e0
+          // Single atom on right too
           ctxBS.strokeStyle = color;
           ctxBS.lineWidth = 2;
           ctxBS.beginPath();
-          ctxBS.moveTo(margin.left, yForE(e0));
-          ctxBS.lineTo(margin.left + pw, yForE(e0));
+          ctxBS.moveTo(rxLeft, baseY);
+          ctxBS.lineTo(rxRight, baseY);
           ctxBS.stroke();
-
-          // Label on the left
-          ctxBS.fillStyle = color;
-          ctxBS.font = FONT_SM;
-          ctxBS.textAlign = 'left';
-          ctxBS.fillText(label, margin.left + pw + 4, yForE(e0) + 4);
         } else {
-          // Compute eigenvalues at each distance
-          // For each k = 1..N, draw a curve of ε_k(d)
-          const curves = [];
-          for (let k = 1; k <= N; k++) {
-            const pts = [];
-            for (let i = 0; i <= nPts; i++) {
-              const d = dMax - i * (dMax - dMin) / nPts;
-              const t = tMax * Math.exp(-alpha * (d - dMin));
-              const ek = e0 - 2 * t * Math.cos(k * Math.PI / (N + 1));
-              pts.push({ x: xForD(d), y: yForE(ek) });
-            }
-            curves.push(pts);
+          const halfSpread = spread * ph / 2;
+          const lineSpacing = N > 1 ? (2 * halfSpread) / (N - 1) : 0;
+          // Band fill when many lines
+          if (N >= 8) {
+            const bandColor = color.startsWith('#') ? color : color;
+            ctxBS.fillStyle = color.replace(')', ', 0.12)').replace('rgb', 'rgba');
+            // simple rect for band
+            ctxBS.globalAlpha = 0.15;
+            ctxBS.fillStyle = color;
+            ctxBS.fillRect(rxLeft, baseY - halfSpread, rxWidth, halfSpread * 2);
+            ctxBS.globalAlpha = 1.0;
           }
 
-          // Band fill: shade region between top and bottom eigenvalues at close distance
-          // Use a gradient fill between the outermost curves
-          const topCurve = curves[N - 1]; // highest energy (k=N, cos is most negative)
-          const botCurve = curves[0];      // lowest energy (k=1, cos is most positive)
+          for (let n = 0; n < N; n++) {
+            const offsetY = N === 1 ? 0 : -halfSpread + n * lineSpacing;
+            const lineY = baseY + offsetY;
+            const alpha = N <= 4 ? 1.0 : lineAlpha;
+            const lw = N <= 4 ? 1.8 : Math.max(0.6, 1.8 - N * 0.05);
 
-          ctxBS.globalAlpha = 0.08;
-          ctxBS.fillStyle = color;
-          ctxBS.beginPath();
-          ctxBS.moveTo(botCurve[0].x, botCurve[0].y);
-          for (let i = 0; i <= nPts; i++) ctxBS.lineTo(botCurve[i].x, botCurve[i].y);
-          for (let i = nPts; i >= 0; i--) ctxBS.lineTo(topCurve[i].x, topCurve[i].y);
-          ctxBS.closePath();
-          ctxBS.fill();
-          ctxBS.globalAlpha = 1.0;
-
-          // Draw individual level curves
-          const lineAlpha = N <= 6 ? 0.9 : Math.max(0.15, 0.9 - (N - 6) * 0.03);
-          const lw = N <= 6 ? 1.5 : Math.max(0.5, 1.5 - (N - 6) * 0.04);
-
-          curves.forEach((pts) => {
-            ctxBS.globalAlpha = lineAlpha;
+            ctxBS.globalAlpha = alpha;
             ctxBS.strokeStyle = color;
             ctxBS.lineWidth = lw;
             ctxBS.beginPath();
-            pts.forEach((p, i) => i === 0 ? ctxBS.moveTo(p.x, p.y) : ctxBS.lineTo(p.x, p.y));
+            ctxBS.moveTo(rxLeft, lineY);
+            ctxBS.lineTo(rxRight, lineY);
             ctxBS.stroke();
-          });
-          ctxBS.globalAlpha = 1.0;
-
-          // Label at far-right (close together) - show band
-          const tClose = tMax * Math.exp(-alpha * (dMin - dMin));
-          const levelsClose = tightBindingLevels(e0, tClose, N);
-          const bandTop = Math.max(...levelsClose);
-          const bandBot = Math.min(...levelsClose);
-          const bandMidY = yForE((bandTop + bandBot) / 2);
-
-          // Label on right edge
-          ctxBS.fillStyle = color;
-          ctxBS.font = '10px Inter, system-ui, sans-serif';
-          ctxBS.textAlign = 'left';
-          ctxBS.globalAlpha = 0.8;
-          if (N >= 2) {
-            ctxBS.fillText(label + ' band', margin.left + pw + 4, bandMidY + 4);
-            if (N <= 10) {
-              ctxBS.font = '9px Inter, system-ui, sans-serif';
-              ctxBS.fillText('(' + N + ' levels)', margin.left + pw + 4, bandMidY + 15);
-            }
           }
           ctxBS.globalAlpha = 1.0;
+
+          // Band boundary lines
+          if (N >= 2) {
+            ctxBS.strokeStyle = color;
+            ctxBS.lineWidth = 1.2;
+            ctxBS.setLineDash([3, 3]);
+            ctxBS.beginPath();
+            ctxBS.moveTo(rxLeft - 5, baseY - halfSpread);
+            ctxBS.lineTo(rxRight, baseY - halfSpread);
+            ctxBS.moveTo(rxLeft - 5, baseY + halfSpread);
+            ctxBS.lineTo(rxRight, baseY + halfSpread);
+            ctxBS.stroke();
+            ctxBS.setLineDash([]);
+          }
+
+          // Band label on right
+          if (N >= 3) {
+            ctxBS.fillStyle = color;
+            ctxBS.globalAlpha = 0.8;
+            ctxBS.font = '10px Inter, system-ui, sans-serif';
+            ctxBS.textAlign = 'right';
+            ctxBS.fillText(N + ' levels', rxRight - 2, baseY - halfSpread - 3);
+            ctxBS.globalAlpha = 1.0;
+          }
+        }
+
+        // Connecting dashed lines from isolated level to band edges
+        if (N >= 2) {
+          const halfSpread = spread * ph / 2;
+          ctxBS.strokeStyle = 'rgba(255,255,255,0.12)';
+          ctxBS.lineWidth = 0.8;
+          ctxBS.setLineDash([3, 6]);
+          ctxBS.beginPath();
+          ctxBS.moveTo(lxMid + lxHalf, baseY);
+          ctxBS.lineTo(rxLeft, baseY - halfSpread);
+          ctxBS.moveTo(lxMid + lxHalf, baseY);
+          ctxBS.lineTo(rxLeft, baseY + halfSpread);
+          ctxBS.stroke();
+          ctxBS.setLineDash([]);
         }
       });
 
-      // At far-left (large d), mark atomic levels with labels
-      if (N > 1) {
-        atomicLevels.forEach((lvl) => {
-          ctxBS.fillStyle = lvl.color;
-          ctxBS.font = FONT_SM;
-          ctxBS.textAlign = 'right';
-          ctxBS.fillText(lvl.label, margin.left - 6, yForE(lvl.e0) + 4);
-        });
+      // Caption
+      ctxBS.fillStyle = COLORS.textDim;
+      ctxBS.font = FONT_SM;
+      ctxBS.textAlign = 'center';
+      if (N === 1) {
+        ctxBS.fillText('Single atom: discrete levels', WBS / 2, HBS - 8);
+      } else if (N < 6) {
+        ctxBS.fillText('Each level splits into ' + N + ' closely-spaced levels', WBS / 2, HBS - 8);
+      } else {
+        ctxBS.fillText('Levels merge into quasi-continuous bands (N = ' + N + ')', WBS / 2, HBS - 8);
       }
 
       document.getElementById('band-n-atoms-val')?.replaceChildren(document.createTextNode(N.toString()));
     }
 
-    // Animate N smoothly when slider changes
-    bsNSlider?.addEventListener('input', () => {
-      const target = parseInt(bsNSlider.value);
-      if (bsAnimId) { cancelAnimationFrame(bsAnimId); bsAnimId = null; }
-      bsAnimTarget = target;
-      if (bsAnimCurrent === null) bsAnimCurrent = target;
-
-      function step() {
-        if (bsAnimCurrent === bsAnimTarget) { bsAnimId = null; return; }
-        if (bsAnimCurrent < bsAnimTarget) bsAnimCurrent++;
-        else bsAnimCurrent--;
-        drawBandSplitting(bsAnimCurrent);
-        bsAnimId = requestAnimationFrame(step);
-      }
-      step();
-    });
+    bsNSlider?.addEventListener('input', drawBandSplitting);
     drawBandSplitting();
   }
 
