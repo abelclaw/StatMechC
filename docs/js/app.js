@@ -17520,7 +17520,7 @@ function initCh13Vis() {
           for (var i = 0; i < 8; i++) corners.push({ x: i & 1 ? 1 : -1, y: i & 2 ? 1 : -1, z: i & 4 ? 1 : -1 });
           bzEdges = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]].map(function (pair) { return [corners[pair[0]], corners[pair[1]]]; });
         }
-        ctxFS.strokeStyle = 'rgba(255,255,255,0.12)'; ctxFS.lineWidth = 1; ctxFS.setLineDash([4, 4]);
+        ctxFS.strokeStyle = 'rgba(255,255,255,0.4)'; ctxFS.lineWidth = 1.2; ctxFS.setLineDash([6, 4]);
         for (var idx = 0; idx < bzEdges.length; idx++) {
           var pa = proj3(rot3(bzEdges[idx][0], fsAX, fsAY), sc);
           var pb = proj3(rot3(bzEdges[idx][1], fsAX, fsAY), sc);
