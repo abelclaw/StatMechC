@@ -20385,6 +20385,1264 @@ function initCh14Vis() {
     }
     animateSolidTypes();
   }
+
+  // =========================================================================
+  // TRANSISTOR DEMO
+  // =========================================================================
+  const cTrans = document.getElementById('vis-transistor-demo');
+  if (cTrans) {
+    const { ctx, W, H } = setupCanvas(cTrans);
+    let baseOn = false;
+    let animT = 0;
+    const transButtons = document.getElementById('transistor-base-buttons');
+
+    function drawTransistor() {
+      clearCanvas(ctx, W, H);
+      const cx = W / 2, cy = H / 2;
+      const onC = '#4caf50', offC = '#666', wireC = '#aaa';
+
+      // Title
+      ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
+      ctx.fillText('npn Transistor Circuit', cx, 25);
+
+      // Draw the transistor body
+      const tx = cx - 20, ty = cy - 50, tw = 40, th = 100;
+      // N-P-N layers
+      ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty, tw, 30);
+      ctx.fillStyle = '#ff7070'; ctx.fillRect(tx, ty + 30, tw, 15);
+      ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty + 45, tw, 55);
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(tx, ty, tw, th);
+      // Labels
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('n', tx + tw/2, ty + 18);
+      ctx.fillText('p', tx + tw/2, ty + 42);
+      ctx.fillText('n', tx + tw/2, ty + 75);
+
+      // Terminal labels
+      ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'left';
+      ctx.fillText('Collector', tx + tw + 15, ty + 10);
+      ctx.fillText('Base', tx + tw + 15, ty + 42);
+      ctx.fillText('Emitter', tx + tw + 15, ty + 85);
+
+      // Wires
+      const wireCol = baseOn ? onC : wireC;
+      const flowCol = baseOn ? onC : '#555';
+
+      // Supply voltage (top)
+      ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, ty - 50); ctx.lineTo(cx, ty); ctx.stroke();
+      ctx.fillStyle = COLORS.text; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('V_supply', cx, ty - 55);
+      // + symbol
+      ctx.fillStyle = flowCol; ctx.font = 'bold 16px sans-serif';
+      ctx.fillText('+', cx + 15, ty - 35);
+
+      // Ground (bottom)
+      ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, ty + th); ctx.lineTo(cx, ty + th + 40); ctx.stroke();
+      // Ground symbol
+      for (let i = 0; i < 3; i++) {
+        const gw = 20 - i * 6;
+        ctx.beginPath();
+        ctx.moveTo(cx - gw, ty + th + 40 + i * 6);
+        ctx.lineTo(cx + gw, ty + th + 40 + i * 6);
+        ctx.stroke();
+      }
+
+      // Base wire (left)
+      ctx.strokeStyle = baseOn ? '#ff9800' : wireC; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(tx - 80, ty + 37); ctx.lineTo(tx, ty + 37); ctx.stroke();
+
+      // Base voltage label
+      ctx.fillStyle = baseOn ? '#ff9800' : '#888'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(baseOn ? '0.7V' : '0V', tx - 85, ty + 42);
+
+      // Battery symbol for base
+      if (baseOn) {
+        const bx = tx - 60, by = ty + 25;
+        ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + 24); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx - 6, by + 8); ctx.lineTo(bx + 6, by + 8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx - 3, by + 14); ctx.lineTo(bx + 3, by + 14); ctx.stroke();
+      }
+
+      // LED on the collector side
+      const ledX = cx + 100, ledY = ty - 20;
+      ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, ty - 30); ctx.lineTo(ledX, ty - 30); ctx.lineTo(ledX, ledY + 10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ledX, ledY + 35); ctx.lineTo(ledX, ty + 10); ctx.lineTo(cx + 20, ty + 10); ctx.stroke();
+
+      // LED symbol (triangle + bar)
+      if (baseOn) {
+        ctx.fillStyle = 'rgba(255,200,50,0.5)';
+        ctx.beginPath(); ctx.arc(ledX, ledY + 22, 18, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = baseOn ? '#ffeb3b' : '#555';
+      ctx.beginPath();
+      ctx.moveTo(ledX - 10, ledY + 12); ctx.lineTo(ledX + 10, ledY + 12);
+      ctx.lineTo(ledX, ledY + 30); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = baseOn ? '#ffeb3b' : '#555'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ledX - 10, ledY + 30); ctx.lineTo(ledX + 10, ledY + 30); ctx.stroke();
+      ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'center';
+      ctx.fillText('LED', ledX, ledY + 50);
+
+      // Current flow arrows when on
+      if (baseOn) {
+        animT += 0.04;
+        const arrowPositions = [];
+        // Current through collector to emitter
+        for (let i = 0; i < 4; i++) {
+          const frac = ((animT + i * 0.25) % 1);
+          const ay = ty - 50 + frac * (th + 90);
+          arrowPositions.push({ x: cx, y: ay, dir: 1 });
+        }
+        ctx.fillStyle = onC;
+        for (const ap of arrowPositions) {
+          if (ap.y < ty - 50 || ap.y > ty + th + 40) continue;
+          ctx.beginPath();
+          ctx.moveTo(ap.x - 5, ap.y - 4);
+          ctx.lineTo(ap.x + 5, ap.y - 4);
+          ctx.lineTo(ap.x, ap.y + 6);
+          ctx.closePath(); ctx.fill();
+        }
+      }
+
+      // Status text
+      ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
+      if (baseOn) {
+        ctx.fillStyle = onC;
+        ctx.fillText('Base ON: current flows, LED lights up', cx, H - 15);
+      } else {
+        ctx.fillStyle = '#999';
+        ctx.fillText('Base OFF: no current flows, LED is dark', cx, H - 15);
+      }
+    }
+
+    let transAnim;
+    function animateTransistor() {
+      drawTransistor();
+      if (baseOn) transAnim = requestAnimationFrame(animateTransistor);
+    }
+
+    if (transButtons) {
+      transButtons.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-value]');
+        if (!btn) return;
+        transButtons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        baseOn = btn.dataset.value === 'on';
+        if (transAnim) cancelAnimationFrame(transAnim);
+        animateTransistor();
+      });
+    }
+    drawTransistor();
+  }
+
+  // =========================================================================
+  // NOT GATE DEMO
+  // =========================================================================
+  const cNot = document.getElementById('vis-not-gate');
+  if (cNot) {
+    const { ctx, W, H } = setupCanvas(cNot);
+    let inputX = 0;
+    const notButtons = document.getElementById('not-gate-buttons');
+    const notOutput = document.getElementById('not-gate-output');
+    let notAnimT = 0;
+
+    function drawNotGate() {
+      clearCanvas(ctx, W, H);
+      const outputY = inputX === 0 ? 1 : 0;
+      const onC = '#4caf50', offC = '#666';
+
+      ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
+      ctx.fillText('NOT Gate (Inverter) from npn Transistor', W / 2, 22);
+
+      // Circuit layout
+      const cx = W / 2, gndY = H - 45, vccY = 50;
+
+      // Vcc at top
+      ctx.fillStyle = '#ff5252'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('V_cc', cx, vccY - 8);
+
+      // Resistor from Vcc to junction
+      const rTop = vccY + 5, rBot = vccY + 60;
+      ctx.strokeStyle = outputY ? onC : offC; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, rTop); ctx.lineTo(cx, rTop + 5); ctx.stroke();
+      // Zigzag resistor
+      const rSteps = 5, rW = 8;
+      ctx.beginPath(); ctx.moveTo(cx, rTop + 5);
+      for (let i = 0; i < rSteps; i++) {
+        const yy = rTop + 5 + (i + 0.25) * (rBot - rTop - 10) / rSteps;
+        const yy2 = rTop + 5 + (i + 0.75) * (rBot - rTop - 10) / rSteps;
+        ctx.lineTo(cx + (i % 2 === 0 ? rW : -rW), yy);
+        ctx.lineTo(cx + (i % 2 === 0 ? -rW : rW), yy2);
+      }
+      ctx.lineTo(cx, rBot); ctx.stroke();
+      ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'left';
+      ctx.fillText('R', cx + 14, (rTop + rBot) / 2 + 4);
+
+      // Junction point (Y output branches off here)
+      const jY = rBot + 5;
+      ctx.strokeStyle = outputY ? onC : offC; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, rBot); ctx.lineTo(cx, jY); ctx.stroke();
+
+      // Y output wire (goes right)
+      ctx.strokeStyle = outputY ? onC : offC; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cx, jY); ctx.lineTo(cx + 120, jY); ctx.stroke();
+      ctx.fillStyle = outputY ? onC : '#888'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Y = ' + outputY, cx + 125, jY + 5);
+      // Junction dot
+      ctx.fillStyle = outputY ? onC : offC;
+      ctx.beginPath(); ctx.arc(cx, jY, 4, 0, Math.PI * 2); ctx.fill();
+
+      // Transistor body below junction
+      const tTop = jY + 10, tH = 50;
+      // Collector wire
+      ctx.strokeStyle = inputX ? onC : offC; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, jY); ctx.lineTo(cx, tTop); ctx.stroke();
+
+      // Transistor box
+      ctx.fillStyle = '#334'; ctx.fillRect(cx - 20, tTop, 40, tH);
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 1; ctx.strokeRect(cx - 20, tTop, 40, tH);
+      // NPN label
+      ctx.fillStyle = '#5c9eff'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('n', cx, tTop + 12);
+      ctx.fillStyle = '#ff7070'; ctx.fillText('p', cx, tTop + tH/2 + 3);
+      ctx.fillStyle = '#5c9eff'; ctx.fillText('n', cx, tTop + tH - 5);
+
+      // Emitter to ground
+      ctx.strokeStyle = inputX ? onC : offC; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, tTop + tH); ctx.lineTo(cx, gndY); ctx.stroke();
+      // Ground symbol
+      for (let i = 0; i < 3; i++) {
+        const gw = 15 - i * 4;
+        ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - gw, gndY + i * 5);
+        ctx.lineTo(cx + gw, gndY + i * 5);
+        ctx.stroke();
+      }
+
+      // Base wire (X input from left)
+      ctx.strokeStyle = inputX ? '#ff9800' : '#666'; ctx.lineWidth = 2.5;
+      const baseY = tTop + tH / 2;
+      ctx.beginPath(); ctx.moveTo(cx - 120, baseY); ctx.lineTo(cx - 20, baseY); ctx.stroke();
+      ctx.fillStyle = inputX ? '#ff9800' : '#888'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('X = ' + inputX, cx - 125, baseY + 5);
+
+      // Animated current flow
+      if (inputX) {
+        notAnimT += 0.04;
+        ctx.fillStyle = onC;
+        for (let i = 0; i < 3; i++) {
+          const frac = ((notAnimT + i * 0.33) % 1);
+          const ay = tTop + frac * (gndY - tTop);
+          ctx.beginPath();
+          ctx.moveTo(cx - 4, ay - 3); ctx.lineTo(cx + 4, ay - 3);
+          ctx.lineTo(cx, ay + 5); ctx.closePath(); ctx.fill();
+        }
+      }
+
+      // Status
+      ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
+      if (inputX) {
+        ctx.fillStyle = '#ff9800';
+        ctx.fillText('X=1: transistor ON, current goes to ground → Y=0', W / 2, H - 10);
+      } else {
+        ctx.fillStyle = '#4caf50';
+        ctx.fillText('X=0: transistor OFF, current diverted to Y → Y=1', W / 2, H - 10);
+      }
+
+      if (notOutput) notOutput.textContent = 'Output: Y = ' + outputY;
+    }
+
+    let notAnim;
+    function animateNot() {
+      drawNotGate();
+      if (inputX) notAnim = requestAnimationFrame(animateNot);
+    }
+
+    if (notButtons) {
+      notButtons.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-value]');
+        if (!btn) return;
+        notButtons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        inputX = parseInt(btn.dataset.value);
+        if (notAnim) cancelAnimationFrame(notAnim);
+        animateNot();
+      });
+    }
+    drawNotGate();
+  }
+
+  // =========================================================================
+  // LOGIC GATES EXPLORER
+  // =========================================================================
+  const cGates = document.getElementById('vis-logic-gates');
+  if (cGates) {
+    const { ctx, W, H } = setupCanvas(cGates);
+    let gateType = 'AND', gateA = 0, gateB = 0;
+    const gateButtons = document.getElementById('gate-type-buttons');
+    const inputBtnA = document.getElementById('gate-input-a');
+    const inputBtnB = document.getElementById('gate-input-b');
+
+    const GATE_FUNCS = {
+      AND:  (a, b) => a & b,
+      NAND: (a, b) => (a & b) ^ 1,
+      OR:   (a, b) => a | b,
+      NOR:  (a, b) => (a | b) ^ 1,
+      XOR:  (a, b) => a ^ b
+    };
+
+    function drawGateShape(cx, cy, type, size) {
+      const s = size;
+      ctx.lineWidth = 2.5; ctx.strokeStyle = '#333'; ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      if (type === 'AND' || type === 'NAND') {
+        ctx.moveTo(cx - s, cy - s);
+        ctx.lineTo(cx, cy - s);
+        ctx.arc(cx, cy, s, -Math.PI/2, Math.PI/2);
+        ctx.lineTo(cx - s, cy + s);
+        ctx.closePath();
+      } else if (type === 'OR' || type === 'NOR') {
+        ctx.moveTo(cx - s, cy - s);
+        ctx.quadraticCurveTo(cx - s/3, cy - s, cx + s * 0.7, cy);
+        ctx.quadraticCurveTo(cx - s/3, cy + s, cx - s, cy + s);
+        ctx.quadraticCurveTo(cx - s * 0.5, cy, cx - s, cy - s);
+      } else if (type === 'XOR') {
+        ctx.moveTo(cx - s, cy - s);
+        ctx.quadraticCurveTo(cx - s/3, cy - s, cx + s * 0.7, cy);
+        ctx.quadraticCurveTo(cx - s/3, cy + s, cx - s, cy + s);
+        ctx.quadraticCurveTo(cx - s * 0.5, cy, cx - s, cy - s);
+      }
+      ctx.fill(); ctx.stroke();
+
+      // Bubble for NAND/NOR
+      if (type === 'NAND' || type === 'NOR') {
+        const bx = type === 'NAND' ? cx + s + 7 : cx + s * 0.7 + 7;
+        ctx.beginPath(); ctx.arc(bx, cy, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+      }
+
+      // Extra curve for XOR
+      if (type === 'XOR') {
+        ctx.beginPath();
+        ctx.moveTo(cx - s - 6, cy - s);
+        ctx.quadraticCurveTo(cx - s * 0.5 - 6, cy, cx - s - 6, cy + s);
+        ctx.stroke();
+      }
+
+      // Gate label
+      ctx.fillStyle = '#333'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+      const labelX = (type === 'OR' || type === 'NOR' || type === 'XOR') ? cx - s * 0.15 : cx;
+      ctx.fillText(type, labelX, cy + 5);
+    }
+
+    function drawLogicGates() {
+      clearCanvas(ctx, W, H);
+      const out = GATE_FUNCS[gateType](gateA, gateB);
+      const onC = '#4caf50', offC = '#666';
+
+      // Layout
+      const gateX = W / 2, gateY = 110, gs = 45;
+
+      // Title
+      ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
+      ctx.fillText(gateType + ' Gate', gateX, 25);
+
+      // Input wires
+      const inAY = gateY - gs * 0.5, inBY = gateY + gs * 0.5;
+      const wireStartX = gateX - 180;
+
+      // A wire
+      ctx.strokeStyle = gateA ? onC : offC; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(wireStartX, inAY); ctx.lineTo(gateX - gs, inAY); ctx.stroke();
+      // B wire
+      ctx.strokeStyle = gateB ? onC : offC; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(wireStartX, inBY); ctx.lineTo(gateX - gs, inBY); ctx.stroke();
+
+      // Input labels
+      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillStyle = gateA ? onC : offC; ctx.fillText('A=' + gateA, wireStartX - 10, inAY + 6);
+      ctx.fillStyle = gateB ? onC : offC; ctx.fillText('B=' + gateB, wireStartX - 10, inBY + 6);
+
+      // Input dots (clickable indicators)
+      ctx.fillStyle = gateA ? onC : '#444';
+      ctx.beginPath(); ctx.arc(wireStartX, inAY, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(gateA.toString(), wireStartX, inAY + 4);
+
+      ctx.fillStyle = gateB ? onC : '#444';
+      ctx.beginPath(); ctx.arc(wireStartX, inBY, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(gateB.toString(), wireStartX, inBY + 4);
+
+      // Gate shape
+      drawGateShape(gateX, gateY, gateType, gs);
+
+      // Output wire
+      const outStartX = (gateType === 'NAND' || gateType === 'NOR') ? gateX + gs + 12 :
+                         (gateType === 'OR' || gateType === 'XOR') ? gateX + gs * 0.7 : gateX + gs;
+      const outEndX = gateX + 180;
+      ctx.strokeStyle = out ? onC : offC; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(outStartX, gateY); ctx.lineTo(outEndX, gateY); ctx.stroke();
+
+      // Output label and indicator
+      ctx.fillStyle = out ? onC : offC;
+      ctx.beginPath(); ctx.arc(outEndX + 15, gateY, 12, 0, Math.PI * 2); ctx.fill();
+      if (out) {
+        ctx.fillStyle = 'rgba(76,175,80,0.3)';
+        ctx.beginPath(); ctx.arc(outEndX + 15, gateY, 20, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(out.toString(), outEndX + 15, gateY + 5);
+      ctx.fillStyle = out ? onC : offC; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Out=' + out, outEndX + 35, gateY + 6);
+
+      // Truth table
+      const ttX = W / 2 - 100, ttY = 195, ttW = 200, rowH = 26;
+      const cols = ['A', 'B', 'Out'];
+      const colW = ttW / 3;
+
+      // Header
+      ctx.fillStyle = '#2a3a4a'; ctx.fillRect(ttX, ttY, ttW, rowH);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+      for (let c = 0; c < 3; c++) {
+        ctx.fillText(cols[c], ttX + colW * c + colW / 2, ttY + 17);
+      }
+
+      // Rows
+      for (let r = 0; r < 4; r++) {
+        const a = (r >> 1) & 1, b = r & 1;
+        const o = GATE_FUNCS[gateType](a, b);
+        const isActive = (a === gateA && b === gateB);
+        const ry = ttY + rowH * (r + 1);
+
+        ctx.fillStyle = isActive ? 'rgba(76,175,80,0.25)' : (r % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)');
+        ctx.fillRect(ttX, ry, ttW, rowH);
+
+        if (isActive) {
+          ctx.strokeStyle = onC; ctx.lineWidth = 2;
+          ctx.strokeRect(ttX, ry, ttW, rowH);
+        }
+
+        ctx.fillStyle = isActive ? '#fff' : COLORS.text;
+        ctx.font = (isActive ? 'bold ' : '') + '12px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(a.toString(), ttX + colW * 0 + colW / 2, ry + 17);
+        ctx.fillText(b.toString(), ttX + colW * 1 + colW / 2, ry + 17);
+        ctx.fillStyle = isActive ? (o ? onC : '#ff5252') : COLORS.text;
+        ctx.fillText(o.toString(), ttX + colW * 2 + colW / 2, ry + 17);
+      }
+
+      // Table border
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+      ctx.strokeRect(ttX, ttY, ttW, rowH * 5);
+      for (let i = 1; i < 5; i++) {
+        ctx.beginPath(); ctx.moveTo(ttX, ttY + rowH * i); ctx.lineTo(ttX + ttW, ttY + rowH * i); ctx.stroke();
+      }
+      for (let i = 1; i < 3; i++) {
+        ctx.beginPath(); ctx.moveTo(ttX + colW * i, ttY); ctx.lineTo(ttX + colW * i, ttY + rowH * 5); ctx.stroke();
+      }
+
+      // Instruction
+      ctx.fillStyle = '#888'; ctx.font = FONT_SM; ctx.textAlign = 'center';
+      ctx.fillText('Click A and B buttons to toggle inputs. Select gate type above.', W / 2, H - 10);
+    }
+
+    if (gateButtons) {
+      gateButtons.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-value]');
+        if (!btn) return;
+        gateButtons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        gateType = btn.dataset.value;
+        drawLogicGates();
+      });
+    }
+    if (inputBtnA) {
+      inputBtnA.addEventListener('click', function() {
+        gateA = gateA ^ 1;
+        inputBtnA.textContent = 'A = ' + gateA;
+        drawLogicGates();
+      });
+    }
+    if (inputBtnB) {
+      inputBtnB.addEventListener('click', function() {
+        gateB = gateB ^ 1;
+        inputBtnB.textContent = 'B = ' + gateB;
+        drawLogicGates();
+      });
+    }
+    drawLogicGates();
+  }
+
+  // =========================================================================
+  // FULL ADDER
+  // =========================================================================
+  const cAdder = document.getElementById('vis-full-adder');
+  if (cAdder) {
+    const { ctx, W, H } = setupCanvas(cAdder);
+    let adA = 0, adB = 0, adCin = 0;
+    const adBtnA = document.getElementById('adder-input-a');
+    const adBtnB = document.getElementById('adder-input-b');
+    const adBtnCin = document.getElementById('adder-input-cin');
+    const adOutput = document.getElementById('adder-output');
+
+    function drawSmallGate(x, y, type, w, h) {
+      ctx.lineWidth = 1.5; ctx.strokeStyle = '#333'; ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      const hw = w / 2, hh = h / 2;
+      if (type === 'XOR' || type === 'OR') {
+        ctx.moveTo(x - hw, y - hh);
+        ctx.quadraticCurveTo(x, y - hh, x + hw, y);
+        ctx.quadraticCurveTo(x, y + hh, x - hw, y + hh);
+        ctx.quadraticCurveTo(x - hw / 3, y, x - hw, y - hh);
+        ctx.fill(); ctx.stroke();
+        if (type === 'XOR') {
+          ctx.beginPath();
+          ctx.moveTo(x - hw - 4, y - hh);
+          ctx.quadraticCurveTo(x - hw / 3 - 4, y, x - hw - 4, y + hh);
+          ctx.stroke();
+        }
+      } else if (type === 'AND') {
+        ctx.moveTo(x - hw, y - hh);
+        ctx.lineTo(x, y - hh);
+        ctx.arc(x, y, hh, -Math.PI / 2, Math.PI / 2);
+        ctx.lineTo(x - hw, y + hh);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      ctx.fillStyle = '#333'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+      const lx = (type === 'OR' || type === 'XOR') ? x - 2 : x;
+      ctx.fillText(type, lx, y + 4);
+    }
+
+    function drawFullAdder() {
+      clearCanvas(ctx, W, H);
+      const P = adA ^ adB;
+      const sumOut = P ^ adCin;
+      const G1 = adA & adB;
+      const G2 = P & adCin;
+      const coutOut = G1 | G2;
+      const onC = '#4caf50', offC = '#555', hiC = '#ff9800';
+
+      ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
+      ctx.fillText('Full Adder', W / 2, 22);
+
+      // Gate positions
+      const xor1X = 160, xor1Y = 80;
+      const xor2X = 310, xor2Y = 95;
+      const and1X = 310, and1Y = 195;
+      const and2X = 310, and2Y = 255;
+      const orX = 440, orY = 225;
+      const gw = 55, gh = 35;
+
+      // Input labels
+      ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillStyle = adA ? onC : offC; ctx.fillText('A=' + adA, 55, 68);
+      ctx.fillStyle = adB ? onC : offC; ctx.fillText('B=' + adB, 55, 98);
+      ctx.fillStyle = adCin ? hiC : offC; ctx.fillText('Cin=' + adCin, 55, 210);
+
+      // Wire helper
+      function wire(pts, val) {
+        ctx.strokeStyle = val ? onC : offC; ctx.lineWidth = val ? 2.5 : 1.5;
+        ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.stroke();
+      }
+      function dot(x, y, val) {
+        ctx.fillStyle = val ? onC : offC;
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // A → XOR1 top
+      wire([[60, 65], [xor1X - gw/2, 65], [xor1X - gw/2, xor1Y - 10]], adA);
+      // B → XOR1 bot
+      wire([[60, 95], [xor1X - gw/2 + 5, 95], [xor1X - gw/2 + 5, xor1Y + 10]], adB);
+
+      // XOR1
+      drawSmallGate(xor1X, xor1Y, 'XOR', gw, gh);
+
+      // P wire from XOR1
+      const pX = xor1X + gw / 2 + 5;
+      wire([[xor1X + gw / 2, xor1Y], [pX, xor1Y]], P);
+      ctx.fillStyle = P ? onC : '#888'; ctx.font = FONT_SM; ctx.textAlign = 'left';
+      ctx.fillText('P', pX + 2, xor1Y - 6);
+
+      // P → XOR2 top
+      dot(pX + 10, xor1Y, P);
+      wire([[pX + 10, xor1Y], [xor2X - gw/2, xor1Y], [xor2X - gw/2, xor2Y - 10]], P);
+      // P → AND1 top
+      wire([[pX + 10, xor1Y], [pX + 10, 185], [and1X - gw/2, 185], [and1X - gw/2, and1Y - 10]], P);
+
+      // Cin wire
+      wire([[60, 207], [200, 207]], adCin);
+      dot(200, 207, adCin);
+      // Cin → XOR2 bot
+      wire([[200, 207], [200, xor2Y + 10], [xor2X - gw/2, xor2Y + 10]], adCin);
+      // Cin → AND1 bot
+      wire([[200, 207], [200, and1Y + 10], [and1X - gw/2, and1Y + 10]], adCin);
+
+      // XOR2
+      drawSmallGate(xor2X, xor2Y, 'XOR', gw, gh);
+
+      // Sum output
+      wire([[xor2X + gw/2, xor2Y], [W - 50, xor2Y]], sumOut);
+      ctx.fillStyle = sumOut ? onC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Sum=' + sumOut, W - 48, xor2Y + 5);
+
+      // AND1 (P AND Cin)
+      drawSmallGate(and1X, and1Y, 'AND', gw, gh);
+      ctx.fillStyle = G2 ? onC : '#888'; ctx.font = FONT_SM; ctx.textAlign = 'left';
+      ctx.fillText('G2', and1X + gw/2 + 5, and1Y - 5);
+
+      // A → AND2 top
+      dot(75, 65, adA);
+      wire([[75, 65], [75, 245], [and2X - gw/2, 245]], adA);
+      // B → AND2 bot
+      dot(85, 95, adB);
+      wire([[85, 95], [85, 265], [and2X - gw/2, 265]], adB);
+
+      // AND2 (A AND B)
+      drawSmallGate(and2X, and2Y, 'AND', gw, gh);
+      ctx.fillStyle = G1 ? onC : '#888'; ctx.font = FONT_SM; ctx.textAlign = 'left';
+      ctx.fillText('G1', and2X + gw/2 + 5, and2Y - 5);
+
+      // G2 → OR top
+      wire([[and1X + gw/2, and1Y], [380, and1Y], [380, orY - 12], [orX - gw/2, orY - 12]], G2);
+      // G1 → OR bot
+      wire([[and2X + gw/2, and2Y], [380, and2Y], [380, orY + 12], [orX - gw/2, orY + 12]], G1);
+
+      // OR gate
+      drawSmallGate(orX, orY, 'OR', gw, gh);
+
+      // Cout output
+      wire([[orX + gw/2, orY], [W - 50, orY]], coutOut);
+      ctx.fillStyle = coutOut ? onC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Cout=' + coutOut, W - 48, orY + 5);
+
+      // Equation
+      ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
+      ctx.fillText(adA + ' + ' + adB + ' + ' + adCin + ' = ' + (adA + adB + adCin) +
+        ' (binary: ' + coutOut + '' + sumOut + ')', W / 2, H - 10);
+
+      if (adOutput) adOutput.textContent = 'Sum = ' + sumOut + ', C_out = ' + coutOut;
+    }
+
+    function toggleAdder(btn, getter, setter) {
+      if (btn) btn.addEventListener('click', function() {
+        setter(); drawFullAdder();
+      });
+    }
+    toggleAdder(adBtnA, null, function() { adA ^= 1; adBtnA.textContent = 'A = ' + adA; });
+    toggleAdder(adBtnB, null, function() { adB ^= 1; adBtnB.textContent = 'B = ' + adB; });
+    toggleAdder(adBtnCin, null, function() { adCin ^= 1; adBtnCin.textContent = 'C_in = ' + adCin; });
+    drawFullAdder();
+  }
+
+  // =========================================================================
+  // SR LATCH
+  // =========================================================================
+  const cSR = document.getElementById('vis-sr-latch');
+  if (cSR) {
+    const { ctx, W, H } = setupCanvas(cSR);
+    let srQ = 0, srS = 0, srR = 0;
+    let srPulseTimer = null;
+    const srSetBtn = document.getElementById('sr-set-btn');
+    const srResetBtn = document.getElementById('sr-reset-btn');
+    const srOutput = document.getElementById('sr-latch-output');
+
+    function drawSRLatch() {
+      clearCanvas(ctx, W, H);
+      const onC = '#4caf50', offC = '#555', pulseC = '#ff9800';
+      const qBar = srQ ? 0 : 1;
+
+      ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
+      ctx.fillText('SR Latch (Cross-Coupled NOR Gates)', W / 2, 22);
+
+      // NOR gate positions
+      const nor1X = 260, nor1Y = 90;  // top NOR → Q
+      const nor2X = 260, nor2Y = 210; // bot NOR → Q̄
+      const gw = 60, gh = 40;
+
+      // Draw NOR gates
+      function drawNOR(x, y) {
+        ctx.lineWidth = 2; ctx.strokeStyle = '#333'; ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.beginPath();
+        const hw = gw / 2, hh = gh / 2;
+        ctx.moveTo(x - hw, y - hh);
+        ctx.quadraticCurveTo(x, y - hh, x + hw * 0.8, y);
+        ctx.quadraticCurveTo(x, y + hh, x - hw, y + hh);
+        ctx.quadraticCurveTo(x - hw / 3, y, x - hw, y - hh);
+        ctx.fill(); ctx.stroke();
+        // Bubble
+        ctx.beginPath(); ctx.arc(x + hw * 0.8 + 6, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#333'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('NOR', x - 3, y + 4);
+      }
+
+      drawNOR(nor1X, nor1Y);
+      drawNOR(nor2X, nor2Y);
+
+      // Wire helper
+      function wire(pts, val, pulse) {
+        ctx.strokeStyle = pulse ? pulseC : (val ? onC : offC);
+        ctx.lineWidth = val || pulse ? 2.5 : 1.5;
+        ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.stroke();
+      }
+
+      // S input → NOR1 top
+      wire([[80, nor1Y - 13], [nor1X - gw/2, nor1Y - 13]], srS, srS);
+      ctx.fillStyle = srS ? pulseC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('S=' + srS, 75, nor1Y - 8);
+
+      // R input → NOR2 bot
+      wire([[80, nor2Y + 13], [nor2X - gw/2, nor2Y + 13]], srR, srR);
+      ctx.fillStyle = srR ? pulseC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('R=' + srR, 75, nor2Y + 18);
+
+      // Q output from NOR1
+      const qOutX = nor1X + gw/2 * 0.8 + 11;
+      wire([[qOutX, nor1Y], [W - 100, nor1Y]], srQ, false);
+      ctx.fillStyle = srQ ? onC : offC; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Q=' + srQ, W - 95, nor1Y + 6);
+      // Q indicator
+      if (srQ) {
+        ctx.fillStyle = 'rgba(76,175,80,0.3)';
+        ctx.beginPath(); ctx.arc(W - 60, nor1Y, 15, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Q̄ output from NOR2
+      wire([[qOutX, nor2Y], [W - 100, nor2Y]], qBar, false);
+      ctx.fillStyle = qBar ? onC : offC; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Q\u0305=' + qBar, W - 95, nor2Y + 6);
+      if (qBar) {
+        ctx.fillStyle = 'rgba(76,175,80,0.3)';
+        ctx.beginPath(); ctx.arc(W - 60, nor2Y, 15, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Cross-coupling: Q → NOR2 top input
+      const fbX1 = nor1X + gw/2 * 0.8 + 11 + 30;
+      wire([[qOutX + 25, nor1Y], [fbX1, nor1Y], [fbX1, nor2Y - 50], [160, nor2Y - 50], [160, nor2Y - 13], [nor2X - gw/2, nor2Y - 13]], srQ, false);
+      ctx.fillStyle = srQ ? onC : offC;
+      ctx.beginPath(); ctx.arc(qOutX + 25, nor1Y, 3, 0, Math.PI * 2); ctx.fill();
+
+      // Cross-coupling: Q̄ → NOR1 bot input
+      wire([[qOutX + 25, nor2Y], [fbX1 + 15, nor2Y], [fbX1 + 15, nor1Y + 50], [160, nor1Y + 50], [160, nor1Y + 13], [nor1X - gw/2, nor1Y + 13]], qBar, false);
+      ctx.fillStyle = qBar ? onC : offC;
+      ctx.beginPath(); ctx.arc(qOutX + 25, nor2Y, 3, 0, Math.PI * 2); ctx.fill();
+
+      // Status
+      ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
+      if (srS) ctx.fillText('SET pulse: Q → 1', W / 2, H - 12);
+      else if (srR) ctx.fillText('RESET pulse: Q → 0', W / 2, H - 12);
+      else ctx.fillText('Stable state: Q=' + srQ + ', Q\u0305=' + qBar + '. Pulse SET or RESET to change.', W / 2, H - 12);
+
+      if (srOutput) srOutput.textContent = 'Q = ' + srQ + ', Q\u0305 = ' + qBar;
+    }
+
+    function pulseInput(type) {
+      if (srPulseTimer) clearTimeout(srPulseTimer);
+      if (type === 'set') { srS = 1; srR = 0; srQ = 1; }
+      else { srS = 0; srR = 1; srQ = 0; }
+      drawSRLatch();
+      srPulseTimer = setTimeout(function() {
+        srS = 0; srR = 0;
+        drawSRLatch();
+      }, 400);
+    }
+
+    if (srSetBtn) srSetBtn.addEventListener('click', function() { pulseInput('set'); });
+    if (srResetBtn) srResetBtn.addEventListener('click', function() { pulseInput('reset'); });
+    drawSRLatch();
+  }
+
+  // =========================================================================
+  // CIRCUIT BUILDER SANDBOX
+  // =========================================================================
+  const cBuilder = document.getElementById('vis-circuit-builder');
+  if (cBuilder) {
+    const { ctx, W, H } = setupCanvas(cBuilder);
+
+    // State
+    const gates = [];
+    const wires = [];
+    let nextId = 1;
+    let selectedTool = 'INPUT';
+    let wireStart = null; // {gateId, portType, portIdx, x, y}
+    let dragGate = null;
+    let dragOffset = { x: 0, y: 0 };
+    let mouseX = 0, mouseY = 0;
+    let hoveredPort = null;
+
+    // Gate definitions
+    const GATE_DEFS = {
+      INPUT:  { inputs: 0, outputs: 1, w: 50, h: 36, label: 'IN' },
+      OUTPUT: { inputs: 1, outputs: 0, w: 50, h: 36, label: 'OUT' },
+      NOT:    { inputs: 1, outputs: 1, w: 55, h: 36, label: 'NOT' },
+      AND:    { inputs: 2, outputs: 1, w: 55, h: 40, label: 'AND' },
+      NAND:   { inputs: 2, outputs: 1, w: 55, h: 40, label: 'NAND' },
+      OR:     { inputs: 2, outputs: 1, w: 55, h: 40, label: 'OR' },
+      NOR:    { inputs: 2, outputs: 1, w: 55, h: 40, label: 'NOR' },
+      XOR:    { inputs: 2, outputs: 1, w: 55, h: 40, label: 'XOR' }
+    };
+
+    const GATE_LOGIC = {
+      INPUT:  function(ins, g) { return [g.value || 0]; },
+      OUTPUT: function(ins) { return []; },
+      NOT:    function(ins) { return [(ins[0] || 0) ^ 1]; },
+      AND:    function(ins) { return [(ins[0] || 0) & (ins[1] || 0)]; },
+      NAND:   function(ins) { return [((ins[0] || 0) & (ins[1] || 0)) ^ 1]; },
+      OR:     function(ins) { return [(ins[0] || 0) | (ins[1] || 0)]; },
+      NOR:    function(ins) { return [((ins[0] || 0) | (ins[1] || 0)) ^ 1]; },
+      XOR:    function(ins) { return [(ins[0] || 0) ^ (ins[1] || 0)]; }
+    };
+
+    function createGate(type, x, y) {
+      const def = GATE_DEFS[type];
+      const g = {
+        id: nextId++, type: type, x: x, y: y,
+        w: def.w, h: def.h,
+        value: 0, // for INPUT type
+        inputValues: new Array(def.inputs).fill(0),
+        outputValues: new Array(def.outputs).fill(0)
+      };
+      gates.push(g);
+      return g;
+    }
+
+    function getPortPos(gate, portType, idx) {
+      const def = GATE_DEFS[gate.type];
+      if (portType === 'input') {
+        const n = def.inputs;
+        const spacing = gate.h / (n + 1);
+        return { x: gate.x, y: gate.y + spacing * (idx + 1) };
+      } else {
+        return { x: gate.x + gate.w, y: gate.y + gate.h / 2 };
+      }
+    }
+
+    function findPort(mx, my, radius) {
+      radius = radius || 12;
+      for (let i = 0; i < gates.length; i++) {
+        const g = gates[i];
+        const def = GATE_DEFS[g.type];
+        // Check input ports
+        for (let p = 0; p < def.inputs; p++) {
+          const pos = getPortPos(g, 'input', p);
+          if (Math.hypot(mx - pos.x, my - pos.y) < radius) {
+            return { gateId: g.id, portType: 'input', portIdx: p, x: pos.x, y: pos.y, gate: g };
+          }
+        }
+        // Check output ports
+        for (let p = 0; p < def.outputs; p++) {
+          const pos = getPortPos(g, 'output', p);
+          if (Math.hypot(mx - pos.x, my - pos.y) < radius) {
+            return { gateId: g.id, portType: 'output', portIdx: p, x: pos.x, y: pos.y, gate: g };
+          }
+        }
+      }
+      return null;
+    }
+
+    function findGateAt(mx, my) {
+      for (let i = gates.length - 1; i >= 0; i--) {
+        const g = gates[i];
+        if (mx >= g.x && mx <= g.x + g.w && my >= g.y && my <= g.y + g.h) return g;
+      }
+      return null;
+    }
+
+    function propagate() {
+      // Topological evaluation with cycle handling (for latches)
+      const maxIter = 20;
+      for (let iter = 0; iter < maxIter; iter++) {
+        let changed = false;
+        for (let i = 0; i < gates.length; i++) {
+          const g = gates[i];
+          const def = GATE_DEFS[g.type];
+          // Gather inputs
+          const ins = new Array(def.inputs).fill(0);
+          for (let w = 0; w < wires.length; w++) {
+            const wire = wires[w];
+            if (wire.toId === g.id) {
+              const srcGate = gates.find(function(gg) { return gg.id === wire.fromId; });
+              if (srcGate) ins[wire.toPort] = srcGate.outputValues[wire.fromPort] || 0;
+            }
+          }
+          g.inputValues = ins;
+          const newOut = GATE_LOGIC[g.type](ins, g);
+          for (let o = 0; o < newOut.length; o++) {
+            if (g.outputValues[o] !== newOut[o]) { changed = true; g.outputValues[o] = newOut[o]; }
+          }
+        }
+        if (!changed) break;
+      }
+    }
+
+    function drawCircuit() {
+      clearCanvas(ctx, W, H);
+      const onC = '#4caf50', offC = '#666';
+
+      // Grid dots
+      ctx.fillStyle = 'rgba(128,128,128,0.15)';
+      for (let gx = 20; gx < W; gx += 20) {
+        for (let gy = 20; gy < H; gy += 20) {
+          ctx.fillRect(gx - 0.5, gy - 0.5, 1, 1);
+        }
+      }
+
+      // Draw wires
+      for (let i = 0; i < wires.length; i++) {
+        const w = wires[i];
+        const fromGate = gates.find(function(g) { return g.id === w.fromId; });
+        const toGate = gates.find(function(g) { return g.id === w.toId; });
+        if (!fromGate || !toGate) continue;
+        const fp = getPortPos(fromGate, 'output', w.fromPort);
+        const tp = getPortPos(toGate, 'input', w.toPort);
+        const val = fromGate.outputValues[w.fromPort] || 0;
+
+        ctx.strokeStyle = val ? onC : offC;
+        ctx.lineWidth = val ? 2.5 : 1.5;
+        // Route: horizontal from output, then vertical, then horizontal to input
+        const midX = (fp.x + tp.x) / 2;
+        ctx.beginPath();
+        ctx.moveTo(fp.x, fp.y);
+        ctx.lineTo(midX, fp.y);
+        ctx.lineTo(midX, tp.y);
+        ctx.lineTo(tp.x, tp.y);
+        ctx.stroke();
+      }
+
+      // Wire being drawn
+      if (wireStart) {
+        ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(wireStart.x, wireStart.y);
+        ctx.lineTo(mouseX, mouseY); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Draw gates
+      for (let i = 0; i < gates.length; i++) {
+        const g = gates[i];
+        const def = GATE_DEFS[g.type];
+
+        // Gate body
+        if (g.type === 'INPUT') {
+          const val = g.value || 0;
+          ctx.fillStyle = val ? 'rgba(76,175,80,0.3)' : 'rgba(100,100,100,0.2)';
+          ctx.strokeStyle = val ? onC : '#888';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(g.x, g.y, g.w, g.h, 6);
+          ctx.fill(); ctx.stroke();
+          // Toggle switch appearance
+          ctx.fillStyle = val ? onC : '#888'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(val ? '1' : '0', g.x + g.w / 2, g.y + g.h / 2 + 5);
+        } else if (g.type === 'OUTPUT') {
+          const val = g.inputValues[0] || 0;
+          // LED circle
+          ctx.fillStyle = val ? 'rgba(76,175,80,0.4)' : 'rgba(100,100,100,0.15)';
+          ctx.strokeStyle = val ? onC : '#888'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(g.x + g.w / 2, g.y + g.h / 2, g.h / 2, 0, Math.PI * 2);
+          ctx.fill(); ctx.stroke();
+          if (val) {
+            ctx.fillStyle = 'rgba(76,175,80,0.2)';
+            ctx.beginPath(); ctx.arc(g.x + g.w / 2, g.y + g.h / 2, g.h / 2 + 6, 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.fillStyle = val ? onC : '#888'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(val ? '1' : '0', g.x + g.w / 2, g.y + g.h / 2 + 4);
+        } else {
+          // Logic gate body
+          ctx.fillStyle = 'rgba(240,240,255,0.95)';
+          ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(g.x, g.y, g.w, g.h, 4);
+          ctx.fill(); ctx.stroke();
+          // Label
+          ctx.fillStyle = '#333'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(g.type, g.x + g.w / 2, g.y + g.h / 2 + 4);
+        }
+
+        // Input ports
+        for (let p = 0; p < def.inputs; p++) {
+          const pos = getPortPos(g, 'input', p);
+          const val = g.inputValues[p] || 0;
+          ctx.fillStyle = val ? onC : '#888';
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        // Output ports
+        for (let p = 0; p < def.outputs; p++) {
+          const pos = getPortPos(g, 'output', p);
+          const val = g.outputValues[p] || 0;
+          ctx.fillStyle = val ? onC : '#888';
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+
+      // Hovered port highlight
+      if (hoveredPort && (selectedTool === 'WIRE' || wireStart)) {
+        ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(hoveredPort.x, hoveredPort.y, 8, 0, Math.PI * 2); ctx.stroke();
+      }
+
+      // Empty state message
+      if (gates.length === 0) {
+        ctx.fillStyle = '#888'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Click a gate type above, then click here to place it.', W / 2, H / 2 - 10);
+        ctx.fillText('Use WIRE mode to connect gates. Click INPUT switches to toggle.', W / 2, H / 2 + 14);
+      }
+
+      // Tool indicator
+      ctx.fillStyle = '#888'; ctx.font = FONT_SM; ctx.textAlign = 'right';
+      ctx.fillText('Tool: ' + selectedTool, W - 10, H - 8);
+    }
+
+    // Mouse event handling
+    function getCanvasPos(e) {
+      const rect = cBuilder.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (W / rect.width),
+        y: (e.clientY - rect.top) * (H / rect.height)
+      };
+    }
+
+    cBuilder.addEventListener('mousedown', function(e) {
+      const pos = getCanvasPos(e);
+      mouseX = pos.x; mouseY = pos.y;
+
+      if (selectedTool === 'DELETE') {
+        // Delete gate under cursor
+        const g = findGateAt(pos.x, pos.y);
+        if (g) {
+          // Remove connected wires
+          for (let i = wires.length - 1; i >= 0; i--) {
+            if (wires[i].fromId === g.id || wires[i].toId === g.id) wires.splice(i, 1);
+          }
+          gates.splice(gates.indexOf(g), 1);
+          propagate(); drawCircuit();
+          return;
+        }
+        // Delete wire near cursor
+        for (let i = wires.length - 1; i >= 0; i--) {
+          const w = wires[i];
+          const fromGate = gates.find(function(gg) { return gg.id === w.fromId; });
+          const toGate = gates.find(function(gg) { return gg.id === w.toId; });
+          if (fromGate && toGate) {
+            const fp = getPortPos(fromGate, 'output', w.fromPort);
+            const tp = getPortPos(toGate, 'input', w.toPort);
+            const midX = (fp.x + tp.x) / 2;
+            // Check distance to wire segments
+            if (distToSegment(pos, fp, {x:midX,y:fp.y}) < 8 ||
+                distToSegment(pos, {x:midX,y:fp.y}, {x:midX,y:tp.y}) < 8 ||
+                distToSegment(pos, {x:midX,y:tp.y}, tp) < 8) {
+              wires.splice(i, 1);
+              propagate(); drawCircuit();
+              return;
+            }
+          }
+        }
+        drawCircuit();
+        return;
+      }
+
+      if (selectedTool === 'WIRE') {
+        const port = findPort(pos.x, pos.y);
+        if (port) {
+          if (!wireStart) {
+            wireStart = port;
+          } else {
+            // Complete wire
+            if (wireStart.portType !== port.portType && wireStart.gateId !== port.gateId) {
+              const from = wireStart.portType === 'output' ? wireStart : port;
+              const to = wireStart.portType === 'input' ? wireStart : port;
+              // Check if input already connected
+              const existing = wires.findIndex(function(w) { return w.toId === to.gateId && w.toPort === to.portIdx; });
+              if (existing >= 0) wires.splice(existing, 1);
+              wires.push({ fromId: from.gateId, fromPort: from.portIdx, toId: to.gateId, toPort: to.portIdx });
+              propagate();
+            }
+            wireStart = null;
+          }
+        } else {
+          wireStart = null;
+        }
+        drawCircuit();
+        return;
+      }
+
+      // Check if clicking on an INPUT gate to toggle
+      const clickedGate = findGateAt(pos.x, pos.y);
+      if (clickedGate && clickedGate.type === 'INPUT') {
+        clickedGate.value = clickedGate.value ? 0 : 1;
+        clickedGate.outputValues[0] = clickedGate.value;
+        propagate(); drawCircuit();
+        return;
+      }
+
+      // Check if starting a drag on existing gate
+      if (clickedGate && selectedTool !== 'WIRE') {
+        dragGate = clickedGate;
+        dragOffset = { x: pos.x - clickedGate.x, y: pos.y - clickedGate.y };
+        return;
+      }
+
+      // Place new gate
+      if (GATE_DEFS[selectedTool]) {
+        const def = GATE_DEFS[selectedTool];
+        const snap = function(v) { return Math.round(v / 20) * 20; };
+        createGate(selectedTool, snap(pos.x - def.w / 2), snap(pos.y - def.h / 2));
+        propagate(); drawCircuit();
+      }
+    });
+
+    cBuilder.addEventListener('mousemove', function(e) {
+      const pos = getCanvasPos(e);
+      mouseX = pos.x; mouseY = pos.y;
+
+      if (dragGate) {
+        const snap = function(v) { return Math.round(v / 20) * 20; };
+        dragGate.x = snap(pos.x - dragOffset.x);
+        dragGate.y = snap(pos.y - dragOffset.y);
+        drawCircuit();
+        return;
+      }
+
+      hoveredPort = findPort(pos.x, pos.y);
+      if (wireStart) drawCircuit();
+      else if (hoveredPort && selectedTool === 'WIRE') drawCircuit();
+    });
+
+    cBuilder.addEventListener('mouseup', function() {
+      dragGate = null;
+    });
+
+    // Touch support
+    cBuilder.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousedown', { clientX: touch.clientX, clientY: touch.clientY });
+      cBuilder.dispatchEvent(mouseEvent);
+    }, { passive: false });
+    cBuilder.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY });
+      cBuilder.dispatchEvent(mouseEvent);
+    }, { passive: false });
+    cBuilder.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      cBuilder.dispatchEvent(new MouseEvent('mouseup'));
+    }, { passive: false });
+
+    // Distance from point to line segment helper
+    function distToSegment(p, a, b) {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+      let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+    }
+
+    // Palette buttons
+    const paletteEl = document.getElementById('circuit-palette');
+    if (paletteEl) {
+      paletteEl.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-gate]');
+        if (!btn) return;
+        paletteEl.querySelectorAll('[data-gate]').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        selectedTool = btn.dataset.gate;
+        wireStart = null;
+        drawCircuit();
+      });
+    }
+
+    // Clear button
+    var clearBtn = document.getElementById('circuit-clear-btn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function() {
+        gates.length = 0; wires.length = 0; wireStart = null; nextId = 1;
+        drawCircuit();
+      });
+    }
+
+    // Preset: Full Adder
+    var presetAdder = document.getElementById('preset-adder');
+    if (presetAdder) {
+      presetAdder.addEventListener('click', function() {
+        gates.length = 0; wires.length = 0; wireStart = null; nextId = 1;
+        var inA  = createGate('INPUT', 40, 40);
+        var inB  = createGate('INPUT', 40, 120);
+        var inCin = createGate('INPUT', 40, 280);
+        var xor1 = createGate('XOR', 180, 60);
+        var and2 = createGate('AND', 180, 180);
+        var xor2 = createGate('XOR', 360, 100);
+        var and1 = createGate('AND', 360, 220);
+        var or1  = createGate('OR', 540, 160);
+        var outSum = createGate('OUTPUT', 520, 100);
+        var outCout = createGate('OUTPUT', 700, 160);
+        // A → XOR1.0, AND2.0
+        wires.push({fromId:inA.id, fromPort:0, toId:xor1.id, toPort:0});
+        wires.push({fromId:inA.id, fromPort:0, toId:and2.id, toPort:0});
+        // B → XOR1.1, AND2.1
+        wires.push({fromId:inB.id, fromPort:0, toId:xor1.id, toPort:1});
+        wires.push({fromId:inB.id, fromPort:0, toId:and2.id, toPort:1});
+        // XOR1 → XOR2.0, AND1.0
+        wires.push({fromId:xor1.id, fromPort:0, toId:xor2.id, toPort:0});
+        wires.push({fromId:xor1.id, fromPort:0, toId:and1.id, toPort:0});
+        // Cin → XOR2.1, AND1.1
+        wires.push({fromId:inCin.id, fromPort:0, toId:xor2.id, toPort:1});
+        wires.push({fromId:inCin.id, fromPort:0, toId:and1.id, toPort:1});
+        // XOR2 → Sum
+        wires.push({fromId:xor2.id, fromPort:0, toId:outSum.id, toPort:0});
+        // AND1 → OR.0
+        wires.push({fromId:and1.id, fromPort:0, toId:or1.id, toPort:0});
+        // AND2 → OR.1
+        wires.push({fromId:and2.id, fromPort:0, toId:or1.id, toPort:1});
+        // OR → Cout
+        wires.push({fromId:or1.id, fromPort:0, toId:outCout.id, toPort:0});
+        propagate(); drawCircuit();
+      });
+    }
+
+    // Preset: SR Latch
+    var presetSR = document.getElementById('preset-sr-latch');
+    if (presetSR) {
+      presetSR.addEventListener('click', function() {
+        gates.length = 0; wires.length = 0; wireStart = null; nextId = 1;
+        var inS = createGate('INPUT', 40, 60);
+        var inR = createGate('INPUT', 40, 280);
+        var nor1 = createGate('NOR', 240, 80);
+        var nor2 = createGate('NOR', 240, 260);
+        var outQ = createGate('OUTPUT', 500, 80);
+        var outQb = createGate('OUTPUT', 500, 260);
+        // S → NOR1.0
+        wires.push({fromId:inS.id, fromPort:0, toId:nor1.id, toPort:0});
+        // R → NOR2.1
+        wires.push({fromId:inR.id, fromPort:0, toId:nor2.id, toPort:1});
+        // NOR1 → outQ, and NOR2.0 (cross-coupling)
+        wires.push({fromId:nor1.id, fromPort:0, toId:outQ.id, toPort:0});
+        wires.push({fromId:nor1.id, fromPort:0, toId:nor2.id, toPort:0});
+        // NOR2 → outQb, and NOR1.1 (cross-coupling)
+        wires.push({fromId:nor2.id, fromPort:0, toId:outQb.id, toPort:0});
+        wires.push({fromId:nor2.id, fromPort:0, toId:nor1.id, toPort:1});
+        propagate(); drawCircuit();
+      });
+    }
+
+    drawCircuit();
+  }
 }
 
 
