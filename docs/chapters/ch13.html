@@ -511,10 +511,27 @@ $$|t_k| = \cos\delta_k = \frac{1}{\sqrt{1 + \frac{m_e^2\lambda^2}{\hbar^4 k^2}}}
 
 <p>In three dimensions, the relationship $\epsilon(\vec{k}) = \epsilon_F$ defines a surface instead of two points. This surface is called the <span class="tooltip-trigger">Fermi surface<span class="tooltip-content">The surface in momentum space defined by $\epsilon(\vec{k}) = \epsilon_F$, which separates occupied from unoccupied states at $T = 0$.</span></span>. The Fermi surface is an abstract surface in momentum space, not the real surface of a metal in position space. It describes the boundary between occupied and unoccupied energy levels at $T = 0$. For the free-electron gas where $\epsilon = \frac{\hbar^2 \vec{k}^2}{2m_e}$ this is the surface of constant $|\vec{k}|$, namely a sphere. In metals such as sodium which have very weakly bound valence electrons, so the free-electron gas model is an excellent approximation, the Fermi surface is indeed spherical. For other metals, the Fermi surface can have a different shape.</p>
 
-<figure>
-<img src="images/13-Metals_p13_img3.png" alt="Spherical Fermi surface for a free-electron metal" style="max-width:300px;">
-<figcaption>Figure 5. The Fermi surface for a free-electron-like metal (e.g. sodium or strontium) is nearly spherical, sitting inside the first Brillouin zone. For more complex metals, the Fermi surface can have elaborate shapes &mdash; see the <a href="http://www.phys.ufl.edu/fermisurface/" target="_blank">3D Fermi Surface Database</a> for interactive visualizations of every element.</figcaption>
-</figure>
+<div class="interactive-container">
+<h3>Interactive: 3D Fermi Surfaces</h3>
+<p>Select a material to see its Fermi surface in 3D momentum space. Drag to rotate. The wireframe cube shows the first Brillouin zone.</p>
+<canvas id="vis-fermi-surface" width="600" height="500"></canvas>
+<div class="slider-container" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
+  <label style="font-weight:600;">Material:</label>
+  <select id="fermi-surface-select" style="padding:4px 8px; border-radius:4px; background:#1a2733; color:#e8ecf1; border:1px solid rgba(255,255,255,0.2); font-size:13px;">
+    <option value="free">Free electron gas (sphere)</option>
+    <option value="sodium">Sodium — nearly free</option>
+    <option value="copper" selected>Copper — necks at L points</option>
+    <option value="aluminum">Aluminum — multiply connected</option>
+    <option value="lead">Lead — rounded cube</option>
+    <option value="iron">Iron — d-band bloated sphere</option>
+    <option value="graphene">Graphene — Dirac cones (2D)</option>
+  </select>
+  <label><input type="checkbox" id="fermi-surface-bz" checked> Brillouin zone</label>
+  <label><input type="checkbox" id="fermi-surface-axes" checked> Axes</label>
+  <label><input type="checkbox" id="fermi-surface-auto" checked> Auto-rotate</label>
+</div>
+<div id="fermi-surface-info" style="margin-top:6px; font-size:12px; color:rgba(255,255,255,0.5); min-height:2em;"></div>
+</div>
 
 <p>In copper, the Fermi surface bulges out toward the Brillouin zone boundaries. The things that look like holes in the Fermi surface are not really holes but rather the regions where $d\epsilon/dk$ blows up. This is the 3D analog of the 1D bandgap region in the Kronig-Penney model: when you go from one band to the next, $\epsilon$ jumps as $k$ changes by a little bit, so $d\epsilon/dk$ is large.</p>
 
