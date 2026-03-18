@@ -13523,7 +13523,7 @@ function initCh11Vis() {
   const debyeSlider = document.getElementById('debye-td');
 
   function debyeFunction(x) {
-    // C_V / 3NkB = 9*(T/theta_D)^3 * integral_0^{theta_D/T} [z^4 * e^z / (e^z - 1)^2] dz
+    // C_V / 3NkB = 3*(T/theta_D)^3 * integral_0^{theta_D/T} [z^4 * e^z / (e^z - 1)^2] dz
     // x = theta_D / T
     if (x < 0.01) return 1; // Dulong-Petit limit
     if (x > 100) return 0;
@@ -13537,7 +13537,7 @@ function initCh11Vis() {
       const val = z * z * z * z * ez / ((ez - 1) * (ez - 1));
       integral += val * dz;
     }
-    return 9 * integral / (x * x * x);
+    return 3 * integral / (x * x * x);
   }
 
   function drawDebye() {
