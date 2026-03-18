@@ -15124,8 +15124,8 @@ function initCh12Vis() {
       const b = ngBlend;
 
       const series = ngActive();
-      const maxN = Math.max(10, ...series.map(function(s) { return s.N; }));
-      const rawMax = 2.5 * TC_C * Math.pow(maxN, 2/3);
+      // Fixed x-axis range based on largest preset (N=1000) so axis doesn't jump when toggling curves
+      const rawMax = 2.5 * TC_C * Math.pow(1000, 2/3);
       const sclMax = 1.8;
 
       // Axis label
