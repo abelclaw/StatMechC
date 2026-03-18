@@ -40,13 +40,12 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <div class="interactive-wrapper">
 <h4>Interactive: Hydrogen Atom Orbitals</h4>
 <canvas id="vis-orbitals-3d" width="700" height="420"></canvas>
-<div class="controls">
-<label>Orbital: <select id="orbital-select">
-<option value="s">s (ℓ=0)</option>
-<option value="p" selected>p (ℓ=1)</option>
-<option value="d">d (ℓ=2)</option>
-<option value="f">f (ℓ=3)</option>
-</select></label>
+<div class="controls" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+<button class="control-btn orbital-btn" data-orbital="s">s (ℓ=0)</button>
+<button class="control-btn orbital-btn active" data-orbital="p">p (ℓ=1)</button>
+<button class="control-btn orbital-btn" data-orbital="d">d (ℓ=2)</button>
+<button class="control-btn orbital-btn" data-orbital="f">f (ℓ=3)</button>
+<button class="control-btn orbital-btn" data-orbital="g">g (ℓ=4)</button>
 </div>
 <figcaption>Figure 1. The shape of hydrogen atom orbitals determined by spherical harmonics $Y_\ell^m(\theta, \varphi)$. The distance from the origin at each angle gives $|Y_\ell^m|$, with color denoting the sign (blue positive, red negative). Drag to rotate; select orbital type to explore different shapes.</figcaption>
 </div>
@@ -66,6 +65,7 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>To understand the periodic table, we need more than Hund's rule. We have to go beyond the hydrogenic atom spectrum and understand how the electron screening moves the energy levels up and down. It turns out to be very complicated. The energy levels as a function of $Z$ look like:</p>
 
 <div class="interactive-container" style="position:relative;">
+<h3>Interactive: Orbital Energy Levels vs Atomic Number</h3>
 <canvas id="vis-orbital-energies" width="700" height="450"></canvas>
 <div id="orbital-tooltip" style="display:none;position:absolute;pointer-events:none;background:rgba(15,25,35,0.92);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 10px;font:12px Inter,system-ui,sans-serif;color:#e8ecf1;white-space:nowrap;z-index:10;"></div>
 <div class="slider-container">
