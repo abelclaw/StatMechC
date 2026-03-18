@@ -11714,24 +11714,38 @@ function initCh9Vis() {
       }
       ctxCS.stroke();
 
-      // Draw data points for selected substances (real NIST data)
+      // Draw data points with error bars for selected substances (real NIST data)
+      var nScale = pw / 3.5;  // pixels per unit of n/nc
+      var errCap = 3;  // half-height of error bar caps in px
       substances.forEach((sub) => {
         const cb = document.getElementById(sub.id);
         if (!cb?.checked) return;
 
         ctxCS.fillStyle = sub.color;
+        ctxCS.strokeStyle = sub.color;
+        ctxCS.lineWidth = 1;
         sub.data.forEach(d => {
           const t = d[0], nl = d[1], ng = d[2];
-          // Liquid point
-          let px = ox + (nl / 3.5) * pw;
-          let py = oy + ph - ((t - 0.45) / 0.6) * ph;
-          if (px >= ox && px <= ox + pw && py >= oy && py <= oy + ph) {
-            ctxCS.beginPath(); ctxCS.arc(px, py, 4, 0, 2 * Math.PI); ctxCS.fill();
+          const py = oy + ph - ((t - 0.45) / 0.6) * ph;
+          if (py < oy || py > oy + ph) return;
+
+          // Liquid point + error bar (~1.5% of density)
+          var px = ox + (nl / 3.5) * pw;
+          var errPx = nl * 0.015 * nScale;
+          if (px >= ox && px <= ox + pw) {
+            ctxCS.beginPath(); ctxCS.moveTo(px - errPx, py); ctxCS.lineTo(px + errPx, py); ctxCS.stroke();
+            ctxCS.beginPath(); ctxCS.moveTo(px - errPx, py - errCap); ctxCS.lineTo(px - errPx, py + errCap); ctxCS.stroke();
+            ctxCS.beginPath(); ctxCS.moveTo(px + errPx, py - errCap); ctxCS.lineTo(px + errPx, py + errCap); ctxCS.stroke();
+            ctxCS.beginPath(); ctxCS.arc(px, py, 3, 0, 2 * Math.PI); ctxCS.fill();
           }
-          // Gas point
+          // Gas point + error bar (~3% — larger relative uncertainty at low density)
           px = ox + (ng / 3.5) * pw;
-          if (px >= ox && px <= ox + pw && py >= oy && py <= oy + ph) {
-            ctxCS.beginPath(); ctxCS.arc(px, py, 4, 0, 2 * Math.PI); ctxCS.fill();
+          errPx = Math.max(ng * 0.03, 0.01) * nScale;
+          if (px >= ox && px <= ox + pw) {
+            ctxCS.beginPath(); ctxCS.moveTo(px - errPx, py); ctxCS.lineTo(px + errPx, py); ctxCS.stroke();
+            ctxCS.beginPath(); ctxCS.moveTo(px - errPx, py - errCap); ctxCS.lineTo(px - errPx, py + errCap); ctxCS.stroke();
+            ctxCS.beginPath(); ctxCS.moveTo(px + errPx, py - errCap); ctxCS.lineTo(px + errPx, py + errCap); ctxCS.stroke();
+            ctxCS.beginPath(); ctxCS.arc(px, py, 3, 0, 2 * Math.PI); ctxCS.fill();
           }
         });
       });
