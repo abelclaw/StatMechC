@@ -15322,17 +15322,19 @@ function initCh12Vis() {
       const errTop = mainTop + mainH + gap;
 
       const Tc = N / 6.0;
-      const tMax = N * 1.5;
+      // Fixed x-axis so transition visibly shifts as N changes
+      // Tc ranges from ~1.7 (N=10) to ~83 (N=500)
+      const tMax = 200;
 
-      function exactFrac(t) {
+      function exactFrac(nVal, t) {
         if (t < 0.001) return 1.0;
         const beta_eps = 1.0 / t;
         if (beta_eps > 50) return 1.0;
         const ebeps = Math.exp(-beta_eps);
-        const Z = (1 - Math.pow(ebeps, N + 1)) / (1 - ebeps);
+        const Z = (1 - Math.pow(ebeps, nVal + 1)) / (1 - ebeps);
         let num = 0;
-        for (let n1 = 0; n1 <= N; n1++) num += n1 * Math.pow(ebeps, n1);
-        return 1 - (num / Z) / N;
+        for (let n1 = 0; n1 <= nVal; n1++) num += n1 * Math.pow(ebeps, n1);
+        return 1 - (num / Z) / nVal;
       }
       function lowTFrac(t) { return Math.max(1 - t / N, 0); }
       function highTFrac(t) { return t > 0.01 ? Math.min(0.5 + N / (12 * t), 1) : 1; }
@@ -15340,31 +15342,41 @@ function initCh12Vis() {
       const data = [];
       for (let i = 0; i <= nPts; i++) {
         const t = (i / nPts) * tMax;
-        const ex = exactFrac(t), lo = lowTFrac(t), hi = highTFrac(t);
+        const ex = exactFrac(N, t), lo = lowTFrac(t), hi = highTFrac(t);
         const errLo = ex > 0.001 ? Math.abs(lo - ex) / ex : 0;
         const errHi = ex > 0.001 ? Math.abs(hi - ex) / ex : 0;
         data.push({ t, ex, lo, hi, errLo, errHi });
       }
 
-      const tcPx = ox + (Tc / tMax) * pw;
-      const crossLo = Tc * 0.5, crossHi = Tc * 2.0;
-      const crossLoPx = ox + (crossLo / tMax) * pw;
-      const crossHiPx = ox + (crossHi / tMax) * pw;
+      const tcPx = Math.min(ox + (Tc / tMax) * pw, ox + pw);
+      const crossLo = Tc * 0.5, crossHi = Math.min(Tc * 2.0, tMax);
+      const crossLoPx = Math.min(ox + (crossLo / tMax) * pw, ox + pw);
+      const crossHiPx = Math.min(ox + (crossHi / tMax) * pw, ox + pw);
 
       ctxBA.fillStyle = 'rgba(79, 195, 247, 0.07)';
       ctxBA.fillRect(ox, mainTop, crossLoPx - ox, mainH);
-      ctxBA.fillStyle = 'rgba(255, 167, 38, 0.10)';
-      ctxBA.fillRect(crossLoPx, mainTop, crossHiPx - crossLoPx, mainH);
-      ctxBA.fillStyle = 'rgba(102, 187, 106, 0.07)';
-      ctxBA.fillRect(crossHiPx, mainTop, ox + pw - crossHiPx, mainH);
+      if (crossLoPx < ox + pw) {
+        ctxBA.fillStyle = 'rgba(255, 167, 38, 0.10)';
+        ctxBA.fillRect(crossLoPx, mainTop, crossHiPx - crossLoPx, mainH);
+      }
+      if (crossHiPx < ox + pw) {
+        ctxBA.fillStyle = 'rgba(102, 187, 106, 0.07)';
+        ctxBA.fillRect(crossHiPx, mainTop, ox + pw - crossHiPx, mainH);
+      }
 
       ctxBA.font = FONT_SM; ctxBA.textAlign = 'center';
-      ctxBA.fillStyle = 'rgba(79, 195, 247, 0.5)';
-      if (crossLoPx - ox > 50) ctxBA.fillText('Low-T valid', ox + (crossLoPx - ox) / 2, mainTop + 14);
-      ctxBA.fillStyle = 'rgba(255, 167, 38, 0.6)';
-      ctxBA.fillText('Crossover', (crossLoPx + crossHiPx) / 2, mainTop + 14);
-      ctxBA.fillStyle = 'rgba(102, 187, 106, 0.5)';
-      ctxBA.fillText('High-T valid', crossHiPx + (ox + pw - crossHiPx) / 2, mainTop + 14);
+      if (crossLoPx - ox > 60) {
+        ctxBA.fillStyle = 'rgba(79, 195, 247, 0.5)';
+        ctxBA.fillText('Low-T valid', ox + (crossLoPx - ox) / 2, mainTop + 14);
+      }
+      if (crossLoPx < ox + pw - 20 && crossHiPx - crossLoPx > 55) {
+        ctxBA.fillStyle = 'rgba(255, 167, 38, 0.6)';
+        ctxBA.fillText('Crossover', (crossLoPx + crossHiPx) / 2, mainTop + 14);
+      }
+      if (crossHiPx < ox + pw - 40) {
+        ctxBA.fillStyle = 'rgba(102, 187, 106, 0.5)';
+        ctxBA.fillText('High-T valid', crossHiPx + (ox + pw - crossHiPx) / 2, mainTop + 14);
+      }
 
       drawAxes(ctxBA, ox, mainTop, pw, mainH, {xLabel: 'kT / \u03B5', yLabel: '\u27E8N\u2080\u27E9 / N'});
 
@@ -15379,21 +15391,46 @@ function initCh12Vis() {
         }
       }
 
-      // X-axis ticks for main plot
+      // X-axis ticks (fixed range 0-200)
       ctxBA.textAlign = 'center'; ctxBA.fillStyle = COLORS.textDim;
-      const xStep = tMax <= 50 ? 5 : tMax <= 200 ? 25 : tMax <= 500 ? 50 : 100;
-      for (let v = 0; v <= tMax; v += xStep) {
+      for (let v = 0; v <= tMax; v += 25) {
         const px = ox + (v / tMax) * pw;
         ctxBA.fillText(v.toFixed(0), px, mainTop + mainH + 15);
       }
 
-      // Tc vertical marker
-      ctxBA.strokeStyle = COLORS.orange; ctxBA.lineWidth = 1.5;
-      ctxBA.setLineDash([6, 3]);
-      ctxBA.beginPath(); ctxBA.moveTo(tcPx, mainTop); ctxBA.lineTo(tcPx, mainTop + mainH); ctxBA.stroke();
-      ctxBA.setLineDash([]);
-      ctxBA.fillStyle = COLORS.orange; ctxBA.font = FONT_SM; ctxBA.textAlign = 'left';
-      ctxBA.fillText('Tc', tcPx + 4, mainTop + mainH - 8);
+      // Ghost reference curves for other N values so student sees Tc shift
+      const refNs = [20, 50, 100, 200, 500].filter(n => Math.abs(n - N) > 15);
+      for (const rN of refNs) {
+        ctxBA.strokeStyle = 'rgba(255,255,255,0.08)'; ctxBA.lineWidth = 1;
+        ctxBA.beginPath();
+        let started = false;
+        for (let i = 0; i <= nPts; i++) {
+          const t = (i / nPts) * tMax;
+          const frac = exactFrac(rN, t);
+          const px = ox + (t / tMax) * pw;
+          const py = mainTop + mainH * (1 - frac);
+          if (!started) { ctxBA.moveTo(px, py); started = true; } else ctxBA.lineTo(px, py);
+        }
+        ctxBA.stroke();
+        // Small Tc label
+        const rTc = rN / 6;
+        if (rTc < tMax * 0.95) {
+          const rTcPx = ox + (rTc / tMax) * pw;
+          ctxBA.fillStyle = 'rgba(255,255,255,0.15)'; ctxBA.font = '9px Inter, system-ui, sans-serif';
+          ctxBA.textAlign = 'center';
+          ctxBA.fillText('N=' + rN, rTcPx, mainTop + mainH - 4);
+        }
+      }
+
+      // Tc vertical marker (prominent)
+      if (Tc < tMax) {
+        ctxBA.strokeStyle = COLORS.orange; ctxBA.lineWidth = 1.5;
+        ctxBA.setLineDash([6, 3]);
+        ctxBA.beginPath(); ctxBA.moveTo(tcPx, mainTop); ctxBA.lineTo(tcPx, mainTop + mainH); ctxBA.stroke();
+        ctxBA.setLineDash([]);
+        ctxBA.fillStyle = COLORS.orange; ctxBA.font = FONT_SM; ctxBA.textAlign = 'left';
+        ctxBA.fillText('Tc \u2248 ' + Tc.toFixed(0), tcPx + 4, mainTop + mainH - 8);
+      }
 
       // Approximation curves: solid in valid region, faded+dashed outside
       function drawApproxCurve(color, fracFn, validMin, validMax) {
@@ -15441,18 +15478,24 @@ function initCh12Vis() {
       // --- Error subplot ---
       ctxBA.fillStyle = 'rgba(79, 195, 247, 0.05)';
       ctxBA.fillRect(ox, errTop, crossLoPx - ox, errH);
-      ctxBA.fillStyle = 'rgba(255, 167, 38, 0.08)';
-      ctxBA.fillRect(crossLoPx, errTop, crossHiPx - crossLoPx, errH);
-      ctxBA.fillStyle = 'rgba(102, 187, 106, 0.05)';
-      ctxBA.fillRect(crossHiPx, errTop, ox + pw - crossHiPx, errH);
+      if (crossLoPx < ox + pw) {
+        ctxBA.fillStyle = 'rgba(255, 167, 38, 0.08)';
+        ctxBA.fillRect(crossLoPx, errTop, crossHiPx - crossLoPx, errH);
+      }
+      if (crossHiPx < ox + pw) {
+        ctxBA.fillStyle = 'rgba(102, 187, 106, 0.05)';
+        ctxBA.fillRect(crossHiPx, errTop, ox + pw - crossHiPx, errH);
+      }
 
       drawAxes(ctxBA, ox, errTop, pw, errH, {xLabel: 'kT / \u03B5', yLabel: 'Rel. Error'});
 
       // Tc marker on error plot
-      ctxBA.strokeStyle = COLORS.orange; ctxBA.lineWidth = 1;
-      ctxBA.setLineDash([4, 3]);
-      ctxBA.beginPath(); ctxBA.moveTo(tcPx, errTop); ctxBA.lineTo(tcPx, errTop + errH); ctxBA.stroke();
-      ctxBA.setLineDash([]);
+      if (Tc < tMax) {
+        ctxBA.strokeStyle = COLORS.orange; ctxBA.lineWidth = 1;
+        ctxBA.setLineDash([4, 3]);
+        ctxBA.beginPath(); ctxBA.moveTo(tcPx, errTop); ctxBA.lineTo(tcPx, errTop + errH); ctxBA.stroke();
+        ctxBA.setLineDash([]);
+      }
 
       // Max error for y-scale
       let maxErr = 0.01;
@@ -15478,7 +15521,7 @@ function initCh12Vis() {
 
       // X-axis ticks for error plot
       ctxBA.textAlign = 'center'; ctxBA.fillStyle = COLORS.textDim;
-      for (let v = 0; v <= tMax; v += xStep) {
+      for (let v = 0; v <= tMax; v += 25) {
         const px = ox + (v / tMax) * pw;
         ctxBA.fillText(v.toFixed(0), px, errTop + errH + 15);
       }
@@ -15525,9 +15568,9 @@ function initCh12Vis() {
 
       // Title with dynamic Tc annotation
       ctxBA.fillStyle = COLORS.text; ctxBA.font = FONT_LG; ctxBA.textAlign = 'left';
-      ctxBA.fillText('BEC Two-State Approximations', ox + 5, mainTop - 10);
+      ctxBA.fillText('Two-State Approximations', ox + 5, mainTop - 10);
       ctxBA.textAlign = 'right'; ctxBA.fillStyle = COLORS.orange; ctxBA.font = FONT_LG;
-      ctxBA.fillText('N = ' + N + '    Tc \u2248 ' + Tc.toFixed(1) + ' \u03B5/kB', ox + pw, mainTop - 10);
+      ctxBA.fillText('N = ' + N + '   Tc \u2248 ' + Tc.toFixed(1) + ' \u03B5/kB', ox + pw, mainTop - 10);
 
       // Error plot label
       ctxBA.fillStyle = COLORS.text; ctxBA.font = FONT_SM; ctxBA.textAlign = 'left';
