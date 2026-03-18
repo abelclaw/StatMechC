@@ -666,3 +666,225 @@ $$\rho_{\text{NS}} \approx \frac{M_\odot}{\frac{4}{3}\pi R_{\text{NS}}^3} = 3 \t
 <li>The <strong>Tolman-Oppenheimer-Volkoff limit</strong> for neutron stars is estimated at $\sim 3\,M_\odot$. Above this mass, not even neutron degeneracy pressure can prevent collapse to a <strong>black hole</strong>.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch15-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>According to the Vogt-Russell theorem, what single parameter indexes the family of main-sequence stars with the same chemical composition?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch15-rq1" value="a"> (a) Surface temperature $T_s$</label>
+  <label><input type="radio" name="ch15-rq1" value="b"> (b) Luminosity $L$</label>
+  <label><input type="radio" name="ch15-rq1" value="c"> (c) Mass $M$</label>
+  <label><input type="radio" name="ch15-rq1" value="d"> (d) Radius $R$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="The Vogt-Russell theorem states that all stars with the same chemical composition and mass are the same. Thus mass alone indexes a one-parameter family of stars.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>Why can hydrogen fusion occur in the sun even though the core temperature ($\sim 15 \times 10^6\;\text{K}$) is far below the classical threshold ($\sim 4 \times 10^9\;\text{K}$) for protons to overcome the Coulomb barrier?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch15-rq2" value="a"> (a) The sun's magnetic field accelerates protons to higher energies</label>
+  <label><input type="radio" name="ch15-rq2" value="b"> (b) Protons can quantum-mechanically tunnel through the Coulomb barrier</label>
+  <label><input type="radio" name="ch15-rq2" value="c"> (c) Radiation pressure compresses the protons close enough to fuse</label>
+  <label><input type="radio" name="ch15-rq2" value="d"> (d) The Boltzmann distribution has a long enough tail to provide sufficient high-energy protons</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Quantum tunneling allows protons to pass through the Coulomb barrier without needing enough kinetic energy to go over it. The tunneling estimate gives a minimum temperature of $\sim 20 \times 10^6\;\text{K}$, within a factor of 2 of the sun's core temperature.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>A white dwarf is supported against gravitational collapse by:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch15-rq3" value="a"> (a) Thermal gas pressure from hydrogen fusion</label>
+  <label><input type="radio" name="ch15-rq3" value="b"> (b) Radiation pressure from blackbody photons</label>
+  <label><input type="radio" name="ch15-rq3" value="c"> (c) Electron degeneracy pressure</label>
+  <label><input type="radio" name="ch15-rq3" value="d"> (d) Neutron degeneracy pressure</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="White dwarfs have no nuclear fusion. They are supported entirely by electron degeneracy pressure arising from the Pauli exclusion principle. Neutron degeneracy pressure supports neutron stars instead.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>In the Eddington stellar model, the polytropic equation of state $P = K\rho^{4/3}$ arises from assuming that:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch15-rq4" value="a"> (a) The star is entirely composed of degenerate electrons</label>
+  <label><input type="radio" name="ch15-rq4" value="b"> (b) The ratio of radiation pressure to gas pressure is constant throughout the star</label>
+  <label><input type="radio" name="ch15-rq4" value="c"> (c) The star is convective throughout, so it follows an adiabat</label>
+  <label><input type="radio" name="ch15-rq4" value="d"> (d) The density is uniform throughout the star</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The Eddington model assumes $P_{\text{rad}}/P_{\text{gas}}$ is constant (independent of $r$). This leads to $P \propto \rho^{4/3}$, which is an $n = 3$ polytrope (Eq. 26).">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>A star has surface temperature $T_s = 11{,}600\;\text{K}$ (twice the sun's) and luminosity $L = 64\,L_\odot$. Using the Stefan-Boltzmann relation $L = 4\pi R^2 \sigma T_s^4$ (Eq. 3), what is the star's radius in units of $R_\odot$?</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer (in solar radii)...">
+</div>
+<button class="check-answer-btn" data-answer="2" data-hint="From $L/L_\odot = (R/R_\odot)^2(T_s/T_{s,\odot})^4$: $64 = (R/R_\odot)^2 \times 2^4 = 16(R/R_\odot)^2$, so $R/R_\odot = 2$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>The Chandrasekhar mass depends only on fundamental constants: $M_{\text{Ch}} \propto \sqrt{c^3\hbar^3/(G^3 m_p^4)}$. Which of the following changes would <em>increase</em> the Chandrasekhar limit?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch15-sa2" value="a"> (a) Increasing the gravitational constant $G$</label>
+  <label><input type="radio" name="ch15-sa2" value="b"> (b) Increasing the proton mass $m_p$</label>
+  <label><input type="radio" name="ch15-sa2" value="c"> (c) Increasing the speed of light $c$</label>
+  <label><input type="radio" name="ch15-sa2" value="d"> (d) Decreasing Planck's constant $\hbar$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="$M_{\text{Ch}} \propto c^{3/2}\hbar^{3/2}G^{-3/2}m_p^{-2}$. Increasing $c$ increases $M_{\text{Ch}}$. Increasing $G$ or $m_p$ or decreasing $\hbar$ would all decrease it.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>Estimate the core temperature of a star with mass $M = 4\,M_\odot$ and core radius $r_{\text{core}} = R_\odot$ using $k_B T_{\text{core}} = \frac{1}{3}\frac{G M m_p}{r_{\text{core}}}$ (Eq. 7, with $M_{\text{shell}} \approx M$). Express your answer in units of $10^6\;\text{K}$, rounded to the nearest integer. Use $G = 6.67 \times 10^{-11}\;\text{N m}^2/\text{kg}^2$, $M_\odot = 2 \times 10^{30}\;\text{kg}$, $R_\odot = 7 \times 10^8\;\text{m}$, $m_p = 1.67 \times 10^{-27}\;\text{kg}$, $k_B = 1.38 \times 10^{-23}\;\text{J/K}$.</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer (in millions of K)...">
+</div>
+<button class="check-answer-btn" data-answer="31" data-hint="$T_{\text{core}} = \frac{G \times 4M_\odot \times m_p}{3 k_B R_\odot} = 4 \times 7.7 \times 10^6\;\text{K} = 30.8 \times 10^6\;\text{K} \approx 31 \times 10^6\;\text{K}$. This is 4 times the solar estimate since $T_{\text{core}} \propto M$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>A neutron star has mass $M = 1.4\,M_\odot$ and radius $R = 10\;\text{km}$. What is its average density in $\text{kg/m}^3$? Express your answer in scientific notation as $a \times 10^{17}$ and give $a$ rounded to one decimal place.</p>
+<div class="sa-input">
+  <input type="text" placeholder="Your answer for a...">
+</div>
+<button class="check-answer-btn" data-answer="6.7" data-hint="$\rho = \frac{M}{\frac{4}{3}\pi R^3} = \frac{1.4 \times 2 \times 10^{30}}{\frac{4}{3}\pi (10^4)^3} = \frac{2.8 \times 10^{30}}{4.19 \times 10^{12}} = 6.7 \times 10^{17}\;\text{kg/m}^3$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Problem 1: The Jeans Instability</div>
+<p>A uniform cloud of hydrogen gas at temperature $T$ and number density $n$ will collapse under its own gravity if a region becomes large enough that gravitational energy exceeds thermal energy. Consider a spherical region of radius $R$ within the cloud.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>The gravitational potential energy of a uniform sphere of mass $M$ and radius $R$ is $E_{\text{grav}} = -\frac{3}{5}\frac{GM^2}{R}$. Write $M$ in terms of the mass density $\rho = n m_p$ and $R$, and express $|E_{\text{grav}}|$ as a function of $\rho$ and $R$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>The thermal energy of the gas in this sphere is $E_{\text{therm}} = N \cdot \frac{3}{2}k_B T = \frac{3}{2}\frac{M}{m_p}k_B T$. Show that collapse occurs ($|E_{\text{grav}}| > E_{\text{therm}}$) when $R$ exceeds the <strong>Jeans length</strong>:</p>
+$$R_J = \sqrt{\frac{15 k_B T}{4\pi G m_p^2 n}}$$
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The corresponding <strong>Jeans mass</strong> is $M_J = \frac{4}{3}\pi R_J^3 \rho$. Evaluate $M_J$ numerically for a molecular hydrogen cloud with $T = 10\;\text{K}$ and $n = 10^{10}\;\text{m}^{-3}$. Express your answer in solar masses. (Use $G = 6.67 \times 10^{-11}\;\text{N m}^2/\text{kg}^2$, $m_p = 1.67 \times 10^{-27}\;\text{kg}$.)</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Why does increasing the temperature of the gas cloud make gravitational collapse harder? Relate your answer to the Jeans instability visualization in the chapter (Interactive 2). How does $M_J$ scale with $T$?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 2: Solving the Lane-Emden Equation</div>
+<p>The Lane-Emden equation (Eq. 30) describes the density profile of a polytropic star:</p>
+$$\frac{1}{\xi^2}\frac{d}{d\xi}\left(\xi^2\frac{d\theta}{d\xi}\right) = -\theta^n$$
+<p>with boundary conditions $\theta(0) = 1$ and $\theta'(0) = 0$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Show that for $n = 0$ (constant density), the Lane-Emden equation can be solved exactly to give $\theta(\xi) = 1 - \xi^2/6$. Find the surface of the star $\xi_{\max}$ where $\theta = 0$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Show that for $n = 1$, the solution is $\theta(\xi) = \frac{\sin\xi}{\xi}$. Verify that it satisfies the boundary conditions and find $\xi_{\max}$. (<em>Hint:</em> substitute directly and use L'H&ocirc;pital's rule for $\xi \to 0$.)</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>For general $n$, expand $\theta(\xi) = 1 + a_2\xi^2 + a_4\xi^4 + \cdots$ near $\xi = 0$. Substitute into the Lane-Emden equation and show that $a_2 = -1/6$ for all $n$. Find $a_4$ in terms of $n$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Compute the ratio of central density to mean density, $\rho_c/\bar{\rho}$, for the $n = 0$ and $n = 1$ polytropes. In which case is the star more centrally concentrated? How does the $n = 3$ Eddington model compare qualitatively, given that $C_3 = 0.077$ (Eq. 31)?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 3: White Dwarf Properties</div>
+<p>In this problem you will explore the structure of white dwarfs using the results derived in the chapter.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>A white dwarf has mass $M = 0.6\,M_\odot$. Using the non-relativistic mass-radius relation for an $n = 3/2$ polytrope, $R \propto M^{-1/3}$, and the fact that $R \approx R_E$ for $M \approx 0.5\,M_\odot$, estimate the radius of this white dwarf in units of $R_E$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Compute the average density $\bar{\rho}$ of this white dwarf in $\text{kg/m}^3$. Compare it to the density of the sun ($\rho_\odot \approx 1400\;\text{kg/m}^3$). Use $M_\odot = 2 \times 10^{30}\;\text{kg}$ and $R_E = 6370\;\text{km}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute the electron number density $n_e = \rho/(2m_p)$ and the Fermi energy $\epsilon_F = \frac{\hbar^2}{2m_e}(3\pi^2 n_e)^{2/3}$ for this white dwarf using the non-relativistic formula. Is the result comparable to $m_e c^2 = 511\;\text{keV}$? What does this tell you about whether a relativistic treatment is needed?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The white dwarf Sirius B has a measured mass of $1.02\,M_\odot$ and radius of $0.54\,R_E$. From the mass-radius plot (Figure 3), this lies close to the relativistic curve. Compute $x_F = p_F/(m_ec)$ using Eq. (81) for Sirius B. Is $x_F \ll 1$ (non-relativistic), $x_F \sim 1$ (mildly relativistic), or $x_F \gg 1$ (ultrarelativistic)?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Problem 4: Neutron Stars and Pulsars</div>
+<p>When a massive star undergoes a core-collapse supernova, the remnant core can form a neutron star. This problem explores the physics of neutron stars.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>The characteristic mass of a neutron star is the same as for a white dwarf: $M_{\text{NS}} \sim \sqrt{c^3\hbar^3/(G^3 m_p^4)}$. However, the characteristic radius changes because the relevant fermion mass changes from $m_e$ to $m_p$. Using Eq. (87), compute the ratio $R_{\text{WD}}/R_{\text{NS}}$ and express it in terms of fundamental mass ratios. Evaluate numerically.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>A pre-supernova stellar core has radius $R_i \approx R_E = 6370\;\text{km}$ and rotates with period $P_i = 1\;\text{day}$. After collapse to a neutron star of radius $R_f = 10\;\text{km}$, what is the rotation period $P_f$? Assume the core is a uniform sphere and angular momentum $I\omega$ is conserved, where $I = \frac{2}{5}MR^2$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The Crab Pulsar has a period of $P = 33.5\;\text{ms}$ and is observed to be slowing down at a rate $\dot{P} = 4.21 \times 10^{-13}\;\text{s/s}$. Assuming the pulsar loses rotational kinetic energy at a steady rate, estimate the <strong>spin-down luminosity</strong> $L = -dE_{\text{rot}}/dt = I\omega\dot{\omega}$ using $M = 1.4\,M_\odot$ and $R = 10\;\text{km}$. Express your answer in watts and compare to the sun's luminosity $L_\odot = 3.8 \times 10^{26}\;\text{W}$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>The Crab Nebula supernova was observed in 1054 AD. Using the current period and spin-down rate, and assuming $\dot{P}$ has been roughly constant, estimate the initial period of the Crab Pulsar at birth. Is your answer consistent with the result from part (b)?</p>
+</div>
+</div>
+
+</div>
+</details>
