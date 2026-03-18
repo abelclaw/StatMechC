@@ -17617,7 +17617,8 @@ function initCh14Vis() {
   const cOrb3D = document.getElementById('vis-orbitals-3d');
   if (cOrb3D) {
     const { ctx, W, H } = setupCanvas(cOrb3D);
-    const orbSelect = document.getElementById('orbital-select');
+    const orbBtns = document.querySelectorAll('.orbital-btn');
+    let currentOrbital = 'p';
 
     let angleX = -0.3, angleY = 0.4;
     let dragging = false, dragStart = {x:0,y:0}, dragAngleStart = {x:0,y:0};
