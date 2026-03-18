@@ -621,7 +621,7 @@ li { margin-bottom: 6px; }
   font-weight: 600;
   transition: background 0.15s;
 }
-.interactive-wrapper .controls button:hover { background: var(--accent-light); }
+.interactive-wrapper .controls button:not(.control-btn):hover { background: var(--accent-light); }
 .interactive-wrapper .controls .button-group {
   display: flex;
   gap: 6px;
@@ -634,6 +634,7 @@ li { margin-bottom: 6px; }
   font-weight: 500;
 }
 .interactive-wrapper .controls .button-group .control-btn:hover {
+  background: rgba(41, 128, 185, 0.25);
   border-color: var(--accent-light);
   color: #fff;
 }
