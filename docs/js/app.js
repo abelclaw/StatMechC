@@ -23531,7 +23531,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:10}],{value:10000});
       bbAddPart('WIRE',[{row:'c',col:10},{row:'h',col:16}],{color:'#43a047'}); // to base
-      bbRunSim(); bbDesc('<b>NOT Gate (Inverter).</b> When the input switch is OFF, the transistor is OFF, so current flows through the 1k\u03A9 pull-up resistor to the LED \u2192 LED is ON. When the switch is ON, the transistor turns ON and pulls the output to ground \u2192 LED is OFF. The output is always the <em>opposite</em> of the input. This is exactly how the NOT gate in section 14.5.1 works.');
+      bbRunSim(); bbDesc('<b>NOT Gate (Inverter) \u2014 click the switch!</b><br><br>This is the transistor inverter from section 14.5.1. Read the circuit left to right:<br>\u2022 <b>Input</b> (left): switch \u2192 10k\u03A9 resistor \u2192 transistor base (green wire).<br>\u2022 <b>Output</b> (top): 9V \u2192 1k\u03A9 pull-up resistor \u2192 LED \u2192 ground.<br>\u2022 <b>Transistor</b> (bottom): collector connected to the output node (orange wire), emitter to ground (blue wire).<br><br><b>Switch OFF:</b> No current to the base \u2192 transistor OFF \u2192 current has no path except through the LED \u2192 <b>LED ON</b>.<br><b>Switch ON:</b> Current flows into the base \u2192 transistor ON \u2192 shorts the output to ground \u2192 current bypasses the LED \u2192 <b>LED OFF</b>.<br><br>Input ON \u2192 Output OFF. That\u2019s inversion!');
     }
 
     // ---- NAND GATE: two NPN in series, pull-up resistor ----
@@ -26214,6 +26214,7 @@ function initCh15Vis() {
     const zoomLabel = document.getElementById('size-zoom-label');
 
     const stars = [
+      {name:'Solar System',R:6450, T:0,    type:'to Neptune', cat:'Orbits', imgScale:1.11},
       {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:44},
       {name:'Stephenson 2-18',R:2150,T:3200, type:'M6Ia',  cat:'Hypergiant'},
       {name:'WOH G64',    R:1540, T:3400, type:'M5I',    cat:'Hypergiant'},
@@ -26417,13 +26418,14 @@ function initCh15Vis() {
       ctxS.restore();
     }
 
-    // --- Planet & black hole images ---
+    // --- Planet, black hole & solar system images ---
     const earthImg = new Image(); earthImg.src = 'images/earth_transparent.png';
     const jupiterImg = new Image(); jupiterImg.src = 'images/jupiter_transparent.png';
     const sgrAImg = new Image(); sgrAImg.src = 'images/sgr_a_star_eht.jpg';
+    const solarSysImg = new Image(); solarSysImg.src = 'images/solar_system_orbits.jpg';
     let imgLoaded = 0;
-    const totalImgs = 3;
-    earthImg.onload = jupiterImg.onload = sgrAImg.onload = () => { if (++imgLoaded >= totalImgs) drawSizes(); };
+    const totalImgs = 4;
+    earthImg.onload = jupiterImg.onload = sgrAImg.onload = solarSysImg.onload = () => { if (++imgLoaded >= totalImgs) drawSizes(); };
 
     function drawPlanetImg(img, sx, sy, rPx) {
       const r = Math.max(rPx, 1.2);
@@ -26484,7 +26486,12 @@ function initCh15Vis() {
         if (v.sy + v.rPx < -50 || v.sy - v.rPx > HS + 50) continue;
 
         const isHover = hoverStar === v.i;
-        if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
+        if (v.s.name === 'Solar System') {
+          // Scale image up so Neptune's orbit (at ~90% of image) matches rPx
+          const imgR = v.rPx * (v.s.imgScale || 1);
+          drawPlanetImg(solarSysImg, v.sx, v.sy, imgR);
+        }
+        else if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
         else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
         else if (v.s.cat === 'Black Hole') {
           drawPlanetImg(sgrAImg, v.sx, v.sy, v.rPx);
