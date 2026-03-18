@@ -260,24 +260,24 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 
 <p>Comparing to our exact numerical results from Section 3.1 we find good agreement.</p>
 
-<!-- INTERACTIVE: BEC -->
+<!-- INTERACTIVE: BEC Simulator -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#10052;&#65039;</span> Interactive: Bose-Einstein Condensation</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-bec" width="600" height="380"></canvas></div>
+  <div class="vis-header"><span class="vis-icon">&#10052;&#65039;</span> Interactive: BEC Simulator</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-bec" width="600" height="420"></canvas></div>
   <div class="vis-controls">
-    <label>T/T<sub>c</sub>: <input type="range" id="bec-temp" min="0.05" max="2" step="0.05" value="1"> <span class="value-display" id="bec-temp-val">1.00</span></label>
+    <label>T/T<sub>c</sub>: <input type="range" id="bec-temp" min="0.05" max="2" step="0.05" value="0.3"> <span class="value-display" id="bec-temp-val">0.30</span></label>
   </div>
 </div>
 
 <p>We also checked the $\mu = 0$ approximation numerically. When does it break down? The approximation $\mu \approx 0$ is good in the BEC regime (low $T$), where the ground state is anomalously filled. It breaks down at higher $T$ when $\langle N_\text{ground}\rangle$ gets small, as you can see from Eq. (14): as $\langle N_\text{ground}\rangle \to 0$ then $\mu \to -\infty$.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Exact vs Approximate ⟨N₁⟩</h4>
-<canvas id="vis-n1-compare" width="600" height="320"></canvas>
+<h4>Interactive: Exact vs Approximate Ground State Occupation</h4>
+<canvas id="vis-n1-compare" width="600" height="400"></canvas>
 <div class="controls">
-<label>N particles: <input type="range" id="n1-particles" min="10" max="500" step="10" value="100"><span id="n1-particles-val">100</span></label>
+<label>N particles: <input type="range" id="n1-particles" min="50" max="500" step="10" value="100"><span id="n1-particles-val">100</span></label>
 </div>
-<figcaption>Comparing $\langle N_1 \rangle$ computed numerically (solid) to the $\mu = 0$ approximation (dashed). The approximation works well below $T_c$ but diverges above it.</figcaption>
+<figcaption>Top: ground state fraction from exact numerical solution (solid) vs the $\mu = 0$ approximation (dashed). Bottom: chemical potential $\mu$ vs temperature. The approximation $\mu \approx 0$ works well below $T_c$ but breaks down above it as $\mu$ deviates significantly from zero.</figcaption>
 </div>
 
 <h2>4. Experimental Evidence</h2>

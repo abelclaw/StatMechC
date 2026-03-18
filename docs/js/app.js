@@ -14900,67 +14900,195 @@ function initCh12Vis() {
     drawBecApprox();
   }
 
-  // ----- Ground State Occupation vs μ -----
+  // ----- Multi-State Occupation vs μ (Why Only Ground State Condenses) -----
   const cBM = document.getElementById('vis-bec-mu');
   if (cBM) {
     const {ctx: ctxBM, W: WBM, H: HBM} = setupCanvas(cBM);
+    const muMuSlider = document.getElementById('becmu-mu');
     const muTempSlider = document.getElementById('becmu-temp');
+
+    // State definitions: energy level index and color
+    const bmStates = [
+      {label: 'ε₀ = 0', eps: 0, color: COLORS.red},
+      {label: 'ε₁ = ε', eps: 1, color: COLORS.blue},
+      {label: 'ε₂ = 2ε', eps: 2, color: COLORS.green},
+      {label: 'ε₃ = 3ε', eps: 3, color: COLORS.orange},
+    ];
+
+    function bmBoseOcc(eps, mu, kT) {
+      const arg = (eps - mu) / kT;
+      if (arg > 30) return 0;
+      if (arg < 0.0001) return 1e4; // near-singularity cap
+      return 1.0 / (Math.exp(arg) - 1);
+    }
 
     function drawBecMu() {
       clearCanvas(ctxBM, WBM, HBM);
       const kT = parseFloat(muTempSlider?.value || 1.0);
+      const muVal = parseFloat(muMuSlider?.value || -2.0);
 
-      const ox = 70, oy = 30, pw = WBM - 110, ph = HBM - 80;
-      drawAxes(ctxBM, ox, oy, pw, ph, {xLabel: 'μ / ε', yLabel: '⟨N_ground⟩'});
+      // --- Left panel: occupation curves vs μ ---
+      const ox = 60, oy = 35, pw = Math.floor(WBM * 0.52), ph = HBM - 95;
+      const muMin = -5, muMax = 0;
+      const maxN = 30; // display cap for y-axis
 
-      // Plot <N_ground> = 1/(e^{-beta*mu} - 1) for mu < 0
-      const muMin = -5 * kT;
-      const muMax = -0.01 * kT; // approach 0 from below
+      drawAxes(ctxBM, ox, oy, pw, ph, {xLabel: 'μ / ε', yLabel: '⟨Nᵢ⟩', yLabelOffset: 38});
 
-      ctxBM.strokeStyle = COLORS.blue; ctxBM.lineWidth = 2.5;
-      ctxBM.beginPath();
-      const maxN = 100; // display cap
-      for (let i = 0; i <= 400; i++) {
-        const mu = muMin + (i / 400) * (muMax - muMin);
-        const Ng = 1.0 / (Math.exp(-mu / kT) - 1);
-        const clampN = Math.min(Ng, maxN);
-        const px = ox + (mu - muMin) / (muMax - muMin) * pw;
-        const py = oy + ph * (1 - clampN / maxN);
-        if (py < oy) continue;
-        if (i === 0) ctxBM.moveTo(px, py); else ctxBM.lineTo(px, py);
-      }
-      ctxBM.stroke();
-
-      // Singularity line at mu = 0
-      const zeroX = ox + pw;
-      ctxBM.strokeStyle = COLORS.red; ctxBM.lineWidth = 1;
-      ctxBM.setLineDash([5, 5]);
-      ctxBM.beginPath(); ctxBM.moveTo(zeroX, oy); ctxBM.lineTo(zeroX, oy + ph); ctxBM.stroke();
-      ctxBM.setLineDash([]);
-      ctxBM.fillStyle = COLORS.red; ctxBM.font = FONT_SM; ctxBM.textAlign = 'center';
-      ctxBM.fillText('μ → 0', zeroX, oy + ph + 15);
-      ctxBM.fillText('(diverges)', zeroX, oy + ph + 28);
-
-      // Axis tick labels
-      ctxBM.fillStyle = COLORS.textDim; ctxBM.font = FONT_SM; ctxBM.textAlign = 'center';
-      for (let i = 0; i <= 4; i++) {
-        const mu = muMin + (i / 4) * (muMax - muMin);
-        const px = ox + (i / 4) * pw;
-        ctxBM.fillText((mu).toFixed(1), px, oy + ph + 15);
-      }
-      for (let i = 0; i <= 4; i++) {
-        const n = (i / 4) * maxN;
-        const py = oy + ph * (1 - i / 4);
+      // Y-axis ticks
+      ctxBM.fillStyle = COLORS.textDim; ctxBM.font = FONT_SM;
+      for (let i = 0; i <= 5; i++) {
+        const n = (i / 5) * maxN;
+        const py = oy + ph * (1 - i / 5);
         ctxBM.textAlign = 'right';
         ctxBM.fillText(n.toFixed(0), ox - 5, py + 4);
+        if (i > 0) {
+          ctxBM.strokeStyle = COLORS.grid; ctxBM.lineWidth = 0.5;
+          ctxBM.beginPath(); ctxBM.moveTo(ox, py); ctxBM.lineTo(ox + pw, py); ctxBM.stroke();
+        }
       }
 
-      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT_LG; ctxBM.textAlign = 'left';
-      ctxBM.fillText('⟨N_ground⟩ = 1/(e^{−βμ} − 1)  |  kT/ε = ' + kT.toFixed(1), ox + 5, oy - 8);
+      // X-axis ticks
+      ctxBM.textAlign = 'center';
+      for (let i = 0; i <= 5; i++) {
+        const mu = muMin + (i / 5) * (muMax - muMin);
+        const px = ox + (i / 5) * pw;
+        ctxBM.fillText(mu.toFixed(1), px, oy + ph + 15);
+      }
 
+      // Draw occupation curves for each state (back to front so ground state on top)
+      ctxBM.save();
+      ctxBM.beginPath();
+      ctxBM.rect(ox, oy - 2, pw + 1, ph + 4);
+      ctxBM.clip();
+
+      for (let s = bmStates.length - 1; s >= 0; s--) {
+        const st = bmStates[s];
+        ctxBM.strokeStyle = st.color; ctxBM.lineWidth = s === 0 ? 2.5 : 2;
+        ctxBM.beginPath();
+        let started = false;
+        for (let i = 0; i <= 500; i++) {
+          const mu = muMin + (i / 500) * (muMax - muMin);
+          if (mu >= st.eps) continue; // μ must be below the energy level
+          const occ = bmBoseOcc(st.eps, mu, kT);
+          const clampN = Math.min(occ, maxN * 1.5);
+          const px = ox + (mu - muMin) / (muMax - muMin) * pw;
+          const py = oy + ph * (1 - clampN / maxN);
+          if (!started) { ctxBM.moveTo(px, py); started = true; }
+          else ctxBM.lineTo(px, py);
+        }
+        ctxBM.stroke();
+      }
+      ctxBM.restore();
+
+      // Vertical dashed line at μ = 0 (singularity boundary)
+      const zeroX = ox + pw;
+      ctxBM.strokeStyle = 'rgba(255,255,255,0.25)'; ctxBM.lineWidth = 1;
+      ctxBM.setLineDash([4, 4]);
+      ctxBM.beginPath(); ctxBM.moveTo(zeroX, oy); ctxBM.lineTo(zeroX, oy + ph); ctxBM.stroke();
+      ctxBM.setLineDash([]);
+      ctxBM.fillStyle = 'rgba(255,255,255,0.35)'; ctxBM.font = FONT_SM; ctxBM.textAlign = 'center';
+      ctxBM.fillText('μ=0', zeroX, oy - 5);
+
+      // Vertical line at current μ value
+      const muX = ox + (muVal - muMin) / (muMax - muMin) * pw;
+      ctxBM.strokeStyle = 'rgba(255,255,255,0.6)'; ctxBM.lineWidth = 1.5;
+      ctxBM.setLineDash([3, 3]);
+      ctxBM.beginPath(); ctxBM.moveTo(muX, oy); ctxBM.lineTo(muX, oy + ph); ctxBM.stroke();
+      ctxBM.setLineDash([]);
+
+      // Dots on each curve at current μ
+      const occValues = [];
+      for (let s = 0; s < bmStates.length; s++) {
+        const st = bmStates[s];
+        const occ = bmBoseOcc(st.eps, muVal, kT);
+        occValues.push(occ);
+        const clampN = Math.min(occ, maxN);
+        const py = oy + ph * (1 - clampN / maxN);
+        const dotPy = Math.max(oy, py);
+        ctxBM.fillStyle = st.color;
+        ctxBM.beginPath(); ctxBM.arc(muX, dotPy, 5, 0, 2 * Math.PI); ctxBM.fill();
+      }
+
+      // Title for left panel
+      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT_LG; ctxBM.textAlign = 'left';
+      ctxBM.fillText('⟨Nᵢ⟩ = 1/(e^{β(εᵢ−μ)} − 1)', ox + 5, oy - 14);
+
+      // --- Right panel: energy level diagram ---
+      const rx = ox + pw + 55, rw = WBM - rx - 10, rh = ph;
+      const ry = oy;
+      const levelSpacing = Math.min(rh / 5, 65);
+      const barMaxW = rw - 60;
+      const barMaxN = Math.max(10, ...occValues);
+
+      // Panel label
+      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT_LG; ctxBM.textAlign = 'left';
+      ctxBM.fillText('Occupation', rx, ry - 14);
+
+      // Draw energy levels and occupation bars
+      for (let s = 0; s < bmStates.length; s++) {
+        const st = bmStates[s];
+        const yLevel = ry + rh - 20 - s * levelSpacing;
+        const occ = occValues[s];
+
+        // Energy level line
+        ctxBM.strokeStyle = 'rgba(255,255,255,0.25)'; ctxBM.lineWidth = 1;
+        ctxBM.beginPath(); ctxBM.moveTo(rx, yLevel); ctxBM.lineTo(rx + rw, yLevel); ctxBM.stroke();
+
+        // Energy label on the left
+        ctxBM.fillStyle = st.color; ctxBM.font = FONT_SM; ctxBM.textAlign = 'right';
+        ctxBM.fillText(st.label, rx - 4, yLevel + 4);
+
+        // Occupation bar growing upward from the level line
+        const barW = Math.min(barMaxW, (occ / barMaxN) * barMaxW);
+        const barH = Math.min(levelSpacing * 0.55, 24);
+        if (barW > 1) {
+          ctxBM.fillStyle = st.color;
+          ctxBM.globalAlpha = 0.5;
+          ctxBM.fillRect(rx + 2, yLevel - barH, barW, barH);
+          ctxBM.globalAlpha = 1.0;
+          ctxBM.strokeStyle = st.color; ctxBM.lineWidth = 1.5;
+          ctxBM.strokeRect(rx + 2, yLevel - barH, barW, barH);
+        }
+
+        // Occupation value
+        ctxBM.fillStyle = st.color; ctxBM.font = FONT_SM; ctxBM.textAlign = 'left';
+        const labelX = rx + 2 + Math.max(barW + 4, 3);
+        const occStr = occ >= 1000 ? occ.toExponential(0) : occ >= 100 ? occ.toFixed(0) : occ >= 10 ? occ.toFixed(1) : occ.toFixed(2);
+        ctxBM.fillText('⟨N⟩=' + occStr, labelX, yLevel - barH / 2 + 4);
+      }
+
+      // μ indicator line on the energy diagram
+      // μ is in units of ε; position relative to ground state level
+      const groundY = ry + rh - 20;
+      const muYPos = groundY + Math.abs(muVal) * levelSpacing;
+      if (muYPos <= ry + rh + 15 && muYPos >= ry) {
+        ctxBM.strokeStyle = 'rgba(255,255,255,0.5)'; ctxBM.lineWidth = 1;
+        ctxBM.setLineDash([3, 3]);
+        ctxBM.beginPath(); ctxBM.moveTo(rx, muYPos); ctxBM.lineTo(rx + rw, muYPos); ctxBM.stroke();
+        ctxBM.setLineDash([]);
+        ctxBM.fillStyle = 'rgba(255,255,255,0.5)'; ctxBM.font = FONT_SM; ctxBM.textAlign = 'right';
+        ctxBM.fillText('μ', rx - 4, muYPos + 4);
+      }
+
+      // Legend below left plot
+      const ly = oy + ph + 35;
+      ctxBM.font = FONT_SM;
+      let lx = ox;
+      for (let s = 0; s < bmStates.length; s++) {
+        const st = bmStates[s];
+        ctxBM.fillStyle = st.color;
+        ctxBM.fillRect(lx, ly - 8, 14, 3);
+        ctxBM.fillText(st.label, lx + 18, ly - 3);
+        lx += s === 0 ? 68 : 62;
+      }
+
+      // Update slider readouts
+      const muDisplay = muVal >= -0.095 ? muVal.toFixed(2) : muVal.toFixed(1);
+      document.getElementById('becmu-mu-val')?.replaceChildren(document.createTextNode(muDisplay));
       document.getElementById('becmu-temp-val')?.replaceChildren(document.createTextNode(kT.toFixed(1)));
     }
 
+    muMuSlider?.addEventListener('input', drawBecMu);
     muTempSlider?.addEventListener('input', drawBecMu);
     drawBecMu();
   }
