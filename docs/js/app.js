@@ -13026,6 +13026,191 @@ function initCh11Vis() {
   tempSlider?.addEventListener('input', draw);
   draw();
 
+  // ----- Lambert's Cosine Law -----
+  const cLambert = document.getElementById('vis-lambert');
+  if (cLambert) {
+    const lam = setupCanvas(cLambert);
+    const ctxL = lam.ctx, WL = lam.W, HL = lam.H;
+    const lambertSlider = document.getElementById('lambert-theta');
+
+    function drawLambert() {
+      const thetaDeg = parseFloat(lambertSlider?.value || 0);
+      const theta = thetaDeg * Math.PI / 180;
+      clearCanvas(ctxL, WL, HL);
+
+      // Layout: left side shows the emitting surface + radiation lobe,
+      // right side shows the distant observer receiving projected flux
+      const cx = WL * 0.35, cy = HL * 0.55;  // center of the emitting surface
+      const surfLen = 120;  // half-length of surface line
+      const lobeR = 100;    // max radius of the cosine lobe
+
+      // --- Draw emitting surface ---
+      ctxL.strokeStyle = COLORS.text;
+      ctxL.lineWidth = 3;
+      ctxL.beginPath();
+      ctxL.moveTo(cx - surfLen, cy);
+      ctxL.lineTo(cx + surfLen, cy);
+      ctxL.stroke();
+
+      // Hatch marks below surface
+      ctxL.strokeStyle = COLORS.textDim;
+      ctxL.lineWidth = 1;
+      for (let i = -surfLen + 8; i <= surfLen - 8; i += 12) {
+        ctxL.beginPath();
+        ctxL.moveTo(cx + i, cy);
+        ctxL.lineTo(cx + i - 6, cy + 10);
+        ctxL.stroke();
+      }
+
+      // Surface label
+      ctxL.fillStyle = COLORS.textDim;
+      ctxL.font = FONT_SM;
+      ctxL.textAlign = 'center';
+      ctxL.fillText('emitting surface', cx, cy + 28);
+
+      // --- Draw surface normal (dashed) ---
+      ctxL.strokeStyle = COLORS.textDim;
+      ctxL.lineWidth = 1;
+      ctxL.setLineDash([5, 4]);
+      ctxL.beginPath();
+      ctxL.moveTo(cx, cy);
+      ctxL.lineTo(cx, cy - lobeR - 40);
+      ctxL.stroke();
+      ctxL.setLineDash([]);
+
+      // Normal label
+      ctxL.fillStyle = COLORS.textDim;
+      ctxL.font = FONT_SM;
+      ctxL.textAlign = 'left';
+      ctxL.fillText('normal', cx + 4, cy - lobeR - 30);
+
+      // --- Draw cos(theta) emission lobe ---
+      ctxL.strokeStyle = COLORS.blue;
+      ctxL.lineWidth = 1.5;
+      ctxL.globalAlpha = 0.25;
+      ctxL.fillStyle = COLORS.blue;
+      ctxL.beginPath();
+      for (let a = -Math.PI / 2; a <= Math.PI / 2; a += 0.02) {
+        const r = lobeR * Math.cos(a);
+        const px = cx + r * Math.sin(a);
+        const py = cy - r * Math.cos(a);
+        a === -Math.PI / 2 ? ctxL.moveTo(px, py) : ctxL.lineTo(px, py);
+      }
+      ctxL.closePath();
+      ctxL.fill();
+      ctxL.globalAlpha = 1.0;
+      ctxL.stroke();
+
+      // --- Draw the direction arrow at angle theta ---
+      const arrowLen = lobeR * Math.cos(theta) + 20;
+      const dirX = cx + arrowLen * Math.sin(theta);
+      const dirY = cy - arrowLen * Math.cos(theta);
+
+      ctxL.strokeStyle = COLORS.orange;
+      ctxL.lineWidth = 2.5;
+      drawArrow(ctxL, cx, cy, dirX, dirY, 10);
+
+      // --- Draw theta arc ---
+      if (thetaDeg > 2) {
+        const arcR = 35;
+        ctxL.strokeStyle = COLORS.orange;
+        ctxL.lineWidth = 1.5;
+        ctxL.beginPath();
+        // arc from normal (up = -PI/2) to direction
+        ctxL.arc(cx, cy, arcR, -Math.PI / 2, -Math.PI / 2 + theta, false);
+        ctxL.stroke();
+
+        // theta label
+        const labelAngle = -Math.PI / 2 + theta / 2;
+        ctxL.fillStyle = COLORS.orange;
+        ctxL.font = FONT;
+        ctxL.textAlign = 'center';
+        ctxL.fillText('\u03B8', cx + (arcR + 14) * Math.cos(labelAngle), cy + (arcR + 14) * Math.sin(labelAngle) + 4);
+      }
+
+      // --- Right side: projected area visualization ---
+      const rx = WL * 0.75, ry = HL * 0.38;
+      const stripW = 80, stripH = 14;
+
+      // Full area (top)
+      ctxL.fillStyle = COLORS.blue;
+      ctxL.globalAlpha = 0.5;
+      ctxL.fillRect(rx - stripW / 2, ry - 50, stripW, stripH);
+      ctxL.globalAlpha = 1.0;
+      ctxL.strokeStyle = COLORS.blue;
+      ctxL.lineWidth = 1;
+      ctxL.strokeRect(rx - stripW / 2, ry - 50, stripW, stripH);
+
+      ctxL.fillStyle = COLORS.text;
+      ctxL.font = FONT;
+      ctxL.textAlign = 'center';
+      ctxL.fillText('Area A (face-on)', rx, ry - 56);
+
+      // Projected area (below)
+      const projW = stripW * Math.cos(theta);
+      ctxL.fillStyle = COLORS.orange;
+      ctxL.globalAlpha = 0.5;
+      ctxL.fillRect(rx - projW / 2, ry + 10, projW, stripH);
+      ctxL.globalAlpha = 1.0;
+      ctxL.strokeStyle = COLORS.orange;
+      ctxL.lineWidth = 1;
+      ctxL.strokeRect(rx - projW / 2, ry + 10, projW, stripH);
+
+      ctxL.fillStyle = COLORS.text;
+      ctxL.font = FONT;
+      ctxL.textAlign = 'center';
+      ctxL.fillText('Projected: A cos \u03B8', rx, ry + 38);
+
+      // --- cos(theta) value display ---
+      const cosVal = Math.cos(theta);
+      ctxL.fillStyle = COLORS.orange;
+      ctxL.font = FONT_LG;
+      ctxL.textAlign = 'center';
+      ctxL.fillText('cos \u03B8 = ' + cosVal.toFixed(3), rx, ry + 62);
+
+      // --- Flux bar chart at bottom right ---
+      const barX = WL * 0.58, barY = HL * 0.72;
+      const barMaxW = WL * 0.35, barH = 18;
+
+      // Full flux bar
+      ctxL.fillStyle = COLORS.blue;
+      ctxL.globalAlpha = 0.6;
+      ctxL.fillRect(barX, barY, barMaxW, barH);
+      ctxL.globalAlpha = 1.0;
+
+      ctxL.fillStyle = COLORS.text;
+      ctxL.font = FONT_SM;
+      ctxL.textAlign = 'left';
+      ctxL.fillText('Full flux (normal)', barX, barY - 4);
+
+      // Projected flux bar
+      const projBarW = barMaxW * cosVal;
+      ctxL.fillStyle = COLORS.orange;
+      ctxL.globalAlpha = 0.6;
+      ctxL.fillRect(barX, barY + barH + 10, projBarW, barH);
+      ctxL.globalAlpha = 1.0;
+
+      ctxL.fillStyle = COLORS.text;
+      ctxL.font = FONT_SM;
+      ctxL.fillText('Flux at \u03B8 = ' + thetaDeg + '\u00B0  (\u00D7' + cosVal.toFixed(2) + ')', barX, barY + barH + 6);
+
+      // Title
+      ctxL.fillStyle = COLORS.text;
+      ctxL.font = FONT_LG;
+      ctxL.textAlign = 'left';
+      ctxL.fillText("Lambert's Cosine Law", 10, 18);
+
+      ctxL.fillStyle = COLORS.textDim;
+      ctxL.font = FONT_SM;
+      ctxL.fillText('Emission intensity \u221D cos \u03B8', 10, 34);
+
+      document.getElementById('lambert-theta-val')?.replaceChildren(document.createTextNode(thetaDeg.toFixed(0)));
+    }
+
+    lambertSlider?.addEventListener('input', drawLambert);
+    drawLambert();
+  }
+
   // ----- Debye Model Heat Capacity -----
   const cDebye = document.getElementById('vis-debye');
   if (cDebye) {

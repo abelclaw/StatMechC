@@ -39,13 +39,15 @@
 
 <!-- INTERACTIVE: Phonon Wave in 1D Chain -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔊</span> Interactive: Phonon Modes in a 1D Chain</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-phonon-chain" width="600" height="250"></canvas></div>
+  <div class="vis-header"><span class="vis-icon">🔊</span> Interactive: Normal Modes of a 1D Chain</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-phonon-chain" width="600" height="340"></canvas></div>
   <div class="vis-controls">
     <label>Mode $n$: <input type="range" id="phonon-mode" min="1" max="10" step="1" value="1"> <span class="value-display" id="phonon-mode-val">1</span></label>
     <label>Amplitude: <input type="range" id="phonon-amp" min="0.1" max="1.0" step="0.05" value="0.5"> <span class="value-display" id="phonon-amp-val">0.50</span></label>
-    <button id="phonon-start">Animate</button>
+    <button id="phonon-play">&#9654; Play</button>
+    <button id="phonon-reset">Reset</button>
   </div>
+  <div class="vis-caption">A chain of $N$ atoms (blue) connected by springs, with fixed walls at each end. Each <strong>normal mode</strong> $n$ is a standing wave $A(x,t) = A_0 \sin(k_n x)\cos(\omega_n t)$ with wavevector $k_n = \pi n / L$ and frequency $\omega_n = c_s k_n$. The gray dots show equilibrium positions; the dashed envelope shows the maximum displacement. Higher modes have shorter wavelengths and oscillate faster.</div>
 </div>
 
 <p>If you knock one side of the solid, a sound wave will propagate through by vibrating each successive molecule. The quanta of sound-wave excitations in solids are called phonons.</p>
@@ -364,7 +366,15 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <p>Rather than the total or differential energy, we are often interested in the power: how much energy leaves the blackbody per unit time. A related quantity is the flux of radiation, which is the power per unit area. The flux is given by the energy density times the velocity. For example, the flux in an electromagnetic wave is $\Phi = c\frac{E}{V}$, since electromagnetic waves travel at the speed of light.</p>
 
-<figure><img src="images/11-PhononsPhotons_p10_img0.png" alt="Geometry of radiation flux from a surface"><figcaption>The outward flux from a surface includes a geometric projection factor $\cos\theta$ (Lambert's cosine law).</figcaption></figure>
+<!-- INTERACTIVE: Lambert's cosine law -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">&#128161;</span> Interactive: Lambert's Cosine Law</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-lambert" width="600" height="400"></canvas></div>
+  <div class="vis-controls">
+    <label>Observer angle &theta;: <input type="range" id="lambert-theta" min="0" max="89" step="1" value="0"> <span class="value-display" id="lambert-theta-val">0</span>&deg;</label>
+  </div>
+  <p class="vis-caption">Drag the slider to see how the flux through a distant surface element depends on the angle &theta; from the surface normal. The projected area shrinks as cos&thinsp;&theta;, reducing the effective flux.</p>
+</div>
 
 <p>Think of the flux of photons passing through a spherical shell far away from the blackbody at some time. At any point on the shell, it is only the perpendicular component of the flux from the surface that hits the point. So we need to multiply by a projection factor of $\cos\theta$ when doing the angular integral over the outgoing directions. (The factor of $\cos\theta$ actually has a name, <span class="tooltip-trigger">Lambert's cosine law<span class="tooltip-content">The radiation intensity from a surface element is proportional to $\cos\theta$, where $\theta$ is the angle from the surface normal. This geometric factor reduces the effective solid angle from $4\pi$ to $\pi$.</span></span>). Thus, instead of $4\pi$ of the sphere, the effective solid angle reached from the surface of the black body is</p>
 
