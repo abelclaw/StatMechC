@@ -26441,41 +26441,20 @@ function initCh15Vis() {
     }
 
     // --- Draw Earth ---
-    function drawEarth(sx, sy, rPx) {
-      const er = Math.max(rPx, 1.2);
-      // Blue body
-      const eg = ctxS.createRadialGradient(sx - er * 0.2, sy - er * 0.2, er * 0.1, sx, sy, er);
-      eg.addColorStop(0, '#7ec8e3');
-      eg.addColorStop(0.5, '#4a90d9');
-      eg.addColorStop(1, '#2c5f8a');
-      ctxS.fillStyle = eg;
-      ctxS.beginPath(); ctxS.arc(sx, sy, er, 0, 2 * Math.PI); ctxS.fill();
-      // Green patches
-      if (er > 4) {
-        ctxS.fillStyle = 'rgba(92,184,92,0.5)';
-        ctxS.beginPath(); ctxS.arc(sx - er * 0.25, sy - er * 0.15, er * 0.35, 0, 2 * Math.PI); ctxS.fill();
-        ctxS.beginPath(); ctxS.arc(sx + er * 0.30, sy + er * 0.10, er * 0.25, 0, 2 * Math.PI); ctxS.fill();
-      }
-    }
+    // --- Planet images ---
+    const earthImg = new Image(); earthImg.src = '../images/earth_transparent.png';
+    const jupiterImg = new Image(); jupiterImg.src = '../images/jupiter_transparent.png';
+    let planetsLoaded = 0;
+    earthImg.onload = jupiterImg.onload = () => { if (++planetsLoaded >= 2) drawSizes(); };
 
-    // --- Draw Jupiter ---
-    function drawJupiter(sx, sy, rPx) {
-      const jr = Math.max(rPx, 1.2);
-      const jg = ctxS.createRadialGradient(sx - jr * 0.2, sy - jr * 0.2, jr * 0.1, sx, sy, jr);
-      jg.addColorStop(0, '#e8d5a3');
-      jg.addColorStop(0.5, '#c4a265');
-      jg.addColorStop(1, '#8b6914');
-      ctxS.fillStyle = jg;
-      ctxS.beginPath(); ctxS.arc(sx, sy, jr, 0, 2 * Math.PI); ctxS.fill();
-      // Bands
-      if (jr > 6) {
-        ctxS.save(); ctxS.beginPath(); ctxS.arc(sx, sy, jr, 0, 2 * Math.PI); ctxS.clip();
-        const bands = [-0.5, -0.2, 0.15, 0.45];
-        for (const b of bands) {
-          ctxS.fillStyle = 'rgba(139,90,20,0.3)';
-          ctxS.fillRect(sx - jr, sy + b * jr, jr * 2, jr * 0.12);
-        }
-        ctxS.restore();
+    function drawPlanetImg(img, sx, sy, rPx) {
+      const r = Math.max(rPx, 1.2);
+      if (img.complete && img.naturalWidth > 0) {
+        ctxS.drawImage(img, sx - r, sy - r, r * 2, r * 2);
+      } else {
+        // Fallback circle
+        ctxS.fillStyle = '#555';
+        ctxS.beginPath(); ctxS.arc(sx, sy, r, 0, 2 * Math.PI); ctxS.fill();
       }
     }
 
@@ -26527,8 +26506,8 @@ function initCh15Vis() {
         if (v.sy + v.rPx < -50 || v.sy - v.rPx > HS + 50) continue;
 
         const isHover = hoverStar === v.i;
-        if (v.s.name === 'Earth') drawEarth(v.sx, v.sy, v.rPx);
-        else if (v.s.name === 'Jupiter') drawJupiter(v.sx, v.sy, v.rPx);
+        if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
+        else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
         else drawStar(v.s, v.sx, v.sy, v.rPx, isHover);
 
         // Labels above the star
