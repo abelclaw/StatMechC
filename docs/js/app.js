@@ -22901,6 +22901,21 @@ function initCh14Vis() {
     function fmtR(v) { return v >= 1e6 ? (v/1e6)+'M\u03A9' : v >= 1000 ? (v/1000)+'k\u03A9' : v+'\u03A9'; }
     function fmtC(C) { return C >= 1e-3 ? (C*1e3).toFixed(0)+'mF' : C >= 1e-6 ? (C*1e6).toFixed(0)+'\u00B5F' : (C*1e9).toFixed(0)+'nF'; }
 
+    // Standard resistor color code
+    var BAND_COLORS = ['#000','#8B4513','#ff0000','#ff8c00','#ffd700','#22b14c','#0000ff','#8b00ff','#808080','#fff'];
+    // band index:       0-blk  1-brn    2-red     3-org     4-yel     5-grn     6-blu     7-vio     8-gry    9-wht
+    var BAND_BORDERS= ['#000','#5a2d0a','#cc0000','#cc7000','#ccaa00','#1a8a3a','#0000aa','#6a00aa','#606060','#ccc'];
+    function resistorBands(ohms) {
+      // Returns [band1, band2, multiplier, tolerance] color indices
+      if (ohms <= 0) return [0,0,0,0];
+      var exp = Math.floor(Math.log10(ohms));
+      var sig = Math.round(ohms / Math.pow(10, exp - 1));
+      if (sig >= 100) { sig = Math.round(sig / 10); exp++; }
+      var d1 = Math.floor(sig / 10), d2 = sig % 10;
+      var mult = exp - 1; if (mult < 0) mult = 0; if (mult > 9) mult = 9;
+      return [d1, d2, mult, 1]; // tolerance band = brown (1%) for aesthetics
+    }
+
     function bbDraw() {
       clearCanvas(bbCtx, bbW, bbH); bbAnimT += 0.03;
       // Board
@@ -22942,12 +22957,16 @@ function initCh14Vis() {
           bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo((h0.x+h1.x)/2-ux*bl/2, (h0.y+h1.y)/2-uy*bl/2); bbCtx.stroke();
           bbCtx.beginPath(); bbCtx.moveTo((h0.x+h1.x)/2+ux*bl/2, (h0.y+h1.y)/2+uy*bl/2); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
           bbCtx.save(); bbCtx.translate((h0.x+h1.x)/2, (h0.y+h1.y)/2); bbCtx.rotate(Math.atan2(dy,dx));
-          bbCtx.fillStyle = '#d4a574'; bbCtx.beginPath(); bbCtx.roundRect(-bl/2, -5, bl, 10, 2); bbCtx.fill();
-          bbCtx.strokeStyle = '#8d6e4a'; bbCtx.lineWidth = 1; bbCtx.beginPath(); bbCtx.roundRect(-bl/2, -5, bl, 10, 2); bbCtx.stroke();
-          ['#a52a2a','#000','#f00','#ffd700'].forEach(function(c, bi) { bbCtx.fillStyle = c; bbCtx.fillRect(-bl/2+3+bi*(bl-6)/3.5, -4, 2, 8); });
+          bbCtx.fillStyle = '#d4b896'; bbCtx.beginPath(); bbCtx.roundRect(-bl/2, -6, bl, 12, 2); bbCtx.fill();
+          bbCtx.strokeStyle = '#8d6e4a'; bbCtx.lineWidth = 1; bbCtx.beginPath(); bbCtx.roundRect(-bl/2, -6, bl, 12, 2); bbCtx.stroke();
+          var bands = resistorBands(p.value || 1000);
+          var bandW = Math.max(2, bl * 0.08);
+          var positions = [-bl/2 + bl*0.15, -bl/2 + bl*0.3, -bl/2 + bl*0.45, -bl/2 + bl*0.75];
+          for (var bi = 0; bi < 4; bi++) {
+            bbCtx.fillStyle = BAND_COLORS[bands[bi]]; bbCtx.fillRect(positions[bi] - bandW/2, -5, bandW, 10);
+            bbCtx.strokeStyle = BAND_BORDERS[bands[bi]]; bbCtx.lineWidth = 0.5; bbCtx.strokeRect(positions[bi] - bandW/2, -5, bandW, 10);
+          }
           bbCtx.restore();
-          bbCtx.fillStyle = '#888'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center';
-          bbCtx.fillText(fmtR(p.value||1000), (h0.x+h1.x)/2, (h0.y+h1.y)/2-10);
           curDots(h0.x, h0.y, h1.x, h1.y, ((bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0)-(bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0))/(p.value||1000));
         } else if (p.type === 'LED') {
           var h1 = holeXY(p.holes[1].row, p.holes[1].col), isOn = p._ledOn, mx = (h0.x+h1.x)/2, my = (h0.y+h1.y)/2;
@@ -23001,8 +23020,31 @@ function initCh14Vis() {
       if (bbClick1) { var cp = holeXY(bbClick1.row, bbClick1.col); bbCtx.strokeStyle = '#ff9800'; bbCtx.lineWidth = 2.5; bbCtx.beginPath(); bbCtx.arc(cp.x, cp.y, 8, 0, Math.PI*2); bbCtx.stroke(); bbCtx.fillStyle = 'rgba(255,152,0,0.2)'; bbCtx.beginPath(); bbCtx.arc(cp.x, cp.y, 8, 0, Math.PI*2); bbCtx.fill(); }
       if (bbHover) {
         var hp = holeXY(bbHover.row, bbHover.col); bbCtx.strokeStyle = 'rgba(255,255,255,0.7)'; bbCtx.lineWidth = 1.5; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y, 6, 0, Math.PI*2); bbCtx.stroke();
+        // Build tooltip text: voltage + component info
+        var tipLines = [];
         var v = bbNodeVolts[holeNode(bbHover.row, bbHover.col)];
-        if (v !== undefined) { bbCtx.fillStyle = 'rgba(0,0,0,0.85)'; bbCtx.beginPath(); bbCtx.roundRect(hp.x+10, hp.y-22, 52, 18, 4); bbCtx.fill(); bbCtx.fillStyle = '#fff'; bbCtx.font = 'bold 11px sans-serif'; bbCtx.textAlign = 'left'; bbCtx.fillText(v.toFixed(2)+'V', hp.x+14, hp.y-8); }
+        if (v !== undefined) tipLines.push(v.toFixed(2) + 'V');
+        // Check if hovering over a component
+        var hovPart = bbFindPartAt(hp.x, hp.y);
+        if (hovPart) {
+          if (hovPart.type === 'RESISTOR') tipLines.push(fmtR(hovPart.value||1000) + ' (click to change)');
+          else if (hovPart.type === 'CAPACITOR') tipLines.push(fmtC(hovPart.value||100e-6) + ' (click to change)');
+          else if (hovPart.type === 'LED') tipLines.push('LED (Vf=1.8V)' + (hovPart._ledOn ? ' ON' : ' OFF'));
+          else if (hovPart.type === 'NPN') tipLines.push('NPN transistor' + (hovPart._state === 'on' ? ' ON' : ' OFF'));
+          else if (hovPart.type === 'BATTERY') tipLines.push('Battery ' + (hovPart.value||9) + 'V');
+          else if (hovPart.type === 'SWITCH') tipLines.push('Switch ' + (hovPart.on ? 'CLOSED' : 'OPEN'));
+        }
+        if (tipLines.length > 0) {
+          var tipW = 10; bbCtx.font = 'bold 11px sans-serif';
+          for (var ti = 0; ti < tipLines.length; ti++) tipW = Math.max(tipW, bbCtx.measureText(tipLines[ti]).width + 12);
+          var tipH = tipLines.length * 16 + 6;
+          var tipX = hp.x + 10, tipY = hp.y - tipH - 4;
+          if (tipX + tipW > bbW - 10) tipX = hp.x - tipW - 10;
+          if (tipY < 5) tipY = hp.y + 12;
+          bbCtx.fillStyle = 'rgba(0,0,0,0.9)'; bbCtx.beginPath(); bbCtx.roundRect(tipX, tipY, tipW, tipH, 4); bbCtx.fill();
+          bbCtx.fillStyle = '#fff'; bbCtx.font = 'bold 11px sans-serif'; bbCtx.textAlign = 'left';
+          for (var ti = 0; ti < tipLines.length; ti++) bbCtx.fillText(tipLines[ti], tipX + 6, tipY + 14 + ti * 16);
+        }
       }
       bbCtx.fillStyle = '#888'; bbCtx.font = FONT_SM; bbCtx.textAlign = 'left';
       bbCtx.fillText('Click placed R/C to change value. Click status bar to toggle current.', 10, bbH-8);
@@ -23037,7 +23079,14 @@ function initCh14Vis() {
       bbRunSim();
     });
 
-    function bbRunSim() { bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
+    function bbFullReset() {
+      bbNodeVolts = {};
+      for (var i = 0; i < bbParts.length; i++) {
+        if (bbParts[i].type === 'NPN') bbParts[i]._state = 'off';
+        if (bbParts[i].type === 'LED') bbParts[i]._ledOn = false;
+      }
+    }
+    function bbRunSim() { bbFullReset(); bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
 
     var bbPaletteEl = document.getElementById('bb-palette');
     if (bbPaletteEl) bbPaletteEl.addEventListener('click', function(e) { var btn = e.target.closest('[data-part]'); if (!btn) return; bbPaletteEl.querySelectorAll('[data-part]').forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active'); bbTool = btn.dataset.part; bbClick1 = null; bbDraw(); });
