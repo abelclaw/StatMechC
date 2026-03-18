@@ -602,13 +602,11 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 <!-- INTERACTIVE: Transistor Demo -->
 <div class="visualization">
   <div class="figure-label">Interactive 15: npn Transistor</div>
-  <p class="vis-caption">An npn transistor acting as a switch. Toggle the base voltage to control current flow.</p>
-  <div class="vis-canvas-wrap"><canvas id="vis-transistor-demo" width="600" height="350"></canvas></div>
+  <p class="vis-caption">An npn transistor acting as a switch. Adjust the variable resistor to control the base voltage.</p>
+  <div class="vis-canvas-wrap"><canvas id="vis-transistor-demo" width="650" height="400"></canvas></div>
   <div class="vis-controls">
-    <div class="button-group" id="transistor-base-buttons">
-      <button class="control-btn active" data-value="off">Base OFF</button>
-      <button class="control-btn" data-value="on">Base ON (0.7V)</button>
-    </div>
+    <label>Variable resistance: <input type="range" id="transistor-resistance" min="0" max="100" step="1" value="100"> <span id="transistor-r-val">R = high</span></label>
+    <span class="value-display" id="transistor-vbase">V_base = 0.00 V</span>
   </div>
 </div>
 

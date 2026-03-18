@@ -21050,59 +21050,74 @@ function initCh14Vis() {
   const cTrans = document.getElementById('vis-transistor-demo');
   if (cTrans) {
     const { ctx, W, H } = setupCanvas(cTrans);
-    let baseOn = false;
     let animT = 0;
-    const transButtons = document.getElementById('transistor-base-buttons');
+    const rSlider = document.getElementById('transistor-resistance');
+    const rValSpan = document.getElementById('transistor-r-val');
+    const vBaseSpan = document.getElementById('transistor-vbase');
+
+    // Physics: base circuit has a 1.5V battery in series with variable
+    // resistor R_var and a fixed base resistor R_base.
+    // V_base = V_bat * R_base / (R_base + R_var).
+    // Slider goes from 0 (R_var = 0, V_base = 1.5V) to 100 (R_var >> R_base, V_base ≈ 0).
+    const V_BAT = 1.5;
+    const R_BASE = 1; // normalised units
+    function getBaseVoltage() {
+      var sliderVal = rSlider ? parseInt(rSlider.value) : 100;
+      // slider 100 = max resistance = low voltage; 0 = zero resistance = full voltage
+      var rVar = sliderVal / 100 * 20; // 0 to 20 in normalised units
+      return V_BAT * R_BASE / (R_BASE + rVar);
+    }
 
     function drawTransistor() {
       clearCanvas(ctx, W, H);
-      const cx = W / 2, cy = H / 2 + 10;
-      const onC = '#4caf50', offC = '#666', wireC = '#aaa';
+      var vBase = getBaseVoltage();
+      var baseOn = vBase >= 0.7;
+      var threshold = 0.7;
+
+      // Main circuit centre; base circuit extends left
+      var cx = W / 2 + 60, cy = H / 2 + 10;
+      var onC = '#4caf50', offC = '#666', wireC = '#aaa';
 
       // Title
       ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
-      ctx.fillText('npn Transistor Circuit', cx, 25);
+      ctx.fillText('npn Transistor Circuit', W / 2, 22);
 
-      // Layout: V_supply → LED (in series) → Collector → Emitter → Ground
-      const flowCol = baseOn ? onC : '#555';
+      var flowCol = baseOn ? onC : '#555';
 
-      // Transistor body
-      const tx = cx - 20, ty = cy - 25, tw = 40, th = 80;
+      // ── Transistor body ──
+      var tx = cx - 20, ty = cy - 25, tw = 40, th = 80;
       ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty, tw, 25);
       ctx.fillStyle = '#ff7070'; ctx.fillRect(tx, ty + 25, tw, 12);
       ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty + 37, tw, 43);
       ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5;
       ctx.strokeRect(tx, ty, tw, th);
-      // NPN labels
       ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('n', tx + tw / 2, ty + 16);
       ctx.fillText('p', tx + tw / 2, ty + 35);
       ctx.fillText('n', tx + tw / 2, ty + 62);
 
-      // Terminal labels
+      // Terminal labels (right of transistor)
       ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'left';
       ctx.fillText('Collector', tx + tw + 10, ty + 8);
       ctx.fillText('Base', tx + tw + 10, ty + 35);
       ctx.fillText('Emitter', tx + tw + 10, ty + 72);
 
-      // === Supply voltage at top ===
-      const vccY = 42;
+      // ── Main circuit: V_supply → LED → Collector → Emitter → Ground ──
+      var vccY = 40;
       ctx.fillStyle = COLORS.text; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('V_supply', cx, vccY - 5);
+      ctx.fillText('V_supply', cx, vccY - 6);
       ctx.fillStyle = flowCol; ctx.font = 'bold 16px sans-serif';
-      ctx.fillText('+', cx + 15, vccY + 12);
+      ctx.fillText('+', cx + 15, vccY + 10);
 
       // Wire from V_supply down to LED
-      const ledTop = vccY + 8;
-      const ledBot = ty - 30;
-      const ledMidY = (ledTop + ledBot) / 2;
+      var ledTop = vccY + 6;
+      var ledBot = ty - 28;
+      var ledMidY = (ledTop + ledBot) / 2;
       ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(cx, ledTop); ctx.lineTo(cx, ledMidY - 18); ctx.stroke();
 
-      // LED symbol (triangle pointing down + bar) — in series
-      const ledTriTop = ledMidY - 16;
-      const ledTriBot = ledMidY + 6;
-      const ledBarY = ledTriBot;
+      // LED (triangle pointing down + bar)
+      var ledTriTop = ledMidY - 16, ledTriBot = ledMidY + 6, ledBarY = ledTriBot;
       if (baseOn) {
         ctx.fillStyle = 'rgba(255,200,50,0.4)';
         ctx.beginPath(); ctx.arc(cx, ledMidY - 4, 20, 0, Math.PI * 2); ctx.fill();
@@ -21120,86 +21135,170 @@ function initCh14Vis() {
       ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(cx, ledBarY); ctx.lineTo(cx, ty); ctx.stroke();
 
-      // === Ground (below emitter) ===
-      const gndY = ty + th + 35;
+      // Ground (below emitter)
+      var gndY = ty + th + 35;
       ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(cx, ty + th); ctx.lineTo(cx, gndY); ctx.stroke();
       ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
-      for (let i = 0; i < 3; i++) {
-        const gw = 16 - i * 5;
+      for (var gi = 0; gi < 3; gi++) {
+        var gw = 16 - gi * 5;
         ctx.beginPath();
-        ctx.moveTo(cx - gw, gndY + i * 5);
-        ctx.lineTo(cx + gw, gndY + i * 5);
+        ctx.moveTo(cx - gw, gndY + gi * 5);
+        ctx.lineTo(cx + gw, gndY + gi * 5);
         ctx.stroke();
       }
 
-      // === Base wire (left) ===
-      const baseY = ty + 31;
-      ctx.strokeStyle = baseOn ? '#ff9800' : wireC; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(tx - 80, baseY); ctx.lineTo(tx, baseY); ctx.stroke();
+      // ── Base circuit (left side) ──
+      // Layout: battery at far left, wire right → variable resistor → wire → base
+      // Return path: base-emitter junction shares the main ground
+      var baseY = ty + 31;
+      var baseWireLeft = tx - 8; // where wire meets transistor
+      var batX = 50; // battery centre x
+      var batTopY = baseY - 30;
+      var batBotY = baseY + 50;
+      var baseCol = vBase >= threshold ? '#ff9800' : wireC;
 
-      // Base voltage label
-      ctx.fillStyle = baseOn ? '#ff9800' : '#888'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(baseOn ? '0.7V' : '0V', tx - 85, baseY + 5);
+      // Battery (vertical, left side)
+      // + terminal at top, - terminal at bottom
+      ctx.strokeStyle = baseCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(batX, batTopY); ctx.lineTo(batX, batBotY); ctx.stroke();
+      // Long line = + terminal
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(batX - 10, batTopY); ctx.lineTo(batX + 10, batTopY); ctx.stroke();
+      // Short line = - terminal
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(batX - 5, batBotY); ctx.lineTo(batX + 5, batBotY); ctx.stroke();
+      // Battery label
+      ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'center';
+      ctx.fillText('1.5 V', batX, batTopY - 8);
+      ctx.fillStyle = baseCol; ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('+', batX + 16, batTopY + 5);
+      ctx.fillText('\u2013', batX + 14, batBotY + 4);
 
-      // Battery symbol for base
-      if (baseOn) {
-        const bx = tx - 55, by = baseY - 14;
-        ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + 28); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(bx - 6, by + 9); ctx.lineTo(bx + 6, by + 9); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(bx - 3, by + 16); ctx.lineTo(bx + 3, by + 16); ctx.stroke();
+      // Wire from battery + terminal right to base level
+      ctx.strokeStyle = baseCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(batX, batTopY); ctx.lineTo(batX, baseY); ctx.stroke();
+
+      // Variable resistor (zigzag with arrow) between battery and base
+      var rzLeft = batX + 15, rzRight = baseWireLeft - 15;
+      var rzMid = (rzLeft + rzRight) / 2;
+      // Wire from battery junction to resistor
+      ctx.beginPath(); ctx.moveTo(batX, baseY); ctx.lineTo(rzLeft, baseY); ctx.stroke();
+
+      // Zigzag resistor body
+      var rzSteps = 6, rzAmp = 8;
+      ctx.beginPath(); ctx.moveTo(rzLeft, baseY);
+      for (var ri = 0; ri < rzSteps; ri++) {
+        var rx1 = rzLeft + (ri + 0.25) * (rzRight - rzLeft) / rzSteps;
+        var rx2 = rzLeft + (ri + 0.75) * (rzRight - rzLeft) / rzSteps;
+        ctx.lineTo(rx1, baseY + (ri % 2 === 0 ? -rzAmp : rzAmp));
+        ctx.lineTo(rx2, baseY + (ri % 2 === 0 ? rzAmp : -rzAmp));
+      }
+      ctx.lineTo(rzRight, baseY); ctx.stroke();
+
+      // Arrow through resistor (indicates variable)
+      var arrowMidX = rzMid, arrowMidY = baseY - 20;
+      ctx.strokeStyle = baseCol; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(arrowMidX - 18, arrowMidY + 12);
+      ctx.lineTo(arrowMidX + 18, arrowMidY - 12);
+      ctx.stroke();
+      // Arrowhead
+      ctx.beginPath();
+      ctx.moveTo(arrowMidX + 18, arrowMidY - 12);
+      ctx.lineTo(arrowMidX + 10, arrowMidY - 8);
+      ctx.lineTo(arrowMidX + 14, arrowMidY - 16);
+      ctx.closePath(); ctx.fillStyle = baseCol; ctx.fill();
+      // Label
+      ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'center';
+      ctx.fillText('R_var', rzMid, baseY + 24);
+
+      // Wire from resistor to base
+      ctx.strokeStyle = baseCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(rzRight, baseY); ctx.lineTo(baseWireLeft, baseY);
+      ctx.lineTo(tx, baseY); ctx.stroke();
+
+      // Return wire: battery - terminal down to shared ground
+      // Wire goes down from battery bottom, then right to the main ground point
+      var retY = gndY + 5; // slightly below main ground for clarity
+      ctx.strokeStyle = baseCol; ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(batX, batBotY); ctx.lineTo(batX, retY);
+      ctx.lineTo(cx, retY); ctx.stroke();
+      ctx.setLineDash([]);
+      // Small ground symbol at battery bottom
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+      for (var ggi = 0; ggi < 3; ggi++) {
+        var ggw = 8 - ggi * 2.5;
+        ctx.beginPath();
+        ctx.moveTo(batX - ggw, retY + ggi * 3);
+        ctx.lineTo(batX + ggw, retY + ggi * 3);
+        ctx.stroke();
       }
 
-      // === Current flow arrows when on ===
+      // Voltage display on base wire
+      var vDispX = rzRight + 10, vDispY = baseY - 14;
+      ctx.fillStyle = vBase >= threshold ? '#ff9800' : '#888';
+      ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(vBase.toFixed(2) + ' V', (rzRight + tx) / 2, baseY - 14);
+
+      // ── Current flow arrows (main circuit) when on ──
       if (baseOn) {
         animT += 0.04;
         ctx.fillStyle = onC;
-        const pathTop = ledTop;
-        const pathBot = gndY;
-        for (let i = 0; i < 5; i++) {
-          const frac = ((animT + i * 0.2) % 1);
-          const ay = pathTop + frac * (pathBot - pathTop);
+        var pathTop = ledTop, pathBot = gndY;
+        for (var ai = 0; ai < 5; ai++) {
+          var frac = ((animT + ai * 0.2) % 1);
+          var ay = pathTop + frac * (pathBot - pathTop);
           if (ay < pathTop || ay > pathBot) continue;
-          // Skip drawing over the LED triangle area
           if (ay > ledTriTop - 2 && ay < ledBarY + 2) continue;
           ctx.beginPath();
-          ctx.moveTo(cx - 5, ay - 4);
-          ctx.lineTo(cx + 5, ay - 4);
-          ctx.lineTo(cx, ay + 5);
-          ctx.closePath(); ctx.fill();
+          ctx.moveTo(cx - 5, ay - 4); ctx.lineTo(cx + 5, ay - 4);
+          ctx.lineTo(cx, ay + 5); ctx.closePath(); ctx.fill();
+        }
+        // Small arrows on base wire too
+        ctx.fillStyle = '#ff9800';
+        for (var bi = 0; bi < 2; bi++) {
+          var bf = ((animT * 0.7 + bi * 0.5) % 1);
+          var bax = batX + bf * (tx - batX);
+          ctx.beginPath();
+          ctx.moveTo(bax - 3, baseY - 4); ctx.lineTo(bax - 3, baseY + 4);
+          ctx.lineTo(bax + 5, baseY); ctx.closePath(); ctx.fill();
         }
       }
 
-      // Status text
+      // ── Status text ──
       ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
       if (baseOn) {
         ctx.fillStyle = onC;
-        ctx.fillText('Base ON \u2192 current flows through LED \u2192 it lights up', cx, H - 10);
+        ctx.fillText('V_base = ' + vBase.toFixed(2) + ' V \u2265 0.7 V \u2192 transistor ON, LED lights up', W / 2, H - 8);
       } else {
         ctx.fillStyle = '#999';
-        ctx.fillText('Base OFF \u2192 no current flows \u2192 LED is dark', cx, H - 10);
+        ctx.fillText('V_base = ' + vBase.toFixed(2) + ' V < 0.7 V \u2192 transistor OFF, no current', W / 2, H - 8);
       }
+
+      // Update HTML displays
+      if (rValSpan) {
+        var rVar = (rSlider ? parseInt(rSlider.value) : 100) / 100 * 20;
+        if (rVar < 0.01) rValSpan.textContent = 'R \u2248 0';
+        else if (rVar > 19) rValSpan.textContent = 'R = high';
+        else rValSpan.textContent = 'R = ' + rVar.toFixed(1) + ' k\u03A9';
+      }
+      if (vBaseSpan) vBaseSpan.textContent = 'V_base = ' + vBase.toFixed(2) + ' V';
     }
 
-    let transAnim;
+    var transAnim;
     function animateTransistor() {
       drawTransistor();
-      if (baseOn) transAnim = requestAnimationFrame(animateTransistor);
+      transAnim = requestAnimationFrame(animateTransistor);
     }
 
-    if (transButtons) {
-      transButtons.addEventListener('click', function(e) {
-        const btn = e.target.closest('[data-value]');
-        if (!btn) return;
-        transButtons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        baseOn = btn.dataset.value === 'on';
-        if (transAnim) cancelAnimationFrame(transAnim);
-        animateTransistor();
+    if (rSlider) {
+      rSlider.addEventListener('input', function() {
+        // animation loop handles redraw
       });
     }
-    drawTransistor();
+    animateTransistor();
   }
 
   // =========================================================================
