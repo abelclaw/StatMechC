@@ -163,7 +163,8 @@ $$\langle x \rangle = 0.59L; \qquad \langle x^2 \rangle = 0.42L^2; \qquad \sigma
 
 <!-- Interactive Gaussian Explorer -->
 <div class="interactive-container">
-  <h3>Interactive: Gaussian Explorer</h3>
+  <div class="figure-label">Interactive 1: Gaussian Explorer</div>
+  <p class="vis-caption">Adjust the mean and standard deviation to see how the Gaussian distribution changes shape.</p>
   <div class="vis-controls">
     <label>Mean ($\mu$): <input type="range" id="gauss-mean" min="-3" max="3" step="0.1" value="0"><span class="slider-value" id="gauss-mean-val">0</span></label>
     <label>Std Dev ($\sigma$): <input type="range" id="gauss-sigma" min="0.2" max="3" step="0.1" value="1"><span class="slider-value" id="gauss-sigma-val">1</span></label>
@@ -327,8 +328,8 @@ $$(M_r)_N \to \begin{cases} 0, & n\text{ odd} \\ \dfrac{2^{-r/2}\, r!}{\left(\fr
 <p>Now say $N = 2$, so we pick two molecules with positions $x_1$ and $x_2$. What is the probability that they will have mean $\bar{x}$? For a given $\bar{x}$ we need $\frac{x_1 + x_2}{2} = \bar{x}$. For example if $\bar{x} = 0$, then for any $x_1$ there is an $x_2$ that works, namely $x_2 = -x_1$. However, if the mean is all the way on the edge, $\bar{x} = \frac{L}{2}$, then not all $x_1$ work; in fact, we need both $x_1$ and $x_2$ to be exactly $\frac{L}{2}$. Thus there are fewer possibilities when $\bar{x}$ is close to the boundaries of the box than if $\bar{x}$ is central.</p>
 
 <div class="interactive-container">
-  <h3>Interactive: Averaging and Convolution</h3>
-  <p class="vis-caption">Slide $N$ to see the distribution $P_N(\bar{x})$ of the average of $N$ uniform draws. For $N=1$: flat. $N=2$: triangle. $N \ge 3$: rapidly approaches Gaussian (CLT). The red dashed curve shows the Gaussian fit $\mathcal{N}(0, \sigma/\sqrt{N})$.</p>
+  <div class="figure-label">Interactive 2: Averaging and Convolution</div>
+  <p class="vis-caption">Slide $N$ to see how the distribution of averages of $N$ uniform draws evolves from flat to triangular to Gaussian.</p>
   <div class="vis-controls">
     <label>Number of particles $N$: <input type="range" id="conv-n" min="1" max="10" step="1" value="1"> <span class="slider-value" id="conv-n-val">1</span></label>
   </div>
@@ -396,7 +397,8 @@ $$\frac{\sigma}{\bar{x}} \to \frac{1}{\sqrt{N}}\frac{\sigma}{\bar{x}}$$
 
 <!-- Interactive CLT Visualizer -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">📊</span> Interactive: Central Limit Theorem</div>
+  <div class="figure-label">Interactive 3: Central Limit Theorem</div>
+  <p class="vis-caption">Choose any distribution and hit Go to watch the histogram of sample averages converge to a Gaussian as $N$ grows.</p>
   <div class="vis-controls">
     <label>Distribution:
       <select id="clt-dist">
@@ -415,7 +417,6 @@ $$\frac{\sigma}{\bar{x}} \to \frac{1}{\sqrt{N}}\frac{\sigma}{\bar{x}}$$
     <span class="value-display" id="clt-count">0 averages</span>
   </div>
   <div class="vis-canvas-wrap"><canvas id="vis-clt" width="700" height="340"></canvas></div>
-  <div class="vis-caption">Choose any distribution, then hit Go. Each frame draws $N$ samples, averages them, and adds the result to the normalized histogram. Regardless of the starting distribution, the histogram of averages converges to a Gaussian as $N$ grows.</div>
 </div>
 
 <h3 id="s1-3-3">3.3 &mdash; Why we take logarithms in statistical mechanics</h3>
@@ -527,8 +528,8 @@ $$\frac{\sigma}{\langle m \rangle} = \frac{1}{\sqrt{\lambda t}}$$
 <p>This goes to 0 as $t \to \infty$. In other words, the Poisson distribution is narrower and narrower as $t$ gets larger. What does this mean physically? It means if we wait one lifetime ($t = \frac{1}{\lambda}$) we should expect $1 \pm 1$ particle to decay. If we wait 2 lifetimes, we expect $2 \pm \sqrt{2}$ to decay. If we wait 100 lifetimes, we expect $100 \pm 10$ to decay. So the longer we wait, not only are there more decays, but we know more precisely how many decays there will be. This is, of course, a consequence of the central limit theorem.</p>
 
 <div class="interactive-container">
-  <h3>Interactive: Poisson Distribution Explorer</h3>
-  <p class="vis-caption">Adjust the rate parameter $\lambda t$ to see how the Poisson PMF changes. At small $\lambda t$, the distribution is highly asymmetric; at large $\lambda t$, it approaches a Gaussian with mean $\lambda t$ and standard deviation $\sqrt{\lambda t}$.</p>
+  <div class="figure-label">Interactive 4: Poisson Distribution Explorer</div>
+  <p class="vis-caption">Adjust $\lambda t$ to see how the Poisson distribution evolves from asymmetric at small values to Gaussian at large values.</p>
   <div class="vis-controls">
     <label>$\lambda t$: <input type="range" id="poisson-lambda" min="0.5" max="20" step="0.5" value="5"> <span class="slider-value" id="poisson-lambda-val">5</span></label>
   </div>

@@ -161,14 +161,14 @@ $$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \
 
 <!-- Interactive Random Walk -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🚶</span> Interactive: 2D Random Walk</div>
+  <div class="figure-label">Interactive 1: 2D Random Walk</div>
+  <p class="vis-caption">50 walkers start at the center and take random steps, illustrating the $\ell\sqrt{N}$ scaling of RMS distance.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-randomwalk" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <button id="rw-start">▶ Start</button>
     <button id="rw-reset">Reset</button>
     <label>Speed: <input type="range" id="rw-speed" min="1" max="6" step="1" value="3"><span class="slider-value" id="rw-speed-val">3</span></label>
   </div>
-  <div class="vis-caption">50 walkers start at the center and take random steps. The dashed red circle shows the measured RMS distance; the green circle shows the expected $\ell\sqrt{N}$ scaling.</div>
 </div>
 
 <!-- ============================================================ -->
@@ -178,8 +178,8 @@ $$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \
 
 <!-- Interactive Brownian Motion -->
 <div class="interactive-container">
-  <h3>Interactive: Brownian Motion</h3>
-  <p class="vis-caption">A large particle (yellow) is buffeted by many small gas molecules, producing the random jittery motion first observed by Robert Brown in 1827. The trail shows the pollen grain's path &mdash; a physical random walk driven by molecular collisions.</p>
+  <div class="figure-label">Interactive 2: Brownian Motion</div>
+  <p class="vis-caption">A large pollen grain is buffeted by small gas molecules, producing the jittery random walk first observed by Robert Brown in 1827.</p>
   <div class="vis-controls">
     <label>Temperature: <input type="range" id="bm-temp" min="0.5" max="5" step="0.1" value="2"><span class="slider-value" id="bm-temp-val">2</span></label>
     <label>Pollen size: <input type="range" id="bm-size" min="8" max="25" step="1" value="14"><span class="slider-value" id="bm-size-val">14</span></label>
@@ -308,7 +308,8 @@ $$n(\vec{x}, t) = \int d^3y\left(\frac{1}{2\pi\ell\bar{v}t}\right)^{3/2}\exp\!\l
 
 <!-- Interactive Diffusion Simulation -->
 <div class="interactive-container">
-  <h3>Interactive: Diffusion Simulation</h3>
+  <div class="figure-label">Interactive 3: Diffusion Simulation</div>
+  <p class="vis-caption">Adjust the diffusion constant $D$ to see how a point-source density spreads over time according to the diffusion equation.</p>
   <div class="vis-controls">
     <label>Diffusion constant ($D$): <input type="range" id="diff-D" min="0.1" max="5" step="0.1" value="1"><span class="slider-value" id="diff-D-val">1</span></label>
   </div>
@@ -468,7 +469,8 @@ $$N_A = \frac{3RT}{\mu D}$$
 <p>Consider a ball falling through a fluid. It is accelerated from a downward force due to gravity and encounters resistance, or drag, from the fluid. There are two sources of drag. The first, called <em>inertial drag</em>, is due to the ball bonking molecules in front of it and speeding them up. The inertial force goes like the square of the velocity: $\vec{F}_{\text{inertial}} = \pi R^2 \rho |\vec{v}|\vec{v}$. For slow objects, the dominant drag force is due to <span class="tooltip-trigger">viscosity<span class="tooltip-content">A measure of a fluid's resistance to shear deformation. More viscous fluids (like honey) resist flow more than less viscous ones (like water).</span></span>, called viscous drag.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Stokes Drag &amp; Terminal Velocity</h4>
+<div class="figure-label">Interactive 4: Stokes Drag &amp; Terminal Velocity</div>
+<p class="vis-caption">A ball falling through a viscous fluid reaches terminal velocity when gravity balances Stokes drag.</p>
 <canvas id="vis-stokes" width="600" height="350"></canvas>
 <div class="controls">
 <label>Viscosity η: <input type="range" id="stokes-eta" min="0.5" max="5" step="0.1" value="1.5"><span id="stokes-eta-val">1.5</span></label>
@@ -476,7 +478,6 @@ $$N_A = \frac{3RT}{\mu D}$$
 <button id="stokes-start">Drop</button>
 <button id="stokes-reset">Reset</button>
 </div>
-<figcaption>A ball falling through a viscous fluid reaches terminal velocity when gravity balances drag. Adjust viscosity and radius to see the effect on terminal velocity.</figcaption>
 </div>
 
 <p>Viscosity is another physical effect whose microscopic origin is in the stochastic collision of molecules. The more precise name for viscosity is <em>dynamic shear viscosity</em>. It measures how a fluid responds to shear forces: you push the top layer and ask how much the bottom layer moves. Intuitively, viscosity is a measure of how well a fluid flows.</p>
