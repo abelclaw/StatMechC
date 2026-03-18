@@ -19604,6 +19604,220 @@ function initCh14Vis() {
     occTempSlider?.addEventListener('input', drawOccupationBandgap);
     drawOccupationBandgap();
   }
+
+  // ----- Interactive Periodic Table with Electron Configurations -----
+  const ptContainer = document.getElementById('vis-periodic-table');
+  if (ptContainer) {
+    const SYM = ['','H','He','Li','Be','B','C','N','O','F','Ne',
+      'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca',
+      'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',
+      'Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr',
+      'Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn',
+      'Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd',
+      'Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb',
+      'Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg',
+      'Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th',
+      'Pa','U','Np','Pu','Am','Cm','Bk','Cf','Es','Fm',
+      'Md','No','Lr','Rf','Db','Sg','Bh','Hs','Mt','Ds',
+      'Rg','Cn','Nh','Fl','Mc','Lv','Ts','Og'];
+
+    // Aufbau filling order: [orbital name, capacity]
+    const AUFBAU = [
+      ['1s',2],['2s',2],['2p',6],['3s',2],['3p',6],['4s',2],['3d',10],['4p',6],
+      ['5s',2],['4d',10],['5p',6],['6s',2],['4f',14],['5d',10],['6p',6],
+      ['7s',2],['5f',14],['6d',10],['7p',6]
+    ];
+
+    // Noble gas cores for compact config display
+    const CORES = [[86,'Rn'],[54,'Xe'],[36,'Kr'],[18,'Ar'],[10,'Ne'],[2,'He']];
+
+    // Superscript digits
+    const SUP = '\u2070\u00B9\u00B2\u00B3\u2074\u2075\u2076\u2077\u2078\u2079';
+    function toSup(n) {
+      return String(n).split('').map(function(d) { return SUP[parseInt(d)]; }).join('');
+    }
+
+    function getPTConfig(Z) {
+      let rem = Z, orbs = [], lastOrb = '', lastN = 0;
+      for (let i = 0; i < AUFBAU.length; i++) {
+        if (rem <= 0) break;
+        const name = AUFBAU[i][0], cap = AUFBAU[i][1];
+        const fill = Math.min(rem, cap);
+        orbs.push([name, fill]);
+        lastOrb = name; lastN = fill; rem -= fill;
+      }
+      return { orbs, lastOrb, lastN };
+    }
+
+    function formatPTConfig(Z) {
+      const info = getPTConfig(Z);
+      let coreZ = 0, coreSym = '';
+      for (let i = 0; i < CORES.length; i++) {
+        if (CORES[i][0] < Z) { coreZ = CORES[i][0]; coreSym = CORES[i][1]; break; }
+      }
+      const parts = [];
+      let skip = coreZ;
+      for (let j = 0; j < info.orbs.length; j++) {
+        const name = info.orbs[j][0], fill = info.orbs[j][1];
+        if (skip > 0) { skip -= fill; if (skip < 0) { parts.push(name + toSup(fill + skip)); skip = 0; } continue; }
+        parts.push(name + toSup(fill));
+      }
+      return (coreZ > 0 ? '[' + coreSym + '] ' : '') + parts.join(' ');
+    }
+
+    function blockOf(orbName) { return orbName.charAt(orbName.length - 1); }
+
+    // Grid positions: POS[Z] = {r, c}
+    const POS = {};
+    function addPos(z, r, c) { POS[z] = { r, c }; }
+    addPos(1,1,1); addPos(2,1,18);
+    for (let i = 0; i < 2; i++) addPos(3+i, 2, 1+i);
+    for (let i = 0; i < 6; i++) addPos(5+i, 2, 13+i);
+    for (let i = 0; i < 2; i++) addPos(11+i, 3, 1+i);
+    for (let i = 0; i < 6; i++) addPos(13+i, 3, 13+i);
+    for (let i = 0; i < 2; i++) addPos(19+i, 4, 1+i);
+    for (let i = 0; i < 10; i++) addPos(21+i, 4, 3+i);
+    for (let i = 0; i < 6; i++) addPos(31+i, 4, 13+i);
+    for (let i = 0; i < 2; i++) addPos(37+i, 5, 1+i);
+    for (let i = 0; i < 10; i++) addPos(39+i, 5, 3+i);
+    for (let i = 0; i < 6; i++) addPos(49+i, 5, 13+i);
+    addPos(55,6,1); addPos(56,6,2);
+    for (let i = 0; i < 9; i++) addPos(72+i, 6, 4+i);
+    for (let i = 0; i < 6; i++) addPos(81+i, 6, 13+i);
+    addPos(87,7,1); addPos(88,7,2);
+    for (let i = 0; i < 9; i++) addPos(104+i, 7, 4+i);
+    for (let i = 0; i < 6; i++) addPos(113+i, 7, 13+i);
+    for (let i = 0; i < 15; i++) addPos(57+i, 9, 4+i);
+    for (let i = 0; i < 15; i++) addPos(89+i, 10, 4+i);
+
+    const BLOCK_COLORS = { s: '#f4a6a0', p: '#a0c4f4', d: '#a0d8a0', f: '#f4cfa0' };
+    const BLOCK_HOVER = { s: '#e8807a', p: '#7ab0f0', d: '#70c870', f: '#e8b870' };
+    const ROW_LABELS = {
+      1: '(1s)', 2: '(2s, 2p)', 3: '(3s, 3p)',
+      4: '(4s, 3d, 4p)', 5: '(5s, 4d, 5p)',
+      6: '(6s, 4f, 5d, 6p)', 7: '(7s, 5f, 6d, 7p)'
+    };
+
+    const ptGrid = document.createElement('div');
+    ptGrid.style.cssText = 'display:grid;grid-template-columns:auto repeat(18,1fr);gap:1px;font-family:sans-serif;background:#fafafa;border-radius:4px;padding:4px;overflow-x:auto;';
+
+    // Floating tooltip
+    const ptTip = document.createElement('div');
+    ptTip.style.cssText = 'position:absolute;background:rgba(30,30,30,0.95);color:#fff;padding:8px 12px;border-radius:6px;font-size:13px;pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:100;white-space:nowrap;font-family:sans-serif;line-height:1.5;';
+    ptContainer.appendChild(ptTip);
+
+    // Legend
+    const legendCell = document.createElement('div');
+    legendCell.style.cssText = 'grid-column:1/span 19;display:flex;gap:12px;justify-content:center;align-items:center;padding:4px 0 2px;font-size:11px;color:#333;';
+    [['s-block','#f4a6a0'],['p-block','#a0c4f4'],['d-block','#a0d8a0'],['f-block','#f4cfa0']].forEach(function(pair) {
+      const s = document.createElement('span');
+      s.style.cssText = 'display:flex;align-items:center;gap:3px;';
+      const box = document.createElement('span');
+      box.style.cssText = 'width:12px;height:10px;border-radius:2px;border:1px solid #888;display:inline-block;background:'+pair[1];
+      s.appendChild(box);
+      s.appendChild(document.createTextNode(pair[0]));
+      legendCell.appendChild(s);
+    });
+    ptGrid.appendChild(legendCell);
+
+    // Build rows 1-10 (row 8 = spacer)
+    for (let r = 1; r <= 10; r++) {
+      if (r === 8) {
+        const sp = document.createElement('div');
+        sp.style.cssText = 'grid-column:1/span 19;height:8px;';
+        ptGrid.appendChild(sp);
+        continue;
+      }
+      const gridRow = r < 8 ? r + 1 : r;
+
+      // Row label
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-size:9px;color:#666;white-space:nowrap;min-width:50px;grid-row:'+gridRow+';grid-column:1;';
+      if (r === 9) lbl.textContent = 'Lanthanides';
+      else if (r === 10) lbl.textContent = 'Actinides';
+      else lbl.textContent = ROW_LABELS[r] || '';
+      ptGrid.appendChild(lbl);
+
+      for (let c = 1; c <= 18; c++) {
+        let foundZ = 0;
+        for (let z = 1; z <= 118; z++) {
+          if (POS[z] && POS[z].r === r && POS[z].c === c) { foundZ = z; break; }
+        }
+        const isLaPH = (r === 6 && c === 3), isAcPH = (r === 7 && c === 3);
+
+        if (!foundZ && !isLaPH && !isAcPH) {
+          const empty = document.createElement('div');
+          empty.style.cssText = 'grid-row:'+gridRow+';grid-column:'+(c+1);
+          ptGrid.appendChild(empty);
+          continue;
+        }
+
+        const cell = document.createElement('div');
+        cell.style.cssText = 'grid-row:'+gridRow+';grid-column:'+(c+1)+';border:1px solid #888;border-radius:2px;text-align:center;padding:1px 0;min-height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+        if (isLaPH || isAcPH) {
+          cell.style.background = BLOCK_COLORS.f;
+          cell.style.cursor = 'default';
+          const mk = document.createElement('div');
+          mk.style.cssText = 'font-size:7px;color:#444;font-weight:bold;';
+          mk.textContent = isLaPH ? '57-71' : '89-103';
+          cell.appendChild(mk);
+          const sy = document.createElement('div');
+          sy.style.cssText = 'font-size:8px;font-weight:bold;color:#222;';
+          sy.textContent = isLaPH ? 'La-Lu' : 'Ac-Lr';
+          cell.appendChild(sy);
+        } else {
+          const info = getPTConfig(foundZ);
+          const block = blockOf(info.lastOrb);
+          const bgColor = BLOCK_COLORS[block];
+          const hoverColor = BLOCK_HOVER[block];
+          cell.style.background = bgColor;
+          cell.style.cursor = 'pointer';
+          cell.style.transition = 'background 0.1s';
+
+          const numDiv = document.createElement('div');
+          numDiv.style.cssText = 'font-size:7px;color:#444;line-height:1;';
+          numDiv.textContent = foundZ;
+          cell.appendChild(numDiv);
+
+          const symDiv = document.createElement('div');
+          symDiv.style.cssText = 'font-size:11px;font-weight:bold;color:#222;line-height:1.1;';
+          symDiv.textContent = SYM[foundZ];
+          cell.appendChild(symDiv);
+
+          const orbDiv = document.createElement('div');
+          orbDiv.style.cssText = 'font-size:8px;color:#333;line-height:1;font-style:italic;';
+          orbDiv.textContent = info.lastOrb + toSup(info.lastN);
+          cell.appendChild(orbDiv);
+
+          (function(cellEl, zVal, bg, hov) {
+            cellEl.addEventListener('mouseenter', function() {
+              this.style.background = hov;
+              this.style.boxShadow = '0 0 0 2px #333';
+              this.style.zIndex = '10';
+              ptTip.innerHTML = '<strong>' + SYM[zVal] + '</strong> (Z\u2009=\u2009' + zVal + ')<br>' + formatPTConfig(zVal);
+              ptTip.style.opacity = '1';
+            });
+            cellEl.addEventListener('mousemove', function(e) {
+              const rect = ptContainer.getBoundingClientRect();
+              let left = e.clientX - rect.left + 12;
+              if (left + ptTip.offsetWidth > rect.width) left = e.clientX - rect.left - ptTip.offsetWidth - 12;
+              ptTip.style.left = left + 'px';
+              ptTip.style.top = (e.clientY - rect.top - 10) + 'px';
+            });
+            cellEl.addEventListener('mouseleave', function() {
+              this.style.background = bg;
+              this.style.boxShadow = 'none';
+              this.style.zIndex = '';
+              ptTip.style.opacity = '0';
+            });
+          })(cell, foundZ, bgColor, hoverColor);
+        }
+        ptGrid.appendChild(cell);
+      }
+    }
+    ptContainer.appendChild(ptGrid);
+  }
 }
 
 
