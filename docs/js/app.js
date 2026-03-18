@@ -24034,8 +24034,6 @@ function initCh15Vis() {
         ctxLE.fillText(p.label, WLE - 160, 35 + idx * 16);
       });
 
-      ctxLE.fillStyle = COLORS.text; ctxLE.font = FONT_LG; ctxLE.textAlign = 'left';
-      ctxLE.fillText('Lane-Emden Solutions: \u03B8(\u03BE)', oxLE + 5, oyLE + 12);
     }
     drawLE();
   }
@@ -24242,7 +24240,63 @@ function initCh15Vis() {
       ctxBM.fillText('Radiation Pressure Fraction vs Stellar Mass', oxBM + 5, oyBM + 12);
     }
 
-    drawBetaMass();
+    let bmHoverLogM = null;
+
+    function drawBetaMassWithHover() {
+      drawBetaMass();
+      if (bmHoverLogM === null) return;
+
+      const logMmin = 0, logMmax = 2;
+      const Msun = Math.pow(10, bmHoverLogM);
+      const beta = betaFromMass(Msun);
+      const px = oxBM + (bmHoverLogM - logMmin) / (logMmax - logMmin) * pwBM;
+      const py = oyBM + phBM - beta * phBM;
+
+      // Crosshair lines
+      ctxBM.strokeStyle = COLORS.textDim; ctxBM.lineWidth = 1; ctxBM.setLineDash([3, 3]);
+      ctxBM.beginPath(); ctxBM.moveTo(px, oyBM); ctxBM.lineTo(px, oyBM + phBM); ctxBM.stroke();
+      ctxBM.beginPath(); ctxBM.moveTo(oxBM, py); ctxBM.lineTo(oxBM + pwBM, py); ctxBM.stroke();
+      ctxBM.setLineDash([]);
+
+      // Dot on curve
+      ctxBM.fillStyle = COLORS.blue;
+      ctxBM.beginPath(); ctxBM.arc(px, py, 6, 0, 2 * Math.PI); ctxBM.fill();
+
+      // Tooltip
+      const massStr = Msun < 10 ? Msun.toFixed(1) : Math.round(Msun);
+      const betaStr = beta > 0.999 ? beta.toFixed(4) : beta.toFixed(3);
+      const radFrac = ((1 - beta) * 100).toFixed(beta > 0.99 ? 2 : 1);
+      const label = `M = ${massStr} M\u2609    \u03B2 = ${betaStr}    (${radFrac}% radiation)`;
+      ctxBM.font = FONT_SM; ctxBM.fillStyle = COLORS.text;
+      const tw = ctxBM.measureText(label).width;
+      const tx = Math.min(Math.max(px - tw / 2, oxBM), oxBM + pwBM - tw);
+      const ty = py > oyBM + phBM / 2 ? py - 16 : py + 22;
+      ctxBM.fillStyle = 'rgba(30,30,30,0.85)';
+      ctxBM.fillRect(tx - 4, ty - 12, tw + 8, 16);
+      ctxBM.fillStyle = COLORS.text;
+      ctxBM.textAlign = 'left';
+      ctxBM.fillText(label, tx, ty);
+    }
+
+    cBM.addEventListener('mousemove', function(e) {
+      const rect = cBM.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (WBM / rect.width);
+      const logMmin = 0, logMmax = 2;
+      const logM = logMmin + (mx - oxBM) / pwBM * (logMmax - logMmin);
+      if (logM >= logMmin && logM <= logMmax) {
+        bmHoverLogM = logM;
+      } else {
+        bmHoverLogM = null;
+      }
+      drawBetaMassWithHover();
+    });
+
+    cBM.addEventListener('mouseleave', function() {
+      bmHoverLogM = null;
+      drawBetaMassWithHover();
+    });
+
+    drawBetaMassWithHover();
   }
 
   // ===========================================================================
