@@ -26543,7 +26543,9 @@ function initCh15Vis() {
             ctxS.font = sizeFont; ctxS.textAlign = 'center';
             // Build label text
             let pillLabel;
-            if (v.s.shadow) {
+            if (v.s.cat === 'Orbits') {
+              pillLabel = 'Neptune orbit \u2248 30 AU = ' + v.s.R + ' R\u2609';
+            } else if (v.s.shadow) {
               pillLabel = 'Shadow \u2248 ' + v.s.shadow + ' R\u2609  |  R\u209b = ' + v.s.R + ' R\u2609';
             } else {
               pillLabel = v.s.R + ' R\u2609';
