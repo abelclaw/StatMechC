@@ -1,0 +1,179 @@
+<div class="chapter-solutions" id="ch3-solutions">
+<h2>Chapter 3: Equilibrium &mdash; Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Chaos amplification (Q1)</div>
+<p>We need $(\ell/R)^N \Delta\theta_1 \sim 1$, so $(10^3)^N \times 10^{-40} = 1$, giving $10^{3N} = 10^{40}$, hence $N = 40/3 \approx 13.3$. Since $N$ must be an integer, $N \approx 14$ collisions. Answer: (b).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Boltzmann H theorem (Q2)</div>
+<p>The H theorem (Eq. 26) states $dH/dt \geq 0$: $H$ increases or stays constant. It reaches its maximum value $\ln(\text{number of states})$ at equilibrium when all probabilities are equal. Answer: (c).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Detailed balance (Q3)</div>
+<p>Detailed balance is the statement that $T_{ab} = T_{ba}$: the transition rate from state $a$ to $b$ equals the rate from $b$ to $a$. This follows from time-reversal invariance classically and Hermiticity of $H_{\text{int}}$ quantum mechanically. Answer: (b).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Ergodicity (Q4)</div>
+<p>An ergodic system is one where the time average of any observable equals the ensemble average. This bridges the gap between what experiments measure (time averages) and what statistical mechanics computes (ensemble averages). Answer: (b).</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: Doubling the energy (Q5)</div>
+<p>Since $\Omega \propto E^{3N/2}$, doubling $E$ gives:</p>
+$$\frac{\Omega(2E)}{\Omega(E)} = \frac{(2E)^{3N/2}}{E^{3N/2}} = 2^{3N/2} = 2^{1.5 \times 10^{23}}$$
+<p>Answer: (b), $2^{3 \times 10^{23}/2}$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: He/Xe speed ratio (Q6)</div>
+<p>From Maxwell's result $\langle m_1 v_1^2 \rangle = \langle m_2 v_2^2 \rangle$:</p>
+$$\frac{v_{\text{rms,He}}}{v_{\text{rms,Xe}}} = \sqrt{\frac{m_{\text{Xe}}}{m_{\text{He}}}} = \sqrt{\frac{131}{4}} = \sqrt{32.75} \approx 5.72$$
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Surface area ratio (Q7)</div>
+<p>For $d = 6$: $\sigma_6 = \frac{2(\sqrt{\pi})^6}{(6/2 - 1)!} = \frac{2\pi^3}{2!} = \frac{2\pi^3}{2} = \pi^3 \approx 31.006$.</p>
+<p>For $d = 3$: $\sigma_3 = 4\pi \approx 12.566$.</p>
+$$\frac{\sigma_6}{\sigma_3} = \frac{\pi^3}{4\pi} = \frac{\pi^2}{4} \approx 2.47$$
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Most probable speed (Q8)</div>
+<p>We maximize $f(v) = v^2 e^{-mv^2/(2k_BT)}$. Setting $f'(v) = 0$:</p>
+$$2v\,e^{-mv^2/(2k_BT)} + v^2\left(-\frac{mv}{k_BT}\right)e^{-mv^2/(2k_BT)} = 0$$
+$$2 - \frac{mv^2}{k_BT} = 0 \implies v_{\text{mp}} = \sqrt{\frac{2k_BT}{m}}$$
+<p>Answer: (b). Note: $\sqrt{3k_BT/m}$ is the rms speed and $\sqrt{8k_BT/(\pi m)}$ is the mean speed.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Chaos in a neutron moderator</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The amplification ratio per collision is:</p>
+$$\frac{\ell}{R} = \frac{2.5 \times 10^{-2}}{3 \times 10^{-15}} \approx 8.3 \times 10^{12}$$
+<p>This is roughly $10^{13}$, which is about $10^{10}$ times larger than the value $\sim 10^3$ for a room-temperature gas. The much larger ratio arises because nuclear radii are far smaller than atomic radii while the mean free path in a solid is much larger than in a gas.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>We need $(\ell/R)^N \Delta\theta_1 \sim 1$:</p>
+$$(8.3 \times 10^{12})^N \times 10^{-20} = 1$$
+$$N \ln(8.3 \times 10^{12}) = 20\ln 10$$
+$$N \times 12.9\ln 10 = 20\ln 10$$
+$$N = \frac{20}{12.9} \approx 1.55$$
+<p>So after just $N = 2$ collisions the trajectory is completely unpredictable. At a collision rate of $10^8\,\text{s}^{-1}$, this takes $t = 2/10^8 = 2 \times 10^{-8}\,\text{s}$, or about 20 nanoseconds.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Since the trajectory becomes fully chaotic after just 2 collisions, and thermalization requires $\sim 115$ collisions, the neutron's trajectory is overwhelmingly chaotic long before it thermalizes. By the time thermalization is complete, the trajectory has been randomized many times over. This is why the slowed-down (thermal) neutrons have an isotropic, Maxwell-Boltzmann velocity distribution despite starting with a well-defined direction from the fission event.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: H theorem for a three-state system</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>From Eq. (20) with $T_{ij} = \gamma$ for all $i \neq j$:</p>
+$$\frac{dP_1}{dt} = \gamma[(P_2 - P_1) + (P_3 - P_1)] = \gamma(P_2 + P_3 - 2P_1)$$
+<p>By symmetry of the problem:</p>
+$$\frac{dP_2}{dt} = \gamma(P_1 + P_3 - 2P_2)$$
+$$\frac{dP_3}{dt} = \gamma(P_1 + P_2 - 2P_3)$$
+<p>One can verify $\frac{d}{dt}(P_1 + P_2 + P_3) = 0$ as required.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>By symmetry of the initial conditions ($P_2(0) = P_3(0) = 0$) and the transition rates, $P_2(t) = P_3(t)$ for all $t$. Using $P_2 = P_3 = \frac{1-P_1}{2}$:</p>
+$$\frac{dP_1}{dt} = \gamma\left(\frac{1-P_1}{2} + \frac{1-P_1}{2} - 2P_1\right) = \gamma(1 - 3P_1)$$
+<p>This is a linear ODE with solution:</p>
+$$P_1(t) = \frac{1}{3} + \frac{2}{3}e^{-3\gamma t}$$
+<p>and $P_2(t) = P_3(t) = \frac{1}{3} - \frac{1}{3}e^{-3\gamma t}$. As $t \to \infty$, all three approach $1/3$ as expected.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>At $t = 0$: $P_1 = 1, P_2 = P_3 = 0$. The terms $P_a \ln P_a$ with $P_a = 0$ contribute zero (since $\lim_{x\to 0}x\ln x = 0$), so:</p>
+$$H(0) = -(1\cdot\ln 1 + 0 + 0) = 0$$
+<p>At $t \to \infty$: $P_1 = P_2 = P_3 = 1/3$:</p>
+$$H(\infty) = -3\left(\frac{1}{3}\ln\frac{1}{3}\right) = \ln 3 \approx 1.099$$
+<p>Since $\ln 3 > 0 = H(0)$, $H$ has indeed increased, consistent with the H theorem.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>At $t=0$, $P_1 = 1$ and $P_2 = P_3 = 0$. Using the symmetrized form (Eq. 25):</p>
+$$\frac{dH}{dt}\bigg|_{t=0} = \frac{1}{2}\sum_{a,b}\gamma(\ln P_a - \ln P_b)(P_a - P_b)$$
+<p>The only nonzero terms involve pairs where one probability is 1 and the other is 0. Formally, consider the limit as $P_2, P_3 \to 0^+$. The terms with $a=1, b=2$ (and $a=1, b=3$) each contribute $\frac{\gamma}{2}(\ln P_1 - \ln P_2)(P_1 - P_2)$ which is large and positive. The term $a=2, b=3$ contributes zero by symmetry.</p>
+<p>Alternatively, we can compute directly:</p>
+$$\frac{dH}{dt} = -\sum_a \frac{dP_a}{dt}\ln P_a = -\frac{dP_1}{dt}\ln P_1 - \frac{dP_2}{dt}\ln P_2 - \frac{dP_3}{dt}\ln P_3$$
+<p>At $t = 0^+$: $dP_1/dt = \gamma(0 + 0 - 2) = -2\gamma$ and $dP_2/dt = dP_3/dt = \gamma$. So:</p>
+$$\frac{dH}{dt}\bigg|_{t=0^+} = -(-2\gamma)\ln 1 - \gamma\ln\epsilon - \gamma\ln\epsilon = -2\gamma\ln\epsilon$$
+<p>where $\epsilon \to 0^+$. This diverges to $+\infty$, confirming $dH/dt > 0$. Physically, the system is maximally far from equilibrium at $t=0$, so the rate of entropy production is largest there (in fact, infinite in the continuum limit since the probabilities start at exactly 0).</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: State counting for a 2D ideal gas</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Each particle can be anywhere in the 2D box of area $A$. Dividing into cells of size $(\Delta q)^2$, there are $A/(\Delta q)^2$ choices per particle. For $N$ independent particles:</p>
+$$\Omega_q = \left(\frac{A}{(\Delta q)^2}\right)^N$$
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The constraint $\sum_{j=1}^{N}(p_{jx}^2 + p_{jy}^2) = 2mE$ defines a sphere in $d = 2N$ dimensions of radius $\sqrt{2mE}$. The number of momentum cells on this sphere is the surface area divided by $(\Delta p)^{2N-1}$ (the dimension of the surface is $2N-1$):</p>
+$$\Omega_p = \sigma_{2N}\left(\frac{\sqrt{2mE}}{\Delta p}\right)^{2N-1}$$
+<p>Using the formula $\sigma_{2N} = \frac{2\pi^N}{(N-1)!}$ and Stirling's approximation $(N-1)! \approx N! \approx (N/e)^N$:</p>
+$$\Omega_p \approx \frac{2\pi^N}{(N/e)^N}\left(\frac{\sqrt{2mE}}{\Delta p}\right)^{2N} = 2\left(\frac{e\pi}{N}\right)^N\left(\frac{2mE}{(\Delta p)^2}\right)^N$$
+<p>where we dropped the distinction between $2N-1$ and $2N$ for large $N$.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Combining parts (a) and (b):</p>
+$$\Omega(N, A, E) = \Omega_q \cdot \Omega_p \propto A^N \cdot E^N$$
+<p>up to factors not depending on $A$ or $E$. In $d$ spatial dimensions, the number of momentum components per particle is $d$, so the energy constraint defines a sphere in $dN$ dimensions, giving $\Omega \propto E^{dN/2}$. For $d = 2$: $\Omega \propto E^N$; for $d = 3$: $\Omega \propto E^{3N/2}$. The exponent reflects the number of quadratic degrees of freedom sharing the energy.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>Fixing $p_x$ for one particle, the remaining energy is $E' = E - p_x^2/(2m)$. The remaining degrees of freedom have $\Omega \propto (E')^{N-1}$ (since the remaining $2N - 1$ momentum components form a sphere in $2N-1$ dimensions, but for large $N$ this exponent is effectively $N$). Following the same steps as Section 7:</p>
+$$\frac{dP}{dp_x} \propto \left(1 - \frac{p_x^2}{2mE}\right)^N \xrightarrow{N\to\infty} \exp\left(-\frac{N p_x^2}{2mE}\right) = \exp\left(-\frac{p_x^2}{2m\bar{\epsilon}}\right)$$
+<p>where $\bar{\epsilon} = E/N$. This is a Gaussian in $p_x$, just as in 3D. The distribution is the same form because fixing one component of momentum is the same operation regardless of the total spatial dimension.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Molecular speeds in Earth's atmosphere</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>For nitrogen at $T = 300\,\text{K}$, $m = 28 \times 1.66\times 10^{-27}\,\text{kg} = 4.65 \times 10^{-26}\,\text{kg}$:</p>
+$$v_{\text{mp}} = \sqrt{\frac{2k_BT}{m}} = \sqrt{\frac{2(1.38\times 10^{-23})(300)}{4.65\times 10^{-26}}} = \sqrt{1.78\times 10^5} \approx 422\,\text{m/s}$$
+$$\langle v \rangle = \sqrt{\frac{8k_BT}{\pi m}} = \sqrt{\frac{4}{\pi}}v_{\text{mp}} \approx 1.128 \times 422 \approx 476\,\text{m/s}$$
+$$v_{\text{rms}} = \sqrt{\frac{3k_BT}{m}} = \sqrt{\frac{3}{2}}v_{\text{mp}} \approx 1.225 \times 422 \approx 517\,\text{m/s}$$
+<p>Ranking: $v_{\text{mp}} < \langle v \rangle < v_{\text{rms}}$. This ordering always holds because the distribution has a long tail at high speeds that pulls the mean and rms above the peak.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The fraction of molecules with $v > v_{\text{esc}}$ is dominated by the exponential tail:</p>
+$$f \sim e^{-mv_{\text{esc}}^2/(2k_BT)}$$
+<p>The exponent is:</p>
+$$\frac{mv_{\text{esc}}^2}{2k_BT} = \frac{(4.65\times 10^{-26})(11200)^2}{2(1.38\times 10^{-23})(300)} = \frac{5.83\times 10^{-18}}{8.28\times 10^{-21}} \approx 704$$
+<p>So $f \sim e^{-704} \approx 10^{-306}$. This is absurdly small &mdash; effectively zero. Nitrogen is not escaping from Earth's atmosphere on any relevant timescale.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>For hydrogen, $m = 2 \times 1.66\times 10^{-27}\,\text{kg} = 3.32\times 10^{-27}\,\text{kg}$:</p>
+$$\frac{mv_{\text{esc}}^2}{2k_BT} = \frac{(3.32\times 10^{-27})(11200)^2}{2(1.38\times 10^{-23})(300)} = \frac{4.16\times 10^{-19}}{8.28\times 10^{-21}} \approx 50.2$$
+<p>So $f \sim e^{-50} \approx 2\times 10^{-22}$. While still very small, this is enormously larger than $10^{-306}$ for nitrogen. Over geological timescales ($\sim 4.5 \times 10^9$ years $\approx 1.4\times 10^{17}\,\text{s}$), molecules in the high-speed tail at the top of the atmosphere can escape. With $\sim 10^{44}$ molecules and collision rates of $\sim 10^{9}\,\text{s}^{-1}$, the escape rate is non-negligible for hydrogen but essentially zero for nitrogen.</p>
+<p>For Jupiter: $mv_{\text{esc}}^2/(2k_BT) = (3.32\times 10^{-27})(59500)^2/(2\times 1.38\times 10^{-23}\times 165) \approx 2580$. The fraction $e^{-2580}$ is so extraordinarily small that Jupiter retains even hydrogen permanently, explaining its hydrogen-rich atmosphere.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(d)</div>
+<p>By Maxwell's result (Eq. 14), $\langle m_1 v_1^2 \rangle = \langle m_2 v_2^2 \rangle$ at the same temperature. But here we want different temperatures to match rms speeds. We need:</p>
+$$v_{\text{rms,O}_2}(T') = v_{\text{rms,N}_2}(300\,\text{K})$$
+$$\sqrt{\frac{3k_BT'}{m_{\text{O}_2}}} = \sqrt{\frac{3k_B(300)}{m_{\text{N}_2}}}$$
+$$T' = 300\,\frac{m_{\text{O}_2}}{m_{\text{N}_2}} = 300\times\frac{32}{28} = 342.9\,\text{K} \approx 343\,\text{K}$$
+<p>Oxygen, being heavier, must be at a higher temperature to achieve the same rms speed.</p>
+</div>
+</div>
+
+</div>

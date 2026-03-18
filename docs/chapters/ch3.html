@@ -537,3 +537,216 @@ $$\frac{dP(v)}{dv} = 4\pi v^2 \left(\frac{m}{2\pi k_B T}\right)^{3/2}e^{-mv^2/(2
 </ul>
 <p>Much of the material in this lecture was abstract and foundational. It built up to the postulate of equal a priori probabilities. We then applied this postulate to derive the Maxwell-Boltzmann distribution. Going forward, we will do many more applications, referring back to this foundational material when appropriate.</p>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch3-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>In a gas at room temperature, the mean free path is $\ell \approx 10^{-7}\,\text{m}$ and the molecular radius is $R \approx 10^{-10}\,\text{m}$. If a perturbation changes the first scattering angle by $\Delta\theta_1 = 10^{-40}$, approximately how many collisions $N$ are needed before $\Delta\theta_N \sim 1$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch3-rq1" value="a"> (a) About 3</label>
+  <label><input type="radio" name="ch3-rq1" value="b"> (b) About 14</label>
+  <label><input type="radio" name="ch3-rq1" value="c"> (c) About 40</label>
+  <label><input type="radio" name="ch3-rq1" value="d"> (d) About 1000</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="The angle grows as $\Delta\theta_N \approx (\ell/R)^N \Delta\theta_1 = (10^3)^N \times 10^{-40}$. Setting this to 1 gives $3N = 40$, so $N \approx 13$&ndash;$14$. Even absurdly small perturbations are amplified to order 1 in just a handful of collisions.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>The Boltzmann H function is defined as $H(t) = -\sum_a P_a(t)\ln P_a(t)$. What does the H theorem say about $H(t)$ as a system approaches equilibrium?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch3-rq2" value="a"> (a) $H$ decreases monotonically until it reaches zero</label>
+  <label><input type="radio" name="ch3-rq2" value="b"> (b) $H$ oscillates but eventually converges</label>
+  <label><input type="radio" name="ch3-rq2" value="c"> (c) $H$ increases (or stays constant) over time</label>
+  <label><input type="radio" name="ch3-rq2" value="d"> (d) $H$ stays constant at all times by Liouville's theorem</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="The H theorem proves $dH/dt \geq 0$: the quantity $H$ is non-decreasing. It reaches its maximum when all accessible states are equally probable, i.e., at equilibrium.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>The principle of detailed balance states that:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch3-rq3" value="a"> (a) The number of particles going left equals the number going right</label>
+  <label><input type="radio" name="ch3-rq3" value="b"> (b) The transition rate from state $a$ to $b$ equals the rate from $b$ to $a$: $T_{ab} = T_{ba}$</label>
+  <label><input type="radio" name="ch3-rq3" value="c"> (c) The total energy of the system is balanced between kinetic and potential</label>
+  <label><input type="radio" name="ch3-rq3" value="d"> (d) Every collision produces equal and opposite momentum changes</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Detailed balance means the transition rate between any two states is symmetric: $T_{ab} = T_{ba}$. In classical mechanics this follows from time-reversal invariance; in quantum mechanics it follows from the Hermiticity of the interaction Hamiltonian.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>A system is ergodic if:</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch3-rq4" value="a"> (a) Its equations of motion are time-reversal invariant</label>
+  <label><input type="radio" name="ch3-rq4" value="b"> (b) The time average of an observable equals the ensemble average over all accessible states</label>
+  <label><input type="radio" name="ch3-rq4" value="c"> (c) All collisions are perfectly elastic</label>
+  <label><input type="radio" name="ch3-rq4" value="d"> (d) Its phase space volume is conserved under time evolution</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Ergodicity means the time average equals the ensemble average. This is important because experiments measure time averages, while statistical mechanics computes ensemble averages. Option (d) describes Liouville's theorem, which is a separate result.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>The number of states of an ideal gas with $N$ particles in a box of volume $V$ at energy $E$ is given by Eq.&nbsp;(40): $\Omega(N,V,E) \propto V^N E^{3N/2}$. If you double the energy of a gas of $N = 10^{23}$ particles while keeping the volume fixed, by what factor does $\Omega$ increase? Express your answer as a power of 2.</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch3-sa1" value="a"> (a) $2^{10^{23}}$</label>
+  <label><input type="radio" name="ch3-sa1" value="b"> (b) $2^{3 \times 10^{23}/2}$</label>
+  <label><input type="radio" name="ch3-sa1" value="c"> (c) $2^{3/2}$</label>
+  <label><input type="radio" name="ch3-sa1" value="d"> (d) $2^{3}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Since $\Omega \propto E^{3N/2}$, doubling $E$ gives $\Omega(2E)/\Omega(E) = 2^{3N/2} = 2^{1.5 \times 10^{23}}$. This astronomically large factor illustrates why the number of states is such an extremely sensitive function of energy.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>Maxwell's kinetic theory argument (Section 3.1) shows that in equilibrium $\langle m_1 v_1^2 \rangle = \langle m_2 v_2^2 \rangle$. Consider a mixture of helium ($m_{\text{He}} = 4\,\text{u}$) and xenon ($m_{\text{Xe}} = 131\,\text{u}$) at the same temperature. What is the ratio of the root-mean-square speeds, $v_{\text{rms,He}}/v_{\text{rms,Xe}}$?</p>
+<div class="sa-input"><input type="text" placeholder="Your answer (to 2 decimal places)..."></div>
+<button class="check-answer-btn" data-answer="5.72" data-explanation="From $\langle m_1 v_1^2\rangle = \langle m_2 v_2^2\rangle$, we get $v_{\text{rms,He}}/v_{\text{rms,Xe}} = \sqrt{m_{\text{Xe}}/m_{\text{He}}} = \sqrt{131/4} = \sqrt{32.75} \approx 5.72$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>The surface area of a $d$-dimensional unit sphere is $\sigma_d = \frac{2(\sqrt{\pi})^d}{(d/2 - 1)!}$. Compute the ratio $\sigma_6/\sigma_3$. (Use $\sigma_3 = 4\pi$ and compute $\sigma_6$ from the formula with $(d/2-1)! = 2! = 2$.)</p>
+<div class="sa-input"><input type="text" placeholder="Your answer (to 2 decimal places)..."></div>
+<button class="check-answer-btn" data-answer="2.47" data-explanation="$\sigma_6 = \frac{2(\sqrt{\pi})^6}{2!} = \frac{2\pi^3}{2} = \pi^3 \approx 31.006$. Then $\sigma_6/\sigma_3 = \pi^3/(4\pi) = \pi^2/4 \approx 2.47$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>The Maxwell-Boltzmann speed distribution is $\frac{dP}{dv} = 4\pi v^2\left(\frac{m}{2\pi k_BT}\right)^{3/2}e^{-mv^2/(2k_BT)}$. The most probable speed $v_{\text{mp}}$ is the speed at which this distribution is maximized. Which expression gives $v_{\text{mp}}$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch3-sa4" value="a"> (a) $\sqrt{k_BT/m}$</label>
+  <label><input type="radio" name="ch3-sa4" value="b"> (b) $\sqrt{2k_BT/m}$</label>
+  <label><input type="radio" name="ch3-sa4" value="c"> (c) $\sqrt{3k_BT/m}$</label>
+  <label><input type="radio" name="ch3-sa4" value="d"> (d) $\sqrt{8k_BT/(\pi m)}$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Setting $d(dP/dv)/dv = 0$ requires $d/dv[v^2 e^{-mv^2/(2k_BT)}] = 0$, giving $2v - v \cdot mv^2/(k_BT) = 0$, so $v_{\text{mp}} = \sqrt{2k_BT/m}$. Option (c) is the rms speed and (d) is the mean speed.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Chaos in a neutron moderator</div>
+<p>In a nuclear reactor, fast neutrons ($m = 1.67 \times 10^{-27}\,\text{kg}$) scatter off carbon nuclei in a graphite moderator. The neutron-carbon scattering cross section gives an effective radius $R \approx 3 \times 10^{-15}\,\text{m}$, and the mean free path in graphite is $\ell \approx 2.5 \times 10^{-2}\,\text{m}$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Compute the amplification ratio $\ell/R$ per collision. Compare this to the value $\sim 10^3$ for a gas at room temperature discussed in the chapter.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>If the initial angular perturbation is $\Delta\theta_1 = 10^{-20}$ (comparable to what a gravitational wave from a distant binary might produce), after how many collisions $N$ will $\Delta\theta_N \sim 1$? The collision rate is about $10^{8}\,\text{s}^{-1}$; how long does this take in seconds?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The neutron must undergo roughly 115 collisions to slow down from fission energies ($\sim 2\,\text{MeV}$) to thermal energies ($\sim 0.025\,\text{eV}$). Is the neutron's trajectory fully chaotic by the time it thermalizes? Explain.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. H theorem for a three-state system</div>
+<p>Consider a system with exactly three accessible states $\{1, 2, 3\}$ and uniform transition rates $T_{ij} = \gamma$ for all $i \neq j$. At $t=0$ the probabilities are $P_1(0) = 1$, $P_2(0) = 0$, $P_3(0) = 0$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Write down the master equation (Eq.&nbsp;(20)) for this system. Show that $\frac{dP_1}{dt} = \gamma(P_2 + P_3 - 2P_1)$ and write the analogous equations for $P_2$ and $P_3$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Using the constraint $P_1 + P_2 + P_3 = 1$ and the symmetry $P_2 = P_3$ (justified by the initial conditions and the symmetry of the transition rates), solve for $P_1(t)$ exactly.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Compute $H(t) = -\sum_a P_a \ln P_a$ at $t = 0$ and $t \to \infty$. Verify that $H$ increases from its initial value to $\ln 3$, consistent with the Boltzmann H theorem.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Compute $dH/dt$ at $t = 0$. Show that it is strictly positive.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. State counting for a 2D ideal gas</div>
+<p>Consider $N$ non-interacting particles of mass $m$ confined to a 2D square box of area $A$ with total energy $E$.</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>By analogy with the 3D derivation in Section 6, argue that the number of position states is $\Omega_q = \left(\frac{A}{(\Delta q)^2}\right)^N$.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>The energy constraint is $\sum_{j=1}^{N}(p_{jx}^2 + p_{jy}^2) = 2mE$, which defines a sphere in $2N$ dimensions. Using $\sigma_d = \frac{2(\sqrt{\pi})^d}{(d/2-1)!}$, show that the number of momentum states is $\Omega_p = \sigma_{2N}\left(\frac{\sqrt{2mE}}{\Delta p}\right)^{2N-1}$. For large $N$, simplify this to leading order.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Using Stirling's approximation for large $N$, show that $\Omega(N,A,E) \propto A^N E^{N}$ (up to factors not depending on $A$ or $E$). Compare the exponent of $E$ to the 3D result $\Omega \propto E^{3N/2}$ and explain the difference.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Derive the single-particle momentum distribution $dP/dp_x$ for this 2D gas, following the method of Section 7. Show it is still a Gaussian in $p_x$.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Molecular speeds in Earth's atmosphere</div>
+<p>The Maxwell-Boltzmann speed distribution applies to molecules in the atmosphere at temperature $T = 300\,\text{K}$. Consider nitrogen molecules ($m = 28\,\text{u}$, where $1\,\text{u} = 1.66\times 10^{-27}\,\text{kg}$).</p>
+
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Compute the most probable speed $v_{\text{mp}}$, the mean speed $\langle v \rangle = \sqrt{8k_BT/(\pi m)}$, and the root-mean-square speed $v_{\text{rms}} = \sqrt{3k_BT/m}$. Rank them in order.</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Earth's escape velocity is $v_{\text{esc}} = 11.2\,\text{km/s}$. Show that the fraction of nitrogen molecules with $v > v_{\text{esc}}$ is proportional to $e^{-mv_{\text{esc}}^2/(2k_BT)}$ and estimate this number. Is atmospheric nitrogen escaping?</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Repeat part (b) for hydrogen molecules ($m = 2\,\text{u}$). Comment on why Earth has very little atmospheric hydrogen compared to Jupiter (which has an escape velocity of $59.5\,\text{km/s}$ and surface temperature $\sim 165\,\text{K}$).</p>
+</div>
+
+<div class="problem-part">
+<div class="part-label">(d)</div>
+<p>Using the equipartition result $\langle \frac{1}{2}mv^2\rangle = \frac{3}{2}k_BT$ and Maxwell's kinetic theory result (Eq.&nbsp;(14)), at what temperature would oxygen molecules ($m = 32\,\text{u}$) have the same rms speed as nitrogen at $300\,\text{K}$?</p>
+</div>
+</div>
+
+</div>
+</details>
