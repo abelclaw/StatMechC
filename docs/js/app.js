@@ -15075,51 +15075,28 @@ function initCh12Vis() {
       const tMaxR = 2.5 * Tc;
       const curve = [];
 
-      if (N <= 200) {
-        // Exact 3D box numerical bisection
-        const nMax = Math.min(Math.max(Math.ceil(Math.pow(N, 1/3) * 4), 12), 25);
-        const exc = ngEnergyLevels(nMax);
-        for (let i = 0; i <= nPts; i++) {
-          const tR = (i / nPts) * tMaxR;
-          if (tR < 0.01) { curve.push({ tRaw: tR, frac: 1 }); continue; }
-          const bE = 1.0 / tR;
-          let muLo = -50 * tR, muHi = -1e-8;
-          for (let it = 0; it < 80; it++) {
-            const mu = (muLo + muHi) / 2;
-            let Ns = 0;
-            for (let j = 0; j < exc.length; j++) {
-              const arg = bE * exc[j][0] - mu * bE;
-              if (arg > 30) break;
-              Ns += exc[j][1] / (Math.exp(arg) - 1);
-              if (Ns > N * 2) break;
-            }
-            const Ng = 1.0 / (Math.exp(-mu * bE) - 1);
-            if (Ng + Ns > N) muHi = mu; else muLo = mu;
+      // Exact 3D box numerical bisection for all N
+      const nMax = Math.min(Math.max(Math.ceil(Math.pow(N, 1/3) * 5), 15), 50);
+      const exc = ngEnergyLevels(nMax);
+      for (let i = 0; i <= nPts; i++) {
+        const tR = (i / nPts) * tMaxR;
+        if (tR < 0.01) { curve.push({ tRaw: tR, frac: 1 }); continue; }
+        const bE = 1.0 / tR;
+        let muLo = -50 * tR, muHi = -1e-10;
+        for (let it = 0; it < 100; it++) {
+          const mu = (muLo + muHi) / 2;
+          let Ns = 0;
+          for (let j = 0; j < exc.length; j++) {
+            const arg = bE * (exc[j][0] - mu);
+            if (arg > 40) break;
+            Ns += exc[j][1] / (Math.exp(arg) - 1);
           }
-          const muF = (muLo + muHi) / 2;
-          const Ng = 1.0 / (Math.exp(-muF / tR) - 1);
-          curve.push({ tRaw: tR, frac: Math.max(0, Math.min(1, Ng / N)) });
+          const Ng = 1.0 / (Math.exp(-mu * bE) - 1);
+          if (Ng + Ns > N) muHi = mu; else muLo = mu;
         }
-      } else {
-        // Semi-analytical with physics-based finite-size rounding
-        const rw = 1.5 * Math.pow(N, -1/3);
-        for (let i = 0; i <= nPts; i++) {
-          const tR = (i / nPts) * tMaxR;
-          if (tR < 0.01) { curve.push({ tRaw: tR, frac: 1 }); continue; }
-          const ts = tR / Tc;
-          let f;
-          if (ts < 1 - 3 * rw) {
-            f = Math.max(0, 1 - Math.pow(ts, 1.5) - 0.7 * Math.pow(N, -1/3) * ts);
-          } else if (ts > 1 + 3 * rw) {
-            f = Math.max(0, 0.5 * Math.pow(N, -1/3) * Math.exp(-(ts - 1) / rw));
-          } else {
-            const bv = Math.max(0, 1 - Math.pow(Math.min(ts, 1), 1.5) - 0.7 * Math.pow(N, -1/3) * ts);
-            const av = 0.5 * Math.pow(N, -1/3) * Math.exp(-Math.max(0, ts - 1) / rw);
-            const w = 0.5 * (1 - Math.tanh((ts - 1) / rw * 1.5));
-            f = bv * w + av * (1 - w);
-          }
-          curve.push({ tRaw: tR, frac: Math.max(0, Math.min(1, f)) });
-        }
+        const muF = (muLo + muHi) / 2;
+        const Ng = 1.0 / (Math.exp(-muF / tR) - 1);
+        curve.push({ tRaw: tR, frac: Math.max(0, Math.min(1, Ng / N)) });
       }
       ngCache.set(N, curve);
       return curve;
