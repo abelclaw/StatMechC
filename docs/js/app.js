@@ -22368,24 +22368,34 @@ function initCh14Vis() {
           ctx.fillText('XOR', g.x + g.w * 0.42, cy + 3);
         }
 
-        // Input port circles
+        // Input port circles — larger in WIRE mode
+        var portR = (selectedTool === 'WIRE' || wireStart) ? 6 : 4;
         for (let p = 0; p < def.inputs; p++) {
           const pos = getPortPos(g, 'input', p);
           const val = g.inputValues[p] || 0;
+          if (selectedTool === 'WIRE' || wireStart) {
+            // Draw hit zone ring
+            ctx.strokeStyle = 'rgba(255,152,0,0.3)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2); ctx.stroke();
+          }
           ctx.fillStyle = val ? onC : '#888';
-          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, portR, 0, Math.PI * 2); ctx.fill();
           ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, portR, 0, Math.PI * 2); ctx.stroke();
         }
 
-        // Output port circles
+        // Output port circles — larger in WIRE mode
         for (let p = 0; p < def.outputs; p++) {
           const pos = getPortPos(g, 'output', p);
           const val = g.outputValues[p] || 0;
+          if (selectedTool === 'WIRE' || wireStart) {
+            ctx.strokeStyle = 'rgba(255,152,0,0.3)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2); ctx.stroke();
+          }
           ctx.fillStyle = val ? onC : '#888';
-          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, portR, 0, Math.PI * 2); ctx.fill();
           ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, portR, 0, Math.PI * 2); ctx.stroke();
         }
       }
 
@@ -22491,7 +22501,24 @@ function initCh14Vis() {
       }
 
       if (selectedTool === 'WIRE') {
-        const port = findPort(pos.x, pos.y);
+        // Generous port hit radius
+        var port = findPort(pos.x, pos.y, 20);
+        // If clicking on a gate body but missed a port, auto-snap to nearest port
+        if (!port && clickedGate) {
+          var bestDist = Infinity, bestPort = null;
+          var cdef = GATE_DEFS[clickedGate.type];
+          for (var pi = 0; pi < cdef.outputs; pi++) {
+            var pp = getPortPos(clickedGate, 'output', pi);
+            var dd = Math.hypot(pos.x - pp.x, pos.y - pp.y);
+            if (dd < bestDist) { bestDist = dd; bestPort = { gateId: clickedGate.id, portType: 'output', portIdx: pi, x: pp.x, y: pp.y, gate: clickedGate }; }
+          }
+          for (var pi = 0; pi < cdef.inputs; pi++) {
+            var pp = getPortPos(clickedGate, 'input', pi);
+            var dd = Math.hypot(pos.x - pp.x, pos.y - pp.y);
+            if (dd < bestDist) { bestDist = dd; bestPort = { gateId: clickedGate.id, portType: 'input', portIdx: pi, x: pp.x, y: pp.y, gate: clickedGate }; }
+          }
+          if (bestPort) port = bestPort;
+        }
         if (port) {
           if (!wireStart) {
             wireStart = port;
@@ -22507,12 +22534,12 @@ function initCh14Vis() {
             wireStart = null;
           }
         } else {
-          wireStart = null;
-          // In WIRE mode, clicking body of INPUT gate toggles it
+          // Clicking empty space cancels wire
           if (clickedGate && clickedGate.type === 'INPUT') {
             inputClickCandidate = clickedGate;
             inputClickPos = { x: pos.x, y: pos.y };
           }
+          wireStart = null;
         }
         drawCircuit();
         return;
@@ -22550,7 +22577,7 @@ function initCh14Vis() {
         return;
       }
 
-      hoveredPort = findPort(pos.x, pos.y);
+      hoveredPort = findPort(pos.x, pos.y, 20);
       if (wireStart) drawCircuit();
       else if (hoveredPort && selectedTool === 'WIRE') drawCircuit();
       else if (selectedTool === 'DELETE') drawCircuit();
