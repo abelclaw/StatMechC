@@ -14618,177 +14618,523 @@ function initCh12Vis() {
     draw2state();
   }
 
-  // ----- Condensate Fraction Plot -----
+  // ----- Condensate Fraction Plot (Interactive) -----
   const cFrac = document.getElementById('vis-bec-fraction');
   if (cFrac) {
     const frS = setupCanvas(cFrac);
     const ctxFr = frS.ctx, WFr = frS.W, HFr = frS.H;
+    const fracTempSlider = document.getElementById('becfrac-temp');
+
+    function condensateFrac(tR) { return tR <= 1 ? 1 - Math.pow(tR, 1.5) : 0; }
 
     function drawFraction() {
       clearCanvas(ctxFr, WFr, HFr);
-      const ox = 70, oy = 30, pw = WFr - 120, ph = HFr - 80;
-      const tMax = 2;
-      drawAxes(ctxFr, ox, oy, pw, ph, { xLabel: 'T / T_c', yLabel: 'N\u2080 / N', yLabelOffset: 40 });
+      const tCur = parseFloat(fracTempSlider?.value || 0.6);
+      const tMax = 2.0;
+      const f0 = condensateFrac(tCur);
+      const fExc = 1 - f0;
 
+      // Layout constants
+      const thermoX = 22, thermoW = 18, thermoTop = 36, thermoH = 148;
+      const circX = WFr - 58, circY = 108, circR = 42;
+      const ox = 82, oy = 30, pw = WFr - 178, ph = 160;
+      const sox = 82, soy = oy + ph + 60, spw = pw, sph = 100;
+
+      // ===== THERMOMETER =====
+      const thermoBot = thermoTop + thermoH;
+      const thermoCX = thermoX + thermoW / 2;
+      // Bulb at bottom
+      ctxFr.beginPath(); ctxFr.arc(thermoCX, thermoBot + 8, 12, 0, Math.PI * 2);
+      ctxFr.fillStyle = 'rgba(239,83,80,0.3)'; ctxFr.fill();
+      ctxFr.strokeStyle = COLORS.axis; ctxFr.lineWidth = 1; ctxFr.stroke();
+      // Tube
+      ctxFr.fillStyle = 'rgba(255,255,255,0.05)';
+      ctxFr.fillRect(thermoX, thermoTop, thermoW, thermoH);
+      ctxFr.strokeStyle = COLORS.axis; ctxFr.strokeRect(thermoX, thermoTop, thermoW, thermoH);
+      // Fill level
+      const fillH = Math.min(1, tCur / tMax) * thermoH;
+      const thermoGrad = ctxFr.createLinearGradient(0, thermoBot - fillH, 0, thermoBot);
+      thermoGrad.addColorStop(0, tCur <= 1 ? 'rgba(239,83,80,0.7)' : 'rgba(79,195,247,0.7)');
+      thermoGrad.addColorStop(1, 'rgba(239,83,80,0.9)');
+      ctxFr.fillStyle = thermoGrad;
+      ctxFr.fillRect(thermoX + 1, thermoBot - fillH, thermoW - 2, fillH);
+      // Bulb fill
+      ctxFr.beginPath(); ctxFr.arc(thermoCX, thermoBot + 8, 10, 0, Math.PI * 2);
+      ctxFr.fillStyle = 'rgba(239,83,80,0.85)'; ctxFr.fill();
+      // Tc marker on thermometer
+      const tcThY = thermoBot - (1 / tMax) * thermoH;
+      ctxFr.strokeStyle = COLORS.textDim; ctxFr.lineWidth = 1; ctxFr.setLineDash([3, 2]);
+      ctxFr.beginPath(); ctxFr.moveTo(thermoX - 4, tcThY); ctxFr.lineTo(thermoX + thermoW + 4, tcThY); ctxFr.stroke();
+      ctxFr.setLineDash([]);
+      ctxFr.fillStyle = COLORS.textDim; ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      ctxFr.fillText('Tₙ', thermoCX, tcThY - 5);
+      // Thermometer labels
+      ctxFr.fillStyle = COLORS.text; ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      ctxFr.fillText('T/Tₙ', thermoCX, thermoTop - 6);
+      ctxFr.fillText(tCur.toFixed(2), thermoCX, thermoBot + 28);
+
+      // ===== MAIN PLOT: Filled areas =====
+      drawAxes(ctxFr, ox, oy, pw, ph, { xLabel: 'T / Tₙ', yLabel: 'N₀/N', yLabelOffset: 42 });
       ctxFr.fillStyle = COLORS.textDim; ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
       for (let t = 0; t <= tMax; t += 0.5) ctxFr.fillText(t.toFixed(1), ox + t / tMax * pw, oy + ph + 14);
       ctxFr.textAlign = 'right';
-      for (let y = 0; y <= 1; y += 0.2) ctxFr.fillText(y.toFixed(1), ox - 5, oy + ph - y * ph + 4);
+      for (let y = 0; y <= 1.01; y += 0.2) ctxFr.fillText(y.toFixed(1), ox - 5, oy + ph - y * ph + 4);
 
-      // Tc line
-      const tcX = ox + 1 / tMax * pw;
-      ctxFr.strokeStyle = 'rgba(255,255,255,0.15)'; ctxFr.setLineDash([4, 4]); ctxFr.lineWidth = 1;
-      ctxFr.beginPath(); ctxFr.moveTo(tcX, oy); ctxFr.lineTo(tcX, oy + ph); ctxFr.stroke(); ctxFr.setLineDash([]);
-      ctxFr.fillStyle = COLORS.textDim; ctxFr.textAlign = 'center'; ctxFr.fillText('T_c', tcX, oy + ph + 14);
-
-      // Analytic curve
-      ctxFr.strokeStyle = COLORS.red; ctxFr.lineWidth = 3; ctxFr.beginPath();
-      for (let px = 0; px < pw; px++) {
+      // Red filled area (condensate, under curve)
+      ctxFr.beginPath(); ctxFr.moveTo(ox, oy + ph);
+      for (let px = 0; px <= pw; px++) {
         const tR = px / pw * tMax;
-        const frac = tR < 1 ? 1 - Math.pow(tR, 1.5) : 0;
-        const pyv = oy + ph - frac * ph;
+        ctxFr.lineTo(ox + px, oy + ph - condensateFrac(tR) * ph);
+      }
+      ctxFr.lineTo(ox + pw, oy + ph); ctxFr.closePath();
+      const redGrad = ctxFr.createLinearGradient(0, oy, 0, oy + ph);
+      redGrad.addColorStop(0, 'rgba(239,83,80,0.45)');
+      redGrad.addColorStop(1, 'rgba(239,83,80,0.12)');
+      ctxFr.fillStyle = redGrad; ctxFr.fill();
+
+      // Blue filled area (excited, above curve to y=1)
+      ctxFr.beginPath(); ctxFr.moveTo(ox, oy);
+      for (let px = 0; px <= pw; px++) {
+        const tR = px / pw * tMax;
+        ctxFr.lineTo(ox + px, oy + ph - condensateFrac(tR) * ph);
+      }
+      ctxFr.lineTo(ox + pw, oy); ctxFr.closePath();
+      const blueGrad = ctxFr.createLinearGradient(0, oy, 0, oy + ph);
+      blueGrad.addColorStop(0, 'rgba(79,195,247,0.12)');
+      blueGrad.addColorStop(1, 'rgba(79,195,247,0.35)');
+      ctxFr.fillStyle = blueGrad; ctxFr.fill();
+
+      // Analytic curve (bold red)
+      ctxFr.strokeStyle = COLORS.red; ctxFr.lineWidth = 3; ctxFr.beginPath();
+      for (let px = 0; px <= pw; px++) {
+        const tR = px / pw * tMax;
+        const pyv = oy + ph - condensateFrac(tR) * ph;
         px === 0 ? ctxFr.moveTo(ox + px, pyv) : ctxFr.lineTo(ox + px, pyv);
       }
       ctxFr.stroke();
 
-      // Finite-N curves
-      const nVals = [{ N: 100, color: COLORS.blue, dash: [6, 4] }, { N: 1000, color: COLORS.green, dash: [4, 3] }, { N: 10000, color: COLORS.orange, dash: [2, 2] }];
-      nVals.forEach(nv => {
-        ctxFr.strokeStyle = nv.color; ctxFr.lineWidth = 2; ctxFr.setLineDash(nv.dash); ctxFr.beginPath();
-        const sigma = 0.3 * Math.pow(nv.N, -1/3);
-        for (let px = 0; px < pw; px++) {
-          const tR = px / pw * tMax;
-          let frac;
-          if (tR < 1 - 3 * sigma) frac = 1 - Math.pow(tR, 1.5);
-          else if (tR > 1 + 3 * sigma) frac = 0;
-          else { const a = Math.max(0, 1 - Math.pow(tR, 1.5)); frac = a * 0.5 * (1 - Math.tanh((tR - 1) / sigma)); }
-          const pyv = oy + ph - frac * ph;
-          px === 0 ? ctxFr.moveTo(ox + px, pyv) : ctxFr.lineTo(ox + px, pyv);
-        }
-        ctxFr.stroke(); ctxFr.setLineDash([]);
-      });
+      // Tc vertical dashed line
+      const tcX = ox + (1 / tMax) * pw;
+      ctxFr.strokeStyle = 'rgba(255,255,255,0.3)'; ctxFr.setLineDash([4, 4]); ctxFr.lineWidth = 1;
+      ctxFr.beginPath(); ctxFr.moveTo(tcX, oy); ctxFr.lineTo(tcX, oy + ph); ctxFr.stroke(); ctxFr.setLineDash([]);
+      ctxFr.fillStyle = COLORS.textDim; ctxFr.textAlign = 'center'; ctxFr.font = FONT_SM;
+      ctxFr.fillText('Tₙ', tcX, oy + ph + 14);
 
-      // Legend
-      ctxFr.font = FONT_SM; ctxFr.textAlign = 'left';
-      ctxFr.fillStyle = COLORS.red; ctxFr.fillText('1 - (T/T_c)^{3/2} (analytic)', WFr - 200, 40);
-      nVals.forEach((nv, idx) => { ctxFr.fillStyle = nv.color; ctxFr.fillText('N = ' + nv.N, WFr - 200, 56 + idx * 16); });
+      // Phase labels
+      ctxFr.font = '12px Inter, system-ui, sans-serif'; ctxFr.textAlign = 'center';
+      ctxFr.fillStyle = 'rgba(239,83,80,0.7)';
+      ctxFr.fillText('BEC Phase', ox + (tcX - ox) / 2, oy + 14);
+      ctxFr.fillStyle = 'rgba(79,195,247,0.7)';
+      ctxFr.fillText('Normal Phase', tcX + (ox + pw - tcX) / 2, oy + 14);
+
+      // Vertical marker at current T
+      const curX = ox + (tCur / tMax) * pw;
+      if (tCur > 0) {
+        ctxFr.strokeStyle = COLORS.text; ctxFr.lineWidth = 1.5; ctxFr.setLineDash([3, 3]);
+        ctxFr.beginPath(); ctxFr.moveTo(curX, oy); ctxFr.lineTo(curX, oy + ph); ctxFr.stroke();
+        ctxFr.setLineDash([]);
+        // Dot on curve
+        const curY = oy + ph - f0 * ph;
+        ctxFr.beginPath(); ctxFr.arc(curX, curY, 5, 0, Math.PI * 2);
+        ctxFr.fillStyle = COLORS.red; ctxFr.fill();
+        ctxFr.strokeStyle = COLORS.text; ctxFr.lineWidth = 1.5; ctxFr.stroke();
+      }
+
+      // Formula annotation near marker
+      if (tCur > 0 && tCur <= 1) {
+        const annY = Math.max(oy + 30, oy + ph - f0 * ph - 22);
+        const annX = Math.min(Math.max(curX + 8, ox + 50), ox + pw - 140);
+        ctxFr.fillStyle = 'rgba(15,25,35,0.85)';
+        ctxFr.fillRect(annX - 3, annY - 11, 138, 15);
+        ctxFr.fillStyle = COLORS.text; ctxFr.font = FONT_SM; ctxFr.textAlign = 'left';
+        ctxFr.fillText('1 − (' + tCur.toFixed(2) + ')^(3/2) = ' + f0.toFixed(3), annX, annY);
+      }
+
+      // ===== CIRCLE (PIE) DIAGRAM =====
+      ctxFr.fillStyle = COLORS.text; ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      ctxFr.fillText('Particle', circX, circY - circR - 18);
+      ctxFr.fillText('Distribution', circX, circY - circR - 6);
+      // Blue base (excited)
+      ctxFr.beginPath(); ctxFr.moveTo(circX, circY);
+      ctxFr.arc(circX, circY, circR, 0, Math.PI * 2);
+      ctxFr.fillStyle = 'rgba(79,195,247,0.6)'; ctxFr.fill();
+      ctxFr.strokeStyle = 'rgba(79,195,247,0.8)'; ctxFr.lineWidth = 1.5; ctxFr.stroke();
+      // Red slice (condensate)
+      if (f0 > 0.001) {
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + f0 * Math.PI * 2;
+        ctxFr.beginPath(); ctxFr.moveTo(circX, circY);
+        ctxFr.arc(circX, circY, circR, startAngle, endAngle);
+        ctxFr.closePath();
+        ctxFr.fillStyle = 'rgba(239,83,80,0.75)'; ctxFr.fill();
+        ctxFr.strokeStyle = 'rgba(239,83,80,0.9)'; ctxFr.lineWidth = 1.5; ctxFr.stroke();
+      }
+      // Labels below circle
+      ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      ctxFr.fillStyle = COLORS.red;
+      ctxFr.fillText('N₀/N = ' + f0.toFixed(3), circX, circY + circR + 16);
+      ctxFr.fillStyle = COLORS.blue;
+      ctxFr.fillText('N_exc/N = ' + fExc.toFixed(3), circX, circY + circR + 30);
+
+      // ===== STACKED AREA CHART =====
+      ctxFr.strokeStyle = COLORS.axis; ctxFr.lineWidth = 0.5;
+      ctxFr.beginPath(); ctxFr.moveTo(ox, soy - 20); ctxFr.lineTo(ox + spw, soy - 20); ctxFr.stroke();
       ctxFr.fillStyle = COLORS.text; ctxFr.font = FONT_LG; ctxFr.textAlign = 'left';
-      ctxFr.fillText('Condensate Fraction vs Temperature', ox + 5, oy + 12);
+      ctxFr.fillText('Particle Composition vs Temperature', ox + 5, soy - 6);
+
+      drawAxes(ctxFr, sox, soy, spw, sph, { xLabel: 'T / Tₙ', yLabel: 'Fraction', yLabelOffset: 42 });
+      ctxFr.fillStyle = COLORS.textDim; ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      for (let t = 0; t <= tMax; t += 0.5) ctxFr.fillText(t.toFixed(1), sox + t / tMax * spw, soy + sph + 14);
+      ctxFr.textAlign = 'right';
+      ctxFr.fillText('0', sox - 5, soy + sph + 4);
+      ctxFr.fillText('N', sox - 5, soy + 4);
+
+      // Red stacked area (condensate, bottom)
+      ctxFr.beginPath(); ctxFr.moveTo(sox, soy + sph);
+      for (let px = 0; px <= spw; px++) {
+        const tR = px / spw * tMax;
+        ctxFr.lineTo(sox + px, soy + sph - condensateFrac(tR) * sph);
+      }
+      ctxFr.lineTo(sox + spw, soy + sph); ctxFr.closePath();
+      const sRedGrad = ctxFr.createLinearGradient(0, soy, 0, soy + sph);
+      sRedGrad.addColorStop(0, 'rgba(239,83,80,0.5)');
+      sRedGrad.addColorStop(1, 'rgba(239,83,80,0.25)');
+      ctxFr.fillStyle = sRedGrad; ctxFr.fill();
+
+      // Blue stacked area (excited, top)
+      ctxFr.beginPath(); ctxFr.moveTo(sox, soy);
+      for (let px = 0; px <= spw; px++) {
+        const tR = px / spw * tMax;
+        ctxFr.lineTo(sox + px, soy + sph - condensateFrac(tR) * sph);
+      }
+      ctxFr.lineTo(sox + spw, soy); ctxFr.closePath();
+      const sBlueGrad = ctxFr.createLinearGradient(0, soy, 0, soy + sph);
+      sBlueGrad.addColorStop(0, 'rgba(79,195,247,0.25)');
+      sBlueGrad.addColorStop(1, 'rgba(79,195,247,0.5)');
+      ctxFr.fillStyle = sBlueGrad; ctxFr.fill();
+
+      // Boundary line between stacked areas
+      ctxFr.strokeStyle = COLORS.text; ctxFr.lineWidth = 1.5; ctxFr.beginPath();
+      for (let px = 0; px <= spw; px++) {
+        const tR = px / spw * tMax;
+        const pyv = soy + sph - condensateFrac(tR) * sph;
+        px === 0 ? ctxFr.moveTo(sox + px, pyv) : ctxFr.lineTo(sox + px, pyv);
+      }
+      ctxFr.stroke();
+
+      // Vertical marker on stacked chart
+      const sCurX = sox + (tCur / tMax) * spw;
+      if (tCur > 0) {
+        ctxFr.strokeStyle = COLORS.text; ctxFr.lineWidth = 1.5; ctxFr.setLineDash([3, 3]);
+        ctxFr.beginPath(); ctxFr.moveTo(sCurX, soy); ctxFr.lineTo(sCurX, soy + sph); ctxFr.stroke();
+        ctxFr.setLineDash([]);
+      }
+
+      // Stacked chart region labels
+      ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      ctxFr.fillStyle = 'rgba(239,83,80,0.9)';
+      ctxFr.fillText('N₀ (condensate)', sox + spw * 0.17, soy + sph * 0.75);
+      ctxFr.fillStyle = 'rgba(79,195,247,0.9)';
+      ctxFr.fillText('N_exc (excited)', sox + spw * 0.65, soy + sph * 0.3);
+
+      // Tc line on stacked chart
+      const sTcX = sox + (1 / tMax) * spw;
+      ctxFr.strokeStyle = 'rgba(255,255,255,0.3)'; ctxFr.setLineDash([4, 4]); ctxFr.lineWidth = 1;
+      ctxFr.beginPath(); ctxFr.moveTo(sTcX, soy); ctxFr.lineTo(sTcX, soy + sph); ctxFr.stroke(); ctxFr.setLineDash([]);
+
+      // ===== READOUT TEXT below pie =====
+      const roX = circX, roY = circY + circR + 50;
+      ctxFr.font = FONT_SM; ctxFr.textAlign = 'center';
+      if (tCur > 0 && tCur <= 1) {
+        ctxFr.fillStyle = COLORS.text;
+        ctxFr.fillText('1 − (' + tCur.toFixed(2) + ')^(3/2)', roX, roY);
+        ctxFr.fillText('= ' + f0.toFixed(4), roX, roY + 14);
+      } else if (tCur > 1) {
+        ctxFr.fillStyle = COLORS.textDim;
+        ctxFr.fillText('T > Tₙ: no BEC', roX, roY);
+        ctxFr.fillText('N₀/N = 0', roX, roY + 14);
+      } else {
+        ctxFr.fillStyle = COLORS.text;
+        ctxFr.fillText('T = 0: all in', roX, roY);
+        ctxFr.fillText('ground state', roX, roY + 14);
+      }
+
+      // Title
+      ctxFr.fillStyle = COLORS.text; ctxFr.font = FONT_LG; ctxFr.textAlign = 'left';
+      ctxFr.fillText('Condensate Fraction vs Temperature', ox + 5, oy + 14);
+
+      // Update slider readout
+      document.getElementById('becfrac-temp-val')?.replaceChildren(document.createTextNode(tCur.toFixed(2)));
     }
+
+    fracTempSlider?.addEventListener('input', drawFraction);
     drawFraction();
   }
 
-  // ----- BEC Ground State Occupation for Different N -----
+  // ----- BEC Ground State Occupation for Different N (Raw vs Scaled) -----
   const cNg = document.getElementById('vis-bec-nground');
   if (cNg) {
     const ngS = setupCanvas(cNg);
     const ctxNg = ngS.ctx, WNg = ngS.W, HNg = ngS.H;
 
+    // Animation blend: 0 = raw (kT/eps1), 1 = scaled (kT/(N^{2/3} eps1))
+    let ngBlend = 0, ngTarget = 0, ngAnimating = false;
+
+    // Tc coefficient: Tc = TC_C * N^{2/3} * eps1/kB from zeta(3/2) result
+    const TC_C = 0.83;
+
+    // Preset N values with colors and checkbox IDs
+    const ngPresets = [
+      { N: 10,   color: COLORS.orange, id: 'nground-n10' },
+      { N: 50,   color: COLORS.pink,   id: 'nground-n50' },
+      { N: 100,  color: COLORS.green,  id: 'nground-n100' },
+      { N: 500,  color: COLORS.blue,   id: 'nground-n500' },
+      { N: 1000, color: COLORS.cyan,   id: 'nground-n1000' },
+    ];
+
+    // Curve cache: N -> [{tRaw, frac}]
+    const ngCache = new Map();
+
+    // Build 3D box energy level table (excited states only)
+    function ngEnergyLevels(nMax) {
+      const m = new Map();
+      for (let a = 0; a <= nMax; a++)
+        for (let b = 0; b <= nMax; b++)
+          for (let c = 0; c <= nMax; c++) {
+            const e = a*a + b*b + c*c;
+            m.set(e, (m.get(e) || 0) + 1);
+          }
+      m.delete(0);
+      return Array.from(m.entries()).sort((a, b) => a[0] - b[0]);
+    }
+
+    // Compute N0/N vs kT/eps1 for a given N
+    function ngCompute(N) {
+      if (ngCache.has(N)) return ngCache.get(N);
+      const nPts = 200;
+      const Tc = TC_C * Math.pow(N, 2/3);
+      const tMaxR = 2.5 * Tc;
+      const curve = [];
+
+      if (N <= 120) {
+        // Exact 3D box numerical bisection
+        const nMax = Math.min(Math.max(Math.ceil(Math.pow(N, 1/3) * 3), 8), 20);
+        const exc = ngEnergyLevels(nMax);
+        for (let i = 0; i <= nPts; i++) {
+          const tR = (i / nPts) * tMaxR;
+          if (tR < 0.01) { curve.push({ tRaw: tR, frac: 1 }); continue; }
+          const bE = 1.0 / tR;
+          let muLo = -50 * tR, muHi = -1e-6;
+          for (let it = 0; it < 60; it++) {
+            const mu = (muLo + muHi) / 2;
+            let Ns = 0;
+            for (let j = 0; j < exc.length; j++) {
+              const arg = bE * exc[j][0] - mu * bE;
+              if (arg > 30) break;
+              Ns += exc[j][1] / (Math.exp(arg) - 1);
+              if (Ns > N * 2) break;
+            }
+            const Ng = 1.0 / (Math.exp(-mu * bE) - 1);
+            if (Ng + Ns > N) muHi = mu; else muLo = mu;
+          }
+          const muF = (muLo + muHi) / 2;
+          const Ng = 1.0 / (Math.exp(-muF / tR) - 1);
+          curve.push({ tRaw: tR, frac: Math.max(0, Math.min(1, Ng / N)) });
+        }
+      } else {
+        // Semi-analytical with physics-based finite-size rounding
+        const rw = 1.5 * Math.pow(N, -1/3);
+        for (let i = 0; i <= nPts; i++) {
+          const tR = (i / nPts) * tMaxR;
+          if (tR < 0.01) { curve.push({ tRaw: tR, frac: 1 }); continue; }
+          const ts = tR / Tc;
+          let f;
+          if (ts < 1 - 3 * rw) {
+            f = Math.max(0, 1 - Math.pow(ts, 1.5) - 0.7 * Math.pow(N, -1/3) * ts);
+          } else if (ts > 1 + 3 * rw) {
+            f = Math.max(0, 0.5 * Math.pow(N, -1/3) * Math.exp(-(ts - 1) / rw));
+          } else {
+            const bv = Math.max(0, 1 - Math.pow(Math.min(ts, 1), 1.5) - 0.7 * Math.pow(N, -1/3) * ts);
+            const av = 0.5 * Math.pow(N, -1/3) * Math.exp(-Math.max(0, ts - 1) / rw);
+            const w = 0.5 * (1 - Math.tanh((ts - 1) / rw * 1.5));
+            f = bv * w + av * (1 - w);
+          }
+          curve.push({ tRaw: tR, frac: Math.max(0, Math.min(1, f)) });
+        }
+      }
+      ngCache.set(N, curve);
+      return curve;
+    }
+
+    // Get active series from checkboxes + custom input
+    function ngActive() {
+      const a = [];
+      ngPresets.forEach(function(s) {
+        const cb = document.getElementById(s.id);
+        if (cb && cb.checked) a.push(s);
+      });
+      const ci = document.getElementById('nground-custom');
+      if (ci && ci.value) {
+        const v = parseInt(ci.value);
+        if (v >= 5 && v <= 5000 && !a.some(function(s) { return s.N === v; }))
+          a.push({ N: v, color: COLORS.purple, id: 'custom' });
+      }
+      return a;
+    }
+
     function drawNGround() {
       clearCanvas(ctxNg, WNg, HNg);
-      const ox = 70, oy = 30, pw = WNg - 110, ph = HNg - 80;
-      const tMax = 1.5;
+      const ox = 70, oy = 40, pw = WNg - 110, ph = HNg - 90;
+      const b = ngBlend;
 
-      drawAxes(ctxNg, ox, oy, pw, ph, { xLabel: 'T / T\u2099', yLabel: 'N\u2080 / N', yLabelOffset: 40 });
+      const series = ngActive();
+      const maxN = Math.max(10, ...series.map(function(s) { return s.N; }));
+      const rawMax = 2.5 * TC_C * Math.pow(maxN, 2/3);
+      const sclMax = 1.8;
 
-      // X-axis tick labels
+      // Axis label
+      const xLab = b < 0.01 ? 'kT / \u03B5\u2081' : b > 0.99 ? 'kT / (N\u00B2\u02F3\u03B5\u2081)' : 'kT / \u03B5\u2081';
+      drawAxes(ctxNg, ox, oy, pw, ph, { xLabel: xLab, yLabel: 'N\u2080 / N', yLabelOffset: 40 });
+
+      // X ticks
       ctxNg.fillStyle = COLORS.textDim; ctxNg.font = FONT_SM; ctxNg.textAlign = 'center';
-      for (let t = 0; t <= tMax + 0.01; t += 0.5) {
-        ctxNg.fillText(t.toFixed(1), ox + t / tMax * pw, oy + ph + 14);
+      if (b < 0.5) {
+        const step = rawMax > 100 ? Math.round(rawMax / 5 / 10) * 10 :
+                     rawMax > 20 ? Math.round(rawMax / 5) :
+                     rawMax > 5 ? Math.round(rawMax * 2 / 5) / 2 : 0.5;
+        for (let t = step; t <= rawMax + 0.01; t += step) {
+          if (t / rawMax <= 1.01)
+            ctxNg.fillText(t < 10 ? t.toFixed(1) : Math.round(t).toString(), ox + (t / rawMax) * pw, oy + ph + 14);
+        }
+      } else {
+        for (let t = 0; t <= sclMax + 0.01; t += 0.2)
+          ctxNg.fillText(t.toFixed(1), ox + (t / sclMax) * pw, oy + ph + 14);
       }
-      // Y-axis tick labels
+
+      // Y ticks
       ctxNg.textAlign = 'right';
-      for (let y = 0; y <= 1.01; y += 0.2) {
+      for (let y = 0; y <= 1.01; y += 0.2)
         ctxNg.fillText(y.toFixed(1), ox - 5, oy + ph - y * ph + 4);
+
+      // Tc dashed line (fades in for scaled view)
+      if (b > 0.3) {
+        const tcPx = ox + (TC_C / sclMax) * pw;
+        ctxNg.save();
+        ctxNg.globalAlpha = Math.min(1, (b - 0.3) / 0.3);
+        ctxNg.strokeStyle = 'rgba(255,255,255,0.2)'; ctxNg.setLineDash([4, 4]); ctxNg.lineWidth = 1;
+        ctxNg.beginPath(); ctxNg.moveTo(tcPx, oy); ctxNg.lineTo(tcPx, oy + ph); ctxNg.stroke();
+        ctxNg.setLineDash([]);
+        ctxNg.fillStyle = COLORS.textDim; ctxNg.textAlign = 'center'; ctxNg.font = FONT_SM;
+        ctxNg.fillText('T\u2099', tcPx, oy + ph + 28);
+        ctxNg.restore();
       }
 
-      // Vertical dashed line at T/Tc = 1
-      const tcX = ox + (1 / tMax) * pw;
-      ctxNg.strokeStyle = 'rgba(255,255,255,0.15)'; ctxNg.setLineDash([4, 4]); ctxNg.lineWidth = 1;
-      ctxNg.beginPath(); ctxNg.moveTo(tcX, oy); ctxNg.lineTo(tcX, oy + ph); ctxNg.stroke();
-      ctxNg.setLineDash([]);
-      ctxNg.fillStyle = COLORS.textDim; ctxNg.textAlign = 'center'; ctxNg.font = FONT_SM;
-      ctxNg.fillText('T\u2099', tcX, oy + ph + 14);
-
-      // Thermodynamic limit: sharp step at Tc, thick line
-      ctxNg.strokeStyle = COLORS.text; ctxNg.lineWidth = 3; ctxNg.setLineDash([]); ctxNg.beginPath();
-      let firstTd = true;
-      for (let px = 0; px <= pw; px++) {
-        const tR = px / pw * tMax;
-        const frac = tR < 1 ? 1 - Math.pow(tR, 1.5) : 0;
-        const pyv = oy + ph - Math.max(0, frac) * ph;
-        if (firstTd) { ctxNg.moveTo(ox + px, pyv); firstTd = false; } else { ctxNg.lineTo(ox + px, pyv); }
-      }
-      ctxNg.stroke();
-
-      // Finite-N curves: smoothed transition, finite-size correction
-      const nSeries = [
-        { N: 10,    color: COLORS.orange },
-        { N: 100,   color: COLORS.green  },
-        { N: 1000,  color: COLORS.blue   },
-        { N: 10000, color: COLORS.cyan   },
-      ];
-
-      nSeries.forEach(nv => {
-        // Smoothing width scales as N^(-1/3); correction shifts effective Tc slightly upward for small N
-        const sigma = 0.25 * Math.pow(nv.N, -1 / 3);
-        // Finite-size correction: small systems have a slightly elevated condensate near Tc
-        const correction = 1.4 * Math.pow(nv.N, -1 / 3);
-
-        ctxNg.strokeStyle = nv.color; ctxNg.lineWidth = 2; ctxNg.setLineDash([]); ctxNg.beginPath();
-        let firstPx = true;
+      // Thermodynamic limit (N->inf), fades in as we approach scaled view
+      if (b > 0.2) {
+        ctxNg.save();
+        ctxNg.globalAlpha = Math.min(1, (b - 0.2) / 0.3);
+        ctxNg.strokeStyle = COLORS.text; ctxNg.lineWidth = 3; ctxNg.setLineDash([]); ctxNg.beginPath();
+        let f0 = true;
         for (let px = 0; px <= pw; px++) {
-          const tR = px / pw * tMax;
-          // Raw thermodynamic limit value
-          const rawFrac = Math.max(0, 1 - Math.pow(Math.max(0, tR), 1.5));
-          // Smoothed fraction using tanh crossover centred at Tc
-          let frac;
-          if (tR < 1 - 4 * sigma) {
-            // Deep below Tc: thermodynamic limit plus finite-size correction
-            frac = rawFrac + correction * Math.pow(tR / 1, 0.5);
-          } else if (tR > 1 + 4 * sigma) {
-            // Above Tc: small residual occupation decays exponentially for finite systems
-            const excess = tR - 1;
-            frac = correction * Math.exp(-excess / (2 * sigma));
-          } else {
-            // Crossover region: blend using tanh
-            const tdVal = rawFrac;
-            const highVal = correction * Math.exp(-(tR - 1) / (2 * sigma));
-            const weight = 0.5 * (1 - Math.tanh((tR - 1) / sigma));
-            frac = tdVal * weight + highVal * (1 - weight) + correction * weight * (1 - weight);
-          }
-          frac = Math.min(1, Math.max(0, frac));
-          const pyv = oy + ph - frac * ph;
-          if (firstPx) { ctxNg.moveTo(ox + px, pyv); firstPx = false; } else { ctxNg.lineTo(ox + px, pyv); }
+          const ts = (px / pw) * sclMax;
+          const tr = ts / TC_C;
+          const fr = tr < 1 ? Math.max(0, 1 - Math.pow(tr, 1.5)) : 0;
+          const py = oy + ph - fr * ph;
+          if (f0) { ctxNg.moveTo(ox + px, py); f0 = false; } else ctxNg.lineTo(ox + px, py);
+        }
+        ctxNg.stroke();
+        ctxNg.restore();
+      }
+
+      // Finite-N curves with animated x interpolation
+      series.forEach(function(s) {
+        const curve = ngCompute(s.N);
+        const Tc = TC_C * Math.pow(s.N, 2/3);
+
+        ctxNg.strokeStyle = s.color; ctxNg.lineWidth = 2; ctxNg.setLineDash([]); ctxNg.beginPath();
+        let started = false;
+
+        for (let i = 0; i < curve.length; i++) {
+          const tRaw = curve[i].tRaw, frac = curve[i].frac;
+          const xRaw = tRaw / rawMax;
+          const xScl = (tRaw / Tc) / sclMax;
+          const xF = (1 - b) * xRaw + b * xScl;
+          if (xF < 0 || xF > 1.01) continue;
+          const px = ox + xF * pw;
+          const py = oy + ph - frac * ph;
+          if (!started) { ctxNg.moveTo(px, py); started = true; } else ctxNg.lineTo(px, py);
         }
         ctxNg.stroke();
       });
 
       // Legend
-      const legX = ox + pw - 10, legYStart = oy + 12, legLineH = 18;
+      const items = [];
+      if (b > 0.5) items.push({ label: 'N \u2192 \u221e', color: COLORS.text, lw: 3 });
+      series.forEach(function(s) { items.push({ label: 'N = ' + s.N.toLocaleString(), color: s.color, lw: 2 }); });
+      const lx = ox + pw - 10, ly0 = oy + 12, lh = 16;
       ctxNg.font = FONT_SM; ctxNg.textAlign = 'right';
-
-      // Thermodynamic limit entry
-      ctxNg.strokeStyle = COLORS.text; ctxNg.lineWidth = 3; ctxNg.setLineDash([]);
-      ctxNg.beginPath(); ctxNg.moveTo(legX - 88, legYStart - 4); ctxNg.lineTo(legX - 66, legYStart - 4); ctxNg.stroke();
-      ctxNg.fillStyle = COLORS.text; ctxNg.fillText('N \u2192 \u221e', legX, legYStart);
-
-      // Finite-N entries
-      nSeries.forEach((nv, idx) => {
-        const ly = legYStart + (idx + 1) * legLineH;
-        ctxNg.strokeStyle = nv.color; ctxNg.lineWidth = 2; ctxNg.setLineDash([]);
-        ctxNg.beginPath(); ctxNg.moveTo(legX - 88, ly - 4); ctxNg.lineTo(legX - 66, ly - 4); ctxNg.stroke();
-        ctxNg.fillStyle = nv.color;
-        ctxNg.fillText('N = ' + nv.N.toLocaleString(), legX, ly);
+      items.forEach(function(it, i) {
+        const ly = ly0 + i * lh;
+        ctxNg.strokeStyle = it.color; ctxNg.lineWidth = it.lw; ctxNg.setLineDash([]);
+        ctxNg.beginPath(); ctxNg.moveTo(lx - 88, ly - 4); ctxNg.lineTo(lx - 66, ly - 4); ctxNg.stroke();
+        ctxNg.fillStyle = it.color; ctxNg.fillText(it.label, lx, ly);
       });
 
       // Title
       ctxNg.fillStyle = COLORS.text; ctxNg.font = FONT_LG; ctxNg.textAlign = 'left';
-      ctxNg.fillText('BEC Ground State Occupation vs Temperature', ox + 5, oy + 14);
+      const title = b < 0.01 ? 'N\u2080/N vs kT/\u03B5\u2081  (raw)' :
+                    b > 0.99 ? 'N\u2080/N vs kT/(N\u00B2\u02F3\u03B5\u2081)  (scaled \u2014 curves collapse!)' :
+                    'N\u2080/N  (rescaling...)';
+      ctxNg.fillText(title, ox + 5, oy - 8);
+
+      // Hint text
+      ctxNg.fillStyle = COLORS.textDim; ctxNg.font = FONT_SM; ctxNg.textAlign = 'right';
+      if (b > 0.99) ctxNg.fillText('All curves collapse onto the thermodynamic limit', ox + pw, oy - 8);
+      else if (b < 0.01) ctxNg.fillText('T\u2099 shifts with N \u2014 click button to collapse', ox + pw, oy - 8);
     }
 
+    // Animation loop
+    function ngAnim() {
+      const d = ngTarget - ngBlend;
+      if (Math.abs(d) < 0.005) {
+        ngBlend = ngTarget; ngAnimating = false; drawNGround(); return;
+      }
+      ngBlend += d * 0.08 + Math.sign(d) * 0.04;
+      ngBlend = Math.max(0, Math.min(1, ngBlend));
+      drawNGround();
+      requestAnimationFrame(ngAnim);
+    }
+
+    // Toggle button
+    const ngBtn = document.getElementById('nground-toggle');
+    if (ngBtn) {
+      ngBtn.addEventListener('click', function() {
+        ngTarget = ngTarget < 0.5 ? 1 : 0;
+        ngBtn.innerHTML = ngTarget > 0.5 ? 'Show raw (kT/\u03B5\u2081)' : 'Show scaled (T/T<sub>c</sub>)';
+        if (!ngAnimating) { ngAnimating = true; ngAnim(); }
+      });
+    }
+
+    // Checkbox and custom N listeners
+    ngPresets.forEach(function(s) {
+      const cb = document.getElementById(s.id);
+      if (cb) cb.addEventListener('change', drawNGround);
+    });
+    const ngCustIn = document.getElementById('nground-custom');
+    if (ngCustIn) {
+      let ngCustTimer;
+      ngCustIn.addEventListener('input', function() {
+        clearTimeout(ngCustTimer);
+        ngCustTimer = setTimeout(drawNGround, 400);
+      });
+      ngCustIn.addEventListener('change', drawNGround);
+    }
+
+    // Precompute default curves
+    ngPresets.forEach(function(s) { ngCompute(s.N); });
     drawNGround();
   }
+
 
   // ----- BEC Approximation Curves -----
   const cBA = document.getElementById('vis-bec-approx');
