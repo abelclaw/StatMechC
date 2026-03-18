@@ -17745,84 +17745,98 @@ function initCh14Vis() {
       return { x: x1, y: y1, z: z2 };
     }
 
+    function drawOneOrbital(def, cx, cy, scale, res) {
+      const perspective = 4;
+      const mesh = generateOrbitalMesh(def.l, def.m, res);
+
+      const projected = mesh.vertices.map(v => {
+        const r = rotPt(v, angleX, angleY);
+        const f = perspective / (perspective + r.z);
+        return { x: cx + r.x * scale * f, y: cy - r.y * scale * f, z: r.z, val: v.val };
+      });
+
+      const faceData = mesh.faces.map(face => {
+        const p0 = projected[face[0]], p1 = projected[face[1]], p2 = projected[face[2]];
+        const avgZ = (p0.z + p1.z + p2.z) / 3;
+        const avgVal = (p0.val + p1.val + p2.val) / 3;
+        const ux = p1.x - p0.x, uy = p1.y - p0.y;
+        const vx = p2.x - p0.x, vy = p2.y - p0.y;
+        const cross = ux * vy - uy * vx;
+        return { avgZ, avgVal, cross, p0, p1, p2 };
+      });
+
+      faceData.sort((a, b) => a.avgZ - b.avgZ);
+
+      for (const fd of faceData) {
+        const { p0, p1, p2, avgVal, cross } = fd;
+        if (Math.abs(cross) < 0.01) continue;
+
+        const brightness = 0.45 + 0.55 * Math.min(1, Math.abs(cross) / (scale * scale * 0.003));
+        let r, g, b;
+        if (avgVal >= 0) {
+          r = Math.floor(79 * brightness);
+          g = Math.floor(195 * brightness);
+          b = Math.floor(247 * brightness);
+        } else {
+          r = Math.floor(239 * brightness);
+          g = Math.floor(83 * brightness);
+          b = Math.floor(80 * brightness);
+        }
+
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
     function drawOrbitals() {
       clearCanvas(ctx, W, H);
-      const type = orbSelect ? orbSelect.value : 'p';
+      const type = currentOrbital;
       const defs = orbitalDefs[type];
       const count = defs.length;
 
-      // Layout: evenly spaced columns
-      const colW = W / count;
-      const res = count <= 3 ? 32 : (count <= 5 ? 24 : 18);
-      const scale = count === 1 ? 150 : (count <= 3 ? 110 : (count <= 5 ? 75 : 55));
-      const perspective = 4;
+      // 2-row grid for f (7) and g (9)
+      const useGrid = count >= 7;
+      if (useGrid) {
+        const cols = Math.ceil(count / 2);
+        const colW = W / cols;
+        const rowH = H / 2;
+        const res = count <= 7 ? 18 : 14;
+        const scale = count <= 7 ? 55 : 42;
 
-      for (let idx = 0; idx < count; idx++) {
-        const def = defs[idx];
-        const cx = colW * (idx + 0.5);
-        const cy = H / 2 - 12;
-        const mesh = generateOrbitalMesh(def.l, def.m, res);
-
-        // Transform vertices
-        const projected = mesh.vertices.map(v => {
-          const r = rotPt(v, angleX, angleY);
-          const f = perspective / (perspective + r.z);
-          return { x: cx + r.x * scale * f, y: cy - r.y * scale * f, z: r.z, val: v.val };
-        });
-
-        // Compute face depths and normals, then sort
-        const faceData = mesh.faces.map(face => {
-          const p0 = projected[face[0]], p1 = projected[face[1]], p2 = projected[face[2]];
-          const avgZ = (p0.z + p1.z + p2.z) / 3;
-          const avgVal = (p0.val + p1.val + p2.val) / 3;
-          // Cross product for face normal (in screen space, for basic lighting)
-          const ux = p1.x - p0.x, uy = p1.y - p0.y;
-          const vx = p2.x - p0.x, vy = p2.y - p0.y;
-          const cross = ux * vy - uy * vx;
-          return { face, avgZ, avgVal, cross, p0, p1, p2 };
-        });
-
-        // Painter's algorithm: draw far faces first
-        faceData.sort((a, b) => a.avgZ - b.avgZ);
-
-        for (const fd of faceData) {
-          const { p0, p1, p2, avgVal, cross } = fd;
-          // Skip degenerate
-          if (Math.abs(cross) < 0.01) continue;
-
-          // Lighting: simple diffuse based on face normal
-          const brightness = 0.45 + 0.55 * Math.min(1, Math.abs(cross) / (scale * scale * 0.003));
-
-          let r, g, b;
-          if (avgVal >= 0) {
-            // Blue for positive: #4fc3f7
-            r = Math.floor(79 * brightness);
-            g = Math.floor(195 * brightness);
-            b = Math.floor(247 * brightness);
-          } else {
-            // Red for negative: #ef5350
-            r = Math.floor(239 * brightness);
-            g = Math.floor(83 * brightness);
-            b = Math.floor(80 * brightness);
-          }
-
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.closePath();
-          ctx.fill();
+        for (let idx = 0; idx < count; idx++) {
+          const row = Math.floor(idx / cols);
+          const col = idx % cols;
+          const itemsInRow = row === 0 ? cols : count - cols;
+          const rowOffset = (cols - itemsInRow) * colW / 2;
+          const cx = rowOffset + colW * (col + 0.5);
+          const cy = rowH * (row + 0.5) - 4;
+          drawOneOrbital(defs[idx], cx, cy, scale, res);
+          ctx.fillStyle = COLORS.text;
+          ctx.font = FONT_SM;
+          ctx.textAlign = 'center';
+          ctx.fillText(defs[idx].label, cx, cy + scale + 14);
         }
+      } else {
+        const colW = W / count;
+        const res = count <= 3 ? 32 : 24;
+        const scale = count === 1 ? 150 : (count <= 3 ? 110 : 75);
 
-        // Label
-        ctx.fillStyle = COLORS.text;
-        ctx.font = count <= 3 ? FONT_LG : FONT_SM;
-        ctx.textAlign = 'center';
-        ctx.fillText(def.label, cx, H - 10);
+        for (let idx = 0; idx < count; idx++) {
+          const cx = colW * (idx + 0.5);
+          const cy = H / 2 - 12;
+          drawOneOrbital(defs[idx], cx, cy, scale, res);
+          ctx.fillStyle = COLORS.text;
+          ctx.font = count <= 3 ? FONT_LG : FONT_SM;
+          ctx.textAlign = 'center';
+          ctx.fillText(defs[idx].label, cx, H - 10);
+        }
       }
 
-      // Instruction text
       ctx.fillStyle = COLORS.textDim;
       ctx.font = FONT_SM;
       ctx.textAlign = 'left';
@@ -17870,7 +17884,14 @@ function initCh14Vis() {
       activeAnimations['vis-orbitals-3d'] = requestAnimationFrame(animateOrbitals);
     }
 
-    if (orbSelect) orbSelect.addEventListener('change', drawOrbitals);
+    orbBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        orbBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentOrbital = btn.dataset.orbital;
+        drawOrbitals();
+      });
+    });
     animateOrbitals();
   }
 
