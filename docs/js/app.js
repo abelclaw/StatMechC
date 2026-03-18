@@ -13523,178 +13523,163 @@ function initCh11Vis() {
     function drawLambert() {
       const thetaDeg = parseFloat(lambertSlider?.value || 0);
       const theta = thetaDeg * Math.PI / 180;
+      const cosTheta = Math.cos(theta);
       clearCanvas(ctxL, WL, HL);
 
-      // Layout: left side shows the emitting surface + radiation lobe,
-      // right side shows the distant observer receiving projected flux
-      const cx = WL * 0.35, cy = HL * 0.55;  // center of the emitting surface
-      const surfLen = 120;  // half-length of surface line
-      const lobeR = 100;    // max radius of the cosine lobe
+      // Detector position
+      const detCx = lbSurfCx + lbDetDist * Math.sin(theta);
+      const detCy = lbSurfY - lbDetDist * Math.cos(theta);
+      const detDx = Math.cos(theta) * lbDetHalf, detDy = Math.sin(theta) * lbDetHalf;
+      const d1x = detCx - detDx, d1y = detCy - detDy;
+      const d2x = detCx + detDx, d2y = detCy + detDy;
 
-      // --- Draw emitting surface ---
-      ctxL.strokeStyle = COLORS.text;
-      ctxL.lineWidth = 3;
-      ctxL.beginPath();
-      ctxL.moveTo(cx - surfLen, cy);
-      ctxL.lineTo(cx + surfLen, cy);
-      ctxL.stroke();
+      // --- Normal (dashed) ---
+      ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
+      ctxL.setLineDash([5, 4]);
+      ctxL.beginPath(); ctxL.moveTo(lbSurfCx, lbSurfY); ctxL.lineTo(lbSurfCx, lbSurfY - lbDetDist - 20); ctxL.stroke();
+      ctxL.setLineDash([]);
+      ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
+      ctxL.fillText('n\u0302', lbSurfCx + 4, lbSurfY - lbDetDist - 10);
 
-      // Hatch marks below surface
-      ctxL.strokeStyle = COLORS.textDim;
-      ctxL.lineWidth = 1;
-      for (let i = -surfLen + 8; i <= surfLen - 8; i += 12) {
-        ctxL.beginPath();
-        ctxL.moveTo(cx + i, cy);
-        ctxL.lineTo(cx + i - 6, cy + 10);
-        ctxL.stroke();
+      // --- Theta arc ---
+      if (thetaDeg > 2) {
+        const arcR = 44;
+        ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 1.5;
+        ctxL.beginPath(); ctxL.arc(lbSurfCx, lbSurfY, arcR, -Math.PI / 2, -Math.PI / 2 + theta, false); ctxL.stroke();
+        const la = -Math.PI / 2 + theta / 2;
+        ctxL.fillStyle = COLORS.orange; ctxL.font = '15px Inter, system-ui, sans-serif';
+        ctxL.textAlign = 'center'; ctxL.textBaseline = 'middle';
+        ctxL.fillText('\u03B8', lbSurfCx + (arcR + 13) * Math.cos(la), lbSurfY + (arcR + 13) * Math.sin(la));
+        ctxL.textBaseline = 'alphabetic';
       }
 
-      // Surface label
-      ctxL.fillStyle = COLORS.textDim;
-      ctxL.font = FONT_SM;
-      ctxL.textAlign = 'center';
-      ctxL.fillText('emitting surface', cx, cy + 28);
-
-      // --- Draw surface normal (dashed) ---
-      ctxL.strokeStyle = COLORS.textDim;
-      ctxL.lineWidth = 1;
-      ctxL.setLineDash([5, 4]);
-      ctxL.beginPath();
-      ctxL.moveTo(cx, cy);
-      ctxL.lineTo(cx, cy - lobeR - 40);
-      ctxL.stroke();
+      // --- Faint line surface to detector ---
+      ctxL.strokeStyle = 'rgba(255,255,255,0.08)'; ctxL.lineWidth = 1;
+      ctxL.setLineDash([3, 5]);
+      ctxL.beginPath(); ctxL.moveTo(lbSurfCx, lbSurfY); ctxL.lineTo(detCx, detCy); ctxL.stroke();
       ctxL.setLineDash([]);
 
-      // Normal label
-      ctxL.fillStyle = COLORS.textDim;
-      ctxL.font = FONT_SM;
-      ctxL.textAlign = 'left';
-      ctxL.fillText('normal', cx + 4, cy - lobeR - 30);
+      // --- Emitting surface ---
+      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 3;
+      ctxL.beginPath(); ctxL.moveTo(lbSurfCx - lbSurfHalf, lbSurfY); ctxL.lineTo(lbSurfCx + lbSurfHalf, lbSurfY); ctxL.stroke();
+      ctxL.shadowColor = 'rgba(255,160,40,0.35)'; ctxL.shadowBlur = 10;
+      ctxL.strokeStyle = 'rgba(255,160,40,0.5)'; ctxL.lineWidth = 2;
+      ctxL.beginPath(); ctxL.moveTo(lbSurfCx - lbSurfHalf, lbSurfY); ctxL.lineTo(lbSurfCx + lbSurfHalf, lbSurfY); ctxL.stroke();
+      ctxL.shadowBlur = 0;
+      ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
+      for (let i = -lbSurfHalf + 5; i <= lbSurfHalf - 5; i += 9) {
+        ctxL.beginPath(); ctxL.moveTo(lbSurfCx + i, lbSurfY + 1); ctxL.lineTo(lbSurfCx + i - 4, lbSurfY + 8); ctxL.stroke();
+      }
+      ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
+      ctxL.fillText('blackbody surface', lbSurfCx, lbSurfY + 20);
 
-      // --- Draw cos(theta) emission lobe ---
-      ctxL.strokeStyle = COLORS.blue;
-      ctxL.lineWidth = 1.5;
-      ctxL.globalAlpha = 0.25;
-      ctxL.fillStyle = COLORS.blue;
+      // --- Detector window ---
+      ctxL.strokeStyle = COLORS.cyan; ctxL.lineWidth = 3;
+      ctxL.beginPath(); ctxL.moveTo(d1x, d1y); ctxL.lineTo(d2x, d2y); ctxL.stroke();
+      const capL = 5, capNx = -Math.sin(theta) * capL, capNy = Math.cos(theta) * capL;
+      ctxL.lineWidth = 2;
       ctxL.beginPath();
-      for (let a = -Math.PI / 2; a <= Math.PI / 2; a += 0.02) {
-        const r = lobeR * Math.cos(a);
-        const px = cx + r * Math.sin(a);
-        const py = cy - r * Math.cos(a);
+      ctxL.moveTo(d1x + capNx, d1y + capNy); ctxL.lineTo(d1x - capNx, d1y - capNy);
+      ctxL.moveTo(d2x + capNx, d2y + capNy); ctxL.lineTo(d2x - capNx, d2y - capNy);
+      ctxL.stroke();
+      ctxL.fillStyle = COLORS.cyan; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
+      ctxL.fillText('detector', detCx + (lbDetHalf + 10) * Math.cos(theta), detCy + (lbDetHalf + 10) * Math.sin(theta));
+
+      // --- Emit photons ---
+      lbEmitAccum += LB_EMIT_RATE;
+      while (lbEmitAccum >= 1 && lbPhotons.length < LB_MAX) { lbPhotons.push(lbEmit()); lbEmitAccum -= 1; }
+      if (lbEmitAccum >= 1) lbEmitAccum = 0;
+
+      // --- Update photons ---
+      for (let i = lbPhotons.length - 1; i >= 0; i--) {
+        const p = lbPhotons[i];
+        if (!p.alive) continue;
+        p.x += p.vx; p.y += p.vy; p.age++;
+        if (!p.hit && lbPtSeg(p.x, p.y, d1x, d1y, d2x, d2y) < 4) { p.hit = true; p.alive = false; }
+        if (p.x < -10 || p.x > WL + 10 || p.y < -10 || p.y > HL + 10 || p.age > 280) p.alive = false;
+      }
+      for (let i = lbPhotons.length - 1; i >= 0; i--) {
+        if (!lbPhotons[i].alive && lbPhotons[i].age > (lbPhotons[i].hit ? 15 : 0)) lbPhotons.splice(i, 1);
+      }
+
+      // --- Draw photons ---
+      for (const p of lbPhotons) {
+        const alpha = p.hit ? Math.max(0, 1 - p.age * 0.06) : Math.min(0.85, Math.max(0, 1 - p.age / 220));
+        if (alpha <= 0) continue;
+        if (p.hit) {
+          ctxL.globalAlpha = alpha * 0.5; ctxL.fillStyle = COLORS.cyan;
+          ctxL.beginPath(); ctxL.arc(p.x, p.y, 6, 0, Math.PI * 2); ctxL.fill();
+          ctxL.globalAlpha = alpha; ctxL.fillStyle = '#fff';
+          ctxL.beginPath(); ctxL.arc(p.x, p.y, 2, 0, Math.PI * 2); ctxL.fill();
+        } else {
+          ctxL.globalAlpha = alpha; ctxL.fillStyle = COLORS.yellow;
+          ctxL.beginPath(); ctxL.arc(p.x, p.y, 1.8, 0, Math.PI * 2); ctxL.fill();
+        }
+      }
+      ctxL.globalAlpha = 1.0;
+
+      // --- Right panel: cos theta lobe ---
+      const plotCx = WL * 0.80, plotCy = HL * 0.45, plotR = 60;
+      ctxL.globalAlpha = 0.12; ctxL.fillStyle = COLORS.blue;
+      ctxL.beginPath();
+      for (let a = -Math.PI / 2; a <= Math.PI / 2; a += 0.03) {
+        const r = plotR * Math.cos(a);
+        const px = plotCx + r * Math.sin(a), py = plotCy - r * Math.cos(a);
         a === -Math.PI / 2 ? ctxL.moveTo(px, py) : ctxL.lineTo(px, py);
       }
-      ctxL.closePath();
-      ctxL.fill();
+      ctxL.closePath(); ctxL.fill();
+      ctxL.globalAlpha = 0.4; ctxL.strokeStyle = COLORS.blue; ctxL.lineWidth = 1; ctxL.stroke();
       ctxL.globalAlpha = 1.0;
-      ctxL.stroke();
-
-      // --- Draw the direction arrow at angle theta ---
-      const arrowLen = lobeR * Math.cos(theta) + 20;
-      const dirX = cx + arrowLen * Math.sin(theta);
-      const dirY = cy - arrowLen * Math.cos(theta);
-
-      ctxL.strokeStyle = COLORS.orange;
-      ctxL.lineWidth = 2.5;
-      drawArrow(ctxL, cx, cy, dirX, dirY, 10);
-
-      // --- Draw theta arc ---
-      if (thetaDeg > 2) {
-        const arcR = 35;
-        ctxL.strokeStyle = COLORS.orange;
-        ctxL.lineWidth = 1.5;
-        ctxL.beginPath();
-        // arc from normal (up = -PI/2) to direction
-        ctxL.arc(cx, cy, arcR, -Math.PI / 2, -Math.PI / 2 + theta, false);
-        ctxL.stroke();
-
-        // theta label
-        const labelAngle = -Math.PI / 2 + theta / 2;
-        ctxL.fillStyle = COLORS.orange;
-        ctxL.font = FONT;
-        ctxL.textAlign = 'center';
-        ctxL.fillText('\u03B8', cx + (arcR + 14) * Math.cos(labelAngle), cy + (arcR + 14) * Math.sin(labelAngle) + 4);
-      }
-
-      // --- Right side: projected area visualization ---
-      const rx = WL * 0.75, ry = HL * 0.38;
-      const stripW = 80, stripH = 14;
-
-      // Full area (top)
-      ctxL.fillStyle = COLORS.blue;
-      ctxL.globalAlpha = 0.5;
-      ctxL.fillRect(rx - stripW / 2, ry - 50, stripW, stripH);
-      ctxL.globalAlpha = 1.0;
-      ctxL.strokeStyle = COLORS.blue;
-      ctxL.lineWidth = 1;
-      ctxL.strokeRect(rx - stripW / 2, ry - 50, stripW, stripH);
-
-      ctxL.fillStyle = COLORS.text;
-      ctxL.font = FONT;
-      ctxL.textAlign = 'center';
-      ctxL.fillText('Area A (face-on)', rx, ry - 56);
-
-      // Projected area (below)
-      const projW = stripW * Math.cos(theta);
+      ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
+      ctxL.beginPath(); ctxL.moveTo(plotCx - plotR - 8, plotCy); ctxL.lineTo(plotCx + plotR + 8, plotCy); ctxL.stroke();
+      const lobeV = plotR * cosTheta;
+      const arX = plotCx + lobeV * Math.sin(theta), arY = plotCy - lobeV * Math.cos(theta);
+      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2;
+      drawArrow(ctxL, plotCx, plotCy, arX, arY, 7);
       ctxL.fillStyle = COLORS.orange;
-      ctxL.globalAlpha = 0.5;
-      ctxL.fillRect(rx - projW / 2, ry + 10, projW, stripH);
-      ctxL.globalAlpha = 1.0;
-      ctxL.strokeStyle = COLORS.orange;
-      ctxL.lineWidth = 1;
-      ctxL.strokeRect(rx - projW / 2, ry + 10, projW, stripH);
+      ctxL.beginPath(); ctxL.arc(arX, arY, 3, 0, Math.PI * 2); ctxL.fill();
+      ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
+      ctxL.fillText('I(\u03B8) \u221D cos \u03B8', plotCx, plotCy + 18);
 
-      ctxL.fillStyle = COLORS.text;
-      ctxL.font = FONT;
-      ctxL.textAlign = 'center';
-      ctxL.fillText('Projected: A cos \u03B8', rx, ry + 38);
+      // --- Flux bar ---
+      const barX = WL * 0.64, barY2 = 24, barW = WL * 0.32, barH2 = 18;
+      ctxL.fillStyle = COLORS.text; ctxL.font = FONT; ctxL.textAlign = 'left';
+      ctxL.fillText('Relative flux through detector', barX, barY2 - 2);
+      ctxL.fillStyle = 'rgba(255,255,255,0.07)'; ctxL.fillRect(barX, barY2 + 4, barW, barH2);
+      const bGrad = ctxL.createLinearGradient(barX, 0, barX + barW * cosTheta, 0);
+      bGrad.addColorStop(0, COLORS.cyan); bGrad.addColorStop(1, COLORS.blue);
+      ctxL.fillStyle = bGrad; ctxL.fillRect(barX, barY2 + 4, barW * cosTheta, barH2);
+      ctxL.strokeStyle = COLORS.axis; ctxL.lineWidth = 1; ctxL.strokeRect(barX, barY2 + 4, barW, barH2);
+      ctxL.fillStyle = COLORS.text; ctxL.font = FONT_LG; ctxL.fillText((cosTheta * 100).toFixed(0) + '%', barX + barW + 6, barY2 + 18);
 
-      // --- cos(theta) value display ---
-      const cosVal = Math.cos(theta);
-      ctxL.fillStyle = COLORS.orange;
-      ctxL.font = FONT_LG;
-      ctxL.textAlign = 'center';
-      ctxL.fillText('cos \u03B8 = ' + cosVal.toFixed(3), rx, ry + 62);
+      // --- Projected width comparison ---
+      const pwY = HL * 0.72, pwX = WL * 0.62, fullW = 80;
+      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2;
+      ctxL.beginPath(); ctxL.moveTo(pwX, pwY); ctxL.lineTo(pwX + fullW, pwY); ctxL.stroke();
+      ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
+      ctxL.fillText('surface width', pwX + fullW + 6, pwY + 4);
+      ctxL.strokeStyle = COLORS.cyan;
+      ctxL.beginPath(); ctxL.moveTo(pwX, pwY + 16); ctxL.lineTo(pwX + fullW * cosTheta, pwY + 16); ctxL.stroke();
+      ctxL.fillStyle = COLORS.textDim;
+      ctxL.fillText('as seen by detector (\u00d7cos\u03b8)', pwX + fullW + 6, pwY + 20);
+      ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_LG; ctxL.textAlign = 'left';
+      ctxL.fillText('cos ' + thetaDeg + '\u00b0 = ' + cosTheta.toFixed(3), pwX, pwY + 46);
 
-      // --- Flux bar chart at bottom right ---
-      const barX = WL * 0.58, barY = HL * 0.72;
-      const barMaxW = WL * 0.35, barH = 18;
-
-      // Full flux bar
-      ctxL.fillStyle = COLORS.blue;
-      ctxL.globalAlpha = 0.6;
-      ctxL.fillRect(barX, barY, barMaxW, barH);
-      ctxL.globalAlpha = 1.0;
-
-      ctxL.fillStyle = COLORS.text;
-      ctxL.font = FONT_SM;
-      ctxL.textAlign = 'left';
-      ctxL.fillText('Full flux (normal)', barX, barY - 4);
-
-      // Projected flux bar
-      const projBarW = barMaxW * cosVal;
-      ctxL.fillStyle = COLORS.orange;
-      ctxL.globalAlpha = 0.6;
-      ctxL.fillRect(barX, barY + barH + 10, projBarW, barH);
-      ctxL.globalAlpha = 1.0;
-
-      ctxL.fillStyle = COLORS.text;
-      ctxL.font = FONT_SM;
-      ctxL.fillText('Flux at \u03B8 = ' + thetaDeg + '\u00B0  (\u00D7' + cosVal.toFixed(2) + ')', barX, barY + barH + 6);
-
-      // Title
-      ctxL.fillStyle = COLORS.text;
-      ctxL.font = FONT_LG;
-      ctxL.textAlign = 'left';
+      // --- Title ---
+      ctxL.fillStyle = COLORS.text; ctxL.font = FONT_LG; ctxL.textAlign = 'left';
       ctxL.fillText("Lambert's Cosine Law", 10, 18);
 
-      ctxL.fillStyle = COLORS.textDim;
-      ctxL.font = FONT_SM;
-      ctxL.fillText('Emission intensity \u221D cos \u03B8', 10, 34);
-
+      // --- Update displays ---
       document.getElementById('lambert-theta-val')?.replaceChildren(document.createTextNode(thetaDeg.toFixed(0)));
+      document.getElementById('lambert-cos-val')?.replaceChildren(document.createTextNode(cosTheta.toFixed(3)));
+      document.getElementById('lambert-flux-val')?.replaceChildren(document.createTextNode((cosTheta * 100).toFixed(0)));
     }
 
-    // replaced below
+    function animateLambert() {
+      drawLambert();
+      activeAnimations['lambert'] = requestAnimationFrame(animateLambert);
+    }
+    animateLambert();
   }
 
   // ----- Debye Model Heat Capacity -----
