@@ -293,10 +293,10 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 <div class="interactive-container">
   <h3>Interactive: Momentum Distribution</h3>
   <div class="vis-controls">
-    <label>T / T<sub>c</sub>: <input type="range" id="bec-momentum-temp" min="0" max="2.0" step="0.01" value="1.5"> <span class="slider-value" id="bec-momentum-temp-val">1.50</span></label>
+    <label>T / T<sub>c</sub>: <input type="range" id="bec-momentum-temp" min="0.01" max="2.0" step="0.01" value="1.5"> <span class="slider-value" id="bec-momentum-temp-val">1.50</span></label>
   </div>
-  <canvas id="vis-bec-momentum" width="600" height="420"></canvas>
-  <p class="vis-caption">Drag the temperature slider to see how the momentum-space density evolves. Above $T_c$, the distribution is a smooth thermal (Gaussian) profile. Below $T_c$, a sharp peak emerges at zero momentum &mdash; the Bose-Einstein condensate. Compare with Figure 7 above.</p>
+  <canvas id="vis-bec-momentum" width="600" height="400"></canvas>
+  <p class="vis-caption">Side-by-side comparison: Maxwell-Boltzmann statistics (left) vs Bose-Einstein statistics (right) at the same temperature. Lower the temperature below $T_c$ to see the sharp condensate peak emerge in the BE distribution while the MB distribution remains a smooth Gaussian. Compare with the experimental images in Figure 7.</p>
 </div>
 
 <p>In this figure, from Wieman and Cornell's group at the JILA laboratory in Boulder, we see the distribution of atoms in the BEC at different temperatures. The critical temperature is $T_c \approx 170\,\text{nK}$. Above this temperature (left), the distribution is pretty smooth, consistent with a Maxwell-Boltzmann velocity distribution. Below the critical temperature you can clearly see the higher density corresponding to an anomalously large occupancy of the ground state, consistent with expectations from a BEC. The right image shows the BEC at even lower temperature, where the occupancy is even higher. Direct observation of thermodynamic properties of the system, such as the energy density and heat capacity (particularly by Ketterle's group at MIT), further confirmed that this system was a BEC.</p>
