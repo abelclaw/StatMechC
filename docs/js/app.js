@@ -23107,6 +23107,11 @@ function initCh14Vis() {
       bbNodeVolts = {}; bbNodeVolts[groundNode] = 0;
       for (var i = 0; i < N; i++) bbNodeVolts[nodeNames[i]] = x[i];
       for (var n in nodeSet) bbNodeVolts[n] = bbNodeVolts[root(n)] || 0;
+      // Extract voltage source currents and store on LED parts
+      for (var k = 0; k < M; k++) {
+        var vs = vSources[k], p = bbParts[vs.pi];
+        if (p.type === 'LED') p._ledCurrent = x[N + k];
+      }
       for (var i = 0; i < bbParts.length; i++) {
         var p = bbParts[i];
         if (p.type === 'CAPACITOR') bbCapVolts[p.id] = (bbNodeVolts[root(holeNode(p.holes[0].row, p.holes[0].col))]||0) - (bbNodeVolts[root(holeNode(p.holes[1].row, p.holes[1].col))]||0);
@@ -23137,7 +23142,13 @@ function initCh14Vis() {
           if (p.type === 'LED') {
             var v0 = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0;
             var v1 = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0;
-            p._ledOn = (v0 - v1) > 1.0;
+            if (p._ledOn) {
+              // Already on: check if current is sufficient (> 1mA) and forward
+              p._ledOn = (p._ledCurrent || 0) > 0.001;
+            } else {
+              // Off: check if open-circuit voltage would turn it on
+              p._ledOn = (v0 - v1) > 1.8;
+            }
           }
         }
         bbSolve();
