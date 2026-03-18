@@ -15852,7 +15852,7 @@ function initCh12Vis() {
         return Math.min(1, 1 / Z);
       }
 
-      // Helper: get per-level occupations for BE
+      // Helper: get per-state occupations for BE (divided by degeneracy → monotonic)
       function getBEOccupations(tScaled) {
         if (tScaled < 0.001) return [{eps: 0, occ: N, mult: 1}];
         const betaEps = 1.0 / (tScaled * N23);
@@ -15862,13 +15862,13 @@ function initCh12Vis() {
         for (let j = 0; j < Math.min(excitedEnergies.length, 9); j++) {
           const [eps, mult] = excitedEnergies[j];
           const arg = betaEps * eps - mu * betaEps;
-          const occ = arg > 30 ? 0 : mult / (Math.exp(arg) - 1);
+          const occ = arg > 30 ? 0 : 1 / (Math.exp(arg) - 1);
           levels.push({eps, occ: Math.max(0, occ), mult});
         }
         return levels;
       }
 
-      // Helper: get per-level occupations for MB
+      // Helper: get per-state occupations for MB (divided by degeneracy → monotonic)
       function getMBOccupations(tScaled) {
         if (tScaled < 0.001) return [{eps: 0, occ: N, mult: 1}];
         const betaEps = 1.0 / (tScaled * N23);
@@ -15879,12 +15879,12 @@ function initCh12Vis() {
           if (arg > 30) break;
           Z += mult * Math.exp(-arg);
         }
-        // MB: <n_i> = N * g_i * exp(-beta*eps_i) / Z
-        const levels = [{eps: 0, occ: N * groundMult / Z, mult: groundMult}];
+        // MB per-state: <n> = N * exp(-beta*eps) / Z
+        const levels = [{eps: 0, occ: N / Z, mult: groundMult}];
         for (let j = 0; j < Math.min(excitedEnergies.length, 9); j++) {
           const [eps, mult] = excitedEnergies[j];
           const arg = betaEps * eps;
-          const occ = arg > 30 ? 0 : N * mult * Math.exp(-arg) / Z;
+          const occ = arg > 30 ? 0 : N * Math.exp(-arg) / Z;
           levels.push({eps, occ: Math.max(0, occ), mult});
         }
         return levels;
@@ -15997,7 +15997,7 @@ function initCh12Vis() {
 
       // Title
       ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_LG; ctxBE.textAlign = 'left';
-      ctxBE.fillText('Occupation \u27E8N\u1D62\u27E9', bx, by - 12);
+      ctxBE.fillText('Per-state \u27E8n\u27E9', bx, by - 12);
 
       // Find max occupation across both for scaling
       let maxOcc = 1;
@@ -16009,7 +16009,7 @@ function initCh12Vis() {
       // Y-axis label
       ctxBE.save(); ctxBE.translate(bx - 25, by + bh / 2); ctxBE.rotate(-Math.PI / 2);
       ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
-      ctxBE.fillText('\u27E8N\u1D62\u27E9', 0, 0); ctxBE.restore();
+      ctxBE.fillText('\u27E8n\u27E9', 0, 0); ctxBE.restore();
 
       // Y-axis ticks
       ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'right';
