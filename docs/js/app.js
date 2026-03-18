@@ -66,11 +66,15 @@ async function navigateTo(id) {
   location.hash = id;
   window.scrollTo(0, 0);
 
-  if (window.renderMathInElement && target) {
-    renderMathInElement(target, katexOptions);
-  }
-
   initChapterVisualizations(id);
+
+  if (window.renderMathInElement && target) {
+    try {
+      renderMathInElement(target, katexOptions);
+    } catch (e) {
+      console.error('KaTeX error in', id, e);
+    }
+  }
 }
 
 // ===== CHAPTER TABLE OF CONTENTS =====
@@ -13125,9 +13129,8 @@ function initCh10Vis() {
 // =============================================================================
 function initCh11Vis() {
   const c = document.getElementById('vis-blackbody');
-  if (!c) { console.error('CH11: vis-blackbody not found'); return; }
+  if (!c) return;
   const { ctx, W, H } = setupCanvas(c);
-  console.log('CH11 blackbody canvas:', W, 'x', H);
 
   const tempSlider = document.getElementById('bb-temp');
 
@@ -13160,9 +13163,7 @@ function initCh11Vis() {
   }
 
   function draw() {
-    try {
     const T = parseFloat(tempSlider?.value || 5000);
-    console.log('CH11 draw: T=', T, 'W=', W, 'H=', H);
     clearCanvas(ctx, W, H);
 
     const ox = 65, oy = 30;
