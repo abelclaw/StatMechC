@@ -11727,12 +11727,12 @@ function initCh9Vis() {
           // Liquid point
           var px = ox + (nl / 3.5) * pw;
           if (px >= ox && px <= ox + pw) {
-            ctxCS.beginPath(); ctxCS.arc(px, py, 3, 0, 2 * Math.PI); ctxCS.fill();
+            ctxCS.beginPath(); ctxCS.arc(px, py, 2, 0, 2 * Math.PI); ctxCS.fill();
           }
           // Gas point
           px = ox + (ng / 3.5) * pw;
           if (px >= ox && px <= ox + pw) {
-            ctxCS.beginPath(); ctxCS.arc(px, py, 3, 0, 2 * Math.PI); ctxCS.fill();
+            ctxCS.beginPath(); ctxCS.arc(px, py, 2, 0, 2 * Math.PI); ctxCS.fill();
           }
         });
       });
