@@ -87,7 +87,8 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 </div>
 
 <figure>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 684 340" style="max-width:700px;width:100%;display:block;margin:0 auto;font-family:sans-serif;">
+<div id="vis-periodic-table" style="max-width:750px;margin:0 auto;position:relative;"></div>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 0 0" style="display:none;">
 <style>
 .pt1s{fill:#f4a6a0}.pt1p{fill:#a0c4f4}.pt1d{fill:#a0d8a0}.pt1f{fill:#f4cfa0}
 .pt1sym{font-size:6.5px;font-weight:bold;text-anchor:middle;fill:#222}
@@ -316,13 +317,10 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>We're almost back to statistical mechanics. The final concept from chemistry we need to understand is how to think about solids. Every element or compound forms a solid when cold enough. But these solids can have very different forms and properties depending on what the constituent atoms or molecules are. Almost all solids can be characterized as molecular, ionic, covalent-network or metallic:</p>
 
-<figure>
-<img src="images/14-Semiconductors_p7_img0.png" alt="Molecular solid (CO2)">
-<img src="images/14-Semiconductors_p7_img1.png" alt="Ionic solid (NaCl)">
-<img src="images/14-Semiconductors_p7_img2.png" alt="Covalent network solid (diamond)">
-<img src="images/14-Semiconductors_p7_img3.png" alt="Metallic solid (gold)">
-<figcaption>Figure 7. Different types of solids: molecular (e.g. CO$_2$), ionic (e.g. NaCl), covalent network (e.g. diamond), and metallic (e.g. gold).</figcaption>
-</figure>
+<div class="interactive-container">
+<canvas id="vis-solid-types" width="700" height="500"></canvas>
+<p class="vis-caption">Figure 7. Four types of solids: molecular (CO$_2$), ionic (NaCl), covalent network (diamond), and metallic (gold). Drag to rotate each structure.</p>
+</div>
 
 <p><strong>Molecular solids:</strong> Molecules that are themselves quite stable, like CO$_2$ or H$_2$O or noble gases, have little interest in sharing electrons. Their solid forms are molecular solids: conglomerations of molecules with some regularity but no exactly periodic lattice structure. The solids are held together by various relatively weak attractive interactions, such as hydrogen bonds, dipole-dipole interactions, or dispersive forces. Ice is a molecular solid.</p>
 
@@ -491,13 +489,13 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>The analog quantum mechanics problem is a series of $N$ particles-in-a-box or potential wells. When two wells with energies $\epsilon_0$ are brought together, we get one eigenstate with lower energy and one with higher energy $\epsilon_\pm = \epsilon_0 \pm \Delta$. When three wells are brought together, the lowest energy lowers more, the highest energy raises more, the energies are roughly $\epsilon_0 - 1.5\Delta$, $\epsilon_0$, $\epsilon_0 + 1.5\Delta$ and so on.</p>
 
 <div class="interactive-container">
-<canvas id="vis-band-splitting" width="600" height="350"></canvas>
+<canvas id="vis-band-splitting" width="700" height="420"></canvas>
 <div class="slider-container">
 <label for="band-n-atoms">Number of atoms $N$:</label>
-<input type="range" id="band-n-atoms" min="1" max="20" step="1" value="1">
+<input type="range" id="band-n-atoms" min="1" max="30" step="1" value="1">
 <span class="slider-value" id="band-n-atoms-val">1</span>
 </div>
-<p class="vis-caption">Figure 9. As atoms come together, discrete energy levels split into bands of $N$ closely-spaced levels.</p>
+<p class="vis-caption">Figure 9. As atoms come together (left to right), discrete energy levels split into bands of $N$ closely-spaced levels following the tight-binding dispersion $\epsilon_k = \epsilon_0 - 2t\cos\!\left(\frac{k\pi}{N+1}\right)$. The hopping parameter $t$ grows as the interatomic distance shrinks.</p>
 </div>
 
 <p>The discrete energy levels turn into bands. Half of each band comprises bonding orbitals with energies below the energy $\epsilon_0$ of the isolated atom. The other half of each band comprises the antibonding orbitals with energies greater than $\epsilon_0$. Every energy level is 2-fold degenerate because of the two electron spins. So if there are $N$ atoms, there are $2N$ energy levels in each band. The number of bands is set by the number of original orbitals.</p>
@@ -508,7 +506,12 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <h4>Interactive: Band Filling in 3rd-Row Metals</h4>
 <canvas id="vis-band-filling-3rd" width="700" height="400"></canvas>
 <div class="controls">
-<label>Element: <select id="bf3-element"><option value="Na">Na (1 valence e⁻)</option><option value="Mg">Mg (2 valence e⁻)</option><option value="Al">Al (3 valence e⁻)</option><option value="Si">Si (4 valence e⁻)</option></select></label>
+<div class="button-group" id="bf3-element-buttons">
+<button class="control-btn active" data-value="Na">Na (1 valence e⁻)</button>
+<button class="control-btn" data-value="Mg">Mg (2 valence e⁻)</button>
+<button class="control-btn" data-value="Al">Al (3 valence e⁻)</button>
+<button class="control-btn" data-value="Si">Si (4 valence e⁻)</button>
+</div>
 </div>
 <figcaption>Figure 10. Bands of metals on the 3rd row. Each atom contributes valence electrons that fill the bands from the bottom. The Fermi level sits within a band for conductors (Na, Mg, Al) but at a band edge for Si.</figcaption>
 </div>
