@@ -13492,38 +13492,37 @@ function initCh11Vis() {
     const ctxL = lam.ctx, WL = lam.W, HL = lam.H;
     const lambertSlider = document.getElementById('lambert-theta');
 
-    // --- Cavity geometry ---
-    // Box on the left with an aperture at the top
-    const boxL = 20, boxR = 190, boxT = HL * 0.42, boxB = HL - 30;
-    const boxW = boxR - boxL, boxH = boxB - boxT;
-    const aperL = 78, aperR = 132; // aperture x-range (gap in top wall)
-    const aperCx = (aperL + aperR) / 2, aperY = boxT;
-    const aperHalf = (aperR - aperL) / 2;
+    // --- Cavity geometry (squarish box, bottom-left) ---
+    const boxSz = 150;
+    const boxL = 15, boxR = boxL + boxSz;
+    const boxB = HL - 20, boxT = boxB - boxSz;
+    const aperHalf = 22;
+    const aperCx = (boxL + boxR) / 2;
+    const aperL = aperCx - aperHalf, aperR = aperCx + aperHalf;
+    const aperY = boxT;
 
-    // --- Detector geometry ---
-    const detDist = 175; // distance from aperture center to detector
-    const detHalfLen = 40;
+    // --- Detector ---
+    const detDist = 165;
+    const detHalfLen = 38;
 
     // --- Particles ---
-    const LB_MAX_INSIDE = 50;  // particles bouncing inside
-    const LB_MAX_OUTSIDE = 80; // escaped particles in flight
-    const insideParticles = [];
-    const outsideParticles = [];
+    const LB_MAX_INSIDE = 60;
+    const LB_MAX_OUTSIDE = 120;
+    const insideP = [];
+    const outsideP = [];
 
-    // Initialize cavity particles
     function spawnInside() {
-      const speed = 1.2 + Math.random() * 1.5;
+      const speed = 1.0 + Math.random() * 1.8;
       const ang = Math.random() * Math.PI * 2;
       return {
-        x: boxL + 15 + Math.random() * (boxW - 30),
-        y: boxT + 15 + Math.random() * (boxH - 30),
-        vx: Math.cos(ang) * speed,
-        vy: Math.sin(ang) * speed,
+        x: boxL + 8 + Math.random() * (boxSz - 16),
+        y: boxT + 8 + Math.random() * (boxSz - 16),
+        vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
       };
     }
-    for (let i = 0; i < LB_MAX_INSIDE; i++) insideParticles.push(spawnInside());
+    for (let i = 0; i < LB_MAX_INSIDE; i++) insideP.push(spawnInside());
 
-    function lbPtSeg(px, py, ax, ay, bx, by) {
+    function ptSegDist(px, py, ax, ay, bx, by) {
       const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
       if (len2 === 0) return Math.hypot(px - ax, py - ay);
       const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
@@ -13536,121 +13535,98 @@ function initCh11Vis() {
       const cosTheta = Math.cos(theta);
       clearCanvas(ctxL, WL, HL);
 
-      // --- Detector position ---
+      // Detector position
       const detCx = aperCx + detDist * Math.sin(theta);
       const detCy = aperY - detDist * Math.cos(theta);
-      const detDx = Math.cos(theta) * detHalfLen, detDy = Math.sin(theta) * detHalfLen;
-      const d1x = detCx - detDx, d1y = detCy - detDy;
-      const d2x = detCx + detDx, d2y = detCy + detDy;
+      const ddx = Math.cos(theta) * detHalfLen, ddy = Math.sin(theta) * detHalfLen;
+      const d1x = detCx - ddx, d1y = detCy - ddy;
+      const d2x = detCx + ddx, d2y = detCy + ddy;
 
       // === UPDATE INSIDE PARTICLES ===
-      for (const p of insideParticles) {
+      for (const p of insideP) {
         p.x += p.vx; p.y += p.vy;
-
-        // Wall bounces
         if (p.x <= boxL + 2) { p.x = boxL + 2; p.vx = Math.abs(p.vx); }
         if (p.x >= boxR - 2) { p.x = boxR - 2; p.vx = -Math.abs(p.vx); }
         if (p.y >= boxB - 2) { p.y = boxB - 2; p.vy = -Math.abs(p.vy); }
-
-        // Top wall bounce (except through the aperture)
         if (p.y <= boxT + 2 && p.vy < 0) {
           if (p.x < aperL || p.x > aperR) {
-            // Hit solid wall, bounce
             p.y = boxT + 2; p.vy = Math.abs(p.vy);
           } else {
-            // Escape through aperture!
+            // Escape through aperture
             const speed = Math.hypot(p.vx, p.vy);
-            // Pick a random upward direction for escaped photon
-            const escAng = (Math.random() - 0.5) * Math.PI; // -90 to +90
-            outsideParticles.push({
+            const escAng = (Math.random() - 0.5) * Math.PI;
+            outsideP.push({
               x: p.x, y: aperY - 2,
-              vx: Math.sin(escAng) * speed,
-              vy: -Math.cos(escAng) * speed,
+              vx: Math.sin(escAng) * speed, vy: -Math.cos(escAng) * speed,
               alive: true, age: 0, hit: false,
             });
-            // Respawn inside
             const sp = spawnInside();
             p.x = sp.x; p.y = sp.y; p.vx = sp.vx; p.vy = sp.vy;
           }
         }
       }
-
-      // Trim outside particles if too many
-      while (outsideParticles.length > LB_MAX_OUTSIDE) outsideParticles.shift();
+      while (outsideP.length > LB_MAX_OUTSIDE) outsideP.shift();
 
       // === UPDATE OUTSIDE PARTICLES ===
-      for (let i = outsideParticles.length - 1; i >= 0; i--) {
-        const p = outsideParticles[i];
+      for (let i = outsideP.length - 1; i >= 0; i--) {
+        const p = outsideP[i];
         if (!p.alive) continue;
         p.x += p.vx; p.y += p.vy; p.age++;
-        // Detector hit check
-        if (!p.hit && lbPtSeg(p.x, p.y, d1x, d1y, d2x, d2y) < 4) {
-          p.hit = true; p.alive = false;
-        }
-        // Off-screen
+        if (!p.hit && ptSegDist(p.x, p.y, d1x, d1y, d2x, d2y) < 4) { p.hit = true; p.alive = false; }
         if (p.x < -10 || p.x > WL + 10 || p.y < -30 || p.age > 300) p.alive = false;
       }
-      // Cleanup
-      for (let i = outsideParticles.length - 1; i >= 0; i--) {
-        if (!outsideParticles[i].alive && outsideParticles[i].age > (outsideParticles[i].hit ? 18 : 0)) {
-          outsideParticles.splice(i, 1);
-        }
+      for (let i = outsideP.length - 1; i >= 0; i--) {
+        if (!outsideP[i].alive && outsideP[i].age > (outsideP[i].hit ? 18 : 0)) outsideP.splice(i, 1);
       }
 
       // === DRAW CAVITY ===
-      // Warm interior glow
-      const glow = ctxL.createRadialGradient(aperCx, boxT + boxH * 0.5, 10, aperCx, boxT + boxH * 0.5, boxH * 0.7);
-      glow.addColorStop(0, 'rgba(255, 120, 40, 0.10)');
-      glow.addColorStop(1, 'rgba(255, 80, 20, 0.02)');
+      // Warm glow
+      const glow = ctxL.createRadialGradient(aperCx, boxT + boxSz * 0.5, 5, aperCx, boxT + boxSz * 0.5, boxSz * 0.6);
+      glow.addColorStop(0, 'rgba(255,120,40,0.12)');
+      glow.addColorStop(1, 'rgba(255,80,20,0.02)');
       ctxL.fillStyle = glow;
-      ctxL.fillRect(boxL, boxT, boxW, boxH);
+      ctxL.fillRect(boxL, boxT, boxSz, boxSz);
 
-      // Cavity walls
+      // Walls
       ctxL.strokeStyle = COLORS.text; ctxL.lineWidth = 2.5;
       ctxL.beginPath();
-      // Left wall
       ctxL.moveTo(boxL, boxT); ctxL.lineTo(boxL, boxB);
-      // Bottom wall
-      ctxL.lineTo(boxR, boxB);
-      // Right wall
-      ctxL.lineTo(boxR, boxT);
-      // Top wall with gap (aperture)
+      ctxL.lineTo(boxR, boxB); ctxL.lineTo(boxR, boxT);
       ctxL.moveTo(boxR, boxT); ctxL.lineTo(aperR, boxT);
       ctxL.moveTo(aperL, boxT); ctxL.lineTo(boxL, boxT);
       ctxL.stroke();
 
-      // Aperture highlight
-      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 3;
+      // Aperture ticks
+      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2.5;
       ctxL.beginPath();
-      ctxL.moveTo(aperL, boxT); ctxL.lineTo(aperL, boxT - 6);
-      ctxL.moveTo(aperR, boxT); ctxL.lineTo(aperR, boxT - 6);
+      ctxL.moveTo(aperL, boxT); ctxL.lineTo(aperL, boxT - 5);
+      ctxL.moveTo(aperR, boxT); ctxL.lineTo(aperR, boxT - 5);
       ctxL.stroke();
 
-      // Labels
+      // Cavity label
       ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
-      ctxL.fillText('cavity', aperCx, boxB - 8);
-      ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_SM;
-      ctxL.fillText('aperture', aperCx, boxT - 10);
+      ctxL.fillText('cavity (T)', aperCx, boxB - 6);
 
-      // --- Draw inside particles ---
+      // Inside particles
       ctxL.fillStyle = COLORS.yellow;
-      for (const p of insideParticles) {
+      for (const p of insideP) {
         ctxL.globalAlpha = 0.8;
         ctxL.beginPath(); ctxL.arc(p.x, p.y, 2, 0, Math.PI * 2); ctxL.fill();
       }
       ctxL.globalAlpha = 1.0;
 
-      // --- Normal line (dashed, from aperture upward) ---
+      // === GEOMETRY LINES ===
+      // Normal (dashed)
       ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
       ctxL.setLineDash([5, 4]);
-      ctxL.beginPath(); ctxL.moveTo(aperCx, aperY); ctxL.lineTo(aperCx, aperY - detDist - 15); ctxL.stroke();
+      ctxL.beginPath(); ctxL.moveTo(aperCx, aperY); ctxL.lineTo(aperCx, aperY - detDist - 12); ctxL.stroke();
       ctxL.setLineDash([]);
       ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
-      ctxL.fillText('n\u0302', aperCx + 4, aperY - detDist - 6);
+      ctxL.fillText('n\u0302', aperCx + 3, aperY - detDist - 4);
 
-      // --- Theta arc ---
+      // Theta arc
       if (thetaDeg > 2) {
-        const arcR = 36;
+        const arcR = 32;
         ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 1.5;
         ctxL.beginPath(); ctxL.arc(aperCx, aperY, arcR, -Math.PI / 2, -Math.PI / 2 + theta, false); ctxL.stroke();
         const la = -Math.PI / 2 + theta / 2;
@@ -13660,16 +13636,16 @@ function initCh11Vis() {
         ctxL.textBaseline = 'alphabetic';
       }
 
-      // --- Faint line aperture to detector ---
+      // Faint guideline to detector
       ctxL.strokeStyle = 'rgba(255,255,255,0.06)'; ctxL.lineWidth = 1;
       ctxL.setLineDash([3, 5]);
       ctxL.beginPath(); ctxL.moveTo(aperCx, aperY); ctxL.lineTo(detCx, detCy); ctxL.stroke();
       ctxL.setLineDash([]);
 
-      // --- Detector window ---
+      // === DETECTOR ===
       ctxL.strokeStyle = COLORS.cyan; ctxL.lineWidth = 3;
       ctxL.beginPath(); ctxL.moveTo(d1x, d1y); ctxL.lineTo(d2x, d2y); ctxL.stroke();
-      const capSz = 5, cnx = -Math.sin(theta) * capSz, cny = Math.cos(theta) * capSz;
+      const cs = 5, cnx = -Math.sin(theta) * cs, cny = Math.cos(theta) * cs;
       ctxL.lineWidth = 2;
       ctxL.beginPath();
       ctxL.moveTo(d1x + cnx, d1y + cny); ctxL.lineTo(d1x - cnx, d1y - cny);
@@ -13678,8 +13654,8 @@ function initCh11Vis() {
       ctxL.fillStyle = COLORS.cyan; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
       ctxL.fillText('detector', detCx + (detHalfLen + 8) * Math.cos(theta), detCy + (detHalfLen + 8) * Math.sin(theta));
 
-      // --- Draw outside particles ---
-      for (const p of outsideParticles) {
+      // === OUTSIDE PARTICLES ===
+      for (const p of outsideP) {
         const alpha = p.hit ? Math.max(0, 1 - p.age * 0.055) : Math.min(0.85, Math.max(0, 1 - p.age / 250));
         if (alpha <= 0) continue;
         if (p.hit) {
@@ -13708,10 +13684,8 @@ function initCh11Vis() {
       ctxL.closePath(); ctxL.fill();
       ctxL.globalAlpha = 0.4; ctxL.strokeStyle = COLORS.blue; ctxL.lineWidth = 1; ctxL.stroke();
       ctxL.globalAlpha = 1.0;
-      // Base line
       ctxL.strokeStyle = COLORS.textDim; ctxL.lineWidth = 1;
       ctxL.beginPath(); ctxL.moveTo(plotCx - plotR - 6, plotCy); ctxL.lineTo(plotCx + plotR + 6, plotCy); ctxL.stroke();
-      // Arrow at theta
       const lv = plotR * cosTheta;
       const arX = plotCx + lv * Math.sin(theta), arY = plotCy - lv * Math.cos(theta);
       ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2;
@@ -13733,30 +13707,28 @@ function initCh11Vis() {
       ctxL.fillStyle = COLORS.text; ctxL.font = FONT_LG;
       ctxL.fillText((cosTheta * 100).toFixed(0) + '%', barX + barW + 6, barY + 16);
 
-      // --- Aperture projection diagram ---
-      const apDiagX = WL * 0.42, apDiagY = HL * 0.60;
-      const apW = 70;
-      // Full aperture width
+      // --- Projected aperture width ---
+      const apX = WL * 0.42, apY = HL * 0.58;
+      const apW = 60;
       ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2;
-      ctxL.beginPath(); ctxL.moveTo(apDiagX, apDiagY); ctxL.lineTo(apDiagX + apW, apDiagY); ctxL.stroke();
+      ctxL.beginPath(); ctxL.moveTo(apX, apY); ctxL.lineTo(apX + apW, apY); ctxL.stroke();
       ctxL.fillStyle = COLORS.textDim; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
-      ctxL.fillText('aperture width', apDiagX + apW + 6, apDiagY + 4);
-      // Projected
-      const projApW = apW * cosTheta;
+      ctxL.fillText('aperture width', apX + apW + 6, apY + 4);
+      const pW = apW * cosTheta;
       ctxL.strokeStyle = COLORS.cyan; ctxL.lineWidth = 2;
-      ctxL.beginPath(); ctxL.moveTo(apDiagX, apDiagY + 18); ctxL.lineTo(apDiagX + projApW, apDiagY + 18); ctxL.stroke();
+      ctxL.beginPath(); ctxL.moveTo(apX, apY + 18); ctxL.lineTo(apX + pW, apY + 18); ctxL.stroke();
       ctxL.fillStyle = COLORS.textDim;
-      ctxL.fillText('seen by detector (\u00d7 cos \u03B8)', apDiagX + apW + 6, apDiagY + 22);
+      ctxL.fillText('as seen by detector (\u00d7 cos \u03B8)', apX + apW + 6, apY + 22);
 
       // cos theta readout
       ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_LG;
-      ctxL.fillText('cos ' + thetaDeg + '\u00b0 = ' + cosTheta.toFixed(3), apDiagX, apDiagY + 48);
+      ctxL.fillText('cos ' + thetaDeg + '\u00b0 = ' + cosTheta.toFixed(3), apX, apY + 48);
 
       // --- Title ---
       ctxL.fillStyle = COLORS.text; ctxL.font = FONT_LG; ctxL.textAlign = 'left';
       ctxL.fillText("Lambert's Cosine Law", 10, 18);
 
-      // --- Update HTML displays ---
+      // --- Update HTML ---
       document.getElementById('lambert-theta-val')?.replaceChildren(document.createTextNode(thetaDeg.toFixed(0)));
       document.getElementById('lambert-cos-val')?.replaceChildren(document.createTextNode(cosTheta.toFixed(3)));
       document.getElementById('lambert-flux-val')?.replaceChildren(document.createTextNode((cosTheta * 100).toFixed(0)));
