@@ -23460,18 +23460,6 @@ function initCh14Vis() {
 
     function bbClear() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbWireColorIdx = 0; bbAnimRunning = false; }
     function bbDesc(html) { var el = document.getElementById('bb-description'); if (el) el.innerHTML = html; }
-    function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); bbDesc('<b>LED Circuit.</b> The simplest circuit: 9V battery \u2192 470\u03A9 resistor \u2192 LED \u2192 ground. The resistor limits current to about 15mA so the LED doesn\u2019t burn out. Try clicking the resistor to change its value \u2014 higher resistance means less current and a dimmer LED. Without the resistor, the LED would draw too much current and destroy itself.'); }
-    function bbPresetSwitch() {
-      // Simple: Battery → Switch → Resistor → LED → GND
-      bbClear(); bbShowCurrent = true;
-      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
-      bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'});
-      bbAddPart('SWITCH',[{row:'a',col:5},{row:'a',col:10}],{on:false});
-      bbAddPart('RESISTOR',[{row:'b',col:10},{row:'b',col:15}],{value:470});
-      bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]);
-      bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>Switch Circuit.</b> A simple on/off switch in series with a resistor and LED. Close the switch (click it) to complete the circuit and light the LED. Open it to break the circuit. This is how a light switch works in your house \u2014 it just connects or disconnects the wire.');
-    }
     function bbPresetAstable() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
@@ -23566,24 +23554,6 @@ function initCh14Vis() {
     }
 
     // ---- RC CHARGE/DISCHARGE: switch charges cap, LED shows discharge ----
-    function bbPresetRC() {
-      bbClear(); bbShowCurrent = true;
-      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
-      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
-      // Charging: VCC -> switch -> R(1k) -> cap+ (col 13) -> cap- (col 18) -> GND
-      bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
-      bbAddPart('SWITCH',[{row:'a',col:4},{row:'a',col:8}],{on:false});
-      bbAddPart('RESISTOR',[{row:'b',col:8},{row:'b',col:13}],{value:1000});
-      bbAddPart('CAPACITOR',[{row:'a',col:13},{row:'a',col:18}],{value:470e-6});
-      bbAddPart('WIRE',[{row:'b',col:18},{row:'r-t',col:18}],{color:'#1e88e5'});
-      // Discharge: cap+ (col 13) -> R(470) -> LED -> GND
-      bbAddPart('RESISTOR',[{row:'d',col:13},{row:'d',col:18}],{value:470});
-      bbAddPart('LED',[{row:'e',col:18},{row:'e',col:22}]);
-      bbAddPart('WIRE',[{row:'d',col:22},{row:'r-t',col:22}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>RC Charge/Discharge.</b> Close the switch to charge the 470\u00B5F capacitor through the 1k\u03A9 resistor (RC = 0.47s). A discharge path through a 470\u03A9 resistor and LED is always connected. While charging, current splits between the cap and the LED. Open the switch and watch the cap discharge through the LED. The time constant \u03C4 = RC determines how fast the voltage rises and falls \u2014 try changing R or C values.');
-    }
-
-    // ---- DARLINGTON PAIR: two NPN cascaded for extreme gain ----
     function bbPresetDarlington() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
@@ -23610,23 +23580,6 @@ function initCh14Vis() {
     }
 
     // ---- VOLTAGE DIVIDER: two resistors split VCC, LED shows midpoint ----
-    function bbPresetDivider() {
-      bbClear(); bbShowCurrent = true;
-      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
-      // R1 (top): VCC → midpoint (col 12). Starts at 1kΩ.
-      bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'});
-      bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:12}],{value:1000});
-      // R2 (bottom): midpoint → GND. Starts at 4.7kΩ (unequal to make it interesting).
-      bbAddPart('RESISTOR',[{row:'b',col:12},{row:'b',col:19}],{value:4700});
-      bbAddPart('WIRE',[{row:'c',col:19},{row:'r-t',col:19}],{color:'#1e88e5'});
-      // LED + resistor from midpoint to GND — acts as a voltage indicator
-      bbAddPart('WIRE',[{row:'c',col:12},{row:'f',col:12}],{color:'#43a047'}); // midpoint down to bottom half
-      bbAddPart('RESISTOR',[{row:'f',col:12},{row:'f',col:17}],{value:470});
-      bbAddPart('LED',[{row:'g',col:17},{row:'g',col:22}]);
-      bbAddPart('WIRE',[{row:'h',col:22},{row:'r-b',col:22}],{color:'#1e88e5'});
-      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>Voltage Divider.</b> V<sub>mid</sub> = V<sub>CC</sub> \u00D7 R<sub>2</sub> / (R<sub>1</sub> + R<sub>2</sub>). With R<sub>1</sub>=1k\u03A9 and R<sub>2</sub>=4.7k\u03A9, the midpoint should be 9 \u00D7 4.7/5.7 \u2248 7.4V. <b>Hover over the midpoint (column 12) to check.</b> The LED below lights up because 7.4V is well above its 1.8V threshold. Now <b>click R<sub>1</sub> (top resistor) to increase it</b> \u2014 watch the midpoint voltage drop. Keep clicking until the LED turns off. You\u2019ve just learned how every transistor bias circuit works: two resistors set the base voltage.');
-    }
 
     // ---- EMITTER FOLLOWER: NPN voltage follower, output tracks input minus VBE ----
     function bbPresetFollower() {
@@ -23653,14 +23606,10 @@ function initCh14Vis() {
       bbRunSim(); bbDesc('<b>Emitter Follower.</b> The base is biased at ~4.5V by a voltage divider. The collector connects directly to VCC (no load resistor). The output is taken from the emitter, which follows the base voltage minus one V<sub>BE</sub> drop (0.7V). Hover over the base and emitter holes to compare: V<sub>emitter</sub> \u2248 V<sub>base</sub> \u2212 0.7V. This circuit is a buffer \u2014 it doesn\u2019t amplify voltage but can supply much more current than the input.');
     }
 
-    document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
-    document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
     document.getElementById('bb-preset-not')?.addEventListener('click', bbPresetNOT);
     document.getElementById('bb-preset-nand')?.addEventListener('click', bbPresetNAND);
-    document.getElementById('bb-preset-rc')?.addEventListener('click', bbPresetRC);
     document.getElementById('bb-preset-darlington')?.addEventListener('click', bbPresetDarlington);
     document.getElementById('bb-preset-astable')?.addEventListener('click', bbPresetAstable);
-    document.getElementById('bb-preset-divider')?.addEventListener('click', bbPresetDivider);
     document.getElementById('bb-preset-follower')?.addEventListener('click', bbPresetFollower);
 
     var bbAnimRunning = false;
