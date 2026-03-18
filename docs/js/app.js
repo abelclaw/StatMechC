@@ -24631,11 +24631,11 @@ function initCh15Vis() {
     const fateSlider = document.getElementById('fate-mass');
 
     const phases = [
-      {name: 'Brown Dwarf', range: [0, 0.08], color: '#795548', fate: 'Slowly cools forever', desc: 'Too low mass for H fusion'},
-      {name: 'Red Dwarf', range: [0.08, 0.5], color: COLORS.red, fate: 'White dwarf (He)', desc: 'Burns H slowly for trillions of years'},
-      {name: 'Sun-like', range: [0.5, 8], color: COLORS.yellow, fate: 'White dwarf (C/O)', desc: 'Main sequence → Red giant → Planetary nebula'},
-      {name: 'Massive', range: [8, 25], color: COLORS.blue, fate: 'Neutron star', desc: 'Supergiant → Core-collapse supernova'},
-      {name: 'Very Massive', range: [25, 50], color: COLORS.purple, fate: 'Black hole', desc: 'Supergiant → Hypernova or direct collapse'}
+      {name: 'Brown Dwarf', range: [0, 0.08], color: '#795548', fate: 'Slowly cools forever', desc: 'Too low mass for H fusion', abundance: '~6% of star-like objects', metallicity: 'Varies (reflects birth cloud)'},
+      {name: 'Red Dwarf', range: [0.08, 0.5], color: COLORS.red, fate: 'White dwarf (He)', desc: 'Burns H slowly for trillions of years', abundance: '~73% of all stars', metallicity: 'Low to moderate (all generations present)'},
+      {name: 'Sun-like', range: [0.5, 8], color: COLORS.yellow, fate: 'White dwarf (C/O)', desc: 'Main sequence → Red giant → Planetary nebula', abundance: '~20% of all stars', metallicity: 'Low to high (Pop I and II)'},
+      {name: 'Massive', range: [8, 25], color: COLORS.blue, fate: 'Neutron star', desc: 'Supergiant → Core-collapse supernova', abundance: '~0.1% of all stars', metallicity: 'Typically high (young Pop I stars)'},
+      {name: 'Very Massive', range: [25, 50], color: COLORS.purple, fate: 'Black hole', desc: 'Supergiant → Hypernova or direct collapse', abundance: '<0.01% of all stars', metallicity: 'High (Pop I) or very low (Pop III)'}
     ];
 
     // Log-scale slider: map 0-1000 → 0.08-50 M☉ logarithmically
@@ -24698,10 +24698,14 @@ function initCh15Vis() {
       ctxF.fillText('Evolution: ' + current.desc, ox, infoY + 25);
       ctxF.fillStyle = COLORS.green; ctxF.font = FONT;
       ctxF.fillText('Final fate: ' + current.fate, ox, infoY + 50);
+      ctxF.fillStyle = COLORS.cyan || '#4dd0e1'; ctxF.font = FONT;
+      ctxF.fillText('Abundance: ' + current.abundance, ox, infoY + 75);
+      ctxF.fillStyle = COLORS.textDim; ctxF.font = FONT;
+      ctxF.fillText('Metallicity: ' + current.metallicity, ox, infoY + 100);
 
       // Key thresholds
       ctxF.fillStyle = COLORS.textDim; ctxF.font = FONT_SM;
-      ctxF.fillText('Key thresholds:  0.08 M☉ (H fusion)  |  0.5 M☉ (He flash)  |  8 M☉ (supernova)  |  ~25 M☉ (black hole)', ox, infoY + 80);
+      ctxF.fillText('Key thresholds:  0.08 M☉ (H fusion)  |  0.5 M☉ (He flash)  |  8 M☉ (supernova)  |  ~25 M☉ (black hole)', ox, infoY + 130);
 
       document.getElementById('fate-mass-val')?.replaceChildren(document.createTextNode(M < 1 ? M.toFixed(2) : M.toFixed(1)));
     }
@@ -26145,18 +26149,19 @@ function initCh15Vis() {
 
       // Draw horizon stars (back to front = largest first)
       horizonStars.sort((a, b) => b.rPx - a.rPx);
+      let nextLabelY = 30; // track occupied vertical space to avoid overlapping labels
       for (const h of horizonStars) {
         drawHorizon(h.s, h.sx, h.sy, h.rPx, camX, scale);
-        // Label near the visible surface
         const [cr, cg, cb] = tempToRGB(h.s.T);
         const col = 'rgb(' + Math.round(cr*255) + ',' + Math.round(cg*255) + ',' + Math.round(cb*255) + ')';
         const surfaceY = h.sy - h.rPx;
-        const labelY = Math.max(surfaceY + 25, 30);
+        const labelY = Math.max(surfaceY + 25, nextLabelY);
         if (labelY < HS - 20) {
           ctxS.fillStyle = col; ctxS.font = FONT; ctxS.textAlign = 'center';
           ctxS.fillText(h.s.name + ' (surface)', Math.max(80, Math.min(WS - 80, h.sx)), labelY);
           ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
           ctxS.fillText(h.s.R + ' R\u2609 \u00b7 ' + h.s.type + ' \u00b7 ' + h.s.cat, Math.max(80, Math.min(WS - 80, h.sx)), labelY + 16);
+          nextLabelY = labelY + 36;
         }
       }
 
