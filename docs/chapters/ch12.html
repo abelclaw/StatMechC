@@ -180,20 +180,19 @@ $$\langle N_1 \rangle = \frac{1}{e^{\beta(\epsilon_1 - \mu)} - 1} = \frac{1}{e^{
 
 <p>For different $N$ the curve shifts, but looks qualitatively the same. After a little fiddling (inspired by the analytic result below), we see that if we plot the ground state occupancy as a function of $\frac{k_BT}{N^{2/3}\epsilon_1}$ the result is essentially independent of $N$ for the Bose-Einstein case:</p>
 
-<div class="interactive-container">
-  <div class="vis-controls" style="margin-bottom:8px; display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
-    <button id="nground-toggle" style="padding:4px 14px; border-radius:4px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#e8ecf1; cursor:pointer; font-size:13px;">Show scaled (T/T<sub>c</sub>)</button>
-    <span style="color:rgba(255,255,255,0.35); font-size:12px;">|</span>
-    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n10" checked> N=10</label>
-    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n50" checked> N=50</label>
-    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n100" checked> N=100</label>
-    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n500" checked> N=500</label>
-    <label style="font-size:12px; color:#e8ecf1;"><input type="checkbox" id="nground-n1000" checked> N=1000</label>
-    <span style="color:rgba(255,255,255,0.35); font-size:12px;">|</span>
-    <label style="font-size:12px; color:#e8ecf1;">Custom N: <input type="number" id="nground-custom" min="5" max="5000" step="1" placeholder="e.g. 200" style="width:70px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:#e8ecf1; border-radius:3px; padding:2px 4px; font-size:12px;"></label>
-  </div>
+<div class="interactive-wrapper">
+  <h4>Interactive: Ground State Occupancy for Different N</h4>
   <canvas id="vis-bec-nground" width="600" height="420"></canvas>
-  <p class="vis-caption">Figure 4. Ground state occupancy $N_0/N$ for different system sizes. Toggle between raw ($kT/\epsilon_1$) and scaled ($kT/N^{2/3}\epsilon_1$) axes to see all curves collapse onto the thermodynamic limit $N_0/N = 1 - (T/T_c)^{3/2}$.</p>
+  <div class="controls">
+    <button id="nground-toggle">Show scaled (T/T<sub>c</sub>)</button>
+    <label><input type="checkbox" id="nground-n10" checked> N=10</label>
+    <label><input type="checkbox" id="nground-n50" checked> N=50</label>
+    <label><input type="checkbox" id="nground-n100" checked> N=100</label>
+    <label><input type="checkbox" id="nground-n500" checked> N=500</label>
+    <label><input type="checkbox" id="nground-n1000" checked> N=1000</label>
+    <label>Custom N: <input type="number" id="nground-custom" min="5" max="5000" step="1" placeholder="e.g. 200" style="width:70px;"></label>
+  </div>
+  <figcaption>Ground state occupancy $N_0/N$ for different system sizes. Toggle between raw ($kT/\epsilon_1$) and scaled ($kT/N^{2/3}\epsilon_1$) axes to see all curves collapse onto the thermodynamic limit $N_0/N = 1 - (T/T_c)^{3/2}$.</figcaption>
 </div>
 
 <p>The kink in the graph, at around $T_c \approx 0.8\frac{N^{2/3}\epsilon_1}{k_B}$ indicates the phase transition. Above this temperature, the ground state is basically empty, having only its fair share of particles. Below this temperature, $\langle N_\text{ground}\rangle$ starts growing linearly with $T$. The rescaling of our numerical result from the left to the right plot indicates that the critical temperature $T_c$ scales like $N^{2/3}$, a result that we will next confirm analytically.</p>

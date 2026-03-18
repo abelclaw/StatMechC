@@ -15083,7 +15083,7 @@ function initCh12Vis() {
       const tMaxR = 2.5 * Tc;
       const curve = [];
 
-      if (N <= 120) {
+      if (N <= 200) {
         // Exact 3D box numerical bisection
         const nMax = Math.min(Math.max(Math.ceil(Math.pow(N, 1/3) * 4), 12), 25);
         const exc = ngEnergyLevels(nMax);
