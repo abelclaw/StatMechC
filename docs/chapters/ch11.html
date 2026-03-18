@@ -422,7 +422,7 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
 
 <!-- INTERACTIVE: Stellar Blackbody Spectra -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">&#11088;</span> Interactive: Stellar Blackbody Spectra</div>
+  <div class="vis-header"><span class="vis-icon">&#11088;</span> Interactive: Blackbody Spectra of Hot Objects</div>
   <div style="display:flex;align-items:stretch;min-height:340px;background:var(--bg-alt,#0f1923)">
     <div style="flex:1;min-width:0">
       <div class="vis-canvas-wrap" style="height:100%"><canvas id="vis-stellar-bb" width="600" height="340"></canvas></div>
@@ -436,19 +436,17 @@ $$\frac{E}{V} = \frac{4\sigma}{c}\,T^4$$
     </div>
   </div>
   <div class="vis-controls">
-    <label>Star: <select id="stellar-select">
-      <option value="betelgeuse">Betelgeuse</option>
-      <option value="antares">Antares</option>
-      <option value="aldebaran">Aldebaran</option>
-      <option value="sun" selected>Sun</option>
-      <option value="procyon">Procyon</option>
-      <option value="sirius">Sirius</option>
-      <option value="vega">Vega</option>
-      <option value="rigel">Rigel</option>
-      <option value="spica">Spica</option>
+    <label>Object: <select id="stellar-select">
+      <option value="lava">Lava (1200 K)</option>
+      <option value="candle">Candle Flame (1800 K)</option>
+      <option value="bulb">Incandescent Bulb (2700 K)</option>
+      <option value="betelgeuse">Betelgeuse (3500 K)</option>
+      <option value="sun" selected>Sun (5778 K)</option>
+      <option value="sirius">Sirius (9940 K)</option>
+      <option value="rigel">Rigel (12100 K)</option>
     </select></label>
   </div>
-  <figcaption style="padding:8px 16px;font-size:0.82rem;color:rgba(255,255,255,0.5)">Figure 5. The blackbody spectrum of different stars. The shaded rainbow band marks the visible range (380&ndash;700 nm). Cooler stars like Betelgeuse peak in the infrared and appear red; the Sun peaks near 500 nm in the visible; hot stars like Rigel and Spica peak in the ultraviolet and appear blue-white.</figcaption>
+  <figcaption style="padding:8px 16px;font-size:0.82rem;color:rgba(255,255,255,0.5)">Figure 5. The blackbody spectrum of various hot objects. The shaded rainbow band marks the visible range (380&ndash;700 nm). Cooler objects like lava and candle flames peak in the infrared and glow red-orange; the Sun peaks near 500 nm in the visible; hot stars like Rigel peak in the ultraviolet and appear blue-white.</figcaption>
 </div>
 
 <div class="info-box example">

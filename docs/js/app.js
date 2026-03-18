@@ -15078,21 +15078,21 @@ function initCh12Vis() {
     // Compute N0/N vs kT/eps1 for a given N
     function ngCompute(N) {
       if (ngCache.has(N)) return ngCache.get(N);
-      const nPts = 200;
+      const nPts = 600;
       const Tc = TC_C * Math.pow(N, 2/3);
       const tMaxR = 2.5 * Tc;
       const curve = [];
 
       if (N <= 120) {
         // Exact 3D box numerical bisection
-        const nMax = Math.min(Math.max(Math.ceil(Math.pow(N, 1/3) * 3), 8), 20);
+        const nMax = Math.min(Math.max(Math.ceil(Math.pow(N, 1/3) * 4), 12), 25);
         const exc = ngEnergyLevels(nMax);
         for (let i = 0; i <= nPts; i++) {
           const tR = (i / nPts) * tMaxR;
           if (tR < 0.01) { curve.push({ tRaw: tR, frac: 1 }); continue; }
           const bE = 1.0 / tR;
-          let muLo = -50 * tR, muHi = -1e-6;
-          for (let it = 0; it < 60; it++) {
+          let muLo = -50 * tR, muHi = -1e-8;
+          for (let it = 0; it < 80; it++) {
             const mu = (muLo + muHi) / 2;
             let Ns = 0;
             for (let j = 0; j < exc.length; j++) {
