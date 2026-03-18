@@ -26179,12 +26179,19 @@ function initCh15Vis() {
         const labelAbove = v.sy - v.rPx - 10;
         if (labelAbove > 8 && v.sx > -30 && v.sx < WS + 30) {
           ctxS.textAlign = 'center';
+          // Category above name
+          if (v.rPx > 6 || isHover) {
+            ctxS.fillStyle = COLORS.textDim; ctxS.font = '10px Inter, system-ui, sans-serif';
+            ctxS.fillText(v.s.cat + ' \u00b7 ' + v.s.type, v.sx, labelAbove - 16);
+          }
+          // Star name
           ctxS.fillStyle = isHover ? '#fff' : 'rgba(255,255,255,0.82)';
           ctxS.font = (isHover || v.rPx > 15) ? FONT : FONT_SM;
           ctxS.fillText(v.s.name, v.sx, labelAbove);
+          // Size below name
           if (v.rPx > 6 || isHover) {
             ctxS.fillStyle = COLORS.textDim; ctxS.font = '10px Inter, system-ui, sans-serif';
-            ctxS.fillText(v.s.R + ' R\u2609 \u00b7 ' + v.s.type, v.sx, labelAbove + 13);
+            ctxS.fillText(v.s.R + ' R\u2609', v.sx, labelAbove + 13);
           }
         }
 
@@ -26207,18 +26214,18 @@ function initCh15Vis() {
           const aw = Math.min(8, v.rPx * 0.15);
           ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + aw, markerY - aw/2); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + aw, markerY + aw/2); ctxS.stroke();
           ctxS.beginPath(); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - aw, markerY - aw/2); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - aw, markerY + aw/2); ctxS.stroke();
-          // Size label — large font with dark pill background
-          const fontSize = Math.max(13, Math.min(18, v.rPx * 0.15));
-          ctxS.font = fontSize + 'px Inter, system-ui, sans-serif';
+          // Size label — larger font with dark pill background
+          const fontSize = Math.max(15, Math.min(22, v.rPx * 0.2));
+          ctxS.font = 'bold ' + fontSize + 'px Inter, system-ui, sans-serif';
           ctxS.textAlign = 'center';
-          const tw = ctxS.measureText(sizeStr).width + 12;
-          const th = fontSize + 6;
-          ctxS.fillStyle = 'rgba(0,0,0,0.75)';
+          const tw = ctxS.measureText(sizeStr).width + 16;
+          const th = fontSize + 10;
+          ctxS.fillStyle = 'rgba(0,0,0,0.82)';
           ctxS.beginPath();
-          ctxS.roundRect(v.sx - tw/2, markerY - th - 2, tw, th, 4);
+          ctxS.roundRect(v.sx - tw/2, markerY - th - 2, tw, th, 5);
           ctxS.fill();
-          ctxS.fillStyle = 'rgba(255,255,200,0.95)';
-          ctxS.fillText(sizeStr, v.sx, markerY - 6);
+          ctxS.fillStyle = 'rgba(255,255,200,1.0)';
+          ctxS.fillText(sizeStr, v.sx, markerY - 7);
         }
       }
 
