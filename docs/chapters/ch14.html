@@ -38,7 +38,8 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>The quantum number $\ell$ gives the shape of the orbital, and $m$ its orientation. We associate letters to $\ell$ values: $\ell = 0$ is the letter $s$, $\ell = 1$ is the letter $p$, $\ell = 2$ is the letter $d$, $\ell = 3$ is the letter $f$. (By the way, these letters originated from properties of associated spectral lines: sharp, principal, diffuse and fundamental.) The $s$ orbitals are spherically symmetric. There is only one $s$ orbital for each $n$ since $2\ell + 1 = 1$ when $\ell = 0$. The $p$ orbitals have two lobes, one with $\psi < 0$ and one with $\psi > 0$. There are three $p$ orbitals for each $n$ since $2\ell + 1 = 3$ when $\ell = 1$. The three $p$ orbitals have different orientations, with the lobes pointing in the $x$, $y$ or $z$ direction. There are five $d$ orbitals and seven $f$ orbitals.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Hydrogen Atom Orbitals</h4>
+<div class="figure-label">Interactive 1: Hydrogen Atom Orbitals</div>
+<p class="vis-caption">Shapes of hydrogen atom orbitals determined by spherical harmonics. Drag to rotate; select orbital type to explore.</p>
 <canvas id="vis-orbitals-3d" width="700" height="420"></canvas>
 <div class="controls">
 <div class="button-group" style="justify-content:center;">
@@ -49,7 +50,7 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <button class="control-btn orbital-btn" data-orbital="g">g (ℓ=4)</button>
 </div>
 </div>
-<figcaption>Figure 1. The shape of hydrogen atom orbitals determined by spherical harmonics $Y_\ell^m(\theta, \varphi)$. The distance from the origin at each angle gives $|Y_\ell^m|$, with color denoting the sign (blue positive, red negative). Drag to rotate; select orbital type to explore different shapes.</figcaption>
+<p class="vis-caption">The distance from the origin at each angle gives $|Y_\ell^m|$, with color denoting the sign (blue positive, red negative).</p>
 </div>
 
 <p>The radial wavefunction is determined mostly by the principal quantum number $n$. For $n = 1$, $R_{10}(r) \sim \exp\left(-\frac{r}{a_0}\right)$ with $a_0 = \frac{\hbar}{m_e c} = 5 \times 10^{-11}\;\text{m}$ the <span class="tooltip-trigger">Bohr radius<span class="tooltip-content">The characteristic size of the hydrogen atom, $a_0 = 5 \times 10^{-11}\;\text{m}$.</span></span>. Thus the size of the hydrogen atom itself is around $a_0$. With $n = 2$, $R_{20}(r) \sim \left(2 - \frac{r}{a_0}\right)\exp\left(-\frac{r}{2a_0}\right)$. So the $n = 2$ wavefunction also dies exponentially, but has a node at $r = 2a_0$ after which it flips sign. In general, the radial dependence looks like $R_{n\ell}(r) \sim \exp\left(-\frac{r}{na_0}\right)$. So for bigger $n$ the orbitals get bigger and bigger, with the atomic radius scaling as $\langle r \rangle \sim na_0$.</p>
@@ -67,7 +68,8 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>To understand the periodic table, we need more than Hund's rule. We have to go beyond the hydrogenic atom spectrum and understand how the electron screening moves the energy levels up and down. It turns out to be very complicated. The energy levels as a function of $Z$ look like:</p>
 
 <div class="interactive-container" style="position:relative;">
-<h3>Interactive: Orbital Energy Levels vs Atomic Number</h3>
+<div class="figure-label">Interactive 2: Orbital Energy Levels vs Atomic Number</div>
+<p class="vis-caption">Energies of orbitals as a function of atomic number, including electron screening effects.</p>
 <canvas id="vis-orbital-energies" width="700" height="450"></canvas>
 <div id="orbital-tooltip" style="display:none;position:absolute;pointer-events:none;background:rgba(15,25,35,0.92);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 10px;font:12px Inter,system-ui,sans-serif;color:#e8ecf1;white-space:nowrap;z-index:10;"></div>
 <div id="orbital-mini-pt" style="margin:8px auto 4px;"></div>
@@ -76,7 +78,7 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <input type="range" id="orbital-z" min="1" max="86" step="1" value="26">
 <span class="slider-value" id="orbital-z-val">26 (Fe)</span>
 </div>
-<p class="vis-caption">Figure 2. Energies of orbitals as a function of atomic number, including electron screening effects. The $3d$ orbitals have energies above $4s$ around $Z = 19$, explaining why potassium fills $4s$ before $3d$. Drag the slider or click the plot to highlight any element.</p>
+<p class="vis-caption">The $3d$ orbitals have energies above $4s$ around $Z = 19$, explaining why potassium fills $4s$ before $3d$. Drag the slider or click the plot to highlight any element.</p>
 </div>
 
 <p>We see a few things from this plot. First of all, there is always a large gap between the $p$ orbitals and the $s$ orbitals in the shell above it. This gap is very important. It makes the elements with filled $p$ orbitals and no extra electrons very stable. Such elements are called the <span class="tooltip-trigger">noble gases<span class="tooltip-content">Elements with completely filled $p$ orbitals (He, Ne, Ar, Kr, Xe, Rn). They are extremely stable and chemically inert.</span></span> and sit at the far right of the periodic table. Note that the noble gases do not have all the orbitals filled for a given $n$, just all the $p$ orbitals filled for a given $n$.</p>
@@ -90,8 +92,9 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 </div>
 
 <figure>
+<div class="figure-label">Interactive 3: Periodic Table of Electron Configurations</div>
+<p class="vis-caption">Interactive periodic table showing electron configurations. Hover over any element to see its full configuration.</p>
 <div id="vis-periodic-table" style="max-width:750px;margin:0 auto;position:relative;"></div>
-<figcaption>Figure 3. Periodic table showing electron configurations. Each cell displays the orbital being filled at that element. Hover over any element to see its full configuration. Each row fills a group of energy levels together, giving the periodicity of the table.</figcaption>
 </figure>
 
 <h3 id="ch14-sec2-3">14.2.3 Molecular orbital theory</h3>
@@ -101,7 +104,8 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>Recall from quantum mechanics that if we have a potential well, there will be a bound state with some energy $\epsilon_0$ and wavefunction $\psi(x)$. If we put two of these wells next to each other, then instead of two states with energy $\epsilon_0$, one state will have energy $\epsilon_- = \epsilon_0 - \Delta$ and the other energy $\epsilon_+ = \epsilon_0 + \Delta$. The state with lower energy is the symmetric combination $\psi_+ = \frac{1}{\sqrt{2}}(\psi_1 + \psi_2)$ and the state with high energy is the antisymmetric combination $\psi_- = \frac{1}{\sqrt{2}}(\psi_1 - \psi_2)$. This is a very generic feature of quantum mechanical systems: when two systems are brought together, their energies will split, with some going lower and some going higher.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Double Well Splitting</h4>
+<div class="figure-label">Interactive 4: Double Well Splitting</div>
+<p class="vis-caption">Bring two potential wells together to see energy levels split into bonding and antibonding states.</p>
 <canvas id="vis-well-splitting" width="700" height="420"></canvas>
 <div class="controls">
 <label>Well separation: <input type="range" id="well-sep" min="-40" max="120" step="1" value="90"><span id="well-sep-val">90</span></label>
@@ -111,13 +115,14 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <option value="psi">Wavefunctions only</option>
 </select></label>
 </div>
-<figcaption>Bring two potential wells together. As they approach, the degenerate energy levels split into bonding ($\psi_+$, lower) and antibonding ($\psi_-$, higher) states with splitting $2\Delta$. Wells can pass through each other.</figcaption>
+<p class="vis-caption">Degenerate energy levels split into bonding ($\psi_+$, lower) and antibonding ($\psi_-$, higher) states with splitting $2\Delta$.</p>
 </div>
 
 <p>The same thing happens when we bring two atoms together. Consider two hydrogen atoms. Each separately has two $1s$ orbitals (the two spin states) with energies $\epsilon_0$. When we bring them together, two states get higher in energy and two get lower in energy, so their new energies are $\epsilon_\pm = \epsilon_0 \pm \Delta$ just like in 1D quantum mechanics. We call the lower energy states the <span class="tooltip-trigger">bonding orbitals<span class="tooltip-content">Molecular orbitals formed from the symmetric combination of atomic orbitals. They have lower energy than the isolated atomic orbitals.</span></span> and the higher energy states the <span class="tooltip-trigger">antibonding orbitals<span class="tooltip-content">Molecular orbitals formed from the antisymmetric combination of atomic orbitals. They have higher energy than the isolated atomic orbitals.</span></span>. This idea of constructing orbitals for the molecules by taking linear combinations of the atomic orbitals is called <span class="tooltip-trigger">molecular orbital theory<span class="tooltip-content">A method for determining the electronic structure of molecules by combining atomic orbitals into molecular bonding and antibonding orbitals.</span></span>. It works pretty well and can explain a lot of chemistry.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Molecular Orbital Diagrams</h4>
+<div class="figure-label">Interactive 5: Molecular Orbital Diagrams</div>
+<p class="vis-caption">Molecular orbital energy diagrams showing how atomic orbitals combine into bonding and antibonding states.</p>
 <canvas id="vis-mo-diagram" width="700" height="380"></canvas>
 <div class="controls">
 <div class="button-group" id="mo-molecule-buttons">
@@ -127,7 +132,7 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <button class="control-btn" data-value="N2">N₂ (triple bond)</button>
 </div>
 </div>
-<figcaption>Figure 5. Molecular orbital energy diagram. Atomic orbitals combine into bonding (lower energy, $\sigma$) and antibonding (higher energy, $\sigma^*$) molecular orbitals. Electrons fill from the bottom up. Select different molecules to compare.</figcaption>
+<p class="vis-caption">Electrons fill from the bottom up. Select different molecules to compare bonding patterns.</p>
 </div>
 
 <p>So for two H atoms, there are 2 total electrons and the energy is lowered if both electrons are shared in the bonding orbitals. This is a <span class="tooltip-trigger">covalent bond<span class="tooltip-content">A chemical bond formed by the sharing of electrons between atoms in bonding molecular orbitals.</span></span>. On the other hand, if we bring two helium atoms together, with a total of 4 electrons, the two bonding orbitals would get filled with two electrons, but then the other two electrons must go into the antibonding orbitals. This is not energetically favorable, so it doesn't happen: He doesn't bond with itself.</p>
@@ -144,7 +149,8 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>When different elements are brought together, the eigenstates are again linear combinations $\psi_+ \sim c_1\psi_1 + c_2\psi_2$ and $\psi_- = c_1\psi_1 - c_2\psi_2$ but the linear combinations are not symmetric ($c_1 \neq c_2$). The bonding orbital will be more like the lower-energy atomic orbital, and the antibonding orbital will be more like the higher-energy atomic orbital (see the right diagram in Fig. 5). Consequently the electrons will be localized close to the element with the lower-energy orbital.</p>
 
 <div class="interactive-container" style="position:relative;">
-<h3>Interactive: Ionization Energies</h3>
+<div class="figure-label">Interactive 6: Ionization Energies</div>
+<p class="vis-caption">First ionization energies of the elements. Noble gases have the highest values; alkali metals the lowest.</p>
 <canvas id="vis-ionization" width="700" height="350"></canvas>
 <div id="ion-tooltip" style="display:none;position:absolute;pointer-events:none;background:rgba(15,25,35,0.92);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 10px;font:12px Inter,system-ui,sans-serif;color:#e8ecf1;white-space:nowrap;z-index:10;"></div>
 <div id="ion-mini-pt" style="margin:8px auto 4px;"></div>
@@ -153,7 +159,7 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <input type="range" id="ion-z-slider" min="1" max="86" step="1" value="14">
 <span class="slider-value" id="ion-z-val">14 (Si)</span>
 </div>
-<p class="vis-caption">Figure 6. First ionization energies of the elements. Noble gases (He, Ne, Ar, etc.) have the highest values; alkali metals (Li, Na, K, etc.) the lowest. Drag the slider or click the plot to highlight any element.</p>
+<p class="vis-caption">Drag the slider or click the plot to highlight any element.</p>
 </div>
 
 <p>We see from this figure that the noble gases have the highest ionization energies so they are the most stable. Elements with one electron above a filled $p$ orbital, namely those in the first column of the periodic table (H and the Alkali metals, Li, Na, K, Rb) have low ionization energies: they want to give up an electron. The valence electrons are very weakly bound to these elements. On the other hand, elements that are one electron short of a filled $p$ orbital (the halogens, F, Cl, Br, I) would become very stable if an electron were added. Their valence electrons are tightly bound and will not be given up easily. These have high ionization energies (but not as high as the noble gases which really really do not want to give up electrons).</p>
@@ -179,8 +185,9 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>We're almost back to statistical mechanics. The final concept from chemistry we need to understand is how to think about solids. Every element or compound forms a solid when cold enough. But these solids can have very different forms and properties depending on what the constituent atoms or molecules are. Almost all solids can be characterized as molecular, ionic, covalent-network or metallic:</p>
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 7: Types of Solids</div>
+<p class="vis-caption">Four types of solids: molecular, ionic, covalent network, and metallic. Drag to rotate each structure.</p>
 <canvas id="vis-solid-types" width="700" height="500"></canvas>
-<p class="vis-caption">Figure 7. Four types of solids: molecular (CO$_2$), ionic (NaCl), covalent network (diamond), and metallic (gold). Drag to rotate each structure.</p>
 </div>
 
 <p><strong>Molecular solids:</strong> Molecules that are themselves quite stable, like CO$_2$ or H$_2$O or noble gases, have little interest in sharing electrons. Their solid forms are molecular solids: conglomerations of molecules with some regularity but no exactly periodic lattice structure. The solids are held together by various relatively weak attractive interactions, such as hydrogen bonds, dipole-dipole interactions, or dispersive forces. Ice is a molecular solid.</p>
@@ -194,6 +201,8 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>Which elements form which type of solids? The noble gases are very stable and have no electron affinities, so they form molecular solids. Atoms which like to form diatomic molecules, such as the halogens (F$_2$, Cl$_2$, Br$_2$), oxygen O$_2$ and nitrogen N$_2$ will also form molecular solids. Carbon forms covalent networks, like diamond, graphite and graphene. Most of the rest of the periodic table have spare valence electrons and low electronegativities so they form elemental metallic solids. Elements on the boundary between metals and non-metals have intermediate properties. These are called <span class="tooltip-trigger">metalloids<span class="tooltip-content">Elements on the boundary between metals and non-metals in the periodic table, including the semiconductors silicon and germanium.</span></span> and include the semiconductors:</p>
 
 <figure>
+<div class="figure-label">Figure 1: Metals, Nonmetals, and Metalloids</div>
+<p class="vis-caption">Periodic table showing the classification of elements as metals, nonmetals, or metalloids.</p>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 320" style="max-width:700px;width:100%;display:block;margin:0 auto;font-family:sans-serif;">
 <style>
 .pt2mt{fill:#b3d9ff}.pt2nm{fill:#ffb3b3}.pt2md{fill:#b3ffb3}
@@ -340,7 +349,7 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <rect x="230" y="303" width="12" height="10" class="pt2nm pt2c"/><text x="246" y="312" style="font-size:9px;fill:#333">Nonmetal</text>
 <rect x="330" y="303" width="12" height="10" class="pt2md pt2c"/><text x="346" y="312" style="font-size:9px;fill:#333">Metalloid</text>
 </svg>
-<figcaption>Figure 8. Metals, non-metals and metalloids in the periodic table. The dashed staircase line marks the boundary between metals and non-metals, with metalloids along the boundary.</figcaption>
+<figcaption>The dashed staircase line marks the boundary between metals and non-metals, with metalloids along the boundary.</figcaption>
 </figure>
 
 <h3 id="ch14-sec2-5">14.2.5 Tight-binding model</h3>
@@ -350,13 +359,15 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>The analog quantum mechanics problem is a series of $N$ particles-in-a-box or potential wells. When two wells with energies $\epsilon_0$ are brought together, we get one eigenstate with lower energy and one with higher energy $\epsilon_\pm = \epsilon_0 \pm \Delta$. When three wells are brought together, the lowest energy lowers more, the highest energy raises more, the energies are roughly $\epsilon_0 - 1.5\Delta$, $\epsilon_0$, $\epsilon_0 + 1.5\Delta$ and so on.</p>
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 8: Band Splitting from Atomic Levels</div>
+<p class="vis-caption">As atoms come together, discrete energy levels split into bands of $N$ closely-spaced levels.</p>
 <canvas id="vis-band-splitting" width="700" height="420"></canvas>
 <div class="slider-container">
 <label for="band-n-atoms">Number of atoms $N$:</label>
 <input type="range" id="band-n-atoms" min="1" max="30" step="1" value="1">
 <span class="slider-value" id="band-n-atoms-val">1</span>
 </div>
-<p class="vis-caption">Figure 9. As atoms come together (left to right), discrete energy levels split into bands of $N$ closely-spaced levels following the tight-binding dispersion $\epsilon_k = \epsilon_0 - 2t\cos\!\left(\frac{k\pi}{N+1}\right)$. The hopping parameter $t$ grows as the interatomic distance shrinks.</p>
+<p class="vis-caption">Tight-binding dispersion $\epsilon_k = \epsilon_0 - 2t\cos\!\left(\frac{k\pi}{N+1}\right)$. The hopping parameter $t$ grows as the interatomic distance shrinks.</p>
 </div>
 
 <p>The discrete energy levels turn into bands. Half of each band comprises bonding orbitals with energies below the energy $\epsilon_0$ of the isolated atom. The other half of each band comprises the antibonding orbitals with energies greater than $\epsilon_0$. Every energy level is 2-fold degenerate because of the two electron spins. So if there are $N$ atoms, there are $2N$ energy levels in each band. The number of bands is set by the number of original orbitals.</p>
@@ -364,7 +375,8 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>For elements above hydrogen, the $2p$ and $2s$ orbitals are not degenerate even for a single molecule (recall Fig. 2). Thus, when the orbitals combine, the center of the bands are offset but the bands may overlap. For example, in sodium: the bands look like</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Band Filling in 3rd-Row Metals</h4>
+<div class="figure-label">Interactive 9: Band Filling in 3rd-Row Metals</div>
+<p class="vis-caption">Band structure of 3rd-row elements showing how valence electrons fill the bands from the bottom.</p>
 <canvas id="vis-band-filling-3rd" width="700" height="400"></canvas>
 <div class="controls">
 <div class="button-group" id="bf3-element-buttons">
@@ -374,7 +386,7 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <button class="control-btn" data-value="Si">Si (4 valence e⁻)</button>
 </div>
 </div>
-<figcaption>Figure 10. Bands of metals on the 3rd row. Each atom contributes valence electrons that fill the bands from the bottom. The Fermi level sits within a band for conductors (Na, Mg, Al) but at a band edge for Si.</figcaption>
+<p class="vis-caption">The Fermi level sits within a band for conductors (Na, Mg, Al) but at a band edge for Si.</p>
 </div>
 
 <p>Sodium is Na $= 1s^2 2s^2 2p^6 3s^1$, so each atom has one valence electron in the $3s$ orbital. When the bands form, the $N$ valence electrons from the $3s^1$ orbitals get distributed over the $N$ energy levels of the bonding band. Thus the $3s$ band is half filled.</p>
@@ -405,13 +417,14 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 <p>Now that we understand the origin of real bands in actual elements, we can start classifying materials. First some more terminology. If the Fermi level is between two bands we call the band above it the <span class="tooltip-trigger">conduction band<span class="tooltip-content">The band of energy levels above the Fermi level (above the band gap). Electrons in the conduction band can move freely and carry current.</span></span> and the band below it the <span class="tooltip-trigger">valence band<span class="tooltip-content">The band of energy levels below the Fermi level (below the band gap). In semiconductors, the valence band is nearly fully occupied.</span></span>. The <span class="tooltip-trigger">bandgap<span class="tooltip-content">The energy difference between the top of the valence band and the bottom of the conduction band. It determines whether a material is a conductor, semiconductor, or insulator.</span></span> is the energy difference between the valence and conduction band. In a metal, the Fermi level is within a band, so the valence and conduction bands overlap. In an insulator there is a big bandgap. A semiconductor is somewhere between an insulator and a conductor: it has a bandgap, typically of order 1 eV.</p>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Band Structure and Thermal Excitation</h4>
+<div class="figure-label">Interactive 10: Band Structure and Thermal Excitation</div>
+<p class="vis-caption">Adjust bandgap and temperature to see how electrons are thermally excited into the conduction band.</p>
 <canvas id="vis-band-compare" width="600" height="400"></canvas>
 <div class="controls">
 <label>Bandgap (eV): <input type="range" id="bc-gap" min="0" max="3" step="0.1" value="1.1"><span id="bc-gap-val">1.1</span></label>
 <label>Temperature (K): <input type="range" id="bc-temp" min="50" max="10000" step="10" value="1500"><span id="bc-temp-val">1500</span></label>
 </div>
-<figcaption>Adjust bandgap and temperature to see how the Fermi-Dirac distribution fills the conduction band. Electrons (filled dots) are thermally excited from the valence band, leaving holes (open circles).</figcaption>
+<p class="vis-caption">Filled dots are thermally excited electrons; open circles are the holes they leave behind.</p>
 </div>
 
 <p>In <span class="tooltip-trigger">intrinsic semiconductors<span class="tooltip-content">A pure semiconductor without any dopants. The Fermi level sits in the middle of the bandgap and the number of electrons equals the number of holes.</span></span>, or insulators, the Fermi level is right in the center of the bandgap. This follows from charge conservation and the symmetry of the Fermi distribution. Charge conservation implies the same total number of electrons and holes (since electron-hole pairs come from real electrons being excited from the valence to conduction band). Recall that the Fermi distribution</p>
@@ -431,12 +444,13 @@ $$f\!\left(\epsilon_F + \tfrac{1}{2}\epsilon_{\text{bg}}\right) = \frac{1}{\exp\
 </div>
 
 <div class="interactive-wrapper">
-<h4>Interactive: Occupation vs Bandgap</h4>
+<div class="figure-label">Interactive 11: Occupation vs Bandgap</div>
+<p class="vis-caption">Probability of finding an electron at the conduction band edge as a function of bandgap energy.</p>
 <canvas id="vis-occupation-bandgap" width="600" height="300"></canvas>
 <div class="controls">
 <label>Temperature: <input type="range" id="occgap-temp" min="100" max="1000" step="50" value="300"><span id="occgap-temp-val">300</span> K</label>
 </div>
-<figcaption>Probability of finding an electron at the bottom of the conduction band as a function of bandgap energy. Key materials (Si, GaAs, diamond, NaCl) are marked. Adjust temperature to see how thermal excitation changes.</figcaption>
+<p class="vis-caption">Key materials (Si, GaAs, diamond, NaCl) are marked. Adjust temperature to see how thermal excitation changes.</p>
 </div>
 
 <p>We see that this function is exponentially falling. For $\epsilon_{\text{bg}} = 1\;\text{eV}$, the base of the conduction band only has a $10^{-9}$ chance of being occupied. At $\epsilon_{\text{bg}} = 2\;\text{eV}$ the probability is already down to $10^{-18}$, and at $\epsilon_{\text{bg}} = 3\;\text{eV}$ it's down to $10^{-27}$. Considering there are of order $N_A \sim 10^{24}$ electrons around, we conclude that for a bandgap of order $\epsilon_{\text{bg}} \gtrsim 2.5\;\text{eV}$ a material will no longer conduct and become an insulator.</p>
@@ -494,7 +508,8 @@ $$n_e n_h = n_I^2 = 4\left(\frac{mk_B T}{2\pi\hbar^2}\right)^3 e^{-\frac{\epsilo
 
 <!-- INTERACTIVE: Doping and Band Structure -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">💎</span> Interactive: Doping — n-type and p-type Semiconductors</div>
+  <div class="figure-label">Interactive 12: Doping &mdash; n-type and p-type Semiconductors</div>
+  <p class="vis-caption">Band structure of intrinsic, n-type, and p-type semiconductors showing donor and acceptor levels.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-doping" width="700" height="420"></canvas></div>
   <div class="vis-controls">
     <div class="button-group" id="doping-type-buttons">
@@ -515,7 +530,8 @@ $$n_e n_h = n_I^2 = 4\left(\frac{mk_B T}{2\pi\hbar^2}\right)^3 e^{-\frac{\epsilo
 
 <!-- INTERACTIVE: p-n Junction -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔋</span> Interactive: p-n Junction</div>
+  <div class="figure-label">Interactive 13: p-n Junction</div>
+  <p class="vis-caption">A p-n junction under different bias conditions, showing charge carrier behavior and the depletion region.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-pn-junction" width="600" height="400"></canvas></div>
   <div class="vis-controls">
     <label>Applied voltage $V/V_T$: <input type="range" id="pn-voltage" min="-3" max="3" step="0.1" value="0"> <span class="value-display" id="pn-voltage-val">0.0</span></label>
@@ -546,13 +562,15 @@ $$\epsilon_{\text{junc}} = k_B T\ln\frac{n_h^{\text{p-type}}\,n_e^{\text{n-type}
 <p>If the applied voltage is in the other direction, however, so that the negative terminal connects to the p side (<span class="tooltip-trigger">reverse bias<span class="tooltip-content">Connecting the negative terminal of a battery to the p-side of a p-n junction, which increases the junction potential and blocks current flow.</span></span>), it will draw holes from the n side and send electrons into the p side. The electrons on the p side make the junction potential larger and no current passes through. If enough reverse-bias voltage is applied, above the breakdown voltage (typically 30V--50V), then the electrons are forced across the junction and a current flows (in the opposite direction).</p>
 
 <div class="interactive-container">
+<div class="figure-label">Interactive 14: I-V Characteristic of a Diode</div>
+<p class="vis-caption">I-V characteristic of a p-n junction diode showing exponential current in forward bias.</p>
 <canvas id="vis-iv-curve" width="600" height="400"></canvas>
 <div class="slider-container">
 <label for="iv-temp">Temperature $T$ (K):</label>
 <input type="range" id="iv-temp" min="200" max="500" step="10" value="300">
 <span class="slider-value" id="iv-temp-val">300</span>
 </div>
-<p class="vis-caption">Figure 14. I-V characteristic of a p-n junction diode: $I = I_s(e^{eV/k_BT} - 1)$. Current flows exponentially in forward bias but is blocked in reverse bias.</p>
+<p class="vis-caption">$I = I_s(e^{eV/k_BT} - 1)$. Current flows exponentially in forward bias but is blocked in reverse bias.</p>
 </div>
 
 <p>Thus this p-n junction acts as a <span class="tooltip-trigger">rectifier or diode<span class="tooltip-content">A device that allows current to flow in only one direction. A p-n junction conducts in forward bias (above ~0.6V) but blocks current in reverse bias.</span></span>: it allows current to flow in only one direction: $V \gtrsim 0.6\;\text{V}$ is required in forward bias to conduct but $V \gtrsim 50\;\text{V}$ is required for reverse bias to conduct.</p>
@@ -583,7 +601,8 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <!-- INTERACTIVE: Transistor Demo -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: npn Transistor</div>
+  <div class="figure-label">Interactive 15: npn Transistor</div>
+  <p class="vis-caption">An npn transistor acting as a switch. Toggle the base voltage to control current flow.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-transistor-demo" width="600" height="350"></canvas></div>
   <div class="vis-controls">
     <div class="button-group" id="transistor-base-buttons">
@@ -607,7 +626,8 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <!-- INTERACTIVE: NOT Gate Demo -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: NOT Gate (Inverter)</div>
+  <div class="figure-label">Interactive 16: NOT Gate (Inverter)</div>
+  <p class="vis-caption">A NOT gate built from a transistor. Toggle input X to see the inverted output Y.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-not-gate" width="600" height="320"></canvas></div>
   <div class="vis-controls">
     <div class="button-group" id="not-gate-buttons">
@@ -626,7 +646,8 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <!-- INTERACTIVE: Logic Gates Explorer -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: Logic Gates Explorer</div>
+  <div class="figure-label">Interactive 17: Logic Gates Explorer</div>
+  <p class="vis-caption">Explore standard logic gates (AND, NAND, OR, NOR, XOR) by toggling inputs A and B.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-logic-gates" width="700" height="380"></canvas></div>
   <div class="vis-controls">
     <div class="button-group" id="gate-type-buttons">
@@ -645,12 +666,13 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <p>The XOR gate is an "exclusive OR", meaning it gives 1 if and only if 1 of the inputs is 1 and the other is zero. We can construct an XOR gate out of NAND gates. Note that the logic table for XOR is the same as for the addition of 1-bit binary numbers. Although the single XOR gate only adds two 1-bit numbers modulo 2, XOR gates can be combined to make more complicated adders.</p>
 
-<p>To add more than 2 bits, we need to carry over the second binary digit. We do this with a carry block in what's called a <strong>half adder</strong>. Half adders can be chained together into a <strong>full adder</strong>:</p>
+<p>To add more than 1-bit numbers, we need to handle <strong>carries</strong>. When we add $1 + 1$ in binary, the result is $10$ (i.e. "0, carry the 1"). A <strong>half adder</strong> adds two bits and produces a sum and a carry. But when adding multi-bit numbers, each column (after the first) might receive a carry from the previous column. A <strong>full adder</strong> handles this: it takes three inputs ($A$, $B$, and $C_\text{in}$, the carry from the previous column) and produces two outputs: the sum bit and a carry-out bit $C_\text{out}$ to pass to the next column. The sum is computed by $A \oplus B \oplus C_\text{in}$ (XOR), and the carry-out is 1 whenever two or more inputs are 1:</p>
 
 <!-- INTERACTIVE: Full Adder -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: Full Adder</div>
-  <div class="vis-canvas-wrap"><canvas id="vis-full-adder" width="650" height="320"></canvas></div>
+  <div class="figure-label">Interactive 18: Full Adder</div>
+  <p class="vis-caption">A full adder circuit built from logic gates. Toggle inputs A, B, and carry-in to see how the sum and carry-out are computed. Chain full adders together to add multi-bit binary numbers.</p>
+  <div class="vis-canvas-wrap"><canvas id="vis-full-adder" width="650" height="360"></canvas></div>
   <div class="vis-controls">
     <div class="button-group" id="adder-input-buttons">
       <button class="control-btn" id="adder-input-a">A = 0</button>
@@ -667,7 +689,8 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <!-- INTERACTIVE: SR Latch -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: SR Latch</div>
+  <div class="figure-label">Interactive 19: SR Latch</div>
+  <p class="vis-caption">An SR latch built from cross-coupled NOR gates, demonstrating 1-bit memory storage.</p>
   <div class="vis-canvas-wrap"><canvas id="vis-sr-latch" width="600" height="300"></canvas></div>
   <div class="vis-controls">
     <div class="button-group" id="sr-latch-buttons">
@@ -684,7 +707,8 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <!-- INTERACTIVE: Circuit Builder -->
 <div class="visualization">
-  <div class="vis-header"><span class="vis-icon">🔧</span> Interactive: Circuit Builder</div>
+  <div class="figure-label">Interactive 20: Circuit Builder</div>
+  <p class="vis-caption">Build your own digital circuits by placing logic gates, wiring them together, and testing with input switches.</p>
   <div style="display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--border); border-radius:6px; overflow:hidden; background:var(--bg-alt, #f5f5f5);">
     <div id="circuit-palette" style="width:100%; padding:8px 12px; background:var(--bg-alt, #eee); border-bottom:1px solid var(--border); display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
       <span style="font-size:0.8rem; font-weight:600; margin-right:4px; color:var(--text-muted);">Place:</span>

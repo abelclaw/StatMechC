@@ -21606,23 +21606,22 @@ function initCh14Vis() {
       const G2 = P & adCin;
       const coutOut = G1 | G2;
       const onC = '#4caf50', offC = '#555', hiC = '#ff9800';
+      const total = adA + adB + adCin;
 
-      ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
-      ctx.fillText('Full Adder', W / 2, 22);
-
-      // Gate positions
-      const xor1X = 160, xor1Y = 80;
-      const xor2X = 310, xor2Y = 95;
-      const and1X = 310, and1Y = 195;
-      const and2X = 310, and2Y = 255;
-      const orX = 440, orY = 225;
+      // Gate positions — shifted down for more room
+      const topY = 40;
+      const xor1X = 170, xor1Y = topY + 55;
+      const xor2X = 320, xor2Y = topY + 70;
+      const and1X = 320, and1Y = topY + 160;
+      const and2X = 320, and2Y = topY + 220;
+      const orX = 450, orY = topY + 190;
       const gw = 55, gh = 35;
 
       // Input labels
       ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillStyle = adA ? onC : offC; ctx.fillText('A=' + adA, 55, 68);
-      ctx.fillStyle = adB ? onC : offC; ctx.fillText('B=' + adB, 55, 98);
-      ctx.fillStyle = adCin ? hiC : offC; ctx.fillText('Cin=' + adCin, 55, 210);
+      ctx.fillStyle = adA ? onC : offC; ctx.fillText('A = ' + adA, 60, topY + 43);
+      ctx.fillStyle = adB ? onC : offC; ctx.fillText('B = ' + adB, 60, topY + 73);
+      ctx.fillStyle = adCin ? hiC : offC; ctx.fillText('Cin = ' + adCin, 60, topY + 180);
 
       // Wire helper
       function wire(pts, val) {
@@ -21637,9 +21636,9 @@ function initCh14Vis() {
       }
 
       // A → XOR1 top
-      wire([[60, 65], [xor1X - gw/2, 65], [xor1X - gw/2, xor1Y - 10]], adA);
+      wire([[65, topY + 40], [xor1X - gw/2, topY + 40], [xor1X - gw/2, xor1Y - 10]], adA);
       // B → XOR1 bot
-      wire([[60, 95], [xor1X - gw/2 + 5, 95], [xor1X - gw/2 + 5, xor1Y + 10]], adB);
+      wire([[65, topY + 70], [xor1X - gw/2 + 5, topY + 70], [xor1X - gw/2 + 5, xor1Y + 10]], adB);
 
       // XOR1
       drawSmallGate(xor1X, xor1Y, 'XOR', gw, gh);
@@ -21648,29 +21647,38 @@ function initCh14Vis() {
       const pX = xor1X + gw / 2 + 5;
       wire([[xor1X + gw / 2, xor1Y], [pX, xor1Y]], P);
       ctx.fillStyle = P ? onC : '#888'; ctx.font = FONT_SM; ctx.textAlign = 'left';
-      ctx.fillText('P', pX + 2, xor1Y - 6);
+      ctx.fillText('P = A\u2295B', pX + 2, xor1Y - 6);
 
       // P → XOR2 top
       dot(pX + 10, xor1Y, P);
       wire([[pX + 10, xor1Y], [xor2X - gw/2, xor1Y], [xor2X - gw/2, xor2Y - 10]], P);
       // P → AND1 top
-      wire([[pX + 10, xor1Y], [pX + 10, 185], [and1X - gw/2, 185], [and1X - gw/2, and1Y - 10]], P);
+      wire([[pX + 10, xor1Y], [pX + 10, and1Y - 20], [and1X - gw/2, and1Y - 20], [and1X - gw/2, and1Y - 10]], P);
 
       // Cin wire
-      wire([[60, 207], [200, 207]], adCin);
-      dot(200, 207, adCin);
+      wire([[65, topY + 177], [210, topY + 177]], adCin);
+      dot(210, topY + 177, adCin);
       // Cin → XOR2 bot
-      wire([[200, 207], [200, xor2Y + 10], [xor2X - gw/2, xor2Y + 10]], adCin);
+      wire([[210, topY + 177], [210, xor2Y + 10], [xor2X - gw/2, xor2Y + 10]], adCin);
       // Cin → AND1 bot
-      wire([[200, 207], [200, and1Y + 10], [and1X - gw/2, and1Y + 10]], adCin);
+      wire([[210, topY + 177], [210, and1Y + 10], [and1X - gw/2, and1Y + 10]], adCin);
 
       // XOR2
       drawSmallGate(xor2X, xor2Y, 'XOR', gw, gh);
 
       // Sum output
-      wire([[xor2X + gw/2, xor2Y], [W - 50, xor2Y]], sumOut);
-      ctx.fillStyle = sumOut ? onC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText('Sum=' + sumOut, W - 48, xor2Y + 5);
+      wire([[xor2X + gw/2, xor2Y], [W - 80, xor2Y]], sumOut);
+      // Sum output indicator
+      ctx.fillStyle = sumOut ? onC : offC;
+      ctx.beginPath(); ctx.arc(W - 65, xor2Y, 10, 0, Math.PI * 2); ctx.fill();
+      if (sumOut) {
+        ctx.fillStyle = 'rgba(76,175,80,0.25)';
+        ctx.beginPath(); ctx.arc(W - 65, xor2Y, 16, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(sumOut.toString(), W - 65, xor2Y + 4);
+      ctx.fillStyle = sumOut ? onC : offC; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Sum', W - 50, xor2Y + 5);
 
       // AND1 (P AND Cin)
       drawSmallGate(and1X, and1Y, 'AND', gw, gh);
@@ -21678,11 +21686,11 @@ function initCh14Vis() {
       ctx.fillText('G2', and1X + gw/2 + 5, and1Y - 5);
 
       // A → AND2 top
-      dot(75, 65, adA);
-      wire([[75, 65], [75, 245], [and2X - gw/2, 245]], adA);
+      dot(80, topY + 40, adA);
+      wire([[80, topY + 40], [80, and2Y - 10], [and2X - gw/2, and2Y - 10]], adA);
       // B → AND2 bot
-      dot(85, 95, adB);
-      wire([[85, 95], [85, 265], [and2X - gw/2, 265]], adB);
+      dot(90, topY + 70, adB);
+      wire([[90, topY + 70], [90, and2Y + 10], [and2X - gw/2, and2Y + 10]], adB);
 
       // AND2 (A AND B)
       drawSmallGate(and2X, and2Y, 'AND', gw, gh);
@@ -21690,24 +21698,41 @@ function initCh14Vis() {
       ctx.fillText('G1', and2X + gw/2 + 5, and2Y - 5);
 
       // G2 → OR top
-      wire([[and1X + gw/2, and1Y], [380, and1Y], [380, orY - 12], [orX - gw/2, orY - 12]], G2);
+      wire([[and1X + gw/2, and1Y], [395, and1Y], [395, orY - 12], [orX - gw/2, orY - 12]], G2);
       // G1 → OR bot
-      wire([[and2X + gw/2, and2Y], [380, and2Y], [380, orY + 12], [orX - gw/2, orY + 12]], G1);
+      wire([[and2X + gw/2, and2Y], [395, and2Y], [395, orY + 12], [orX - gw/2, orY + 12]], G1);
 
       // OR gate
       drawSmallGate(orX, orY, 'OR', gw, gh);
 
       // Cout output
-      wire([[orX + gw/2, orY], [W - 50, orY]], coutOut);
-      ctx.fillStyle = coutOut ? onC : offC; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText('Cout=' + coutOut, W - 48, orY + 5);
+      wire([[orX + gw/2, orY], [W - 80, orY]], coutOut);
+      // Cout indicator
+      ctx.fillStyle = coutOut ? hiC : offC;
+      ctx.beginPath(); ctx.arc(W - 65, orY, 10, 0, Math.PI * 2); ctx.fill();
+      if (coutOut) {
+        ctx.fillStyle = 'rgba(255,152,0,0.25)';
+        ctx.beginPath(); ctx.arc(W - 65, orY, 16, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(coutOut.toString(), W - 65, orY + 4);
+      ctx.fillStyle = coutOut ? hiC : offC; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Cout', W - 50, orY + 5);
 
-      // Equation
-      ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
-      ctx.fillText(adA + ' + ' + adB + ' + ' + adCin + ' = ' + (adA + adB + adCin) +
-        ' (binary: ' + coutOut + '' + sumOut + ')', W / 2, H - 10);
+      // Bottom result box
+      const boxY = H - 42, boxH = 34;
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      ctx.beginPath(); ctx.roundRect(W/2 - 200, boxY, 400, boxH, 6); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(W/2 - 200, boxY, 400, boxH, 6); ctx.stroke();
 
-      if (adOutput) adOutput.textContent = 'Sum = ' + sumOut + ', C_out = ' + coutOut;
+      ctx.fillStyle = COLORS.text; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(adA + ' + ' + adB + ' + ' + adCin + ' = ' + total +
+        '    \u2192    binary: ' + coutOut + '' + sumOut +
+        '    (Sum = ' + sumOut + ', Carry = ' + coutOut + ')', W / 2, boxY + 21);
+
+      if (adOutput) adOutput.textContent = 'Sum = ' + sumOut + ', Carry out = ' + coutOut +
+        '  (' + adA + '+' + adB + '+' + adCin + ' = ' + total + ')';
     }
 
     function toggleAdder(btn, getter, setter) {
