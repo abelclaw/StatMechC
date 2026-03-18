@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instructor Solutions — Statistical Mechanics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { background: #faf9f6; }
+    .instructor-page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 60px 120px;
+    }
+    .instructor-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--accent-bg);
+    }
+    .instructor-header h1 {
+      font-family: var(--font-sans);
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .instructor-header .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+    .instructor-warning {
+      background: #fef9e7;
+      border-left: 4px solid var(--warning);
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      margin-bottom: 32px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      color: #7d6608;
+    }
+    .chapter-toc-instructor {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 28px;
+      margin-bottom: 40px;
+    }
+    .chapter-toc-instructor h2 {
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 12px;
+      border: none;
+      padding: 0;
+    }
+    .chapter-toc-instructor ol {
+      columns: 2;
+      column-gap: 32px;
+      margin: 0;
+      padding-left: 24px;
+    }
+    .chapter-toc-instructor li {
+      margin-bottom: 6px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+    .chapter-toc-instructor a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .chapter-toc-instructor a:hover {
+      text-decoration: underline;
+    }
+    .chapter-solutions {
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+    .chapter-solutions:last-child { border-bottom: none; }
+    .chapter-solutions h2 {
+      font-family: var(--font-sans);
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 48px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-bg);
+    }
+    .solution {
+      margin-bottom: 32px;
+    }
+    .solution .problem-label {
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .solution-part {
+      margin: 12px 0 12px 20px;
+      padding-left: 16px;
+      border-left: 2px solid var(--accent-bg);
+    }
+    .solution-part .part-label {
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--accent-light);
+      margin-bottom: 4px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+    @media (max-width: 900px) {
+      .instructor-page { padding: 32px 20px 80px; }
+      .chapter-toc-instructor ol { columns: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="instructor-page">
+
+<a href="../#home" class="back-link">&larr; Back to textbook</a>
+
+<div class="instructor-header">
+  <h1>Instructor Solutions</h1>
+  <div class="subtitle">Statistical Mechanics &mdash; Physics 181 &mdash; M. Schwartz &mdash; Harvard</div>
+</div>
+
+<div class="instructor-warning">
+  <strong>Confidential.</strong> These solutions are intended for instructors only. Please do not distribute to students.
+</div>
+
+<div class="chapter-toc-instructor">
+  <h2>Chapters</h2>
+  <ol>
+    <li><a href="#ch1-solutions">Probability</a></li>
+    <li><a href="#ch2-solutions">Diffusion</a></li>
+    <li><a href="#ch3-solutions">Equilibrium</a></li>
+    <li><a href="#ch4-solutions">Temperature</a></li>
+    <li><a href="#ch5-solutions">Thermodynamics</a></li>
+    <li><a href="#ch6-solutions">Entropy</a></li>
+    <li><a href="#ch7-solutions">Ensembles</a></li>
+    <li><a href="#ch8-solutions">Free Energy</a></li>
+    <li><a href="#ch9-solutions">Phase Transitions</a></li>
+    <li><a href="#ch10-solutions">Quantum Stat Mech</a></li>
+    <li><a href="#ch11-solutions">Phonons &amp; Photons</a></li>
+    <li><a href="#ch12-solutions">BEC</a></li>
+    <li><a href="#ch13-solutions">Metals</a></li>
+    <li><a href="#ch14-solutions">Semiconductors</a></li>
+    <li><a href="#ch15-solutions">Stars</a></li>
+  </ol>
+</div>
+
+<div id="solutions-container">
+  <p style="text-align:center; color:var(--text-muted); font-family:var(--font-sans);">Loading solutions...</p>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+const katexOptions = {
+  delimiters: [
+    { left: '$$', right: '$$', display: true },
+    { left: '\\[', right: '\\]', display: true },
+    { left: '$', right: '$', display: false },
+    { left: '\\(', right: '\\)', display: false }
+  ],
+  throwOnError: false,
+  trust: true
+};
+
+async function loadAllSolutions() {
+  const container = document.getElementById('solutions-container');
+  container.innerHTML = '';
+
+  for (let i = 1; i <= 15; i++) {
+    try {
+      const resp = await fetch(`ch${i}-solutions.html`);
+      if (resp.ok) {
+        const html = await resp.text();
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        container.appendChild(div);
+      }
+    } catch (e) {
+      console.error(`Failed to load ch${i} solutions:`, e);
+    }
+  }
+
+  if (window.renderMathInElement) {
+    renderMathInElement(container, katexOptions);
+  }
+
+  // Scroll to hash if present
+  if (location.hash) {
+    const target = document.querySelector(location.hash);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadAllSolutions);
+</script>
+</body>
+</html>

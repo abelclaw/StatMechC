@@ -892,6 +892,169 @@ blockquote cite {
   color: var(--text-muted);
 }
 
+/* ===== PROBLEMS SECTIONS ===== */
+.problems-section {
+  margin: 16px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.problems-section summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--bg-alt);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  user-select: none;
+  transition: background 0.15s;
+  list-style: none;
+}
+.problems-section summary::-webkit-details-marker { display: none; }
+.problems-section summary::before {
+  content: '\25B6';
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: transform var(--transition);
+}
+.problems-section[open] summary::before { transform: rotate(90deg); }
+.problems-section summary:hover { background: #e8e6e3; }
+.problems-section .problems-body {
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+  background: #fff;
+}
+
+.problem {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #eee;
+}
+.problem:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.problem-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.problem p { margin-bottom: 10px; }
+
+/* Multiple choice options */
+.mc-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 16px;
+  padding-left: 8px;
+}
+.mc-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.mc-options label:hover { background: var(--accent-bg); }
+.mc-options input[type="radio"] {
+  margin-top: 4px;
+  accent-color: var(--accent-light);
+}
+
+/* Short answer input */
+.sa-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.sa-input input[type="text"] {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+.sa-input input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent-light);
+  box-shadow: 0 0 0 3px rgba(41,128,185,0.15);
+}
+
+/* Check answer button */
+.check-answer-btn {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.check-answer-btn:hover { background: var(--accent-light); }
+
+/* Answer feedback */
+.answer-feedback {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  display: none;
+}
+.answer-feedback.correct {
+  display: block;
+  background: #e8f8f0;
+  border-left: 4px solid var(--success);
+  color: #1a7a42;
+}
+.answer-feedback.incorrect {
+  display: block;
+  background: #fdecea;
+  border-left: 4px solid #e74c3c;
+  color: #c0392b;
+}
+
+/* Long problem parts */
+.problem-part {
+  margin: 12px 0 12px 20px;
+  padding-left: 16px;
+  border-left: 2px solid var(--accent-bg);
+}
+.part-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent-light);
+  margin-bottom: 4px;
+}
+
+/* Problem diagrams/figures */
+.problem-figure {
+  margin: 16px auto;
+  text-align: center;
+  max-width: 500px;
+}
+.problem-figure svg { max-width: 100%; height: auto; }
+.problem-figure .caption {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
 /* ===== LOADING INDICATOR ===== */
 .chapter-loading {
   text-align: center;
