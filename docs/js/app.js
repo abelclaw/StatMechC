@@ -15566,24 +15566,32 @@ function initCh12Vis() {
     drawBecMu();
   }
 
-  // ----- BEC Exact Numerical Result -----
+  // ----- BEC Exact Numerical Result (split layout: main plot + occupation bars) -----
   const cBE = document.getElementById('vis-bec-exact');
   if (cBE) {
     const {ctx: ctxBE, W: WBE, H: HBE} = setupCanvas(cBE);
     const beNSlider = document.getElementById('bece-N');
+    const beTSlider = document.getElementById('bece-T');
 
     function drawBecExact() {
       clearCanvas(ctxBE, WBE, HBE);
       const N = parseInt(beNSlider?.value || 100);
+      const tSliderVal = parseFloat(beTSlider?.value || 0.5);
+      const N23 = Math.pow(N, 2.0 / 3);
 
-      const ox = 60, oy = 30, pw = WBE - 100, ph = HBE - 80;
-      drawAxes(ctxBE, ox, oy, pw, ph, {xLabel: 'kT / Nε₁', yLabel: '⟨N_ground⟩ / N'});
+      // --- Layout: left plot ~60%, right bar chart ~40% ---
+      const gap = 25;
+      const leftW = Math.floor(WBE * 0.57);
+
+      // Left plot area
+      const ox = 55, oy = 45, pw = leftW - ox - 10, ph = HBE - 105;
+      // Right bar chart area
+      const bx = leftW + gap + 30, by = oy, bw = WBE - (leftW + gap + 30) - 10, bh = ph;
 
       const tMax = 2.0;
-      const nStates = 15; // number of excited states for numerical sum
+      const nStates = 15;
 
       // Precompute energy levels and their multiplicities for the 3D box
-      // Energy = nx^2 + ny^2 + nz^2, with nx,ny,nz = 0..nStates
       const energyMap = new Map();
       for (let nx = 0; nx <= nStates; nx++) {
         for (let ny = 0; ny <= nStates; ny++) {
@@ -15593,30 +15601,22 @@ function initCh12Vis() {
           }
         }
       }
-      // Remove ground state (eps=0) for excited-state sum
       const groundMult = energyMap.get(0) || 1;
       energyMap.delete(0);
-      // Convert to sorted arrays for fast iteration
       const excitedEnergies = Array.from(energyMap.entries()).sort((a, b) => a[0] - b[0]);
 
-      // BE exact (numerical): solve sum_i 1/(e^{beta(eps_i - mu)} - 1) = N for mu
-      // Then N_ground = 1/(e^{-beta*mu} - 1)
-      ctxBE.strokeStyle = COLORS.text; ctxBE.lineWidth = 2.5;
-      ctxBE.beginPath();
-      for (let it = 0; it <= 300; it++) {
-        const tScaled = (it / 300) * tMax;
-        if (tScaled < 0.001) continue;
-        const betaEps = 1.0 / (tScaled * N);
-
-        // Numerically solve for mu using bisection
-        let muLo = -50 * tScaled * N, muHi = -0.0001;
+      // Helper: solve for mu given tScaled = kT/(N^{2/3} eps1)
+      // betaEps1 = 1/(kT/eps1) = 1/(tScaled * N^{2/3})
+      function solveMu(tScaled) {
+        const betaEps = 1.0 / (tScaled * N23);
+        let muLo = -50 / betaEps, muHi = -0.0001;
         for (let iter = 0; iter < 60; iter++) {
           const muMid = (muLo + muHi) / 2;
           let Nsum = 0;
           for (let j = 0; j < excitedEnergies.length; j++) {
             const [eps, mult] = excitedEnergies[j];
             const arg = betaEps * eps - muMid * betaEps;
-            if (arg > 30) break; // sorted by energy, so all higher energies also > 30
+            if (arg > 30) break;
             Nsum += mult / (Math.exp(arg) - 1);
             if (Nsum > N * 2) break;
           }
@@ -15624,60 +15624,240 @@ function initCh12Vis() {
           const Ntot = Ng + Nsum;
           if (Ntot > N) muHi = muMid; else muLo = muMid;
         }
-        const muFinal = (muLo + muHi) / 2;
-        const Ng = 1.0 / (Math.exp(-muFinal * betaEps) - 1);
-        const frac = Math.max(0, Math.min(1, Ng / N));
-
-        const px = ox + (tScaled / tMax) * pw;
-        const py = oy + ph * (1 - frac);
-        if (it <= 1) ctxBE.moveTo(px, py); else ctxBE.lineTo(px, py);
+        return (muLo + muHi) / 2;
       }
-      ctxBE.stroke();
 
-      // MB result: N_ground/N = e^{-beta*0} / Z = 1/Z
-      ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 2;
-      ctxBE.setLineDash([6, 4]);
-      ctxBE.beginPath();
-      for (let it = 1; it <= 300; it++) {
-        const tScaled = (it / 300) * tMax;
-        const betaEps = 1.0 / (tScaled * N);
-        let Z = groundMult; // ground state contribution (eps=0, mult typically 1)
+      // Helper: get ground state fraction for BE
+      function getBEFrac(tScaled) {
+        if (tScaled < 0.001) return 1;
+        const betaEps = 1.0 / (tScaled * N23);
+        const mu = solveMu(tScaled);
+        const Ng = 1.0 / (Math.exp(-mu * betaEps) - 1);
+        return Math.max(0, Math.min(1, Ng / N));
+      }
+
+      // Helper: get MB ground state fraction
+      function getMBFrac(tScaled) {
+        if (tScaled < 0.001) return 1;
+        const betaEps = 1.0 / (tScaled * N23);
+        let Z = groundMult;
         for (let j = 0; j < excitedEnergies.length; j++) {
           const [eps, mult] = excitedEnergies[j];
           const arg = betaEps * eps;
           if (arg > 30) break;
           Z += mult * Math.exp(-arg);
         }
-        const fracMB = Math.min(1, 1.0 / Z);
+        return Math.min(1, N / Z);
+      }
+
+      // Helper: get per-level occupations for BE
+      function getBEOccupations(tScaled) {
+        if (tScaled < 0.001) return [{eps: 0, occ: N, mult: 1}];
+        const betaEps = 1.0 / (tScaled * N23);
+        const mu = solveMu(tScaled);
+        const Ng = Math.max(0, 1.0 / (Math.exp(-mu * betaEps) - 1));
+        const levels = [{eps: 0, occ: Ng, mult: 1}];
+        for (let j = 0; j < Math.min(excitedEnergies.length, 9); j++) {
+          const [eps, mult] = excitedEnergies[j];
+          const arg = betaEps * eps - mu * betaEps;
+          const occ = arg > 30 ? 0 : mult / (Math.exp(arg) - 1);
+          levels.push({eps, occ: Math.max(0, occ), mult});
+        }
+        return levels;
+      }
+
+      // Find Tc: temperature where N_ground/N drops to ~0.01
+      let tcLo = 0.01, tcHi = tMax;
+      for (let iter = 0; iter < 40; iter++) {
+        const mid = (tcLo + tcHi) / 2;
+        if (getBEFrac(mid) > 0.01) tcLo = mid; else tcHi = mid;
+      }
+      const Tc = (tcLo + tcHi) / 2;
+
+      // ========== LEFT PLOT: N_ground/N vs kT/(N^{2/3} eps1) ==========
+      drawAxes(ctxBE, ox, oy, pw, ph, {xLabel: 'kT / (N\u00B2\u0313\u00B3\u03B5\u2081)', yLabel: '\u27E8N_ground\u27E9 / N', yLabelOffset: 38});
+
+      // Y-axis ticks
+      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'right';
+      for (let v = 0; v <= 1.0; v += 0.2) {
+        const yy = oy + ph * (1 - v);
+        ctxBE.fillText(v.toFixed(1), ox - 5, yy + 4);
+        if (v > 0 && v < 1) {
+          ctxBE.strokeStyle = COLORS.grid; ctxBE.lineWidth = 0.5;
+          ctxBE.beginPath(); ctxBE.moveTo(ox, yy); ctxBE.lineTo(ox + pw, yy); ctxBE.stroke();
+        }
+      }
+      // X-axis ticks
+      ctxBE.textAlign = 'center';
+      for (let v = 0.5; v <= tMax; v += 0.5) {
+        const xx = ox + (v / tMax) * pw;
+        ctxBE.fillText(v.toFixed(1), xx, oy + ph + 14);
+        ctxBE.strokeStyle = COLORS.grid; ctxBE.lineWidth = 0.5;
+        ctxBE.beginPath(); ctxBE.moveTo(xx, oy); ctxBE.lineTo(xx, oy + ph); ctxBE.stroke();
+      }
+
+      // BE curve (solid, bright blue)
+      ctxBE.strokeStyle = COLORS.blue; ctxBE.lineWidth = 2.5;
+      ctxBE.beginPath();
+      let firstBE = true;
+      for (let it = 1; it <= 200; it++) {
+        const tScaled = (it / 200) * tMax;
+        const frac = getBEFrac(tScaled);
         const px = ox + (tScaled / tMax) * pw;
-        const py = oy + ph * (1 - fracMB);
-        if (it === 1) ctxBE.moveTo(px, py); else ctxBE.lineTo(px, py);
+        const py = oy + ph * (1 - frac);
+        if (firstBE) { ctxBE.moveTo(px, py); firstBE = false; } else ctxBE.lineTo(px, py);
+      }
+      ctxBE.stroke();
+
+      // MB curve (dashed, dimmer red)
+      ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 2; ctxBE.globalAlpha = 0.7;
+      ctxBE.setLineDash([6, 4]);
+      ctxBE.beginPath();
+      let firstMB = true;
+      for (let it = 1; it <= 200; it++) {
+        const tScaled = (it / 200) * tMax;
+        const frac = getMBFrac(tScaled);
+        const px = ox + (tScaled / tMax) * pw;
+        const py = oy + ph * (1 - frac);
+        if (firstMB) { ctxBE.moveTo(px, py); firstMB = false; } else ctxBE.lineTo(px, py);
       }
       ctxBE.stroke();
       ctxBE.setLineDash([]);
+      ctxBE.globalAlpha = 1.0;
+
+      // Tc marker (dashed yellow vertical)
+      const tcX = ox + (Tc / tMax) * pw;
+      ctxBE.strokeStyle = COLORS.yellow; ctxBE.lineWidth = 1.5; ctxBE.setLineDash([4, 4]);
+      ctxBE.beginPath(); ctxBE.moveTo(tcX, oy); ctxBE.lineTo(tcX, oy + ph); ctxBE.stroke();
+      ctxBE.setLineDash([]);
+      ctxBE.fillStyle = COLORS.yellow; ctxBE.font = FONT; ctxBE.textAlign = 'center';
+      ctxBE.fillText('Tc', tcX, oy + ph + 14);
+
+      // Current temperature marker (solid green vertical + dot on BE curve)
+      const curTX = ox + (tSliderVal / tMax) * pw;
+      ctxBE.strokeStyle = COLORS.green; ctxBE.lineWidth = 1.5; ctxBE.globalAlpha = 0.5;
+      ctxBE.beginPath(); ctxBE.moveTo(curTX, oy); ctxBE.lineTo(curTX, oy + ph); ctxBE.stroke();
+      ctxBE.globalAlpha = 1.0;
+      const curFrac = getBEFrac(tSliderVal);
+      const curY = oy + ph * (1 - curFrac);
+      ctxBE.fillStyle = COLORS.green;
+      ctxBE.beginPath(); ctxBE.arc(curTX, curY, 5, 0, 2 * Math.PI); ctxBE.fill();
 
       // Legend
-      const lx = ox + pw - 180, ly = oy + 10;
-      ctxBE.strokeStyle = COLORS.text; ctxBE.lineWidth = 2.5; ctxBE.setLineDash([]);
-      ctxBE.beginPath(); ctxBE.moveTo(lx, ly); ctxBE.lineTo(lx + 20, ly); ctxBE.stroke();
-      ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_SM; ctxBE.textAlign = 'left';
-      ctxBE.fillText('Bose-Einstein', lx + 25, ly + 4);
+      const lx = ox + pw - 150, ly = oy + 6;
+      ctxBE.strokeStyle = COLORS.blue; ctxBE.lineWidth = 2.5; ctxBE.setLineDash([]);
+      ctxBE.beginPath(); ctxBE.moveTo(lx, ly); ctxBE.lineTo(lx + 18, ly); ctxBE.stroke();
+      ctxBE.fillStyle = COLORS.blue; ctxBE.font = FONT_SM; ctxBE.textAlign = 'left';
+      ctxBE.fillText('Bose-Einstein', lx + 22, ly + 4);
 
-      ctxBE.strokeStyle = COLORS.red; ctxBE.setLineDash([6, 4]);
-      ctxBE.beginPath(); ctxBE.moveTo(lx, ly + 18); ctxBE.lineTo(lx + 20, ly + 18); ctxBE.stroke();
-      ctxBE.setLineDash([]);
-      ctxBE.fillStyle = COLORS.red;
-      ctxBE.fillText('Maxwell-Boltzmann', lx + 25, ly + 22);
+      ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 2; ctxBE.setLineDash([6, 4]); ctxBE.globalAlpha = 0.7;
+      ctxBE.beginPath(); ctxBE.moveTo(lx, ly + 16); ctxBE.lineTo(lx + 18, ly + 16); ctxBE.stroke();
+      ctxBE.setLineDash([]); ctxBE.globalAlpha = 1.0;
+      ctxBE.fillStyle = COLORS.red; ctxBE.globalAlpha = 0.7;
+      ctxBE.fillText('Maxwell-Boltzmann', lx + 22, ly + 20);
+      ctxBE.globalAlpha = 1.0;
 
+      // Title
       ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_LG; ctxBE.textAlign = 'left';
-      ctxBE.fillText('BEC Exact Numerical (N = ' + N + ')', ox + 5, oy - 8);
+      ctxBE.fillText('N_ground / N   (N = ' + N + ')', ox, oy - 12);
+
+      // ========== RIGHT PANEL: Occupation bar chart ==========
+      const levels = getBEOccupations(tSliderVal);
+      const nBars = levels.length;
+
+      // Right panel axes
+      ctxBE.strokeStyle = COLORS.axis; ctxBE.lineWidth = 1;
+      ctxBE.beginPath(); ctxBE.moveTo(bx, by + bh); ctxBE.lineTo(bx + bw, by + bh); ctxBE.stroke();
+      ctxBE.beginPath(); ctxBE.moveTo(bx, by); ctxBE.lineTo(bx, by + bh); ctxBE.stroke();
+
+      // Title
+      ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_LG; ctxBE.textAlign = 'left';
+      ctxBE.fillText('Occupation \u27E8N\u1D62\u27E9', bx, by - 12);
+
+      // Find max occupation for scaling
+      let maxOcc = 0;
+      for (let i = 0; i < nBars; i++) maxOcc = Math.max(maxOcc, levels[i].occ);
+      maxOcc = Math.max(maxOcc, 1);
+
+      // Y-axis label
+      ctxBE.save(); ctxBE.translate(bx - 25, by + bh / 2); ctxBE.rotate(-Math.PI / 2);
+      ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
+      ctxBE.fillText('\u27E8N\u1D62\u27E9', 0, 0); ctxBE.restore();
+
+      // Y-axis ticks
+      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'right';
+      const yTickCount = 4;
+      for (let i = 0; i <= yTickCount; i++) {
+        const val = (i / yTickCount) * maxOcc;
+        const yy = by + bh * (1 - i / yTickCount);
+        ctxBE.fillText(val < 10 ? val.toFixed(1) : Math.round(val).toString(), bx - 4, yy + 4);
+        if (i > 0) {
+          ctxBE.strokeStyle = COLORS.grid; ctxBE.lineWidth = 0.5;
+          ctxBE.beginPath(); ctxBE.moveTo(bx, yy); ctxBE.lineTo(bx + bw, yy); ctxBE.stroke();
+        }
+      }
+
+      // Draw bars
+      const barPad = 3;
+      const barW = Math.max(4, (bw - barPad * (nBars + 1)) / nBars);
+      for (let i = 0; i < nBars; i++) {
+        const lev = levels[i];
+        const barH = Math.max(0, (lev.occ / maxOcc) * bh);
+        const barX = bx + barPad + i * (barW + barPad);
+        const barY = by + bh - barH;
+
+        // Ground state red, others blue
+        const isGround = (i === 0);
+        ctxBE.fillStyle = isGround ? COLORS.red : COLORS.blue;
+        ctxBE.globalAlpha = isGround ? 1.0 : 0.7;
+        ctxBE.fillRect(barX, barY, barW, barH);
+        ctxBE.globalAlpha = 1.0;
+
+        ctxBE.strokeStyle = isGround ? COLORS.red : COLORS.blue;
+        ctxBE.lineWidth = 1;
+        ctxBE.strokeRect(barX, barY, barW, barH);
+
+        // Energy label below bar
+        ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
+        const label = lev.eps === 0 ? '0' : lev.eps.toString();
+        ctxBE.fillText(label, barX + barW / 2, by + bh + 13);
+
+        // Occupation value on/above bar
+        if (barH > 18 && lev.occ > 0.05) {
+          ctxBE.fillStyle = '#fff'; ctxBE.font = FONT_SM;
+          const occText = lev.occ < 10 ? lev.occ.toFixed(1) : Math.round(lev.occ).toString();
+          ctxBE.fillText(occText, barX + barW / 2, barY + 13);
+        } else if (lev.occ > 0.05) {
+          ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM;
+          ctxBE.fillText(lev.occ.toFixed(1), barX + barW / 2, barY - 3);
+        }
+      }
+
+      // X-axis label for bar chart
+      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
+      ctxBE.fillText('Energy (\u03B5\u2081 units)', bx + bw / 2, by + bh + 28);
+
+      // ========== Info display ==========
+      const Nground = curFrac * N;
+      const Nexcited = N - Nground;
+      const pct = (curFrac * 100).toFixed(1);
+      const infoEl = document.getElementById('bece-info');
+      if (infoEl) {
+        infoEl.textContent = 'N_ground = ' + Nground.toFixed(1) +
+          ',   N_excited = ' + Nexcited.toFixed(1) +
+          ',   N_ground/N = ' + pct + '%' +
+          '     (Tc \u2248 ' + Tc.toFixed(2) + ' N\u00B2\u0313\u00B3\u03B5\u2081/k)';
+      }
 
       document.getElementById('bece-N-val')?.replaceChildren(document.createTextNode(N));
+      document.getElementById('bece-T-val')?.replaceChildren(document.createTextNode(tSliderVal.toFixed(2)));
     }
 
     beNSlider?.addEventListener('input', drawBecExact);
+    beTSlider?.addEventListener('input', drawBecExact);
     drawBecExact();
   }
+
 
   // ----- Exact vs Approximate N1 -----
   const cN1 = document.getElementById('vis-n1-compare');
