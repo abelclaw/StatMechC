@@ -19205,35 +19205,44 @@ function initCh14Vis() {
     drawBandSplitting();
   }
 
-  // ----- p-n Junction (animated) -----
+  // ----- p-n Junction (animated with recombination) -----
   const cPN = document.getElementById('vis-pn-junction');
   if (cPN) {
     const pn = setupCanvas(cPN);
     const ctxPN = pn.ctx, WPN = pn.W, HPN = pn.H;
     const voltageSlider = document.getElementById('pn-voltage');
 
-    const NUM_ELECTRONS = 14, NUM_HOLES = 14;
-    const pnElectrons = [], pnHoles = [];
-    const pnCx = WPN / 2, pnOy = 30, pnPh = HPN - 80;
-    const pnBandW = WPN / 2 - 40, pnEg = 60;
+    // Layout constants
+    const pnCx = WPN / 2, pnOy = 40, pnPh = HPN - 90;
+    const pnBandW = WPN / 2 - 40, pnEg = 70;
 
-    function initPNParticles() {
-      pnElectrons.length = 0;
-      pnHoles.length = 0;
-      for (let i = 0; i < NUM_ELECTRONS; i++) {
-        pnElectrons.push({
-          x: pnCx + 40 + Math.random() * (pnBandW - 60),
-          vy: (Math.random() - 0.5) * 0.3
-        });
-      }
-      for (let i = 0; i < NUM_HOLES; i++) {
-        pnHoles.push({
-          x: 40 + Math.random() * (pnBandW - 40),
-          vy: (Math.random() - 0.5) * 0.3
-        });
-      }
+    // Particle arrays — electrons in conduction band, holes in valence band
+    // In forward bias:
+    //   - Electrons enter n-side (right edge), flow left toward junction
+    //   - Holes enter p-side (left edge), flow right toward junction
+    //   - At junction: electron drops from conduction -> valence band,
+    //     annihilating a hole. This emits a photon (shown as flash).
+    const pnElectrons = [], pnHoles = [], pnFlashes = [];
+    const PN_MAX = 16;
+
+    function spawnElectron() {
+      pnElectrons.push({
+        x: WPN - 25 - Math.random() * 30,
+        jitter: (Math.random() - 0.5) * 0.4
+      });
     }
-    initPNParticles();
+    function spawnHole() {
+      pnHoles.push({
+        x: 25 + Math.random() * 30,
+        jitter: (Math.random() - 0.5) * 0.4
+      });
+    }
+
+    // Seed initial carriers on their home sides
+    for (let i = 0; i < 10; i++) {
+      pnElectrons.push({ x: pnCx + 30 + Math.random() * (pnBandW - 20), jitter: (Math.random() - 0.5) * 0.4 });
+      pnHoles.push({ x: 30 + Math.random() * (pnBandW - 20), jitter: (Math.random() - 0.5) * 0.4 });
+    }
 
     let pnAnimId = null;
 
@@ -19242,24 +19251,30 @@ function initCh14Vis() {
       clearCanvas(ctxPN, WPN, HPN);
 
       const shift = V * 25;
-      const pValTop = pnOy + pnPh / 2;
+      // Band positions — p-side conduction/valence on left, n-side on right
+      const pValTop = pnOy + pnPh / 2 + 5;
       const pCondBot = pValTop - pnEg;
-      const nValTop = pValTop + 30 - shift;
+      const nValTop = pValTop + 35 - shift;
       const nCondBot = nValTop - pnEg;
 
-      // Current magnitude from Shockley equation
+      // Current from Shockley equation
       const currentMag = Math.max(0, Math.exp(V) - 1);
-      const speed = Math.min(currentMag * 0.8, 3.0);
+      const speed = Math.min(currentMag * 0.7, 2.5);
       const depW = Math.max(8, 60 - shift);
 
+      // Recombination zone: near the junction on the p-side
+      // (electrons cross into p-side conduction band, then drop to valence)
+      const recomZoneL = pnCx - 30;
+      const recomZoneR = pnCx + 10;
+
       // ---- Background fills ----
-      ctxPN.fillStyle = 'rgba(239,83,80,0.12)';
+      ctxPN.fillStyle = 'rgba(239,83,80,0.10)';
       ctxPN.fillRect(20, pValTop, pnBandW, pnPh - (pValTop - pnOy));
-      ctxPN.fillStyle = 'rgba(239,83,80,0.06)';
+      ctxPN.fillStyle = 'rgba(239,83,80,0.05)';
       ctxPN.fillRect(20, pnOy, pnBandW, pCondBot - pnOy);
-      ctxPN.fillStyle = 'rgba(79,195,247,0.12)';
+      ctxPN.fillStyle = 'rgba(79,195,247,0.10)';
       ctxPN.fillRect(pnCx + 20, nValTop, pnBandW, pnOy + pnPh - nValTop);
-      ctxPN.fillStyle = 'rgba(79,195,247,0.06)';
+      ctxPN.fillStyle = 'rgba(79,195,247,0.05)';
       ctxPN.fillRect(pnCx + 20, pnOy, pnBandW, nCondBot - pnOy);
 
       // ---- Band edges ----
@@ -19271,7 +19286,7 @@ function initCh14Vis() {
       ctxPN.beginPath(); ctxPN.moveTo(pnCx + 20, nCondBot); ctxPN.lineTo(WPN - 20, nCondBot); ctxPN.stroke();
       ctxPN.beginPath(); ctxPN.moveTo(pnCx + 20, nValTop); ctxPN.lineTo(WPN - 20, nValTop); ctxPN.stroke();
 
-      // Junction curves
+      // Junction curves connecting bands smoothly
       ctxPN.strokeStyle = COLORS.textDim;
       ctxPN.lineWidth = 1.5;
       ctxPN.setLineDash([4, 4]);
@@ -19292,56 +19307,187 @@ function initCh14Vis() {
       ctxPN.lineWidth = 1;
       ctxPN.strokeRect(pnCx - depW, pnOy, 2 * depW, pnPh);
 
-      // ---- Animate electrons (conduction band, n-side, flow left in forward bias) ----
-      for (let i = 0; i < pnElectrons.length; i++) {
+      // ---- Update & draw electrons (conduction band) ----
+      // Electrons live at the conduction band level. On n-side that's nCondBot,
+      // near junction they follow the bezier curve down to pCondBot level.
+      for (let i = pnElectrons.length - 1; i >= 0; i--) {
         const e = pnElectrons[i];
-        const bandY = nCondBot - 20;
-        e.vy += (Math.random() - 0.5) * 0.05;
-        e.vy *= 0.95;
-        const ey = bandY + e.vy * 15;
+        e.jitter += (Math.random() - 0.5) * 0.06;
+        e.jitter *= 0.93;
+
+        // Y position follows conduction band: interpolate through junction
+        let ey;
+        if (e.x > pnCx + 20) {
+          ey = nCondBot - 15;
+        } else if (e.x < pnCx - 20) {
+          ey = pCondBot - 15;
+        } else {
+          // In junction region: interpolate between band levels
+          const t = (e.x - (pnCx - 20)) / 40;
+          ey = pCondBot - 15 + t * (nCondBot - pCondBot);
+        }
+        ey += e.jitter * 12;
 
         if (V > 0.3) {
           e.x -= speed;
-          if (e.x < 20) { e.x = WPN - 30; e.vy = (Math.random() - 0.5) * 0.3; }
+          // Recombination: when electron reaches junction zone on p-side,
+          // it drops to valence band and annihilates a hole
+          if (e.x < recomZoneR && e.x > recomZoneL) {
+            // Find nearest hole to recombine with
+            let closest = -1, closestDist = 999;
+            for (let j = 0; j < pnHoles.length; j++) {
+              const d = Math.abs(pnHoles[j].x - e.x);
+              if (d < closestDist) { closestDist = d; closest = j; }
+            }
+            if (closest >= 0 && closestDist < 40) {
+              // Recombine! Both annihilate, emit photon flash
+              const fx = (e.x + pnHoles[closest].x) / 2;
+              const fy = (ey + pValTop + 15) / 2;
+              pnFlashes.push({ x: fx, y: fy, r: 2, alpha: 1.0 });
+              pnElectrons.splice(i, 1);
+              pnHoles.splice(closest, 1);
+              continue;
+            }
+          }
+          // If electron drifts too far left without recombining, recycle
+          if (e.x < 25) {
+            pnElectrons.splice(i, 1);
+            continue;
+          }
         } else {
-          e.x += (Math.random() - 0.5) * 0.6;
-          if (e.x < pnCx + 30) e.x = pnCx + 30 + Math.random() * 20;
-          if (e.x > WPN - 25) e.x = WPN - 30;
+          // No forward bias: electrons stay on n-side, jitter
+          e.x += (Math.random() - 0.5) * 0.5;
+          if (e.x < pnCx + 25) e.x = pnCx + 25 + Math.random() * 15;
+          if (e.x > WPN - 22) e.x = WPN - 28;
         }
 
+        // Draw electron
         ctxPN.fillStyle = COLORS.blue;
-        ctxPN.beginPath(); ctxPN.arc(e.x, ey, 4, 0, 2 * Math.PI); ctxPN.fill();
-        ctxPN.strokeStyle = '#fff'; ctxPN.lineWidth = 1.2;
+        ctxPN.beginPath(); ctxPN.arc(e.x, ey, 4.5, 0, 2 * Math.PI); ctxPN.fill();
+        ctxPN.strokeStyle = '#fff'; ctxPN.lineWidth = 1.3;
         ctxPN.beginPath(); ctxPN.moveTo(e.x - 2.5, ey); ctxPN.lineTo(e.x + 2.5, ey); ctxPN.stroke();
       }
 
-      // ---- Animate holes (valence band, p-side, flow right in forward bias) ----
-      for (let i = 0; i < pnHoles.length; i++) {
+      // ---- Update & draw holes (valence band) ----
+      for (let i = pnHoles.length - 1; i >= 0; i--) {
         const h = pnHoles[i];
-        const bandY = pValTop + 20;
-        h.vy += (Math.random() - 0.5) * 0.05;
-        h.vy *= 0.95;
-        const hy = bandY + h.vy * 15;
+        h.jitter += (Math.random() - 0.5) * 0.06;
+        h.jitter *= 0.93;
+
+        let hy;
+        if (h.x < pnCx - 20) {
+          hy = pValTop + 15;
+        } else if (h.x > pnCx + 20) {
+          hy = nValTop + 15;
+        } else {
+          const t = (h.x - (pnCx - 20)) / 40;
+          hy = pValTop + 15 + t * (nValTop - pValTop);
+        }
+        hy += h.jitter * 12;
 
         if (V > 0.3) {
           h.x += speed;
-          if (h.x > WPN - 20) { h.x = 30; h.vy = (Math.random() - 0.5) * 0.3; }
+          // Holes that cross too far right without recombining, recycle
+          if (h.x > WPN - 20) {
+            pnHoles.splice(i, 1);
+            continue;
+          }
         } else {
-          h.x += (Math.random() - 0.5) * 0.6;
-          if (h.x > pnCx - 30) h.x = pnCx - 30 - Math.random() * 20;
-          if (h.x < 25) h.x = 30;
+          h.x += (Math.random() - 0.5) * 0.5;
+          if (h.x > pnCx - 25) h.x = pnCx - 25 - Math.random() * 15;
+          if (h.x < 22) h.x = 28;
         }
 
+        // Draw hole (open circle with + sign)
         ctxPN.strokeStyle = COLORS.red; ctxPN.lineWidth = 1.8;
-        ctxPN.beginPath(); ctxPN.arc(h.x, hy, 4, 0, 2 * Math.PI); ctxPN.stroke();
+        ctxPN.beginPath(); ctxPN.arc(h.x, hy, 4.5, 0, 2 * Math.PI); ctxPN.stroke();
         ctxPN.lineWidth = 1.2;
         ctxPN.beginPath(); ctxPN.moveTo(h.x - 2.5, hy); ctxPN.lineTo(h.x + 2.5, hy); ctxPN.stroke();
         ctxPN.beginPath(); ctxPN.moveTo(h.x, hy - 2.5); ctxPN.lineTo(h.x, hy + 2.5); ctxPN.stroke();
       }
 
+      // ---- Spawn new carriers from external circuit in forward bias ----
+      if (V > 0.3) {
+        // Rate proportional to current
+        const spawnProb = Math.min(speed * 0.08, 0.25);
+        if (pnElectrons.length < PN_MAX && Math.random() < spawnProb) spawnElectron();
+        if (pnHoles.length < PN_MAX && Math.random() < spawnProb) spawnHole();
+      } else {
+        // Keep a baseline population in equilibrium
+        if (pnElectrons.length < 8) {
+          pnElectrons.push({ x: pnCx + 30 + Math.random() * (pnBandW - 20), jitter: (Math.random() - 0.5) * 0.4 });
+        }
+        if (pnHoles.length < 8) {
+          pnHoles.push({ x: 30 + Math.random() * (pnBandW - 20), jitter: (Math.random() - 0.5) * 0.4 });
+        }
+      }
+
+      // ---- Draw & update recombination flashes (photon emission) ----
+      for (let i = pnFlashes.length - 1; i >= 0; i--) {
+        const f = pnFlashes[i];
+        // Draw starburst
+        ctxPN.save();
+        ctxPN.globalAlpha = f.alpha;
+        // Yellow glow
+        const grad = ctxPN.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 3);
+        grad.addColorStop(0, 'rgba(255,238,88,0.9)');
+        grad.addColorStop(0.5, 'rgba(255,238,88,0.3)');
+        grad.addColorStop(1, 'rgba(255,238,88,0)');
+        ctxPN.fillStyle = grad;
+        ctxPN.beginPath(); ctxPN.arc(f.x, f.y, f.r * 3, 0, 2 * Math.PI); ctxPN.fill();
+        // Central bright dot
+        ctxPN.fillStyle = '#fff';
+        ctxPN.beginPath(); ctxPN.arc(f.x, f.y, f.r * 0.6, 0, 2 * Math.PI); ctxPN.fill();
+        // Wavy photon symbol ~
+        if (f.alpha > 0.4) {
+          ctxPN.strokeStyle = COLORS.yellow; ctxPN.lineWidth = 1.5;
+          const waveOff = (1 - f.alpha) * 25;
+          for (let a = 0; a < 3; a++) {
+            const angle = a * 2.09 + f.r * 0.1;
+            const dx = Math.cos(angle), dy = Math.sin(angle);
+            const sx = f.x + dx * (f.r + waveOff);
+            const sy = f.y + dy * (f.r + waveOff);
+            ctxPN.beginPath();
+            ctxPN.moveTo(sx, sy);
+            ctxPN.lineTo(sx + dx * 8, sy + dy * 8);
+            ctxPN.stroke();
+          }
+        }
+        ctxPN.restore();
+        f.r += 0.4;
+        f.alpha -= 0.025;
+        if (f.alpha <= 0) pnFlashes.splice(i, 1);
+      }
+
+      // ---- Downward arrow showing e- dropping from Ec to Ev at junction ----
+      if (V > 0.5) {
+        const dropX = pnCx - 5;
+        const dropTop = pCondBot + 2;
+        const dropBot = pValTop - 2;
+        ctxPN.strokeStyle = 'rgba(255,238,88,0.5)';
+        ctxPN.lineWidth = 1.5;
+        ctxPN.setLineDash([3, 3]);
+        ctxPN.beginPath();
+        ctxPN.moveTo(dropX, dropTop);
+        ctxPN.lineTo(dropX, dropBot);
+        ctxPN.stroke();
+        ctxPN.setLineDash([]);
+        // Arrowhead
+        ctxPN.fillStyle = 'rgba(255,238,88,0.5)';
+        ctxPN.beginPath();
+        ctxPN.moveTo(dropX, dropBot);
+        ctxPN.lineTo(dropX - 4, dropBot - 7);
+        ctxPN.lineTo(dropX + 4, dropBot - 7);
+        ctxPN.closePath(); ctxPN.fill();
+        // Label
+        ctxPN.fillStyle = COLORS.yellow; ctxPN.font = FONT_SM; ctxPN.textAlign = 'left';
+        ctxPN.fillText('e\u207b drops', dropX + 7, (dropTop + dropBot) / 2 - 5);
+        ctxPN.fillText('to Ev (\u03b3)', dropX + 7, (dropTop + dropBot) / 2 + 8);
+      }
+
       // ---- Current arrow ----
       if (V > 0.3 && speed > 0.1) {
-        const arrowY = pnOy + pnPh + 18;
+        const arrowY = pnOy + pnPh + 22;
         const arrowLen = Math.min(speed * 30, 100);
         ctxPN.strokeStyle = COLORS.green; ctxPN.fillStyle = COLORS.green; ctxPN.lineWidth = 2.5;
         ctxPN.beginPath();
@@ -19359,30 +19505,31 @@ function initCh14Vis() {
 
       // ---- Labels ----
       ctxPN.fillStyle = COLORS.text; ctxPN.font = FONT; ctxPN.textAlign = 'center';
-      ctxPN.fillText('p-type', pnBandW / 2 + 20, HPN - 10);
-      ctxPN.fillText('n-type', pnCx + 20 + pnBandW / 2, HPN - 10);
-      ctxPN.fillText('V = ' + V.toFixed(1) + ' V\u209C', pnCx, HPN - 10);
+      ctxPN.fillText('p-type', pnBandW / 2 + 20, HPN - 8);
+      ctxPN.fillText('n-type', pnCx + 20 + pnBandW / 2, HPN - 8);
+      ctxPN.fillText('V = ' + V.toFixed(1) + ' V\u209C', pnCx, HPN - 8);
 
       ctxPN.font = FONT_SM;
       if (V > 0.5) {
         ctxPN.fillStyle = COLORS.green;
-        ctxPN.fillText('Forward bias \u2014 current flows \u2192', pnCx, pnOy - 10);
+        ctxPN.fillText('Forward bias \u2014 electrons & holes recombine at junction, emitting photons', pnCx, pnOy - 18);
       } else if (V < -0.5) {
         ctxPN.fillStyle = COLORS.red;
-        ctxPN.fillText('Reverse bias \u2014 depletion widens', pnCx, pnOy - 10);
+        ctxPN.fillText('Reverse bias \u2014 depletion widens, no current', pnCx, pnOy - 18);
       } else {
         ctxPN.fillStyle = COLORS.textDim;
-        ctxPN.fillText('No bias \u2014 equilibrium', pnCx, pnOy - 10);
+        ctxPN.fillText('No bias \u2014 carriers in equilibrium on each side', pnCx, pnOy - 18);
       }
 
       ctxPN.font = FONT_SM; ctxPN.textAlign = 'left'; ctxPN.fillStyle = COLORS.textDim;
-      ctxPN.fillText('Ec', 22, pCondBot - 5);
-      ctxPN.fillText('Ev', 22, pValTop + 14);
-      ctxPN.fillText('Eg', 22, (pCondBot + pValTop) / 2 + 4);
+      ctxPN.fillText('Ec (conduction)', 22, pCondBot - 6);
+      ctxPN.fillText('Ev (valence)', 22, pValTop + 16);
 
+      // Legend
       ctxPN.textAlign = 'right';
-      ctxPN.fillStyle = COLORS.blue; ctxPN.fillText('\u25cf e\u207b', WPN - 22, nCondBot - 5);
-      ctxPN.fillStyle = COLORS.red; ctxPN.fillText('\u25cb h\u207a', WPN - 22, nValTop + 14);
+      ctxPN.fillStyle = COLORS.blue; ctxPN.fillText('\u25cf e\u207b (conduction band)', WPN - 12, pnOy + 4);
+      ctxPN.fillStyle = COLORS.red; ctxPN.fillText('\u25cb h\u207a (valence band)', WPN - 12, pnOy + 18);
+      ctxPN.fillStyle = COLORS.yellow; ctxPN.fillText('\u2728 recombination \u2192 photon', WPN - 12, pnOy + 32);
 
       document.getElementById('pn-voltage-val')?.replaceChildren(document.createTextNode(V.toFixed(1)));
       pnAnimId = requestAnimationFrame(drawPNJunction);
