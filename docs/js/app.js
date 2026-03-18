@@ -17521,6 +17521,256 @@ function initCh13Vis() {
 // CH14: Semiconductors - Band Gap
 // =============================================================================
 function initCh14Vis() {
+  // ----- 3D Hydrogen Orbitals -----
+  const cOrb3D = document.getElementById('vis-orbitals-3d');
+  if (cOrb3D) {
+    const { ctx, W, H } = setupCanvas(cOrb3D);
+    const orbSelect = document.getElementById('orbital-select');
+
+    let angleX = -0.3, angleY = 0.4;
+    let dragging = false, dragStart = {x:0,y:0}, dragAngleStart = {x:0,y:0};
+
+    // Spherical harmonics (real form) — returns value and sign
+    // We compute |Y_l^m|^2 for the "radiation pattern" style plot
+    function factorial(n) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+
+    // Associated Legendre polynomials P_l^m(x) for x = cos(theta)
+    function assocLegendre(l, m, x) {
+      // m >= 0 assumed
+      if (m > l) return 0;
+      // Start with P_m^m
+      let pmm = 1;
+      if (m > 0) {
+        const somx2 = Math.sqrt((1 - x) * (1 + x));
+        let fact = 1;
+        for (let i = 1; i <= m; i++) {
+          pmm *= -fact * somx2;
+          fact += 2;
+        }
+      }
+      if (l === m) return pmm;
+      // P_{m+1}^m
+      let pmm1 = x * (2 * m + 1) * pmm;
+      if (l === m + 1) return pmm1;
+      // Recurrence
+      let pll = 0;
+      for (let ll = m + 2; ll <= l; ll++) {
+        pll = (x * (2 * ll - 1) * pmm1 - (ll + m - 1) * pmm) / (ll - m);
+        pmm = pmm1;
+        pmm1 = pll;
+      }
+      return pll;
+    }
+
+    // Real spherical harmonic Y_l^m(theta, phi)
+    function realSphericalHarmonic(l, m, theta, phi) {
+      const am = Math.abs(m);
+      const norm = Math.sqrt((2 * l + 1) / (4 * Math.PI) * factorial(l - am) / factorial(l + am));
+      const plm = assocLegendre(l, am, Math.cos(theta));
+      if (m > 0) return norm * plm * Math.cos(m * phi) * Math.SQRT2;
+      if (m < 0) return norm * plm * Math.sin(am * phi) * Math.SQRT2;
+      return norm * plm;
+    }
+
+    // Labels for each orbital
+    const orbitalDefs = {
+      's': [{ l: 0, m: 0, label: 's' }],
+      'p': [
+        { l: 1, m: -1, label: 'p_y' },
+        { l: 1, m: 0, label: 'p_z' },
+        { l: 1, m: 1, label: 'p_x' },
+      ],
+      'd': [
+        { l: 2, m: -2, label: 'd_{xy}' },
+        { l: 2, m: -1, label: 'd_{yz}' },
+        { l: 2, m: 0, label: 'd_{z²}' },
+        { l: 2, m: 1, label: 'd_{xz}' },
+        { l: 2, m: 2, label: 'd_{x²-y²}' },
+      ],
+      'f': [
+        { l: 3, m: -3, label: 'f_{y(3x²-y²)}' },
+        { l: 3, m: -2, label: 'f_{xyz}' },
+        { l: 3, m: -1, label: 'f_{yz²}' },
+        { l: 3, m: 0, label: 'f_{z³}' },
+        { l: 3, m: 1, label: 'f_{xz²}' },
+        { l: 3, m: 2, label: 'f_{z(x²-y²)}' },
+        { l: 3, m: 3, label: 'f_{x(x²-3y²)}' },
+      ]
+    };
+
+    // Generate mesh for a spherical harmonic
+    function generateOrbitalMesh(l, m, resolution) {
+      const nTheta = resolution, nPhi = resolution * 2;
+      const vertices = [];
+      const faces = [];
+
+      for (let i = 0; i <= nTheta; i++) {
+        const theta = Math.PI * i / nTheta;
+        for (let j = 0; j <= nPhi; j++) {
+          const phi = 2 * Math.PI * j / nPhi;
+          const val = realSphericalHarmonic(l, m, theta, phi);
+          const r = Math.abs(val);
+          const st = Math.sin(theta);
+          vertices.push({
+            x: r * st * Math.cos(phi),
+            y: r * Math.cos(theta),
+            z: r * st * Math.sin(phi),
+            val: val
+          });
+        }
+      }
+
+      // Create triangle faces
+      for (let i = 0; i < nTheta; i++) {
+        for (let j = 0; j < nPhi; j++) {
+          const a = i * (nPhi + 1) + j;
+          const b = a + nPhi + 1;
+          faces.push([a, b, a + 1]);
+          faces.push([b, b + 1, a + 1]);
+        }
+      }
+      return { vertices, faces };
+    }
+
+    // 3D rotation
+    function rotPt(p, ax, ay) {
+      let { x, y, z } = p;
+      let x1 = x * Math.cos(ay) - z * Math.sin(ay);
+      let z1 = x * Math.sin(ay) + z * Math.cos(ay);
+      let y1 = y * Math.cos(ax) - z1 * Math.sin(ax);
+      let z2 = y * Math.sin(ax) + z1 * Math.cos(ax);
+      return { x: x1, y: y1, z: z2 };
+    }
+
+    function drawOrbitals() {
+      clearCanvas(ctx, W, H);
+      const type = orbSelect ? orbSelect.value : 'p';
+      const defs = orbitalDefs[type];
+      const count = defs.length;
+
+      // Layout: evenly spaced columns
+      const colW = W / count;
+      const res = count <= 3 ? 32 : (count <= 5 ? 24 : 18);
+      const scale = count === 1 ? 150 : (count <= 3 ? 110 : (count <= 5 ? 75 : 55));
+      const perspective = 4;
+
+      for (let idx = 0; idx < count; idx++) {
+        const def = defs[idx];
+        const cx = colW * (idx + 0.5);
+        const cy = H / 2 - 12;
+        const mesh = generateOrbitalMesh(def.l, def.m, res);
+
+        // Transform vertices
+        const projected = mesh.vertices.map(v => {
+          const r = rotPt(v, angleX, angleY);
+          const f = perspective / (perspective + r.z);
+          return { x: cx + r.x * scale * f, y: cy - r.y * scale * f, z: r.z, val: v.val };
+        });
+
+        // Compute face depths and normals, then sort
+        const faceData = mesh.faces.map(face => {
+          const p0 = projected[face[0]], p1 = projected[face[1]], p2 = projected[face[2]];
+          const avgZ = (p0.z + p1.z + p2.z) / 3;
+          const avgVal = (p0.val + p1.val + p2.val) / 3;
+          // Cross product for face normal (in screen space, for basic lighting)
+          const ux = p1.x - p0.x, uy = p1.y - p0.y;
+          const vx = p2.x - p0.x, vy = p2.y - p0.y;
+          const cross = ux * vy - uy * vx;
+          return { face, avgZ, avgVal, cross, p0, p1, p2 };
+        });
+
+        // Painter's algorithm: draw far faces first
+        faceData.sort((a, b) => a.avgZ - b.avgZ);
+
+        for (const fd of faceData) {
+          const { p0, p1, p2, avgVal, cross } = fd;
+          // Skip degenerate
+          if (Math.abs(cross) < 0.01) continue;
+
+          // Lighting: simple diffuse based on face normal
+          const brightness = 0.45 + 0.55 * Math.min(1, Math.abs(cross) / (scale * scale * 0.003));
+
+          let r, g, b;
+          if (avgVal >= 0) {
+            // Blue for positive: #4fc3f7
+            r = Math.floor(79 * brightness);
+            g = Math.floor(195 * brightness);
+            b = Math.floor(247 * brightness);
+          } else {
+            // Red for negative: #ef5350
+            r = Math.floor(239 * brightness);
+            g = Math.floor(83 * brightness);
+            b = Math.floor(80 * brightness);
+          }
+
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // Label
+        ctx.fillStyle = COLORS.text;
+        ctx.font = count <= 3 ? FONT_LG : FONT_SM;
+        ctx.textAlign = 'center';
+        ctx.fillText(def.label, cx, H - 10);
+      }
+
+      // Instruction text
+      ctx.fillStyle = COLORS.textDim;
+      ctx.font = FONT_SM;
+      ctx.textAlign = 'left';
+      ctx.fillText('Drag to rotate', 8, 14);
+    }
+
+    // Mouse interaction
+    cOrb3D.addEventListener('mousedown', e => {
+      dragging = true;
+      dragStart = { x: e.clientX, y: e.clientY };
+      dragAngleStart = { x: angleX, y: angleY };
+    });
+    cOrb3D.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      angleY = dragAngleStart.y + (e.clientX - dragStart.x) * 0.01;
+      angleX = dragAngleStart.x + (e.clientY - dragStart.y) * 0.01;
+      drawOrbitals();
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+
+    // Touch support
+    cOrb3D.addEventListener('touchstart', e => {
+      e.preventDefault();
+      dragging = true;
+      const t = e.touches[0];
+      dragStart = { x: t.clientX, y: t.clientY };
+      dragAngleStart = { x: angleX, y: angleY };
+    }, { passive: false });
+    cOrb3D.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      angleY = dragAngleStart.y + (t.clientX - dragStart.x) * 0.01;
+      angleX = dragAngleStart.x + (t.clientY - dragStart.y) * 0.01;
+      drawOrbitals();
+    }, { passive: false });
+    cOrb3D.addEventListener('touchend', () => { dragging = false; });
+
+    // Auto-rotation
+    function animateOrbitals() {
+      if (!dragging) {
+        angleY += 0.004;
+        drawOrbitals();
+      }
+      activeAnimations['vis-orbitals-3d'] = requestAnimationFrame(animateOrbitals);
+    }
+
+    if (orbSelect) orbSelect.addEventListener('change', drawOrbitals);
+    animateOrbitals();
+  }
+
   // ----- Orbital Energy Levels vs Atomic Number -----
   const cOrb = document.getElementById('vis-orbital-energies');
   if (cOrb) {

@@ -37,10 +37,19 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>The quantum number $\ell$ gives the shape of the orbital, and $m$ its orientation. We associate letters to $\ell$ values: $\ell = 0$ is the letter $s$, $\ell = 1$ is the letter $p$, $\ell = 2$ is the letter $d$, $\ell = 3$ is the letter $f$. (By the way, these letters originated from properties of associated spectral lines: sharp, principal, diffuse and fundamental.) The $s$ orbitals are spherically symmetric. There is only one $s$ orbital for each $n$ since $2\ell + 1 = 1$ when $\ell = 0$. The $p$ orbitals have two lobes, one with $\psi < 0$ and one with $\psi > 0$. There are three $p$ orbitals for each $n$ since $2\ell + 1 = 3$ when $\ell = 1$. The three $p$ orbitals have different orientations, with the lobes pointing in the $x$, $y$ or $z$ direction. There are five $d$ orbitals and seven $f$ orbitals.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p2_img0.png" alt="Hydrogen atom orbital shapes">
-<figcaption>Figure 1. The shape of hydrogen atom orbitals are determined by spherical harmonics. These plots are like radiation patterns: the distance from the origin at the angle $\theta, \varphi$ is given by $Y_\ell^m(\theta, \varphi)$ with the color denoting the sign.</figcaption>
-</figure>
+<div class="interactive-wrapper">
+<h4>Interactive: Hydrogen Atom Orbitals</h4>
+<canvas id="vis-orbitals-3d" width="700" height="420"></canvas>
+<div class="controls">
+<label>Orbital: <select id="orbital-select">
+<option value="s">s (ℓ=0)</option>
+<option value="p" selected>p (ℓ=1)</option>
+<option value="d">d (ℓ=2)</option>
+<option value="f">f (ℓ=3)</option>
+</select></label>
+</div>
+<figcaption>Figure 1. The shape of hydrogen atom orbitals determined by spherical harmonics $Y_\ell^m(\theta, \varphi)$. The distance from the origin at each angle gives $|Y_\ell^m|$, with color denoting the sign (blue positive, red negative). Drag to rotate; select orbital type to explore different shapes.</figcaption>
+</div>
 
 <p>The radial wavefunction is determined mostly by the principal quantum number $n$. For $n = 1$, $R_{10}(r) \sim \exp\left(-\frac{r}{a_0}\right)$ with $a_0 = \frac{\hbar}{m_e c} = 5 \times 10^{-11}\;\text{m}$ the <span class="tooltip-trigger">Bohr radius<span class="tooltip-content">The characteristic size of the hydrogen atom, $a_0 = 5 \times 10^{-11}\;\text{m}$.</span></span>. Thus the size of the hydrogen atom itself is around $a_0$. With $n = 2$, $R_{20}(r) \sim \left(2 - \frac{r}{a_0}\right)\exp\left(-\frac{r}{2a_0}\right)$. So the $n = 2$ wavefunction also dies exponentially, but has a node at $r = 2a_0$ after which it flips sign. In general, the radial dependence looks like $R_{n\ell}(r) \sim \exp\left(-\frac{r}{na_0}\right)$. So for bigger $n$ the orbitals get bigger and bigger, with the atomic radius scaling as $\langle r \rangle \sim na_0$.</p>
 
@@ -56,13 +65,15 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>To understand the periodic table, we need more than Hund's rule. We have to go beyond the hydrogenic atom spectrum and understand how the electron screening moves the energy levels up and down. It turns out to be very complicated. The energy levels as a function of $Z$ look like:</p>
 
-<div class="interactive-wrapper">
-<h4>Interactive: Orbital Energy Levels vs Atomic Number</h4>
-<canvas id="vis-orbital-energies" width="700" height="400"></canvas>
-<div class="controls">
-<label>Highlight Z: <input type="range" id="orbital-z" min="1" max="86" step="1" value="14"><span id="orbital-z-val">14 (Si)</span></label>
+<div class="interactive-container" style="position:relative;">
+<canvas id="vis-orbital-energies" width="700" height="450"></canvas>
+<div id="orbital-tooltip" style="display:none;position:absolute;pointer-events:none;background:rgba(15,25,35,0.92);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 10px;font:12px Inter,system-ui,sans-serif;color:#e8ecf1;white-space:nowrap;z-index:10;"></div>
+<div class="slider-container">
+<label for="orbital-z">Highlight element (Z):</label>
+<input type="range" id="orbital-z" min="1" max="86" step="1" value="26">
+<span class="slider-value" id="orbital-z-val">26 (Fe)</span>
 </div>
-<figcaption>Figure 2. Energies of orbitals as a function of atomic number, including electron screening effects. Note that the $3d$ orbitals have energies above the $4s$ orbitals around $Z = 19$ (potassium). Drag the slider to highlight any element.</figcaption>
+<p class="vis-caption">Figure 2. Energies of orbitals as a function of atomic number, including electron screening effects. The $3d$ orbitals have energies above $4s$ around $Z = 19$, explaining why potassium fills $4s$ before $3d$. Drag the slider or click the plot to highlight any element.</p>
 </div>
 
 <p>We see a few things from this plot. First of all, there is always a large gap between the $p$ orbitals and the $s$ orbitals in the shell above it. This gap is very important. It makes the elements with filled $p$ orbitals and no extra electrons very stable. Such elements are called the <span class="tooltip-trigger">noble gases<span class="tooltip-content">Elements with completely filled $p$ orbitals (He, Ne, Ar, Kr, Xe, Rn). They are extremely stable and chemically inert.</span></span> and sit at the far right of the periodic table. Note that the noble gases do not have all the orbitals filled for a given $n$, just all the $p$ orbitals filled for a given $n$.</p>
