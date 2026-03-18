@@ -18170,6 +18170,9 @@ function initCh14Vis() {
         ctxOE.fillStyle = COLORS.text; ctxOE.font = FONT_SM; ctxOE.textAlign = 'left';
         ctxOE.fillText(item[0], lx + 24, iy + 4);
       });
+
+      // Update mini periodic table highlight
+      if (typeof updatePTHighlight === 'function') updatePTHighlight();
     }
 
     // --- Hover and click ---
@@ -18187,6 +18190,103 @@ function initCh14Vis() {
         if (dist < bestDist) { bestDist = dist; bestOrb = oi; bestZ = z; }
       }
       return { orb: bestOrb, z: bestZ };
+    }
+
+    // --- Mini Periodic Table ---
+    const ptContainer = document.getElementById('orbital-mini-pt');
+    const ptCells = {};  // Z -> cell element
+    if (ptContainer) {
+      // Periodic table layout: [Z, row, col] for Z=1..86
+      const ptLayout = [
+        [1,0,0],[2,0,17],
+        [3,1,0],[4,1,1],[5,1,12],[6,1,13],[7,1,14],[8,1,15],[9,1,16],[10,1,17],
+        [11,2,0],[12,2,1],[13,2,12],[14,2,13],[15,2,14],[16,2,15],[17,2,16],[18,2,17],
+        [19,3,0],[20,3,1],
+        [21,3,2],[22,3,3],[23,3,4],[24,3,5],[25,3,6],[26,3,7],[27,3,8],[28,3,9],[29,3,10],[30,3,11],
+        [31,3,12],[32,3,13],[33,3,14],[34,3,15],[35,3,16],[36,3,17],
+        [37,4,0],[38,4,1],
+        [39,4,2],[40,4,3],[41,4,4],[42,4,5],[43,4,6],[44,4,7],[45,4,8],[46,4,9],[47,4,10],[48,4,11],
+        [49,4,12],[50,4,13],[51,4,14],[52,4,15],[53,4,16],[54,4,17],
+        [55,5,0],[56,5,1],
+        [72,5,3],[73,5,4],[74,5,5],[75,5,6],[76,5,7],[77,5,8],[78,5,9],[79,5,10],[80,5,11],
+        [81,5,12],[82,5,13],[83,5,14],[84,5,15],[85,5,16],[86,5,17],
+        [57,7,3],[58,7,4],[59,7,5],[60,7,6],[61,7,7],[62,7,8],[63,7,9],[64,7,10],[65,7,11],[66,7,12],[67,7,13],[68,7,14],[69,7,15],[70,7,16],[71,7,17]
+      ];
+      // Orbital block for each Z
+      const blockOf = {};
+      // s-block: groups 1,2 + He
+      [1,2,3,4,11,12,19,20,37,38,55,56].forEach(function(z){ blockOf[z] = 's'; });
+      // d-block
+      for (let z = 21; z <= 30; z++) blockOf[z] = 'd';
+      for (let z = 39; z <= 48; z++) blockOf[z] = 'd';
+      for (let z = 72; z <= 80; z++) blockOf[z] = 'd';
+      // f-block
+      for (let z = 57; z <= 71; z++) blockOf[z] = 'f';
+      // p-block (everything else up to 86)
+      for (let z = 1; z <= 86; z++) { if (!blockOf[z]) blockOf[z] = 'p'; }
+
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(18,1fr);grid-template-rows:repeat(8,1fr);gap:1px;max-width:580px;margin:0 auto;';
+
+      // Lanthanide pointer in row 5, col 2
+      const ptrCell = document.createElement('div');
+      ptrCell.style.cssText = 'grid-row:6;grid-column:3;font:7px Inter,system-ui,sans-serif;color:rgba(255,166,38,0.6);display:flex;align-items:center;justify-content:center;';
+      ptrCell.textContent = '* ↓';
+      grid.appendChild(ptrCell);
+
+      // Lanthanide label
+      const lnLabel = document.createElement('div');
+      lnLabel.style.cssText = 'grid-row:8;grid-column:1/4;font:7px Inter,system-ui,sans-serif;color:rgba(255,166,38,0.5);display:flex;align-items:center;justify-content:flex-end;padding-right:3px;';
+      lnLabel.textContent = '*';
+      grid.appendChild(lnLabel);
+
+      ptLayout.forEach(function(item) {
+        const z = item[0], row = item[1], col = item[2];
+        const cell = document.createElement('div');
+        const blk = blockOf[z];
+        const c = typeColors[blk];
+        cell.style.cssText = 'grid-row:' + (row + 1) + ';grid-column:' + (col + 1) + ';'
+          + 'font:7px Inter,system-ui,sans-serif;text-align:center;padding:1px 0;'
+          + 'border-radius:2px;cursor:pointer;transition:all 0.15s;'
+          + 'background:rgba(' + hexRGB(c).join(',') + ',0.12);color:' + c + ';line-height:1.3;';
+        cell.innerHTML = '<div style="font-size:5px;opacity:0.5;">' + z + '</div>' + elements[z];
+        cell.addEventListener('click', function() {
+          if (zSlider) { zSlider.value = z; drawOrbitalEnergies(); }
+        });
+        grid.appendChild(cell);
+        ptCells[z] = cell;
+      });
+      ptContainer.appendChild(grid);
+    }
+
+    function updatePTHighlight() {
+      const Z = parseInt(zSlider?.value || 26);
+      for (const z in ptCells) {
+        const cell = ptCells[z];
+        const blk = cell._block || (function() {
+          // Cache block type
+          const zi = parseInt(z);
+          let b = 'p';
+          if ([1,2,3,4,11,12,19,20,37,38,55,56].indexOf(zi) >= 0) b = 's';
+          else if ((zi >= 21 && zi <= 30) || (zi >= 39 && zi <= 48) || (zi >= 72 && zi <= 80)) b = 'd';
+          else if (zi >= 57 && zi <= 71) b = 'f';
+          cell._block = b;
+          return b;
+        })();
+        const c = typeColors[blk];
+        const rgb = hexRGB(c).join(',');
+        if (parseInt(z) === Z) {
+          cell.style.background = 'rgba(' + rgb + ',0.85)';
+          cell.style.color = '#0f1923';
+          cell.style.fontWeight = 'bold';
+          cell.style.boxShadow = '0 0 6px rgba(' + rgb + ',0.6)';
+        } else {
+          cell.style.background = 'rgba(' + rgb + ',0.12)';
+          cell.style.color = c;
+          cell.style.fontWeight = 'normal';
+          cell.style.boxShadow = 'none';
+        }
+      }
     }
 
     cOrb.addEventListener('mousemove', function(e) {
@@ -18492,7 +18592,8 @@ function initCh14Vis() {
   const cBF3 = document.getElementById('vis-band-filling-3rd');
   if (cBF3) {
     const { ctx: ctxBF3, W: WBF3, H: HBF3 } = setupCanvas(cBF3);
-    const bf3Select = document.getElementById('bf3-element');
+    const bf3Buttons = document.getElementById('bf3-element-buttons');
+    let bf3Selected = 'Na';
 
     const elemData = {
       'Na': { name: 'Na', config: '[Ne] 3s¹', valence: 1, total: 8, fill3s: 0.5, fill3p: 0 },
