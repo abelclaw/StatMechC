@@ -143,12 +143,17 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>When different elements are brought together, the eigenstates are again linear combinations $\psi_+ \sim c_1\psi_1 + c_2\psi_2$ and $\psi_- = c_1\psi_1 - c_2\psi_2$ but the linear combinations are not symmetric ($c_1 \neq c_2$). The bonding orbital will be more like the lower-energy atomic orbital, and the antibonding orbital will be more like the higher-energy atomic orbital (see the right diagram in Fig. 5). Consequently the electrons will be localized close to the element with the lower-energy orbital.</p>
 
-<div class="interactive-wrapper">
-<h4>Interactive: Ionization Energies</h4>
+<div class="interactive-container" style="position:relative;">
+<h3>Interactive: Ionization Energies</h3>
 <canvas id="vis-ionization" width="700" height="350"></canvas>
-<div class="controls">
+<div id="ion-tooltip" style="display:none;position:absolute;pointer-events:none;background:rgba(15,25,35,0.92);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 10px;font:12px Inter,system-ui,sans-serif;color:#e8ecf1;white-space:nowrap;z-index:10;"></div>
+<div id="ion-mini-pt" style="margin:8px auto 4px;"></div>
+<div class="slider-container">
+<label for="ion-z-slider">Highlight element (Z):</label>
+<input type="range" id="ion-z-slider" min="1" max="86" step="1" value="14">
+<span class="slider-value" id="ion-z-val">14 (Si)</span>
 </div>
-<figcaption>Figure 6. First ionization energies of the elements. Noble gases (He, Ne, Ar, etc.) have the highest values; alkali metals (Li, Na, K, etc.) the lowest. Hover over points for element details.</figcaption>
+<p class="vis-caption">Figure 6. First ionization energies of the elements. Noble gases (He, Ne, Ar, etc.) have the highest values; alkali metals (Li, Na, K, etc.) the lowest. Drag the slider or click the plot to highlight any element.</p>
 </div>
 
 <p>We see from this figure that the noble gases have the highest ionization energies so they are the most stable. Elements with one electron above a filled $p$ orbital, namely those in the first column of the periodic table (H and the Alkali metals, Li, Na, K, Rb) have low ionization energies: they want to give up an electron. The valence electrons are very weakly bound to these elements. On the other hand, elements that are one electron short of a filled $p$ orbital (the halogens, F, Cl, Br, I) would become very stable if an electron were added. Their valence electrons are tightly bound and will not be given up easily. These have high ionization energies (but not as high as the noble gases which really really do not want to give up electrons).</p>

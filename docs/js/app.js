@@ -18470,121 +18470,285 @@ function initCh14Vis() {
   const cIon = document.getElementById('vis-ionization');
   if (cIon) {
     const { ctx: ctxIon, W: WIon, H: HIon } = setupCanvas(cIon);
+    const ionZSlider = document.getElementById('ion-z-slider');
+    const ionTooltipEl = document.getElementById('ion-tooltip');
 
-    // First ionization energies in eV (Z=1..54)
+    // First ionization energies in eV (Z=1..86)
     const ionData = [
       13.60,24.59,5.39,9.32,8.30,11.26,14.53,13.62,17.42,21.56,
       5.14,7.65,5.99,8.15,10.49,10.36,12.97,15.76,4.34,6.11,
       6.56,6.83,6.75,6.77,7.43,7.90,7.88,7.64,7.73,9.39,
       6.00,7.90,9.79,9.75,11.81,14.00,4.18,5.69,6.22,6.63,
       6.76,7.09,7.28,7.36,7.46,8.34,7.58,8.99,5.79,7.34,
-      8.61,9.01,10.45,12.13
+      8.61,9.01,10.45,12.13,3.89,5.21,5.58,5.54,5.47,5.53,
+      5.58,5.64,5.67,6.15,5.86,5.94,6.02,6.11,6.18,6.25,
+      5.43,6.83,7.55,7.86,7.83,8.44,8.97,8.96,9.23,10.44,
+      6.11,7.42,7.29,8.41,9.30,10.75
     ];
-    const elSym = ['','H','He','Li','Be','B','C','N','O','F','Ne',
+    const ionElements = ['','H','He','Li','Be','B','C','N','O','F','Ne',
       'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca',
       'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',
       'Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr',
       'Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn',
-      'Sb','Te','I','Xe'];
-    const periodBounds = [[1,2],[3,10],[11,18],[19,36],[37,54]];
-    const periodColors = [COLORS.red, COLORS.orange, COLORS.green, COLORS.blue, COLORS.purple];
+      'Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd',
+      'Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb',
+      'Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg',
+      'Tl','Pb','Bi','Po','At','Rn'];
+    const periodBounds = [[1,2],[3,10],[11,18],[19,36],[37,54],[55,86]];
+    const periodColors = [COLORS.red, COLORS.orange, COLORS.green, COLORS.blue, COLORS.purple, COLORS.cyan];
+    const Nz = 86;
+
+    // Orbital block for color coding mini PT
+    const ionBlockOf = {};
+    [1,2,3,4,11,12,19,20,37,38,55,56].forEach(function(z){ ionBlockOf[z] = 's'; });
+    for (let z = 21; z <= 30; z++) ionBlockOf[z] = 'd';
+    for (let z = 39; z <= 48; z++) ionBlockOf[z] = 'd';
+    for (let z = 72; z <= 80; z++) ionBlockOf[z] = 'd';
+    for (let z = 57; z <= 71; z++) ionBlockOf[z] = 'f';
+    for (let z = 1; z <= 86; z++) { if (!ionBlockOf[z]) ionBlockOf[z] = 'p'; }
+    const ionTypeColors = { s: '#ef5350', p: '#4fc3f7', d: '#66bb6a', f: '#ffa726' };
+
+    function hexRGBion(hex) {
+      return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+    }
 
     let hoverIon = -1;
 
+    const ox = 60, oy = 25, pw = WIon - 80, ph = HIon - 70;
+    const maxE = 26;
+    function ionZtoX(z) { return ox + (z / Nz) * pw; }
+    function ionEtoY(e) { return oy + ph - (e / maxE) * ph; }
+    function ionXtoZ(px) { return Math.round((px - ox) / pw * Nz); }
+
     function drawIonization() {
       clearCanvas(ctxIon, WIon, HIon);
+      const Z = parseInt(ionZSlider?.value || 14);
+      const sym = Z >= 1 && Z <= Nz ? ionElements[Z] : 'Z=' + Z;
+      document.getElementById('ion-z-val')?.replaceChildren(document.createTextNode(Z + ' (' + sym + ')'));
 
-      const ox = 60, oy = 25, pw = WIon - 80, ph = HIon - 70;
-      const maxE = 26;
+      // Grid
+      ctxIon.strokeStyle = COLORS.grid; ctxIon.lineWidth = 0.5;
+      for (let e = 0; e <= 25; e += 5) {
+        const py = ionEtoY(e);
+        ctxIon.beginPath(); ctxIon.moveTo(ox, py); ctxIon.lineTo(ox + pw, py); ctxIon.stroke();
+      }
+      for (let z = 10; z <= 80; z += 10) {
+        const x = ionZtoX(z);
+        ctxIon.beginPath(); ctxIon.moveTo(x, oy); ctxIon.lineTo(x, oy + ph); ctxIon.stroke();
+      }
 
-      drawAxes(ctxIon, ox, oy, pw, ph, { xLabel: 'Atomic Number Z' });
+      // Axes
+      ctxIon.strokeStyle = COLORS.axis; ctxIon.lineWidth = 1;
+      ctxIon.beginPath();
+      ctxIon.moveTo(ox, oy); ctxIon.lineTo(ox, oy + ph); ctxIon.lineTo(ox + pw, oy + ph);
+      ctxIon.stroke();
 
       // Y ticks
       ctxIon.fillStyle = COLORS.textDim; ctxIon.font = FONT_SM; ctxIon.textAlign = 'right';
       for (let e = 0; e <= 25; e += 5) {
-        const py = oy + ph - (e / maxE) * ph;
-        ctxIon.fillText(e.toString(), ox - 5, py + 4);
-        ctxIon.strokeStyle = COLORS.grid; ctxIon.lineWidth = 0.5;
-        ctxIon.beginPath(); ctxIon.moveTo(ox, py); ctxIon.lineTo(ox + pw, py); ctxIon.stroke();
+        ctxIon.fillText(e + ' eV', ox - 5, ionEtoY(e) + 4);
       }
       // X ticks
       ctxIon.textAlign = 'center';
-      for (let z = 10; z <= 50; z += 10) {
-        ctxIon.fillText(z.toString(), ox + (z / 54) * pw, oy + ph + 14);
-      }
+      ctxIon.fillText('1', ionZtoX(1), oy + ph + 15);
+      for (let z = 10; z <= 80; z += 10) ctxIon.fillText(z.toString(), ionZtoX(z), oy + ph + 15);
+      ctxIon.fillText('86', ionZtoX(86), oy + ph + 15);
+      ctxIon.fillStyle = COLORS.text; ctxIon.font = FONT_SM;
+      ctxIon.fillText('Atomic Number Z', ox + pw / 2, oy + ph + 38);
 
-      ctxIon.save(); ctxIon.translate(15, oy + ph / 2); ctxIon.rotate(-Math.PI / 2);
+      // Y-axis label
+      ctxIon.save(); ctxIon.translate(14, oy + ph / 2); ctxIon.rotate(-Math.PI / 2);
       ctxIon.fillStyle = COLORS.text; ctxIon.font = FONT_SM; ctxIon.textAlign = 'center';
       ctxIon.fillText('Ionization Energy (eV)', 0, 0); ctxIon.restore();
 
-      // Connect points with line
+      // Noble gas markers
+      var ionNobles = [{z:2,s:'He'},{z:10,s:'Ne'},{z:18,s:'Ar'},{z:36,s:'Kr'},{z:54,s:'Xe'},{z:86,s:'Rn'}];
+      ctxIon.fillStyle = 'rgba(255,238,88,0.45)'; ctxIon.font = '9px Inter, system-ui, sans-serif'; ctxIon.textAlign = 'center';
+      ionNobles.forEach(function(ng) { ctxIon.fillText(ng.s, ionZtoX(ng.z), oy + ph + 27); });
+
+      // Connect points with line (glow then main)
+      ctxIon.strokeStyle = 'rgba(255,255,255,0.08)'; ctxIon.lineWidth = 4;
+      ctxIon.beginPath();
+      for (let z = 1; z <= ionData.length; z++) {
+        const px = ionZtoX(z), py = ionEtoY(ionData[z - 1]);
+        z === 1 ? ctxIon.moveTo(px, py) : ctxIon.lineTo(px, py);
+      }
+      ctxIon.stroke();
       ctxIon.strokeStyle = 'rgba(255,255,255,0.2)'; ctxIon.lineWidth = 1;
       ctxIon.beginPath();
       for (let z = 1; z <= ionData.length; z++) {
-        const px = ox + (z / 54) * pw;
-        const py = oy + ph - (ionData[z - 1] / maxE) * ph;
+        const px = ionZtoX(z), py = ionEtoY(ionData[z - 1]);
         z === 1 ? ctxIon.moveTo(px, py) : ctxIon.lineTo(px, py);
       }
       ctxIon.stroke();
 
       // Draw data points colored by period
       for (let z = 1; z <= ionData.length; z++) {
-        let pIdx = -1;
-        for (let p = 0; p < periodBounds.length; p++) {
+        var pIdx = -1;
+        for (var p = 0; p < periodBounds.length; p++) {
           if (z >= periodBounds[p][0] && z <= periodBounds[p][1]) { pIdx = p; break; }
         }
-        const highlight = true;
-        const px = ox + (z / 54) * pw;
-        const py = oy + ph - (ionData[z - 1] / maxE) * ph;
+        const px = ionZtoX(z), py = ionEtoY(ionData[z - 1]);
+        const isSelected = (z === Z);
+        const isHovered = (z === hoverIon);
 
-        ctxIon.globalAlpha = highlight ? 1.0 : 0.2;
-        ctxIon.fillStyle = pIdx >= 0 ? periodColors[pIdx] : COLORS.textDim;
-        ctxIon.beginPath(); ctxIon.arc(px, py, 4, 0, 2 * Math.PI); ctxIon.fill();
+        // Glow for selected/hovered
+        if (isSelected || isHovered) {
+          ctxIon.fillStyle = isSelected ? 'rgba(255,238,88,0.3)' : 'rgba(255,255,255,0.15)';
+          ctxIon.beginPath(); ctxIon.arc(px, py, 8, 0, 2 * Math.PI); ctxIon.fill();
+        }
+
+        // Point
+        ctxIon.fillStyle = isSelected ? COLORS.yellow : (pIdx >= 0 ? periodColors[pIdx] : COLORS.textDim);
+        ctxIon.beginPath(); ctxIon.arc(px, py, isSelected ? 5 : (isHovered ? 5 : 3.5), 0, 2 * Math.PI); ctxIon.fill();
 
         // Label noble gases and alkali metals
-        const nobles = [2,10,18,36,54];
-        const alkalis = [1,3,11,19,37];
-        if (nobles.includes(z) || alkalis.includes(z)) {
-          ctxIon.fillStyle = highlight ? COLORS.text : 'rgba(255,255,255,0.15)';
-          ctxIon.font = '10px Inter, system-ui, sans-serif';
-          ctxIon.textAlign = 'center';
-          ctxIon.fillText(elSym[z], px, py - 8);
+        if ([2,10,18,36,54,86].indexOf(z) >= 0 || [1,3,11,19,37,55].indexOf(z) >= 0) {
+          ctxIon.fillStyle = COLORS.text; ctxIon.font = '10px Inter, system-ui, sans-serif'; ctxIon.textAlign = 'center';
+          ctxIon.fillText(ionElements[z], px, py - 9);
         }
-        ctxIon.globalAlpha = 1.0;
       }
 
-      // Hover info
-      if (hoverIon >= 1 && hoverIon <= ionData.length) {
-        const z = hoverIon;
-        const px = ox + (z / 54) * pw;
-        const py = oy + ph - (ionData[z - 1] / maxE) * ph;
-        ctxIon.fillStyle = COLORS.yellow;
-        ctxIon.beginPath(); ctxIon.arc(px, py, 6, 0, 2 * Math.PI); ctxIon.fill();
-        ctxIon.fillStyle = COLORS.text; ctxIon.font = FONT; ctxIon.textAlign = 'center';
-        ctxIon.fillText(elSym[z] + ' (Z=' + z + '): ' + ionData[z - 1].toFixed(2) + ' eV', ox + pw / 2, oy + ph + 38);
+      // Selected Z highlight line
+      if (Z >= 1 && Z <= ionData.length) {
+        const zPx = ionZtoX(Z);
+        ctxIon.strokeStyle = 'rgba(255,238,88,0.35)'; ctxIon.lineWidth = 1;
+        ctxIon.setLineDash([4, 3]);
+        ctxIon.beginPath(); ctxIon.moveTo(zPx, oy); ctxIon.lineTo(zPx, oy + ph); ctxIon.stroke();
+        ctxIon.setLineDash([]);
+
+        // Label at top
+        ctxIon.fillStyle = COLORS.yellow; ctxIon.font = '13px Inter, system-ui, sans-serif'; ctxIon.textAlign = 'center';
+        ctxIon.fillText(sym + '  (Z=' + Z + ', IE=' + ionData[Z - 1].toFixed(2) + ' eV)', zPx, oy - 8);
       }
 
       // Legend
+      const lx = ox + pw - 100, ly = oy + 6;
+      ctxIon.fillStyle = 'rgba(15,25,35,0.7)'; ctxIon.fillRect(lx - 6, ly - 2, 106, periodBounds.length * 15 + 6);
+      ctxIon.strokeStyle = 'rgba(255,255,255,0.1)'; ctxIon.lineWidth = 1; ctxIon.strokeRect(lx - 6, ly - 2, 106, periodBounds.length * 15 + 6);
       ctxIon.font = FONT_SM; ctxIon.textAlign = 'left';
-      periodBounds.forEach((pb, i) => {
+      periodBounds.forEach(function(pb, i) {
+        const iy = ly + 9 + i * 15;
         ctxIon.fillStyle = periodColors[i];
-        ctxIon.globalAlpha = 1;
-        ctxIon.fillText('Period ' + (i + 1), ox + pw - 80, oy + 14 + i * 14);
-        ctxIon.globalAlpha = 1;
+        ctxIon.beginPath(); ctxIon.arc(lx + 5, iy, 3, 0, 2 * Math.PI); ctxIon.fill();
+        ctxIon.fillStyle = COLORS.text;
+        ctxIon.fillText('Period ' + (i + 1), lx + 14, iy + 4);
       });
 
-      ctxIon.fillStyle = COLORS.text; ctxIon.font = FONT_LG; ctxIon.textAlign = 'left';
-      ctxIon.fillText('First Ionization Energies', ox + 5, oy + 14);
+      // Update mini periodic table
+      if (typeof updateIonPT === 'function') updateIonPT();
     }
 
-    cIon.addEventListener('mousemove', (e) => {
-      const rect = cIon.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const ox = 60, pw = WIon - 80;
-      hoverIon = Math.round((mx - ox) / pw * 54);
+    // --- Mini Periodic Table ---
+    const ionPtContainer = document.getElementById('ion-mini-pt');
+    const ionPtCells = {};
+    if (ionPtContainer) {
+      const ptLayout = [
+        [1,0,0],[2,0,17],
+        [3,1,0],[4,1,1],[5,1,12],[6,1,13],[7,1,14],[8,1,15],[9,1,16],[10,1,17],
+        [11,2,0],[12,2,1],[13,2,12],[14,2,13],[15,2,14],[16,2,15],[17,2,16],[18,2,17],
+        [19,3,0],[20,3,1],
+        [21,3,2],[22,3,3],[23,3,4],[24,3,5],[25,3,6],[26,3,7],[27,3,8],[28,3,9],[29,3,10],[30,3,11],
+        [31,3,12],[32,3,13],[33,3,14],[34,3,15],[35,3,16],[36,3,17],
+        [37,4,0],[38,4,1],
+        [39,4,2],[40,4,3],[41,4,4],[42,4,5],[43,4,6],[44,4,7],[45,4,8],[46,4,9],[47,4,10],[48,4,11],
+        [49,4,12],[50,4,13],[51,4,14],[52,4,15],[53,4,16],[54,4,17],
+        [55,5,0],[56,5,1],
+        [72,5,3],[73,5,4],[74,5,5],[75,5,6],[76,5,7],[77,5,8],[78,5,9],[79,5,10],[80,5,11],
+        [81,5,12],[82,5,13],[83,5,14],[84,5,15],[85,5,16],[86,5,17],
+        [57,7,3],[58,7,4],[59,7,5],[60,7,6],[61,7,7],[62,7,8],[63,7,9],[64,7,10],[65,7,11],[66,7,12],[67,7,13],[68,7,14],[69,7,15],[70,7,16],[71,7,17]
+      ];
+
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(18,1fr);grid-template-rows:repeat(8,1fr);gap:1px;max-width:580px;margin:0 auto;';
+
+      // Lanthanide pointer
+      const ptrCell = document.createElement('div');
+      ptrCell.style.cssText = 'grid-row:6;grid-column:3;font:7px Inter,system-ui,sans-serif;color:rgba(255,166,38,0.6);display:flex;align-items:center;justify-content:center;';
+      ptrCell.textContent = '* \u2193';
+      grid.appendChild(ptrCell);
+      const lnLabel = document.createElement('div');
+      lnLabel.style.cssText = 'grid-row:8;grid-column:1/4;font:7px Inter,system-ui,sans-serif;color:rgba(255,166,38,0.5);display:flex;align-items:center;justify-content:flex-end;padding-right:3px;';
+      lnLabel.textContent = '*';
+      grid.appendChild(lnLabel);
+
+      ptLayout.forEach(function(item) {
+        var z = item[0], row = item[1], col = item[2];
+        var cell = document.createElement('div');
+        var blk = ionBlockOf[z];
+        var c = ionTypeColors[blk];
+        var rgb = hexRGBion(c);
+        cell.style.cssText = 'grid-row:' + (row + 1) + ';grid-column:' + (col + 1) + ';'
+          + 'font:7px Inter,system-ui,sans-serif;text-align:center;padding:1px 0;'
+          + 'border-radius:2px;cursor:pointer;transition:all 0.15s;'
+          + 'background:rgba(' + rgb.join(',') + ',0.12);color:' + c + ';line-height:1.3;';
+        cell.innerHTML = '<div style="font-size:5px;opacity:0.5;">' + z + '</div>' + ionElements[z];
+        cell._block = blk;
+        cell.addEventListener('click', function() {
+          if (ionZSlider) { ionZSlider.value = z; drawIonization(); }
+        });
+        grid.appendChild(cell);
+        ionPtCells[z] = cell;
+      });
+      ionPtContainer.appendChild(grid);
+    }
+
+    function updateIonPT() {
+      var Z = parseInt(ionZSlider?.value || 14);
+      for (var z in ionPtCells) {
+        var cell = ionPtCells[z];
+        var blk = cell._block;
+        var c = ionTypeColors[blk];
+        var rgb = hexRGBion(c).join(',');
+        if (parseInt(z) === Z) {
+          cell.style.background = 'rgba(' + rgb + ',0.85)';
+          cell.style.color = '#0f1923';
+          cell.style.fontWeight = 'bold';
+          cell.style.boxShadow = '0 0 6px rgba(' + rgb + ',0.6)';
+        } else {
+          cell.style.background = 'rgba(' + rgb + ',0.12)';
+          cell.style.color = c;
+          cell.style.fontWeight = 'normal';
+          cell.style.boxShadow = 'none';
+        }
+      }
+    }
+
+    // --- Hover and click ---
+    cIon.addEventListener('mousemove', function(e) {
+      var rect = cIon.getBoundingClientRect();
+      var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      var z = ionXtoZ(mx);
+      hoverIon = (z >= 1 && z <= ionData.length && my >= oy && my <= oy + ph) ? z : -1;
+      cIon.style.cursor = (mx >= ox && mx <= ox + pw && my >= oy && my <= oy + ph) ? 'crosshair' : 'default';
+      // Show tooltip
+      if (ionTooltipEl) {
+        if (hoverIon >= 1) {
+          var pIdx = -1;
+          for (var p = 0; p < periodBounds.length; p++) {
+            if (hoverIon >= periodBounds[p][0] && hoverIon <= periodBounds[p][1]) { pIdx = p; break; }
+          }
+          var c = pIdx >= 0 ? periodColors[pIdx] : COLORS.text;
+          ionTooltipEl.style.display = 'block';
+          ionTooltipEl.style.left = (mx + 14) + 'px'; ionTooltipEl.style.top = (my - 10) + 'px';
+          ionTooltipEl.style.borderColor = c;
+          ionTooltipEl.innerHTML = '<span style="color:' + c + ';font-weight:600;">' + ionElements[hoverIon] + '</span> (Z=' + hoverIon + '): ' + ionData[hoverIon - 1].toFixed(2) + ' eV';
+        } else { ionTooltipEl.style.display = 'none'; }
+      }
       drawIonization();
     });
-    cIon.addEventListener('mouseleave', () => { hoverIon = -1; drawIonization(); });
+    cIon.addEventListener('mouseleave', function() {
+      hoverIon = -1;
+      if (ionTooltipEl) ionTooltipEl.style.display = 'none';
+      cIon.style.cursor = 'default';
+      drawIonization();
+    });
+    cIon.addEventListener('click', function(e) {
+      var rect = cIon.getBoundingClientRect();
+      var z = ionXtoZ(e.clientX - rect.left);
+      if (z >= 1 && z <= Nz && ionZSlider) { ionZSlider.value = z; drawIonization(); }
+    });
+    ionZSlider?.addEventListener('input', drawIonization);
     drawIonization();
   }
 
