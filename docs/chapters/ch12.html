@@ -270,13 +270,13 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 
 <p>We also checked the $\mu = 0$ approximation numerically. When does it break down? The approximation $\mu \approx 0$ is good in the BEC regime (low $T$), where the ground state is anomalously filled. It breaks down at higher $T$ when $\langle N_\text{ground}\rangle$ gets small, as you can see from Eq. (14): as $\langle N_\text{ground}\rangle \to 0$ then $\mu \to -\infty$.</p>
 
-<div class="interactive-wrapper">
-<h4>Interactive: Exact vs Approximate Ground State Occupation</h4>
-<canvas id="vis-n1-compare" width="600" height="400"></canvas>
-<div class="controls">
-<label>N particles: <input type="range" id="n1-particles" min="50" max="500" step="10" value="100"><span id="n1-particles-val">100</span></label>
-</div>
-<figcaption>Top: ground state fraction from exact numerical solution (solid) vs the $\mu = 0$ approximation (dashed). Bottom: chemical potential $\mu$ vs temperature. The approximation $\mu \approx 0$ works well below $T_c$ but breaks down above it as $\mu$ deviates significantly from zero.</figcaption>
+<div class="interactive-container">
+  <h3>Interactive: Exact vs Approximate Ground State Occupation</h3>
+  <div class="vis-controls">
+    <label>N particles: <input type="range" id="n1-particles" min="20" max="2000" step="10" value="200"> <span class="slider-value" id="n1-particles-val">200</span></label>
+  </div>
+  <canvas id="vis-n1-compare" width="600" height="400"></canvas>
+  <p class="vis-caption">Ground state fraction $N_0/N$ vs temperature. The $\mu = 0$ approximation (dashed orange) matches the exact numerical solution (solid blue) well below $T_c$, but overshoots above $T_c$ by predicting negative occupation. The thermodynamic limit $1-(T/T_c)^{3/2}$ (dotted green) is shown for reference. Hover to read values.</p>
 </div>
 
 <h2>4. Experimental Evidence</h2>
@@ -288,6 +288,16 @@ $$T_c = \frac{4\epsilon_1}{\pi k_B}\!\left(\frac{N}{\zeta_{3/2}}\right)^{2/3} = 
 <p>In order to see the BEC, one needs to be able to distinguish atoms in the ground state from atoms in the excited states. The basic feature that makes this possible is that the ground state atoms all have smaller wavenumbers and hence slower velocities than the other states. So if you remove the magnetic trap, the atoms will start to spread, with the ground state atoms spreading more slowly. Thus the atoms' positions after a short time indicate their initial velocities. The scientists photographed (i.e. illuminated the system with a resonant laser pulse) the system after $t = 100\,\text{ms}$ and found a high density of atoms that had not moved very far:</p>
 
 <figure><img src="images/12-BEC_p9_img0.png" alt="Observation of a Bose-Einstein condensate"><figcaption>Figure 7. Observation of a Bose-Einstein condensate. From Wieman and Cornell's group at the JILA laboratory in Boulder. Above $T_c$ (left), the distribution is smooth (Maxwell-Boltzmann). Below $T_c$ (center, right), a sharp peak appears at zero momentum, corresponding to the condensate.</figcaption></figure>
+
+<!-- INTERACTIVE: BEC Momentum Distribution -->
+<div class="interactive-container">
+  <h3>Interactive: Momentum Distribution</h3>
+  <div class="vis-controls">
+    <label>T / T<sub>c</sub>: <input type="range" id="bec-momentum-temp" min="0" max="2.0" step="0.01" value="1.5"> <span class="slider-value" id="bec-momentum-temp-val">1.50</span></label>
+  </div>
+  <canvas id="vis-bec-momentum" width="600" height="420"></canvas>
+  <p class="vis-caption">Drag the temperature slider to see how the momentum-space density evolves. Above $T_c$, the distribution is a smooth thermal (Gaussian) profile. Below $T_c$, a sharp peak emerges at zero momentum &mdash; the Bose-Einstein condensate. Compare with Figure 7 above.</p>
+</div>
 
 <p>In this figure, from Wieman and Cornell's group at the JILA laboratory in Boulder, we see the distribution of atoms in the BEC at different temperatures. The critical temperature is $T_c \approx 170\,\text{nK}$. Above this temperature (left), the distribution is pretty smooth, consistent with a Maxwell-Boltzmann velocity distribution. Below the critical temperature you can clearly see the higher density corresponding to an anomalously large occupancy of the ground state, consistent with expectations from a BEC. The right image shows the BEC at even lower temperature, where the occupancy is even higher. Direct observation of thermodynamic properties of the system, such as the energy density and heat capacity (particularly by Ketterle's group at MIT), further confirmed that this system was a BEC.</p>
 

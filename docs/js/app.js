@@ -16308,6 +16308,157 @@ function initCh12Vis() {
     n1Slider?.addEventListener('input', drawN1Compare);
     drawN1Compare();
   }
+
+  // ---- BEC Momentum Distribution: 3D surface plot ----
+  const cMom = document.getElementById('vis-bec-momentum');
+  if (cMom) {
+    const mS = setupCanvas(cMom);
+    const ctxM = mS.ctx, WM = mS.W, HM = mS.H;
+    const momTempSlider = document.getElementById('bec-momentum-temp');
+
+    // Grid parameters for pseudo-3D surface
+    const NX = 80, NY = 40;
+    const viewAngle = 0.55; // tilt angle (radians)
+    const cosA = Math.cos(viewAngle), sinA = Math.sin(viewAngle);
+
+    function momentumDist(px, py, tRatio) {
+      const p2 = px * px + py * py;
+      // Thermal (Gaussian) component: width proportional to sqrt(T)
+      const sigma2 = Math.max(tRatio, 0.05) * 0.12;
+      const thermal = Math.exp(-p2 / (2 * sigma2));
+      // Condensate peak: sharp Gaussian at p=0, fraction = 1 - (T/Tc)^1.5
+      let condensateFrac = 0;
+      if (tRatio < 1) {
+        condensateFrac = 1 - Math.pow(tRatio, 1.5);
+      }
+      const peakWidth = 0.008;
+      const condensate = condensateFrac * 3.5 * Math.exp(-p2 / (2 * peakWidth));
+      return thermal + condensate;
+    }
+
+    // Project 3D (x, y, z) to 2D screen coordinates
+    function project(x, y, z) {
+      // x runs left-right, y runs into screen (depth), z is height
+      const sx = WM / 2 + x * 3.0 - y * 1.8;
+      const sy = HM * 0.88 - z * 65 - y * cosA * 2.5 + y * 0.8;
+      return [sx, sy, y]; // return depth for painter's algorithm
+    }
+
+    function drawMomentum() {
+      clearCanvas(ctxM, WM, HM);
+      const tR = parseFloat(momTempSlider?.value || 1.5);
+
+      // Title
+      ctxM.fillStyle = COLORS.text; ctxM.font = FONT_LG; ctxM.textAlign = 'left';
+      ctxM.fillText('Momentum-Space Density', 15, 20);
+
+      // Temperature label
+      ctxM.fillStyle = tR <= 1 ? COLORS.red : COLORS.blue;
+      ctxM.font = FONT_LG; ctxM.textAlign = 'right';
+      const label = tR <= 1 ? 'T < T_c  (BEC)' : 'T > T_c  (normal)';
+      ctxM.fillText('T/T\u2081 = ' + tR.toFixed(2) + '    ' + label, WM - 15, 20);
+
+      // Update slider display
+      const valSpan = document.getElementById('bec-momentum-temp-val');
+      if (valSpan) valSpan.textContent = tR.toFixed(2);
+
+      // Build surface grid
+      const pRange = 1.0;
+      const rows = [];
+      for (let iy = 0; iy < NY; iy++) {
+        const row = [];
+        const py = (iy / (NY - 1) - 0.5) * 2 * pRange;
+        for (let ix = 0; ix < NX; ix++) {
+          const px = (ix / (NX - 1) - 0.5) * 2 * pRange;
+          const z = momentumDist(px, py, tR);
+          const [sx, sy] = project(ix - NX / 2, iy - NY / 2, z);
+          row.push({ sx, sy, z, ix, iy });
+        }
+        rows.push(row);
+      }
+
+      // Draw surface using painter's algorithm (back to front)
+      for (let iy = 0; iy < NY - 1; iy++) {
+        for (let ix = 0; ix < NX - 1; ix++) {
+          const p00 = rows[iy][ix];
+          const p10 = rows[iy][ix + 1];
+          const p01 = rows[iy + 1][ix];
+          const p11 = rows[iy + 1][ix + 1];
+
+          const avgZ = (p00.z + p10.z + p01.z + p11.z) / 4;
+
+          // Color based on height
+          let r, g, b;
+          if (avgZ > 2.0) {
+            // Condensate peak: bright white-yellow
+            const t = Math.min((avgZ - 2.0) / 2.5, 1);
+            r = 255; g = Math.round(255 - t * 30); b = Math.round(200 - t * 150);
+          } else if (avgZ > 1.0) {
+            // Transition: orange to yellow
+            const t = (avgZ - 1.0) / 1.0;
+            r = Math.round(255); g = Math.round(140 + t * 115); b = Math.round(50 + t * 100);
+          } else if (avgZ > 0.3) {
+            // Mid: red to orange
+            const t = (avgZ - 0.3) / 0.7;
+            r = Math.round(180 + t * 75); g = Math.round(50 + t * 90); b = Math.round(50);
+          } else {
+            // Low: dark blue to red
+            const t = avgZ / 0.3;
+            r = Math.round(30 + t * 150); g = Math.round(40 + t * 10); b = Math.round(100 - t * 50);
+          }
+
+          ctxM.fillStyle = `rgb(${r},${g},${b})`;
+          ctxM.beginPath();
+          ctxM.moveTo(p00.sx, p00.sy);
+          ctxM.lineTo(p10.sx, p10.sy);
+          ctxM.lineTo(p11.sx, p11.sy);
+          ctxM.lineTo(p01.sx, p01.sy);
+          ctxM.closePath();
+          ctxM.fill();
+
+          // Wireframe lines for depth perception (subtle)
+          if (ix % 4 === 0 || iy % 4 === 0) {
+            ctxM.strokeStyle = `rgba(255,255,255,0.08)`;
+            ctxM.lineWidth = 0.5;
+            ctxM.stroke();
+          }
+        }
+      }
+
+      // Axis labels
+      ctxM.fillStyle = COLORS.textDim; ctxM.font = FONT_SM; ctxM.textAlign = 'center';
+      ctxM.fillText('p\u2093', WM / 2 + NX * 1.5 + 15, HM * 0.82 + 20);
+      ctxM.fillText('p\u2094', WM / 2 - NX * 0.9 - 25, HM * 0.82 - NY * cosA * 1.2 - 5);
+
+      // Vertical axis label
+      ctxM.save();
+      ctxM.translate(18, HM * 0.45);
+      ctxM.rotate(-Math.PI / 2);
+      ctxM.fillText('density f(p)', 0, 0);
+      ctxM.restore();
+
+      // Draw base grid lines for grounding
+      ctxM.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctxM.lineWidth = 0.5;
+      for (let iy = 0; iy < NY; iy += 8) {
+        ctxM.beginPath();
+        const [sx0, sy0] = project(-NX / 2, iy - NY / 2, 0);
+        const [sx1, sy1] = project(NX / 2 - 1, iy - NY / 2, 0);
+        ctxM.moveTo(sx0, sy0); ctxM.lineTo(sx1, sy1);
+        ctxM.stroke();
+      }
+      for (let ix = 0; ix < NX; ix += 8) {
+        ctxM.beginPath();
+        const [sx0, sy0] = project(ix - NX / 2, -NY / 2, 0);
+        const [sx1, sy1] = project(ix - NX / 2, NY / 2 - 1, 0);
+        ctxM.moveTo(sx0, sy0); ctxM.lineTo(sx1, sy1);
+        ctxM.stroke();
+      }
+    }
+
+    momTempSlider?.addEventListener('input', drawMomentum);
+    drawMomentum();
+  }
 }
 
 
