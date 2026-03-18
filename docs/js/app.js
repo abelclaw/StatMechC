@@ -11510,14 +11510,28 @@ function initCh9Vis() {
         var iPts = sample(p.iVal);
         var mPts = showMF ? sample(p.mfVal) : [];
 
-        // Determine y scale: use the maximum of all sampled values × 1.15
-        // so the entire curve is always fully visible within the panel.
+        // Determine y scale per panel type:
+        // - Strong divergence (κT, γ>0.5): 90th percentile so dots are spread
+        //   across the panel and the peak visibly exits the top near Tc.
+        // - Weak divergence (Cp, α<0.5): full max × 1.5 for headroom so
+        //   the curve sits in the lower ~60% of the panel.
+        // - Vanishing: left-edge value × 1.15.
         var yMax = 0;
-        iPts.forEach(function(d) { if (d.y > yMax) yMax = d.y; });
-        if (showMF) mPts.forEach(function(d) { if (d.y > yMax) yMax = d.y; });
-        // Also ensure data points fit
-        p.data.forEach(function(d) { if (d.y > yMax) yMax = d.y; });
-        yMax = yMax > 0 ? yMax * 1.15 : 1;
+        if (p.diverges && p.iVal > 0.5) {
+          var allY = iPts.map(function(d){return d.y;}).sort(function(a,b){return a-b;});
+          var p90 = allY[Math.floor(allY.length * 0.90)] || 10;
+          yMax = p90 * 1.15;
+        } else if (p.diverges) {
+          iPts.forEach(function(d) { if (d.y > yMax) yMax = d.y; });
+          yMax = yMax > 0 ? yMax * 1.5 : 10;
+        } else {
+          var yEdge = p.fn(tMin, p.iVal);
+          yMax = (yEdge !== null && yEdge > 0) ? yEdge * 1.15 : 1.5;
+        }
+        // Ensure MF curve and data points fit
+        if (showMF) mPts.forEach(function(d) { if (d.y > yMax) yMax = d.y * 1.15; });
+        p.data.forEach(function(d) { if (d.y > yMax) yMax = d.y * 1.15; });
+        if (yMax < 0.01) yMax = 1;
 
         function toPixel(t, y) {
           return {
