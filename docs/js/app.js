@@ -21290,15 +21290,37 @@ function initCh14Vis() {
       ctx.fillText('X = ' + inputX, cx - 125, baseY + 5);
 
       // Animated current flow
+      notAnimT += 0.04;
       if (inputX) {
-        notAnimT += 0.04;
+        // X=1: current flows Vcc → resistor → transistor → ground
         ctx.fillStyle = onC;
         for (let i = 0; i < 3; i++) {
           const frac = ((notAnimT + i * 0.33) % 1);
-          const ay = tTop + frac * (gndY - tTop);
+          const ay = rTop + frac * (gndY - rTop);
+          if (ay < rTop || ay > gndY) continue;
           ctx.beginPath();
           ctx.moveTo(cx - 4, ay - 3); ctx.lineTo(cx + 4, ay - 3);
           ctx.lineTo(cx, ay + 5); ctx.closePath(); ctx.fill();
+        }
+      } else {
+        // X=0: current flows Vcc → resistor → Y output (rightward)
+        ctx.fillStyle = onC;
+        // Vertical arrows: Vcc down to junction
+        for (let i = 0; i < 2; i++) {
+          const frac = ((notAnimT + i * 0.5) % 1);
+          const ay = rTop + frac * (jY - rTop);
+          if (ay < rTop || ay > jY) continue;
+          ctx.beginPath();
+          ctx.moveTo(cx - 4, ay - 3); ctx.lineTo(cx + 4, ay - 3);
+          ctx.lineTo(cx, ay + 5); ctx.closePath(); ctx.fill();
+        }
+        // Horizontal arrows: junction rightward to Y
+        for (let i = 0; i < 2; i++) {
+          const frac = ((notAnimT + i * 0.5) % 1);
+          const ax = cx + frac * 120;
+          ctx.beginPath();
+          ctx.moveTo(ax - 3, jY - 4); ctx.lineTo(ax - 3, jY + 4);
+          ctx.lineTo(ax + 5, jY); ctx.closePath(); ctx.fill();
         }
       }
 
@@ -21318,7 +21340,7 @@ function initCh14Vis() {
     let notAnim;
     function animateNot() {
       drawNotGate();
-      if (inputX) notAnim = requestAnimationFrame(animateNot);
+      notAnim = requestAnimationFrame(animateNot);
     }
 
     if (notButtons) {
@@ -21332,7 +21354,7 @@ function initCh14Vis() {
         animateNot();
       });
     }
-    drawNotGate();
+    animateNot();
   }
 
   // =========================================================================
