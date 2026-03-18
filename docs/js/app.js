@@ -19555,251 +19555,348 @@ function initCh14Vis() {
     const dopTempSlider = document.getElementById('doping-temp');
     let dopType = 'intrinsic';
 
-    // Seeded random for stable carrier positions
-    let carrierSeed = 1;
-    function dopRand() {
-      carrierSeed = (carrierSeed * 16807) % 2147483647;
-      return (carrierSeed - 1) / 2147483646;
+    // Animated particle system (like band-compare)
+    let dopParticles = []; // {x, y, targetY, vx, type:'electron'|'hole'|'donor_e'|'acceptor_h', opacity, phase}
+    let dopAnimId = null;
+    let dopLastTime = 0;
+
+    // Layout constants
+    const dopBandW = 200, dopBandH = 90;
+    const dopEg = 1.1; // eV
+    const dopGapPx = 70;
+    const dopBandCx = WDO * 0.38;
+    const dopMidY = HDO / 2;
+    const dopCbBot = dopMidY - dopGapPx / 2;
+    const dopCbTop = dopCbBot - dopBandH;
+    const dopVbTop = dopMidY + dopGapPx / 2;
+    const dopVbBot = dopVbTop + dopBandH;
+    const dopLeft = dopBandCx - dopBandW / 2 + 6;
+    const dopRight = dopBandCx + dopBandW / 2 - 6;
+
+    // Dopant level y-positions (45meV and 57meV mapped to gap fraction)
+    const donorLevelY = dopCbBot + 5;  // just below CB edge
+    const acceptorLevelY = dopVbTop - 5; // just above VB edge
+
+    function dopTargetCounts(T) {
+      var kBT = 0.026 * T;
+      // Intrinsic carrier count (visual scale)
+      var niRaw = Math.exp(-dopEg / (2 * kBT));
+      var niRef = Math.exp(-dopEg / (2 * 0.026 * 3));
+      var nI = Math.round(Math.min(niRaw / niRef * 20, 25));
+
+      var nDopant = 10;
+      if (dopType === 'intrinsic') return { elec: nI, hole: nI, donorE: 0, acceptorH: 0 };
+      if (dopType === 'n-type') {
+        var ne = Math.min(30, nDopant + nI);
+        var nh = ne > 0 ? Math.max(0, Math.round(nI * nI / ne)) : 0;
+        return { elec: ne, hole: nh, donorE: 0, acceptorH: 0 };
+      }
+      // p-type
+      var nh2 = Math.min(30, nDopant + nI);
+      var ne2 = nh2 > 0 ? Math.max(0, Math.round(nI * nI / nh2)) : 0;
+      return { elec: ne2, hole: nh2, donorE: 0, acceptorH: 0 };
     }
 
-    function drawDoping() {
-      const T = parseFloat(dopTempSlider?.value || 1);
+    function makeParticle(type) {
+      var x = dopLeft + Math.random() * (dopRight - dopLeft);
+      var kBT = 0.026 * parseFloat(dopTempSlider?.value || 1);
+      var eDist = -Math.log(1 - Math.random() * 0.95) * kBT * 20;
+      var targetY;
+      if (type === 'electron') {
+        targetY = dopCbBot - 6 - Math.min(eDist, dopBandH - 12);
+      } else {
+        targetY = dopVbTop + 6 + Math.min(eDist, dopBandH * 0.6);
+      }
+      return {
+        x: x, y: type === 'electron' ? dopCbBot : dopVbTop, targetY: targetY,
+        vx: (Math.random() - 0.5) * 25,
+        type: type, opacity: 0, phase: Math.random() * Math.PI * 2
+      };
+    }
+
+    function drawDoping(timestamp) {
+      if (!timestamp) timestamp = performance.now();
+      var dt = Math.min((timestamp - dopLastTime) / 1000, 0.1);
+      dopLastTime = timestamp;
+
+      var T = parseFloat(dopTempSlider?.value || 1);
+      var kBT = 0.026 * T;
       clearCanvas(ctxDO, WDO, HDO);
-      carrierSeed = Math.round(T * 100) + (dopType === 'n-type' ? 10000 : dopType === 'p-type' ? 20000 : 30000);
 
-      // Layout: left = band diagram, right = Fermi-Dirac / DOS
-      const bandX = 60, bandW = 280, rightX = 400, rightW = 240;
-      const topM = 45, botM = 35;
+      // --- Valence band fill (solid, like band-compare) ---
+      ctxDO.fillStyle = 'rgba(239,83,80,0.35)';
+      ctxDO.fillRect(dopBandCx - dopBandW/2 + 2, dopVbTop + 2, dopBandW - 4, dopBandH - 4);
 
-      // Energy scale
-      const Eg = 1.1; // eV (Si)
-      const eScale = (HDO - topM - botM) / 3.0; // px per eV
-      const midE = 1.5;
-      const cbEdge = midE + Eg / 2;
-      const vbEdge = midE - Eg / 2;
-      function eToY(e) { return topM + (midE + 1.5 - e) * eScale; }
+      // Valence band outline
+      ctxDO.fillStyle = 'rgba(239,83,80,0.12)';
+      ctxDO.fillRect(dopBandCx - dopBandW/2, dopVbTop, dopBandW, dopBandH);
+      ctxDO.strokeStyle = COLORS.red; ctxDO.lineWidth = 2;
+      ctxDO.strokeRect(dopBandCx - dopBandW/2, dopVbTop, dopBandW, dopBandH);
 
-      const cbY = eToY(cbEdge), vbY = eToY(vbEdge);
-      const cbTopY = eToY(cbEdge + 0.8), vbBotY = eToY(vbEdge - 0.8);
+      // Conduction band
+      ctxDO.fillStyle = 'rgba(79,195,247,0.08)';
+      ctxDO.fillRect(dopBandCx - dopBandW/2, dopCbTop, dopBandW, dopBandH);
+      ctxDO.strokeStyle = COLORS.blue; ctxDO.lineWidth = 2;
+      ctxDO.strokeRect(dopBandCx - dopBandW/2, dopCbTop, dopBandW, dopBandH);
 
-      // --- LEFT: Band Diagram ---
-      // Conduction band gradient
-      const cbGrad = ctxDO.createLinearGradient(0, cbTopY, 0, cbY);
-      cbGrad.addColorStop(0, 'rgba(79,195,247,0.03)');
-      cbGrad.addColorStop(1, 'rgba(79,195,247,0.18)');
-      ctxDO.fillStyle = cbGrad;
-      ctxDO.fillRect(bandX, cbTopY, bandW, cbY - cbTopY);
+      // Band gap background
+      ctxDO.fillStyle = 'rgba(255,255,255,0.02)';
+      ctxDO.fillRect(dopBandCx - dopBandW/2, dopCbBot, dopBandW, dopGapPx);
 
-      // Valence band gradient
-      const vbGrad = ctxDO.createLinearGradient(0, vbY, 0, vbBotY);
-      vbGrad.addColorStop(0, 'rgba(239,83,80,0.18)');
-      vbGrad.addColorStop(1, 'rgba(239,83,80,0.03)');
-      ctxDO.fillStyle = vbGrad;
-      ctxDO.fillRect(bandX, vbY, bandW, vbBotY - vbY);
-
-      // Band edges
-      ctxDO.lineWidth = 2.5;
-      ctxDO.strokeStyle = COLORS.blue;
-      ctxDO.beginPath(); ctxDO.moveTo(bandX, cbY); ctxDO.lineTo(bandX + bandW, cbY); ctxDO.stroke();
-      ctxDO.strokeStyle = COLORS.red;
-      ctxDO.beginPath(); ctxDO.moveTo(bandX, vbY); ctxDO.lineTo(bandX + bandW, vbY); ctxDO.stroke();
-
-      // Edge labels
-      ctxDO.font = FONT; ctxDO.textAlign = 'right';
-      ctxDO.fillStyle = COLORS.blue; ctxDO.fillText('Ec', bandX - 8, cbY + 5);
-      ctxDO.fillStyle = COLORS.red; ctxDO.fillText('Ev', bandX - 8, vbY + 5);
-
-      // Band names
-      ctxDO.textAlign = 'center'; ctxDO.font = FONT;
-      ctxDO.fillStyle = COLORS.blue; ctxDO.fillText('Conduction Band', bandX + bandW / 2, cbTopY + 16);
-      ctxDO.fillStyle = COLORS.red; ctxDO.fillText('Valence Band', bandX + bandW / 2, vbBotY - 8);
-
-      // Bandgap annotation
-      const gapMidY = (cbY + vbY) / 2;
-      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'center';
-      ctxDO.fillText('Eg = 1.1 eV', bandX + bandW / 2, gapMidY + 4);
-      ctxDO.strokeStyle = COLORS.textDim; ctxDO.lineWidth = 1;
-      const bx = bandX + bandW / 2 + 45;
-      ctxDO.beginPath();
-      ctxDO.moveTo(bx, cbY + 3); ctxDO.lineTo(bx, gapMidY - 10);
-      ctxDO.moveTo(bx, gapMidY + 10); ctxDO.lineTo(bx, vbY - 3);
-      ctxDO.stroke();
-
-      // Dopant levels
-      const donorE = cbEdge - 0.045, acceptorE = vbEdge + 0.057;
-      const donorY = eToY(donorE), acceptorY = eToY(acceptorE);
-
+      // --- Dopant levels ---
       if (dopType === 'n-type') {
         ctxDO.strokeStyle = COLORS.green; ctxDO.lineWidth = 2;
-        for (let i = 0; i < 8; i++) {
-          const x = bandX + 25 + i * (bandW - 50) / 7;
-          ctxDO.beginPath(); ctxDO.moveTo(x - 10, donorY); ctxDO.lineTo(x + 10, donorY); ctxDO.stroke();
-        }
-        ctxDO.fillStyle = COLORS.green; ctxDO.font = FONT_SM; ctxDO.textAlign = 'right';
-        ctxDO.fillText('Ed (donor, 45 meV)', bandX - 8, donorY + 4);
+        ctxDO.setLineDash([6, 4]);
+        ctxDO.beginPath();
+        ctxDO.moveTo(dopBandCx - dopBandW/2 + 10, donorLevelY);
+        ctxDO.lineTo(dopBandCx + dopBandW/2 - 10, donorLevelY);
+        ctxDO.stroke();
+        ctxDO.setLineDash([]);
+        ctxDO.fillStyle = COLORS.green; ctxDO.font = FONT_SM; ctxDO.textAlign = 'left';
+        ctxDO.fillText('Ed (donor)', dopBandCx + dopBandW/2 + 8, donorLevelY + 4);
       } else if (dopType === 'p-type') {
         ctxDO.strokeStyle = COLORS.purple; ctxDO.lineWidth = 2;
-        for (let i = 0; i < 8; i++) {
-          const x = bandX + 25 + i * (bandW - 50) / 7;
-          ctxDO.beginPath(); ctxDO.moveTo(x - 10, acceptorY); ctxDO.lineTo(x + 10, acceptorY); ctxDO.stroke();
-        }
-        ctxDO.fillStyle = COLORS.purple; ctxDO.font = FONT_SM; ctxDO.textAlign = 'right';
-        ctxDO.fillText('Ea (acceptor, 57 meV)', bandX - 8, acceptorY + 4);
+        ctxDO.setLineDash([6, 4]);
+        ctxDO.beginPath();
+        ctxDO.moveTo(dopBandCx - dopBandW/2 + 10, acceptorLevelY);
+        ctxDO.lineTo(dopBandCx + dopBandW/2 - 10, acceptorLevelY);
+        ctxDO.stroke();
+        ctxDO.setLineDash([]);
+        ctxDO.fillStyle = COLORS.purple; ctxDO.font = FONT_SM; ctxDO.textAlign = 'left';
+        ctxDO.fillText('Ea (acceptor)', dopBandCx + dopBandW/2 + 8, acceptorLevelY + 4);
       }
 
-      // Chemical potential
-      let mu = midE;
+      // --- Fermi level ---
+      var mu = dopMidY;
       if (dopType === 'n-type') {
-        const muLow = (cbEdge + donorE) / 2;
-        mu = muLow + Math.min(1, T / 2.5) * (midE - muLow);
+        var muLowY = (dopCbBot + donorLevelY) / 2;
+        mu = muLowY + Math.min(1, T / 2.5) * (dopMidY - muLowY);
       } else if (dopType === 'p-type') {
-        const muLow = (vbEdge + acceptorE) / 2;
-        mu = muLow + Math.min(1, T / 2.5) * (midE - muLow);
+        var muLowY = (dopVbTop + acceptorLevelY) / 2;
+        mu = muLowY + Math.min(1, T / 2.5) * (dopMidY - muLowY);
       }
-      const muY = eToY(mu);
 
-      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 2;
-      ctxDO.setLineDash([8, 5]);
-      ctxDO.beginPath(); ctxDO.moveTo(bandX, muY); ctxDO.lineTo(bandX + bandW, muY); ctxDO.stroke();
+      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 1.5;
+      ctxDO.setLineDash([5, 5]);
+      ctxDO.beginPath();
+      ctxDO.moveTo(dopBandCx - dopBandW/2 - 10, mu);
+      ctxDO.lineTo(dopBandCx + dopBandW/2 + 10, mu);
+      ctxDO.stroke();
       ctxDO.setLineDash([]);
-      ctxDO.fillStyle = COLORS.yellow; ctxDO.font = FONT; ctxDO.textAlign = 'right';
-      ctxDO.fillText('μ', bandX - 8, muY + 5);
 
-      // Carriers
-      const kBT = 0.026 * T;
-      const niBase = Math.exp(-Eg / (2 * kBT));
-      const nI = Math.max(1, Math.min(25, Math.round(niBase * 800)));
-      let nElec, nHole;
-      if (dopType === 'intrinsic') { nElec = nI; nHole = nI; }
-      else if (dopType === 'n-type') { nElec = Math.min(30, nI + 8); nHole = Math.max(0, Math.round(nI * nI / nElec)); }
-      else { nHole = Math.min(30, nI + 8); nElec = Math.max(0, Math.round(nI * nI / nHole)); }
+      // Band labels
+      ctxDO.fillStyle = COLORS.blue; ctxDO.font = FONT; ctxDO.textAlign = 'left';
+      ctxDO.fillText('Conduction band', dopBandCx - dopBandW/2, dopCbTop - 6);
+      ctxDO.fillStyle = COLORS.red;
+      ctxDO.fillText('Valence band', dopBandCx - dopBandW/2, dopVbBot + 16);
+      ctxDO.fillStyle = COLORS.yellow; ctxDO.font = FONT_SM;
+      ctxDO.fillText('\u03BC', dopBandCx + dopBandW/2 + 14, mu + 4);
 
-      // Electrons (filled blue circles with minus)
-      ctxDO.fillStyle = COLORS.blue;
-      for (let i = 0; i < nElec; i++) {
-        const x = bandX + 15 + dopRand() * (bandW - 30);
-        const de = -Math.log(1 - dopRand() * 0.95) * kBT * 3;
-        const y = cbY - Math.min(de * eScale, cbY - cbTopY - 5) - 4;
-        ctxDO.beginPath(); ctxDO.arc(x, y, 4, 0, 2 * Math.PI); ctxDO.fill();
-        ctxDO.fillStyle = '#fff'; ctxDO.fillRect(x - 2.5, y - 0.7, 5, 1.4);
-        ctxDO.fillStyle = COLORS.blue;
+      // Bandgap arrow
+      var arrowX = dopBandCx - dopBandW/2 - 18;
+      ctxDO.strokeStyle = COLORS.orange; ctxDO.lineWidth = 1;
+      ctxDO.beginPath();
+      ctxDO.moveTo(arrowX, dopCbBot); ctxDO.lineTo(arrowX, dopVbTop);
+      ctxDO.stroke();
+      ctxDO.beginPath(); ctxDO.moveTo(arrowX-3, dopCbBot+6); ctxDO.lineTo(arrowX, dopCbBot); ctxDO.lineTo(arrowX+3, dopCbBot+6); ctxDO.stroke();
+      ctxDO.beginPath(); ctxDO.moveTo(arrowX-3, dopVbTop-6); ctxDO.lineTo(arrowX, dopVbTop); ctxDO.lineTo(arrowX+3, dopVbTop-6); ctxDO.stroke();
+      ctxDO.fillStyle = COLORS.orange; ctxDO.font = FONT_SM; ctxDO.textAlign = 'right';
+      ctxDO.fillText('Eg=1.1 eV', arrowX - 4, dopMidY + 4);
+
+      // --- Update particle system ---
+      var targets = dopTargetCounts(T);
+      var curElec = dopParticles.filter(function(p) { return p.type === 'electron'; }).length;
+      var curHole = dopParticles.filter(function(p) { return p.type === 'hole'; }).length;
+
+      // Add electrons
+      if (curElec < targets.elec) {
+        var toAdd = Math.min(targets.elec - curElec, 2);
+        for (var i = 0; i < toAdd; i++) dopParticles.push(makeParticle('electron'));
+      }
+      // Remove excess electrons (fade out by reducing opacity, remove when gone)
+      if (curElec > targets.elec) {
+        var excess = curElec - targets.elec;
+        var removed = 0;
+        for (var i = dopParticles.length - 1; i >= 0 && removed < excess; i--) {
+          if (dopParticles[i].type === 'electron') { dopParticles.splice(i, 1); removed++; }
+        }
       }
 
-      // Holes (open red circles with plus)
-      for (let i = 0; i < nHole; i++) {
-        const x = bandX + 15 + dopRand() * (bandW - 30);
-        const de = -Math.log(1 - dopRand() * 0.95) * kBT * 3;
-        const y = vbY + Math.min(de * eScale, vbBotY - vbY - 5) + 4;
-        ctxDO.strokeStyle = COLORS.red; ctxDO.lineWidth = 1.8;
-        ctxDO.beginPath(); ctxDO.arc(x, y, 4, 0, 2 * Math.PI); ctxDO.stroke();
-        ctxDO.lineWidth = 1.2;
-        ctxDO.beginPath(); ctxDO.moveTo(x - 2.5, y); ctxDO.lineTo(x + 2.5, y); ctxDO.stroke();
-        ctxDO.beginPath(); ctxDO.moveTo(x, y - 2.5); ctxDO.lineTo(x, y + 2.5); ctxDO.stroke();
+      // Add holes
+      if (curHole < targets.hole) {
+        var toAdd = Math.min(targets.hole - curHole, 2);
+        for (var i = 0; i < toAdd; i++) dopParticles.push(makeParticle('hole'));
+      }
+      // Remove excess holes
+      if (curHole > targets.hole) {
+        var excess = curHole - targets.hole;
+        var removed = 0;
+        for (var i = dopParticles.length - 1; i >= 0 && removed < excess; i--) {
+          if (dopParticles[i].type === 'hole') { dopParticles.splice(i, 1); removed++; }
+        }
       }
 
-      // --- RIGHT: Fermi-Dirac + carrier distributions ---
-      const plotW = rightW - 20;
-      ctxDO.strokeStyle = COLORS.textDim; ctxDO.lineWidth = 1;
-      ctxDO.beginPath(); ctxDO.moveTo(rightX, cbTopY); ctxDO.lineTo(rightX, vbBotY); ctxDO.stroke();
+      // Animate
+      dopParticles.forEach(function(p) {
+        if (p.opacity < 1) p.opacity = Math.min(1, p.opacity + dt * 3);
+        // Recalculate target Y based on current T
+        var eDist = -Math.log(1 - ((Math.abs(Math.sin(p.phase * 0.3)) * 0.9 + 0.05))) * kBT * 20;
+        if (p.type === 'electron') {
+          p.targetY = dopCbBot - 6 - Math.min(eDist, dopBandH - 12);
+        } else {
+          p.targetY = dopVbTop + 6 + Math.min(eDist, dopBandH * 0.6);
+        }
+        p.y += (p.targetY - p.y) * dt * 3;
+        p.x += p.vx * dt;
+        p.phase += dt * 2;
+        if (p.x < dopLeft) { p.x = dopLeft; p.vx = Math.abs(p.vx); }
+        if (p.x > dopRight) { p.x = dopRight; p.vx = -Math.abs(p.vx); }
+      });
 
-      // Band edge guides
-      ctxDO.strokeStyle = 'rgba(128,128,128,0.3)'; ctxDO.lineWidth = 0.5;
+      // Draw particles
+      dopParticles.forEach(function(p) {
+        var r = 3.5 + Math.sin(p.phase) * 0.5;
+        ctxDO.globalAlpha = p.opacity * 0.9;
+        if (p.type === 'electron') {
+          ctxDO.fillStyle = COLORS.yellow;
+          ctxDO.beginPath(); ctxDO.arc(p.x, p.y, r, 0, 2 * Math.PI); ctxDO.fill();
+          ctxDO.fillStyle = 'rgba(255,238,88,0.15)';
+          ctxDO.beginPath(); ctxDO.arc(p.x, p.y, r * 2.5, 0, 2 * Math.PI); ctxDO.fill();
+        } else {
+          ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 1.5;
+          ctxDO.beginPath(); ctxDO.arc(p.x, p.y, r, 0, 2 * Math.PI); ctxDO.stroke();
+        }
+        ctxDO.globalAlpha = 1;
+      });
+
+      // --- Right panel: Fermi-Dirac ---
+      var fdLeft = dopBandCx + dopBandW/2 + 50;
+      var fdW = WDO - fdLeft - 20;
+      var fdTop = dopCbTop;
+      var fdBot = dopVbBot;
+      var fdH = fdBot - fdTop;
+
+      // Energy axis
+      ctxDO.strokeStyle = COLORS.axis; ctxDO.lineWidth = 1;
+      ctxDO.beginPath(); ctxDO.moveTo(fdLeft, fdTop); ctxDO.lineTo(fdLeft, fdBot); ctxDO.stroke();
+      ctxDO.beginPath(); ctxDO.moveTo(fdLeft, fdBot); ctxDO.lineTo(fdLeft + fdW, fdBot); ctxDO.stroke();
+
+      // Band shading on FD
+      ctxDO.fillStyle = 'rgba(79,195,247,0.06)';
+      ctxDO.fillRect(fdLeft, fdTop, fdW, Math.max(0, dopCbBot - fdTop));
+      ctxDO.fillStyle = 'rgba(239,83,80,0.06)';
+      ctxDO.fillRect(fdLeft, dopVbTop, fdW, Math.max(0, fdBot - dopVbTop));
+
+      // Band edges as dashed
+      ctxDO.strokeStyle = 'rgba(255,255,255,0.15)'; ctxDO.lineWidth = 1;
       ctxDO.setLineDash([3, 3]);
       ctxDO.beginPath();
-      ctxDO.moveTo(bandX + bandW, cbY); ctxDO.lineTo(rightX + plotW, cbY);
-      ctxDO.moveTo(bandX + bandW, vbY); ctxDO.lineTo(rightX + plotW, vbY);
-      ctxDO.stroke(); ctxDO.setLineDash([]);
+      ctxDO.moveTo(fdLeft, dopCbBot); ctxDO.lineTo(fdLeft + fdW, dopCbBot);
+      ctxDO.moveTo(fdLeft, dopVbTop); ctxDO.lineTo(fdLeft + fdW, dopVbTop);
+      ctxDO.stroke();
+      ctxDO.setLineDash([]);
+
+      // Fermi level on FD panel
+      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 1;
+      ctxDO.setLineDash([4, 4]);
+      ctxDO.beginPath();
+      ctxDO.moveTo(fdLeft, mu); ctxDO.lineTo(fdLeft + fdW, mu);
+      ctxDO.stroke();
+      ctxDO.setLineDash([]);
 
       // Fermi-Dirac curve
-      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 2;
+      var eRange = dopEg / 2 + 1.5;
+      ctxDO.strokeStyle = COLORS.green; ctxDO.lineWidth = 2.5;
       ctxDO.beginPath();
-      const eMin = vbEdge - 0.8, eMax = cbEdge + 0.8;
-      for (let i = 0; i <= 200; i++) {
-        const e = eMin + (eMax - eMin) * i / 200;
-        const f = 1 / (Math.exp((e - mu) / kBT) + 1);
-        const x = rightX + f * plotW, y = eToY(e);
-        i === 0 ? ctxDO.moveTo(x, y) : ctxDO.lineTo(x, y);
+      var fdStarted = false;
+      for (var i = 0; i <= 200; i++) {
+        var y = fdTop + (i / 200) * fdH;
+        // Map y to energy relative to mu (in pixels, mu maps to y=mu)
+        var E_px = mu - y; // positive = above mu
+        var E_eV = E_px / (fdH / 2) * eRange;
+        var f = 1.0 / (Math.exp(E_eV / kBT) + 1);
+        var px = fdLeft + f * fdW;
+        if (!fdStarted) { ctxDO.moveTo(px, y); fdStarted = true; }
+        else ctxDO.lineTo(px, y);
       }
       ctxDO.stroke();
 
-      // Electron population shading
-      if (nElec > 0) {
-        ctxDO.fillStyle = 'rgba(79,195,247,0.25)';
-        ctxDO.beginPath(); ctxDO.moveTo(rightX, cbY);
-        for (let i = 0; i <= 80; i++) {
-          const e = cbEdge + 0.8 * i / 80;
-          const f = 1 / (Math.exp((e - mu) / kBT) + 1);
-          ctxDO.lineTo(rightX + f * Math.sqrt(e - cbEdge) * plotW * 8, eToY(e));
-        }
-        ctxDO.lineTo(rightX, cbTopY); ctxDO.closePath(); ctxDO.fill();
-      }
-
-      // Hole population shading
-      if (nHole > 0) {
-        ctxDO.fillStyle = 'rgba(239,83,80,0.25)';
-        ctxDO.beginPath(); ctxDO.moveTo(rightX, vbY);
-        for (let i = 0; i <= 80; i++) {
-          const e = vbEdge - 0.8 * i / 80;
-          const fH = 1 - 1 / (Math.exp((e - mu) / kBT) + 1);
-          ctxDO.lineTo(rightX + fH * Math.sqrt(vbEdge - e) * plotW * 8, eToY(e));
-        }
-        ctxDO.lineTo(rightX, vbBotY); ctxDO.closePath(); ctxDO.fill();
-      }
-
-      // f(E) axis labels
+      // FD axis labels
       ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'center';
-      ctxDO.fillText('0', rightX, vbBotY + 14);
-      ctxDO.fillText('1', rightX + plotW, vbBotY + 14);
-      ctxDO.fillText('f(E)', rightX + plotW / 2, vbBotY + 26);
+      ctxDO.fillText('f(\u03B5)', fdLeft + fdW / 2, fdBot + 14);
+      ctxDO.fillText('0', fdLeft, fdBot + 14);
+      ctxDO.fillText('1', fdLeft + fdW, fdBot + 14);
 
-      // Fermi level on right
-      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 1;
-      ctxDO.setLineDash([4, 3]);
-      ctxDO.beginPath(); ctxDO.moveTo(rightX, muY); ctxDO.lineTo(rightX + plotW, muY); ctxDO.stroke();
-      ctxDO.setLineDash([]);
-      ctxDO.fillStyle = COLORS.yellow; ctxDO.textAlign = 'left'; ctxDO.font = FONT_SM;
-      ctxDO.fillText('f = ½', rightX + plotW + 4, muY + 4);
+      // --- Title and info ---
+      var titles = { 'intrinsic': 'Intrinsic Si', 'n-type': 'n-type Si (P-doped)', 'p-type': 'p-type Si (Al-doped)' };
+      ctxDO.fillStyle = COLORS.text; ctxDO.font = FONT_LG; ctxDO.textAlign = 'left';
+      ctxDO.fillText(titles[dopType], 10, 18);
+
+      var nE = dopParticles.filter(function(p) { return p.type === 'electron'; }).length;
+      var nH = dopParticles.filter(function(p) { return p.type === 'hole'; }).length;
+      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'left';
+      var infoLine = 'T = ' + (T * 300).toFixed(0) + ' K    kT = ' + (kBT * 1000).toFixed(1) + ' meV';
+      infoLine += '    e\u207B: ' + nE + '    h\u207A: ' + nH;
+      ctxDO.fillText(infoLine, 10, HDO - 6);
+
+      // Physics caption
+      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'center';
+      var msg = '';
+      if (dopType === 'intrinsic') {
+        if (T < 0.5) msg = 'Low T: too cold to excite carriers across the 1.1 eV gap';
+        else if (T < 1.5) msg = 'Thermal excitation creates equal numbers of electrons and holes';
+        else msg = 'High T: many thermal carriers, ne = nh';
+      } else if (dopType === 'n-type') {
+        if (T < 0.5) msg = 'Donor electrons easily reach CB; \u03BC shifts up near Ed';
+        else if (T < 1.5) msg = 'Donors fully ionized. Majority: electrons. Holes suppressed (ne\u00B7nh = ni\u00B2)';
+        else msg = 'High T: thermal carriers overwhelm doping \u2192 intrinsic behavior';
+      } else {
+        if (T < 0.5) msg = 'Acceptor holes easily form in VB; \u03BC shifts down near Ea';
+        else if (T < 1.5) msg = 'Acceptors fully ionized. Majority: holes. Electrons suppressed (ne\u00B7nh = ni\u00B2)';
+        else msg = 'High T: thermal carriers overwhelm doping \u2192 intrinsic behavior';
+      }
+      ctxDO.fillText(msg, WDO / 2, HDO - 20);
 
       // Legend
       ctxDO.font = FONT_SM; ctxDO.textAlign = 'left';
-      const legX = rightX + 5, legY = cbTopY + 8;
-      ctxDO.fillStyle = COLORS.yellow; ctxDO.fillText('— f(E) Fermi-Dirac', legX, legY);
-      ctxDO.fillStyle = COLORS.blue; ctxDO.fillText('■ electron population', legX, legY + 14);
-      ctxDO.fillStyle = COLORS.red; ctxDO.fillText('■ hole population', legX, legY + 28);
-
-      // Title
-      ctxDO.fillStyle = COLORS.text; ctxDO.font = FONT; ctxDO.textAlign = 'left';
-      const titles = { 'intrinsic': 'Intrinsic Si', 'n-type': 'n-type Si (P-doped)', 'p-type': 'p-type Si (Al-doped)' };
-      ctxDO.fillText(titles[dopType], bandX, 20);
-      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM;
-      ctxDO.fillText('T = ' + (T * 300).toFixed(0) + ' K', bandX + 180, 20);
-
-      // Carrier counts
-      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'left';
-      ctxDO.fillText('electrons: ' + nElec + (dopType === 'n-type' ? ' (majority)' : dopType === 'p-type' ? ' (minority)' : ''), bandX, HDO - 12);
-      ctxDO.fillText('holes: ' + nHole + (dopType === 'p-type' ? ' (majority)' : dopType === 'n-type' ? ' (minority)' : ''), bandX + 180, HDO - 12);
-
-      // Energy axis
-      ctxDO.save();
-      ctxDO.translate(15, (cbTopY + vbBotY) / 2);
-      ctxDO.rotate(-Math.PI / 2);
-      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'center';
-      ctxDO.fillText('Energy →', 0, 0);
-      ctxDO.restore();
+      ctxDO.fillStyle = COLORS.yellow;
+      ctxDO.beginPath(); ctxDO.arc(fdLeft + 8, fdTop - 30, 4, 0, 2*Math.PI); ctxDO.fill();
+      ctxDO.fillText(' = electron (CB)', fdLeft + 16, fdTop - 27);
+      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 1.5;
+      ctxDO.beginPath(); ctxDO.arc(fdLeft + 8, fdTop - 15, 4, 0, 2*Math.PI); ctxDO.stroke();
+      ctxDO.fillStyle = COLORS.textDim;
+      ctxDO.fillText(' = hole (VB)', fdLeft + 16, fdTop - 12);
 
       document.getElementById('doping-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(2)));
+
+      dopAnimId = requestAnimationFrame(drawDoping);
     }
 
-    dopButtons?.addEventListener('click', (e) => {
-      const btn = e.target.closest('.control-btn');
+    // Start animation
+    dopLastTime = performance.now();
+    dopAnimId = requestAnimationFrame(drawDoping);
+
+    // Stop when not visible
+    var dopObserver = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) {
+        if (!dopAnimId) {
+          dopLastTime = performance.now();
+          dopAnimId = requestAnimationFrame(drawDoping);
+        }
+      } else {
+        if (dopAnimId) { cancelAnimationFrame(dopAnimId); dopAnimId = null; }
+      }
+    });
+    dopObserver.observe(cDO);
+
+    dopButtons?.addEventListener('click', function(e) {
+      var btn = e.target.closest('.control-btn');
       if (!btn) return;
-      dopButtons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      dopButtons.querySelectorAll('.control-btn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
       dopType = btn.dataset.value;
-      drawDoping();
+      // Don't reset particles - let them animate to new target counts
     });
-    dopTempSlider?.addEventListener('input', drawDoping);
-    drawDoping();
   }
 
   // ----- Band Structure and Thermal Excitation (merged) -----
