@@ -22663,22 +22663,16 @@ function initCh14Vis() {
   if (cBB) {
     const { ctx: bbCtx, W: bbW, H: bbH } = setupCanvas(cBB);
 
-    // ---- LAYOUT CONSTANTS ----
-    const BB_COLS = 30;
-    const BB_GAP = 16;
-    const BB_X0 = 60;
-    const BB_HOLE_R = 3;
-
+    const BB_COLS = 30, BB_GAP = 16, BB_X0 = 60, BB_HOLE_R = 3;
     const BB_ROWS = {
       'r+t': 30, 'r-t': 46,
       a: 72, b: 88, c: 104, d: 120, e: 136,
       f: 164, g: 180, h: 196, i: 212, j: 228,
       'r+b': 254, 'r-b': 270
     };
+    var ALL_ROWS = ['r+t','r-t','a','b','c','d','e','f','g','h','i','j','r+b','r-b'];
 
-    function holeXY(row, col) {
-      return { x: BB_X0 + (col - 1) * BB_GAP, y: BB_ROWS[row] };
-    }
+    function holeXY(row, col) { return { x: BB_X0 + (col - 1) * BB_GAP, y: BB_ROWS[row] }; }
 
     function holeNode(row, col) {
       if (row === 'r+t' || row === 'r+b') return 'VPOS';
@@ -22688,643 +22682,298 @@ function initCh14Vis() {
       return null;
     }
 
-    // ---- COMPONENT STATE ----
-    var bbParts = [];
-    var bbNextId = 1;
-    var bbTool = 'WIRE';
-    var bbClick1 = null;
-    var bbHover = null;
-    var bbNodeVolts = {};
-    var bbSimTime = 0;
-    var bbCapVolts = {};
-    var bbResValue = 1000;
-    var bbCapValue = 100e-6;
+    var bbParts = [], bbNextId = 1, bbTool = 'WIRE', bbClick1 = null, bbHover = null;
+    var bbNodeVolts = {}, bbCapVolts = {};
+    var bbShowCurrent = false, bbAnimT = 0;
+    var bbResValue = 1000, bbCapValue = 100e-6;
+    var RES_VALUES = [220, 470, 1000, 4700, 10000, 47000, 100000];
+    var CAP_VALUES = [1e-6, 10e-6, 47e-6, 100e-6, 470e-6];
+    var WIRE_COLORS = ['#e53935','#1e88e5','#43a047','#ff9800','#8e24aa','#00acc1','#f9a825','#6d4c41'];
+    var bbWireColorIdx = 0;
 
     function bbAddPart(type, holes, opts) {
-      var p = {
-        id: bbNextId++, type: type, holes: holes,
-        value: (opts && opts.value) || 0,
-        on: (opts && opts.on !== undefined) ? opts.on : true,
-        color: (opts && opts.color) || null
-      };
-      bbParts.push(p);
-      return p;
+      var p = { id: bbNextId++, type: type, holes: holes,
+        value: (opts && opts.value) || 0, on: (opts && opts.on !== undefined) ? opts.on : true,
+        color: (opts && opts.color) || null, _state: 'off', _ledOn: false };
+      bbParts.push(p); return p;
     }
 
     function bbFindHole(mx, my) {
       var best = null, bestD = 12;
-      var allRows = ['r+t','r-t','a','b','c','d','e','f','g','h','i','j','r+b','r-b'];
-      for (var ri = 0; ri < allRows.length; ri++) {
+      for (var ri = 0; ri < ALL_ROWS.length; ri++)
         for (var c = 1; c <= BB_COLS; c++) {
-          var p = holeXY(allRows[ri], c);
-          var d = Math.hypot(mx - p.x, my - p.y);
-          if (d < bestD) { bestD = d; best = { row: allRows[ri], col: c }; }
+          var p = holeXY(ALL_ROWS[ri], c), d = Math.hypot(mx - p.x, my - p.y);
+          if (d < bestD) { bestD = d; best = { row: ALL_ROWS[ri], col: c }; }
         }
-      }
       return best;
     }
 
-    // ---- MNA CIRCUIT SOLVER ----
+    function bbFindPartAt(mx, my) {
+      for (var i = bbParts.length - 1; i >= 0; i--) {
+        var p = bbParts[i];
+        if (p.holes.length >= 2) {
+          var a = holeXY(p.holes[0].row, p.holes[0].col), b = holeXY(p.holes[1].row, p.holes[1].col);
+          if (Math.hypot(mx - (a.x+b.x)/2, my - (a.y+b.y)/2) < 14) return p;
+        }
+        for (var h = 0; h < p.holes.length; h++) {
+          var hp = holeXY(p.holes[h].row, p.holes[h].col);
+          if (Math.hypot(mx - hp.x, my - hp.y) < 10) return p;
+        }
+      }
+      return null;
+    }
+
+    // ---- MNA SOLVER ----
     function bbSolve() {
       var nodeSet = {};
-      for (var i = 0; i < bbParts.length; i++) {
-        var p = bbParts[i];
-        for (var h = 0; h < p.holes.length; h++) {
-          var n = holeNode(p.holes[h].row, p.holes[h].col);
+      for (var i = 0; i < bbParts.length; i++)
+        for (var h = 0; h < bbParts[i].holes.length; h++) {
+          var n = holeNode(bbParts[i].holes[h].row, bbParts[i].holes[h].col);
           if (n) nodeSet[n] = true;
         }
-      }
       var mergeMap = {};
-      function root(n) {
-        if (!mergeMap[n]) return n;
-        mergeMap[n] = root(mergeMap[n]);
-        return mergeMap[n];
-      }
-      function merge(a, b) {
-        var ra = root(a), rb = root(b);
-        if (ra !== rb) mergeMap[ra] = rb;
-      }
+      function root(n) { if (!mergeMap[n]) return n; return mergeMap[n] = root(mergeMap[n]); }
+      function merge(a, b) { var ra = root(a), rb = root(b); if (ra !== rb) mergeMap[ra] = rb; }
       for (var i = 0; i < bbParts.length; i++) {
         var p = bbParts[i];
-        if (p.type === 'WIRE' || (p.type === 'SWITCH' && p.on)) {
-          var n0 = holeNode(p.holes[0].row, p.holes[0].col);
-          var n1 = holeNode(p.holes[1].row, p.holes[1].col);
-          if (n0 && n1) merge(n0, n1);
-        }
+        if (p.type === 'WIRE' || (p.type === 'SWITCH' && p.on))
+          merge(holeNode(p.holes[0].row, p.holes[0].col), holeNode(p.holes[1].row, p.holes[1].col));
       }
-
       var groundNode = root('VNEG');
-      var nodeNames = [];
-      var nodeIdx = {};
-      for (var n in nodeSet) {
-        var r = root(n);
-        if (r === groundNode) continue;
-        if (!(r in nodeIdx)) {
-          nodeIdx[r] = nodeNames.length;
-          nodeNames.push(r);
-        }
-      }
+      var nodeNames = [], nodeIdx = {};
+      for (var n in nodeSet) { var r = root(n); if (r !== groundNode && !(r in nodeIdx)) { nodeIdx[r] = nodeNames.length; nodeNames.push(r); } }
       var N = nodeNames.length;
       if (N === 0) { bbNodeVolts = {}; return; }
 
       var vSources = [];
       for (var i = 0; i < bbParts.length; i++) {
         var p = bbParts[i];
-        if (p.type === 'BATTERY') {
-          vSources.push({ partIdx: i, vPlus: 0, vMinus: 1, voltage: p.value || 9 });
-        }
-        if (p.type === 'NPN' && p._state === 'on') {
-          vSources.push({ partIdx: i, vPlus: 1, vMinus: 0, voltage: 0.7 });
-          vSources.push({ partIdx: i, vPlus: 2, vMinus: 0, voltage: 0.2 });
-        }
+        if (p.type === 'BATTERY') vSources.push({ pi: i, tp: 0, tn: 1, v: p.value || 9 });
+        if (p.type === 'NPN' && p._state === 'on') vSources.push({ pi: i, tp: 1, tn: 0, v: 0.7 });
+        if (p.type === 'LED' && p._ledOn) vSources.push({ pi: i, tp: 0, tn: 1, v: 1.8 });
       }
-      var M = vSources.length;
-      var sz = N + M;
-
+      var M = vSources.length, sz = N + M;
       var A = [], b = [];
-      for (var i = 0; i < sz; i++) {
-        A.push(new Float64Array(sz));
-        b.push(0);
-      }
+      for (var i = 0; i < sz; i++) { A.push(new Float64Array(sz)); b.push(0); }
 
-      function nIdx(partI, terminal) {
-        var h = bbParts[partI].holes[terminal];
-        var n = root(holeNode(h.row, h.col));
-        if (n === groundNode) return -1;
-        return nodeIdx[n] !== undefined ? nodeIdx[n] : -1;
-      }
-
-      function stampR(ni, nj, g) {
-        if (ni >= 0) A[ni][ni] += g;
-        if (nj >= 0) A[nj][nj] += g;
-        if (ni >= 0 && nj >= 0) { A[ni][nj] -= g; A[nj][ni] -= g; }
-      }
-      function stampI(ni, val) {
-        if (ni >= 0) b[ni] += val;
-      }
+      function nI(pi, t) { var h = bbParts[pi].holes[t], n = root(holeNode(h.row, h.col)); return n === groundNode ? -1 : (nodeIdx[n] !== undefined ? nodeIdx[n] : -1); }
+      function sR(ni, nj, g) { if (ni >= 0) A[ni][ni] += g; if (nj >= 0) A[nj][nj] += g; if (ni >= 0 && nj >= 0) { A[ni][nj] -= g; A[nj][ni] -= g; } }
+      function sI(ni, v) { if (ni >= 0) b[ni] += v; }
 
       for (var i = 0; i < bbParts.length; i++) {
         var p = bbParts[i];
-        if (p.type === 'RESISTOR') {
-          var ni = nIdx(i, 0), nj = nIdx(i, 1);
-          stampR(ni, nj, 1.0 / (p.value || 1000));
-        }
-        if (p.type === 'LED' && p._ledOn) {
-          var ni = nIdx(i, 0), nj = nIdx(i, 1);
-          stampR(ni, nj, 1.0 / 100);
-        }
+        if (p.type === 'RESISTOR') sR(nI(i,0), nI(i,1), 1.0 / (p.value || 1000));
+        if (p.type === 'NPN' && p._state === 'on') sR(nI(i,2), nI(i,0), 0.5);
         if (p.type === 'CAPACITOR') {
-          var ni = nIdx(i, 0), nj = nIdx(i, 1);
-          var C = p.value || 100e-6;
-          var dt = 1.0 / 60 / 16;
-          var Geq = C / dt;
-          stampR(ni, nj, Geq);
+          var ni = nI(i,0), nj = nI(i,1), C = p.value || 100e-6, dt = 1.0/60/16, Geq = C/dt;
+          sR(ni, nj, Geq);
           var vOld = bbCapVolts[p.id] || 0;
-          stampI(ni, -Geq * vOld);
-          stampI(nj, Geq * vOld);
+          sI(ni, -Geq * vOld); sI(nj, Geq * vOld);
         }
       }
-
       for (var k = 0; k < M; k++) {
-        var vs = vSources[k];
-        var ni = nIdx(vs.partIdx, vs.vPlus);
-        var nj = nIdx(vs.partIdx, vs.vMinus);
-        var row = N + k;
+        var vs = vSources[k], ni = nI(vs.pi, vs.tp), nj = nI(vs.pi, vs.tn), row = N + k;
         if (ni >= 0) { A[ni][row] += 1; A[row][ni] += 1; }
         if (nj >= 0) { A[nj][row] -= 1; A[row][nj] -= 1; }
-        b[row] = vs.voltage;
+        b[row] = vs.v;
       }
-
-      // Gaussian elimination
       var aug = [];
-      for (var i = 0; i < sz; i++) {
-        var r = new Float64Array(sz + 1);
-        for (var j = 0; j < sz; j++) r[j] = A[i][j];
-        r[sz] = b[i];
-        aug.push(r);
-      }
+      for (var i = 0; i < sz; i++) { var r = new Float64Array(sz+1); for (var j = 0; j < sz; j++) r[j] = A[i][j]; r[sz] = b[i]; aug.push(r); }
       for (var col = 0; col < sz; col++) {
-        var maxVal = Math.abs(aug[col][col]), maxRow = col;
-        for (var r = col + 1; r < sz; r++) {
-          if (Math.abs(aug[r][col]) > maxVal) { maxVal = Math.abs(aug[r][col]); maxRow = r; }
-        }
-        var tmp = aug[col]; aug[col] = aug[maxRow]; aug[maxRow] = tmp;
+        var mv = Math.abs(aug[col][col]), mr = col;
+        for (var r = col+1; r < sz; r++) if (Math.abs(aug[r][col]) > mv) { mv = Math.abs(aug[r][col]); mr = r; }
+        var tmp = aug[col]; aug[col] = aug[mr]; aug[mr] = tmp;
         if (Math.abs(aug[col][col]) < 1e-15) continue;
-        for (var r = col + 1; r < sz; r++) {
-          var f = aug[r][col] / aug[col][col];
-          for (var j = col; j <= sz; j++) aug[r][j] -= f * aug[col][j];
-        }
+        for (var r = col+1; r < sz; r++) { var f = aug[r][col]/aug[col][col]; for (var j = col; j <= sz; j++) aug[r][j] -= f*aug[col][j]; }
       }
       var x = new Float64Array(sz);
-      for (var i = sz - 1; i >= 0; i--) {
-        if (Math.abs(aug[i][i]) < 1e-15) continue;
-        x[i] = aug[i][sz];
-        for (var j = i + 1; j < sz; j++) x[i] -= aug[i][j] * x[j];
-        x[i] /= aug[i][i];
-      }
+      for (var i = sz-1; i >= 0; i--) { if (Math.abs(aug[i][i]) < 1e-15) continue; x[i] = aug[i][sz]; for (var j = i+1; j < sz; j++) x[i] -= aug[i][j]*x[j]; x[i] /= aug[i][i]; }
 
-      bbNodeVolts = {};
-      bbNodeVolts[groundNode] = 0;
+      bbNodeVolts = {}; bbNodeVolts[groundNode] = 0;
       for (var i = 0; i < N; i++) bbNodeVolts[nodeNames[i]] = x[i];
       for (var n in nodeSet) bbNodeVolts[n] = bbNodeVolts[root(n)] || 0;
-
-      // Update cap voltages
       for (var i = 0; i < bbParts.length; i++) {
         var p = bbParts[i];
-        if (p.type === 'CAPACITOR') {
-          var n0 = holeNode(p.holes[0].row, p.holes[0].col);
-          var n1 = holeNode(p.holes[1].row, p.holes[1].col);
-          bbCapVolts[p.id] = (bbNodeVolts[root(n0)] || 0) - (bbNodeVolts[root(n1)] || 0);
-        }
+        if (p.type === 'CAPACITOR') bbCapVolts[p.id] = (bbNodeVolts[root(holeNode(p.holes[0].row, p.holes[0].col))]||0) - (bbNodeVolts[root(holeNode(p.holes[1].row, p.holes[1].col))]||0);
       }
     }
 
     function bbSimStep() {
-      for (var iter = 0; iter < 5; iter++) {
+      for (var iter = 0; iter < 8; iter++) {
         for (var i = 0; i < bbParts.length; i++) {
           var p = bbParts[i];
-          if (p.type === 'NPN') {
-            var nE = holeNode(p.holes[0].row, p.holes[0].col);
-            var nB = holeNode(p.holes[1].row, p.holes[1].col);
-            var vE = bbNodeVolts[nE] || 0;
-            var vB = bbNodeVolts[nB] || 0;
-            p._state = (vB - vE) > 0.6 ? 'on' : 'off';
-          }
-        }
-        for (var i = 0; i < bbParts.length; i++) {
-          var p = bbParts[i];
-          if (p.type === 'LED') {
-            var n0 = holeNode(p.holes[0].row, p.holes[0].col);
-            var n1 = holeNode(p.holes[1].row, p.holes[1].col);
-            p._ledOn = ((bbNodeVolts[n0] || 0) - (bbNodeVolts[n1] || 0)) > 1.6;
-          }
+          if (p.type === 'NPN') { var vB = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0, vE = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0; p._state = (vB-vE) > 0.55 ? 'on' : 'off'; }
+          if (p.type === 'LED') { var v0 = bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0, v1 = bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0; p._ledOn = (v0-v1) > 1.0; }
         }
         bbSolve();
       }
     }
 
     // ---- DRAWING ----
-    var WIRE_COLORS = ['#e53935','#1e88e5','#43a047','#ff9800','#8e24aa','#00acc1','#f9a825','#6d4c41'];
-    var bbWireColorIdx = 0;
+    function fmtR(v) { return v >= 1e6 ? (v/1e6)+'M\u03A9' : v >= 1000 ? (v/1000)+'k\u03A9' : v+'\u03A9'; }
+    function fmtC(C) { return C >= 1e-3 ? (C*1e3).toFixed(0)+'mF' : C >= 1e-6 ? (C*1e6).toFixed(0)+'\u00B5F' : (C*1e9).toFixed(0)+'nF'; }
 
     function bbDraw() {
-      clearCanvas(bbCtx, bbW, bbH);
-
-      // Board background
-      bbCtx.fillStyle = '#e8dcc8';
-      bbCtx.beginPath(); bbCtx.roundRect(BB_X0 - 15, 15, BB_COLS * BB_GAP + 20, 270, 8); bbCtx.fill();
-      bbCtx.strokeStyle = '#c4b89a'; bbCtx.lineWidth = 2;
-      bbCtx.beginPath(); bbCtx.roundRect(BB_X0 - 15, 15, BB_COLS * BB_GAP + 20, 270, 8); bbCtx.stroke();
-
-      // Power rail stripes
-      bbCtx.fillStyle = 'rgba(229,57,53,0.25)';
-      bbCtx.fillRect(BB_X0 - 10, BB_ROWS['r+t'] - 6, BB_COLS * BB_GAP + 10, 12);
-      bbCtx.fillRect(BB_X0 - 10, BB_ROWS['r+b'] - 6, BB_COLS * BB_GAP + 10, 12);
-      bbCtx.fillStyle = 'rgba(30,136,229,0.25)';
-      bbCtx.fillRect(BB_X0 - 10, BB_ROWS['r-t'] - 6, BB_COLS * BB_GAP + 10, 12);
-      bbCtx.fillRect(BB_X0 - 10, BB_ROWS['r-b'] - 6, BB_COLS * BB_GAP + 10, 12);
-
-      // DIP channel
-      bbCtx.fillStyle = '#c4b89a';
-      bbCtx.fillRect(BB_X0 - 10, 145, BB_COLS * BB_GAP + 10, 12);
-
-      // Row labels
+      clearCanvas(bbCtx, bbW, bbH); bbAnimT += 0.03;
+      // Board
+      bbCtx.fillStyle = '#e8dcc8'; bbCtx.beginPath(); bbCtx.roundRect(BB_X0-15, 15, BB_COLS*BB_GAP+20, 270, 8); bbCtx.fill();
+      bbCtx.strokeStyle = '#c4b89a'; bbCtx.lineWidth = 2; bbCtx.beginPath(); bbCtx.roundRect(BB_X0-15, 15, BB_COLS*BB_GAP+20, 270, 8); bbCtx.stroke();
+      bbCtx.fillStyle = 'rgba(229,57,53,0.25)'; bbCtx.fillRect(BB_X0-10, BB_ROWS['r+t']-6, BB_COLS*BB_GAP+10, 12); bbCtx.fillRect(BB_X0-10, BB_ROWS['r+b']-6, BB_COLS*BB_GAP+10, 12);
+      bbCtx.fillStyle = 'rgba(30,136,229,0.25)'; bbCtx.fillRect(BB_X0-10, BB_ROWS['r-t']-6, BB_COLS*BB_GAP+10, 12); bbCtx.fillRect(BB_X0-10, BB_ROWS['r-b']-6, BB_COLS*BB_GAP+10, 12);
+      bbCtx.fillStyle = '#c4b89a'; bbCtx.fillRect(BB_X0-10, 145, BB_COLS*BB_GAP+10, 12);
       bbCtx.fillStyle = '#888'; bbCtx.font = '10px sans-serif'; bbCtx.textAlign = 'right';
-      bbCtx.fillText('+', BB_X0 - 20, BB_ROWS['r+t'] + 4);
-      bbCtx.fillText('\u2013', BB_X0 - 20, BB_ROWS['r-t'] + 4);
-      'abcdefghij'.split('').forEach(function(r) { bbCtx.fillText(r, BB_X0 - 20, BB_ROWS[r] + 4); });
-      bbCtx.fillText('+', BB_X0 - 20, BB_ROWS['r+b'] + 4);
-      bbCtx.fillText('\u2013', BB_X0 - 20, BB_ROWS['r-b'] + 4);
-
-      // Column numbers
+      bbCtx.fillText('+', BB_X0-20, BB_ROWS['r+t']+4); bbCtx.fillText('\u2013', BB_X0-20, BB_ROWS['r-t']+4);
+      'abcdefghij'.split('').forEach(function(r) { bbCtx.fillText(r, BB_X0-20, BB_ROWS[r]+4); });
+      bbCtx.fillText('+', BB_X0-20, BB_ROWS['r+b']+4); bbCtx.fillText('\u2013', BB_X0-20, BB_ROWS['r-b']+4);
       bbCtx.fillStyle = '#999'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center';
-      for (var c = 1; c <= BB_COLS; c += 5) bbCtx.fillText(c.toString(), BB_X0 + (c - 1) * BB_GAP, 62);
-
-      // Holes
-      var allRows = ['r+t','r-t','a','b','c','d','e','f','g','h','i','j','r+b','r-b'];
-      for (var ri = 0; ri < allRows.length; ri++) {
-        for (var c = 1; c <= BB_COLS; c++) {
-          var p = holeXY(allRows[ri], c);
-          bbCtx.fillStyle = '#555';
-          bbCtx.beginPath(); bbCtx.arc(p.x, p.y, BB_HOLE_R, 0, Math.PI * 2); bbCtx.fill();
-          bbCtx.fillStyle = '#2a2a2a';
-          bbCtx.beginPath(); bbCtx.arc(p.x, p.y + 0.5, BB_HOLE_R - 0.5, 0, Math.PI * 2); bbCtx.fill();
-        }
+      for (var c = 1; c <= BB_COLS; c += 5) bbCtx.fillText(c.toString(), BB_X0+(c-1)*BB_GAP, 62);
+      for (var ri = 0; ri < ALL_ROWS.length; ri++) for (var c = 1; c <= BB_COLS; c++) {
+        var hp = holeXY(ALL_ROWS[ri], c);
+        bbCtx.fillStyle = '#555'; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y, BB_HOLE_R, 0, Math.PI*2); bbCtx.fill();
+        bbCtx.fillStyle = '#2a2a2a'; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y+0.5, BB_HOLE_R-0.5, 0, Math.PI*2); bbCtx.fill();
       }
 
-      // Draw components
-      for (var i = 0; i < bbParts.length; i++) {
-        var p = bbParts[i];
-        var h0 = holeXY(p.holes[0].row, p.holes[0].col);
+      function curDots(x0, y0, x1, y1, current) {
+        if (!bbShowCurrent || Math.abs(current) < 0.0005) return;
+        var len = Math.hypot(x1-x0, y1-y0); if (len < 8) return;
+        var dir = current > 0 ? 1 : -1, nD = Math.max(2, Math.floor(len/25));
+        bbCtx.fillStyle = 'rgba(255,235,59,0.9)';
+        for (var d = 0; d < nD; d++) { var fr = ((bbAnimT*dir*2+d/nD)%1+1)%1; bbCtx.beginPath(); bbCtx.arc(x0+(x1-x0)*fr, y0+(y1-y0)*fr, 2.5, 0, Math.PI*2); bbCtx.fill(); }
+      }
 
+      for (var i = 0; i < bbParts.length; i++) {
+        var p = bbParts[i], h0 = holeXY(p.holes[0].row, p.holes[0].col);
         if (p.type === 'WIRE') {
           var h1 = holeXY(p.holes[1].row, p.holes[1].col);
-          bbCtx.strokeStyle = p.color || '#666'; bbCtx.lineWidth = 2.5; bbCtx.lineCap = 'round';
-          var mx = (h0.x + h1.x) / 2, my = (h0.y + h1.y) / 2;
-          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y);
-          bbCtx.quadraticCurveTo(mx, my - Math.abs(h1.x - h0.x) * 0.12 - 5, h1.x, h1.y);
-          bbCtx.stroke(); bbCtx.lineCap = 'butt';
-        }
-        else if (p.type === 'RESISTOR') {
-          var h1 = holeXY(p.holes[1].row, p.holes[1].col);
-          var dx = h1.x - h0.x, dy = h1.y - h0.y, len = Math.hypot(dx, dy);
-          var ux = dx / len, uy = dy / len;
-          var bodyLen = Math.min(len * 0.5, 28);
-          var bx0 = (h0.x + h1.x) / 2 - ux * bodyLen / 2, by0 = (h0.y + h1.y) / 2 - uy * bodyLen / 2;
-          var bx1 = (h0.x + h1.x) / 2 + ux * bodyLen / 2, by1 = (h0.y + h1.y) / 2 + uy * bodyLen / 2;
+          bbCtx.strokeStyle = p.color||'#666'; bbCtx.lineWidth = 2.5; bbCtx.lineCap = 'round';
+          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.quadraticCurveTo((h0.x+h1.x)/2, (h0.y+h1.y)/2-Math.abs(h1.x-h0.x)*0.12-5, h1.x, h1.y); bbCtx.stroke(); bbCtx.lineCap = 'butt';
+          curDots(h0.x, h0.y, h1.x, h1.y, (bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0)-(bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0));
+        } else if (p.type === 'RESISTOR') {
+          var h1 = holeXY(p.holes[1].row, p.holes[1].col), dx = h1.x-h0.x, dy = h1.y-h0.y, len = Math.hypot(dx,dy), ux = dx/len, uy = dy/len, bl = Math.min(len*0.5, 28);
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
-          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(bx0, by0); bbCtx.stroke();
-          bbCtx.beginPath(); bbCtx.moveTo(bx1, by1); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
-          bbCtx.save();
-          bbCtx.translate((h0.x + h1.x) / 2, (h0.y + h1.y) / 2);
-          bbCtx.rotate(Math.atan2(dy, dx));
-          bbCtx.fillStyle = '#d4a574';
-          bbCtx.beginPath(); bbCtx.roundRect(-bodyLen / 2, -5, bodyLen, 10, 2); bbCtx.fill();
-          bbCtx.strokeStyle = '#8d6e4a'; bbCtx.lineWidth = 1;
-          bbCtx.beginPath(); bbCtx.roundRect(-bodyLen / 2, -5, bodyLen, 10, 2); bbCtx.stroke();
-          var bc = ['#a52a2a','#000','#f00','#ffd700'];
-          for (var bi = 0; bi < 4; bi++) {
-            bbCtx.fillStyle = bc[bi]; bbCtx.fillRect(-bodyLen / 2 + 3 + bi * (bodyLen - 6) / 3.5, -4, 2, 8);
-          }
+          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo((h0.x+h1.x)/2-ux*bl/2, (h0.y+h1.y)/2-uy*bl/2); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo((h0.x+h1.x)/2+ux*bl/2, (h0.y+h1.y)/2+uy*bl/2); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
+          bbCtx.save(); bbCtx.translate((h0.x+h1.x)/2, (h0.y+h1.y)/2); bbCtx.rotate(Math.atan2(dy,dx));
+          bbCtx.fillStyle = '#d4a574'; bbCtx.beginPath(); bbCtx.roundRect(-bl/2, -5, bl, 10, 2); bbCtx.fill();
+          bbCtx.strokeStyle = '#8d6e4a'; bbCtx.lineWidth = 1; bbCtx.beginPath(); bbCtx.roundRect(-bl/2, -5, bl, 10, 2); bbCtx.stroke();
+          ['#a52a2a','#000','#f00','#ffd700'].forEach(function(c, bi) { bbCtx.fillStyle = c; bbCtx.fillRect(-bl/2+3+bi*(bl-6)/3.5, -4, 2, 8); });
           bbCtx.restore();
-          var val = p.value || 1000;
-          var label = val >= 1e6 ? (val/1e6)+'M' : val >= 1000 ? (val/1000)+'k' : val+'';
           bbCtx.fillStyle = '#888'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center';
-          bbCtx.fillText(label+'\u03A9', (h0.x+h1.x)/2, (h0.y+h1.y)/2 - 10);
-        }
-        else if (p.type === 'LED') {
-          var h1 = holeXY(p.holes[1].row, p.holes[1].col);
-          var isOn = p._ledOn;
-          var mx = (h0.x + h1.x) / 2, my = (h0.y + h1.y) / 2;
+          bbCtx.fillText(fmtR(p.value||1000), (h0.x+h1.x)/2, (h0.y+h1.y)/2-10);
+          curDots(h0.x, h0.y, h1.x, h1.y, ((bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0)-(bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0))/(p.value||1000));
+        } else if (p.type === 'LED') {
+          var h1 = holeXY(p.holes[1].row, p.holes[1].col), isOn = p._ledOn, mx = (h0.x+h1.x)/2, my = (h0.y+h1.y)/2;
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
           bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(mx, my); bbCtx.stroke();
           bbCtx.beginPath(); bbCtx.moveTo(mx, my); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
-          if (isOn) {
-            bbCtx.fillStyle = 'rgba(255,60,60,0.35)';
-            bbCtx.beginPath(); bbCtx.arc(mx, my, 14, 0, Math.PI * 2); bbCtx.fill();
-            bbCtx.fillStyle = 'rgba(255,60,60,0.15)';
-            bbCtx.beginPath(); bbCtx.arc(mx, my, 22, 0, Math.PI * 2); bbCtx.fill();
-          }
-          bbCtx.fillStyle = isOn ? '#ff3333' : '#cc4444';
-          bbCtx.beginPath(); bbCtx.arc(mx, my, 6, 0, Math.PI * 2); bbCtx.fill();
-          bbCtx.strokeStyle = isOn ? '#ff6666' : '#993333'; bbCtx.lineWidth = 1.5;
-          bbCtx.beginPath(); bbCtx.arc(mx, my, 6, 0, Math.PI * 2); bbCtx.stroke();
-          if (isOn) {
-            bbCtx.fillStyle = 'rgba(255,255,255,0.5)';
-            bbCtx.beginPath(); bbCtx.arc(mx - 2, my - 2, 2, 0, Math.PI * 2); bbCtx.fill();
-          }
-          bbCtx.fillStyle = '#fff'; bbCtx.font = 'bold 7px sans-serif'; bbCtx.textAlign = 'center';
-          bbCtx.fillText('+', h0.x, h0.y - 6);
-        }
-        else if (p.type === 'CAPACITOR') {
-          var h1 = holeXY(p.holes[1].row, p.holes[1].col);
-          var mx = (h0.x + h1.x) / 2, my = (h0.y + h1.y) / 2;
-          var dx = h1.x - h0.x, dy = h1.y - h0.y, len = Math.hypot(dx, dy);
-          var ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
+          if (isOn) { bbCtx.fillStyle = 'rgba(255,60,60,0.4)'; bbCtx.beginPath(); bbCtx.arc(mx, my, 16, 0, Math.PI*2); bbCtx.fill(); bbCtx.fillStyle = 'rgba(255,100,100,0.15)'; bbCtx.beginPath(); bbCtx.arc(mx, my, 26, 0, Math.PI*2); bbCtx.fill(); }
+          bbCtx.fillStyle = isOn ? '#ff2222' : '#993333'; bbCtx.beginPath(); bbCtx.arc(mx, my, 7, 0, Math.PI*2); bbCtx.fill();
+          bbCtx.strokeStyle = isOn ? '#ff6666' : '#662222'; bbCtx.lineWidth = 1.5; bbCtx.beginPath(); bbCtx.arc(mx, my, 7, 0, Math.PI*2); bbCtx.stroke();
+          if (isOn) { bbCtx.fillStyle = 'rgba(255,255,255,0.6)'; bbCtx.beginPath(); bbCtx.arc(mx-2, my-2, 2.5, 0, Math.PI*2); bbCtx.fill(); }
+          bbCtx.fillStyle = '#fff'; bbCtx.font = 'bold 7px sans-serif'; bbCtx.textAlign = 'center'; bbCtx.fillText('+', h0.x, h0.y-6);
+        } else if (p.type === 'CAPACITOR') {
+          var h1 = holeXY(p.holes[1].row, p.holes[1].col), mx = (h0.x+h1.x)/2, my = (h0.y+h1.y)/2, dx = h1.x-h0.x, dy = h1.y-h0.y, len = Math.hypot(dx,dy), ux = dx/len, uy = dy/len, nx = -uy, ny = ux;
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
-          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(mx - ux * 3, my - uy * 3); bbCtx.stroke();
-          bbCtx.beginPath(); bbCtx.moveTo(mx + ux * 3, my + uy * 3); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(mx-ux*3, my-uy*3); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(mx+ux*3, my+uy*3); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
           bbCtx.strokeStyle = '#1976d2'; bbCtx.lineWidth = 2.5;
-          bbCtx.beginPath(); bbCtx.moveTo(mx - ux*3 + nx*6, my - uy*3 + ny*6); bbCtx.lineTo(mx - ux*3 - nx*6, my - uy*3 - ny*6); bbCtx.stroke();
-          bbCtx.beginPath(); bbCtx.moveTo(mx + ux*3 + nx*6, my + uy*3 + ny*6); bbCtx.lineTo(mx + ux*3 - nx*6, my + uy*3 - ny*6); bbCtx.stroke();
-          var C = p.value || 100e-6;
-          var cLabel = C >= 1e-3 ? (C*1e3).toFixed(0)+'mF' : C >= 1e-6 ? (C*1e6).toFixed(0)+'\u00B5F' : (C*1e9).toFixed(0)+'nF';
-          bbCtx.fillStyle = '#1976d2'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center';
-          bbCtx.fillText(cLabel, mx + nx*10, my + ny*10);
-        }
-        else if (p.type === 'SWITCH') {
-          var h1 = holeXY(p.holes[1].row, p.holes[1].col);
-          var mx = (h0.x + h1.x) / 2, my = (h0.y + h1.y) / 2;
+          bbCtx.beginPath(); bbCtx.moveTo(mx-ux*3+nx*6, my-uy*3+ny*6); bbCtx.lineTo(mx-ux*3-nx*6, my-uy*3-ny*6); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(mx+ux*3+nx*6, my+uy*3+ny*6); bbCtx.lineTo(mx+ux*3-nx*6, my+uy*3-ny*6); bbCtx.stroke();
+          bbCtx.fillStyle = '#1976d2'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center'; bbCtx.fillText(fmtC(p.value||100e-6), mx+nx*10, my+ny*10);
+        } else if (p.type === 'SWITCH') {
+          var h1 = holeXY(p.holes[1].row, p.holes[1].col), mx = (h0.x+h1.x)/2, my = (h0.y+h1.y)/2;
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
-          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(mx - 10, my); bbCtx.stroke();
-          bbCtx.beginPath(); bbCtx.moveTo(mx + 10, my); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
-          if (p.on) {
-            bbCtx.strokeStyle = '#43a047'; bbCtx.lineWidth = 2.5;
-            bbCtx.beginPath(); bbCtx.moveTo(mx - 10, my); bbCtx.lineTo(mx + 10, my); bbCtx.stroke();
-          } else {
-            bbCtx.strokeStyle = '#e53935'; bbCtx.lineWidth = 2.5;
-            bbCtx.beginPath(); bbCtx.moveTo(mx - 10, my); bbCtx.lineTo(mx + 5, my - 10); bbCtx.stroke();
-          }
-          bbCtx.fillStyle = '#555';
-          bbCtx.beginPath(); bbCtx.arc(mx - 10, my, 2.5, 0, Math.PI * 2); bbCtx.fill();
-          bbCtx.beginPath(); bbCtx.arc(mx + 10, my, 2.5, 0, Math.PI * 2); bbCtx.fill();
-          bbCtx.fillStyle = p.on ? '#43a047' : '#e53935'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center';
-          bbCtx.fillText(p.on ? 'ON' : 'OFF', mx, my - 12);
-        }
-        else if (p.type === 'NPN') {
-          var hE = holeXY(p.holes[0].row, p.holes[0].col);
-          var hB = holeXY(p.holes[1].row, p.holes[1].col);
-          var hC = holeXY(p.holes[2].row, p.holes[2].col);
-          var tx = hB.x, ty = hB.y;
-          bbCtx.fillStyle = '#333';
-          bbCtx.beginPath(); bbCtx.arc(tx, ty, 10, 0, Math.PI * 2); bbCtx.fill();
-          bbCtx.strokeStyle = '#666'; bbCtx.lineWidth = 1;
-          bbCtx.beginPath(); bbCtx.arc(tx, ty, 10, 0, Math.PI * 2); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(mx-10, my); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(mx+10, my); bbCtx.lineTo(h1.x, h1.y); bbCtx.stroke();
+          bbCtx.strokeStyle = p.on ? '#43a047' : '#e53935'; bbCtx.lineWidth = 2.5;
+          if (p.on) { bbCtx.beginPath(); bbCtx.moveTo(mx-10, my); bbCtx.lineTo(mx+10, my); bbCtx.stroke(); }
+          else { bbCtx.beginPath(); bbCtx.moveTo(mx-10, my); bbCtx.lineTo(mx+5, my-10); bbCtx.stroke(); }
+          bbCtx.fillStyle = '#555'; bbCtx.beginPath(); bbCtx.arc(mx-10, my, 2.5, 0, Math.PI*2); bbCtx.fill(); bbCtx.beginPath(); bbCtx.arc(mx+10, my, 2.5, 0, Math.PI*2); bbCtx.fill();
+          bbCtx.fillStyle = p.on ? '#43a047' : '#e53935'; bbCtx.font = '9px sans-serif'; bbCtx.textAlign = 'center'; bbCtx.fillText(p.on ? 'ON' : 'OFF', mx, my-12);
+        } else if (p.type === 'NPN') {
+          var hE = holeXY(p.holes[0].row, p.holes[0].col), hB = holeXY(p.holes[1].row, p.holes[1].col), hC = holeXY(p.holes[2].row, p.holes[2].col), tx = hB.x, ty = hB.y;
+          if (p._state === 'on') { bbCtx.fillStyle = 'rgba(76,175,80,0.3)'; bbCtx.beginPath(); bbCtx.arc(tx, ty, 14, 0, Math.PI*2); bbCtx.fill(); }
+          bbCtx.fillStyle = '#333'; bbCtx.beginPath(); bbCtx.arc(tx, ty, 10, 0, Math.PI*2); bbCtx.fill();
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
-          bbCtx.beginPath(); bbCtx.moveTo(hE.x, hE.y); bbCtx.lineTo(tx - 10, ty); bbCtx.stroke();
-          bbCtx.beginPath(); bbCtx.moveTo(hC.x, hC.y); bbCtx.lineTo(tx + 10, ty); bbCtx.stroke();
-          bbCtx.beginPath(); bbCtx.moveTo(hB.x, hB.y); bbCtx.lineTo(tx, ty + 10); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(hE.x, hE.y); bbCtx.lineTo(tx-10, ty); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(hC.x, hC.y); bbCtx.lineTo(tx+10, ty); bbCtx.stroke();
+          bbCtx.beginPath(); bbCtx.moveTo(hB.x, hB.y); bbCtx.lineTo(tx, ty+10); bbCtx.stroke();
           bbCtx.fillStyle = '#aaa'; bbCtx.font = '8px sans-serif'; bbCtx.textAlign = 'center';
-          bbCtx.fillText('E', hE.x, hE.y - 7); bbCtx.fillText('C', hC.x, hC.y - 7); bbCtx.fillText('B', hB.x, hB.y + 14);
-          if (p._state === 'on') {
-            bbCtx.fillStyle = 'rgba(76,175,80,0.3)';
-            bbCtx.beginPath(); bbCtx.arc(tx, ty, 14, 0, Math.PI * 2); bbCtx.fill();
-          }
-        }
-        else if (p.type === 'BATTERY') {
-          var h1 = holeXY(p.holes[1].row, p.holes[1].col);
-          var bx = Math.max(h0.x, h1.x) + 30, by = (h0.y + h1.y) / 2;
-          bbCtx.strokeStyle = '#e53935'; bbCtx.lineWidth = 2;
-          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(bx - 10, h0.y); bbCtx.lineTo(bx - 10, by - 12); bbCtx.stroke();
-          bbCtx.strokeStyle = '#1e88e5'; bbCtx.lineWidth = 2;
-          bbCtx.beginPath(); bbCtx.moveTo(h1.x, h1.y); bbCtx.lineTo(bx + 10, h1.y); bbCtx.lineTo(bx + 10, by + 12); bbCtx.stroke();
-          bbCtx.fillStyle = '#ffb300';
-          bbCtx.beginPath(); bbCtx.roundRect(bx - 15, by - 18, 30, 36, 4); bbCtx.fill();
-          bbCtx.strokeStyle = '#e6a200'; bbCtx.lineWidth = 1.5;
-          bbCtx.beginPath(); bbCtx.roundRect(bx - 15, by - 18, 30, 36, 4); bbCtx.stroke();
-          bbCtx.fillStyle = '#333'; bbCtx.font = 'bold 14px sans-serif'; bbCtx.textAlign = 'center';
-          bbCtx.fillText('+', bx, by - 6); bbCtx.fillText('\u2013', bx, by + 12);
-          bbCtx.font = '9px sans-serif'; bbCtx.fillText((p.value||9)+'V', bx, by + 28);
+          bbCtx.fillText('E', hE.x, hE.y-7); bbCtx.fillText('C', hC.x, hC.y-7); bbCtx.fillText('B', hB.x, hB.y+14);
+        } else if (p.type === 'BATTERY') {
+          var h1 = holeXY(p.holes[1].row, p.holes[1].col), bx = Math.max(h0.x, h1.x)+30, by = (h0.y+h1.y)/2;
+          bbCtx.strokeStyle = '#e53935'; bbCtx.lineWidth = 2; bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.lineTo(bx-10, h0.y); bbCtx.lineTo(bx-10, by-12); bbCtx.stroke();
+          bbCtx.strokeStyle = '#1e88e5'; bbCtx.lineWidth = 2; bbCtx.beginPath(); bbCtx.moveTo(h1.x, h1.y); bbCtx.lineTo(bx+10, h1.y); bbCtx.lineTo(bx+10, by+12); bbCtx.stroke();
+          bbCtx.fillStyle = '#ffb300'; bbCtx.beginPath(); bbCtx.roundRect(bx-15, by-18, 30, 36, 4); bbCtx.fill();
+          bbCtx.strokeStyle = '#e6a200'; bbCtx.lineWidth = 1.5; bbCtx.beginPath(); bbCtx.roundRect(bx-15, by-18, 30, 36, 4); bbCtx.stroke();
+          bbCtx.fillStyle = '#333'; bbCtx.font = 'bold 14px sans-serif'; bbCtx.textAlign = 'center'; bbCtx.fillText('+', bx, by-6); bbCtx.fillText('\u2013', bx, by+12);
+          bbCtx.font = '9px sans-serif'; bbCtx.fillText((p.value||9)+'V', bx, by+28);
         }
       }
-
-      // First click indicator
-      if (bbClick1) {
-        var cp = holeXY(bbClick1.row, bbClick1.col);
-        bbCtx.strokeStyle = '#ff9800'; bbCtx.lineWidth = 2;
-        bbCtx.beginPath(); bbCtx.arc(cp.x, cp.y, 7, 0, Math.PI * 2); bbCtx.stroke();
-      }
-      // Hover tooltip
+      if (bbClick1) { var cp = holeXY(bbClick1.row, bbClick1.col); bbCtx.strokeStyle = '#ff9800'; bbCtx.lineWidth = 2.5; bbCtx.beginPath(); bbCtx.arc(cp.x, cp.y, 8, 0, Math.PI*2); bbCtx.stroke(); bbCtx.fillStyle = 'rgba(255,152,0,0.2)'; bbCtx.beginPath(); bbCtx.arc(cp.x, cp.y, 8, 0, Math.PI*2); bbCtx.fill(); }
       if (bbHover) {
-        var hp = holeXY(bbHover.row, bbHover.col);
-        bbCtx.strokeStyle = 'rgba(255,255,255,0.6)'; bbCtx.lineWidth = 1.5;
-        bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y, 6, 0, Math.PI * 2); bbCtx.stroke();
-        var n = holeNode(bbHover.row, bbHover.col);
-        var v = bbNodeVolts[n];
-        if (v !== undefined) {
-          var vStr = v.toFixed(2) + 'V';
-          bbCtx.fillStyle = 'rgba(0,0,0,0.8)';
-          bbCtx.beginPath(); bbCtx.roundRect(hp.x + 10, hp.y - 22, 48, 18, 4); bbCtx.fill();
-          bbCtx.fillStyle = '#fff'; bbCtx.font = 'bold 11px sans-serif'; bbCtx.textAlign = 'left';
-          bbCtx.fillText(vStr, hp.x + 14, hp.y - 8);
-        }
+        var hp = holeXY(bbHover.row, bbHover.col); bbCtx.strokeStyle = 'rgba(255,255,255,0.7)'; bbCtx.lineWidth = 1.5; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y, 6, 0, Math.PI*2); bbCtx.stroke();
+        var v = bbNodeVolts[holeNode(bbHover.row, bbHover.col)];
+        if (v !== undefined) { bbCtx.fillStyle = 'rgba(0,0,0,0.85)'; bbCtx.beginPath(); bbCtx.roundRect(hp.x+10, hp.y-22, 52, 18, 4); bbCtx.fill(); bbCtx.fillStyle = '#fff'; bbCtx.font = 'bold 11px sans-serif'; bbCtx.textAlign = 'left'; bbCtx.fillText(v.toFixed(2)+'V', hp.x+14, hp.y-8); }
       }
-
-      bbCtx.fillStyle = '#888'; bbCtx.font = FONT_SM;
-      bbCtx.textAlign = 'right'; bbCtx.fillText('Tool: ' + bbTool, bbW - 10, bbH - 8);
-      bbCtx.textAlign = 'left'; bbCtx.fillText('Click switches to toggle. Hover holes for voltage.', 10, bbH - 8);
-
-      var statusEl = document.getElementById('bb-status');
-      if (statusEl) {
-        if (bbTool === 'RESISTOR') {
-          var v = bbResValue; statusEl.textContent = 'Resistor: ' + (v>=1000?(v/1000)+'k':v) + '\u03A9 (click to change)';
-        } else if (bbTool === 'CAPACITOR') {
-          statusEl.textContent = 'Cap: ' + (bbCapValue*1e6).toFixed(0) + '\u00B5F (click to change)';
-        } else statusEl.textContent = '';
-      }
+      bbCtx.fillStyle = '#888'; bbCtx.font = FONT_SM; bbCtx.textAlign = 'left';
+      bbCtx.fillText('Click placed R/C to change value. Click status bar to toggle current.', 10, bbH-8);
+      bbCtx.textAlign = 'right';
+      var tt = bbTool; if (bbTool === 'RESISTOR') tt += ' ('+fmtR(bbResValue)+')'; if (bbTool === 'CAPACITOR') tt += ' ('+fmtC(bbCapValue)+')';
+      bbCtx.fillText(tt + (bbShowCurrent ? ' | Current ON' : ''), bbW-10, bbH-8);
     }
 
-    // ---- MOUSE EVENTS ----
-    function bbGetPos(e) {
-      var rect = cBB.getBoundingClientRect();
-      return { x: (e.clientX - rect.left) * (bbW / rect.width), y: (e.clientY - rect.top) * (bbH / rect.height) };
-    }
-
-    cBB.addEventListener('mousemove', function(e) {
-      bbHover = bbFindHole(bbGetPos(e).x, bbGetPos(e).y);
-      bbDraw();
-    });
+    function bbGetPos(e) { var rect = cBB.getBoundingClientRect(); return { x: (e.clientX-rect.left)*(bbW/rect.width), y: (e.clientY-rect.top)*(bbH/rect.height) }; }
+    cBB.addEventListener('mousemove', function(e) { bbHover = bbFindHole(bbGetPos(e).x, bbGetPos(e).y); if (!bbAnimRunning) bbDraw(); });
 
     cBB.addEventListener('click', function(e) {
-      var pos = bbGetPos(e);
-      var hole = bbFindHole(pos.x, pos.y);
+      var pos = bbGetPos(e), hole = bbFindHole(pos.x, pos.y);
       if (!hole) return;
-
-      // Toggle switches in any mode
-      if (bbTool !== 'DELETE') {
-        for (var i = 0; i < bbParts.length; i++) {
-          var p = bbParts[i];
-          if (p.type === 'SWITCH') {
-            for (var h = 0; h < p.holes.length; h++) {
-              if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) {
-                p.on = !p.on; bbSimStep(); bbDraw(); return;
-              }
-            }
-          }
-        }
+      if (bbTool !== 'DELETE') { for (var i = 0; i < bbParts.length; i++) { var p = bbParts[i]; if (p.type === 'SWITCH') for (var h = 0; h < p.holes.length; h++) if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) { p.on = !p.on; bbRunSim(); return; } } }
+      if (bbTool !== 'DELETE' && !bbClick1) {
+        var pa = bbFindPartAt(pos.x, pos.y);
+        if (pa && pa.type === 'RESISTOR') { pa.value = RES_VALUES[(RES_VALUES.indexOf(pa.value)+1)%RES_VALUES.length]; bbRunSim(); return; }
+        if (pa && pa.type === 'CAPACITOR') { pa.value = CAP_VALUES[(CAP_VALUES.indexOf(pa.value)+1)%CAP_VALUES.length]; bbCapVolts[pa.id] = 0; bbRunSim(); return; }
       }
-
-      if (bbTool === 'DELETE') {
-        for (var i = bbParts.length - 1; i >= 0; i--) {
-          var p = bbParts[i];
-          for (var h = 0; h < p.holes.length; h++) {
-            if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) {
-              if (p.type === 'CAPACITOR') delete bbCapVolts[p.id];
-              bbParts.splice(i, 1); bbSimStep(); bbDraw(); return;
-            }
-          }
-        }
-        return;
-      }
-
-      if (bbTool === 'NPN') {
-        if (hole.col + 2 <= BB_COLS) {
-          bbAddPart('NPN', [{row:hole.row,col:hole.col},{row:hole.row,col:hole.col+1},{row:hole.row,col:hole.col+2}]);
-          bbSimStep(); bbDraw();
-        }
-        return;
-      }
-
+      if (bbTool === 'DELETE') { for (var i = bbParts.length-1; i >= 0; i--) { var p = bbParts[i]; for (var h = 0; h < p.holes.length; h++) if (p.holes[h].row === hole.row && p.holes[h].col === hole.col) { if (p.type === 'CAPACITOR') delete bbCapVolts[p.id]; bbParts.splice(i, 1); bbRunSim(); return; } } return; }
+      if (bbTool === 'NPN') { if (hole.col+2 <= BB_COLS) { bbAddPart('NPN', [{row:hole.row,col:hole.col},{row:hole.row,col:hole.col+1},{row:hole.row,col:hole.col+2}]); bbRunSim(); } return; }
       if (!bbClick1) { bbClick1 = hole; bbDraw(); return; }
-
       var h0 = bbClick1, h1 = hole; bbClick1 = null;
       if (h0.row === h1.row && h0.col === h1.col) { bbDraw(); return; }
-
       if (bbTool === 'WIRE') bbAddPart('WIRE', [h0,h1], {color:WIRE_COLORS[bbWireColorIdx++%WIRE_COLORS.length]});
       else if (bbTool === 'RESISTOR') bbAddPart('RESISTOR', [h0,h1], {value:bbResValue});
       else if (bbTool === 'LED') bbAddPart('LED', [h0,h1]);
       else if (bbTool === 'CAPACITOR') bbAddPart('CAPACITOR', [h0,h1], {value:bbCapValue});
       else if (bbTool === 'SWITCH') bbAddPart('SWITCH', [h0,h1], {on:false});
       else if (bbTool === 'BATTERY') bbAddPart('BATTERY', [h0,h1], {value:9});
-      bbSimStep(); bbDraw();
+      bbRunSim();
     });
 
-    // Value cycling
-    var bbStatusEl = document.getElementById('bb-status');
-    if (bbStatusEl) {
-      bbStatusEl.style.cursor = 'pointer';
-      bbStatusEl.addEventListener('click', function() {
-        if (bbTool === 'RESISTOR') {
-          var vs = [220,470,1000,4700,10000,47000,100000];
-          bbResValue = vs[(vs.indexOf(bbResValue)+1) % vs.length]; bbDraw();
-        } else if (bbTool === 'CAPACITOR') {
-          var vs = [1e-6,10e-6,47e-6,100e-6,470e-6];
-          bbCapValue = vs[(vs.indexOf(bbCapValue)+1) % vs.length]; bbDraw();
-        }
-      });
-    }
+    function bbRunSim() { bbSimStep(); if (!bbAnimRunning) bbDraw(); bbCheckAnim(); }
 
-    // Palette
     var bbPaletteEl = document.getElementById('bb-palette');
-    if (bbPaletteEl) {
-      bbPaletteEl.addEventListener('click', function(e) {
-        var btn = e.target.closest('[data-part]');
-        if (!btn) return;
-        bbPaletteEl.querySelectorAll('[data-part]').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        bbTool = btn.dataset.part; bbClick1 = null; bbDraw();
-      });
-    }
+    if (bbPaletteEl) bbPaletteEl.addEventListener('click', function(e) { var btn = e.target.closest('[data-part]'); if (!btn) return; bbPaletteEl.querySelectorAll('[data-part]').forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active'); bbTool = btn.dataset.part; bbClick1 = null; bbDraw(); });
+    document.getElementById('bb-clear-btn')?.addEventListener('click', function() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbAnimRunning = false; bbDraw(); });
+    var bbStatusEl = document.getElementById('bb-status');
+    if (bbStatusEl) { bbStatusEl.style.cursor = 'pointer'; bbStatusEl.addEventListener('click', function() { if (bbTool === 'RESISTOR') bbResValue = RES_VALUES[(RES_VALUES.indexOf(bbResValue)+1)%RES_VALUES.length]; else if (bbTool === 'CAPACITOR') bbCapValue = CAP_VALUES[(CAP_VALUES.indexOf(bbCapValue)+1)%CAP_VALUES.length]; else { bbShowCurrent = !bbShowCurrent; bbCheckAnim(); } bbDraw(); }); }
 
-    var bbClearBtn = document.getElementById('bb-clear-btn');
-    if (bbClearBtn) bbClearBtn.addEventListener('click', function() {
-      bbParts.length = 0; bbNextId = 1; bbClick1 = null;
-      bbNodeVolts = {}; bbCapVolts = {}; bbSimTime = 0; bbDraw();
-    });
-
-    // ---- PRESETS ----
-    function bbClearAll() {
-      bbParts.length = 0; bbNextId = 1; bbClick1 = null;
-      bbNodeVolts = {}; bbCapVolts = {}; bbSimTime = 0; bbWireColorIdx = 0;
-    }
-
-    function bbPresetLED() {
-      bbClearAll();
-      bbAddPart('BATTERY', [{row:'r+t',col:1},{row:'r-t',col:1}], {value:9});
-      bbAddPart('WIRE', [{row:'r+t',col:5},{row:'a',col:5}], {color:'#e53935'});
-      bbAddPart('RESISTOR', [{row:'a',col:5},{row:'a',col:10}], {value:470});
-      bbAddPart('WIRE', [{row:'b',col:10},{row:'b',col:15}], {color:'#ff9800'});
-      bbAddPart('LED', [{row:'a',col:15},{row:'a',col:20}]);
-      bbAddPart('WIRE', [{row:'b',col:20},{row:'r-t',col:20}], {color:'#1e88e5'});
-      bbSimStep(); bbDraw();
-    }
-
-    function bbPresetSwitch() {
-      bbClearAll();
-      bbAddPart('BATTERY', [{row:'r+t',col:1},{row:'r-t',col:1}], {value:9});
-      // Base: VCC → switch → 10kΩ → transistor base
-      bbAddPart('WIRE', [{row:'r+t',col:3},{row:'a',col:3}], {color:'#e53935'});
-      bbAddPart('SWITCH', [{row:'a',col:3},{row:'a',col:7}], {on:false});
-      bbAddPart('RESISTOR', [{row:'b',col:7},{row:'b',col:12}], {value:10000});
-      // Transistor: E=20, B=21, C=22 bottom half
-      bbAddPart('NPN', [{row:'f',col:20},{row:'f',col:21},{row:'f',col:22}]);
-      bbAddPart('WIRE', [{row:'d',col:12},{row:'g',col:21}], {color:'#43a047'});
-      // Collector: VCC → 470Ω → LED → collector
-      bbAddPart('WIRE', [{row:'r+t',col:16},{row:'a',col:16}], {color:'#e53935'});
-      bbAddPart('RESISTOR', [{row:'a',col:16},{row:'a',col:20}], {value:470});
-      bbAddPart('LED', [{row:'c',col:20},{row:'c',col:24}]);
-      bbAddPart('WIRE', [{row:'d',col:24},{row:'g',col:22}], {color:'#ff9800'});
-      // Emitter to GND
-      bbAddPart('WIRE', [{row:'g',col:20},{row:'r-b',col:20}], {color:'#1e88e5'});
-      bbAddPart('WIRE', [{row:'r-t',col:15},{row:'r-b',col:15}], {color:'#1e88e5'});
-      bbSimStep(); bbDraw();
-    }
-
-    function bbPresetAstable() {
-      bbClearAll();
-      bbAddPart('BATTERY', [{row:'r+t',col:1},{row:'r-t',col:1}], {value:9});
-      bbAddPart('WIRE', [{row:'r+t',col:28},{row:'r+b',col:28}], {color:'#e53935'});
-      bbAddPart('WIRE', [{row:'r-t',col:28},{row:'r-b',col:28}], {color:'#1e88e5'});
-      // LEFT (Q1): VCC → R1(1kΩ) → LED1 → Q1 collector
-      bbAddPart('WIRE', [{row:'r+t',col:4},{row:'a',col:4}], {color:'#e53935'});
-      bbAddPart('RESISTOR', [{row:'a',col:4},{row:'a',col:8}], {value:1000});
-      bbAddPart('LED', [{row:'b',col:8},{row:'b',col:11}]);
-      bbAddPart('NPN', [{row:'f',col:11},{row:'f',col:12},{row:'f',col:13}]);
-      bbAddPart('WIRE', [{row:'d',col:11},{row:'g',col:13}], {color:'#ff9800'});
-      bbAddPart('WIRE', [{row:'g',col:11},{row:'r-b',col:11}], {color:'#1e88e5'});
-      // RIGHT (Q2): VCC → R2(1kΩ) → LED2 → Q2 collector
-      bbAddPart('WIRE', [{row:'r+t',col:17},{row:'a',col:17}], {color:'#e53935'});
-      bbAddPart('RESISTOR', [{row:'a',col:17},{row:'a',col:20}], {value:1000});
-      bbAddPart('LED', [{row:'b',col:20},{row:'b',col:23}]);
-      bbAddPart('NPN', [{row:'f',col:23},{row:'f',col:24},{row:'f',col:25}]);
-      bbAddPart('WIRE', [{row:'d',col:23},{row:'g',col:25}], {color:'#ff9800'});
-      bbAddPart('WIRE', [{row:'g',col:23},{row:'r-b',col:23}], {color:'#1e88e5'});
-      // Cross-coupling caps
-      bbAddPart('CAPACITOR', [{row:'c',col:11},{row:'h',col:24}], {value:100e-6});
-      bbAddPart('CAPACITOR', [{row:'c',col:23},{row:'h',col:12}], {value:100e-6});
-      // Base bias resistors
-      bbAddPart('WIRE', [{row:'r+b',col:7},{row:'j',col:7}], {color:'#e53935'});
-      bbAddPart('RESISTOR', [{row:'j',col:7},{row:'j',col:12}], {value:10000});
-      bbAddPart('WIRE', [{row:'r+b',col:19},{row:'j',col:19}], {color:'#e53935'});
-      bbAddPart('RESISTOR', [{row:'j',col:19},{row:'j',col:24}], {value:10000});
-      // Break symmetry
-      for (var i = 0; i < bbParts.length; i++) {
-        if (bbParts[i].type === 'NPN' && bbParts[i].holes[1].col === 12) bbParts[i]._state = 'on';
-      }
-      bbSimStep(); bbDraw();
-    }
+    function bbClear() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbWireColorIdx = 0; bbAnimRunning = false; }
+    function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); }
+    function bbPresetSwitch() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'}); bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false}); bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:12}],{value:10000}); bbAddPart('NPN',[{row:'f',col:20},{row:'f',col:21},{row:'f',col:22}]); bbAddPart('WIRE',[{row:'d',col:12},{row:'g',col:21}],{color:'#43a047'}); bbAddPart('WIRE',[{row:'r+t',col:16},{row:'a',col:16}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:16},{row:'a',col:20}],{value:470}); bbAddPart('LED',[{row:'c',col:20},{row:'c',col:24}]); bbAddPart('WIRE',[{row:'d',col:24},{row:'g',col:22}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:20},{row:'r-b',col:20}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r-t',col:15},{row:'r-b',col:15}],{color:'#1e88e5'}); bbRunSim(); }
+    function bbPresetAstable() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:28},{row:'r+b',col:28}],{color:'#e53935'}); bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:4},{row:'a',col:8}],{value:1000}); bbAddPart('LED',[{row:'b',col:8},{row:'b',col:11}]); bbAddPart('NPN',[{row:'f',col:11},{row:'f',col:12},{row:'f',col:13}]); bbAddPart('WIRE',[{row:'d',col:11},{row:'g',col:13}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:11},{row:'r-b',col:11}],{color:'#1e88e5'}); bbAddPart('WIRE',[{row:'r+t',col:17},{row:'a',col:17}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:17},{row:'a',col:20}],{value:1000}); bbAddPart('LED',[{row:'b',col:20},{row:'b',col:23}]); bbAddPart('NPN',[{row:'f',col:23},{row:'f',col:24},{row:'f',col:25}]); bbAddPart('WIRE',[{row:'d',col:23},{row:'g',col:25}],{color:'#ff9800'}); bbAddPart('WIRE',[{row:'g',col:23},{row:'r-b',col:23}],{color:'#1e88e5'}); bbAddPart('CAPACITOR',[{row:'c',col:11},{row:'h',col:24}],{value:100e-6}); bbAddPart('CAPACITOR',[{row:'c',col:23},{row:'h',col:12}],{value:100e-6}); bbAddPart('WIRE',[{row:'r+b',col:7},{row:'j',col:7}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'j',col:7},{row:'j',col:12}],{value:10000}); bbAddPart('WIRE',[{row:'r+b',col:19},{row:'j',col:19}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'j',col:19},{row:'j',col:24}],{value:10000}); for (var i = 0; i < bbParts.length; i++) if (bbParts[i].type === 'NPN' && bbParts[i].holes[1].col === 12) bbParts[i]._state = 'on'; bbRunSim(); }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
     document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
     document.getElementById('bb-preset-astable')?.addEventListener('click', bbPresetAstable);
 
-    // ---- ANIMATION for time-domain ----
     var bbAnimRunning = false;
     function bbAnimate() {
-      var hasCap = false;
-      for (var i = 0; i < bbParts.length; i++) { if (bbParts[i].type === 'CAPACITOR') { hasCap = true; break; } }
-      if (hasCap && bbParts.length > 0) {
-        for (var s = 0; s < 16; s++) bbSimStep();
-        bbSimTime += 1.0 / 60;
-        bbDraw();
-        bbAnimRunning = true;
-        requestAnimationFrame(bbAnimate);
-      } else {
-        bbAnimRunning = false;
-      }
+      var hasCap = bbParts.some(function(p) { return p.type === 'CAPACITOR'; });
+      if ((hasCap || bbShowCurrent) && bbParts.length > 0) { if (hasCap) for (var s = 0; s < 16; s++) bbSimStep(); bbDraw(); bbAnimRunning = true; requestAnimationFrame(bbAnimate); }
+      else { bbAnimRunning = false; }
     }
-    function bbCheckAnim() {
-      if (!bbAnimRunning) {
-        for (var i = 0; i < bbParts.length; i++) {
-          if (bbParts[i].type === 'CAPACITOR') { bbAnimate(); return; }
-        }
-      }
-    }
-    // Hook into sim step to start animation when caps present
-    var _origSimStep = bbSimStep;
-    bbSimStep = function() { _origSimStep(); bbCheckAnim(); };
+    function bbCheckAnim() { if (!bbAnimRunning && (bbShowCurrent || bbParts.some(function(p) { return p.type === 'CAPACITOR'; }))) bbAnimate(); }
 
-    // Default: load astable multivibrator
     bbPresetAstable();
   }
 }
