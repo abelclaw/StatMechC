@@ -12691,7 +12691,7 @@ function initCh9Vis() {
 function initCh10Vis() {
   // ===== Main comparison: Quantum vs Classical Statistics =====
   const c = document.getElementById('vis-quantum');
-  if (!c) return;
+  if (c) {
   const { ctx, W, H } = setupCanvas(c);
 
   const tempSlider = document.getElementById('qs-temp');
@@ -12803,6 +12803,7 @@ function initCh10Vis() {
   tempSlider?.addEventListener('input', draw);
   muSlider?.addEventListener('input', draw);
   draw();
+  } // end if (vis-quantum)
 
   // ===== Bose-Einstein Distribution =====
   const cBE = document.getElementById('vis-be-dist');
@@ -13136,6 +13137,198 @@ function initCh11Vis() {
 
   tempSlider?.addEventListener('input', draw);
   draw();
+
+  // ----- Stellar Blackbody Spectra -----
+  const cStellar = document.getElementById('vis-stellar-bb');
+  if (cStellar) {
+    const sbb = setupCanvas(cStellar);
+    const ctxS = sbb.ctx, WS = sbb.W, HS = sbb.H;
+    const stellarSelect = document.getElementById('stellar-select');
+
+    const STARS = {
+      betelgeuse: { name: 'Betelgeuse', type: 'Red supergiant (M1-2 Ia)', T: 3500,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Betelgeuse_captured_by_ALMA.jpg/220px-Betelgeuse_captured_by_ALMA.jpg' },
+      antares:    { name: 'Antares', type: 'Red supergiant (M1.5 Iab)', T: 3400,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Antares_near_Scorpius.jpg/220px-Antares_near_Scorpius.jpg' },
+      aldebaran:  { name: 'Aldebaran', type: 'Orange giant (K5 III)', T: 3900,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Aldebaran-2MASS.jpg/220px-Aldebaran-2MASS.jpg' },
+      sun:        { name: 'Sun', type: 'Yellow dwarf (G2 V)', T: 5778,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/220px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg' },
+      procyon:    { name: 'Procyon', type: 'Yellow-white subgiant (F5 IV-V)', T: 6530,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Procyon_seen_from_Hubble.jpg/220px-Procyon_seen_from_Hubble.jpg' },
+      sirius:     { name: 'Sirius', type: 'White main-sequence (A1 V)', T: 9940,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Sirius_A_and_B_artwork.jpg/220px-Sirius_A_and_B_artwork.jpg' },
+      vega:       { name: 'Vega', type: 'White main-sequence (A0 V)', T: 9602,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Vega_in_lyra.jpg/220px-Vega_in_lyra.jpg' },
+      rigel:      { name: 'Rigel', type: 'Blue supergiant (B8 Ia)', T: 12100,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Rigel_in_Orion_%28with_armature_diffraction_spikes%29.jpg/220px-Rigel_in_Orion_%28with_armature_diffraction_spikes%29.jpg' },
+      spica:      { name: 'Spica', type: 'Blue giant (B1 III-IV)', T: 25400,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Spica_star_%28Hubble%29.jpg/220px-Spica_star_%28Hubble%29.jpg' }
+    };
+
+    // Preload images
+    Object.values(STARS).forEach(star => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = star.img;
+    });
+
+    // Wavelength (nm) to approximate RGB
+    function wavelengthToRGB(lam) {
+      let r = 0, g = 0, b = 0;
+      if (lam >= 380 && lam < 440) { r = -(lam - 440) / 60; b = 1; }
+      else if (lam < 490) { g = (lam - 440) / 50; b = 1; }
+      else if (lam < 510) { g = 1; b = -(lam - 510) / 20; }
+      else if (lam < 580) { r = (lam - 510) / 70; g = 1; }
+      else if (lam < 645) { r = 1; g = -(lam - 645) / 65; }
+      else if (lam <= 700) { r = 1; }
+      let f = 1;
+      if (lam >= 380 && lam < 420) f = 0.3 + 0.7 * (lam - 380) / 40;
+      else if (lam > 645 && lam <= 700) f = 0.3 + 0.7 * (700 - lam) / 55;
+      else if (lam < 380 || lam > 700) f = 0;
+      return [r * f, g * f, b * f];
+    }
+
+    // Blackbody color from spectrum
+    function bbColor(T) {
+      let R = 0, G = 0, B = 0, norm = 0;
+      for (let lam = 380; lam <= 700; lam += 5) {
+        const x = lam * 1e-9;
+        const intensity = 1 / (Math.pow(x, 5) * (Math.exp(0.014388 / (x * T)) - 1));
+        const [r, g, b] = wavelengthToRGB(lam);
+        R += intensity * r; G += intensity * g; B += intensity * b;
+        norm += intensity;
+      }
+      R /= norm; G /= norm; B /= norm;
+      const mx = Math.max(R, G, B);
+      if (mx > 0) { R /= mx; G /= mx; B /= mx; }
+      return 'rgb(' + Math.round(R * 255) + ',' + Math.round(G * 255) + ',' + Math.round(B * 255) + ')';
+    }
+
+    function drawStellar() {
+      const key = stellarSelect.value;
+      const star = STARS[key];
+      const T = star.T;
+      clearCanvas(ctxS, WS, HS);
+
+      const ox = 65, oy = 25;
+      const pw = WS - ox - 30, ph = HS - oy - 55;
+
+      drawAxes(ctxS, ox, oy, pw, ph, { xLabel: 'Wavelength (nm)' });
+
+      const lamMin = 100, lamMax = 2500;
+
+      function planck(lam, Tk) {
+        const l = lam * 1e-9;
+        const hc_lkT = 0.014388 / (l * Tk);
+        if (hc_lkT > 500) return 0;
+        return 1 / (Math.pow(l, 5) * (Math.exp(hc_lkT) - 1));
+      }
+
+      let maxI = 0;
+      for (let px = 0; px < pw; px++) {
+        const lam = lamMin + (px / pw) * (lamMax - lamMin);
+        const val = planck(lam, T);
+        if (isFinite(val) && val > maxI) maxI = val;
+      }
+
+      // Visible spectrum band
+      const visMin = 380, visMax = 700;
+      const pxVisMin = ((visMin - lamMin) / (lamMax - lamMin)) * pw;
+      const pxVisMax = ((visMax - lamMin) / (lamMax - lamMin)) * pw;
+      for (let px = Math.floor(pxVisMin); px <= Math.ceil(pxVisMax); px++) {
+        const lam = lamMin + (px / pw) * (lamMax - lamMin);
+        const [r, g, b] = wavelengthToRGB(lam);
+        ctxS.fillStyle = 'rgba(' + Math.round(r * 255) + ',' + Math.round(g * 255) + ',' + Math.round(b * 255) + ',0.18)';
+        ctxS.fillRect(ox + px, oy, 1, ph);
+      }
+
+      ctxS.fillStyle = 'rgba(255,255,255,0.3)';
+      ctxS.font = FONT_SM;
+      ctxS.textAlign = 'center';
+      ctxS.fillText('visible', ox + (pxVisMin + pxVisMax) / 2, oy + ph - 4);
+
+      // Spectrum curve
+      const starColor = bbColor(T);
+      ctxS.strokeStyle = starColor;
+      ctxS.lineWidth = 2.5;
+      ctxS.beginPath();
+      for (let px = 0; px < pw; px++) {
+        const lam = lamMin + (px / pw) * (lamMax - lamMin);
+        const val = planck(lam, T);
+        const y = oy + ph - (isFinite(val) ? (val / maxI) * (ph - 10) : 0);
+        px === 0 ? ctxS.moveTo(ox + px, y) : ctxS.lineTo(ox + px, y);
+      }
+      ctxS.stroke();
+
+      // Fill under curve
+      ctxS.lineTo(ox + pw, oy + ph);
+      ctxS.lineTo(ox, oy + ph);
+      ctxS.closePath();
+      ctxS.fillStyle = starColor.replace('rgb', 'rgba').replace(')', ',0.12)');
+      ctxS.fill();
+
+      // Peak wavelength marker
+      const peakLam = 2898000 / T;
+      if (peakLam >= lamMin && peakLam <= lamMax) {
+        const peakPx = ox + ((peakLam - lamMin) / (lamMax - lamMin)) * pw;
+        ctxS.setLineDash([4, 3]);
+        ctxS.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctxS.lineWidth = 1;
+        ctxS.beginPath();
+        ctxS.moveTo(peakPx, oy);
+        ctxS.lineTo(peakPx, oy + ph);
+        ctxS.stroke();
+        ctxS.setLineDash([]);
+        ctxS.fillStyle = COLORS.text;
+        ctxS.font = FONT_SM;
+        ctxS.textAlign = 'center';
+        ctxS.fillText('\u03BB_peak = ' + Math.round(peakLam) + ' nm', peakPx, oy + 14);
+      } else if (peakLam < lamMin) {
+        // Peak is off-screen to the left (UV) — label it
+        ctxS.fillStyle = COLORS.textDim;
+        ctxS.font = FONT_SM;
+        ctxS.textAlign = 'left';
+        ctxS.fillText('\u2190 \u03BB_peak = ' + Math.round(peakLam) + ' nm (UV)', ox + 4, oy + 14);
+      }
+
+      // X-axis tick labels
+      ctxS.fillStyle = COLORS.textDim;
+      ctxS.font = FONT_SM;
+      ctxS.textAlign = 'center';
+      for (let lam = 0; lam <= 2500; lam += 500) {
+        if (lam < lamMin) continue;
+        const px = ox + ((lam - lamMin) / (lamMax - lamMin)) * pw;
+        ctxS.fillText(lam.toString(), px, oy + ph + 14);
+      }
+
+      // Title
+      ctxS.fillStyle = COLORS.text;
+      ctxS.font = FONT;
+      ctxS.textAlign = 'left';
+      const titleY = peakLam >= lamMin ? oy + 30 : oy + 30;
+      ctxS.fillText(star.name + '  (T = ' + T + ' K)', ox + 4, titleY);
+
+      // Update info panel
+      const imgEl = document.getElementById('stellar-img');
+      const nameEl = document.getElementById('stellar-name');
+      const typeEl = document.getElementById('stellar-type');
+      const tempEl = document.getElementById('stellar-temp-display');
+      const peakEl = document.getElementById('stellar-peak-display');
+      if (imgEl) {
+        imgEl.src = star.img;
+        imgEl.alt = star.name;
+        imgEl.style.borderColor = starColor;
+      }
+      if (nameEl) nameEl.textContent = star.name;
+      if (typeEl) typeEl.textContent = star.type;
+      if (tempEl) tempEl.textContent = 'T = ' + T + ' K';
+      if (peakEl) peakEl.textContent = '\u03BB_peak = ' + Math.round(2898000 / T) + ' nm';
+    }
+
+    stellarSelect.addEventListener('change', drawStellar);
+    drawStellar();
+  }
 
   // ----- Lambert's Cosine Law -----
   const cLambert = document.getElementById('vis-lambert');
