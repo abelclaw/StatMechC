@@ -24306,7 +24306,7 @@ function initCh15Vis() {
 
       drawAxes(ctxBM, oxBM, oyBM, pwBM, phBM, {
         xLabel: 'Stellar mass  M / M\u2609  (log scale)',
-        yLabel: '\u03B2 = P_gas / P_total',
+        yLabel: 'Pressure fraction',
         yLabelOffset: 48
       });
 
@@ -24330,59 +24330,77 @@ function initCh15Vis() {
         ctxBM.beginPath(); ctxBM.moveTo(oxBM, pyv); ctxBM.lineTo(oxBM + pwBM, pyv); ctxBM.stroke();
       }
 
-      // β vs M curve
-      ctxBM.strokeStyle = COLORS.blue; ctxBM.lineWidth = 2.5;
-      ctxBM.beginPath();
-      let bmFirst = true;
+      // Compute curve points
       const N_BM = 400;
+      const curvePts = [];
       for (let i = 0; i <= N_BM; i++) {
         const logM = logMmin + i / N_BM * (logMmax - logMmin);
         const Msun = Math.pow(10, logM);
         const beta = betaFromMass(Msun);
         const px = oxBM + (logM - logMmin) / (logMmax - logMmin) * pwBM;
-        const pyv = oyBM + phBM - beta * phBM;
-        if (bmFirst) { ctxBM.moveTo(px, pyv); bmFirst = false; } else ctxBM.lineTo(px, pyv);
+        const py = oyBM + phBM - beta * phBM;
+        curvePts.push({ px, py, beta });
       }
+
+      // Shaded region below curve: gas pressure (blue)
+      ctxBM.fillStyle = 'rgba(79,195,247,0.12)';
+      ctxBM.beginPath();
+      ctxBM.moveTo(curvePts[0].px, oyBM + phBM);
+      curvePts.forEach(p => ctxBM.lineTo(p.px, p.py));
+      ctxBM.lineTo(curvePts[N_BM].px, oyBM + phBM);
+      ctxBM.closePath();
+      ctxBM.fill();
+
+      // Shaded region above curve: radiation pressure (red)
+      ctxBM.fillStyle = 'rgba(239,83,80,0.12)';
+      ctxBM.beginPath();
+      ctxBM.moveTo(curvePts[0].px, oyBM);
+      curvePts.forEach(p => ctxBM.lineTo(p.px, p.py));
+      ctxBM.lineTo(curvePts[N_BM].px, oyBM);
+      ctxBM.closePath();
+      ctxBM.fill();
+
+      // β vs M curve (white dividing line)
+      ctxBM.strokeStyle = '#fff'; ctxBM.lineWidth = 2.5;
+      ctxBM.beginPath();
+      curvePts.forEach((p, i) => i === 0 ? ctxBM.moveTo(p.px, p.py) : ctxBM.lineTo(p.px, p.py));
       ctxBM.stroke();
 
-      // Shaded region: gas-pressure dominated (β > 0.5) vs radiation-dominated
-      const halfY = oyBM + phBM - 0.5 * phBM;
-      ctxBM.fillStyle = 'rgba(79,195,247,0.08)';
-      ctxBM.fillRect(oxBM, halfY, pwBM, oyBM + phBM - halfY);
-      ctxBM.fillStyle = 'rgba(239,83,80,0.08)';
-      ctxBM.fillRect(oxBM, oyBM, pwBM, halfY - oyBM);
+      // Region labels inside shaded areas
+      ctxBM.font = FONT_SM; ctxBM.textAlign = 'right';
+      ctxBM.fillStyle = 'rgba(79,195,247,0.7)';
+      ctxBM.fillText('Gas pressure  \u03B2 = P_gas / P_tot', oxBM + pwBM - 8, oyBM + phBM - 14);
+      ctxBM.fillStyle = 'rgba(239,83,80,0.7)';
+      ctxBM.fillText('Radiation pressure  (1\u2212\u03B2)', oxBM + pwBM - 8, oyBM + 30);
 
-      // β = 0.5 dashed guide
-      ctxBM.strokeStyle = COLORS.textDim; ctxBM.lineWidth = 1; ctxBM.setLineDash([4, 4]);
-      ctxBM.beginPath(); ctxBM.moveTo(oxBM, halfY); ctxBM.lineTo(oxBM + pwBM, halfY); ctxBM.stroke();
-      ctxBM.setLineDash([]);
+      // Notable stars
+      const stars = [
+        { name: 'Sun', mass: 1, color: COLORS.yellow },
+        { name: 'Vega', mass: 2.1, color: '#80deea' },
+        { name: 'Spica', mass: 11, color: '#b0bec5' },
+        { name: '\u03B7 Car', mass: 100, color: COLORS.orange }
+      ];
+      stars.forEach(s => {
+        const beta = betaFromMass(s.mass);
+        const logM = Math.log10(s.mass);
+        const px = oxBM + (logM - logMmin) / (logMmax - logMmin) * pwBM;
+        const py = oyBM + phBM - beta * phBM;
 
-      // Region labels
-      ctxBM.font = FONT_SM; ctxBM.textAlign = 'left';
-      ctxBM.fillStyle = COLORS.blue;
-      ctxBM.fillText('Gas-pressure dominated  (\u03B2 \u2248 1)', oxBM + 8, oyBM + phBM - 12);
-      ctxBM.fillStyle = COLORS.red;
-      ctxBM.fillText('Radiation-pressure dominated  (\u03B2 \u2192 0)', oxBM + 8, oyBM + 14);
+        // Vertical dashed tick from axis to curve
+        ctxBM.strokeStyle = s.color; ctxBM.lineWidth = 1; ctxBM.setLineDash([2, 3]);
+        ctxBM.beginPath(); ctxBM.moveTo(px, oyBM + phBM); ctxBM.lineTo(px, py); ctxBM.stroke();
+        ctxBM.setLineDash([]);
 
-      // Annotation: Sun and Eddington mass
-      const sunBeta = betaFromMass(1);
-      const sunPx = oxBM;
-      const sunPy = oyBM + phBM - sunBeta * phBM;
-      ctxBM.fillStyle = COLORS.yellow;
-      ctxBM.beginPath(); ctxBM.arc(sunPx, sunPy, 5, 0, 2 * Math.PI); ctxBM.fill();
-      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT_SM; ctxBM.textAlign = 'left';
-      ctxBM.fillText('M\u2609  \u03B2\u22480.9996', sunPx + 7, sunPy - 4);
+        // Dot on curve
+        ctxBM.fillStyle = s.color;
+        ctxBM.beginPath(); ctxBM.arc(px, py, 5, 0, 2 * Math.PI); ctxBM.fill();
+        ctxBM.strokeStyle = '#fff'; ctxBM.lineWidth = 1;
+        ctxBM.beginPath(); ctxBM.arc(px, py, 5, 0, 2 * Math.PI); ctxBM.stroke();
 
-      const m100Beta = betaFromMass(100);
-      const m100Px = oxBM + pwBM;
-      const m100Py = oyBM + phBM - m100Beta * phBM;
-      ctxBM.fillStyle = COLORS.orange;
-      ctxBM.beginPath(); ctxBM.arc(m100Px, m100Py, 5, 0, 2 * Math.PI); ctxBM.fill();
-      ctxBM.fillStyle = COLORS.text; ctxBM.textAlign = 'right';
-      ctxBM.fillText('100 M\u2609  \u03B2\u2248' + m100Beta.toFixed(2), m100Px - 8, m100Py - 6);
-
-      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT_LG; ctxBM.textAlign = 'left';
-      ctxBM.fillText('Radiation Pressure Fraction vs Stellar Mass', oxBM + 5, oyBM + 12);
+        // Star name below x-axis
+        ctxBM.fillStyle = s.color; ctxBM.font = FONT_SM; ctxBM.textAlign = 'center';
+        ctxBM.fillText(s.name, px, oyBM + phBM + 26);
+      });
     }
 
     let bmHoverLogM = null;
