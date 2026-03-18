@@ -23088,7 +23088,14 @@ function initCh14Vis() {
         var p = bbParts[i];
         if (p.holes.length >= 2) {
           var a = holeXY(p.holes[0].row, p.holes[0].col), b = holeXY(p.holes[1].row, p.holes[1].col);
-          if (Math.hypot(mx - (a.x+b.x)/2, my - (a.y+b.y)/2) < 14) return p;
+          // Sample 6 points along the component (catches wires even on curves)
+          for (var s = 0; s <= 5; s++) {
+            var t = s / 5;
+            var sx = a.x + (b.x - a.x) * t, sy = a.y + (b.y - a.y) * t;
+            // Wires arc upward so adjust y for the curve
+            if (p.type === 'WIRE') sy -= (Math.abs(b.x - a.x) * 0.12 + 5) * Math.sin(t * Math.PI);
+            if (Math.hypot(mx - sx, my - sy) < 12) return p;
+          }
         }
         for (var h = 0; h < p.holes.length; h++) {
           var hp = holeXY(p.holes[h].row, p.holes[h].col);
@@ -23399,7 +23406,8 @@ function initCh14Vis() {
             tipLines.push('I = ' + (mA < 1 ? (mA*1000).toFixed(0) + '\u00B5A' : mA.toFixed(1) + 'mA'));
           }
           else if (hovPart.type === 'WIRE') {
-            tipLines.push('Wire');
+            var wV = bbNodeVolts[holeNode(hovPart.holes[0].row, hovPart.holes[0].col)];
+            tipLines.push('Wire: ' + (wV !== undefined ? wV.toFixed(2) + 'V' : ''));
           }
           else if (hovPart.type === 'CAPACITOR') tipLines.push(fmtC(hovPart.value||100e-6) + ' (click to change)');
           else if (hovPart.type === 'LED') {
