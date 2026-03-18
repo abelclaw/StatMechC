@@ -23613,17 +23613,19 @@ function initCh14Vis() {
     function bbPresetDivider() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
-      // R1: VCC -> col 10 (top resistor)
+      // R1 (top): VCC → midpoint (col 12). Starts at 1kΩ.
       bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'});
-      bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:1000});
-      // R2: col 10 -> GND (bottom resistor)
-      bbAddPart('RESISTOR',[{row:'b',col:10},{row:'b',col:15}],{value:1000});
-      bbAddPart('WIRE',[{row:'c',col:15},{row:'r-t',col:15}],{color:'#1e88e5'});
-      // LED from midpoint to GND (shows voltage at divider output)
-      bbAddPart('LED',[{row:'c',col:10},{row:'c',col:20}]);
-      bbAddPart('RESISTOR',[{row:'d',col:20},{row:'d',col:24}],{value:470});
-      bbAddPart('WIRE',[{row:'e',col:24},{row:'r-t',col:24}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>Voltage Divider.</b> Two resistors in series split the 9V supply. With equal resistors (1k\u03A9 each), the midpoint would be 4.5V \u2014 but the LED loads the divider and pulls the voltage down. Hover over the midpoint hole to see the actual voltage. Click the resistors to change their values: making the top resistor larger lowers the midpoint voltage, making the bottom one larger raises it. This is the foundation of biasing transistors.');
+      bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:12}],{value:1000});
+      // R2 (bottom): midpoint → GND. Starts at 4.7kΩ (unequal to make it interesting).
+      bbAddPart('RESISTOR',[{row:'b',col:12},{row:'b',col:19}],{value:4700});
+      bbAddPart('WIRE',[{row:'c',col:19},{row:'r-t',col:19}],{color:'#1e88e5'});
+      // LED + resistor from midpoint to GND — acts as a voltage indicator
+      bbAddPart('WIRE',[{row:'c',col:12},{row:'f',col:12}],{color:'#43a047'}); // midpoint down to bottom half
+      bbAddPart('RESISTOR',[{row:'f',col:12},{row:'f',col:17}],{value:470});
+      bbAddPart('LED',[{row:'g',col:17},{row:'g',col:22}]);
+      bbAddPart('WIRE',[{row:'h',col:22},{row:'r-b',col:22}],{color:'#1e88e5'});
+      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
+      bbRunSim(); bbDesc('<b>Voltage Divider.</b> V<sub>mid</sub> = V<sub>CC</sub> \u00D7 R<sub>2</sub> / (R<sub>1</sub> + R<sub>2</sub>). With R<sub>1</sub>=1k\u03A9 and R<sub>2</sub>=4.7k\u03A9, the midpoint should be 9 \u00D7 4.7/5.7 \u2248 7.4V. <b>Hover over the midpoint (column 12) to check.</b> The LED below lights up because 7.4V is well above its 1.8V threshold. Now <b>click R<sub>1</sub> (top resistor) to increase it</b> \u2014 watch the midpoint voltage drop. Keep clicking until the LED turns off. You\u2019ve just learned how every transistor bias circuit works: two resistors set the base voltage.');
     }
 
     // ---- EMITTER FOLLOWER: NPN voltage follower, output tracks input minus VBE ----
