@@ -179,14 +179,14 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 <p>This is known as the <span class="tooltip-trigger">Bose-Einstein distribution<span class="tooltip-content">The average number of bosons occupying a state with energy $\epsilon_i$ at temperature $T$ and chemical potential $\mu$. It diverges as $\epsilon_i \to \mu$, which is key to understanding Bose-Einstein condensation.</span></span>.</p>
 
 <!-- INTERACTIVE: Bose-Einstein Distribution -->
-<div class="interactive-container">
-  <h3>Interactive: Bose-Einstein Distribution</h3>
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">&#9881;</span> Interactive: Bose-Einstein Distribution</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-be-dist" width="700" height="420"></canvas></div>
   <div class="vis-controls">
-    <label>$k_BT$: <input type="range" id="be-dist-temp" min="0.1" max="3" step="0.05" value="1"> <span class="slider-value" id="be-dist-temp-val">1.00</span></label>
-    <label>$\mu$: <input type="range" id="be-dist-mu" min="-3" max="-0.05" step="0.05" value="-0.5"> <span class="slider-value" id="be-dist-mu-val">&minus;0.50</span></label>
+    <label>Temperature $k_BT$: <input type="range" id="be-dist-temp" min="0.1" max="3" step="0.05" value="1" style="width:200px"> <span class="value-display" id="be-dist-temp-val">1.00</span></label>
+    <label>Chemical potential $\mu$: <input type="range" id="be-dist-mu" min="-3" max="-0.05" step="0.05" value="-0.5" style="width:200px"> <span class="value-display" id="be-dist-mu-val">&minus;0.50</span></label>
   </div>
-  <canvas id="vis-be-dist" width="600" height="400"></canvas>
-  <p class="vis-caption">The Bose-Einstein distribution $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ gives the average occupation of a state with energy $\epsilon$. Bosons can pile up: as $\epsilon \to \mu$ from above, the occupation diverges. Drag $\mu$ toward zero to see the onset of Bose-Einstein condensation. The dashed line shows the classical (Maxwell-Boltzmann) result for comparison.</p>
+  <p class="vis-caption" style="padding:0 16px 12px;">The Bose-Einstein distribution $\langle n \rangle = \frac{1}{e^{\beta(\epsilon - \mu)} - 1}$ gives the average number of bosons in a state at energy $\epsilon$. Unlike fermions, bosons can pile up without limit: as $\epsilon \to \mu$ from above, the occupation diverges. The chemical potential $\mu$ must always stay below all energy levels ($\mu < 0$ when $\epsilon_0 = 0$). Drag $\mu$ toward zero to see low-energy states become heavily occupied &mdash; this is the precursor to Bose-Einstein condensation. The dashed green line shows the classical Maxwell-Boltzmann approximation for comparison.</p>
 </div>
 
 <p>Note that if $\epsilon_i < \mu$ then $\langle n_i \rangle$ is negative, which is impossible. This means that $\mu < \epsilon_i$ for all $\epsilon_i$, i.e. the chemical potential for any Bose system will be less than all of the energies. Often we set the ground state energy to zero in which case</p>

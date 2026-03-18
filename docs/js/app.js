@@ -12689,122 +12689,6 @@ function initCh9Vis() {
 // CH10: Quantum Statistics
 // =============================================================================
 function initCh10Vis() {
-  // ===== Main comparison: Quantum vs Classical Statistics =====
-  const c = document.getElementById('vis-quantum');
-  if (c) {
-  const { ctx, W, H } = setupCanvas(c);
-
-  const tempSlider = document.getElementById('qs-temp');
-  const muSlider = document.getElementById('qs-mu');
-
-  function draw() {
-    const T = parseFloat(tempSlider?.value || 1);
-    const mu = parseFloat(muSlider?.value || -1);
-    const beta = 1 / T;
-    clearCanvas(ctx, W, H);
-
-    const ox = 75, oy = 30, pw = W - ox - 30, ph = H - oy - 55;
-    const eMax = 5, nMax = 3;
-
-    // Draw axes
-    drawAxes(ctx, ox, oy, pw, ph, { xLabel: 'Energy \u03B5', yLabel: '\u27E8n\u27E9', yLabelOffset: 45 });
-
-    // Tick labels on axes
-    ctx.fillStyle = COLORS.textDim; ctx.font = FONT_SM;
-    ctx.textAlign = 'center';
-    for (let e = 0; e <= eMax; e++) ctx.fillText(e.toFixed(0), ox + e / eMax * pw, oy + ph + 14);
-    ctx.textAlign = 'right';
-    for (let n = 0; n <= nMax; n++) ctx.fillText(n.toFixed(0), ox - 6, oy + ph - n / nMax * ph + 4);
-
-    // --- Shaded regions ---
-    // Find where MB occupation = 1 (boundary of quantum regime)
-    // e^{-beta*(e - mu)} = 1  =>  e = mu, but mu < 0 so we use e where n ~ 1
-    // For MB: n = e^{-beta*(e-mu)} = 1  =>  e = mu (but mu < 0)
-    // Actually n=1 at e = mu + 0 = mu. Since mu < 0, and e >= 0, the n=1 line
-    // for MB is at e = mu which is off-chart. Use n=1 guideline instead.
-
-    // n=1 guideline (quantum/classical boundary)
-    const n1y = oy + ph - (1 / nMax) * ph;
-    ctx.fillStyle = 'rgba(239, 83, 80, 0.06)';
-    ctx.fillRect(ox, oy, pw, n1y - oy);
-    ctx.fillStyle = 'rgba(102, 187, 106, 0.06)';
-    ctx.fillRect(ox, n1y, pw, oy + ph - n1y);
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.setLineDash([5, 4]);
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(ox, n1y); ctx.lineTo(ox + pw, n1y); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Region labels
-    ctx.font = '10px Inter, system-ui, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(239, 83, 80, 0.5)';
-    ctx.fillText('quantum regime: \u27E8n\u27E9 \u2273 1', ox + pw - 5, n1y - 8);
-    ctx.fillStyle = 'rgba(102, 187, 106, 0.5)';
-    ctx.fillText('classical regime: \u27E8n\u27E9 \u226A 1', ox + pw - 5, n1y + 14);
-
-    // Draw the three distributions
-    const distributions = [
-      { name: 'Bose-Einstein',    fn: (e) => 1 / (Math.exp(beta * (e - mu)) - 1), color: COLORS.red,   lw: 3 },
-      { name: 'Fermi-Dirac',      fn: (e) => 1 / (Math.exp(beta * (e - mu)) + 1), color: COLORS.blue,  lw: 3 },
-      { name: 'Maxwell-Boltzmann', fn: (e) => Math.exp(-beta * (e - mu)),           color: COLORS.green, lw: 2.5 }
-    ];
-
-    distributions.forEach((d) => {
-      ctx.strokeStyle = d.color;
-      ctx.lineWidth = d.lw;
-      ctx.beginPath();
-      let started = false;
-      for (let px = 0; px < pw; px++) {
-        const e = px / pw * eMax;
-        let n = d.fn(e);
-        if (!isFinite(n) || n < 0) continue;
-        if (n > nMax * 1.5) { if (started) ctx.lineTo(ox + px, oy); continue; }
-        const clipN = Math.min(n, nMax);
-        const py = oy + ph - (clipN / nMax) * ph;
-        if (!started) { ctx.moveTo(ox + px, py); started = true; }
-        else ctx.lineTo(ox + px, py);
-      }
-      ctx.stroke();
-    });
-
-    // Legend with colored line samples
-    const legX = ox + 8, legY = oy + 8;
-    distributions.forEach((d, idx) => {
-      const y = legY + idx * 18;
-      ctx.strokeStyle = d.color; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(legX, y); ctx.lineTo(legX + 20, y); ctx.stroke();
-      ctx.fillStyle = d.color; ctx.font = '12px Inter, system-ui, sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText(d.name, legX + 25, y + 4);
-    });
-
-    // Parameter readout
-    ctx.fillStyle = COLORS.text; ctx.font = FONT_LG; ctx.textAlign = 'right';
-    ctx.fillText('kT = ' + T.toFixed(2) + ',  \u03BC = ' + mu.toFixed(2), ox + pw - 5, oy + 14);
-
-    // Convergence annotation: find energy where all three are within 5% of each other
-    const eMB1 = mu - T * Math.log(0.3); // where MB gives n ~ 0.3
-    if (eMB1 > 0 && eMB1 < eMax) {
-      const annX = ox + eMB1 / eMax * pw;
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctx.setLineDash([2, 3]); ctx.lineWidth = 0.7;
-      ctx.beginPath(); ctx.moveTo(annX, oy); ctx.lineTo(annX, oy + ph); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = COLORS.textDim; ctx.font = '9px Inter, system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('\u2190 curves converge \u2192', annX + 40, oy + ph - 10);
-    }
-
-    document.getElementById('qs-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(2)));
-    document.getElementById('qs-mu-val')?.replaceChildren(document.createTextNode(mu.toFixed(2)));
-  }
-
-  tempSlider?.addEventListener('input', draw);
-  muSlider?.addEventListener('input', draw);
-  draw();
-  } // end if (vis-quantum)
-
   // ===== Bose-Einstein Distribution =====
   const cBE = document.getElementById('vis-be-dist');
   if (cBE) {
@@ -12813,69 +12697,153 @@ function initCh10Vis() {
     const beSlider = document.getElementById('be-dist-temp');
     const beMuSlider = document.getElementById('be-dist-mu');
 
+    function boseEinstein(e, mu, beta) {
+      var arg = beta * (e - mu);
+      if (arg < 0.001) return NaN;
+      var val = 1 / (Math.exp(arg) - 1);
+      return isFinite(val) && val >= 0 ? val : NaN;
+    }
+
     function drawBE() {
       const kT = parseFloat(beSlider?.value || 1);
       const mu = parseFloat(beMuSlider?.value || -0.5);
       const beta = 1 / kT;
       clearCanvas(ctxBE, WBE, HBE);
-      const ox = 70, oy = 25, pw = WBE - 110, ph = HBE - 70;
-      const eMax = 5, nMax = 5;
-      drawAxes(ctxBE, ox, oy, pw, ph, { xLabel: 'Energy \u03B5', yLabel: '\u27E8n\u27E9', yLabelOffset: 40 });
-      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
-      for (let e = 0; e <= eMax; e++) ctxBE.fillText(e.toFixed(0), ox + e / eMax * pw, oy + ph + 14);
-      ctxBE.textAlign = 'right';
-      for (let n = 0; n <= nMax; n++) ctxBE.fillText(n.toFixed(0), ox - 5, oy + ph - n / nMax * ph + 4);
 
-      // MB comparison (dashed)
+      const ox = 80, oy = 40, pw = WBE - 130, ph = HBE - 95;
+      const eMax = 5, nMax = 5;
+
+      // --- Axis tick labels ---
+      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM;
+      ctxBE.textAlign = 'center';
+      for (let e = 0; e <= eMax; e++) {
+        var x = ox + e / eMax * pw;
+        ctxBE.fillText(e.toFixed(0), x, oy + ph + 16);
+        ctxBE.strokeStyle = COLORS.axis; ctxBE.lineWidth = 1;
+        ctxBE.beginPath(); ctxBE.moveTo(x, oy + ph); ctxBE.lineTo(x, oy + ph + 4); ctxBE.stroke();
+      }
+      ctxBE.textAlign = 'right';
+      for (let n = 0; n <= nMax; n++) {
+        var y = oy + ph - n / nMax * ph;
+        ctxBE.fillText(n.toFixed(0), ox - 8, y + 4);
+        ctxBE.strokeStyle = COLORS.axis; ctxBE.lineWidth = 1;
+        ctxBE.beginPath(); ctxBE.moveTo(ox - 4, y); ctxBE.lineTo(ox, y); ctxBE.stroke();
+      }
+
+      // Axis labels
+      ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT;
+      ctxBE.textAlign = 'center';
+      ctxBE.fillText('Energy  \u03B5', ox + pw / 2, oy + ph + 35);
+      ctxBE.save();
+      ctxBE.translate(ox - 50, oy + ph / 2);
+      ctxBE.rotate(-Math.PI / 2);
+      ctxBE.fillText('Occupation  \u27E8n\u27E9', 0, 0);
+      ctxBE.restore();
+
+      // Draw axes
+      ctxBE.strokeStyle = COLORS.axis; ctxBE.lineWidth = 1.5;
+      ctxBE.beginPath(); ctxBE.moveTo(ox, oy); ctxBE.lineTo(ox, oy + ph); ctxBE.lineTo(ox + pw, oy + ph); ctxBE.stroke();
+
+      // --- Area under BE curve (shaded) ---
+      var grad = ctxBE.createLinearGradient(ox, oy, ox, oy + ph);
+      grad.addColorStop(0, 'rgba(239, 83, 80, 0.18)');
+      grad.addColorStop(1, 'rgba(239, 83, 80, 0.03)');
+      ctxBE.fillStyle = grad;
+      ctxBE.beginPath();
+      var areaStarted = false;
+      for (let px = 0; px <= pw; px++) {
+        var e = px / pw * eMax;
+        var n = boseEinstein(e, mu, beta);
+        if (isNaN(n)) continue;
+        if (n > nMax) n = nMax;
+        if (!areaStarted) { ctxBE.moveTo(ox + px, oy + ph); areaStarted = true; }
+        ctxBE.lineTo(ox + px, oy + ph - (n / nMax) * ph);
+      }
+      ctxBE.lineTo(ox + pw, oy + ph);
+      ctxBE.closePath();
+      ctxBE.fill();
+
+      // --- n=1 guideline ---
+      const n1y = oy + ph - (1 / nMax) * ph;
+      ctxBE.strokeStyle = 'rgba(255,255,255,0.12)'; ctxBE.setLineDash([4, 4]); ctxBE.lineWidth = 0.8;
+      ctxBE.beginPath(); ctxBE.moveTo(ox, n1y); ctxBE.lineTo(ox + pw, n1y); ctxBE.stroke();
+      ctxBE.setLineDash([]);
+      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = '10px Inter, system-ui, sans-serif';
+      ctxBE.textAlign = 'left'; ctxBE.fillText('\u27E8n\u27E9 = 1', ox + 4, n1y - 5);
+
+      // --- Mark mu on the energy axis ---
+      var muClip = Math.max(0, mu);
+      var muPx = ox + muClip / eMax * pw;
+      ctxBE.strokeStyle = COLORS.yellow; ctxBE.setLineDash([4, 3]); ctxBE.lineWidth = 1;
+      ctxBE.beginPath(); ctxBE.moveTo(muPx, oy + ph); ctxBE.lineTo(muPx, oy + ph + 8); ctxBE.stroke();
+      ctxBE.setLineDash([]);
+      ctxBE.fillStyle = COLORS.yellow; ctxBE.font = '11px Inter, system-ui, sans-serif';
+      ctxBE.textAlign = 'center';
+      var muLabel = mu >= 0 ? '\u03BC = ' + mu.toFixed(2) : '\u03BC = \u2212' + Math.abs(mu).toFixed(2);
+      ctxBE.fillText(muLabel, Math.max(ox + 30, muPx), oy + ph + 22);
+
+      // --- MB comparison (dashed green) ---
       ctxBE.strokeStyle = COLORS.green; ctxBE.lineWidth = 1.5; ctxBE.setLineDash([6, 4]);
       ctxBE.beginPath();
-      let stMB = false;
       for (let px = 0; px < pw; px++) {
-        const e = px / pw * eMax;
-        let n = Math.exp(-beta * (e - mu));
+        var e = px / pw * eMax;
+        var n = Math.exp(-beta * (e - mu));
         if (n > nMax) n = nMax;
-        const pyv = oy + ph - (n / nMax) * ph;
-        if (!stMB) { ctxBE.moveTo(ox + px, pyv); stMB = true; } else ctxBE.lineTo(ox + px, pyv);
+        var pyv = oy + ph - (n / nMax) * ph;
+        px === 0 ? ctxBE.moveTo(ox + px, pyv) : ctxBE.lineTo(ox + px, pyv);
       }
       ctxBE.stroke(); ctxBE.setLineDash([]);
 
-      // BE curve (solid)
+      // --- BE curve (solid red) ---
       ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 3; ctxBE.beginPath();
-      let st = false;
+      var stBE = false;
       for (let px = 0; px < pw; px++) {
-        const e = px / pw * eMax;
-        let n = 1 / (Math.exp(beta * (e - mu)) - 1);
-        if (!isFinite(n) || n < 0) continue;
+        var e = px / pw * eMax;
+        var n = boseEinstein(e, mu, beta);
+        if (isNaN(n)) continue;
         if (n > nMax) n = nMax;
-        const pyv = oy + ph - (n / nMax) * ph;
-        if (!st) { ctxBE.moveTo(ox + px, pyv); st = true; } else ctxBE.lineTo(ox + px, pyv);
+        var pyv = oy + ph - (n / nMax) * ph;
+        if (!stBE) { ctxBE.moveTo(ox + px, pyv); stBE = true; } else ctxBE.lineTo(ox + px, pyv);
       }
       ctxBE.stroke();
 
-      // n=1 guideline
-      const n1y = oy + ph - (1 / nMax) * ph;
-      ctxBE.strokeStyle = 'rgba(255,255,255,0.12)'; ctxBE.setLineDash([3, 3]); ctxBE.lineWidth = 0.7;
-      ctxBE.beginPath(); ctxBE.moveTo(ox, n1y); ctxBE.lineTo(ox + pw, n1y); ctxBE.stroke();
-      ctxBE.setLineDash([]);
-      ctxBE.fillStyle = COLORS.textDim; ctxBE.font = '9px Inter, system-ui, sans-serif';
-      ctxBE.textAlign = 'left'; ctxBE.fillText('\u27E8n\u27E9 = 1', ox + 3, n1y - 4);
+      // --- Divergence annotation ---
+      var testE = Math.max(0.05, mu + 0.1);
+      var nAtLow = boseEinstein(testE, mu, beta);
+      if (!isNaN(nAtLow) && nAtLow > 2.5) {
+        ctxBE.fillStyle = 'rgba(255,255,255,0.4)'; ctxBE.font = '11px Inter, system-ui, sans-serif';
+        ctxBE.textAlign = 'left';
+        ctxBE.fillText('\u2191 diverges as \u03B5 \u2192 \u03BC', ox + 12, oy + 16);
+      }
 
-      // Legend
-      const legX = WBE - 160, legY = 30;
-      ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 3;
-      ctxBE.beginPath(); ctxBE.moveTo(legX, legY); ctxBE.lineTo(legX + 18, legY); ctxBE.stroke();
+      // --- "Bosons pile up" annotation ---
+      var nAtLowE = boseEinstein(0.2, mu, beta);
+      if (!isNaN(nAtLowE) && nAtLowE > 1 && nAtLowE < 4) {
+        ctxBE.fillStyle = 'rgba(239, 83, 80, 0.6)'; ctxBE.font = '11px Inter, system-ui, sans-serif';
+        ctxBE.textAlign = 'center';
+        var annY = oy + ph - (Math.min(nAtLowE, nMax) / nMax) * ph;
+        ctxBE.fillText('Bosons pile up', ox + pw * 0.15, Math.max(oy + 35, annY - 15));
+      }
+
+      // --- Legend ---
+      const legX = WBE - 170, legY = oy + ph - 50;
+      ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 3; ctxBE.setLineDash([]);
+      ctxBE.beginPath(); ctxBE.moveTo(legX, legY); ctxBE.lineTo(legX + 25, legY); ctxBE.stroke();
       ctxBE.fillStyle = COLORS.red; ctxBE.font = FONT_SM; ctxBE.textAlign = 'left';
-      ctxBE.fillText('Bose-Einstein', legX + 22, legY + 4);
+      ctxBE.fillText('Bose-Einstein', legX + 30, legY + 4);
 
-      ctxBE.strokeStyle = COLORS.green; ctxBE.lineWidth = 1.5; ctxBE.setLineDash([5, 3]);
-      ctxBE.beginPath(); ctxBE.moveTo(legX, legY + 16); ctxBE.lineTo(legX + 18, legY + 16); ctxBE.stroke();
+      ctxBE.strokeStyle = COLORS.green; ctxBE.lineWidth = 1.5; ctxBE.setLineDash([6, 4]);
+      ctxBE.beginPath(); ctxBE.moveTo(legX, legY + 20); ctxBE.lineTo(legX + 25, legY + 20); ctxBE.stroke();
       ctxBE.setLineDash([]);
-      ctxBE.fillStyle = COLORS.green; ctxBE.fillText('Maxwell-Boltzmann', legX + 22, legY + 20);
+      ctxBE.fillStyle = COLORS.green; ctxBE.fillText('Maxwell-Boltzmann', legX + 30, legY + 24);
 
-      ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_LG; ctxBE.textAlign = 'left';
-      ctxBE.fillText('kT = ' + kT.toFixed(2) + ',  \u03BC = ' + mu.toFixed(2), ox + 5, oy + 12);
+      // --- Title ---
+      ctxBE.fillStyle = COLORS.text; ctxBE.font = '14px Inter, system-ui, sans-serif'; ctxBE.textAlign = 'left';
+      ctxBE.fillText('Bose-Einstein:  \u27E8n\u27E9 = 1 / (e^{(\u03B5\u2212\u03BC)/kT} \u2212 1)', ox + 5, oy - 10);
+
       document.getElementById('be-dist-temp-val')?.replaceChildren(document.createTextNode(kT.toFixed(2)));
-      document.getElementById('be-dist-mu-val')?.replaceChildren(document.createTextNode(mu.toFixed(2)));
+      var muDisp = mu >= 0 ? mu.toFixed(2) : '\u2212' + Math.abs(mu).toFixed(2);
+      document.getElementById('be-dist-mu-val')?.replaceChildren(document.createTextNode(muDisp));
     }
     beSlider?.addEventListener('input', drawBE);
     beMuSlider?.addEventListener('input', drawBE);
@@ -12905,15 +12873,14 @@ function initCh10Vis() {
       ctxFD.fillStyle = COLORS.textDim; ctxFD.font = FONT_SM;
       ctxFD.textAlign = 'center';
       for (let e = 0; e <= eMax; e += 0.5) {
-        const x = ox + e / eMax * pw;
+        var x = ox + e / eMax * pw;
         ctxFD.fillText(e.toFixed(1), x, oy + ph + 16);
-        // small tick mark
         ctxFD.strokeStyle = COLORS.axis; ctxFD.lineWidth = 1;
         ctxFD.beginPath(); ctxFD.moveTo(x, oy + ph); ctxFD.lineTo(x, oy + ph + 4); ctxFD.stroke();
       }
       ctxFD.textAlign = 'right';
       for (let n = 0; n <= 1; n += 0.25) {
-        const y = oy + ph - n * ph;
+        var y = oy + ph - n * ph;
         ctxFD.fillText(n.toFixed(2), ox - 8, y + 4);
         ctxFD.strokeStyle = COLORS.axis; ctxFD.lineWidth = 1;
         ctxFD.beginPath(); ctxFD.moveTo(ox - 4, y); ctxFD.lineTo(ox, y); ctxFD.stroke();
@@ -12933,8 +12900,7 @@ function initCh10Vis() {
       ctxFD.strokeStyle = COLORS.axis; ctxFD.lineWidth = 1.5;
       ctxFD.beginPath(); ctxFD.moveTo(ox, oy); ctxFD.lineTo(ox, oy + ph); ctxFD.lineTo(ox + pw, oy + ph); ctxFD.stroke();
 
-      // --- Shading: filled states (under the curve, left of Fermi energy) ---
-      // Fill the area under the FD curve to show occupied states
+      // --- Area under FD curve (shaded) ---
       var grad = ctxFD.createLinearGradient(ox, oy, ox, oy + ph);
       grad.addColorStop(0, 'rgba(79, 195, 247, 0.15)');
       grad.addColorStop(1, 'rgba(79, 195, 247, 0.03)');
@@ -12942,8 +12908,8 @@ function initCh10Vis() {
       ctxFD.beginPath();
       ctxFD.moveTo(ox, oy + ph);
       for (let px = 0; px <= pw; px++) {
-        const e = px / pw * eMax;
-        const n = fermi(e, muFD, kTr);
+        var e = px / pw * eMax;
+        var n = fermi(e, muFD, kTr);
         ctxFD.lineTo(ox + px, oy + ph - n * ph);
       }
       ctxFD.lineTo(ox + pw, oy + ph);
@@ -12952,29 +12918,27 @@ function initCh10Vis() {
 
       // --- Thermal window band around epsilon_F ---
       if (kTr > 0.015) {
-        const bandHalf = 2 * kTr; // show +/- 2kT window
-        const eLeft = Math.max(0, muFD - bandHalf);
-        const eRight = Math.min(eMax, muFD + bandHalf);
-        const xL = ox + eLeft / eMax * pw;
-        const xR = ox + eRight / eMax * pw;
+        var bandHalf = 2 * kTr;
+        var eLeft = Math.max(0, muFD - bandHalf);
+        var eRight = Math.min(eMax, muFD + bandHalf);
+        var xL = ox + eLeft / eMax * pw;
+        var xR = ox + eRight / eMax * pw;
         ctxFD.fillStyle = 'rgba(255, 167, 38, 0.10)';
         ctxFD.fillRect(xL, oy, xR - xL, ph);
 
-        // Bracket annotations for thermal window
+        // Bracket lines
         ctxFD.strokeStyle = 'rgba(255, 167, 38, 0.5)'; ctxFD.lineWidth = 1;
         ctxFD.setLineDash([3, 3]);
         ctxFD.beginPath(); ctxFD.moveTo(xL, oy + 4); ctxFD.lineTo(xL, oy + ph); ctxFD.stroke();
         ctxFD.beginPath(); ctxFD.moveTo(xR, oy + 4); ctxFD.lineTo(xR, oy + ph); ctxFD.stroke();
         ctxFD.setLineDash([]);
 
-        // Label the thermal window
+        // Double arrow with label
         ctxFD.fillStyle = COLORS.orange; ctxFD.font = '10px Inter, system-ui, sans-serif';
         ctxFD.textAlign = 'center';
         var bandLabelY = oy + 16;
-        // Draw double arrow
         ctxFD.strokeStyle = COLORS.orange; ctxFD.lineWidth = 1;
         ctxFD.beginPath(); ctxFD.moveTo(xL + 2, bandLabelY); ctxFD.lineTo(xR - 2, bandLabelY); ctxFD.stroke();
-        // arrowheads
         ctxFD.beginPath(); ctxFD.moveTo(xL + 2, bandLabelY); ctxFD.lineTo(xL + 7, bandLabelY - 3); ctxFD.lineTo(xL + 7, bandLabelY + 3); ctxFD.fill();
         ctxFD.beginPath(); ctxFD.moveTo(xR - 2, bandLabelY); ctxFD.lineTo(xR - 7, bandLabelY - 3); ctxFD.lineTo(xR - 7, bandLabelY + 3); ctxFD.fill();
         ctxFD.fillText('~ 4k_BT', (xL + xR) / 2, bandLabelY - 6);
@@ -12992,48 +12956,48 @@ function initCh10Vis() {
       ctxFD.beginPath(); ctxFD.moveTo(efX, oy); ctxFD.lineTo(efX, oy + ph); ctxFD.stroke();
       ctxFD.setLineDash([]);
 
-      // Mark the intersection point f(epsilon_F) = 1/2
+      // Mark intersection f(eF) = 1/2
       ctxFD.fillStyle = '#fff';
       ctxFD.beginPath(); ctxFD.arc(efX, halfY, 4, 0, 2 * Math.PI); ctxFD.fill();
       ctxFD.strokeStyle = COLORS.blue; ctxFD.lineWidth = 2;
       ctxFD.beginPath(); ctxFD.arc(efX, halfY, 4, 0, 2 * Math.PI); ctxFD.stroke();
 
-      // Label: epsilon_F on x-axis
+      // Label: epsilon_F
       ctxFD.fillStyle = COLORS.text; ctxFD.font = '12px Inter, system-ui, sans-serif';
       ctxFD.textAlign = 'center';
       ctxFD.fillText('\u03B5_F', efX, oy + ph + 16);
 
-      // Label: f = 1/2 on y-axis side
+      // Label: f = 1/2
       ctxFD.fillStyle = COLORS.textDim; ctxFD.font = '10px Inter, system-ui, sans-serif';
       ctxFD.textAlign = 'left';
       ctxFD.fillText('f = \u00BD', efX + 8, halfY - 6);
 
-      // --- T = 0 reference curve (dashed) ---
+      // --- T = 0 reference (dashed) ---
       ctxFD.strokeStyle = 'rgba(255,255,255,0.35)'; ctxFD.lineWidth = 1.5; ctxFD.setLineDash([6, 4]);
       ctxFD.beginPath();
       for (let px = 0; px <= pw; px++) {
-        const e = px / pw * eMax;
-        const n = e <= muFD ? 1 : 0;
-        const y = oy + ph - n * ph;
+        var e = px / pw * eMax;
+        var n = e <= muFD ? 1 : 0;
+        var y = oy + ph - n * ph;
         px === 0 ? ctxFD.moveTo(ox + px, y) : ctxFD.lineTo(ox + px, y);
       }
       ctxFD.stroke(); ctxFD.setLineDash([]);
 
-      // --- Main FD curve at selected temperature ---
+      // --- Main FD curve ---
       ctxFD.strokeStyle = COLORS.blue; ctxFD.lineWidth = 3;
       ctxFD.beginPath();
       for (let px = 0; px <= pw; px++) {
-        const e = px / pw * eMax;
-        const n = fermi(e, muFD, kTr);
-        const y = oy + ph - n * ph;
+        var e = px / pw * eMax;
+        var n = fermi(e, muFD, kTr);
+        var y = oy + ph - n * ph;
         px === 0 ? ctxFD.moveTo(ox + px, y) : ctxFD.lineTo(ox + px, y);
       }
       ctxFD.stroke();
 
-      // --- Annotations: "Filled states" and "Empty states" ---
+      // --- Annotations ---
       ctxFD.font = '11px Inter, system-ui, sans-serif';
-      const filledX = ox + (muFD * 0.4) / eMax * pw;
-      const emptyX = ox + (muFD * 1.7) / eMax * pw;
+      var filledX = ox + (muFD * 0.4) / eMax * pw;
+      var emptyX = ox + (muFD * 1.7) / eMax * pw;
       ctxFD.fillStyle = 'rgba(79, 195, 247, 0.6)';
       ctxFD.textAlign = 'center';
       ctxFD.fillText('Filled states', filledX, oy + ph * 0.35);
@@ -13044,13 +13008,11 @@ function initCh10Vis() {
 
       // --- Legend ---
       const legX = WFD - 160, legY = oy + ph - 60;
-      // T=0 line
       ctxFD.strokeStyle = 'rgba(255,255,255,0.35)'; ctxFD.lineWidth = 1.5; ctxFD.setLineDash([6, 4]);
       ctxFD.beginPath(); ctxFD.moveTo(legX, legY); ctxFD.lineTo(legX + 25, legY); ctxFD.stroke();
       ctxFD.setLineDash([]);
       ctxFD.fillStyle = COLORS.textDim; ctxFD.font = FONT_SM; ctxFD.textAlign = 'left';
       ctxFD.fillText('T = 0  (step function)', legX + 30, legY + 4);
-      // Current T line
       ctxFD.strokeStyle = COLORS.blue; ctxFD.lineWidth = 3;
       ctxFD.beginPath(); ctxFD.moveTo(legX, legY + 20); ctxFD.lineTo(legX + 25, legY + 20); ctxFD.stroke();
       ctxFD.fillStyle = COLORS.blue; ctxFD.font = FONT_SM;
@@ -13058,15 +13020,104 @@ function initCh10Vis() {
 
       // --- Title ---
       ctxFD.fillStyle = COLORS.text; ctxFD.font = '14px Inter, system-ui, sans-serif'; ctxFD.textAlign = 'left';
-      ctxFD.fillText('Fermi-Dirac Distribution  f(\u03B5) = 1 / (e^{(\u03B5-\u03B5_F)/k_BT} + 1)', ox + 5, oy - 10);
+      ctxFD.fillText('Fermi-Dirac:  f(\u03B5) = 1 / (e^{(\u03B5\u2212\u03B5_F)/kT} + 1)', ox + 5, oy - 10);
 
       document.getElementById('fd-dist-temp-val')?.replaceChildren(document.createTextNode(kTr.toFixed(2)));
     }
     fdSlider?.addEventListener('input', drawFD);
     drawFD();
   }
-}
 
+  // ===== Quantum vs Classical Statistics Comparison =====
+  const c = document.getElementById('vis-quantum');
+  if (c) {
+    const { ctx, W, H } = setupCanvas(c);
+    const tempSlider = document.getElementById('qs-temp');
+    const muSlider = document.getElementById('qs-mu');
+
+    function draw() {
+      const T = parseFloat(tempSlider?.value || 1);
+      const mu = parseFloat(muSlider?.value || -1);
+      const beta = 1 / T;
+      clearCanvas(ctx, W, H);
+
+      const ox = 75, oy = 30, pw = W - ox - 30, ph = H - oy - 55;
+      const eMax = 5, nMax = 3;
+
+      // Axes
+      drawAxes(ctx, ox, oy, pw, ph, { xLabel: 'Energy \u03B5', yLabel: '\u27E8n\u27E9', yLabelOffset: 45 });
+      ctx.fillStyle = COLORS.textDim; ctx.font = FONT_SM;
+      ctx.textAlign = 'center';
+      for (let e = 0; e <= eMax; e++) ctx.fillText(e.toFixed(0), ox + e / eMax * pw, oy + ph + 14);
+      ctx.textAlign = 'right';
+      for (let n = 0; n <= nMax; n++) ctx.fillText(n.toFixed(0), ox - 6, oy + ph - n / nMax * ph + 4);
+
+      // n=1 guideline with shaded regions
+      const n1y = oy + ph - (1 / nMax) * ph;
+      ctx.fillStyle = 'rgba(239, 83, 80, 0.06)';
+      ctx.fillRect(ox, oy, pw, n1y - oy);
+      ctx.fillStyle = 'rgba(102, 187, 106, 0.06)';
+      ctx.fillRect(ox, n1y, pw, oy + ph - n1y);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ox, n1y); ctx.lineTo(ox + pw, n1y); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Region labels
+      ctx.font = '10px Inter, system-ui, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(239, 83, 80, 0.5)';
+      ctx.fillText('quantum regime: \u27E8n\u27E9 \u2273 1', ox + pw - 5, n1y - 8);
+      ctx.fillStyle = 'rgba(102, 187, 106, 0.5)';
+      ctx.fillText('classical regime: \u27E8n\u27E9 \u226A 1', ox + pw - 5, n1y + 14);
+
+      // Three distributions
+      const distributions = [
+        { name: 'Bose-Einstein',    fn: function(e) { return 1 / (Math.exp(beta * (e - mu)) - 1); }, color: COLORS.red,   lw: 3 },
+        { name: 'Fermi-Dirac',      fn: function(e) { return 1 / (Math.exp(beta * (e - mu)) + 1); }, color: COLORS.blue,  lw: 3 },
+        { name: 'Maxwell-Boltzmann', fn: function(e) { return Math.exp(-beta * (e - mu)); },          color: COLORS.green, lw: 2.5 }
+      ];
+
+      distributions.forEach(function(d) {
+        ctx.strokeStyle = d.color; ctx.lineWidth = d.lw;
+        ctx.beginPath();
+        var started = false;
+        for (var px = 0; px < pw; px++) {
+          var e = px / pw * eMax;
+          var n = d.fn(e);
+          if (!isFinite(n) || n < 0) { started = false; continue; }
+          if (n > nMax * 1.5) { if (started) ctx.lineTo(ox + px, oy); started = false; continue; }
+          var clipN = Math.min(n, nMax);
+          var py = oy + ph - (clipN / nMax) * ph;
+          if (!started) { ctx.moveTo(ox + px, py); started = true; }
+          else ctx.lineTo(ox + px, py);
+        }
+        ctx.stroke();
+      });
+
+      // Legend
+      var legX = ox + 8, legY = oy + 8;
+      distributions.forEach(function(d, idx) {
+        var y = legY + idx * 18;
+        ctx.strokeStyle = d.color; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(legX, y); ctx.lineTo(legX + 20, y); ctx.stroke();
+        ctx.fillStyle = d.color; ctx.font = '12px Inter, system-ui, sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(d.name, legX + 25, y + 4);
+      });
+
+      // Parameter readout
+      ctx.fillStyle = COLORS.text; ctx.font = FONT_LG; ctx.textAlign = 'right';
+      var muDisp = mu >= 0 ? mu.toFixed(2) : '\u2212' + Math.abs(mu).toFixed(2);
+      ctx.fillText('kT = ' + T.toFixed(2) + ',  \u03BC = ' + muDisp, ox + pw - 5, oy + 14);
+
+      document.getElementById('qs-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(2)));
+      var muStr = mu >= 0 ? mu.toFixed(2) : '\u2212' + Math.abs(mu).toFixed(2);
+      document.getElementById('qs-mu-val')?.replaceChildren(document.createTextNode(muStr));
+    }
+
+    tempSlider?.addEventListener('input', draw);
+    muSlider?.addEventListener('input', draw);
+    draw();
+  }
+}
 
 // =============================================================================
 // CH11: Blackbody Radiation + Debye Model
@@ -13078,59 +13129,141 @@ function initCh11Vis() {
 
   const tempSlider = document.getElementById('bb-temp');
 
+  // hc/k in nm·K for Planck function
+  const hc_over_k = 14388000;
+
+  function planckLambda(lambdaNm, T) {
+    const x = hc_over_k / (lambdaNm * T);
+    if (x > 500) return 0;
+    return 1 / (lambdaNm * lambdaNm * lambdaNm * lambdaNm * lambdaNm * (Math.exp(x) - 1));
+  }
+
+  // Approximate wavelength to sRGB for visible spectrum band
+  function bbWavelengthToRGB(nm) {
+    let r = 0, g = 0, b = 0;
+    if (nm >= 380 && nm < 440) { r = -(nm - 440) / 60; b = 1; }
+    else if (nm < 490) { g = (nm - 440) / 50; b = 1; }
+    else if (nm < 510) { g = 1; b = -(nm - 510) / 20; }
+    else if (nm < 580) { r = (nm - 510) / 70; g = 1; }
+    else if (nm < 645) { r = 1; g = -(nm - 645) / 65; }
+    else if (nm <= 780) { r = 1; }
+    let f = 0;
+    if (nm >= 380 && nm < 420) f = 0.3 + 0.7 * (nm - 380) / 40;
+    else if (nm >= 420 && nm <= 700) f = 1;
+    else if (nm > 700 && nm <= 780) f = 0.3 + 0.7 * (780 - nm) / 80;
+    r = Math.pow(r * f, 0.8);
+    g = Math.pow(g * f, 0.8);
+    b = Math.pow(b * f, 0.8);
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
+
   function draw() {
     const T = parseFloat(tempSlider?.value || 5000);
     clearCanvas(ctx, W, H);
 
-    const ox = 60, xAxis = H - 50;
-    const fRange = W - ox - 40;
+    const ox = 65, oy = 30;
+    const pw = W - ox - 30, ph = H - oy - 55;
+    const xAxis = oy + ph;
 
-    drawAxes(ctx, ox, 20, fRange, xAxis - 20, { xLabel: 'Frequency \u03BD (arb. units)' });
-
-    const temps = [T * 0.5, T * 0.75, T, T * 1.5];
-    const colors = [COLORS.blue, COLORS.green, COLORS.orange, COLORS.red];
-
-    const nuMax = 15;
-    let globalMax = 0;
-
-    temps.forEach(Tk => {
-      for (let px = 1; px < fRange; px++) {
-        const nu = px / fRange * nuMax;
-        const x = nu / (Tk / 3000);
-        if (x > 0.01) {
-          const u = nu * nu * nu / (Math.exp(x) - 1);
-          if (isFinite(u) && u > globalMax) globalMax = u;
-        }
-      }
+    drawAxes(ctx, ox, oy, pw, ph, {
+      xLabel: 'Wavelength \u03BB (nm)',
+      yLabel: 'Intensity I(\u03BB, T)',
+      yLabelOffset: 42
     });
 
+    const lamMin = 100, lamMax = 3000;
+    const nPts = 500;
+
+    const temps = [T * 0.6, T * 0.8, T, T * 1.4];
+    const colors = [COLORS.blue, COLORS.green, COLORS.orange, COLORS.red];
+
+    // Find global max for normalization
+    let globalMax = 0;
+    temps.forEach(Tk => {
+      for (let i = 1; i <= nPts; i++) {
+        const lam = lamMin + (lamMax - lamMin) * i / nPts;
+        const val = planckLambda(lam, Tk);
+        if (isFinite(val) && val > globalMax) globalMax = val;
+      }
+    });
+    if (globalMax === 0) globalMax = 1;
+
+    // Visible spectrum band (380-780 nm)
+    const visLeft = ox + (380 - lamMin) / (lamMax - lamMin) * pw;
+    const visRight = ox + (780 - lamMin) / (lamMax - lamMin) * pw;
+    for (let px = Math.max(ox, Math.floor(visLeft)); px <= Math.min(ox + pw, Math.ceil(visRight)); px++) {
+      const lam = lamMin + (px - ox) / pw * (lamMax - lamMin);
+      const [r, g, b] = bbWavelengthToRGB(lam);
+      ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.10)';
+      ctx.fillRect(px, oy, 1, ph);
+    }
+
+    // Draw Planck curves
     temps.forEach((Tk, idx) => {
       ctx.strokeStyle = colors[idx];
       ctx.lineWidth = idx === 2 ? 3 : 2;
       ctx.beginPath();
-      for (let px = 1; px < fRange; px++) {
-        const nu = px / fRange * nuMax;
-        const x = nu / (Tk / 3000);
-        const u = x > 0.01 ? nu * nu * nu / (Math.exp(x) - 1) : 0;
-        const py = xAxis - (u / globalMax) * (xAxis - 40);
-        px === 1 ? ctx.moveTo(ox + px, py) : ctx.lineTo(ox + px, py);
+      for (let i = 0; i <= nPts; i++) {
+        const lam = lamMin + (lamMax - lamMin) * i / nPts;
+        const val = planckLambda(lam, Tk);
+        const normVal = val / globalMax;
+        const canvX = ox + (lam - lamMin) / (lamMax - lamMin) * pw;
+        const canvY = xAxis - normVal * ph * 0.92;
+        i === 0 ? ctx.moveTo(canvX, canvY) : ctx.lineTo(canvX, canvY);
       }
       ctx.stroke();
+    });
 
+    // Wien peak for selected temperature
+    const lamPeak = 2898000 / T;
+    if (lamPeak > lamMin && lamPeak < lamMax) {
+      const peakX = ox + (lamPeak - lamMin) / (lamMax - lamMin) * pw;
+      const peakVal = planckLambda(lamPeak, T) / globalMax;
+      const peakY = xAxis - peakVal * ph * 0.92;
+      ctx.strokeStyle = COLORS.cyan;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(peakX, peakY + 5);
+      ctx.lineTo(peakX, xAxis);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.cyan;
+      ctx.font = FONT_SM;
+      ctx.textAlign = 'center';
+      ctx.fillText('\u03BB_peak = ' + lamPeak.toFixed(0) + ' nm', peakX, peakY - 8);
+    }
+
+    // Legend
+    temps.forEach((Tk, idx) => {
+      const legY = oy + 8 + idx * 16;
+      ctx.strokeStyle = colors[idx];
+      ctx.lineWidth = idx === 2 ? 3 : 2;
+      ctx.beginPath();
+      ctx.moveTo(W - 145, legY);
+      ctx.lineTo(W - 120, legY);
+      ctx.stroke();
       ctx.fillStyle = colors[idx];
       ctx.font = FONT_SM;
       ctx.textAlign = 'left';
-      ctx.fillText('T = ' + Tk.toFixed(0) + ' K', W - 130, 30 + idx * 16);
+      ctx.fillText(Tk.toFixed(0) + ' K', W - 115, legY + 4);
     });
 
+    // Title
     ctx.fillStyle = COLORS.text;
-    ctx.font = FONT;
+    ctx.font = FONT_LG;
     ctx.textAlign = 'left';
-    ctx.fillText('Planck: u(\u03BD) \u221D \u03BD\u00B3/(e^{h\u03BD/kT} - 1)', 80, 30);
+    ctx.fillText('Blackbody Spectrum  I(\u03BB, T)', ox + 5, oy - 10);
 
-    const peakWavelength = 2898000 / T;
-    ctx.font = FONT_SM;
-    ctx.fillText('Wien peak \u03BB \u2248 ' + peakWavelength.toFixed(0) + ' nm', 80, 48);
+    // X-axis tick labels
+    ctx.fillStyle = COLORS.textDim;
+    ctx.font = '10px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    for (let lam = 0; lam <= lamMax; lam += 500) {
+      if (lam < lamMin) continue;
+      const canvX = ox + (lam - lamMin) / (lamMax - lamMin) * pw;
+      ctx.fillText(lam.toString(), canvX, xAxis + 13);
+    }
 
     document.getElementById('bb-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(0)));
   }
