@@ -23384,9 +23384,28 @@ function initCh14Vis() {
         // Check if hovering over a component
         var hovPart = bbFindPartAt(hp.x, hp.y);
         if (hovPart) {
-          if (hovPart.type === 'RESISTOR') tipLines.push(fmtR(hovPart.value||1000) + ' (click to change)');
+          // Calculate current for 2-terminal components
+          var hpI = 0;
+          if (hovPart.holes.length >= 2) {
+            var vA = bbNodeVolts[holeNode(hovPart.holes[0].row, hovPart.holes[0].col)] || 0;
+            var vB = bbNodeVolts[holeNode(hovPart.holes[1].row, hovPart.holes[1].col)] || 0;
+            var vDiff = vA - vB;
+            if (hovPart.type === 'RESISTOR') hpI = vDiff / (hovPart.value || 1000);
+            else if (hovPart.type === 'WIRE') hpI = vDiff; // show voltage diff instead
+          }
+          if (hovPart.type === 'RESISTOR') {
+            tipLines.push(fmtR(hovPart.value||1000) + ' (click to change)');
+            var mA = Math.abs(hpI) * 1000;
+            tipLines.push('I = ' + (mA < 1 ? (mA*1000).toFixed(0) + '\u00B5A' : mA.toFixed(1) + 'mA'));
+          }
+          else if (hovPart.type === 'WIRE') {
+            tipLines.push('Wire');
+          }
           else if (hovPart.type === 'CAPACITOR') tipLines.push(fmtC(hovPart.value||100e-6) + ' (click to change)');
-          else if (hovPart.type === 'LED') tipLines.push('LED (Vf=1.8V)' + (hovPart._ledOn ? ' ON' : ' OFF'));
+          else if (hovPart.type === 'LED') {
+            tipLines.push('LED' + (hovPart._ledOn ? ' ON' : ' OFF'));
+            if (hovPart._ledOn && hovPart._ledCurrent) tipLines.push('I = ' + (Math.abs(hovPart._ledCurrent)*1000).toFixed(1) + 'mA');
+          }
           else if (hovPart.type === 'NPN' || hovPart.type === 'PNP') tipLines.push(hovPart.type + ' transistor' + (hovPart._state === 'on' ? ' ON' : ' OFF'));
           else if (hovPart.type === 'BATTERY') tipLines.push('Battery ' + (hovPart.value||9) + 'V');
           else if (hovPart.type === 'SWITCH') tipLines.push('Switch ' + (hovPart.on ? 'CLOSED' : 'OPEN'));
