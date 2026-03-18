@@ -51,6 +51,7 @@ async function navigateTo(id) {
             }
           });
         });
+        initCheckAnswers(target);
       }
     } catch (e) {
       // File not found, use inline content
@@ -157,6 +158,67 @@ function renderMath() {
   if (window.renderMathInElement) {
     renderMathInElement(document.body, katexOptions);
   }
+}
+
+// ===== CHECK ANSWERS =====
+function initCheckAnswers(container) {
+  container.querySelectorAll('.check-answer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const problem = btn.closest('.problem');
+      const feedback = problem.querySelector('.answer-feedback');
+      const correctAnswer = btn.dataset.answer;
+      let userAnswer = '';
+
+      // Multiple choice: check selected radio
+      const radios = problem.querySelectorAll('input[type="radio"]');
+      if (radios.length > 0) {
+        const selected = problem.querySelector('input[type="radio"]:checked');
+        userAnswer = selected ? selected.value : '';
+      }
+
+      // Short answer: check text input
+      const textInput = problem.querySelector('.sa-input input[type="text"]');
+      if (textInput) {
+        userAnswer = textInput.value.trim().toLowerCase().replace(/\s+/g, '');
+      }
+
+      if (!userAnswer) {
+        feedback.className = 'answer-feedback incorrect';
+        feedback.textContent = 'Please select or enter an answer first.';
+        return;
+      }
+
+      // Compare answers (support multiple correct answers separated by |)
+      const correctAnswers = correctAnswer.toLowerCase().replace(/\s+/g, '').split('|');
+      const isCorrect = correctAnswers.includes(userAnswer.toLowerCase());
+
+      if (isCorrect) {
+        feedback.className = 'answer-feedback correct';
+        feedback.innerHTML = btn.dataset.explanation
+          ? 'Correct! ' + btn.dataset.explanation
+          : 'Correct!';
+      } else {
+        feedback.className = 'answer-feedback incorrect';
+        feedback.innerHTML = btn.dataset.hint
+          ? 'Not quite. ' + btn.dataset.hint
+          : 'Not quite — try again.';
+      }
+
+      // Re-render math in feedback
+      if (window.renderMathInElement) {
+        renderMathInElement(feedback, katexOptions);
+      }
+    });
+  });
+
+  // Also handle details open to re-render math
+  container.querySelectorAll('.problems-section').forEach(details => {
+    details.addEventListener('toggle', () => {
+      if (details.open && window.renderMathInElement) {
+        renderMathInElement(details, katexOptions);
+      }
+    });
+  });
 }
 
 // ===== PROGRESS BAR =====
@@ -23384,12 +23446,13 @@ function initCh14Vis() {
 
     var bbPaletteEl = document.getElementById('bb-palette');
     if (bbPaletteEl) bbPaletteEl.addEventListener('click', function(e) { var btn = e.target.closest('[data-part]'); if (!btn) return; bbPaletteEl.querySelectorAll('[data-part]').forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active'); bbTool = btn.dataset.part; bbClick1 = null; bbDraw(); });
-    document.getElementById('bb-clear-btn')?.addEventListener('click', function() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbAnimRunning = false; bbDraw(); });
+    document.getElementById('bb-clear-btn')?.addEventListener('click', function() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbAnimRunning = false; bbDraw(); bbDesc('Empty breadboard. Select a part and click two holes to place it, or choose a preset.'); });
     var bbStatusEl = document.getElementById('bb-status');
     if (bbStatusEl) { bbStatusEl.style.cursor = 'pointer'; bbStatusEl.addEventListener('click', function() { if (bbTool === 'RESISTOR') bbResValue = RES_VALUES[(RES_VALUES.indexOf(bbResValue)+1)%RES_VALUES.length]; else if (bbTool === 'CAPACITOR') bbCapValue = CAP_VALUES[(CAP_VALUES.indexOf(bbCapValue)+1)%CAP_VALUES.length]; else { bbShowCurrent = !bbShowCurrent; bbCheckAnim(); } bbDraw(); }); }
 
     function bbClear() { bbParts.length = 0; bbNextId = 1; bbClick1 = null; bbNodeVolts = {}; bbCapVolts = {}; bbWireColorIdx = 0; bbAnimRunning = false; }
-    function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); }
+    function bbDesc(html) { var el = document.getElementById('bb-description'); if (el) el.innerHTML = html; }
+    function bbPresetLED() { bbClear(); bbShowCurrent = true; bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9}); bbAddPart('WIRE',[{row:'r+t',col:5},{row:'a',col:5}],{color:'#e53935'}); bbAddPart('RESISTOR',[{row:'a',col:5},{row:'a',col:10}],{value:470}); bbAddPart('WIRE',[{row:'b',col:10},{row:'b',col:15}],{color:'#ff9800'}); bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]); bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'}); bbRunSim(); bbDesc('<b>LED Circuit.</b> The simplest circuit: 9V battery \u2192 470\u03A9 resistor \u2192 LED \u2192 ground. The resistor limits current to about 15mA so the LED doesn\u2019t burn out. Try clicking the resistor to change its value \u2014 higher resistance means less current and a dimmer LED. Without the resistor, the LED would draw too much current and destroy itself.'); }
     function bbPresetSwitch() {
       // Simple: Battery → Switch → Resistor → LED → GND
       bbClear(); bbShowCurrent = true;
@@ -23399,7 +23462,7 @@ function initCh14Vis() {
       bbAddPart('RESISTOR',[{row:'b',col:10},{row:'b',col:15}],{value:470});
       bbAddPart('LED',[{row:'a',col:15},{row:'a',col:20}]);
       bbAddPart('WIRE',[{row:'b',col:20},{row:'r-t',col:20}],{color:'#1e88e5'});
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>Switch Circuit.</b> A simple on/off switch in series with a resistor and LED. Close the switch (click it) to complete the circuit and light the LED. Open it to break the circuit. This is how a light switch works in your house \u2014 it just connects or disconnects the wire.');
     }
     function bbPresetAstable() {
       bbClear(); bbShowCurrent = true;
@@ -23437,7 +23500,7 @@ function initCh14Vis() {
       bbAddPart('RESISTOR',[{row:'j',col:19},{row:'j',col:24}],{value:10000});
       for (var i = 0; i < bbParts.length; i++)
         if (bbParts[i].type === 'NPN' && bbParts[i].holes[1].col === 12) bbParts[i]._state = 'on';
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>Astable Multivibrator.</b> Two NPN transistors cross-coupled through capacitors. When Q1 is ON, its collector is at 0V, and the <span style="color:#8e24aa;font-weight:bold;">purple</span> capacitor holds Q2\u2019s base negative, keeping Q2 OFF. The base charges toward VCC through the 10k\u03A9 bias resistor with time constant \u03C4 = RC. When it reaches 0.6V, Q2 turns ON and Q1 turns OFF via the <span style="color:#00acc1;font-weight:bold;">cyan</span> capacitor. The cycle repeats, making the LEDs blink alternately. Click the resistors or capacitors to change the frequency.');
     }
 
     // ---- NOT GATE: switch → base resistor → NPN → LED inverts ----
@@ -23460,7 +23523,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:10}],{value:10000});
       bbAddPart('WIRE',[{row:'c',col:10},{row:'h',col:16}],{color:'#43a047'}); // to base
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>NOT Gate (Inverter).</b> When the input switch is OFF, the transistor is OFF, so current flows through the 1k\u03A9 pull-up resistor to the LED \u2192 LED is ON. When the switch is ON, the transistor turns ON and pulls the output to ground \u2192 LED is OFF. The output is always the <em>opposite</em> of the input. This is exactly how the NOT gate in section 14.5.1 works.');
     }
 
     // ---- NAND GATE: two NPN in series, pull-up resistor ----
@@ -23491,7 +23554,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:24},{row:'a',col:27}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:27},{row:'b',col:29}],{value:10000});
       bbAddPart('WIRE',[{row:'c',col:29},{row:'h',col:5}],{color:'#8e24aa'});
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>NAND Gate.</b> Two NPN transistors in series between the output and ground. The LED (output) turns OFF only when <em>both</em> switches A and B are closed, because both transistors must conduct to pull the output low. Any other combination leaves the output HIGH (LED ON). Toggle the switches to verify the NAND truth table. This is the universal gate \u2014 you can build any logic circuit from NANDs alone.');
     }
 
     // ---- RC CHARGE/DISCHARGE: switch charges cap, LED shows discharge ----
@@ -23509,7 +23572,7 @@ function initCh14Vis() {
       bbAddPart('RESISTOR',[{row:'d',col:13},{row:'d',col:18}],{value:470});
       bbAddPart('LED',[{row:'e',col:18},{row:'e',col:22}]);
       bbAddPart('WIRE',[{row:'d',col:22},{row:'r-t',col:22}],{color:'#1e88e5'});
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>RC Charge/Discharge.</b> Close the switch to charge the 470\u00B5F capacitor through the 1k\u03A9 resistor (RC = 0.47s). A discharge path through a 470\u03A9 resistor and LED is always connected. While charging, current splits between the cap and the LED. Open the switch and watch the cap discharge through the LED. The time constant \u03C4 = RC determines how fast the voltage rises and falls \u2014 try changing R or C values.');
     }
 
     // ---- DARLINGTON PAIR: two NPN cascaded for extreme gain ----
@@ -23535,7 +23598,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:10}],{value:100000});
       bbAddPart('WIRE',[{row:'c',col:10},{row:'h',col:19}],{color:'#8e24aa'}); // to Q1 base
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>Darlington Pair.</b> Two NPN transistors cascaded: Q1\u2019s emitter drives Q2\u2019s base. The total current gain is \u03B2\u00B2 \u2014 if each transistor has \u03B2=100, the pair has gain 10,000. This is why a 100k\u03A9 input resistor (only 83\u00B5A base current!) can still drive the LED. A single transistor couldn\u2019t do this. Toggle the switch to see the extreme amplification.');
     }
 
     // ---- VOLTAGE DIVIDER: two resistors split VCC, LED shows midpoint ----
@@ -23552,7 +23615,7 @@ function initCh14Vis() {
       bbAddPart('LED',[{row:'c',col:10},{row:'c',col:20}]);
       bbAddPart('RESISTOR',[{row:'d',col:20},{row:'d',col:24}],{value:470});
       bbAddPart('WIRE',[{row:'e',col:24},{row:'r-t',col:24}],{color:'#1e88e5'});
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>Voltage Divider.</b> Two resistors in series split the 9V supply. With equal resistors (1k\u03A9 each), the midpoint would be 4.5V \u2014 but the LED loads the divider and pulls the voltage down. Hover over the midpoint hole to see the actual voltage. Click the resistors to change their values: making the top resistor larger lowers the midpoint voltage, making the bottom one larger raises it. This is the foundation of biasing transistors.');
     }
 
     // ---- EMITTER FOLLOWER: NPN voltage follower, output tracks input minus VBE ----
@@ -23577,7 +23640,7 @@ function initCh14Vis() {
       bbAddPart('LED',[{row:'i',col:18},{row:'i',col:22}]);
       bbAddPart('RESISTOR',[{row:'j',col:22},{row:'j',col:26}],{value:470});
       bbAddPart('WIRE',[{row:'i',col:26},{row:'r-b',col:26}],{color:'#1e88e5'});
-      bbRunSim();
+      bbRunSim(); bbDesc('<b>Emitter Follower.</b> The base is biased at ~4.5V by a voltage divider. The collector connects directly to VCC (no load resistor). The output is taken from the emitter, which follows the base voltage minus one V<sub>BE</sub> drop (0.7V). Hover over the base and emitter holes to compare: V<sub>emitter</sub> \u2248 V<sub>base</sub> \u2212 0.7V. This circuit is a buffer \u2014 it doesn\u2019t amplify voltage but can supply much more current than the input.');
     }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
