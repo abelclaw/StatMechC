@@ -397,3 +397,189 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 <li><strong>Maximum entropy principle:</strong> The equilibrium distribution maximizes entropy subject to constraints. With a fixed average energy, this gives the Boltzmann distribution $f_i \propto e^{-\beta \epsilon_i}$.</li>
 </ul>
 </div>
+
+<!-- ===== PROBLEMS ===== -->
+<h2 id="ch4-problems">Problems</h2>
+
+<details class="problems-section">
+<summary>Reading Quiz</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q1.</div>
+<p>Two systems are in thermal equilibrium and can exchange energy. Which quantity must be equal in the two systems?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch4-rq1" value="a"> (a) Total energy $E$</label>
+  <label><input type="radio" name="ch4-rq1" value="b"> (b) Number of microstates $\Omega$</label>
+  <label><input type="radio" name="ch4-rq1" value="c"> (c) $\frac{\partial \ln \Omega}{\partial E}$</label>
+  <label><input type="radio" name="ch4-rq1" value="d"> (d) Entropy $S$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="The equilibrium condition derived in Eq. (11) is $\frac{\partial \ln \Omega_1}{\partial E_1} = \frac{\partial \ln \Omega_2}{\partial E_2}$. This is $1/(k_B T)$ for each system, so temperature is equal, but the fundamental condition is the equality of this derivative.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q2.</div>
+<p>A monatomic ideal gas has $N$ molecules at temperature $T$. What is the heat capacity at constant volume $C_V$?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch4-rq2" value="a"> (a) $Nk_B T$</label>
+  <label><input type="radio" name="ch4-rq2" value="b"> (b) $\frac{3}{2}Nk_B$</label>
+  <label><input type="radio" name="ch4-rq2" value="c"> (c) $\frac{5}{2}Nk_B$</label>
+  <label><input type="radio" name="ch4-rq2" value="d"> (d) $\frac{3}{2}Nk_B T$</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (32), $C_V = \frac{\partial E}{\partial T}\big|_V = \frac{3}{2}Nk_B$ for a monatomic ideal gas with 3 translational degrees of freedom.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q3.</div>
+<p>A diatomic molecule at room temperature typically has $C_V = \frac{5}{2}Nk_B$ rather than $\frac{7}{2}Nk_B$. Why?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch4-rq3" value="a"> (a) Diatomic molecules only have 5 atoms</label>
+  <label><input type="radio" name="ch4-rq3" value="b"> (b) The vibrational mode is frozen out because $k_BT \ll \hbar\omega_0$</label>
+  <label><input type="radio" name="ch4-rq3" value="c"> (c) The rotational mode is frozen out because $k_BT \ll \hbar^2/(2I)$</label>
+  <label><input type="radio" name="ch4-rq3" value="d"> (d) Two of the three rotational modes are frozen out</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="At room temperature ($k_BT \approx 25$ meV), rotational modes are active (rotational energy scale is a few meV or less for most diatomics) but vibrational modes are frozen out (vibrational energy scale is hundreds of meV). This quantum freeze-out removes 2 of the 7 degrees of freedom.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q4.</div>
+<p>When the entropy of a combined system $S_{\text{total}} = S_1 + S_2$ is maximized with respect to how energy is distributed, what physical principle determines the equilibrium state?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch4-rq4" value="a"> (a) Energy is minimized</label>
+  <label><input type="radio" name="ch4-rq4" value="b"> (b) The total number of microstates $\Omega_1 \cdot \Omega_2$ is maximized</label>
+  <label><input type="radio" name="ch4-rq4" value="c"> (c) Energy is equally divided between the two systems</label>
+  <label><input type="radio" name="ch4-rq4" value="d"> (d) The partition function $Z$ is minimized</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="Maximizing $S_{\text{total}} = k_B \ln(\Omega_1 \Omega_2)$ is equivalent to maximizing the product $\Omega_1 \cdot \Omega_2$, since the logarithm is a monotonically increasing function. This is the principle of maximum entropy.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Short Answer</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q5.</div>
+<p>An ideal monatomic gas of $N = 10^{23}$ argon atoms ($m = 40\;\text{u}$) is at temperature $T = 300\;\text{K}$. Compute the root-mean-square speed $v_{\text{rms}} = \sqrt{3k_BT/m}$ in m/s. (Use $k_B = 1.38 \times 10^{-23}\;\text{J/K}$ and $1\;\text{u} = 1.66 \times 10^{-27}\;\text{kg}$.)</p>
+<div class="sa-input"><input type="text" placeholder="Your answer in m/s..."></div>
+<button class="check-answer-btn" data-answer="431|432|430" data-explanation="$v_{\text{rms}} = \sqrt{\frac{3 \times 1.38 \times 10^{-23} \times 300}{40 \times 1.66 \times 10^{-27}}} = \sqrt{\frac{1.24 \times 10^{-20}}{6.64 \times 10^{-26}}} = \sqrt{1.87 \times 10^5} \approx 432\;\text{m/s}$.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q6.</div>
+<p>Two ideal monatomic gases share a total energy $E = 1000\;\text{J}$. Gas 1 has $N_1 = 2 \times 10^{23}$ molecules and gas 2 has $N_2 = 3 \times 10^{23}$ molecules. Using Eq. (6), what is the most likely energy $\langle E_1 \rangle$ of gas 1?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch4-sa1" value="a"> (a) 200 J</label>
+  <label><input type="radio" name="ch4-sa1" value="b"> (b) 400 J</label>
+  <label><input type="radio" name="ch4-sa1" value="c"> (c) 500 J</label>
+  <label><input type="radio" name="ch4-sa1" value="d"> (d) 600 J</label>
+</div>
+<button class="check-answer-btn" data-answer="b" data-explanation="From Eq. (6), $\langle E_1 \rangle = \frac{N_1}{N_1 + N_2}E = \frac{2}{5} \times 1000 = 400\;\text{J}$. Energy is shared in proportion to the number of particles.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q7.</div>
+<p>A gas of $N$ ultrarelativistic particles (energy linear in momentum) in 3D has energy $E = 3Nk_BT$. What is the heat capacity $C_V$ per particle, in units of $k_B$?</p>
+<div class="sa-input"><input type="text" placeholder="Your answer in units of k_B..."></div>
+<button class="check-answer-btn" data-answer="3|3.0" data-explanation="$C_V = \frac{\partial E}{\partial T} = 3Nk_B$, so per particle $C_V/N = 3k_B$. Each of the 3 linear momentum degrees of freedom contributes $k_BT$ (not $\frac{1}{2}k_BT$) because the energy is linear rather than quadratic.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q8.</div>
+<p>For a system with discrete energy levels, the maximum entropy principle with a fixed average energy constraint $\sum_i f_i \epsilon_i = \bar{\epsilon}$ gives the Boltzmann distribution $f_i = \frac{1}{Z}e^{-\beta \epsilon_i}$. What is the Lagrange multiplier $\beta$ in terms of temperature?</p>
+<div class="mc-options">
+  <label><input type="radio" name="ch4-sa2" value="a"> (a) $\beta = k_BT$</label>
+  <label><input type="radio" name="ch4-sa2" value="b"> (b) $\beta = \frac{1}{T}$</label>
+  <label><input type="radio" name="ch4-sa2" value="c"> (c) $\beta = \frac{1}{k_BT}$</label>
+  <label><input type="radio" name="ch4-sa2" value="d"> (d) $\beta = \frac{T}{k_B}$</label>
+</div>
+<button class="check-answer-btn" data-answer="c" data-explanation="Comparing the Boltzmann distribution $f_i \propto e^{-\beta \epsilon_i}$ with $\frac{1}{T} = \frac{\partial S}{\partial E}$, the Lagrange multiplier $\beta$ is identified as $\frac{1}{k_BT}$. This is sometimes called the inverse temperature or thermodynamic beta.">Check Answer</button>
+<div class="answer-feedback"></div>
+</div>
+
+</div>
+</details>
+
+<details class="problems-section">
+<summary>Long Problems</summary>
+<div class="problems-body">
+
+<div class="problem">
+<div class="problem-label">Q9. Thermal Equilibrium Between Unequal Gases</div>
+<p>A container holds two ideal monatomic gases separated by a conducting, fixed wall that allows energy exchange. Gas A has $N_A$ molecules with mass $m_A$ and gas B has $N_B$ molecules with mass $m_B$. The total energy is $E$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Write the total number of microstates $\Omega(E, E_A)$ as a function of the energy $E_A$ in gas A, using the fact that for each gas $\Omega \propto E^{3N/2}$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Find the most likely energy $\langle E_A \rangle$ by maximizing $\ln \Omega$ with respect to $E_A$. Show that in equilibrium the two gases have the same temperature.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Even though the temperatures are equal, the rms speeds of molecules in gas A and gas B are generally different. Find the ratio $v_{\text{rms},A}/v_{\text{rms},B}$ in terms of $m_A$ and $m_B$. For a mixture of helium ($m = 4\;\text{u}$) and xenon ($m = 131\;\text{u}$), compute this ratio numerically.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q10. Entropy of Mixing and the Gibbs Paradox</div>
+<p>Consider two ideal monatomic gases, each with $N$ molecules at the same temperature $T$, initially in separate containers of volume $V$. A partition is removed so the gases mix into a combined volume $2V$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Using the entropy formula $S = Nk_B[\ln V + \frac{3}{2}\ln(\frac{4\pi m E}{3Nh^2}) + c]$ from Eq. (17), show that if the two gases are <em>different</em>, the entropy change upon mixing is $\Delta S = 2Nk_B \ln 2$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Now suppose the two gases are <em>identical</em> (same mass, same $N$, same $T$). Naively applying the same formula gives the same $\Delta S = 2Nk_B \ln 2$. Explain why this is paradoxical. (This is the <em>Gibbs paradox</em>.)</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>The resolution involves dividing $\Omega$ by $N!$ for identical particles (since permutations of identical particles don't create new microstates). Show that this adds a term $-Nk_B \ln N + Nk_B$ to the entropy via Stirling's approximation, and that the entropy of mixing then vanishes for identical gases.</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q11. Rotational Heat Capacity of HCl</div>
+<p>Hydrogen chloride (HCl) has a bond length $r_0 = 127\;\text{pm}$ and atomic masses $m_H = 1\;\text{u}$, $m_{Cl} = 35\;\text{u}$. Use $1\;\text{u} = 1.66 \times 10^{-27}\;\text{kg}$, $\hbar = 1.055 \times 10^{-34}\;\text{J}\cdot\text{s}$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>Compute the reduced mass $\mu$ and the moment of inertia $I = \mu r_0^2$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Calculate the rotational energy scale $\epsilon_{\text{rot}} = \frac{\hbar^2}{2I}$ in eV and the corresponding rotational temperature $\theta_{\text{rot}} = \epsilon_{\text{rot}}/k_B$ in kelvin. Compare your answer with the value in Figure 1.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>At what approximate temperature would you expect the rotational modes of HCl to begin contributing to the heat capacity? At room temperature ($T = 300\;\text{K}$), how many active degrees of freedom does HCl have, and what is $C_V$ per molecule?</p>
+</div>
+</div>
+
+<div class="problem">
+<div class="problem-label">Q12. Maximum Entropy and the Boltzmann Distribution</div>
+<p>Consider a system of $N$ particles that can each occupy one of three energy levels: $\epsilon_1 = 0$, $\epsilon_2 = \epsilon$, and $\epsilon_3 = 2\epsilon$.</p>
+<div class="problem-part">
+<div class="part-label">(a)</div>
+<p>If the only constraint is $\sum_i f_i = 1$ (no energy constraint), show that the entropy $S = -Nk_B \sum_i f_i \ln f_i$ is maximized when $f_1 = f_2 = f_3 = 1/3$. Compute $S$ for this distribution.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(b)</div>
+<p>Now impose the additional constraint that the average energy per particle is $\bar{\epsilon} = \epsilon/2$. Using the Boltzmann distribution $f_i = \frac{1}{Z}e^{-\beta \epsilon_i}$, write down the three occupation fractions in terms of $\beta$ and $\epsilon$. Write the equation that determines $\beta$ from the constraint $\sum_i f_i \epsilon_i = \epsilon/2$.</p>
+</div>
+<div class="problem-part">
+<div class="part-label">(c)</div>
+<p>Solve numerically for $\beta\epsilon$ (to two decimal places) and compute $f_1$, $f_2$, $f_3$. Verify that $\sum_i f_i = 1$ and $\sum_i f_i \epsilon_i = \epsilon/2$. Is the entropy higher or lower than in part (a)? Why does this make sense?</p>
+</div>
+</div>
+
+</div>
+</details>

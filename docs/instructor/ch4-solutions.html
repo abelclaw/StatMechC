@@ -1,0 +1,187 @@
+<div class="chapter-solutions" id="ch4-solutions">
+<h2>Chapter 4: Temperature — Solutions</h2>
+
+<div class="solution">
+<div class="problem-label">Problem 1: Thermal Equilibrium Condition (Q1)</div>
+<p>The correct answer is (c). From Eq. (11), two systems in thermal equilibrium satisfy $\frac{\partial \ln \Omega_1}{\partial E_1} = \frac{\partial \ln \Omega_2}{\partial E_2}$. This is $\frac{1}{k_BT}$ for each system, which defines temperature equality. The total energy $E$ is conserved but not necessarily equal between the two systems. The entropies $S_1$ and $S_2$ are generally different; it is their derivatives $\partial S/\partial E$ that match.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 2: Heat Capacity of Monatomic Gas (Q2)</div>
+<p>The correct answer is (b). For a monatomic ideal gas, $E = \frac{3}{2}Nk_BT$ from Eq. (19), so $C_V = \frac{\partial E}{\partial T}\big|_V = \frac{3}{2}Nk_B$. Note that $C_V$ is independent of temperature for an ideal gas — it is a constant. Option (d) gives the energy, not the heat capacity.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 3: Quantum Freeze-Out (Q3)</div>
+<p>The correct answer is (b). At room temperature $k_BT \approx 25\;\text{meV}$. For most diatomic molecules, the vibrational energy scale is $\epsilon_{\text{vib}} \sim 0.1\text{-}0.5\;\text{eV}$, which is much larger than $k_BT$. Therefore the vibrational mode is frozen out. The rotational energy scale is typically a few meV or less (e.g., $\theta_{\text{rot}} = 2.9\;\text{K}$ for N$_2$), so rotational modes are fully active at room temperature.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 4: Maximum Entropy Principle (Q4)</div>
+<p>The correct answer is (b). Maximizing $S_{\text{total}} = k_B \ln(\Omega_1 \Omega_2)$ is equivalent to maximizing the product $\Omega_1 \cdot \Omega_2$, since $\ln$ is monotonically increasing. Energy is not minimized in an isolated system (it is conserved). Energy is generally not equally divided — it is divided in proportion to the number of degrees of freedom.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 5: RMS Speed of Argon (Q5)</div>
+<p>The rms speed is:
+$$v_{\text{rms}} = \sqrt{\frac{3k_BT}{m}} = \sqrt{\frac{3 \times 1.38 \times 10^{-23} \times 300}{40 \times 1.66 \times 10^{-27}}}$$
+$$= \sqrt{\frac{1.242 \times 10^{-20}}{6.64 \times 10^{-26}}} = \sqrt{1.871 \times 10^5} \approx 432\;\text{m/s}$$
+</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 6: Energy Partition (Q6)</div>
+<p>The correct answer is (b). From Eq. (6):
+$$\langle E_1 \rangle = \frac{N_1}{N_1 + N_2}E = \frac{2 \times 10^{23}}{2 \times 10^{23} + 3 \times 10^{23}} \times 1000\;\text{J} = \frac{2}{5} \times 1000 = 400\;\text{J}$$
+Energy is shared in proportion to the number of particles, not equally.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 7: Relativistic Heat Capacity (Q7)</div>
+<p>For ultrarelativistic particles, $E = 3Nk_BT$ from Eq. (31). Therefore:
+$$C_V = \frac{\partial E}{\partial T} = 3Nk_B$$
+Per particle: $C_V/N = 3k_B$. Each of the 3 linear momentum degrees of freedom contributes $k_BT$ rather than $\frac{1}{2}k_BT$.</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 8: Inverse Temperature (Q8)</div>
+<p>The correct answer is (c). The Lagrange multiplier $\beta$ in Eq. (66) is identified with the inverse temperature $\beta = \frac{1}{k_BT}$. This can be seen by comparing $f_i \propto e^{-\beta\epsilon_i}$ with the Boltzmann factor $e^{-\epsilon_i/(k_BT)}$ from thermodynamic arguments. The quantity $\beta$ is often called the "thermodynamic beta" or "coldness."</p>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 9: Thermal Equilibrium Between Unequal Gases</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>For each ideal monatomic gas, $\Omega \propto E^{3N/2}$. The total number of microstates is:
+$$\Omega(E, E_A) = \Omega_A(E_A)\,\Omega_B(E - E_A) \propto E_A^{3N_A/2}\,(E - E_A)^{3N_B/2}$$
+</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>Maximizing $\ln\Omega$:
+$$\frac{\partial \ln\Omega}{\partial E_A} = \frac{3N_A}{2E_A} - \frac{3N_B}{2(E - E_A)} = 0$$
+Solving: $\frac{N_A}{E_A} = \frac{N_B}{E - E_A}$, so:
+$$\langle E_A \rangle = \frac{N_A}{N_A + N_B}E$$
+Since $\frac{1}{T_A} = \frac{\partial S_A}{\partial E_A} = \frac{3N_Ak_B}{2E_A}$, we get $T_A = \frac{2E_A}{3N_Ak_B}$. Similarly $T_B = \frac{2E_B}{3N_Bk_B}$. At equilibrium, $\frac{E_A}{N_A} = \frac{E_B}{N_B}$, so $T_A = T_B$.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>At equal temperature, $\frac{1}{2}m_A v_{\text{rms},A}^2 = \frac{3}{2}k_BT = \frac{1}{2}m_B v_{\text{rms},B}^2$. Therefore:
+$$\frac{v_{\text{rms},A}}{v_{\text{rms},B}} = \sqrt{\frac{m_B}{m_A}}$$
+For helium and xenon:
+$$\frac{v_{\text{rms},He}}{v_{\text{rms},Xe}} = \sqrt{\frac{131}{4}} = \sqrt{32.75} \approx 5.72$$
+Helium atoms move about 5.7 times faster than xenon atoms at the same temperature.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 10: Entropy of Mixing and the Gibbs Paradox</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>Before mixing, each gas has entropy $S = Nk_B[\ln V + \frac{3}{2}\ln(\frac{4\pi m E}{3Nh^2}) + c]$. The total initial entropy is $S_i = S_1 + S_2$ where each gas occupies volume $V$.
+
+After mixing, each gas (being different) now occupies volume $2V$. The entropy of gas 1 becomes $S_1' = Nk_B[\ln(2V) + \ldots]$ and similarly for gas 2. Only the $\ln V$ term changes:
+$$\Delta S = Nk_B\ln(2V) - Nk_B\ln V + Nk_B\ln(2V) - Nk_B\ln V = 2Nk_B\ln 2$$
+</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>If the gases are identical, removing the partition should produce no physical change — the macroscopic state is the same before and after. Therefore $\Delta S$ should be zero. But the naive calculation gives $\Delta S = 2Nk_B\ln 2 > 0$, which is paradoxical. This is the Gibbs paradox: a formula that works for distinguishable particles gives an unphysical entropy increase when applied to identical particles.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Dividing $\Omega$ by $N!$ for identical particles modifies the entropy:
+$$S' = k_B\ln\frac{\Omega}{N!} = S - k_B\ln N! \approx S - Nk_B\ln N + Nk_B$$
+using Stirling's approximation $\ln N! \approx N\ln N - N$.
+
+The corrected entropy is $S' = Nk_B[\ln V - \ln N + \frac{3}{2}\ln(\frac{4\pi m E}{3Nh^2}) + c']$ where $c'$ absorbs the extra constant. The key change is $\ln V \to \ln V - \ln N = \ln(V/N)$.
+
+Before mixing: each gas has $N$ particles in volume $V$, so $\ln(V/N)$ appears.
+After mixing: the combined gas has $2N$ particles in volume $2V$, so $\ln(2V/(2N)) = \ln(V/N)$ appears.
+
+Since $V/N$ is the same before and after, $\Delta S = 0$ for identical gases. The paradox is resolved.</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 11: Rotational Heat Capacity of HCl</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>The reduced mass is:
+$$\mu = \frac{m_H m_{Cl}}{m_H + m_{Cl}} = \frac{1 \times 35}{1 + 35}\;\text{u} = \frac{35}{36}\;\text{u} = 0.9722\;\text{u} = 1.614 \times 10^{-27}\;\text{kg}$$
+
+The moment of inertia is:
+$$I = \mu r_0^2 = 1.614 \times 10^{-27} \times (1.27 \times 10^{-10})^2 = 1.614 \times 10^{-27} \times 1.613 \times 10^{-20}$$
+$$= 2.603 \times 10^{-47}\;\text{kg}\cdot\text{m}^2$$
+</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The rotational energy scale is:
+$$\epsilon_{\text{rot}} = \frac{\hbar^2}{2I} = \frac{(1.055 \times 10^{-34})^2}{2 \times 2.603 \times 10^{-47}} = \frac{1.113 \times 10^{-68}}{5.206 \times 10^{-47}} = 2.14 \times 10^{-22}\;\text{J}$$
+$$= \frac{2.14 \times 10^{-22}}{1.602 \times 10^{-19}}\;\text{eV} = 1.34 \times 10^{-3}\;\text{eV} = 1.34\;\text{meV}$$
+
+The rotational temperature is:
+$$\theta_{\text{rot}} = \frac{\epsilon_{\text{rot}}}{k_B} = \frac{2.14 \times 10^{-22}}{1.38 \times 10^{-23}} \approx 15.5\;\text{K}$$
+This is consistent with the value $\theta_{\text{rot}} = 15\;\text{K}$ in Figure 1.</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Rotational modes become active when $k_BT \gtrsim \epsilon_{\text{rot}}$, i.e., $T \gtrsim \theta_{\text{rot}} \approx 15\;\text{K}$. At room temperature ($T = 300\;\text{K} \gg 15\;\text{K}$), rotational modes are fully active.
+
+The vibrational temperature is $\theta_{\text{vib}} = 4300\;\text{K} \gg 300\;\text{K}$, so vibrational modes are frozen out.
+
+Therefore HCl at room temperature has 3 translational + 2 rotational = 5 active degrees of freedom, and:
+$$C_V = \frac{5}{2}k_B\;\text{per molecule}$$
+</p>
+</div>
+</div>
+
+<div class="solution">
+<div class="problem-label">Problem 12: Maximum Entropy and the Boltzmann Distribution</div>
+<div class="solution-part">
+<div class="part-label">(a)</div>
+<p>With only $\sum f_i = 1$, the entropy is maximized when all states are equally likely: $f_1 = f_2 = f_3 = 1/3$. This follows from Eq. (63).
+
+The entropy is:
+$$S = -Nk_B\sum_{i=1}^{3}f_i\ln f_i = -Nk_B \times 3 \times \frac{1}{3}\ln\frac{1}{3} = Nk_B\ln 3 \approx 1.099\,Nk_B$$
+</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(b)</div>
+<p>The Boltzmann distribution gives:
+$$f_1 = \frac{1}{Z}, \quad f_2 = \frac{e^{-\beta\epsilon}}{Z}, \quad f_3 = \frac{e^{-2\beta\epsilon}}{Z}$$
+where $Z = 1 + e^{-\beta\epsilon} + e^{-2\beta\epsilon}$.
+
+The constraint $\sum f_i\epsilon_i = \epsilon/2$ gives:
+$$\frac{0 + \epsilon\,e^{-\beta\epsilon} + 2\epsilon\,e^{-2\beta\epsilon}}{1 + e^{-\beta\epsilon} + e^{-2\beta\epsilon}} = \frac{\epsilon}{2}$$
+
+Dividing by $\epsilon$ and letting $x = e^{-\beta\epsilon}$:
+$$\frac{x + 2x^2}{1 + x + x^2} = \frac{1}{2}$$
+$$2x + 4x^2 = 1 + x + x^2$$
+$$3x^2 + x - 1 = 0$$
+</p>
+</div>
+<div class="solution-part">
+<div class="part-label">(c)</div>
+<p>Solving $3x^2 + x - 1 = 0$:
+$$x = \frac{-1 + \sqrt{1 + 12}}{6} = \frac{-1 + \sqrt{13}}{6} = \frac{-1 + 3.606}{6} = \frac{2.606}{6} = 0.4343$$
+
+So $e^{-\beta\epsilon} = 0.4343$, giving $\beta\epsilon = -\ln(0.4343) = 0.8340 \approx 0.83$.
+
+The partition function is $Z = 1 + 0.4343 + 0.4343^2 = 1 + 0.4343 + 0.1886 = 1.6229$.
+
+The occupation fractions are:
+$$f_1 = \frac{1}{1.6229} = 0.6162, \quad f_2 = \frac{0.4343}{1.6229} = 0.2676, \quad f_3 = \frac{0.1886}{1.6229} = 0.1162$$
+
+Verification: $f_1 + f_2 + f_3 = 0.6162 + 0.2676 + 0.1162 = 1.000$ and $f_2\epsilon + f_3 \times 2\epsilon = (0.2676 + 0.2324)\epsilon = 0.500\,\epsilon = \epsilon/2$. Both constraints satisfied.
+
+The entropy is:
+$$S = -Nk_B(0.6162\ln 0.6162 + 0.2676\ln 0.2676 + 0.1162\ln 0.1162)$$
+$$= -Nk_B(-0.2980 - 0.3527 - 0.2498) = 0.9005\,Nk_B$$
+
+This is lower than $Nk_B\ln 3 \approx 1.099\,Nk_B$ from part (a). This makes sense: the energy constraint is an additional restriction on the distribution, reducing the number of configurations and hence the entropy. The uniform distribution maximizes entropy with no constraints; any additional constraint can only reduce (or at most maintain) the entropy.</p>
+</div>
+</div>
+
+</div>
