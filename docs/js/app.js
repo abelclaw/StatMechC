@@ -15868,6 +15868,28 @@ function initCh12Vis() {
         return levels;
       }
 
+      // Helper: get per-level occupations for MB
+      function getMBOccupations(tScaled) {
+        if (tScaled < 0.001) return [{eps: 0, occ: N, mult: 1}];
+        const betaEps = 1.0 / (tScaled * N23);
+        let Z = groundMult;
+        for (let j = 0; j < excitedEnergies.length; j++) {
+          const [eps, mult] = excitedEnergies[j];
+          const arg = betaEps * eps;
+          if (arg > 30) break;
+          Z += mult * Math.exp(-arg);
+        }
+        // MB: <n_i> = N * g_i * exp(-beta*eps_i) / Z
+        const levels = [{eps: 0, occ: N * groundMult / Z, mult: groundMult}];
+        for (let j = 0; j < Math.min(excitedEnergies.length, 9); j++) {
+          const [eps, mult] = excitedEnergies[j];
+          const arg = betaEps * eps;
+          const occ = arg > 30 ? 0 : N * mult * Math.exp(-arg) / Z;
+          levels.push({eps, occ: Math.max(0, occ), mult});
+        }
+        return levels;
+      }
+
       // Find Tc: temperature where N_ground/N drops to ~0.01
       let tcLo = 0.01, tcHi = tMax;
       for (let iter = 0; iter < 40; iter++) {
@@ -15963,9 +15985,10 @@ function initCh12Vis() {
       ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_LG; ctxBE.textAlign = 'left';
       ctxBE.fillText('N_ground / N   (N = ' + N + ')', ox, oy - 12);
 
-      // ========== RIGHT PANEL: Occupation bar chart ==========
-      const levels = getBEOccupations(tSliderVal);
-      const nBars = levels.length;
+      // ========== RIGHT PANEL: Paired BE/MB occupation bar chart ==========
+      const beLevels = getBEOccupations(tSliderVal);
+      const mbLevels = getMBOccupations(tSliderVal);
+      const nGroups = beLevels.length;
 
       // Right panel axes
       ctxBE.strokeStyle = COLORS.axis; ctxBE.lineWidth = 1;
@@ -15976,10 +15999,12 @@ function initCh12Vis() {
       ctxBE.fillStyle = COLORS.text; ctxBE.font = FONT_LG; ctxBE.textAlign = 'left';
       ctxBE.fillText('Occupation \u27E8N\u1D62\u27E9', bx, by - 12);
 
-      // Find max occupation for scaling
-      let maxOcc = 0;
-      for (let i = 0; i < nBars; i++) maxOcc = Math.max(maxOcc, levels[i].occ);
-      maxOcc = Math.max(maxOcc, 1);
+      // Find max occupation across both for scaling
+      let maxOcc = 1;
+      for (let i = 0; i < nGroups; i++) {
+        maxOcc = Math.max(maxOcc, beLevels[i].occ);
+        if (mbLevels[i]) maxOcc = Math.max(maxOcc, mbLevels[i].occ);
+      }
 
       // Y-axis label
       ctxBE.save(); ctxBE.translate(bx - 25, by + bh / 2); ctxBE.rotate(-Math.PI / 2);
@@ -15999,45 +16024,55 @@ function initCh12Vis() {
         }
       }
 
-      // Draw bars
-      const barPad = 3;
-      const barW = Math.max(4, (bw - barPad * (nBars + 1)) / nBars);
-      for (let i = 0; i < nBars; i++) {
-        const lev = levels[i];
-        const barH = Math.max(0, (lev.occ / maxOcc) * bh);
-        const barX = bx + barPad + i * (barW + barPad);
-        const barY = by + bh - barH;
+      // Draw paired bars: BE (blue) left, MB (red) right within each group
+      const groupPad = 4;
+      const groupW = (bw - groupPad) / nGroups;
+      const halfBar = (groupW - groupPad - 2) / 2; // 2px gap between pair
+      for (let i = 0; i < nGroups; i++) {
+        const gx = bx + groupPad / 2 + i * groupW;
 
-        // Ground state red (highlight), others blue
-        const isGround = (i === 0);
-        ctxBE.fillStyle = isGround ? COLORS.red : COLORS.blue;
-        ctxBE.globalAlpha = isGround ? 1.0 : 0.7;
-        ctxBE.fillRect(barX, barY, barW, barH);
+        // BE bar (blue, left)
+        const beOcc = beLevels[i].occ;
+        const beH = Math.max(0, (beOcc / maxOcc) * bh);
+        const beX = gx;
+        const beY = by + bh - beH;
+        ctxBE.fillStyle = COLORS.blue; ctxBE.globalAlpha = 0.85;
+        ctxBE.fillRect(beX, beY, halfBar, beH);
         ctxBE.globalAlpha = 1.0;
+        ctxBE.strokeStyle = COLORS.blue; ctxBE.lineWidth = 1;
+        ctxBE.strokeRect(beX, beY, halfBar, beH);
 
-        ctxBE.strokeStyle = isGround ? COLORS.red : COLORS.blue;
-        ctxBE.lineWidth = 1;
-        ctxBE.strokeRect(barX, barY, barW, barH);
+        // MB bar (red, right)
+        const mbOcc = mbLevels[i] ? mbLevels[i].occ : 0;
+        const mbH = Math.max(0, (mbOcc / maxOcc) * bh);
+        const mbX = gx + halfBar + 2;
+        const mbY = by + bh - mbH;
+        ctxBE.fillStyle = COLORS.red; ctxBE.globalAlpha = 0.6;
+        ctxBE.fillRect(mbX, mbY, halfBar, mbH);
+        ctxBE.globalAlpha = 1.0;
+        ctxBE.strokeStyle = COLORS.red; ctxBE.lineWidth = 1;
+        ctxBE.strokeRect(mbX, mbY, halfBar, mbH);
 
-        // Energy label below bar
+        // Energy label below group
         ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
-        const label = lev.eps === 0 ? '0' : lev.eps.toString();
-        ctxBE.fillText(label, barX + barW / 2, by + bh + 13);
-
-        // Occupation value on/above bar
-        if (barH > 18 && lev.occ > 0.05) {
-          ctxBE.fillStyle = '#fff'; ctxBE.font = FONT_SM;
-          const occText = lev.occ < 10 ? lev.occ.toFixed(1) : Math.round(lev.occ).toString();
-          ctxBE.fillText(occText, barX + barW / 2, barY + 13);
-        } else if (lev.occ > 0.05) {
-          ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM;
-          ctxBE.fillText(lev.occ.toFixed(1), barX + barW / 2, barY - 3);
-        }
+        const label = beLevels[i].eps === 0 ? '0' : beLevels[i].eps.toString();
+        ctxBE.fillText(label, gx + groupW / 2 - groupPad / 4, by + bh + 13);
       }
 
       // X-axis label for bar chart
       ctxBE.fillStyle = COLORS.textDim; ctxBE.font = FONT_SM; ctxBE.textAlign = 'center';
       ctxBE.fillText('Energy (\u03B5\u2081 units)', bx + bw / 2, by + bh + 28);
+
+      // Mini legend for bar chart
+      const lgx = bx + bw - 95, lgy = by + 6;
+      ctxBE.fillStyle = COLORS.blue; ctxBE.globalAlpha = 0.85;
+      ctxBE.fillRect(lgx, lgy - 5, 10, 10); ctxBE.globalAlpha = 1.0;
+      ctxBE.fillStyle = COLORS.blue; ctxBE.font = FONT_SM; ctxBE.textAlign = 'left';
+      ctxBE.fillText('BE', lgx + 14, lgy + 4);
+      ctxBE.fillStyle = COLORS.red; ctxBE.globalAlpha = 0.6;
+      ctxBE.fillRect(lgx + 35, lgy - 5, 10, 10); ctxBE.globalAlpha = 1.0;
+      ctxBE.fillStyle = COLORS.red; ctxBE.font = FONT_SM;
+      ctxBE.fillText('MB', lgx + 49, lgy + 4);
 
       // ========== Info display ==========
       const Nground = curFrac * N;
