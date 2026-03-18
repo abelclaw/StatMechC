@@ -16358,25 +16358,24 @@ function initCh12Vis() {
     drawN1Compare();
   }
 
-  // ---- BEC Momentum Distribution: side-by-side MB vs BE 3D surface ----
+  // ---- BEC Momentum Distribution: side-by-side MB vs BE (row-profile style) ----
   const cMom = document.getElementById('vis-bec-momentum');
   if (cMom) {
     const mS = setupCanvas(cMom);
     const ctxM = mS.ctx, WM = mS.W, HM = mS.H;
     const momTempSlider = document.getElementById('bec-momentum-temp');
 
-    // Grid resolution
-    const NX = 50, NY = 30;
+    // Surface drawn as stacked row profiles (like the JILA images)
+    const NSLICE = 40;   // number of depth slices (py values)
+    const NPTS = 100;    // points per slice (px values)
 
     // Distribution functions
-    // MB: always a smooth Gaussian whose width scales with T
     function mbDist(px, py, tRatio) {
       const p2 = px * px + py * py;
       const sigma2 = Math.max(tRatio, 0.02) * 0.15;
       return Math.exp(-p2 / (2 * sigma2));
     }
 
-    // BE: thermal background + condensate spike below Tc
     function beDist(px, py, tRatio) {
       const p2 = px * px + py * py;
       const sigma2 = Math.max(tRatio, 0.02) * 0.15;
@@ -16389,123 +16388,78 @@ function initCh12Vis() {
       return thermal + condensate;
     }
 
-    // Height-to-color: dark blue -> blue -> cyan -> green -> yellow -> red -> white
-    function heightColor(z, zMax) {
+    // Height-to-color ramp matching the JILA false-color style
+    function heightRGB(z, zMax) {
       const t = Math.min(z / Math.max(zMax, 0.01), 1);
-      let r, g, b;
-      if (t < 0.15) {
-        const s = t / 0.15;
-        r = Math.round(15 + s * 20); g = Math.round(20 + s * 30); b = Math.round(80 + s * 70);
-      } else if (t < 0.35) {
-        const s = (t - 0.15) / 0.2;
-        r = Math.round(35 + s * 5); g = Math.round(50 + s * 130); b = Math.round(150 + s * 50);
-      } else if (t < 0.55) {
-        const s = (t - 0.35) / 0.2;
-        r = Math.round(40 + s * 120); g = Math.round(180 + s * 50); b = Math.round(200 - s * 120);
-      } else if (t < 0.75) {
-        const s = (t - 0.55) / 0.2;
-        r = Math.round(160 + s * 95); g = Math.round(230 - s * 50); b = Math.round(80 - s * 60);
-      } else {
-        const s = (t - 0.75) / 0.25;
-        r = Math.round(255); g = Math.round(180 + s * 75); b = Math.round(20 + s * 200);
-      }
-      return `rgb(${r},${g},${b})`;
+      if (t < 0.12) return [20 + t / 0.12 * 25 | 0, 25 + t / 0.12 * 35 | 0, 90 + t / 0.12 * 60 | 0];
+      if (t < 0.3) { const s = (t - 0.12) / 0.18; return [45 + s * 20 | 0, 60 + s * 100 | 0, 150 + s * 30 | 0]; }
+      if (t < 0.5) { const s = (t - 0.3) / 0.2; return [65 + s * 130 | 0, 160 + s * 70 | 0, 180 - s * 110 | 0]; }
+      if (t < 0.7) { const s = (t - 0.5) / 0.2; return [195 + s * 60 | 0, 230 - s * 40 | 0, 70 - s * 50 | 0]; }
+      { const s = (t - 0.7) / 0.3; return [255, 190 + s * 65 | 0, 20 + s * 215 | 0]; }
     }
 
-    // Draw one 3D surface in the given viewport region
-    function drawSurface(distFn, tRatio, cx, baseY, scaleX, scaleY, zScale, title) {
-      // Build grid: px, py in [-1, 1]
-      const rows = [];
-      let zMax = 0;
-      for (let iy = 0; iy < NY; iy++) {
-        const row = [];
-        const py = (iy / (NY - 1) - 0.5) * 2;
-        for (let ix = 0; ix < NX; ix++) {
-          const px = (ix / (NX - 1) - 0.5) * 2;
+    // Draw one 3D surface as stacked filled row profiles
+    function drawSurface3D(distFn, tRatio, left, right, top, bottom, title, zMax) {
+      const plotW = right - left;
+      const plotH = bottom - top;
+      const depthShift = plotW * 0.15; // how far right back rows shift
+      const depthLift = plotH * 0.55;  // how far up back rows go
+      const zScale = plotH * 0.65;     // height scaling
+
+      // Draw back-to-front (iy=0 is back)
+      for (let iy = 0; iy < NSLICE; iy++) {
+        const py = (iy / (NSLICE - 1) - 0.5) * 2;
+        const depthFrac = iy / (NSLICE - 1); // 0=back, 1=front
+        const rowLeft = left + (1 - depthFrac) * depthShift;
+        const rowRight = right - depthShift + (1 - depthFrac) * depthShift;
+        const rowBase = bottom - (1 - depthFrac) * depthLift;
+        const rowW = rowRight - rowLeft;
+
+        // Build the profile points
+        const pts = [];
+        for (let ix = 0; ix < NPTS; ix++) {
+          const px = (ix / (NPTS - 1) - 0.5) * 2;
           const z = distFn(px, py, tRatio);
-          if (z > zMax) zMax = z;
-          row.push(z);
+          const sx = rowLeft + (ix / (NPTS - 1)) * rowW;
+          const sy = rowBase - z / zMax * zScale;
+          pts.push({ sx, sy, z });
         }
-        rows.push(row);
-      }
 
-      // Isometric-ish projection for each grid point
-      function proj(ix, iy, z) {
-        const gx = ix - NX / 2;
-        const gy = iy - NY / 2;
-        const sx = cx + gx * scaleX + gy * scaleX * 0.4;
-        const sy = baseY - z * zScale - gy * scaleY;
-        return [sx, sy];
-      }
-
-      // Draw filled quads back-to-front (painter's algorithm: iy=0 is back)
-      for (let iy = 0; iy < NY - 1; iy++) {
-        for (let ix = 0; ix < NX - 1; ix++) {
-          const z00 = rows[iy][ix], z10 = rows[iy][ix + 1];
-          const z01 = rows[iy + 1][ix], z11 = rows[iy + 1][ix + 1];
-          const avgZ = (z00 + z10 + z01 + z11) / 4;
-
-          const [sx0, sy0] = proj(ix, iy, z00);
-          const [sx1, sy1] = proj(ix + 1, iy, z10);
-          const [sx2, sy2] = proj(ix + 1, iy + 1, z11);
-          const [sx3, sy3] = proj(ix, iy + 1, z01);
-
-          ctxM.fillStyle = heightColor(avgZ, zMax);
+        // Fill: gradient-colored vertical strips, then cover with bg below base
+        for (let i = 0; i < pts.length - 1; i++) {
+          const avgZ = (pts[i].z + pts[i + 1].z) / 2;
+          const [r, g, b] = heightRGB(avgZ, zMax);
+          // Darken back rows slightly for depth
+          const dim = 0.5 + 0.5 * depthFrac;
+          ctxM.fillStyle = `rgb(${r * dim | 0},${g * dim | 0},${b * dim | 0})`;
           ctxM.beginPath();
-          ctxM.moveTo(sx0, sy0);
-          ctxM.lineTo(sx1, sy1);
-          ctxM.lineTo(sx2, sy2);
-          ctxM.lineTo(sx3, sy3);
+          ctxM.moveTo(pts[i].sx, pts[i].sy);
+          ctxM.lineTo(pts[i + 1].sx, pts[i + 1].sy);
+          ctxM.lineTo(pts[i + 1].sx, rowBase);
+          ctxM.lineTo(pts[i].sx, rowBase);
           ctxM.closePath();
           ctxM.fill();
         }
-      }
 
-      // Wireframe overlay: draw row lines (constant py) front-to-back
-      ctxM.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctxM.lineWidth = 0.6;
-      for (let iy = NY - 1; iy >= 0; iy -= 2) {
+        // Profile outline on top
+        ctxM.strokeStyle = `rgba(255,255,255,${0.15 + 0.2 * depthFrac})`;
+        ctxM.lineWidth = 0.8;
         ctxM.beginPath();
-        for (let ix = 0; ix < NX; ix++) {
-          const [sx, sy] = proj(ix, iy, rows[iy][ix]);
-          if (ix === 0) ctxM.moveTo(sx, sy); else ctxM.lineTo(sx, sy);
+        for (let i = 0; i < pts.length; i++) {
+          if (i === 0) ctxM.moveTo(pts[i].sx, pts[i].sy);
+          else ctxM.lineTo(pts[i].sx, pts[i].sy);
         }
         ctxM.stroke();
       }
 
-      // Draw column lines (constant px) for cross-hatch
-      for (let ix = 0; ix < NX; ix += 3) {
-        ctxM.beginPath();
-        for (let iy = 0; iy < NY; iy++) {
-          const [sx, sy] = proj(ix, iy, rows[iy][ix]);
-          if (iy === 0) ctxM.moveTo(sx, sy); else ctxM.lineTo(sx, sy);
-        }
-        ctxM.stroke();
-      }
-
-      // Axis lines on the base plane
-      ctxM.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctxM.lineWidth = 1;
-      // px axis (front edge)
-      const [ax0, ay0] = proj(0, NY - 1, 0);
-      const [ax1, ay1] = proj(NX - 1, NY - 1, 0);
-      ctxM.beginPath(); ctxM.moveTo(ax0, ay0); ctxM.lineTo(ax1, ay1); ctxM.stroke();
-      // py axis (left edge)
-      const [bx0, by0] = proj(0, 0, 0);
-      ctxM.beginPath(); ctxM.moveTo(ax0, ay0); ctxM.lineTo(bx0, by0); ctxM.stroke();
-      // vertical axis at front-left
-      const [vx0, vy0] = proj(0, NY - 1, 0);
-      const [vx1, vy1] = proj(0, NY - 1, zMax);
-      ctxM.beginPath(); ctxM.moveTo(vx0, vy0); ctxM.lineTo(vx1, vy1); ctxM.stroke();
+      // Title
+      ctxM.fillStyle = COLORS.text; ctxM.font = FONT_LG; ctxM.textAlign = 'center';
+      ctxM.fillText(title, (left + right) / 2, top - 6);
 
       // Axis labels
       ctxM.fillStyle = COLORS.textDim; ctxM.font = FONT_SM; ctxM.textAlign = 'center';
-      ctxM.fillText('p\u2093', (ax0 + ax1) / 2, ay0 + 16);
-      ctxM.fillText('p\u2094', (ax0 + bx0) / 2 - 12, (ay0 + by0) / 2 + 6);
-
-      // Title above plot
-      ctxM.fillStyle = COLORS.text; ctxM.font = FONT_LG; ctxM.textAlign = 'center';
-      ctxM.fillText(title, cx, 20);
+      ctxM.fillText('p\u2093', (left + right) / 2, bottom + 14);
+      ctxM.fillText('p\u2094', left - 6 + depthShift / 2, bottom - depthLift / 2 + 4);
     }
 
     function drawMomentum() {
@@ -16516,30 +16470,31 @@ function initCh12Vis() {
       const valSpan = document.getElementById('bec-momentum-temp-val');
       if (valSpan) valSpan.textContent = tR.toFixed(2);
 
-      // Shared scale: use BE max height so both plots have same vertical scale
-      // This lets you see the BE peak tower over the MB distribution
+      // Compute shared zMax so both plots use same vertical scale
+      // BE peak at T=0: thermal(0)=1 + condensate=4 = 5
+      const sharedZMax = 5.0;
+
       const halfW = WM / 2;
-      const cellW = 3.2, cellD = 2.8, zH = 55;
-      const baseY = HM - 30;
+      const margin = 15, gap = 10, topY = 38, botY = HM - 22;
 
       // Left: Maxwell-Boltzmann
-      drawSurface(mbDist, tR, 152, baseY, cellW, cellD, zH, 'Maxwell-Boltzmann');
+      drawSurface3D(mbDist, tR, margin, halfW - gap, topY, botY, 'Maxwell-Boltzmann', sharedZMax);
 
       // Right: Bose-Einstein
-      drawSurface(beDist, tR, 452, baseY, cellW, cellD, zH, 'Bose-Einstein');
+      drawSurface3D(beDist, tR, halfW + gap, WM - margin, topY, botY, 'Bose-Einstein', sharedZMax);
 
       // Divider
-      ctxM.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctxM.strokeStyle = 'rgba(255,255,255,0.1)';
       ctxM.lineWidth = 1;
       ctxM.setLineDash([4, 4]);
-      ctxM.beginPath(); ctxM.moveTo(halfW, 30); ctxM.lineTo(halfW, HM - 10); ctxM.stroke();
+      ctxM.beginPath(); ctxM.moveTo(halfW, topY - 10); ctxM.lineTo(halfW, botY + 5); ctxM.stroke();
       ctxM.setLineDash([]);
 
-      // Temperature indicator
+      // Temperature readout
       ctxM.fillStyle = tR <= 1 ? COLORS.red : COLORS.blue;
       ctxM.font = FONT_SM; ctxM.textAlign = 'center';
-      const stateLabel = tR <= 1 ? '(below Tc \u2014 BEC regime)' : '(above Tc \u2014 normal gas)';
-      ctxM.fillText('T/Tc = ' + tR.toFixed(2) + '  ' + stateLabel, WM / 2, HM - 6);
+      const label = tR <= 1 ? '(below Tc \u2014 BEC regime)' : '(above Tc \u2014 normal gas)';
+      ctxM.fillText('T/Tc = ' + tR.toFixed(2) + '  ' + label, halfW, HM - 4);
     }
 
     momTempSlider?.addEventListener('input', drawMomentum);
