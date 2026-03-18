@@ -19010,131 +19010,253 @@ function initCh14Vis() {
   if (cDO) {
     const dop = setupCanvas(cDO);
     const ctxDO = dop.ctx, WDO = dop.W, HDO = dop.H;
-    const typeSelect = document.getElementById('doping-type');
+    const dopButtons = document.getElementById('doping-type-buttons');
     const dopTempSlider = document.getElementById('doping-temp');
+    let dopType = 'intrinsic';
+
+    // Seeded random for stable carrier positions
+    let carrierSeed = 1;
+    function dopRand() {
+      carrierSeed = (carrierSeed * 16807) % 2147483647;
+      return (carrierSeed - 1) / 2147483646;
+    }
 
     function drawDoping() {
-      const dopType = typeSelect?.value || 'intrinsic';
       const T = parseFloat(dopTempSlider?.value || 1);
       clearCanvas(ctxDO, WDO, HDO);
+      carrierSeed = Math.round(T * 100) + (dopType === 'n-type' ? 10000 : dopType === 'p-type' ? 20000 : 30000);
 
-      const ox = 50, pw = WDO - 100, bandH = 60, gapH = 80;
-      const valY = HDO - 50, condY = valY - bandH - gapH;
+      // Layout: left = band diagram, right = Fermi-Dirac / DOS
+      const bandX = 60, bandW = 280, rightX = 400, rightW = 240;
+      const topM = 45, botM = 35;
 
-      // Draw bands
-      ctxDO.fillStyle = 'rgba(79,195,247,0.1)';
-      ctxDO.fillRect(ox, condY, pw, bandH);
-      ctxDO.fillStyle = 'rgba(239,83,80,0.1)';
-      ctxDO.fillRect(ox, valY - bandH, pw, bandH);
+      // Energy scale
+      const Eg = 1.1; // eV (Si)
+      const eScale = (HDO - topM - botM) / 3.0; // px per eV
+      const midE = 1.5;
+      const cbEdge = midE + Eg / 2;
+      const vbEdge = midE - Eg / 2;
+      function eToY(e) { return topM + (midE + 1.5 - e) * eScale; }
 
+      const cbY = eToY(cbEdge), vbY = eToY(vbEdge);
+      const cbTopY = eToY(cbEdge + 0.8), vbBotY = eToY(vbEdge - 0.8);
+
+      // --- LEFT: Band Diagram ---
+      // Conduction band gradient
+      const cbGrad = ctxDO.createLinearGradient(0, cbTopY, 0, cbY);
+      cbGrad.addColorStop(0, 'rgba(79,195,247,0.03)');
+      cbGrad.addColorStop(1, 'rgba(79,195,247,0.18)');
+      ctxDO.fillStyle = cbGrad;
+      ctxDO.fillRect(bandX, cbTopY, bandW, cbY - cbTopY);
+
+      // Valence band gradient
+      const vbGrad = ctxDO.createLinearGradient(0, vbY, 0, vbBotY);
+      vbGrad.addColorStop(0, 'rgba(239,83,80,0.18)');
+      vbGrad.addColorStop(1, 'rgba(239,83,80,0.03)');
+      ctxDO.fillStyle = vbGrad;
+      ctxDO.fillRect(bandX, vbY, bandW, vbBotY - vbY);
+
+      // Band edges
+      ctxDO.lineWidth = 2.5;
       ctxDO.strokeStyle = COLORS.blue;
-      ctxDO.lineWidth = 2;
-      ctxDO.beginPath();
-      ctxDO.moveTo(ox, condY + bandH);
-      ctxDO.lineTo(ox + pw, condY + bandH);
-      ctxDO.stroke();
-
+      ctxDO.beginPath(); ctxDO.moveTo(bandX, cbY); ctxDO.lineTo(bandX + bandW, cbY); ctxDO.stroke();
       ctxDO.strokeStyle = COLORS.red;
+      ctxDO.beginPath(); ctxDO.moveTo(bandX, vbY); ctxDO.lineTo(bandX + bandW, vbY); ctxDO.stroke();
+
+      // Edge labels
+      ctxDO.font = FONT; ctxDO.textAlign = 'right';
+      ctxDO.fillStyle = COLORS.blue; ctxDO.fillText('Ec', bandX - 8, cbY + 5);
+      ctxDO.fillStyle = COLORS.red; ctxDO.fillText('Ev', bandX - 8, vbY + 5);
+
+      // Band names
+      ctxDO.textAlign = 'center'; ctxDO.font = FONT;
+      ctxDO.fillStyle = COLORS.blue; ctxDO.fillText('Conduction Band', bandX + bandW / 2, cbTopY + 16);
+      ctxDO.fillStyle = COLORS.red; ctxDO.fillText('Valence Band', bandX + bandW / 2, vbBotY - 8);
+
+      // Bandgap annotation
+      const gapMidY = (cbY + vbY) / 2;
+      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'center';
+      ctxDO.fillText('Eg = 1.1 eV', bandX + bandW / 2, gapMidY + 4);
+      ctxDO.strokeStyle = COLORS.textDim; ctxDO.lineWidth = 1;
+      const bx = bandX + bandW / 2 + 45;
       ctxDO.beginPath();
-      ctxDO.moveTo(ox, valY - bandH);
-      ctxDO.lineTo(ox + pw, valY - bandH);
+      ctxDO.moveTo(bx, cbY + 3); ctxDO.lineTo(bx, gapMidY - 10);
+      ctxDO.moveTo(bx, gapMidY + 10); ctxDO.lineTo(bx, vbY - 3);
       ctxDO.stroke();
 
-      // Gap label
-      const gapMidY = (condY + bandH + valY - bandH) / 2;
-      ctxDO.fillStyle = COLORS.textDim;
-      ctxDO.font = FONT_SM;
-      ctxDO.textAlign = 'center';
-      ctxDO.fillText('Band Gap (Eg)', ox + pw / 2, gapMidY + 4);
+      // Dopant levels
+      const donorE = cbEdge - 0.045, acceptorE = vbEdge + 0.057;
+      const donorY = eToY(donorE), acceptorY = eToY(acceptorE);
 
-      // Fermi level
-      let fermiY = gapMidY;
-      if (dopType === 'n-type') fermiY = gapMidY - gapH * 0.35;
-      else if (dopType === 'p-type') fermiY = gapMidY + gapH * 0.35;
-
-      ctxDO.strokeStyle = COLORS.yellow;
-      ctxDO.lineWidth = 1.5;
-      ctxDO.setLineDash([8, 4]);
-      ctxDO.beginPath();
-      ctxDO.moveTo(ox, fermiY);
-      ctxDO.lineTo(ox + pw, fermiY);
-      ctxDO.stroke();
-      ctxDO.setLineDash([]);
-      ctxDO.fillStyle = COLORS.yellow;
-      ctxDO.font = FONT_SM;
-      ctxDO.textAlign = 'left';
-      ctxDO.fillText('μ (Fermi level)', ox + pw + 5, fermiY + 4);
-
-      // Donor/acceptor levels
       if (dopType === 'n-type') {
-        const donorY = condY + bandH + 10;
-        ctxDO.strokeStyle = COLORS.green;
-        ctxDO.lineWidth = 1.5;
-        for (let i = 0; i < 5; i++) {
-          const x = ox + 40 + i * (pw - 80) / 4;
-          ctxDO.beginPath();
-          ctxDO.moveTo(x - 15, donorY);
-          ctxDO.lineTo(x + 15, donorY);
-          ctxDO.stroke();
+        ctxDO.strokeStyle = COLORS.green; ctxDO.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+          const x = bandX + 25 + i * (bandW - 50) / 7;
+          ctxDO.beginPath(); ctxDO.moveTo(x - 10, donorY); ctxDO.lineTo(x + 10, donorY); ctxDO.stroke();
         }
-        ctxDO.fillStyle = COLORS.green;
-        ctxDO.textAlign = 'right';
-        ctxDO.fillText('Donor levels', ox - 5, donorY + 4);
+        ctxDO.fillStyle = COLORS.green; ctxDO.font = FONT_SM; ctxDO.textAlign = 'right';
+        ctxDO.fillText('Ed (donor, 45 meV)', bandX - 8, donorY + 4);
       } else if (dopType === 'p-type') {
-        const acceptorY = valY - bandH - 10;
-        ctxDO.strokeStyle = COLORS.purple;
-        ctxDO.lineWidth = 1.5;
-        for (let i = 0; i < 5; i++) {
-          const x = ox + 40 + i * (pw - 80) / 4;
-          ctxDO.beginPath();
-          ctxDO.moveTo(x - 15, acceptorY);
-          ctxDO.lineTo(x + 15, acceptorY);
-          ctxDO.stroke();
+        ctxDO.strokeStyle = COLORS.purple; ctxDO.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+          const x = bandX + 25 + i * (bandW - 50) / 7;
+          ctxDO.beginPath(); ctxDO.moveTo(x - 10, acceptorY); ctxDO.lineTo(x + 10, acceptorY); ctxDO.stroke();
         }
-        ctxDO.fillStyle = COLORS.purple;
-        ctxDO.textAlign = 'right';
-        ctxDO.fillText('Acceptor levels', ox - 5, acceptorY + 4);
+        ctxDO.fillStyle = COLORS.purple; ctxDO.font = FONT_SM; ctxDO.textAlign = 'right';
+        ctxDO.fillText('Ea (acceptor, 57 meV)', bandX - 8, acceptorY + 4);
       }
 
-      // Draw electrons and holes based on temperature
-      const nCarriers = Math.round(3 + T * 5);
-      if (dopType === 'n-type' || dopType === 'intrinsic') {
-        ctxDO.fillStyle = COLORS.blue;
-        const nE = dopType === 'n-type' ? nCarriers + 4 : nCarriers;
-        for (let i = 0; i < nE; i++) {
-          const x = ox + 20 + Math.random() * (pw - 40);
-          const y = condY + Math.random() * bandH;
-          ctxDO.beginPath(); ctxDO.arc(x, y, 3, 0, 2 * Math.PI); ctxDO.fill();
-        }
+      // Chemical potential
+      let mu = midE;
+      if (dopType === 'n-type') {
+        const muLow = (cbEdge + donorE) / 2;
+        mu = muLow + Math.min(1, T / 2.5) * (midE - muLow);
+      } else if (dopType === 'p-type') {
+        const muLow = (vbEdge + acceptorE) / 2;
+        mu = muLow + Math.min(1, T / 2.5) * (midE - muLow);
       }
-      if (dopType === 'p-type' || dopType === 'intrinsic') {
-        ctxDO.strokeStyle = COLORS.red;
-        ctxDO.lineWidth = 1.5;
-        const nH = dopType === 'p-type' ? nCarriers + 4 : nCarriers;
-        for (let i = 0; i < nH; i++) {
-          const x = ox + 20 + Math.random() * (pw - 40);
-          const y = valY - bandH + Math.random() * bandH;
-          ctxDO.beginPath(); ctxDO.arc(x, y, 3, 0, 2 * Math.PI); ctxDO.stroke();
-        }
-      }
+      const muY = eToY(mu);
 
-      // Labels
-      ctxDO.fillStyle = COLORS.text;
-      ctxDO.font = FONT;
-      ctxDO.textAlign = 'left';
-      const labels = { 'intrinsic': 'Intrinsic Semiconductor', 'n-type': 'n-type (Donor Doping)', 'p-type': 'p-type (Acceptor Doping)' };
-      ctxDO.fillText(labels[dopType] + ' — T/T₀ = ' + T.toFixed(2), ox, 18);
+      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 2;
+      ctxDO.setLineDash([8, 5]);
+      ctxDO.beginPath(); ctxDO.moveTo(bandX, muY); ctxDO.lineTo(bandX + bandW, muY); ctxDO.stroke();
+      ctxDO.setLineDash([]);
+      ctxDO.fillStyle = COLORS.yellow; ctxDO.font = FONT; ctxDO.textAlign = 'right';
+      ctxDO.fillText('μ', bandX - 8, muY + 5);
 
-      ctxDO.textAlign = 'center';
+      // Carriers
+      const kBT = 0.026 * T;
+      const niBase = Math.exp(-Eg / (2 * kBT));
+      const nI = Math.max(1, Math.min(25, Math.round(niBase * 800)));
+      let nElec, nHole;
+      if (dopType === 'intrinsic') { nElec = nI; nHole = nI; }
+      else if (dopType === 'n-type') { nElec = Math.min(30, nI + 8); nHole = Math.max(0, Math.round(nI * nI / nElec)); }
+      else { nHole = Math.min(30, nI + 8); nElec = Math.max(0, Math.round(nI * nI / nHole)); }
+
+      // Electrons (filled blue circles with minus)
       ctxDO.fillStyle = COLORS.blue;
-      ctxDO.fillText('Conduction Band', ox + pw / 2, condY + 14);
-      ctxDO.fillStyle = COLORS.red;
-      ctxDO.fillText('Valence Band', ox + pw / 2, valY - 10);
+      for (let i = 0; i < nElec; i++) {
+        const x = bandX + 15 + dopRand() * (bandW - 30);
+        const de = -Math.log(1 - dopRand() * 0.95) * kBT * 3;
+        const y = cbY - Math.min(de * eScale, cbY - cbTopY - 5) - 4;
+        ctxDO.beginPath(); ctxDO.arc(x, y, 4, 0, 2 * Math.PI); ctxDO.fill();
+        ctxDO.fillStyle = '#fff'; ctxDO.fillRect(x - 2.5, y - 0.7, 5, 1.4);
+        ctxDO.fillStyle = COLORS.blue;
+      }
+
+      // Holes (open red circles with plus)
+      for (let i = 0; i < nHole; i++) {
+        const x = bandX + 15 + dopRand() * (bandW - 30);
+        const de = -Math.log(1 - dopRand() * 0.95) * kBT * 3;
+        const y = vbY + Math.min(de * eScale, vbBotY - vbY - 5) + 4;
+        ctxDO.strokeStyle = COLORS.red; ctxDO.lineWidth = 1.8;
+        ctxDO.beginPath(); ctxDO.arc(x, y, 4, 0, 2 * Math.PI); ctxDO.stroke();
+        ctxDO.lineWidth = 1.2;
+        ctxDO.beginPath(); ctxDO.moveTo(x - 2.5, y); ctxDO.lineTo(x + 2.5, y); ctxDO.stroke();
+        ctxDO.beginPath(); ctxDO.moveTo(x, y - 2.5); ctxDO.lineTo(x, y + 2.5); ctxDO.stroke();
+      }
+
+      // --- RIGHT: Fermi-Dirac + carrier distributions ---
+      const plotW = rightW - 20;
+      ctxDO.strokeStyle = COLORS.textDim; ctxDO.lineWidth = 1;
+      ctxDO.beginPath(); ctxDO.moveTo(rightX, cbTopY); ctxDO.lineTo(rightX, vbBotY); ctxDO.stroke();
+
+      // Band edge guides
+      ctxDO.strokeStyle = 'rgba(128,128,128,0.3)'; ctxDO.lineWidth = 0.5;
+      ctxDO.setLineDash([3, 3]);
+      ctxDO.beginPath();
+      ctxDO.moveTo(bandX + bandW, cbY); ctxDO.lineTo(rightX + plotW, cbY);
+      ctxDO.moveTo(bandX + bandW, vbY); ctxDO.lineTo(rightX + plotW, vbY);
+      ctxDO.stroke(); ctxDO.setLineDash([]);
+
+      // Fermi-Dirac curve
+      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 2;
+      ctxDO.beginPath();
+      const eMin = vbEdge - 0.8, eMax = cbEdge + 0.8;
+      for (let i = 0; i <= 200; i++) {
+        const e = eMin + (eMax - eMin) * i / 200;
+        const f = 1 / (Math.exp((e - mu) / kBT) + 1);
+        const x = rightX + f * plotW, y = eToY(e);
+        i === 0 ? ctxDO.moveTo(x, y) : ctxDO.lineTo(x, y);
+      }
+      ctxDO.stroke();
+
+      // Electron population shading
+      if (nElec > 0) {
+        ctxDO.fillStyle = 'rgba(79,195,247,0.25)';
+        ctxDO.beginPath(); ctxDO.moveTo(rightX, cbY);
+        for (let i = 0; i <= 80; i++) {
+          const e = cbEdge + 0.8 * i / 80;
+          const f = 1 / (Math.exp((e - mu) / kBT) + 1);
+          ctxDO.lineTo(rightX + f * Math.sqrt(e - cbEdge) * plotW * 8, eToY(e));
+        }
+        ctxDO.lineTo(rightX, cbTopY); ctxDO.closePath(); ctxDO.fill();
+      }
+
+      // Hole population shading
+      if (nHole > 0) {
+        ctxDO.fillStyle = 'rgba(239,83,80,0.25)';
+        ctxDO.beginPath(); ctxDO.moveTo(rightX, vbY);
+        for (let i = 0; i <= 80; i++) {
+          const e = vbEdge - 0.8 * i / 80;
+          const fH = 1 - 1 / (Math.exp((e - mu) / kBT) + 1);
+          ctxDO.lineTo(rightX + fH * Math.sqrt(vbEdge - e) * plotW * 8, eToY(e));
+        }
+        ctxDO.lineTo(rightX, vbBotY); ctxDO.closePath(); ctxDO.fill();
+      }
+
+      // f(E) axis labels
+      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'center';
+      ctxDO.fillText('0', rightX, vbBotY + 14);
+      ctxDO.fillText('1', rightX + plotW, vbBotY + 14);
+      ctxDO.fillText('f(E)', rightX + plotW / 2, vbBotY + 26);
+
+      // Fermi level on right
+      ctxDO.strokeStyle = COLORS.yellow; ctxDO.lineWidth = 1;
+      ctxDO.setLineDash([4, 3]);
+      ctxDO.beginPath(); ctxDO.moveTo(rightX, muY); ctxDO.lineTo(rightX + plotW, muY); ctxDO.stroke();
+      ctxDO.setLineDash([]);
+      ctxDO.fillStyle = COLORS.yellow; ctxDO.textAlign = 'left'; ctxDO.font = FONT_SM;
+      ctxDO.fillText('f = ½', rightX + plotW + 4, muY + 4);
+
+      // Legend
+      ctxDO.font = FONT_SM; ctxDO.textAlign = 'left';
+      const legX = rightX + 5, legY = cbTopY + 8;
+      ctxDO.fillStyle = COLORS.yellow; ctxDO.fillText('— f(E) Fermi-Dirac', legX, legY);
+      ctxDO.fillStyle = COLORS.blue; ctxDO.fillText('■ electron population', legX, legY + 14);
+      ctxDO.fillStyle = COLORS.red; ctxDO.fillText('■ hole population', legX, legY + 28);
+
+      // Title
+      ctxDO.fillStyle = COLORS.text; ctxDO.font = FONT; ctxDO.textAlign = 'left';
+      const titles = { 'intrinsic': 'Intrinsic Si', 'n-type': 'n-type Si (P-doped)', 'p-type': 'p-type Si (Al-doped)' };
+      ctxDO.fillText(titles[dopType], bandX, 20);
+      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM;
+      ctxDO.fillText('T = ' + (T * 300).toFixed(0) + ' K', bandX + 180, 20);
+
+      // Carrier counts
+      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'left';
+      ctxDO.fillText('electrons: ' + nElec + (dopType === 'n-type' ? ' (majority)' : dopType === 'p-type' ? ' (minority)' : ''), bandX, HDO - 12);
+      ctxDO.fillText('holes: ' + nHole + (dopType === 'p-type' ? ' (majority)' : dopType === 'n-type' ? ' (minority)' : ''), bandX + 180, HDO - 12);
+
+      // Energy axis
+      ctxDO.save();
+      ctxDO.translate(15, (cbTopY + vbBotY) / 2);
+      ctxDO.rotate(-Math.PI / 2);
+      ctxDO.fillStyle = COLORS.textDim; ctxDO.font = FONT_SM; ctxDO.textAlign = 'center';
+      ctxDO.fillText('Energy →', 0, 0);
+      ctxDO.restore();
 
       document.getElementById('doping-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(2)));
     }
 
-    typeSelect?.addEventListener('change', drawDoping);
+    dopButtons?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      dopButtons.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      dopType = btn.dataset.value;
+      drawDoping();
+    });
     dopTempSlider?.addEventListener('input', drawDoping);
     drawDoping();
   }
@@ -19922,6 +20044,346 @@ function initCh14Vis() {
       }
     }
     ptContainer.appendChild(ptGrid);
+  }
+
+  // ----- Four Types of Solids (2x2 grid) -----
+  const cSolid = document.getElementById('vis-solid-types');
+  if (cSolid) {
+    const { ctx: ctxS, W: WS, H: HS } = setupCanvas(cSolid);
+
+    const stHalfW = WS / 2;
+    const stHalfH = HS / 2;
+
+    let stAngles = [
+      { x: -0.4, y: 0.5 },
+      { x: -0.35, y: 0.6 },
+      { x: -0.45, y: 0.55 },
+      { x: -0.3, y: 0.65 }
+    ];
+    let stDragging = -1;
+    let stDragStart = { x: 0, y: 0 };
+    let stDragAngleStart = { x: 0, y: 0 };
+
+    function stRotate(p, ax, ay) {
+      var x = p.x, y = p.y, z = p.z;
+      var x1 = x * Math.cos(ay) - z * Math.sin(ay);
+      var z1 = x * Math.sin(ay) + z * Math.cos(ay);
+      var y1 = y * Math.cos(ax) - z1 * Math.sin(ax);
+      var z2 = y * Math.sin(ax) + z1 * Math.cos(ax);
+      return { x: x1, y: y1, z: z2 };
+    }
+
+    function stProject(p, cx, cy, scale) {
+      var persp = 5;
+      var f = persp / (persp + p.z);
+      return { x: cx + p.x * scale * f, y: cy + p.y * scale * f, z: p.z, f: f };
+    }
+
+    function stGetQuadrant(mx, my) {
+      return (my < stHalfH ? 0 : 2) + (mx < stHalfW ? 0 : 1);
+    }
+
+    // 1. CO2 molecular solid
+    function stGetCO2() {
+      var mols = [];
+      var sp = 0.7;
+      for (var ix = -1; ix <= 1; ix++) {
+        for (var iy = -1; iy <= 1; iy++) {
+          for (var iz = 0; iz <= 1; iz++) {
+            var seed = (ix * 7 + iy * 13 + iz * 23) * 0.1;
+            var cx = ix * sp + Math.sin(seed * 3.7) * 0.15;
+            var cy = iy * sp + Math.cos(seed * 2.3) * 0.15;
+            var cz = (iz - 0.5) * sp + Math.sin(seed * 5.1) * 0.15;
+            var th = seed * 2.1 + 0.5, ph = seed * 3.4 + 1.2;
+            var bx = Math.sin(th) * Math.cos(ph) * 0.2;
+            var by = Math.sin(th) * Math.sin(ph) * 0.2;
+            var bz = Math.cos(th) * 0.2;
+            mols.push({
+              c: { x: cx, y: cy, z: cz },
+              o1: { x: cx + bx, y: cy + by, z: cz + bz },
+              o2: { x: cx - bx, y: cy - by, z: cz - bz }
+            });
+          }
+        }
+      }
+      return mols;
+    }
+
+    // 2. NaCl rock salt 3x3x3
+    function stGetNaCl() {
+      var atoms = [], a = 0.5, N = 3, ctr = (N - 1) * a / 2;
+      for (var ix = 0; ix < N; ix++)
+        for (var iy = 0; iy < N; iy++)
+          for (var iz = 0; iz < N; iz++)
+            atoms.push({ x: ix*a - ctr, y: iy*a - ctr, z: iz*a - ctr, isNa: (ix+iy+iz) % 2 === 0 });
+      return atoms;
+    }
+
+    // 3. Diamond FCC + tetrahedral basis
+    function stGetDiamond() {
+      var atoms = [], a = 1, N = 2;
+      var fcc = [[0,0,0],[.5,.5,0],[.5,0,.5],[0,.5,.5]];
+      var basis = [[0,0,0],[.25,.25,.25]];
+      var ctr = N / 2;
+      for (var gx = 0; gx < N; gx++)
+        for (var gy = 0; gy < N; gy++)
+          for (var gz = 0; gz < N; gz++)
+            for (var fi = 0; fi < fcc.length; fi++)
+              for (var bi = 0; bi < basis.length; bi++) {
+                var x = (fcc[fi][0]+basis[bi][0]+gx)*a;
+                var y = (fcc[fi][1]+basis[bi][1]+gy)*a;
+                var z = (fcc[fi][2]+basis[bi][2]+gz)*a;
+                if (x >= -0.1 && x <= N+0.1 && y >= -0.1 && y <= N+0.1 && z >= -0.1 && z <= N+0.1)
+                  atoms.push({ x: x-ctr, y: y-ctr, z: z-ctr });
+              }
+      var unique = [];
+      for (var i = 0; i < atoms.length; i++) {
+        var dup = false;
+        for (var j = 0; j < unique.length; j++)
+          if (Math.abs(unique[j].x-atoms[i].x)<0.01 && Math.abs(unique[j].y-atoms[i].y)<0.01 && Math.abs(unique[j].z-atoms[i].z)<0.01) { dup = true; break; }
+        if (!dup) unique.push(atoms[i]);
+      }
+      return unique;
+    }
+
+    function stGetDiamondBonds(atoms) {
+      var bonds = [], bl = 0.435;
+      for (var i = 0; i < atoms.length; i++)
+        for (var j = i+1; j < atoms.length; j++) {
+          var dx = atoms[i].x-atoms[j].x, dy = atoms[i].y-atoms[j].y, dz = atoms[i].z-atoms[j].z;
+          if (Math.sqrt(dx*dx+dy*dy+dz*dz) < bl) bonds.push([i,j]);
+        }
+      return bonds;
+    }
+
+    // 4. Gold FCC
+    function stGetGold() {
+      var atoms = [], a = 0.65, N = 3;
+      var fcc = [[0,0,0],[.5,.5,0],[.5,0,.5],[0,.5,.5]];
+      var ctr = (N-1)*a/2;
+      for (var gx = 0; gx < N; gx++)
+        for (var gy = 0; gy < N; gy++)
+          for (var gz = 0; gz < N; gz++)
+            for (var fi = 0; fi < fcc.length; fi++)
+              atoms.push({ x: (fcc[fi][0]+gx)*a - ctr, y: (fcc[fi][1]+gy)*a - ctr, z: (fcc[fi][2]+gz)*a - ctr });
+      var unique = [];
+      for (var i = 0; i < atoms.length; i++) {
+        var dup = false;
+        for (var j = 0; j < unique.length; j++)
+          if (Math.abs(unique[j].x-atoms[i].x)<0.01 && Math.abs(unique[j].y-atoms[i].y)<0.01 && Math.abs(unique[j].z-atoms[i].z)<0.01) { dup = true; break; }
+        if (!dup) unique.push(atoms[i]);
+      }
+      return unique;
+    }
+
+    function stGetElectronDots() {
+      var dots = [];
+      for (var i = 0; i < 80; i++) {
+        var s = i * 1.618;
+        dots.push({
+          x: Math.sin(s*3.7+1.2)*0.8 + Math.cos(s*7.1)*0.4,
+          y: Math.cos(s*2.3+0.8)*0.8 + Math.sin(s*5.3)*0.4,
+          z: Math.sin(s*4.1+2.1)*0.8 + Math.cos(s*6.7)*0.4,
+          phase: s * 2.0
+        });
+      }
+      return dots;
+    }
+
+    var stCO2 = stGetCO2();
+    var stNaCl = stGetNaCl();
+    var stDiam = stGetDiamond();
+    var stDiamBonds = stGetDiamondBonds(stDiam);
+    var stGold = stGetGold();
+    var stElecDots = stGetElectronDots();
+    var stFrame = 0;
+
+    function stDrawAtom(x, y, r, color, alpha) {
+      var cr = parseInt(color.slice(1,3),16);
+      var cg = parseInt(color.slice(3,5),16);
+      var cb = parseInt(color.slice(5,7),16);
+      ctxS.fillStyle = 'rgba('+cr+','+cg+','+cb+','+alpha+')';
+      ctxS.beginPath(); ctxS.arc(x, y, r, 0, Math.PI*2); ctxS.fill();
+      ctxS.fillStyle = 'rgba(255,255,255,'+(0.18*alpha)+')';
+      ctxS.beginPath(); ctxS.arc(x - r*0.3, y - r*0.3, r*0.35, 0, Math.PI*2); ctxS.fill();
+    }
+
+    function stDrawCO2(ax, ay, cx, cy, sc) {
+      var items = [];
+      for (var mi = 0; mi < stCO2.length; mi++) {
+        var mol = stCO2[mi];
+        var rc = stRotate(mol.c, ax, ay), ro1 = stRotate(mol.o1, ax, ay), ro2 = stRotate(mol.o2, ax, ay);
+        var pc = stProject(rc, cx, cy, sc), po1 = stProject(ro1, cx, cy, sc), po2 = stProject(ro2, cx, cy, sc);
+        items.push({ pc: pc, po1: po1, po2: po2, z: (pc.z+po1.z+po2.z)/3 });
+      }
+      items.sort(function(a,b) { return b.z - a.z; });
+      for (var ii = 0; ii < items.length; ii++) {
+        var it = items[ii], pc = it.pc, po1 = it.po1, po2 = it.po2;
+        var df = Math.max(0, Math.min(1, (it.z+2)/4));
+        var al = 0.4 + 0.6*df;
+        var ar = 3 + 2*pc.f, or2 = ar*1.15;
+        var ends = [po1, po2];
+        for (var ei = 0; ei < 2; ei++) {
+          var po = ends[ei];
+          var bdx = po.x-pc.x, bdy = po.y-pc.y;
+          var bl = Math.sqrt(bdx*bdx+bdy*bdy) || 1;
+          var nx = -bdy/bl*1.5, ny = bdx/bl*1.5;
+          ctxS.strokeStyle = 'rgba(200,200,200,'+(0.3*al)+')';
+          ctxS.lineWidth = 1;
+          ctxS.beginPath(); ctxS.moveTo(pc.x+nx, pc.y+ny); ctxS.lineTo(po.x+nx, po.y+ny); ctxS.stroke();
+          ctxS.beginPath(); ctxS.moveTo(pc.x-nx, pc.y-ny); ctxS.lineTo(po.x-nx, po.y-ny); ctxS.stroke();
+        }
+        stDrawAtom(pc.x, pc.y, ar, '#888888', al);
+        stDrawAtom(po1.x, po1.y, or2, '#ef5350', al);
+        stDrawAtom(po2.x, po2.y, or2, '#ef5350', al);
+      }
+    }
+
+    function stDrawNaCl(ax, ay, cx, cy, sc) {
+      var proj = [];
+      for (var i = 0; i < stNaCl.length; i++) {
+        var a = stNaCl[i], r = stRotate(a, ax, ay), p = stProject(r, cx, cy, sc);
+        proj.push({ x: p.x, y: p.y, z: p.z, f: p.f, isNa: a.isNa });
+      }
+      proj.sort(function(a,b) { return b.z - a.z; });
+      for (var i = 0; i < proj.length; i++) {
+        var at = proj[i];
+        var df = Math.max(0, Math.min(1, (at.z+2)/4));
+        var al = 0.4 + 0.6*df;
+        if (at.isNa) stDrawAtom(at.x, at.y, 3+2*at.f, '#ab47bc', al);
+        else stDrawAtom(at.x, at.y, 5+3*at.f, '#66bb6a', al);
+      }
+    }
+
+    function stDrawDiamond(ax, ay, cx, cy, sc) {
+      var proj = [];
+      for (var i = 0; i < stDiam.length; i++) {
+        var r = stRotate(stDiam[i], ax, ay);
+        proj.push(stProject(r, cx, cy, sc));
+      }
+      var sb = [];
+      for (var i = 0; i < stDiamBonds.length; i++) {
+        var b = stDiamBonds[i];
+        sb.push({ i: b[0], j: b[1], z: (proj[b[0]].z+proj[b[1]].z)/2 });
+      }
+      sb.sort(function(a,b) { return b.z - a.z; });
+      for (var i = 0; i < sb.length; i++) {
+        var bd = sb[i], p1 = proj[bd.i], p2 = proj[bd.j];
+        var df = Math.max(0, Math.min(1, (bd.z+2)/4));
+        ctxS.strokeStyle = 'rgba(79,195,247,'+(0.2+0.4*df)+')';
+        ctxS.lineWidth = 1.5;
+        ctxS.beginPath(); ctxS.moveTo(p1.x, p1.y); ctxS.lineTo(p2.x, p2.y); ctxS.stroke();
+      }
+      var sa = proj.slice().sort(function(a,b) { return b.z - a.z; });
+      for (var i = 0; i < sa.length; i++) {
+        var at = sa[i];
+        var df = Math.max(0, Math.min(1, (at.z+2)/4));
+        stDrawAtom(at.x, at.y, 3+2*at.f, '#4fc3f7', 0.4+0.6*df);
+      }
+    }
+
+    function stDrawGold(ax, ay, cx, cy, sc) {
+      var t = stFrame * 0.02;
+      for (var i = 0; i < stElecDots.length; i++) {
+        var d = stElecDots[i];
+        var ex = Math.sin(d.phase+t)*0.08, ey = Math.cos(d.phase*1.3+t*0.7)*0.08;
+        var r = stRotate({ x: d.x+ex, y: d.y+ey, z: d.z }, ax, ay);
+        var p = stProject(r, cx, cy, sc);
+        var df = Math.max(0, Math.min(1, (p.z+2)/4));
+        ctxS.fillStyle = 'rgba(255,213,79,'+(0.08+0.12*df)+')';
+        ctxS.beginPath(); ctxS.arc(p.x, p.y, 1.2, 0, Math.PI*2); ctxS.fill();
+      }
+      var proj = [];
+      for (var i = 0; i < stGold.length; i++) {
+        var r = stRotate(stGold[i], ax, ay);
+        proj.push(stProject(r, cx, cy, sc));
+      }
+      proj.sort(function(a,b) { return b.z - a.z; });
+      for (var i = 0; i < proj.length; i++) {
+        var at = proj[i];
+        var df = Math.max(0, Math.min(1, (at.z+2)/4));
+        stDrawAtom(at.x, at.y, 5+3*at.f, '#ffd54f', 0.4+0.6*df);
+      }
+    }
+
+    function drawSolidTypes() {
+      clearCanvas(ctxS, WS, HS);
+      stFrame++;
+
+      ctxS.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctxS.lineWidth = 1;
+      ctxS.beginPath(); ctxS.moveTo(stHalfW, 10); ctxS.lineTo(stHalfW, HS-10); ctxS.stroke();
+      ctxS.beginPath(); ctxS.moveTo(10, stHalfH); ctxS.lineTo(WS-10, stHalfH); ctxS.stroke();
+
+      var qCx = [stHalfW/2, stHalfW+stHalfW/2, stHalfW/2, stHalfW+stHalfW/2];
+      var qCy = [stHalfH/2-8, stHalfH/2-8, stHalfH+stHalfH/2-8, stHalfH+stHalfH/2-8];
+      var labels = ['Molecular (CO\u2082)', 'Ionic (NaCl)', 'Covalent Network (Diamond)', 'Metallic (Gold)'];
+      var scales = [80, 70, 55, 55];
+
+      stDrawCO2(stAngles[0].x, stAngles[0].y, qCx[0], qCy[0], scales[0]);
+      stDrawNaCl(stAngles[1].x, stAngles[1].y, qCx[1], qCy[1], scales[1]);
+      stDrawDiamond(stAngles[2].x, stAngles[2].y, qCx[2], qCy[2], scales[2]);
+      stDrawGold(stAngles[3].x, stAngles[3].y, qCx[3], qCy[3], scales[3]);
+
+      ctxS.fillStyle = COLORS.text;
+      ctxS.font = FONT_LG;
+      ctxS.textAlign = 'center';
+      var labelY = [stHalfH-14, stHalfH-14, HS-14, HS-14];
+      for (var i = 0; i < 4; i++) ctxS.fillText(labels[i], qCx[i], labelY[i]);
+    }
+
+    cSolid.addEventListener('mousedown', function(e) {
+      var rect = cSolid.getBoundingClientRect();
+      var mx = (e.clientX - rect.left) * (WS / rect.width);
+      var my = (e.clientY - rect.top) * (HS / rect.height);
+      stDragging = stGetQuadrant(mx, my);
+      stDragStart = { x: e.clientX, y: e.clientY };
+      stDragAngleStart = { x: stAngles[stDragging].x, y: stAngles[stDragging].y };
+    });
+
+    cSolid.addEventListener('mousemove', function(e) {
+      if (stDragging < 0) return;
+      var mdx = (e.clientX - stDragStart.x) * 0.01;
+      var mdy = (e.clientY - stDragStart.y) * 0.01;
+      stAngles[stDragging].y = stDragAngleStart.y + mdx;
+      stAngles[stDragging].x = stDragAngleStart.x + mdy;
+      drawSolidTypes();
+    });
+
+    window.addEventListener('mouseup', function() { stDragging = -1; });
+
+    cSolid.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      var rect = cSolid.getBoundingClientRect();
+      var tc = e.touches[0];
+      var mx = (tc.clientX - rect.left) * (WS / rect.width);
+      var my = (tc.clientY - rect.top) * (HS / rect.height);
+      stDragging = stGetQuadrant(mx, my);
+      stDragStart = { x: tc.clientX, y: tc.clientY };
+      stDragAngleStart = { x: stAngles[stDragging].x, y: stAngles[stDragging].y };
+    }, { passive: false });
+
+    cSolid.addEventListener('touchmove', function(e) {
+      if (stDragging < 0) return;
+      e.preventDefault();
+      var tc = e.touches[0];
+      var tdx = (tc.clientX - stDragStart.x) * 0.01;
+      var tdy = (tc.clientY - stDragStart.y) * 0.01;
+      stAngles[stDragging].y = stDragAngleStart.y + tdx;
+      stAngles[stDragging].x = stDragAngleStart.x + tdy;
+      drawSolidTypes();
+    }, { passive: false });
+
+    cSolid.addEventListener('touchend', function() { stDragging = -1; });
+
+    function animateSolidTypes() {
+      if (stDragging < 0) {
+        for (var i = 0; i < 4; i++) stAngles[i].y += 0.003;
+        drawSolidTypes();
+      }
+      requestAnimationFrame(animateSolidTypes);
+    }
+    animateSolidTypes();
   }
 }
 

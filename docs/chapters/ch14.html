@@ -639,127 +639,36 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <p>To add more than 2 bits, we need to carry over the second binary digit. We do this with a carry block in what's called a <strong>half adder</strong>. Half adders can be chained together into a <strong>full adder</strong>:</p>
 
-<figure>
-<svg viewBox="0 0 550 300" xmlns="http://www.w3.org/2000/svg" style="max-width:550px; width:100%; height:auto; background:#fafbfc; border:1px solid #e0e0e0; border-radius:4px;">
-  <!-- Labels for inputs -->
-  <text x="18" y="58" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">A</text>
-  <text x="18" y="108" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">B</text>
-  <text x="18" y="228" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">C<tspan font-size="10" dy="3">in</tspan></text>
-
-  <!-- Input wires -->
-  <line x1="35" y1="55" x2="80" y2="55" stroke="#555" stroke-width="1.5"/>
-  <line x1="35" y1="105" x2="80" y2="105" stroke="#555" stroke-width="1.5"/>
-  <line x1="45" y1="225" x2="230" y2="225" stroke="#555" stroke-width="1.5"/>
-
-  <!-- XOR gate 1 shape (A XOR B = P) -->
-  <path d="M80,40 Q95,40 110,55 Q120,68 120,80 Q120,92 110,105 Q95,120 80,120" fill="none" stroke="#333" stroke-width="1.5"/>
-  <path d="M85,40 C100,40 130,55 140,80 C130,105 100,120 85,120" fill="white" stroke="#333" stroke-width="1.5"/>
-  <text x="105" y="85" font-family="sans-serif" font-size="11" fill="#333" text-anchor="middle">XOR</text>
-
-  <!-- XOR1 input wires to gate body -->
-  <line x1="80" y1="55" x2="95" y2="55" stroke="#555" stroke-width="1.5"/>
-  <line x1="80" y1="105" x2="95" y2="105" stroke="#555" stroke-width="1.5"/>
-
-  <!-- Wire P from XOR1 output -->
-  <line x1="140" y1="80" x2="175" y2="80" stroke="#555" stroke-width="1.5"/>
-  <text x="155" y="73" font-family="sans-serif" font-size="11" fill="#888">P</text>
-
-  <!-- Branch P down to AND2 -->
-  <circle cx="175" cy="80" r="2.5" fill="#555"/>
-  <line x1="175" y1="80" x2="175" y2="195" stroke="#555" stroke-width="1.5"/>
-  <line x1="175" y1="195" x2="230" y2="195" stroke="#555" stroke-width="1.5"/>
-
-  <!-- Wire P to XOR2 top input -->
-  <line x1="175" y1="80" x2="230" y2="80" stroke="#555" stroke-width="1.5"/>
-
-  <!-- Cin wire to XOR2 bottom input -->
-  <line x1="200" y1="225" x2="200" y2="120" stroke="#555" stroke-width="1.5"/>
-  <circle cx="200" cy="225" r="2.5" fill="#555"/>
-  <line x1="200" y1="120" x2="230" y2="120" stroke="#555" stroke-width="1.5"/>
-
-  <!-- XOR gate 2 (P XOR Cin = Sum) -->
-  <path d="M230,65 Q245,65 260,80 Q270,93 270,100 Q270,107 260,120 Q245,135 230,135" fill="none" stroke="#333" stroke-width="1.5"/>
-  <path d="M235,65 C250,65 280,80 290,100 C280,120 250,135 235,135" fill="white" stroke="#333" stroke-width="1.5"/>
-  <text x="255" y="105" font-family="sans-serif" font-size="11" fill="#333" text-anchor="middle">XOR</text>
-
-  <!-- XOR2 input wires -->
-  <line x1="230" y1="80" x2="245" y2="80" stroke="#555" stroke-width="1.5"/>
-  <line x1="230" y1="120" x2="245" y2="120" stroke="#555" stroke-width="1.5"/>
-
-  <!-- Sum output -->
-  <line x1="290" y1="100" x2="530" y2="100" stroke="#555" stroke-width="1.5"/>
-  <text x="510" y="93" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">Sum</text>
-
-  <!-- AND gate 1 (A AND B = G1) -->
-  <!-- Branch A down -->
-  <circle cx="60" cy="55" r="2.5" fill="#555"/>
-  <line x1="60" y1="55" x2="60" y2="165" stroke="#555" stroke-width="1.5"/>
-  <line x1="60" y1="165" x2="230" y2="165" stroke="#555" stroke-width="1.5"/>
-  <!-- Branch B down -->
-  <circle cx="70" cy="105" r="2.5" fill="#555"/>
-  <line x1="70" y1="105" x2="70" y2="250" stroke="#555" stroke-width="1.5"/>
-  <line x1="70" y1="250" x2="230" y2="250" stroke="#555" stroke-width="1.5"/>
-
-  <!-- AND gate 2 (P AND Cin = G2) -->
-  <path d="M230,180 L230,210 L260,210 Q285,210 285,195 Q285,180 260,180 Z" fill="white" stroke="#333" stroke-width="1.5"/>
-  <text x="257" y="200" font-family="sans-serif" font-size="11" fill="#333" text-anchor="middle">AND</text>
-
-  <!-- AND2 input wires -->
-  <line x1="225" y1="190" x2="230" y2="190" stroke="#555" stroke-width="1.5"/>
-  <line x1="200" y1="225" x2="200" y2="205" stroke="#555" stroke-width="1.5"/>
-  <line x1="200" y1="205" x2="230" y2="205" stroke="#555" stroke-width="1.5"/>
-
-  <!-- AND gate 1 (A AND B = G1) -->
-  <path d="M230,235 L230,265 L260,265 Q285,265 285,250 Q285,235 260,235 Z" fill="white" stroke="#333" stroke-width="1.5"/>
-  <text x="257" y="255" font-family="sans-serif" font-size="11" fill="#333" text-anchor="middle">AND</text>
-
-  <!-- AND1 input wires -->
-  <line x1="225" y1="245" x2="230" y2="245" stroke="#555" stroke-width="1.5"/>
-  <line x1="225" y1="260" x2="230" y2="260" stroke="#555" stroke-width="1.5"/>
-
-  <!-- Reroute A and B into AND1 inputs -->
-  <line x1="60" y1="165" x2="60" y2="245" stroke="#555" stroke-width="0" />
-  <!-- A to AND1 top -->
-  <line x1="230" y1="165" x2="230" y2="165" stroke="#555" stroke-width="0"/>
-  <!-- Fix: route A wire to AND1 top input at y=245 -->
-  <line x1="60" y1="245" x2="230" y2="245" stroke="#555" stroke-width="1.5"/>
-  <circle cx="60" cy="165" r="2.5" fill="#555"/>
-  <line x1="60" y1="165" x2="60" y2="245" stroke="#555" stroke-width="1.5"/>
-  <!-- B to AND1 bottom input at y=260 -->
-  <line x1="70" y1="250" x2="70" y2="260" stroke="#555" stroke-width="1.5"/>
-  <line x1="70" y1="260" x2="230" y2="260" stroke="#555" stroke-width="1.5"/>
-
-  <!-- G1 output wire -->
-  <line x1="285" y1="250" x2="320" y2="250" stroke="#555" stroke-width="1.5"/>
-  <text x="298" y="268" font-family="sans-serif" font-size="10" fill="#888">G1</text>
-
-  <!-- G2 output wire -->
-  <line x1="285" y1="195" x2="320" y2="195" stroke="#555" stroke-width="1.5"/>
-  <text x="298" y="188" font-family="sans-serif" font-size="10" fill="#888">G2</text>
-
-  <!-- OR gate (G1 OR G2 = Cout) -->
-  <!-- Bring G2 and G1 to OR gate -->
-  <line x1="320" y1="195" x2="350" y2="210" stroke="#555" stroke-width="1.5"/>
-  <line x1="320" y1="250" x2="350" y2="235" stroke="#555" stroke-width="1.5"/>
-
-  <path d="M345,200 Q355,200 370,210 Q385,218 385,222 Q385,226 370,235 Q355,245 345,245 Q355,222 345,200 Z" fill="white" stroke="#333" stroke-width="1.5"/>
-  <text x="367" y="227" font-family="sans-serif" font-size="10" fill="#333" text-anchor="middle">OR</text>
-
-  <!-- Cout output -->
-  <line x1="385" y1="222" x2="530" y2="222" stroke="#555" stroke-width="1.5"/>
-  <text x="505" y="215" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">C<tspan font-size="10" dy="3">out</tspan></text>
-</svg>
-<figcaption>A full adder, built from XOR and AND gates.</figcaption>
-</figure>
+<!-- INTERACTIVE: Full Adder -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: Full Adder</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-full-adder" width="650" height="320"></canvas></div>
+  <div class="vis-controls">
+    <div class="button-group" id="adder-input-buttons">
+      <button class="control-btn" id="adder-input-a">A = 0</button>
+      <button class="control-btn" id="adder-input-b">B = 0</button>
+      <button class="control-btn" id="adder-input-cin">C_in = 0</button>
+    </div>
+    <span class="value-display" id="adder-output">Sum = 0, C_out = 0</span>
+  </div>
+</div>
 
 <p>From here, you can add more and more bits together by sewing in successive adders. You can make more complicated integrated circuits to multiply numbers and do other operations with them.</p>
 
 <p>There's one final element needed to make a computer: <strong>memory</strong>. There are many ways to make memory, but the basic form is a latch or flip-flop. For example, we can make such a thing using cross-coupled NOR gates:</p>
 
-<figure>
-<img src="images/14-Semiconductors_p20_img0.png" alt="SR latch">
-<figcaption>An SR latch built from cross-coupled NOR gates. It has two stable states, and can be toggled between them by pulsing the Set or Reset inputs.</figcaption>
-</figure>
+<!-- INTERACTIVE: SR Latch -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: SR Latch</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-sr-latch" width="600" height="300"></canvas></div>
+  <div class="vis-controls">
+    <div class="button-group" id="sr-latch-buttons">
+      <button class="control-btn" id="sr-set-btn">Pulse SET</button>
+      <button class="control-btn" id="sr-reset-btn">Pulse RESET</button>
+    </div>
+    <span class="value-display" id="sr-latch-output">Q = 0, Q̄ = 1</span>
+  </div>
+</div>
 
 <p>This object called an SR latch (for Set-Reset) has two stable states. Either $Q = 1$ and $\bar{Q} = 0$ or $Q = 0$ and $\bar{Q} = 1$. To change states, we can pulse the $R$ or $S$ input. In this way, we can store a bit, and toggle it back and forth through the Set and Reset switches.</p>
 
