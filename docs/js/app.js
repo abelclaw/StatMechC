@@ -21056,112 +21056,117 @@ function initCh14Vis() {
 
     function drawTransistor() {
       clearCanvas(ctx, W, H);
-      const cx = W / 2, cy = H / 2;
+      const cx = W / 2, cy = H / 2 + 10;
       const onC = '#4caf50', offC = '#666', wireC = '#aaa';
 
       // Title
       ctx.fillStyle = COLORS.text; ctx.font = 'bold ' + FONT_LG; ctx.textAlign = 'center';
       ctx.fillText('npn Transistor Circuit', cx, 25);
 
-      // Draw the transistor body
-      const tx = cx - 20, ty = cy - 50, tw = 40, th = 100;
-      // N-P-N layers
-      ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty, tw, 30);
-      ctx.fillStyle = '#ff7070'; ctx.fillRect(tx, ty + 30, tw, 15);
-      ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty + 45, tw, 55);
+      // Layout: V_supply → LED (in series) → Collector → Emitter → Ground
+      const flowCol = baseOn ? onC : '#555';
+
+      // Transistor body
+      const tx = cx - 20, ty = cy - 25, tw = 40, th = 80;
+      ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty, tw, 25);
+      ctx.fillStyle = '#ff7070'; ctx.fillRect(tx, ty + 25, tw, 12);
+      ctx.fillStyle = '#5c9eff'; ctx.fillRect(tx, ty + 37, tw, 43);
       ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5;
       ctx.strokeRect(tx, ty, tw, th);
-      // Labels
+      // NPN labels
       ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('n', tx + tw/2, ty + 18);
-      ctx.fillText('p', tx + tw/2, ty + 42);
-      ctx.fillText('n', tx + tw/2, ty + 75);
+      ctx.fillText('n', tx + tw / 2, ty + 16);
+      ctx.fillText('p', tx + tw / 2, ty + 35);
+      ctx.fillText('n', tx + tw / 2, ty + 62);
 
       // Terminal labels
       ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'left';
-      ctx.fillText('Collector', tx + tw + 15, ty + 10);
-      ctx.fillText('Base', tx + tw + 15, ty + 42);
-      ctx.fillText('Emitter', tx + tw + 15, ty + 85);
+      ctx.fillText('Collector', tx + tw + 10, ty + 8);
+      ctx.fillText('Base', tx + tw + 10, ty + 35);
+      ctx.fillText('Emitter', tx + tw + 10, ty + 72);
 
-      // Wires
-      const wireCol = baseOn ? onC : wireC;
-      const flowCol = baseOn ? onC : '#555';
-
-      // Supply voltage (top)
-      ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx, ty - 50); ctx.lineTo(cx, ty); ctx.stroke();
+      // === Supply voltage at top ===
+      const vccY = 42;
       ctx.fillStyle = COLORS.text; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('V_supply', cx, ty - 55);
-      // + symbol
+      ctx.fillText('V_supply', cx, vccY - 5);
       ctx.fillStyle = flowCol; ctx.font = 'bold 16px sans-serif';
-      ctx.fillText('+', cx + 15, ty - 35);
+      ctx.fillText('+', cx + 15, vccY + 12);
 
-      // Ground (bottom)
+      // Wire from V_supply down to LED
+      const ledTop = vccY + 8;
+      const ledBot = ty - 30;
+      const ledMidY = (ledTop + ledBot) / 2;
       ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx, ty + th); ctx.lineTo(cx, ty + th + 40); ctx.stroke();
-      // Ground symbol
-      for (let i = 0; i < 3; i++) {
-        const gw = 20 - i * 6;
-        ctx.beginPath();
-        ctx.moveTo(cx - gw, ty + th + 40 + i * 6);
-        ctx.lineTo(cx + gw, ty + th + 40 + i * 6);
-        ctx.stroke();
-      }
+      ctx.beginPath(); ctx.moveTo(cx, ledTop); ctx.lineTo(cx, ledMidY - 18); ctx.stroke();
 
-      // Base wire (left)
-      ctx.strokeStyle = baseOn ? '#ff9800' : wireC; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(tx - 80, ty + 37); ctx.lineTo(tx, ty + 37); ctx.stroke();
-
-      // Base voltage label
-      ctx.fillStyle = baseOn ? '#ff9800' : '#888'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(baseOn ? '0.7V' : '0V', tx - 85, ty + 42);
-
-      // Battery symbol for base
+      // LED symbol (triangle pointing down + bar) — in series
+      const ledTriTop = ledMidY - 16;
+      const ledTriBot = ledMidY + 6;
+      const ledBarY = ledTriBot;
       if (baseOn) {
-        const bx = tx - 60, by = ty + 25;
-        ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + 24); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(bx - 6, by + 8); ctx.lineTo(bx + 6, by + 8); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(bx - 3, by + 14); ctx.lineTo(bx + 3, by + 14); ctx.stroke();
-      }
-
-      // LED on the collector side
-      const ledX = cx + 100, ledY = ty - 20;
-      ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx, ty - 30); ctx.lineTo(ledX, ty - 30); ctx.lineTo(ledX, ledY + 10); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(ledX, ledY + 35); ctx.lineTo(ledX, ty + 10); ctx.lineTo(cx + 20, ty + 10); ctx.stroke();
-
-      // LED symbol (triangle + bar)
-      if (baseOn) {
-        ctx.fillStyle = 'rgba(255,200,50,0.5)';
-        ctx.beginPath(); ctx.arc(ledX, ledY + 22, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,200,50,0.4)';
+        ctx.beginPath(); ctx.arc(cx, ledMidY - 4, 20, 0, Math.PI * 2); ctx.fill();
       }
       ctx.fillStyle = baseOn ? '#ffeb3b' : '#555';
       ctx.beginPath();
-      ctx.moveTo(ledX - 10, ledY + 12); ctx.lineTo(ledX + 10, ledY + 12);
-      ctx.lineTo(ledX, ledY + 30); ctx.closePath(); ctx.fill();
+      ctx.moveTo(cx - 10, ledTriTop); ctx.lineTo(cx + 10, ledTriTop);
+      ctx.lineTo(cx, ledTriBot); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = baseOn ? '#ffeb3b' : '#555'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(ledX - 10, ledY + 30); ctx.lineTo(ledX + 10, ledY + 30); ctx.stroke();
-      ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'center';
-      ctx.fillText('LED', ledX, ledY + 50);
+      ctx.beginPath(); ctx.moveTo(cx - 10, ledBarY); ctx.lineTo(cx + 10, ledBarY); ctx.stroke();
+      ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'left';
+      ctx.fillText('LED', cx + 18, ledMidY);
 
-      // Current flow arrows when on
+      // Wire from LED down to collector
+      ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, ledBarY); ctx.lineTo(cx, ty); ctx.stroke();
+
+      // === Ground (below emitter) ===
+      const gndY = ty + th + 35;
+      ctx.strokeStyle = flowCol; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, ty + th); ctx.lineTo(cx, gndY); ctx.stroke();
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+      for (let i = 0; i < 3; i++) {
+        const gw = 16 - i * 5;
+        ctx.beginPath();
+        ctx.moveTo(cx - gw, gndY + i * 5);
+        ctx.lineTo(cx + gw, gndY + i * 5);
+        ctx.stroke();
+      }
+
+      // === Base wire (left) ===
+      const baseY = ty + 31;
+      ctx.strokeStyle = baseOn ? '#ff9800' : wireC; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(tx - 80, baseY); ctx.lineTo(tx, baseY); ctx.stroke();
+
+      // Base voltage label
+      ctx.fillStyle = baseOn ? '#ff9800' : '#888'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(baseOn ? '0.7V' : '0V', tx - 85, baseY + 5);
+
+      // Battery symbol for base
+      if (baseOn) {
+        const bx = tx - 55, by = baseY - 14;
+        ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + 28); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx - 6, by + 9); ctx.lineTo(bx + 6, by + 9); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx - 3, by + 16); ctx.lineTo(bx + 3, by + 16); ctx.stroke();
+      }
+
+      // === Current flow arrows when on ===
       if (baseOn) {
         animT += 0.04;
-        const arrowPositions = [];
-        // Current through collector to emitter
-        for (let i = 0; i < 4; i++) {
-          const frac = ((animT + i * 0.25) % 1);
-          const ay = ty - 50 + frac * (th + 90);
-          arrowPositions.push({ x: cx, y: ay, dir: 1 });
-        }
         ctx.fillStyle = onC;
-        for (const ap of arrowPositions) {
-          if (ap.y < ty - 50 || ap.y > ty + th + 40) continue;
+        const pathTop = ledTop;
+        const pathBot = gndY;
+        for (let i = 0; i < 5; i++) {
+          const frac = ((animT + i * 0.2) % 1);
+          const ay = pathTop + frac * (pathBot - pathTop);
+          if (ay < pathTop || ay > pathBot) continue;
+          // Skip drawing over the LED triangle area
+          if (ay > ledTriTop - 2 && ay < ledBarY + 2) continue;
           ctx.beginPath();
-          ctx.moveTo(ap.x - 5, ap.y - 4);
-          ctx.lineTo(ap.x + 5, ap.y - 4);
-          ctx.lineTo(ap.x, ap.y + 6);
+          ctx.moveTo(cx - 5, ay - 4);
+          ctx.lineTo(cx + 5, ay - 4);
+          ctx.lineTo(cx, ay + 5);
           ctx.closePath(); ctx.fill();
         }
       }
@@ -21170,10 +21175,10 @@ function initCh14Vis() {
       ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
       if (baseOn) {
         ctx.fillStyle = onC;
-        ctx.fillText('Base ON: current flows, LED lights up', cx, H - 15);
+        ctx.fillText('Base ON \u2192 current flows through LED \u2192 it lights up', cx, H - 10);
       } else {
         ctx.fillStyle = '#999';
-        ctx.fillText('Base OFF: no current flows, LED is dark', cx, H - 15);
+        ctx.fillText('Base OFF \u2192 no current flows \u2192 LED is dark', cx, H - 10);
       }
     }
 
