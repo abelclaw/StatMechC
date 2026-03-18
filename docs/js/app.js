@@ -26067,6 +26067,20 @@ function initCh15Vis() {
       return [r, g, b];
     }
 
+    // --- Helper: draw "R☉" with subscript sun symbol ---
+    function drawRsun(val, x, y, font, color) {
+      const text = val + ' R';
+      ctxS.fillStyle = color; ctxS.font = font;
+      const baseW = ctxS.measureText(text).width;
+      ctxS.fillText(text, x, y);
+      // Draw ☉ as subscript (smaller, shifted down)
+      const size = parseFloat(font);
+      const subSize = Math.round(size * 0.75);
+      ctxS.font = subSize + 'px Inter, system-ui, sans-serif';
+      ctxS.fillText('\u2609', x + baseW + 1, y + size * 0.18);
+      ctxS.font = font; // restore
+    }
+
     // --- Camera system ---
     // Place stars along a horizontal line in world-space (units: R_sun).
     const worldX = [];
@@ -26265,22 +26279,10 @@ function initCh15Vis() {
         }
       }
 
-      // Draw horizon stars (back to front = largest first)
+      // Draw horizon stars (back to front = largest first, no labels)
       horizonStars.sort((a, b) => b.rPx - a.rPx);
-      let nextLabelY = 30; // track occupied vertical space to avoid overlapping labels
       for (const h of horizonStars) {
         drawHorizon(h.s, h.sx, h.sy, h.rPx, camX, scale);
-        const [cr, cg, cb] = tempToRGB(h.s.T);
-        const col = 'rgb(' + Math.round(cr*255) + ',' + Math.round(cg*255) + ',' + Math.round(cb*255) + ')';
-        const surfaceY = h.sy - h.rPx;
-        const labelY = Math.max(surfaceY + 25, nextLabelY);
-        if (labelY < HS - 20) {
-          ctxS.fillStyle = col; ctxS.font = FONT; ctxS.textAlign = 'center';
-          ctxS.fillText(h.s.name + ' (surface)', Math.max(80, Math.min(WS - 80, h.sx)), labelY);
-          ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
-          ctxS.fillText(h.s.R + ' R\u2609 \u00b7 ' + h.s.type + ' \u00b7 ' + h.s.cat, Math.max(80, Math.min(WS - 80, h.sx)), labelY + 16);
-          nextLabelY = labelY + 36;
-        }
       }
 
       // Draw visible stars (back to front = largest first so small ones draw on top)
@@ -26293,11 +26295,11 @@ function initCh15Vis() {
         const isHover = hoverStar === v.i;
         drawStar(v.s, v.sx, v.sy, v.rPx, isHover);
 
-        // Labels
+        // Labels above the star
         const labelAbove = v.sy - v.rPx - 10;
         if (labelAbove > 8 && v.sx > -30 && v.sx < WS + 30) {
           ctxS.textAlign = 'center';
-          // Category above name
+          // Category + type above name
           if (v.rPx > 6 || isHover) {
             ctxS.fillStyle = COLORS.textDim; ctxS.font = '10px Inter, system-ui, sans-serif';
             ctxS.fillText(v.s.cat + ' \u00b7 ' + v.s.type, v.sx, labelAbove - 16);
@@ -26306,44 +26308,38 @@ function initCh15Vis() {
           ctxS.fillStyle = isHover ? '#fff' : 'rgba(255,255,255,0.82)';
           ctxS.font = (isHover || v.rPx > 15) ? FONT : FONT_SM;
           ctxS.fillText(v.s.name, v.sx, labelAbove);
-          // Size below name
-          if (v.rPx > 6 || isHover) {
-            ctxS.fillStyle = COLORS.textDim; ctxS.font = '10px Inter, system-ui, sans-serif';
-            ctxS.fillText(v.s.R + ' R\u2609', v.sx, labelAbove + 13);
-          }
         }
 
-        // Diameter marker <-> with size in km
-        if (v.rPx > 15 && v.sx > 0 && v.sx < WS) {
-          const dKm = v.s.R * 2 * 696340; // diameter in km
-          const exp = Math.floor(Math.log10(dKm));
-          const sizeStr = '10' + superscript(exp) + ' km';
-          const markerY = v.sy + v.rPx * 0.3;
-          const mLeft = v.sx - v.rPx + 4;
-          const mRight = v.sx + v.rPx - 4;
-          // Dark outline then bright line
-          ctxS.strokeStyle = 'rgba(0,0,0,0.5)';
-          ctxS.lineWidth = 3;
-          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mRight, markerY); ctxS.stroke();
-          ctxS.strokeStyle = 'rgba(255,255,200,0.8)';
-          ctxS.lineWidth = 1.5;
-          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mRight, markerY); ctxS.stroke();
-          // Arrows
-          const aw = Math.min(8, v.rPx * 0.15);
-          ctxS.beginPath(); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + aw, markerY - aw/2); ctxS.moveTo(mLeft, markerY); ctxS.lineTo(mLeft + aw, markerY + aw/2); ctxS.stroke();
-          ctxS.beginPath(); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - aw, markerY - aw/2); ctxS.moveTo(mRight, markerY); ctxS.lineTo(mRight - aw, markerY + aw/2); ctxS.stroke();
-          // Size label — larger font with dark pill background
-          const fontSize = Math.max(15, Math.min(22, v.rPx * 0.2));
-          ctxS.font = 'bold ' + fontSize + 'px Inter, system-ui, sans-serif';
-          ctxS.textAlign = 'center';
-          const tw = ctxS.measureText(sizeStr).width + 16;
-          const th = fontSize + 10;
-          ctxS.fillStyle = 'rgba(0,0,0,0.82)';
-          ctxS.beginPath();
-          ctxS.roundRect(v.sx - tw/2, markerY - th - 2, tw, th, 5);
-          ctxS.fill();
-          ctxS.fillStyle = 'rgba(255,255,200,1.0)';
-          ctxS.fillText(sizeStr, v.sx, markerY - 7);
+        // Size label below the star on a dark pill
+        if ((v.rPx > 6 || isHover) && v.sx > -30 && v.sx < WS + 30) {
+          const labelBelow = v.sy + v.rPx + 20;
+          if (labelBelow < HS - 10) {
+            const sizeFont = '12px Inter, system-ui, sans-serif';
+            ctxS.font = sizeFont;
+            const sizeText = v.s.R + ' R';
+            const sunText = '\u2609';
+            const sunFont = '9px Inter, system-ui, sans-serif';
+            const sizeW = ctxS.measureText(sizeText).width;
+            ctxS.font = sunFont;
+            const sunW = ctxS.measureText(sunText).width;
+            const totalW = sizeW + sunW + 2;
+            const pillW = totalW + 16;
+            const pillH = 20;
+            const pillX = v.sx - pillW / 2;
+            const pillY = labelBelow - 14;
+            ctxS.fillStyle = 'rgba(0,0,0,0.80)';
+            ctxS.beginPath(); ctxS.roundRect(pillX, pillY, pillW, pillH, 4); ctxS.fill();
+            ctxS.strokeStyle = 'rgba(255,255,255,0.15)'; ctxS.lineWidth = 1;
+            ctxS.beginPath(); ctxS.roundRect(pillX, pillY, pillW, pillH, 4); ctxS.stroke();
+            // Draw R_sun with subscript
+            const textLeft = v.sx - totalW / 2;
+            ctxS.fillStyle = 'rgba(255,255,200,0.95)'; ctxS.font = sizeFont;
+            ctxS.textAlign = 'left';
+            ctxS.fillText(sizeText, textLeft, labelBelow);
+            ctxS.font = sunFont;
+            ctxS.fillText(sunText, textLeft + sizeW + 1, labelBelow + 2);
+            ctxS.textAlign = 'center';
+          }
         }
       }
 
