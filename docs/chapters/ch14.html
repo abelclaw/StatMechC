@@ -569,20 +569,21 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <p>A <span class="tooltip-trigger">bipolar junction npn transistor<span class="tooltip-content">A device made of two n-type semiconductors sandwiching a thin p-type semiconductor. Current flow between emitter and collector is controlled by a small voltage applied to the base.</span></span> is made by combining two n-type semiconductors on either side of a very thin p-type semiconductor. We call the middle part the <strong>base</strong>, and the two sides the <strong>emitter</strong> and <strong>collector</strong>. The emitter is generally much more heavily doped than the collector.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p16_img0.png" alt="npn transistor diagram">
-<img src="images/14-Semiconductors_p16_img1.png" alt="npn transistor symbol">
-<figcaption>An npn transistor and its circuit symbol.</figcaption>
-</figure>
-
 <p>To a first approximation, this thing is just two diodes sandwiched together. So if we try to connect the emitter to the collector, with say a battery and an LED, nothing happens. Turning the battery around doesn't help either: no current flows with either positive or negative voltage.</p>
 
 <p>Current would flow if we connect the base to the emitter or collector. If we apply a voltage in forward bias between the emitter and base we can eliminate their junction potential. The forward bias on the emitter NP junction allows the emitter to conduct freely, in either direction. Thus, now if we run current between the emitter and collector, with say an LED on one side, we would find a light.</p>
 
-<figure>
-<img src="images/14-Semiconductors_p16_img5.png" alt="Transistor with base voltage applied">
-<figcaption>Applying a voltage to the base of an npn transistor controls whether current can flow between the emitter and collector.</figcaption>
-</figure>
+<!-- INTERACTIVE: Transistor Demo -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: npn Transistor</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-transistor-demo" width="600" height="350"></canvas></div>
+  <div class="vis-controls">
+    <div class="button-group" id="transistor-base-buttons">
+      <button class="control-btn active" data-value="off">Base OFF</button>
+      <button class="control-btn" data-value="on">Base ON (0.7V)</button>
+    </div>
+  </div>
+</div>
 
 <p>The point is that applying a 0.7 V voltage between the base and the emitter controls whether current can flow or not into the circuit.</p>
 
@@ -596,10 +597,18 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <p>Let's start with NOT. A <strong>NOT gate</strong>, also called an inverter, takes 0 and turns it into 1 and takes 1 and turns it into 0. It can be simply built from a npn transistor by connecting $X$ to the base and $Y$ to the collector. We also hook a supply voltage up to the collector and the emitter to the ground:</p>
 
-<figure>
-<img src="images/14-Semiconductors_p17_img2.png" alt="NOT gate circuit">
-<figcaption>A NOT gate built from an npn transistor. If $X$ is 0 (off) then current is diverted to $Y$ giving $Y = 1$. If $X$ is 1 (on) then the gate opens and current passes through to ground, giving $Y = 0$.</figcaption>
-</figure>
+<!-- INTERACTIVE: NOT Gate Demo -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: NOT Gate (Inverter)</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-not-gate" width="600" height="320"></canvas></div>
+  <div class="vis-controls">
+    <div class="button-group" id="not-gate-buttons">
+      <button class="control-btn active" data-value="0">X = 0</button>
+      <button class="control-btn" data-value="1">X = 1</button>
+    </div>
+    <span class="value-display" id="not-gate-output">Output: Y = 1</span>
+  </div>
+</div>
 
 <p>By the way, this gate also shows how transistors act like <strong>amplifiers</strong>: a small voltage (0.7V) applied at $X$ can be turned into an arbitrarily large voltage at $Y$ (that of the supply voltage). The efficiency of amplification led to transistor radios in the 1950s: a weak radio signal comes in that we can idealize as a binary pattern 010010101 at $X$. Adding two NOT gates in series with a large supply voltage produces the same pattern but amplified at $Y$. Previous radios used vacuum tubes for amplification and were heavy, delicate pieces of furniture. The method of amplification using solid state transistors allowed radios to be small and portable, ushering in the consumer electronics revolution.</p>
 
@@ -607,61 +616,24 @@ $$\lambda_{\text{LED}} = \frac{hc}{\epsilon_{\text{bg}}}$$
 
 <p>The other standard logic gates are all $2 \to 1$ gates, so they take two inputs and give one out. AND gives $A \wedge B$ meaning that if $A$ and $B$ are both 1, then it gives 1, otherwise it gives 0:</p>
 
-<figure>
-<div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center;">
-  <div>
-    <div style="text-align:center; font-weight:bold; font-size:0.85rem; margin-bottom:4px;">AND</div>
-    <table style="border-collapse:collapse; font-size:0.85rem;">
-      <tr style="background:#e8ecf1;"><th style="border:1px solid #ddd; padding:3px 8px;">A</th><th style="border:1px solid #ddd; padding:3px 8px;">B</th><th style="border:1px solid #ddd; padding:3px 8px;">Out</th></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-    </table>
-  </div>
-  <div>
-    <div style="text-align:center; font-weight:bold; font-size:0.85rem; margin-bottom:4px;">NAND</div>
-    <table style="border-collapse:collapse; font-size:0.85rem;">
-      <tr style="background:#e8ecf1;"><th style="border:1px solid #ddd; padding:3px 8px;">A</th><th style="border:1px solid #ddd; padding:3px 8px;">B</th><th style="border:1px solid #ddd; padding:3px 8px;">Out</th></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-    </table>
-  </div>
-  <div>
-    <div style="text-align:center; font-weight:bold; font-size:0.85rem; margin-bottom:4px;">OR</div>
-    <table style="border-collapse:collapse; font-size:0.85rem;">
-      <tr style="background:#e8ecf1;"><th style="border:1px solid #ddd; padding:3px 8px;">A</th><th style="border:1px solid #ddd; padding:3px 8px;">B</th><th style="border:1px solid #ddd; padding:3px 8px;">Out</th></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-    </table>
-  </div>
-  <div>
-    <div style="text-align:center; font-weight:bold; font-size:0.85rem; margin-bottom:4px;">NOR</div>
-    <table style="border-collapse:collapse; font-size:0.85rem;">
-      <tr style="background:#e8ecf1;"><th style="border:1px solid #ddd; padding:3px 8px;">A</th><th style="border:1px solid #ddd; padding:3px 8px;">B</th><th style="border:1px solid #ddd; padding:3px 8px;">Out</th></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-    </table>
-  </div>
-  <div>
-    <div style="text-align:center; font-weight:bold; font-size:0.85rem; margin-bottom:4px;">XOR</div>
-    <table style="border-collapse:collapse; font-size:0.85rem;">
-      <tr style="background:#e8ecf1;"><th style="border:1px solid #ddd; padding:3px 8px;">A</th><th style="border:1px solid #ddd; padding:3px 8px;">B</th><th style="border:1px solid #ddd; padding:3px 8px;">Out</th></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td></tr>
-      <tr><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">1</td><td style="border:1px solid #ddd; padding:3px 8px; text-align:center;">0</td></tr>
-    </table>
+<!-- INTERACTIVE: Logic Gates Explorer -->
+<div class="visualization">
+  <div class="vis-header"><span class="vis-icon">🔌</span> Interactive: Logic Gates Explorer</div>
+  <div class="vis-canvas-wrap"><canvas id="vis-logic-gates" width="700" height="380"></canvas></div>
+  <div class="vis-controls">
+    <div class="button-group" id="gate-type-buttons">
+      <button class="control-btn active" data-value="AND">AND</button>
+      <button class="control-btn" data-value="NAND">NAND</button>
+      <button class="control-btn" data-value="OR">OR</button>
+      <button class="control-btn" data-value="NOR">NOR</button>
+      <button class="control-btn" data-value="XOR">XOR</button>
+    </div>
+    <div class="button-group" id="gate-input-buttons">
+      <button class="control-btn" id="gate-input-a" data-value="A">A = 0</button>
+      <button class="control-btn" id="gate-input-b" data-value="B">B = 0</button>
+    </div>
   </div>
 </div>
-<figcaption>Truth tables for the standard logic gates: AND, NAND, OR, NOR, XOR.</figcaption>
-</figure>
 
 <p>The XOR gate is an "exclusive OR", meaning it gives 1 if and only if 1 of the inputs is 1 and the other is zero. We can construct an XOR gate out of NAND gates. Note that the logic table for XOR is the same as for the addition of 1-bit binary numbers. Although the single XOR gate only adds two 1-bit numbers modulo 2, XOR gates can be combined to make more complicated adders.</p>
 

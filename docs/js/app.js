@@ -19139,140 +19139,245 @@ function initCh14Vis() {
     drawDoping();
   }
 
-  // ----- Band Structure Comparison -----
+  // ----- Band Structure and Thermal Excitation (merged) -----
   const cBC = document.getElementById('vis-band-compare');
   if (cBC) {
     const {ctx: ctxBC, W: WBC, H: HBC} = setupCanvas(cBC);
     const gapSlider = document.getElementById('bc-gap');
     const bcTempSlider = document.getElementById('bc-temp');
 
-    function drawBandCompare() {
+    // Persistent particle arrays for smooth animation
+    let bcParticles = []; // {x, y, targetY, vx, type, opacity, phase}
+    let bcAnimId = null;
+    let bcLastTime = 0;
+
+    function bcTargetCount(Eg, kBT) {
+      if (Eg < 0.05) return 35; // metal: lots of free electrons
+      const n = Math.exp(-Eg / (2 * kBT));
+      return Math.round(Math.min(n * 60, 45));
+    }
+
+    function drawBandCompare(timestamp) {
+      if (!timestamp) timestamp = performance.now();
+      const dt = Math.min((timestamp - bcLastTime) / 1000, 0.1);
+      bcLastTime = timestamp;
+
       clearCanvas(ctxBC, WBC, HBC);
       const Eg = parseFloat(gapSlider?.value || 1.1);
       const T = parseFloat(bcTempSlider?.value || 300);
 
-      const bandW = 120, bandH = 80;
-      const gap = Eg * 15; // scale eV to pixels
+      const bandW = 200, bandH = 90;
+      const gapPx = Eg < 0.05 ? 0 : Math.min(Eg * 20, HBC - bandH * 2 - 80);
       const kBT = T / 11600; // eV
 
-      // Three cases: metal (Eg=0), semiconductor (Eg~1), insulator (Eg>4)
-      const cases = [
-        {name: 'Metal', eg: 0},
-        {name: 'Semiconductor', eg: Eg},
-        {name: 'Insulator', eg: Math.max(Eg, 5)}
-      ];
-
-      // Draw the user-adjusted case in the center
-      const cx = WBC / 2;
+      // Layout: bands on left-center, Fermi-Dirac on right
+      const bandCx = WBC * 0.38;
       const midY = HBC / 2;
 
-      // Conduction band
-      const cbTop = midY - gap / 2 - bandH;
-      const cbBot = midY - gap / 2;
-      ctxBC.fillStyle = 'rgba(79,195,247,0.2)';
-      ctxBC.fillRect(cx - bandW / 2, cbTop, bandW, bandH);
-      ctxBC.strokeStyle = COLORS.blue; ctxBC.lineWidth = 2;
-      ctxBC.strokeRect(cx - bandW / 2, cbTop, bandW, bandH);
-      ctxBC.fillStyle = COLORS.blue; ctxBC.font = FONT; ctxBC.textAlign = 'center';
-      ctxBC.fillText('Conduction', cx, cbTop + 15);
-
-      // Valence band
-      const vbTop = midY + gap / 2;
+      // Band positions
+      const cbBot = midY - gapPx / 2;
+      const cbTop = cbBot - bandH;
+      const vbTop = midY + gapPx / 2;
       const vbBot = vbTop + bandH;
-      ctxBC.fillStyle = 'rgba(239,83,80,0.2)';
-      ctxBC.fillRect(cx - bandW / 2, vbTop, bandW, bandH);
-      ctxBC.strokeStyle = COLORS.red; ctxBC.lineWidth = 2;
-      ctxBC.strokeRect(cx - bandW / 2, vbTop, bandW, bandH);
-      ctxBC.fillStyle = COLORS.red; ctxBC.font = FONT; ctxBC.textAlign = 'center';
-      ctxBC.fillText('Valence', cx, vbBot - 5);
 
-      // Fill valence band
-      ctxBC.fillStyle = 'rgba(239,83,80,0.4)';
-      ctxBC.fillRect(cx - bandW / 2 + 2, vbTop + 2, bandW - 4, bandH - 4);
+      // Valence band fill (darker where occupied)
+      const valFillFrac = Eg < 0.05 ? 0.5 : 1.0;
+      ctxBC.fillStyle = 'rgba(239,83,80,0.35)';
+      const fillTop = vbBot - (vbBot - vbTop) * valFillFrac;
+      ctxBC.fillRect(bandCx - bandW / 2 + 2, fillTop, bandW - 4, vbBot - fillTop - 2);
+
+      // Valence band outline
+      ctxBC.fillStyle = 'rgba(239,83,80,0.12)';
+      ctxBC.fillRect(bandCx - bandW / 2, vbTop, bandW, bandH);
+      ctxBC.strokeStyle = COLORS.red; ctxBC.lineWidth = 2;
+      ctxBC.strokeRect(bandCx - bandW / 2, vbTop, bandW, bandH);
+
+      // Conduction band
+      ctxBC.fillStyle = 'rgba(79,195,247,0.08)';
+      ctxBC.fillRect(bandCx - bandW / 2, cbTop, bandW, bandH);
+      ctxBC.strokeStyle = COLORS.blue; ctxBC.lineWidth = 2;
+      ctxBC.strokeRect(bandCx - bandW / 2, cbTop, bandW, bandH);
+
+      // Band gap shading
+      if (gapPx > 2) {
+        ctxBC.fillStyle = 'rgba(255,255,255,0.02)';
+        ctxBC.fillRect(bandCx - bandW / 2, cbBot, bandW, gapPx);
+      }
 
       // Fermi level
-      const Ef = midY; // in the gap
       ctxBC.strokeStyle = COLORS.green; ctxBC.lineWidth = 1.5;
       ctxBC.setLineDash([5, 5]);
-      ctxBC.beginPath(); ctxBC.moveTo(cx - bandW / 2 - 20, Ef); ctxBC.lineTo(cx + bandW / 2 + 20, Ef); ctxBC.stroke();
+      ctxBC.beginPath();
+      ctxBC.moveTo(bandCx - bandW / 2 - 10, midY);
+      ctxBC.lineTo(bandCx + bandW / 2 + 10, midY);
+      ctxBC.stroke();
       ctxBC.setLineDash([]);
-      ctxBC.fillStyle = COLORS.green; ctxBC.font = FONT_SM; ctxBC.textAlign = 'left';
-      ctxBC.fillText('E_F', cx + bandW / 2 + 25, Ef + 4);
 
-      // Bandgap label
-      if (Eg > 0.1) {
+      // Labels - positioned to avoid overlap
+      ctxBC.fillStyle = COLORS.blue; ctxBC.font = FONT; ctxBC.textAlign = 'left';
+      ctxBC.fillText('Conduction band', bandCx - bandW / 2, cbTop - 6);
+      ctxBC.fillStyle = COLORS.red;
+      ctxBC.fillText('Valence band', bandCx - bandW / 2, vbBot + 16);
+      ctxBC.fillStyle = COLORS.green; ctxBC.font = FONT_SM;
+      ctxBC.fillText('\u03B5F', bandCx + bandW / 2 + 14, midY + 4);
+
+      // Bandgap annotation on left side
+      if (Eg > 0.1 && gapPx > 8) {
+        const arrowX = bandCx - bandW / 2 - 18;
         ctxBC.strokeStyle = COLORS.orange; ctxBC.lineWidth = 1;
-        drawArrow(ctxBC, cx + bandW / 2 + 10, cbBot, cx + bandW / 2 + 10, vbTop, 5);
-        ctxBC.fillStyle = COLORS.orange; ctxBC.font = FONT_SM; ctxBC.textAlign = 'left';
-        ctxBC.fillText('E_g = ' + Eg.toFixed(1) + ' eV', cx + bandW / 2 + 15, midY + 4);
+        ctxBC.beginPath();
+        ctxBC.moveTo(arrowX, cbBot); ctxBC.lineTo(arrowX, vbTop);
+        ctxBC.stroke();
+        ctxBC.beginPath(); ctxBC.moveTo(arrowX - 3, cbBot + 6); ctxBC.lineTo(arrowX, cbBot); ctxBC.lineTo(arrowX + 3, cbBot + 6); ctxBC.stroke();
+        ctxBC.beginPath(); ctxBC.moveTo(arrowX - 3, vbTop - 6); ctxBC.lineTo(arrowX, vbTop); ctxBC.lineTo(arrowX + 3, vbTop - 6); ctxBC.stroke();
+        ctxBC.fillStyle = COLORS.orange; ctxBC.font = FONT_SM; ctxBC.textAlign = 'right';
+        ctxBC.fillText('Eg=' + Eg.toFixed(1) + ' eV', arrowX - 4, midY + 4);
       }
 
-      // Electron occupation in conduction band (Fermi-Dirac)
-      if (Eg < 10 && kBT > 0.001) {
-        const nExcited = Math.exp(-Eg / (2 * kBT));
-        const nDots = Math.round(Math.min(nExcited * 50, 30));
-        for (let i = 0; i < nDots; i++) {
-          const ex = cx - bandW / 2 + 5 + Math.random() * (bandW - 10);
-          const ey = cbBot - 5 - Math.random() * (bandH - 10);
-          ctxBC.beginPath(); ctxBC.arc(ex, ey, 2.5, 0, 2 * Math.PI);
-          ctxBC.fillStyle = COLORS.yellow; ctxBC.fill();
-        }
-        // Holes in valence band
-        for (let i = 0; i < nDots; i++) {
-          const hx = cx - bandW / 2 + 5 + Math.random() * (bandW - 10);
-          const hy = vbTop + 5 + Math.random() * 15;
-          ctxBC.beginPath(); ctxBC.arc(hx, hy, 2.5, 0, 2 * Math.PI);
-          ctxBC.strokeStyle = COLORS.yellow; ctxBC.lineWidth = 1;
-          ctxBC.stroke();
+      // Update particle system
+      const targetN = bcTargetCount(Eg, kBT);
+      const currentPairs = Math.floor(bcParticles.length / 2);
+
+      // Add new particles gradually (in electron+hole pairs)
+      if (currentPairs < targetN) {
+        const toAdd = Math.min(targetN - currentPairs, 3);
+        for (let i = 0; i < toAdd; i++) {
+          const x = bandCx - bandW / 2 + 8 + Math.random() * (bandW - 16);
+          const eDist = -Math.log(1 - Math.random() * 0.99) * kBT * 20;
+          const ey = cbBot - 6 - Math.min(eDist, bandH - 12);
+          bcParticles.push({
+            x: x, y: midY, targetY: ey,
+            vx: (Math.random() - 0.5) * 20,
+            type: 'electron', opacity: 0, phase: Math.random() * Math.PI * 2
+          });
+          const hDist = -Math.log(1 - Math.random() * 0.99) * kBT * 20;
+          const hy = vbTop + 6 + Math.min(hDist, bandH * 0.4);
+          bcParticles.push({
+            x: x, y: midY, targetY: hy,
+            vx: (Math.random() - 0.5) * 20,
+            type: 'hole', opacity: 0, phase: Math.random() * Math.PI * 2
+          });
         }
       }
+      // Remove excess pairs gradually
+      while (Math.floor(bcParticles.length / 2) > targetN && bcParticles.length >= 2) {
+        bcParticles.splice(0, 2);
+      }
+
+      // Animate particles
+      const leftEdge = bandCx - bandW / 2 + 6;
+      const rightEdge = bandCx + bandW / 2 - 6;
+      bcParticles.forEach(p => {
+        if (p.opacity < 1) p.opacity = Math.min(1, p.opacity + dt * 3);
+        p.y += (p.targetY - p.y) * dt * 4;
+        p.x += p.vx * dt;
+        p.phase += dt * 2;
+        if (p.x < leftEdge) { p.x = leftEdge; p.vx = Math.abs(p.vx); }
+        if (p.x > rightEdge) { p.x = rightEdge; p.vx = -Math.abs(p.vx); }
+      });
+
+      // Draw particles
+      bcParticles.forEach(p => {
+        const r = 3.5 + Math.sin(p.phase) * 0.5;
+        ctxBC.globalAlpha = p.opacity * 0.9;
+        if (p.type === 'electron') {
+          ctxBC.fillStyle = COLORS.yellow;
+          ctxBC.beginPath(); ctxBC.arc(p.x, p.y, r, 0, 2 * Math.PI); ctxBC.fill();
+          ctxBC.fillStyle = 'rgba(255,238,88,0.15)';
+          ctxBC.beginPath(); ctxBC.arc(p.x, p.y, r * 2.5, 0, 2 * Math.PI); ctxBC.fill();
+        } else {
+          ctxBC.strokeStyle = COLORS.yellow; ctxBC.lineWidth = 1.5;
+          ctxBC.beginPath(); ctxBC.arc(p.x, p.y, r, 0, 2 * Math.PI); ctxBC.stroke();
+        }
+        ctxBC.globalAlpha = 1;
+      });
 
       // Right panel: Fermi-Dirac distribution
-      const ox = cx + bandW / 2 + 80, oy2 = cbTop, ph2 = vbBot - cbTop;
-      const fdW = 100;
+      const fdLeft = bandCx + bandW / 2 + 50;
+      const fdW = WBC - fdLeft - 20;
+      const fdTop = cbTop;
+      const fdBot = vbBot;
+      const fdH = fdBot - fdTop;
 
-      // f(E) curve
-      ctxBC.strokeStyle = COLORS.green; ctxBC.lineWidth = 2;
+      // Energy axis
+      ctxBC.strokeStyle = COLORS.axis; ctxBC.lineWidth = 1;
+      ctxBC.beginPath(); ctxBC.moveTo(fdLeft, fdTop); ctxBC.lineTo(fdLeft, fdBot); ctxBC.stroke();
+      ctxBC.beginPath(); ctxBC.moveTo(fdLeft, fdBot); ctxBC.lineTo(fdLeft + fdW, fdBot); ctxBC.stroke();
+
+      // Band region shading on FD panel
+      ctxBC.fillStyle = 'rgba(79,195,247,0.06)';
+      ctxBC.fillRect(fdLeft, fdTop, fdW, Math.max(0, cbBot - fdTop));
+      ctxBC.fillStyle = 'rgba(239,83,80,0.06)';
+      ctxBC.fillRect(fdLeft, vbTop, fdW, Math.max(0, fdBot - vbTop));
+
+      // Band edges as dashed lines
+      if (gapPx > 2) {
+        ctxBC.strokeStyle = 'rgba(255,255,255,0.15)'; ctxBC.lineWidth = 1;
+        ctxBC.setLineDash([3, 3]);
+        ctxBC.beginPath();
+        ctxBC.moveTo(fdLeft, cbBot); ctxBC.lineTo(fdLeft + fdW, cbBot);
+        ctxBC.moveTo(fdLeft, vbTop); ctxBC.lineTo(fdLeft + fdW, vbTop);
+        ctxBC.stroke();
+        ctxBC.setLineDash([]);
+      }
+
+      // Fermi-Dirac curve
+      const eRange = Math.max(Eg / 2 + 1.5, 2);
+      ctxBC.strokeStyle = COLORS.green; ctxBC.lineWidth = 2.5;
       ctxBC.beginPath();
-      for (let i = 0; i <= 100; i++) {
-        const E_eV = -Eg / 2 + (i / 100) * (Eg + 4); // energy range
-        const f = 1.0 / (Math.exp((E_eV) / kBT) + 1); // relative to Ef
-        const py = Ef - E_eV * 15;
-        const px = ox + f * fdW;
-        if (py >= oy2 && py <= oy2 + ph2) {
-          if (i === 0) ctxBC.moveTo(px, py); else ctxBC.lineTo(px, py);
-        }
+      let started = false;
+      for (let i = 0; i <= 200; i++) {
+        const y = fdTop + (i / 200) * fdH;
+        const E_eV = (midY - y) / (fdH / 2) * eRange;
+        const f = 1.0 / (Math.exp(E_eV / kBT) + 1);
+        const px = fdLeft + f * fdW;
+        if (!started) { ctxBC.moveTo(px, y); started = true; }
+        else ctxBC.lineTo(px, y);
       }
       ctxBC.stroke();
 
-      ctxBC.strokeStyle = COLORS.axis; ctxBC.lineWidth = 1;
-      ctxBC.beginPath(); ctxBC.moveTo(ox, oy2); ctxBC.lineTo(ox, oy2 + ph2); ctxBC.stroke();
+      // FD axis labels
       ctxBC.fillStyle = COLORS.textDim; ctxBC.font = FONT_SM; ctxBC.textAlign = 'center';
-      ctxBC.fillText('f(E)', ox + fdW / 2, oy2 + ph2 + 15);
+      ctxBC.fillText('f(\u03B5)', fdLeft + fdW / 2, fdBot + 14);
+      ctxBC.fillText('0', fdLeft, fdBot + 14);
+      ctxBC.fillText('1', fdLeft + fdW, fdBot + 14);
 
       // Classification
       let classification;
-      if (Eg < 0.1) classification = 'Metal (no gap)';
-      else if (Eg < 4) classification = 'Semiconductor (E_g = ' + Eg.toFixed(1) + ' eV)';
-      else classification = 'Insulator (E_g = ' + Eg.toFixed(1) + ' eV)';
+      if (Eg < 0.05) classification = 'Metal (no gap)';
+      else if (Eg < 4) classification = 'Semiconductor';
+      else classification = 'Insulator';
+      ctxBC.fillStyle = COLORS.text; ctxBC.font = FONT_LG; ctxBC.textAlign = 'left';
+      ctxBC.fillText(classification, 10, 18);
 
-      ctxBC.fillStyle = COLORS.text; ctxBC.font = FONT_LG; ctxBC.textAlign = 'center';
-      ctxBC.fillText(classification, cx, 18);
-
-      // Conductivity estimate
-      const sigma = Eg < 0.1 ? 'High' : Math.exp(-Eg / (2 * kBT)) > 0.01 ? 'Moderate' : 'Very low';
-      ctxBC.fillStyle = COLORS.textDim; ctxBC.font = FONT_SM;
-      ctxBC.fillText('Conductivity: ' + sigma + '  |  kT = ' + (kBT * 1000).toFixed(1) + ' meV', cx, HBC - 8);
+      // Info line
+      const nElectrons = bcParticles.filter(p => p.type === 'electron').length;
+      ctxBC.fillStyle = COLORS.textDim; ctxBC.font = FONT_SM; ctxBC.textAlign = 'left';
+      ctxBC.fillText('T = ' + T + ' K    kT = ' + (kBT * 1000).toFixed(1) + ' meV    Excited electrons: ' + nElectrons, 10, HBC - 6);
 
       document.getElementById('bc-gap-val')?.replaceChildren(document.createTextNode(Eg.toFixed(1)));
       document.getElementById('bc-temp-val')?.replaceChildren(document.createTextNode(T));
+
+      bcAnimId = requestAnimationFrame(drawBandCompare);
     }
 
-    gapSlider?.addEventListener('input', drawBandCompare);
-    bcTempSlider?.addEventListener('input', drawBandCompare);
-    drawBandCompare();
-  }
+    // Start animation loop
+    bcLastTime = performance.now();
+    bcAnimId = requestAnimationFrame(drawBandCompare);
 
+    // Stop animation when not visible
+    const bcObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (!bcAnimId) {
+          bcLastTime = performance.now();
+          bcAnimId = requestAnimationFrame(drawBandCompare);
+        }
+      } else {
+        if (bcAnimId) { cancelAnimationFrame(bcAnimId); bcAnimId = null; }
+      }
+    });
+    bcObserver.observe(cBC);
+  }
   // ----- Double Well Splitting (smooth wells) -----
   const cWell = document.getElementById('vis-well-splitting');
   if (cWell) {
