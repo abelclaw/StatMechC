@@ -16071,17 +16071,15 @@ function initCh12Vis() {
           }
         }
       }
-      emap.delete(0); // remove ground state
+      emap.delete(0);
       return Array.from(emap.entries()).sort((a, b) => a[0] - b[0]);
     }
 
-    const excitedLevels = buildEnergyLevels(12);
+    const excitedLevels = buildEnergyLevels(15);
 
-    // Solve for mu given N and betaEps1 (= eps1 / kT) using bisection
-    // Returns { mu, Nground } where mu is in units of eps1
     function solveForMu(N, betaEps1) {
-      let muLo = -100 / betaEps1, muHi = -1e-6;
-      for (let iter = 0; iter < 80; iter++) {
+      let muLo = -100 / betaEps1, muHi = -1e-8;
+      for (let iter = 0; iter < 100; iter++) {
         const muMid = (muLo + muHi) / 2;
         let Nex = 0;
         for (let j = 0; j < excitedLevels.length; j++) {
@@ -16093,49 +16091,48 @@ function initCh12Vis() {
           if (Nex > N * 3) break;
         }
         const Ng = 1.0 / (Math.exp(-betaEps1 * muMid) - 1);
-        const Ntot = Ng + Nex;
-        if (Ntot > N) muLo = muMid; else muHi = muMid;
+        if (Ng + Nex > N) muLo = muMid; else muHi = muMid;
       }
       const muFinal = (muLo + muHi) / 2;
       const Ng = 1.0 / (Math.exp(-betaEps1 * muFinal) - 1);
       return { mu: muFinal, Nground: Math.max(0, Math.min(N, Ng)) };
     }
 
+    let n1Mouse = null;
+    cN1.addEventListener('mousemove', function(e) {
+      const rect = cN1.getBoundingClientRect();
+      n1Mouse = { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
+      drawN1Compare();
+    });
+    cN1.addEventListener('mouseleave', function() { n1Mouse = null; drawN1Compare(); });
+
     function drawN1Compare() {
       clearCanvas(ctxN1, WN1, HN1);
-      const N = parseInt(n1Slider?.value || 100);
+      const N = parseInt(n1Slider?.value || 200);
       document.getElementById('n1-particles-val')?.replaceChildren(document.createTextNode(N));
 
-      // Tc in units of eps1/kB: Tc ~ 0.8 * N^(2/3) (for 3D box)
       const TcScaled = 0.8 * Math.pow(N, 2.0 / 3.0);
-      const tMax = 2.0; // in units of T/Tc
-      const nPts = 150;
+      const tMax = 1.8;
+      const nPts = 200;
 
-      // Top panel: N_ground/N vs T/Tc
-      const ox = 70, topY = 25, pw = WN1 - 110, topH = 150;
-      // Bottom panel: mu vs T/Tc
-      const botY = topY + topH + 55, botH = 120;
+      // Single generous panel
+      const ox = 65, oy = 40, pw = WN1 - 100, ph = HN1 - 85;
 
-      // Precompute exact and approximate data
-      const exactData = [], approxData = [], muExact = [], muApprox = [];
+      const exactData = [], approxData = [], tdlData = [];
       for (let i = 0; i <= nPts; i++) {
         const tRatio = (i / nPts) * tMax;
-        if (tRatio < 0.02) {
+        if (tRatio < 0.01) {
           exactData.push({ t: tRatio, frac: 1 });
           approxData.push({ t: tRatio, frac: 1 });
-          muExact.push({ t: tRatio, mu: 0 });
-          muApprox.push({ t: tRatio, mu: 0 });
+          tdlData.push({ t: tRatio, frac: 1 });
           continue;
         }
-        const T_abs = tRatio * TcScaled; // in units of eps1/kB
+        const T_abs = tRatio * TcScaled;
         const betaEps1 = 1.0 / T_abs;
 
-        // Exact: solve for mu numerically
         const result = solveForMu(N, betaEps1);
         exactData.push({ t: tRatio, frac: result.Nground / N });
-        muExact.push({ t: tRatio, mu: result.mu });
 
-        // Approximate (mu=0): N_excited = sum g_i / (exp(beta*eps_i) - 1)
         let NexApprox = 0;
         for (let j = 0; j < excitedLevels.length; j++) {
           const [eps, mult] = excitedLevels[j];
@@ -16143,151 +16140,176 @@ function initCh12Vis() {
           if (arg > 40) break;
           NexApprox += mult / (Math.exp(arg) - 1);
         }
-        const NgApprox = Math.max(0, N - NexApprox);
-        approxData.push({ t: tRatio, frac: NgApprox / N });
-        muApprox.push({ t: tRatio, mu: 0 });
+        approxData.push({ t: tRatio, frac: (N - NexApprox) / N });
+        tdlData.push({ t: tRatio, frac: tRatio <= 1 ? 1 - Math.pow(tRatio, 1.5) : 0 });
       }
 
-      // ---- Validity shading ----
-      const tcPx = ox + (1.0 / tMax) * pw;
-      // Green shading below Tc
-      ctxN1.fillStyle = 'rgba(102,187,106,0.06)';
-      ctxN1.fillRect(ox, topY, tcPx - ox, topH);
-      ctxN1.fillRect(ox, botY, tcPx - ox, botH);
-      // Red shading above Tc
-      ctxN1.fillStyle = 'rgba(239,83,80,0.06)';
-      ctxN1.fillRect(tcPx, topY, ox + pw - tcPx, topH);
-      ctxN1.fillRect(tcPx, botY, ox + pw - tcPx, botH);
-
-      // ---- Top panel axes ----
-      ctxN1.strokeStyle = COLORS.axis; ctxN1.lineWidth = 1;
-      ctxN1.beginPath(); ctxN1.moveTo(ox, topY); ctxN1.lineTo(ox, topY + topH); ctxN1.lineTo(ox + pw, topY + topH); ctxN1.stroke();
-
-      // Y-axis labels
-      ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'right';
-      for (let y = 0; y <= 1; y += 0.5) {
-        ctxN1.fillText(y.toFixed(1), ox - 5, topY + topH - y * topH + 4);
-        ctxN1.strokeStyle = COLORS.grid; ctxN1.beginPath();
-        ctxN1.moveTo(ox, topY + topH - y * topH); ctxN1.lineTo(ox + pw, topY + topH - y * topH); ctxN1.stroke();
-      }
-      ctxN1.save(); ctxN1.translate(20, topY + topH / 2); ctxN1.rotate(-Math.PI / 2);
-      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-      ctxN1.fillText('N_ground / N', 0, 0); ctxN1.restore();
-
-      // Tc vertical dashed line (top)
-      ctxN1.strokeStyle = COLORS.yellow; ctxN1.lineWidth = 1; ctxN1.setLineDash([4, 4]);
-      ctxN1.beginPath(); ctxN1.moveTo(tcPx, topY); ctxN1.lineTo(tcPx, topY + topH); ctxN1.stroke();
-      ctxN1.setLineDash([]);
-
-      // Approximate curve (dashed) - top
-      ctxN1.strokeStyle = COLORS.textDim; ctxN1.lineWidth = 2; ctxN1.setLineDash([8, 5]);
+      // Shaded error region between exact and approx
+      ctxN1.save();
+      ctxN1.beginPath(); ctxN1.rect(ox, oy, pw, ph); ctxN1.clip();
+      ctxN1.fillStyle = 'rgba(255,167,38,0.08)';
       ctxN1.beginPath();
       for (let i = 0; i <= nPts; i++) {
         const d = approxData[i];
         const x = ox + (d.t / tMax) * pw;
-        const y = topY + topH - d.frac * topH;
+        const y = oy + ph - Math.max(-0.15, Math.min(1, d.frac)) * ph;
+        i === 0 ? ctxN1.moveTo(x, y) : ctxN1.lineTo(x, y);
+      }
+      for (let i = nPts; i >= 0; i--) {
+        const d = exactData[i];
+        const x = ox + (d.t / tMax) * pw;
+        const y = oy + ph - Math.max(0, Math.min(1, d.frac)) * ph;
+        ctxN1.lineTo(x, y);
+      }
+      ctxN1.closePath(); ctxN1.fill();
+      ctxN1.restore();
+
+      // Tc vertical line
+      const tcPx = ox + (1.0 / tMax) * pw;
+      ctxN1.strokeStyle = 'rgba(255,238,88,0.3)'; ctxN1.lineWidth = 1; ctxN1.setLineDash([5, 4]);
+      ctxN1.beginPath(); ctxN1.moveTo(tcPx, oy); ctxN1.lineTo(tcPx, oy + ph); ctxN1.stroke();
+      ctxN1.setLineDash([]);
+      ctxN1.fillStyle = COLORS.yellow; ctxN1.font = FONT; ctxN1.textAlign = 'center';
+      ctxN1.fillText('T\u2091', tcPx, oy - 6);
+
+      // Axes
+      ctxN1.strokeStyle = COLORS.axis; ctxN1.lineWidth = 1;
+      ctxN1.beginPath(); ctxN1.moveTo(ox, oy); ctxN1.lineTo(ox, oy + ph); ctxN1.lineTo(ox + pw, oy + ph); ctxN1.stroke();
+
+      // Grid + Y-axis labels
+      ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'right';
+      for (let y = 0; y <= 1; y += 0.25) {
+        const py = oy + ph - y * ph;
+        ctxN1.strokeStyle = COLORS.grid; ctxN1.lineWidth = 0.5;
+        ctxN1.beginPath(); ctxN1.moveTo(ox, py); ctxN1.lineTo(ox + pw, py); ctxN1.stroke();
+        ctxN1.fillText(y.toFixed(2), ox - 6, py + 4);
+      }
+      ctxN1.save(); ctxN1.translate(16, oy + ph / 2); ctxN1.rotate(-Math.PI / 2);
+      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT; ctxN1.textAlign = 'center';
+      ctxN1.fillText('N\u2080 / N', 0, 0); ctxN1.restore();
+
+      // X-axis labels
+      ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
+      for (let t = 0; t <= tMax + 0.01; t += 0.5) {
+        const x = ox + (t / tMax) * pw;
+        ctxN1.fillText(t.toFixed(1), x, oy + ph + 14);
+        ctxN1.strokeStyle = COLORS.axis; ctxN1.lineWidth = 1;
+        ctxN1.beginPath(); ctxN1.moveTo(x, oy + ph); ctxN1.lineTo(x, oy + ph + 4); ctxN1.stroke();
+      }
+      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT;
+      ctxN1.fillText('T / T\u2091', ox + pw / 2, oy + ph + 30);
+
+      // Thermodynamic limit (dotted green)
+      ctxN1.save();
+      ctxN1.beginPath(); ctxN1.rect(ox, oy, pw, ph); ctxN1.clip();
+      ctxN1.strokeStyle = COLORS.green; ctxN1.lineWidth = 1.5; ctxN1.setLineDash([2, 4]);
+      ctxN1.globalAlpha = 0.7;
+      ctxN1.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const d = tdlData[i];
+        const x = ox + (d.t / tMax) * pw;
+        const y = oy + ph - d.frac * ph;
         i === 0 ? ctxN1.moveTo(x, y) : ctxN1.lineTo(x, y);
       }
       ctxN1.stroke(); ctxN1.setLineDash([]);
+      ctxN1.restore();
 
-      // Exact curve (solid) - top
-      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 2.5;
+      // Approximate curve (dashed orange)
+      ctxN1.save();
+      ctxN1.beginPath(); ctxN1.rect(ox, oy, pw, ph); ctxN1.clip();
+      ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 2.5; ctxN1.setLineDash([10, 6]);
+      ctxN1.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const d = approxData[i];
+        const x = ox + (d.t / tMax) * pw;
+        const fClamped = Math.max(-0.15, Math.min(1, d.frac));
+        const y = oy + ph - fClamped * ph;
+        i === 0 ? ctxN1.moveTo(x, y) : ctxN1.lineTo(x, y);
+      }
+      ctxN1.stroke(); ctxN1.setLineDash([]);
+      ctxN1.restore();
+
+      // Exact curve (solid blue)
+      ctxN1.save();
+      ctxN1.beginPath(); ctxN1.rect(ox, oy, pw, ph); ctxN1.clip();
+      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 3;
       ctxN1.beginPath();
       for (let i = 0; i <= nPts; i++) {
         const d = exactData[i];
         const x = ox + (d.t / tMax) * pw;
-        const y = topY + topH - Math.max(0, d.frac) * topH;
+        const y = oy + ph - Math.max(0, d.frac) * ph;
         i === 0 ? ctxN1.moveTo(x, y) : ctxN1.lineTo(x, y);
       }
       ctxN1.stroke();
+      ctxN1.restore();
 
-      // ---- Bottom panel axes ----
-      ctxN1.strokeStyle = COLORS.axis; ctxN1.lineWidth = 1;
-      ctxN1.beginPath(); ctxN1.moveTo(ox, botY); ctxN1.lineTo(ox, botY + botH); ctxN1.lineTo(ox + pw, botY + botH); ctxN1.stroke();
-
-      // Find mu range for scaling
-      let muMin = 0;
-      for (const d of muExact) { if (d.mu < muMin) muMin = d.mu; }
-      muMin = Math.min(muMin, -1); // at least show down to -1
-      const muRange = Math.abs(muMin);
-
-      // X-axis labels (shared)
-      ctxN1.fillStyle = COLORS.textDim; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-      for (let t = 0; t <= tMax; t += 0.5) {
-        const x = ox + (t / tMax) * pw;
-        ctxN1.fillText(t.toFixed(1), x, botY + botH + 14);
-        // Also label top panel x-axis ticks lightly
-        ctxN1.fillText(t.toFixed(1), x, topY + topH + 12);
-      }
-      ctxN1.fillText('T / Tc', ox + pw / 2, botY + botH + 28);
-
-      // mu Y-axis labels
-      ctxN1.textAlign = 'right';
-      ctxN1.fillText('0', ox - 5, botY + 4);
-      const muMidVal = -muRange / 2;
-      ctxN1.fillText(muMidVal.toFixed(1), ox - 5, botY + botH / 2 + 4);
-      ctxN1.fillText((-muRange).toFixed(1), ox - 5, botY + botH + 4);
-
-      ctxN1.save(); ctxN1.translate(18, botY + botH / 2); ctxN1.rotate(-Math.PI / 2);
-      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-      ctxN1.fillText('\u03BC / \u03B5\u2081', 0, 0); ctxN1.restore();
-
-      // mu=0 line (horizontal)
-      ctxN1.strokeStyle = COLORS.axis; ctxN1.lineWidth = 0.5;
-      ctxN1.beginPath(); ctxN1.moveTo(ox, botY); ctxN1.lineTo(ox + pw, botY); ctxN1.stroke();
-
-      // Tc vertical dashed line (bottom)
-      ctxN1.strokeStyle = COLORS.yellow; ctxN1.lineWidth = 1; ctxN1.setLineDash([4, 4]);
-      ctxN1.beginPath(); ctxN1.moveTo(tcPx, botY); ctxN1.lineTo(tcPx, botY + botH); ctxN1.stroke();
-      ctxN1.setLineDash([]);
-      ctxN1.fillStyle = COLORS.yellow; ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-      ctxN1.fillText('Tc', tcPx, botY + botH + 14);
-
-      // Approximate mu (dashed line at 0) - bottom
-      ctxN1.strokeStyle = COLORS.textDim; ctxN1.lineWidth = 2; ctxN1.setLineDash([8, 5]);
-      ctxN1.beginPath(); ctxN1.moveTo(ox, botY); ctxN1.lineTo(ox + pw, botY); ctxN1.stroke();
-      ctxN1.setLineDash([]);
-
-      // Exact mu curve - bottom
-      ctxN1.strokeStyle = COLORS.green; ctxN1.lineWidth = 2.5;
-      ctxN1.beginPath();
-      let started = false;
-      for (let i = 0; i <= nPts; i++) {
-        const d = muExact[i];
-        const x = ox + (d.t / tMax) * pw;
-        const muClamped = Math.max(-muRange, d.mu);
-        const y = botY + (-muClamped / muRange) * botH;
-        if (!started) { ctxN1.moveTo(x, y); started = true; } else ctxN1.lineTo(x, y);
-      }
-      ctxN1.stroke();
-
-      // ---- Labels ----
-      // Validity labels
-      ctxN1.font = FONT_SM; ctxN1.textAlign = 'center';
-      ctxN1.fillStyle = 'rgba(102,187,106,0.5)';
-      ctxN1.fillText('\u03BC \u2248 0 valid', ox + (tcPx - ox) / 2, topY + 14);
-      ctxN1.fillStyle = 'rgba(239,83,80,0.5)';
-      ctxN1.fillText('\u03BC \u2248 0 fails', tcPx + (ox + pw - tcPx) / 2, topY + 14);
-
-      // Legend
+      // Legend (top-left inside plot)
+      const lx = ox + 12, ly = oy + 10;
       ctxN1.font = FONT_SM; ctxN1.textAlign = 'left';
-      const lx = ox + pw - 160, ly = topY + 30;
-      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 2.5; ctxN1.setLineDash([]);
-      ctxN1.beginPath(); ctxN1.moveTo(lx, ly); ctxN1.lineTo(lx + 20, ly); ctxN1.stroke();
-      ctxN1.fillStyle = COLORS.blue; ctxN1.fillText('Exact (N = ' + N + ')', lx + 25, ly + 4);
 
-      ctxN1.strokeStyle = COLORS.textDim; ctxN1.lineWidth = 2; ctxN1.setLineDash([8, 5]);
-      ctxN1.beginPath(); ctxN1.moveTo(lx, ly + 16); ctxN1.lineTo(lx + 20, ly + 16); ctxN1.stroke();
+      ctxN1.strokeStyle = COLORS.blue; ctxN1.lineWidth = 3; ctxN1.setLineDash([]);
+      ctxN1.beginPath(); ctxN1.moveTo(lx, ly + 4); ctxN1.lineTo(lx + 22, ly + 4); ctxN1.stroke();
+      ctxN1.fillStyle = COLORS.blue; ctxN1.fillText('Exact (N = ' + N + ')', lx + 27, ly + 8);
+
+      ctxN1.strokeStyle = COLORS.orange; ctxN1.lineWidth = 2.5; ctxN1.setLineDash([10, 6]);
+      ctxN1.beginPath(); ctxN1.moveTo(lx, ly + 21); ctxN1.lineTo(lx + 22, ly + 21); ctxN1.stroke();
       ctxN1.setLineDash([]);
-      ctxN1.fillStyle = COLORS.textDim; ctxN1.fillText('\u03BC = 0 approx', lx + 25, ly + 20);
+      ctxN1.fillStyle = COLORS.orange; ctxN1.fillText('\u03BC = 0 approximation', lx + 27, ly + 25);
 
-      ctxN1.strokeStyle = COLORS.green; ctxN1.lineWidth = 2.5; ctxN1.setLineDash([]);
-      ctxN1.beginPath(); ctxN1.moveTo(lx, ly + 32); ctxN1.lineTo(lx + 20, ly + 32); ctxN1.stroke();
-      ctxN1.fillStyle = COLORS.green; ctxN1.fillText('Exact \u03BC', lx + 25, ly + 36);
+      ctxN1.strokeStyle = COLORS.green; ctxN1.lineWidth = 1.5; ctxN1.setLineDash([2, 4]);
+      ctxN1.globalAlpha = 0.7;
+      ctxN1.beginPath(); ctxN1.moveTo(lx, ly + 38); ctxN1.lineTo(lx + 22, ly + 38); ctxN1.stroke();
+      ctxN1.setLineDash([]); ctxN1.globalAlpha = 1;
+      ctxN1.fillStyle = COLORS.green; ctxN1.fillText('1 \u2212 (T/T\u2091)\u00B3\u02B2 (N \u2192 \u221E)', lx + 27, ly + 42);
 
-      // Title
-      ctxN1.fillStyle = COLORS.text; ctxN1.font = FONT_LG; ctxN1.textAlign = 'left';
-      ctxN1.fillText('Ground State: Exact vs \u03BC = 0 Approximation', ox, topY - 6);
+      // Hover crosshair + tooltip
+      if (n1Mouse) {
+        const mx = n1Mouse.x, my = n1Mouse.y;
+        if (mx >= ox && mx <= ox + pw && my >= oy && my <= oy + ph) {
+          const tHover = ((mx - ox) / pw) * tMax;
+          const idx = Math.round((tHover / tMax) * nPts);
+          if (idx >= 0 && idx <= nPts) {
+            ctxN1.strokeStyle = 'rgba(255,255,255,0.15)'; ctxN1.lineWidth = 1;
+            ctxN1.setLineDash([3, 3]);
+            ctxN1.beginPath(); ctxN1.moveTo(mx, oy); ctxN1.lineTo(mx, oy + ph); ctxN1.stroke();
+            ctxN1.setLineDash([]);
+
+            const eF = Math.max(0, exactData[idx].frac);
+            const aF = approxData[idx].frac;
+            const tF = tdlData[idx].frac;
+            const ePy = oy + ph - eF * ph;
+            const aPy = oy + ph - Math.max(-0.15, Math.min(1, aF)) * ph;
+            const tPy = oy + ph - tF * ph;
+
+            ctxN1.fillStyle = COLORS.blue;
+            ctxN1.beginPath(); ctxN1.arc(mx, ePy, 4, 0, Math.PI * 2); ctxN1.fill();
+            if (aPy >= oy && aPy <= oy + ph) {
+              ctxN1.fillStyle = COLORS.orange;
+              ctxN1.beginPath(); ctxN1.arc(mx, aPy, 4, 0, Math.PI * 2); ctxN1.fill();
+            }
+            if (tPy >= oy && tPy <= oy + ph) {
+              ctxN1.fillStyle = COLORS.green;
+              ctxN1.beginPath(); ctxN1.arc(mx, tPy, 3, 0, Math.PI * 2); ctxN1.fill();
+            }
+
+            const tipW = 145, tipH = 56;
+            const tipXFinal = mx + 12 + tipW > ox + pw ? mx - tipW - 12 : mx + 12;
+            const tipY = Math.max(oy, my - tipH / 2);
+            ctxN1.fillStyle = 'rgba(15,25,35,0.92)';
+            ctxN1.strokeStyle = 'rgba(255,255,255,0.15)'; ctxN1.lineWidth = 1;
+            ctxN1.beginPath(); ctxN1.roundRect(tipXFinal, tipY, tipW, tipH, 4);
+            ctxN1.fill(); ctxN1.stroke();
+
+            ctxN1.font = FONT_SM; ctxN1.textAlign = 'left';
+            ctxN1.fillStyle = COLORS.text;
+            ctxN1.fillText('T/T\u2091 = ' + tHover.toFixed(2), tipXFinal + 8, tipY + 14);
+            ctxN1.fillStyle = COLORS.blue;
+            ctxN1.fillText('Exact: ' + eF.toFixed(3), tipXFinal + 8, tipY + 28);
+            ctxN1.fillStyle = COLORS.orange;
+            ctxN1.fillText('Approx: ' + aF.toFixed(3), tipXFinal + 8, tipY + 42);
+          }
+        }
+      }
     }
 
     n1Slider?.addEventListener('input', drawN1Compare);
