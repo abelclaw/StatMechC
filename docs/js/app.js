@@ -26313,7 +26313,6 @@ function initCh15Vis() {
       {name:'Rigel',      R:79,   T:12100,type:'B8Ia',   cat:'Supergiant'},
       {name:'Aldebaran',  R:44,   T:3910, type:'K5III',  cat:'Giant'},
       {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:44},
-      {name:'Arcturus',   R:25,   T:4286, type:'K1III',  cat:'Giant'},
       {name:'Pollux',     R:9.1,  T:4666, type:'K0III',  cat:'Giant'},
       {name:'Sirius A',   R:1.71, T:9940, type:'A1V',    cat:'Main Seq.'},
       {name:'Sun',        R:1.0,  T:5772, type:'G2V',    cat:'Main Seq.'},
