@@ -23668,34 +23668,33 @@ function initCh14Vis() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
 
-      // Layout: input on the LEFT, output on the RIGHT, transistor in the MIDDLE
-      // Nothing overlaps or crosses.
+      // Transistor on row a so ground wire is a short hop UP to - rail.
+      // Input resistor on row b, output resistor + LED on rows c-d.
+      // Nothing crosses.
       //
-      //   +rail(3)                           +rail(24)
-      //   |                                  |
-      //   a: [switch 3-7]            [470ohm 20-24]
-      //   b: [====47k 7-13====]
-      //   c:                [====LED 14-20====]
-      //   d:          [E=12][B=13][C=14]
-      //   e:          [GND]
+      //   +rail(3)       GND(12)          +rail(24)
+      //   |                |                |
+      //   a: [switch 3-7]  [E12 B13 C14]
+      //   b: [====47k 7-->13====]
+      //   c:                       [470ohm 20-->24]
+      //   d:            [====LED 14-->20====]
+      //   -rail(12)
 
-      // === INPUT (left side, row a + row b) ===
+      // === TRANSISTOR (row a, center) + ground ===
+      bbAddPart('NPN',[{row:'a',col:12},{row:'a',col:13},{row:'a',col:14}]);
+      bbAddPart('WIRE',[{row:'a',col:12},{row:'r-t',col:12}],{color:'#1e88e5'}); // emitter UP to - rail (short!)
+
+      // === INPUT (row a switch + row b resistor, left side) ===
       bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:true});
-      bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:13}],{value:47000});
+      bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:13}],{value:47000});  // ends at col 13 = base
 
-      // === TRANSISTOR (center, row d) ===
-      // E=12, B=13 (=47k output), C=14 (=LED cathode)
-      bbAddPart('NPN',[{row:'d',col:12},{row:'d',col:13},{row:'d',col:14}]);
-      bbAddPart('WIRE',[{row:'e',col:12},{row:'r-b',col:12}],{color:'#1e88e5'}); // emitter DOWN to bottom GND
-      bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'}); // connect top and bottom GND rails
+      // === OUTPUT (row c resistor + row d LED, right side) ===
+      bbAddPart('WIRE',[{row:'r+t',col:24},{row:'c',col:24}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'c',col:20},{row:'c',col:24}],{value:470});
+      bbAddPart('LED',[{row:'d',col:20},{row:'d',col:14}]);                     // anode at col 20, cathode at col 14 = collector
 
-      // === OUTPUT (right side, row a + row c) ===
-      bbAddPart('WIRE',[{row:'r+t',col:24},{row:'a',col:24}],{color:'#e53935'});
-      bbAddPart('RESISTOR',[{row:'a',col:20},{row:'a',col:24}],{value:470});
-      bbAddPart('LED',[{row:'c',col:20},{row:'c',col:14}]);
-
-      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>Input on the left, output on the right, transistor in the middle:<br><br>\u2022 <b>Input (rows a\u2013b, left):</b> + rail \u2192 switch (row a, cols 3\u20137) \u2192 47k\u03A9 (row b, cols 7\u201313) \u2192 straight into the base (col 13). <b>Hover over the 47k\u03A9</b> \u2014 only ~0.18mA.<br><br>\u2022 <b>Output (rows a+c, right):</b> + rail \u2192 470\u03A9 (row a, cols 20\u201324) \u2192 LED (row c, cols 14\u201320) \u2192 straight into the collector (col 14). <b>Hover over the 470\u03A9</b> \u2014 ~15mA.<br><br>\u2022 <b>Transistor</b> (row d, cols 12\u201314): both paths meet here and exit to ground (blue wire, col 12).<br><br>The output is <b>~100\u00D7</b> the input. <b>Click the switch</b> to cut the input \u2014 the LED dies because that tiny 0.18mA was the only thing keeping the 15mA flowing.');
+      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>Input on the left, output on the right, transistor at the top (row a, cols 12\u201314). The emitter (col 12) connects to ground via a short blue wire straight up to the \u2013 rail. No wires cross.<br><br>\u2022 <b>Input:</b> switch (row a, cols 3\u20137) \u2192 47k\u03A9 (row b, cols 7\u201313) \u2192 base (col 13). <b>Hover over the 47k\u03A9</b> \u2014 only ~0.18mA.<br><br>\u2022 <b>Output:</b> 470\u03A9 (row c, cols 20\u201324) \u2192 LED (row d, cols 14\u201320) \u2192 collector (col 14). <b>Hover over the 470\u03A9</b> \u2014 ~15mA.<br><br>The output is <b>~100\u00D7</b> the input. <b>Click the switch</b> to cut the input \u2014 the LED dies because that tiny 0.18mA was the only thing keeping the 15mA flowing.');
     }
 
 
