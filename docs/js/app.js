@@ -23088,12 +23088,18 @@ function initCh14Vis() {
         var p = bbParts[i];
         if (p.holes.length >= 2) {
           var a = holeXY(p.holes[0].row, p.holes[0].col), b = holeXY(p.holes[1].row, p.holes[1].col);
-          // Sample 8 points along the component
-          for (var s = 0; s <= 7; s++) {
-            var t = s / 7;
-            var sx = a.x + (b.x - a.x) * t, sy = a.y + (b.y - a.y) * t;
-            // Wires arc upward (quadratic bezier) — approximate with sin
-            if (p.type === 'WIRE') sy -= (Math.abs(b.x - a.x) * 0.06 + 2.5) * Math.sin(t * Math.PI);
+          // Sample 10 points along the component for hover detection
+          for (var s = 0; s <= 9; s++) {
+            var t = s / 9;
+            // Quadratic bezier: P(t) = (1-t)^2*A + 2(1-t)t*C + t^2*B where C is control point
+            var sx, sy;
+            if (p.type === 'WIRE') {
+              var cx = (a.x+b.x)/2, cy = (a.y+b.y)/2 - Math.abs(b.x-a.x)*0.12 - 5;
+              sx = (1-t)*(1-t)*a.x + 2*(1-t)*t*cx + t*t*b.x;
+              sy = (1-t)*(1-t)*a.y + 2*(1-t)*t*cy + t*t*b.y;
+            } else {
+              sx = a.x + (b.x - a.x) * t; sy = a.y + (b.y - a.y) * t;
+            }
             if (Math.hypot(mx - sx, my - sy) < 14) return p;
           }
         }
@@ -23680,7 +23686,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:true});
       bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:12}],{value:47000});
       bbAddPart('WIRE',[{row:'c',col:12},{row:'h',col:23}],{color:'#43a047'}); // → base
-      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 see the current gain!</b><br><br>This circuit shows how a transistor amplifies current. There are two paths:<br><br>\u2022 <b>Input (left, green wire):</b> 9V \u2192 switch \u2192 47k\u03A9 resistor (row b, cols 6\u201312) \u2192 transistor base. This is a <em>tiny</em> current.<br>\u2022 <b>Output (top, orange wire):</b> 9V \u2192 470\u03A9 resistor (row a, cols 14\u201318) \u2192 LED \u2192 transistor collector. This is a <em>large</em> current.<br><br><b>Hover over the 47k\u03A9 resistor</b> (row b, left side) to see the input current: about 0.18mA.<br><b>Hover over the 470\u03A9 resistor</b> (row a, right side) to see the output current: about 15mA.<br><br>The output current is <b>~100\u00D7 larger</b> than the input \u2014 that\u2019s the transistor\u2019s current gain (\u03B2). A tiny trickle into the base controls a flood through the collector. Click the switch to turn it off and watch both currents drop to zero.');
+      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 see the current gain!</b><br><br>This circuit shows how a transistor amplifies current. There are two paths:<br><br>\u2022 <b>Input (long green wire):</b> 9V \u2192 switch \u2192 47k\u03A9 resistor (row b, cols 6\u201312) \u2192 transistor base. This is a <em>tiny</em> current.<br>\u2022 <b>Output (top, orange wire):</b> 9V \u2192 470\u03A9 resistor (row a, cols 14\u201318) \u2192 LED \u2192 transistor collector. This is a <em>large</em> current.<br><br><b>Hover over the 47k\u03A9 resistor</b> (row b, left side) to see the input current: about 0.18mA.<br><b>Hover over the 470\u03A9 resistor</b> (row a, right side) to see the output current: about 15mA.<br><br>The output current is <b>~100\u00D7 larger</b> than the input \u2014 that\u2019s the transistor\u2019s current gain (\u03B2). A tiny trickle into the base controls a flood through the collector. Click the switch to turn it off and watch both currents drop to zero.');
     }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
