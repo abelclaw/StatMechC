@@ -23444,8 +23444,18 @@ function initCh14Vis() {
       var pos = bbGetPos(e), hole = bbFindHole(pos.x, pos.y);
       if (!hole) return;
       var partAt = bbFindPartAt(pos.x, pos.y);
-      // Toggle switches by clicking anywhere on them (any tool except DELETE)
-      if (bbTool !== 'DELETE' && partAt && partAt.type === 'SWITCH') { partAt.on = !partAt.on; bbRunSim(); return; }
+      // Toggle switches: scan ALL parts for switches near click (not just bbFindPartAt which may return a resistor)
+      if (bbTool !== 'DELETE') {
+        for (var si = 0; si < bbParts.length; si++) {
+          var sp = bbParts[si];
+          if (sp.type !== 'SWITCH' || sp.holes.length < 2) continue;
+          var sa = holeXY(sp.holes[0].row, sp.holes[0].col), sb = holeXY(sp.holes[1].row, sp.holes[1].col);
+          for (var st = 0; st <= 4; st++) {
+            var sx = sa.x + (sb.x-sa.x)*st/4, sy = sa.y + (sb.y-sa.y)*st/4;
+            if (Math.hypot(pos.x-sx, pos.y-sy) < 14) { sp.on = !sp.on; bbRunSim(); return; }
+          }
+        }
+      }
       // Click resistors/capacitors to cycle values (any tool except DELETE, and not mid-placement)
       if (bbTool !== 'DELETE' && !bbClick1 && partAt) {
         if (partAt.type === 'RESISTOR') { partAt.value = RES_VALUES[(RES_VALUES.indexOf(partAt.value)+1)%RES_VALUES.length]; bbRunSim(); return; }
@@ -23592,7 +23602,7 @@ function initCh14Vis() {
       bbAddPart('SWITCH',[{row:'a',col:24},{row:'a',col:27}],{on:false});
       bbAddPart('RESISTOR',[{row:'b',col:27},{row:'b',col:29}],{value:10000});
       bbAddPart('WIRE',[{row:'c',col:29},{row:'h',col:5}],{color:'#8e24aa'});
-      bbRunSim(); bbDesc('<b>NAND Gate \u2014 try both switches (row a)!</b><br><br>Two transistors stacked in series. Current can only flow through both to ground if <em>both</em> are turned on. The LED shows the output:<br><br>\u2022 Both switches OFF \u2192 LED ON<br>\u2022 Switch A only \u2192 LED ON<br>\u2022 Switch B only \u2192 LED ON<br>\u2022 <b>Both switches ON \u2192 LED OFF</b><br><br>The LED turns off <em>only</em> when both inputs are on. That\u2019s a NAND gate \u2014 it\u2019s the opposite of AND. Every computer chip is built from gates like this.');
+      bbRunSim(); bbDesc('<b>NAND Gate \u2014 click the switches!</b><br><br>The LED starts ON. Two transistors (row f) are stacked in series between the output and ground. The only way to turn the LED OFF is to close <em>both</em> switches \u2014 because both transistors need to conduct for current to bypass the LED.<br><br>Try all four combinations:<br>\u2022 Switch A (row a, cols 17\u201320) OFF + Switch B (row a, cols 24\u201327) OFF \u2192 <b>LED ON</b><br>\u2022 A ON + B OFF \u2192 <b>LED ON</b><br>\u2022 A OFF + B ON \u2192 <b>LED ON</b><br>\u2022 A ON + B ON \u2192 <b>LED OFF</b> (both transistors conduct, shorting the output to ground)<br><br>This is NAND: the output is OFF only when <em>both</em> inputs are ON. It\u2019s the most important gate in computing \u2014 you can build any logic circuit from NANDs alone.');
     }
 
     // ---- RC CHARGE/DISCHARGE: switch charges cap, LED shows discharge ----
