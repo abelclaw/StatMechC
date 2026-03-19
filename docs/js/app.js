@@ -26282,8 +26282,8 @@ function initCh15Vis() {
       {name:'Betelgeuse', R:764,  T:3600, type:'M1Ia',   cat:'Supergiant'},
       {name:'Antares',    R:680,  T:3660, type:'M1Ib',   cat:'Supergiant'},
       {name:'Rigel',      R:79,   T:12100,type:'B8Ia',   cat:'Supergiant'},
-      {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:44},
       {name:'Aldebaran',  R:44,   T:3910, type:'K5III',  cat:'Giant'},
+      {name:'Sgr A*',     R:17,   T:0,    type:'4M M\u2609', cat:'Black Hole', shadow:44},
       {name:'Arcturus',   R:25,   T:4286, type:'K1III',  cat:'Giant'},
       {name:'Pollux',     R:9.1,  T:4666, type:'K0III',  cat:'Giant'},
       {name:'Sirius A',   R:1.71, T:9940, type:'A1V',    cat:'Main Seq.'},
@@ -26482,7 +26482,7 @@ function initCh15Vis() {
     // --- Planet, black hole & solar system images ---
     const earthImg = new Image(); earthImg.src = 'images/earth_transparent.png';
     const jupiterImg = new Image(); jupiterImg.src = 'images/jupiter_transparent.png';
-    const sgrAImg = new Image(); sgrAImg.src = 'images/m87_eht.jpg';
+    const sgrAImg = new Image(); sgrAImg.src = 'images/m87_eht.png';
     const solarSysImg = new Image(); solarSysImg.src = 'images/solar_system_orbits.jpg';
     let imgLoaded = 0;
     const totalImgs = 4;
@@ -26555,13 +26555,10 @@ function initCh15Vis() {
         else if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
         else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
         else if (v.s.cat === 'Black Hole') {
-          // M87 EHT image: 733x300, ring outer radius ≈ 40% of half-height
-          if (sgrAImg.complete && sgrAImg.naturalWidth > 0) {
-            const ringFrac = 0.40; // ring radius as fraction of image half-height
-            const imgDrawH = v.rPx / ringFrac * 2; // full drawn height
-            const imgDrawW = imgDrawH * (sgrAImg.naturalWidth / sgrAImg.naturalHeight);
-            ctxS.drawImage(sgrAImg, v.sx - imgDrawW / 2, v.sy - imgDrawH / 2, imgDrawW, imgDrawH);
-          }
+          // M87 EHT image: cropped square, ring outer radius ≈ 40% of half-size
+          const ringFrac = 0.40;
+          const imgR = v.rPx / ringFrac;
+          drawPlanetImg(sgrAImg, v.sx, v.sy, imgR);
           // Indicator rings: event horizon and photon ring
           const ehPx = v.s.R * scale; // event horizon in pixels
           const shadowPx = v.rPx;     // shadow/ring radius in pixels
