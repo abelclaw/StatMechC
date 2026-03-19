@@ -23690,25 +23690,26 @@ function initCh14Vis() {
     function bbPresetAmplifier() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
-      bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'});
 
-      // === INPUT PATH (top-left, flows left to right) ===
+      // === INPUT (top-left, left to right) ===
+      // VCC → switch → 47kΩ → transistor base
       bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
       bbAddPart('SWITCH',[{row:'a',col:4},{row:'a',col:8}],{on:true});
-      bbAddPart('RESISTOR',[{row:'b',col:8},{row:'b',col:14}],{value:47000});
-      bbAddPart('WIRE',[{row:'d',col:14},{row:'g',col:17}],{color:'#43a047'}); // green wire to base
+      bbAddPart('RESISTOR',[{row:'b',col:8},{row:'b',col:15}],{value:47000});
 
-      // === TRANSISTOR (bottom-center) ===
-      bbAddPart('NPN',[{row:'f',col:16},{row:'f',col:17},{row:'f',col:18}]);
-      bbAddPart('WIRE',[{row:'g',col:16},{row:'r-b',col:16}],{color:'#1e88e5'}); // emitter to GND
+      // === TRANSISTOR (middle of top half) ===
+      // E=col14, B=col15, C=col16 — all in top half, no DIP crossing needed
+      bbAddPart('NPN',[{row:'d',col:14},{row:'d',col:15},{row:'d',col:16}]);
+      // Emitter to GND
+      bbAddPart('WIRE',[{row:'c',col:14},{row:'r-t',col:14}],{color:'#1e88e5'});
 
-      // === OUTPUT PATH (top-right, flows right to left into collector) ===
+      // === OUTPUT (top-right, right to left into collector) ===
+      // VCC → 470Ω → LED → transistor collector
       bbAddPart('WIRE',[{row:'r+t',col:24},{row:'a',col:24}],{color:'#e53935'});
       bbAddPart('RESISTOR',[{row:'a',col:24},{row:'a',col:20}],{value:470});
       bbAddPart('LED',[{row:'b',col:20},{row:'b',col:16}]);
-      bbAddPart('WIRE',[{row:'d',col:16},{row:'g',col:18}],{color:'#ff9800'}); // orange wire to collector
 
-      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>Two paths from the + rail both flow into the transistor (bottom center) and out to ground:<br><br>\u2022 <b>Input (top-left):</b> switch (row a, cols 4\u20138) \u2192 47k\u03A9 resistor (row b, cols 8\u201314) \u2192 green wire drops to the base. <b>Hover over the 47k\u03A9 resistor</b> \u2014 only ~0.18mA trickles through.<br><br>\u2022 <b>Output (top-right):</b> 470\u03A9 resistor (row a, cols 20\u201324) \u2192 LED (row b, cols 16\u201320) \u2192 orange wire drops to the collector. <b>Hover over the 470\u03A9 resistor</b> \u2014 ~15mA flows through.<br><br>Both paths meet at the transistor and exit through the blue wire to ground. The tiny 0.18mA input controls the 15mA output \u2014 <b>~100\u00D7 amplification</b>. The LED proves it: 0.18mA alone can\u2019t light an LED, but the transistor multiplies it enough to glow. <b>Click the switch</b> to cut the input.');
+      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>Everything is in the top half of the breadboard. Two paths from the + rail meet at the transistor (row d, cols 14\u201316) and exit to ground (blue wire, col 14):<br><br>\u2022 <b>Input (left):</b> switch (row a, cols 4\u20138) \u2192 47k\u03A9 resistor (row b, cols 8\u201315) \u2192 base (col 15). <b>Hover over the 47k\u03A9</b> \u2014 only ~0.18mA.<br><br>\u2022 <b>Output (right):</b> 470\u03A9 resistor (row a, cols 20\u201324) \u2192 LED (row b, cols 16\u201320) \u2192 collector (col 16). <b>Hover over the 470\u03A9</b> \u2014 ~15mA.<br><br>The output is <b>~100\u00D7</b> the input. The switch lets you prove the connection: <b>click the switch</b> to cut the tiny input current and watch the large output (and the LED) die instantly. A 0.18mA trickle was controlling a 15mA flood.');
     }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
