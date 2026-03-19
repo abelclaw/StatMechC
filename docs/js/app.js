@@ -742,9 +742,9 @@ function initCh1Vis() {
     const llnNSlider = document.getElementById('lln-n');
 
     // Layout
-    const boxY = 50, boxH = 70;
+    const boxY = 40, boxH = 120;
     const boxLeft = 50, boxRight = WL - 50, boxW = boxRight - boxLeft;
-    const histY = 170, histBot = HL - 55, histH = histBot - histY;
+    const histY = 200, histBot = HL - 55, histH = histBot - histY;
     const llnNBins = 80;
 
     // State
@@ -758,10 +758,13 @@ function initCh1Vis() {
       const N = parseInt(llnNSlider?.value || 1);
       llnParticles = [];
       for (let i = 0; i < N; i++) {
+        const speed = 1.0 + Math.random() * 1.5;
+        const angle = Math.random() * 2 * Math.PI;
         llnParticles.push({
-          x: Math.random() - 0.5,
-          vx: (Math.random() - 0.5) * 0.04,
-          ySlot: i  // for vertical spreading in display
+          x: Math.random() - 0.5,          // physics position in [-0.5, 0.5]
+          y: Math.random(),                 // visual y in [0, 1] within box
+          vx: Math.cos(angle) * speed,      // pixels per frame (visual)
+          vy: Math.sin(angle) * speed
         });
       }
     }
@@ -778,9 +781,15 @@ function initCh1Vis() {
       const N = llnParticles.length;
       let com = 0;
       for (const p of llnParticles) {
-        p.x += p.vx;
+        // Move in 2D (pixel space mapped to [0,1] box coords)
+        p.x += p.vx / boxW;
+        p.y += p.vy / boxH;
+        // Bounce off walls in x (the physics dimension)
         if (p.x > 0.5) { p.x = 1 - p.x; p.vx = -p.vx; }
         if (p.x < -0.5) { p.x = -1 - p.x; p.vx = -p.vx; }
+        // Bounce off walls in y (visual only)
+        if (p.y > 1) { p.y = 2 - p.y; p.vy = -p.vy; }
+        if (p.y < 0) { p.y = -p.y; p.vy = -p.vy; }
         com += p.x;
       }
       com /= N;
@@ -803,37 +812,36 @@ function initCh1Vis() {
       const N = llnParticles.length;
       const sigN = sigma1 / Math.sqrt(N);
 
-      // --- 1D Box ---
+      // --- 2D Box ---
       ctxL.strokeStyle = COLORS.axis; ctxL.lineWidth = 2;
       ctxL.strokeRect(boxLeft, boxY, boxW, boxH);
 
       // Label
       ctxL.fillStyle = COLORS.text; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
-      ctxL.fillText(N + ' particle' + (N > 1 ? 's' : '') + ' in a 1D box', boxLeft + boxW / 2, boxY - 10);
+      ctxL.fillText(N + ' particle' + (N > 1 ? 's' : '') + ' bouncing in a box  (only x-position matters for center of mass)', boxLeft + boxW / 2, boxY - 10);
 
-      // Particles
-      const dotR = N > 80 ? 1.5 : N > 30 ? 2.5 : N > 10 ? 3.5 : 5;
-      ctxL.fillStyle = 'rgba(79,195,247,0.45)';
-      for (let i = 0; i < llnParticles.length; i++) {
-        const p = llnParticles[i];
+      // Particles as 2D bouncing balls
+      const dotR = N > 100 ? 2 : N > 40 ? 3 : N > 15 ? 4 : 5;
+      for (const p of llnParticles) {
         const px = boxLeft + (p.x + 0.5) * boxW;
-        // Spread vertically based on slot
-        const rows = Math.ceil(N / Math.max(1, Math.floor(boxW / (dotR * 3))));
-        const row = i % Math.max(1, rows);
-        const py = boxY + 8 + (boxH - 16) * (row + 0.5) / Math.max(1, rows);
+        const py = boxY + 4 + p.y * (boxH - 8);
+        // Subtle color variation based on speed
+        const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        const alpha = 0.4 + Math.min(spd / 4, 0.5);
+        ctxL.fillStyle = 'rgba(79,195,247,' + alpha.toFixed(2) + ')';
         ctxL.beginPath(); ctxL.arc(px, py, dotR, 0, Math.PI * 2); ctxL.fill();
       }
 
-      // Center of mass marker
+      // Center of mass marker (vertical line spanning box)
       const comPx = boxLeft + (com + 0.5) * boxW;
       ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2.5;
       ctxL.beginPath(); ctxL.moveTo(comPx, boxY - 2); ctxL.lineTo(comPx, boxY + boxH + 2); ctxL.stroke();
-      // Triangle pointer
+      // Triangle pointer at top
       ctxL.fillStyle = COLORS.orange;
-      ctxL.beginPath(); ctxL.moveTo(comPx - 7, boxY - 4); ctxL.lineTo(comPx + 7, boxY - 4); ctxL.lineTo(comPx, boxY + 5); ctxL.closePath(); ctxL.fill();
-      // COM value
+      ctxL.beginPath(); ctxL.moveTo(comPx - 7, boxY - 5); ctxL.lineTo(comPx + 7, boxY - 5); ctxL.lineTo(comPx, boxY + 4); ctxL.closePath(); ctxL.fill();
+      // COM value label
       ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
-      ctxL.fillText('x\u0304 = ' + com.toFixed(4), comPx + 12, boxY + boxH / 2 + 4);
+      ctxL.fillText('x\u0304 = ' + com.toFixed(4), comPx + 12, boxY + boxH + 15);
 
       // --- Histogram ---
       ctxL.fillStyle = COLORS.text; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
@@ -1455,55 +1463,6 @@ function initCh1Vis() {
     drawPoisson();
   }
 
-  // ----- OLD Convolution / Averaging Visualizer -----
-  const cConv = document.getElementById('vis-convolution');
-  if (cConv) {
-    const conv = setupCanvas(cConv);
-    const ctxC = conv.ctx, WC = conv.W, HC = conv.H;
-    const convSlider = document.getElementById('conv-n');
-    function irwinHallPDF(s, n) {
-      if (s <= 0 || s >= n) return 0;
-      let result = 0, floorS = Math.floor(s), sign = 1, binom = 1;
-      for (let k = 0; k <= floorS; k++) {
-        if (k > 0) binom = binom * (n - k + 1) / k;
-        result += sign * binom * Math.pow(s - k, n - 1); sign *= -1;
-      }
-      let factorial = 1;
-      for (let i = 2; i < n; i++) factorial *= i;
-      return result / factorial;
-    }
-    function drawConvolution() {
-      const N = parseInt(convSlider?.value || 1);
-      clearCanvas(ctxC, WC, HC);
-      const ox = 50, xAxis = HC - 45, plotW = WC - ox - 20, nPts = 400;
-      const xMin = -1.0, xMax = 1.0;
-      const vals = []; let maxVal = 0;
-      for (let i = 0; i < nPts; i++) {
-        const xbar = xMin + (xMax - xMin) * i / nPts;
-        const s = N * (xbar + 0.5);
-        const p = N * irwinHallPDF(s, N); vals.push(p);
-        if (p > maxVal) maxVal = p;
-      }
-      if (maxVal < 1e-10) maxVal = 1;
-      const yScale = (xAxis - 30) / (maxVal * 1.05);
-      drawAxes(ctxC, ox, 15, plotW, xAxis - 15, { xLabel: 'x\u0304 (sample mean)', yLabel: 'P\u2099(x\u0304)' });
-      ctxC.fillStyle = 'rgba(102,187,106,0.3)'; ctxC.beginPath(); ctxC.moveTo(ox, xAxis);
-      for (let i = 0; i < nPts; i++) ctxC.lineTo(ox + i / nPts * plotW, xAxis - vals[i] * yScale);
-      ctxC.lineTo(ox + plotW, xAxis); ctxC.closePath(); ctxC.fill();
-      ctxC.strokeStyle = COLORS.green; ctxC.lineWidth = 2.5; ctxC.beginPath();
-      for (let i = 0; i < nPts; i++) {
-        const px = ox + i / nPts * plotW, py = xAxis - vals[i] * yScale;
-        i === 0 ? ctxC.moveTo(px, py) : ctxC.lineTo(px, py);
-      }
-      ctxC.stroke();
-      ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'left';
-      ctxC.fillText('N = ' + N + (N === 1 ? ' (uniform)' : N === 2 ? ' (triangle)' : ' (converging to Gaussian)'), ox + 5, 28);
-      ctxC.fillStyle = COLORS.green; ctxC.fillText('P\u2099(x\u0304)', WC - 150, 28);
-      document.getElementById('conv-n-val')?.replaceChildren(document.createTextNode(N.toString()));
-    }
-    convSlider?.addEventListener('input', drawConvolution);
-    drawConvolution();
-  }
 }
 
 

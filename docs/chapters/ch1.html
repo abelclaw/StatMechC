@@ -362,16 +362,6 @@ $$(M_r)_N \to \begin{cases} 0, & r\text{ odd} \\ \dfrac{2^{-r/2}\, r!}{\left(\fr
   <div class="vis-canvas-wrap"><canvas id="vis-lln" width="700" height="380"></canvas></div>
 </div>
 
-<!-- OLD Interactive 2 (for comparison) -->
-<div class="interactive-container" style="border:2px dashed rgba(255,100,100,0.3);padding:10px;margin-top:10px;">
-  <div class="figure-label" style="color:#ef5350;">OLD Interactive 2: Averaging and Convolution</div>
-  <p class="vis-caption">Slide $N$ to see how the distribution of averages of $N$ uniform draws evolves from flat to triangular to Gaussian.</p>
-  <div class="vis-controls">
-    <label>Number of particles <i>N</i>: <input type="range" id="conv-n" min="1" max="10" step="1" value="1"> <span class="slider-value" id="conv-n-val">1</span></label>
-  </div>
-  <canvas id="vis-convolution" width="600" height="300"></canvas>
-</div>
-
 <p>To be quantitative, the easiest way to calculate the probability is with the <span class="tooltip-trigger">Dirac $\delta$ function<span class="tooltip-content">A mathematical distribution that is zero everywhere except at the origin, with total integral equal to 1. It "picks out" the value of a function at a specific point when used inside an integral.</span></span> (see Appendix A for a refresher). Using the $\delta$-function, we can write the probability for getting a mean value $\bar{x} = \frac{x_1 + x_2}{2}$ as</p>
 <div class="equation">
 $$P_2(\bar{x}) = \int_{-L/2}^{L/2} dx_1\, P(x_1)\int_{-L/2}^{L/2} dx_2\, P(x_2)\,\delta\!\left(\frac{x_1 + x_2}{2} - \bar{x}\right)$$
