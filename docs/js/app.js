@@ -23651,12 +23651,12 @@ function initCh14Vis() {
       bbAddPart('WIRE',[{row:'g',col:22},{row:'g',col:17}],{color:'#43a047'}); // Q1 emitter → Q2 base
       bbAddPart('WIRE',[{row:'g',col:18},{row:'g',col:24}],{color:'#ff9800'}); // Q2 collector tied to Q1 collector
       bbAddPart('WIRE',[{row:'g',col:16},{row:'r-b',col:16}],{color:'#1e88e5'}); // Q2 emitter to GND
-      // Input: switch → huge resistor (100kΩ) → Q1 base
+      // Input: switch → massive resistor (1MΩ) → Q1 base
       bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
       bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:false});
-      bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:12}],{value:100000});
+      bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:12}],{value:1000000});
       bbAddPart('WIRE',[{row:'c',col:12},{row:'h',col:23}],{color:'#8e24aa'}); // to Q1 base
-      bbRunSim(); bbDesc('<b>Darlington Pair \u2014 click the switch!</b><br><br>Two transistors working together as a team. The first transistor\u2019s output feeds directly into the second transistor\u2019s input, so the amplification multiplies.<br><br>The input goes through a <em>huge</em> 100k\u03A9 resistor (row b, cols 7\u201312, purple wire), which only lets a tiny trickle of current through \u2014 about 0.076 mA. The output through the 470\u03A9 resistor and LED is about 14.5 mA. That\u2019s roughly a <b>190\u00D7</b> increase in current \u2014 a small input signal controlling a much larger output.<br><br><b>Switch OFF:</b> No input current \u2192 both transistors OFF \u2192 LED OFF.<br><b>Switch ON:</b> Tiny input current \u2192 first transistor amplifies it \u2192 second transistor amplifies it again \u2192 LED ON.<br><br>This is why transistors changed the world: they turn whisper-quiet signals into powerful ones.');
+      bbRunSim(); bbDesc('<b>Darlington Pair \u2014 click the switch!</b><br><br>Two transistors working together as a team. The first transistor\u2019s output feeds directly into the second transistor\u2019s input, so the amplification multiplies.<br><br>The input goes through a <em>massive</em> 1M\u03A9 resistor (row b, cols 7\u201312, purple wire), which only lets a tiny trickle of current through \u2014 about 0.008 mA. The output through the 470\u03A9 resistor and LED is about 14.5 mA. That\u2019s roughly a <b>1,900\u00D7</b> increase in current. Compare that to the single-transistor amplifier, which only manages ~80\u00D7. The Darlington\u2019s double amplification stage is what makes this possible.<br><br><b>Switch OFF:</b> No input current \u2192 both transistors OFF \u2192 LED OFF.<br><b>Switch ON:</b> Tiny input current \u2192 first transistor amplifies it \u2192 second transistor amplifies it again \u2192 LED ON.<br><br>This is why transistors changed the world: they turn whisper-quiet signals into powerful ones.');
     }
 
     // ---- VOLTAGE DIVIDER: two resistors split VCC, LED shows midpoint ----
