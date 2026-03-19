@@ -1427,32 +1427,23 @@ function initCh1Vis() {
       document.getElementById('pvg-mu-val')?.replaceChildren(document.createTextNode(gMu.toFixed(1)));
       document.getElementById('pvg-sig-val')?.replaceChildren(document.createTextNode(gSig.toFixed(1)));
 
-      // Determine plot range
-      const mMax = Math.max(Math.ceil(lt + 4 * Math.sqrt(Math.max(lt, 1))), Math.ceil(gMu + 4 * gSig), 12);
+      // Fixed plot range based on slider maxima so axes don't jump
+      const mMax = 45;
       const ox = 55, xAxis = Hpvg - 50, plotW = Wpvg - ox - 20;
       const barW = plotW / mMax;
+      // Fixed y-scale: tallest possible Poisson peak is at lt~1, P(1)~0.37
+      // but we want to show detail at large lt too, so use a fixed max
+      const yMaxFixed = 0.45;
 
       // Compute Poisson PMF
       const pmf = [];
-      let maxP = 0;
       for (let m = 0; m < mMax; m++) {
         let logP = (lt > 0 && m > 0) ? m * Math.log(lt) - lt : -lt;
         for (let k = 2; k <= m; k++) logP -= Math.log(k);
-        const p = Math.exp(logP);
-        pmf.push(p);
-        if (p > maxP) maxP = p;
+        pmf.push(Math.exp(logP));
       }
 
-      // Compute Gaussian PDF values at integer m for height comparison
-      let gMax = 0;
-      for (let m = 0; m < mMax; m++) {
-        const g = (1 / (gSig * Math.sqrt(2 * Math.PI))) * Math.exp(-((m - gMu) ** 2) / (2 * gSig * gSig));
-        if (g > gMax) gMax = g;
-      }
-
-      const yMax = Math.max(maxP, gMax) * 1.1;
-      if (yMax < 1e-10) return;
-      const yScale = (xAxis - 25) / yMax;
+      const yScale = (xAxis - 25) / yMaxFixed;
 
       // Axes
       drawAxes(ctxPvg, ox, 15, plotW, xAxis - 15, { xLabel: 'm', yLabel: 'P(m)' });
