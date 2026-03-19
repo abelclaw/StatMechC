@@ -23294,6 +23294,44 @@ function initCh14Vis() {
       return [d1, d2, mult, 1]; // tolerance band = brown (1%) for aesthetics
     }
 
+    // Find current through a wire by following wires/switches to the nearest series component
+    function bbWireCurrent(wirePart) {
+      var wn0 = holeNode(wirePart.holes[0].row, wirePart.holes[0].col);
+      var wn1 = holeNode(wirePart.holes[1].row, wirePart.holes[1].col);
+      // Try from each endpoint, preferring the non-rail side
+      var starts = (wn0 === 'VPOS' || wn0 === 'VNEG') ? [wn1, wn0] : [wn0, wn1];
+      for (var s = 0; s < 2; s++) {
+        var visited = {}, queue = [starts[s]];
+        visited[starts[s]] = true;
+        while (queue.length > 0) {
+          var node = queue.shift();
+          // Check for current-carrying components at this node
+          for (var j = 0; j < bbParts.length; j++) {
+            var q = bbParts[j];
+            if (q.type === 'RESISTOR') {
+              var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
+              if (a === node || b === node) return Math.abs((bbNodeVolts[a]||0)-(bbNodeVolts[b]||0)) / (q.value||1000);
+            }
+            if (q.type === 'LED' && q._ledOn && q._ledCurrent) {
+              var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
+              if (a === node || b === node) return Math.abs(q._ledCurrent);
+            }
+          }
+          // Follow wires and switches to next node
+          for (var j = 0; j < bbParts.length; j++) {
+            var q = bbParts[j];
+            if (q === wirePart) continue;
+            if (q.type === 'WIRE' || (q.type === 'SWITCH' && q.on)) {
+              var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
+              if (a === node && !visited[b]) { visited[b] = true; queue.push(b); }
+              if (b === node && !visited[a]) { visited[a] = true; queue.push(a); }
+            }
+          }
+        }
+      }
+      return 0;
+    }
+
     function bbDraw() {
       clearCanvas(bbCtx, bbW, bbH); bbAnimT += 0.03;
       // Board
@@ -23312,52 +23350,6 @@ function initCh14Vis() {
         var hp = holeXY(ALL_ROWS[ri], c);
         bbCtx.fillStyle = '#555'; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y, BB_HOLE_R, 0, Math.PI*2); bbCtx.fill();
         bbCtx.fillStyle = '#2a2a2a'; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y+0.5, BB_HOLE_R-0.5, 0, Math.PI*2); bbCtx.fill();
-      }
-
-      // Compute current through a wire by graph-cut: BFS from one endpoint via
-      // wires/switches (excluding this wire), then sum component currents crossing the boundary.
-      function bbWireCurrent(wirePart) {
-        var n0 = holeNode(wirePart.holes[0].row, wirePart.holes[0].col);
-        var n1 = holeNode(wirePart.holes[1].row, wirePart.holes[1].col);
-        // BFS from n1 (typically the "component side"), excluding this wire
-        var visited = {}, queue = [n1];
-        visited[n1] = true;
-        while (queue.length > 0) {
-          var cur = queue.shift();
-          for (var i = 0; i < bbParts.length; i++) {
-            var p = bbParts[i];
-            if (p === wirePart) continue;
-            if (p.type === 'WIRE' || (p.type === 'SWITCH' && p.on)) {
-              var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
-              if (a === cur && !visited[b]) { visited[b] = true; queue.push(b); }
-              if (b === cur && !visited[a]) { visited[a] = true; queue.push(a); }
-            }
-          }
-        }
-        // If both endpoints ended up in the same set, we can't measure (parallel wires)
-        if (visited[n0]) return 0;
-        // Sum currents from components crossing the boundary
-        var totalI = 0;
-        for (var i = 0; i < bbParts.length; i++) {
-          var p = bbParts[i];
-          if (p.type === 'RESISTOR') {
-            var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
-            if (!!visited[a] !== !!visited[b]) totalI += Math.abs((bbNodeVolts[a]||0)-(bbNodeVolts[b]||0)) / (p.value||1000);
-          }
-          if (p.type === 'LED' && p._ledOn && p._ledCurrent) {
-            var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
-            if (!!visited[a] !== !!visited[b]) totalI += Math.abs(p._ledCurrent);
-          }
-          if ((p.type === 'NPN' || p.type === 'PNP') && p._state === 'on') {
-            var e = holeNode(p.holes[0].row, p.holes[0].col), c = holeNode(p.holes[2].row, p.holes[2].col);
-            if (!!visited[e] !== !!visited[c]) totalI += Math.abs((bbNodeVolts[c]||0)-(bbNodeVolts[e]||0)) * 0.5;
-          }
-          if (p.type === 'BATTERY' && p._batCurrent !== undefined) {
-            var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
-            if (!!visited[a] !== !!visited[b]) totalI += Math.abs(p._batCurrent);
-          }
-        }
-        return totalI;
       }
 
       function curDots(x0, y0, x1, y1, current) {
