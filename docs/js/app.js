@@ -1405,62 +1405,153 @@ function initCh1Vis() {
   }
 
   // =========================================================================
-  // OLD INTERACTIVES (for comparison — remove when done reviewing)
+  // INTERACTIVE 5: POISSON VS GAUSSIAN EXPLORER
   // =========================================================================
+  const cPvg = document.getElementById('vis-pvg');
+  if (cPvg) {
+    const pvg = setupCanvas(cPvg);
+    const ctxPvg = pvg.ctx, Wpvg = pvg.W, Hpvg = pvg.H;
+    const pvgLtSlider = document.getElementById('pvg-lt');
+    const pvgMuSlider = document.getElementById('pvg-mu');
+    const pvgSigSlider = document.getElementById('pvg-sig');
+    const pvgFitBtn = document.getElementById('pvg-fit');
 
-  // ----- OLD Poisson Distribution Explorer -----
-  const cPoisson = document.getElementById('vis-poisson');
-  if (cPoisson) {
-    const poi = setupCanvas(cPoisson);
-    const ctxP = poi.ctx, WP = poi.W, HP = poi.H;
-    const lambdaSlider = document.getElementById('poisson-lambda');
-    function drawPoisson() {
-      const lambda = parseFloat(lambdaSlider?.value || 5);
-      clearCanvas(ctxP, WP, HP);
-      const ox = 50, xAxis = HP - 45, plotW = WP - ox - 20, mMax = 30;
-      const barW = plotW / (mMax + 1);
-      const pmf = []; let maxP = 0;
-      for (let m = 0; m <= mMax; m++) {
-        let logP = m * Math.log(lambda) - lambda;
+    function drawPvg() {
+      clearCanvas(ctxPvg, Wpvg, Hpvg);
+      const lt = parseFloat(pvgLtSlider?.value || 5);
+      const gMu = parseFloat(pvgMuSlider?.value || 8);
+      const gSig = parseFloat(pvgSigSlider?.value || 2);
+
+      // Update slider readouts
+      document.getElementById('pvg-lt-val')?.replaceChildren(document.createTextNode(lt.toFixed(1)));
+      document.getElementById('pvg-mu-val')?.replaceChildren(document.createTextNode(gMu.toFixed(1)));
+      document.getElementById('pvg-sig-val')?.replaceChildren(document.createTextNode(gSig.toFixed(1)));
+
+      // Determine plot range
+      const mMax = Math.max(Math.ceil(lt + 4 * Math.sqrt(Math.max(lt, 1))), Math.ceil(gMu + 4 * gSig), 12);
+      const ox = 55, xAxis = Hpvg - 50, plotW = Wpvg - ox - 20;
+      const barW = plotW / mMax;
+
+      // Compute Poisson PMF
+      const pmf = [];
+      let maxP = 0;
+      for (let m = 0; m < mMax; m++) {
+        let logP = (lt > 0 && m > 0) ? m * Math.log(lt) - lt : -lt;
         for (let k = 2; k <= m; k++) logP -= Math.log(k);
-        const p = Math.exp(logP); pmf.push(p);
+        const p = Math.exp(logP);
+        pmf.push(p);
         if (p > maxP) maxP = p;
       }
-      const yScale = (xAxis - 30) / (maxP * 1.1);
-      drawAxes(ctxP, ox, 15, plotW, xAxis - 15, { xLabel: 'm', yLabel: 'P(m)' });
-      ctxP.fillStyle = 'rgba(79,195,247,0.5)'; ctxP.strokeStyle = COLORS.blue; ctxP.lineWidth = 1;
-      for (let m = 0; m <= mMax; m++) {
-        const bh = pmf[m] * yScale, bx = ox + m * barW + 2, bw = barW - 4;
-        ctxP.fillRect(bx, xAxis - bh, bw, bh); ctxP.strokeRect(bx, xAxis - bh, bw, bh);
+
+      // Compute Gaussian PDF values at integer m for height comparison
+      let gMax = 0;
+      for (let m = 0; m < mMax; m++) {
+        const g = (1 / (gSig * Math.sqrt(2 * Math.PI))) * Math.exp(-((m - gMu) ** 2) / (2 * gSig * gSig));
+        if (g > gMax) gMax = g;
       }
-      const sig = Math.sqrt(lambda);
-      ctxP.strokeStyle = COLORS.orange; ctxP.lineWidth = 2; ctxP.beginPath();
-      for (let px = 0; px < plotW; px++) {
-        const m = px / plotW * (mMax + 1);
-        const g = (1 / (sig * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((m - lambda) / sig) ** 2);
+
+      const yMax = Math.max(maxP, gMax) * 1.1;
+      if (yMax < 1e-10) return;
+      const yScale = (xAxis - 25) / yMax;
+
+      // Axes
+      drawAxes(ctxPvg, ox, 15, plotW, xAxis - 15, { xLabel: 'm', yLabel: 'P(m)' });
+
+      // Poisson bars
+      ctxPvg.fillStyle = 'rgba(79,195,247,0.45)';
+      ctxPvg.strokeStyle = COLORS.blue;
+      ctxPvg.lineWidth = 1;
+      for (let m = 0; m < mMax; m++) {
+        const bh = pmf[m] * yScale;
+        const bx = ox + m * barW + 2;
+        const bw = barW - 4;
+        if (bh > 0.5) {
+          ctxPvg.fillRect(bx, xAxis - bh, bw, bh);
+          ctxPvg.strokeRect(bx, xAxis - bh, bw, bh);
+        }
+      }
+
+      // Gaussian curve
+      ctxPvg.strokeStyle = COLORS.orange;
+      ctxPvg.lineWidth = 2.5;
+      ctxPvg.beginPath();
+      for (let px = 0; px <= plotW; px++) {
+        const m = px / plotW * mMax;
+        const g = (1 / (gSig * Math.sqrt(2 * Math.PI))) * Math.exp(-((m - gMu) ** 2) / (2 * gSig * gSig));
         const py = xAxis - g * yScale;
-        px === 0 ? ctxP.moveTo(ox + px, py) : ctxP.lineTo(ox + px, py);
+        px === 0 ? ctxPvg.moveTo(ox + px, py) : ctxPvg.lineTo(ox + px, py);
       }
-      ctxP.stroke();
-      const meanPx = ox + lambda / (mMax + 1) * plotW + barW / 2;
-      ctxP.strokeStyle = COLORS.red; ctxP.lineWidth = 1.5; ctxP.setLineDash([5, 5]);
-      ctxP.beginPath(); ctxP.moveTo(meanPx, 15); ctxP.lineTo(meanPx, xAxis); ctxP.stroke(); ctxP.setLineDash([]);
-      const sigLeftPx = ox + (lambda - sig) / (mMax + 1) * plotW + barW / 2;
-      const sigRightPx = ox + (lambda + sig) / (mMax + 1) * plotW + barW / 2;
-      ctxP.strokeStyle = 'rgba(255,255,255,0.2)'; ctxP.setLineDash([3, 3]);
-      ctxP.beginPath(); ctxP.moveTo(sigLeftPx, 15); ctxP.lineTo(sigLeftPx, xAxis); ctxP.stroke();
-      ctxP.beginPath(); ctxP.moveTo(sigRightPx, 15); ctxP.lineTo(sigRightPx, xAxis); ctxP.stroke(); ctxP.setLineDash([]);
-      ctxP.fillStyle = COLORS.text; ctxP.font = FONT; ctxP.textAlign = 'left';
-      ctxP.fillText('\u03BB = ' + lambda.toFixed(1) + ',  \u03C3 = \u221A\u03BB = ' + sig.toFixed(2), ox + 5, 28);
-      ctxP.fillStyle = COLORS.blue; ctxP.fillText('Poisson PMF', WP - 160, 28);
-      ctxP.fillStyle = COLORS.orange; ctxP.fillText('Gaussian approx.', WP - 160, 44);
-      ctxP.fillStyle = COLORS.red; ctxP.fillText('\u03BC = \u03BB', WP - 160, 60);
-      ctxP.fillStyle = COLORS.textDim; ctxP.font = '10px Inter, system-ui, sans-serif'; ctxP.textAlign = 'center';
-      for (let m = 0; m <= mMax; m += 5) ctxP.fillText(m.toString(), ox + m * barW + barW / 2, xAxis + 12);
-      document.getElementById('poisson-lambda-val')?.replaceChildren(document.createTextNode(lambda.toFixed(1)));
+      ctxPvg.stroke();
+
+      // Poisson mean marker (blue dashed)
+      const poisMeanPx = ox + (lt / mMax) * plotW;
+      ctxPvg.strokeStyle = COLORS.blue; ctxPvg.lineWidth = 1; ctxPvg.setLineDash([4, 4]);
+      ctxPvg.beginPath(); ctxPvg.moveTo(poisMeanPx, 20); ctxPvg.lineTo(poisMeanPx, xAxis); ctxPvg.stroke();
+      ctxPvg.setLineDash([]);
+
+      // Gaussian mean marker (orange dashed)
+      const gMuPx = ox + (gMu / mMax) * plotW;
+      ctxPvg.strokeStyle = COLORS.orange; ctxPvg.lineWidth = 1; ctxPvg.setLineDash([4, 4]);
+      ctxPvg.beginPath(); ctxPvg.moveTo(gMuPx, 20); ctxPvg.lineTo(gMuPx, xAxis); ctxPvg.stroke();
+      ctxPvg.setLineDash([]);
+
+      // Tick labels
+      ctxPvg.fillStyle = COLORS.textDim; ctxPvg.font = '10px Inter, system-ui, sans-serif'; ctxPvg.textAlign = 'center';
+      const step = mMax > 25 ? Math.ceil(mMax / 12) : mMax > 15 ? 2 : 1;
+      for (let m = 0; m < mMax; m += step) {
+        ctxPvg.fillText(m, ox + (m + 0.5) * barW, xAxis + 13);
+      }
+
+      // Legend and info (top area)
+      ctxPvg.textAlign = 'left';
+      ctxPvg.fillStyle = COLORS.blue; ctxPvg.font = FONT;
+      ctxPvg.fillText('Poisson:  \u03BBt = ' + lt.toFixed(1) + '   \u2192  \u27E8m\u27E9 = ' + lt.toFixed(1) + ',  \u03C3 = \u221A(\u03BBt) = ' + Math.sqrt(lt).toFixed(2), ox + 5, 18);
+      ctxPvg.fillStyle = COLORS.orange;
+      ctxPvg.fillText('Gaussian:  \u03BC = ' + gMu.toFixed(1) + ',  \u03C3 = ' + gSig.toFixed(1), ox + 5, 34);
+
+      // Show "1 parameter!" vs "2 parameters" lesson
+      ctxPvg.textAlign = 'right'; ctxPvg.font = FONT_SM;
+      ctxPvg.fillStyle = COLORS.blue;
+      ctxPvg.fillText('1 parameter (\u03BBt)', Wpvg - 25, 18);
+      ctxPvg.fillStyle = COLORS.orange;
+      ctxPvg.fillText('2 parameters (\u03BC, \u03C3)', Wpvg - 25, 34);
+
+      // Goodness-of-fit indicator
+      let sumSqErr = 0;
+      for (let m = 0; m < mMax; m++) {
+        const g = (1 / (gSig * Math.sqrt(2 * Math.PI))) * Math.exp(-((m - gMu) ** 2) / (2 * gSig * gSig));
+        const diff = pmf[m] - g;
+        sumSqErr += diff * diff;
+      }
+      const rms = Math.sqrt(sumSqErr / mMax);
+      ctxPvg.textAlign = 'center'; ctxPvg.font = FONT_SM;
+      if (rms < 0.003) {
+        ctxPvg.fillStyle = COLORS.green;
+        ctxPvg.fillText('Excellent fit!  RMS error = ' + rms.toFixed(4), ox + plotW / 2, xAxis + 32);
+      } else if (rms < 0.01) {
+        ctxPvg.fillStyle = COLORS.yellow;
+        ctxPvg.fillText('Close!  RMS error = ' + rms.toFixed(4), ox + plotW / 2, xAxis + 32);
+      } else {
+        ctxPvg.fillStyle = COLORS.textDim;
+        ctxPvg.fillText('RMS error = ' + rms.toFixed(4), ox + plotW / 2, xAxis + 32);
+      }
     }
-    lambdaSlider?.addEventListener('input', drawPoisson);
-    drawPoisson();
+
+    // Fit button: set Gaussian params to match Poisson
+    pvgFitBtn?.addEventListener('click', () => {
+      const lt = parseFloat(pvgLtSlider?.value || 5);
+      const bestMu = lt;
+      const bestSig = Math.sqrt(lt);
+      // Animate sliders to fit values
+      if (pvgMuSlider) { pvgMuSlider.value = bestMu; }
+      if (pvgSigSlider) { pvgSigSlider.value = bestSig; }
+      drawPvg();
+    });
+
+    pvgLtSlider?.addEventListener('input', drawPvg);
+    pvgMuSlider?.addEventListener('input', drawPvg);
+    pvgSigSlider?.addEventListener('input', drawPvg);
+    drawPvg();
   }
 
 }

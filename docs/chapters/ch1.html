@@ -564,14 +564,18 @@ $$\frac{\sigma}{\langle m \rangle} = \frac{1}{\sqrt{\lambda t}}$$
   <div class="vis-canvas-wrap"><canvas id="vis-decay" width="700" height="380"></canvas></div>
 </div>
 
-<!-- OLD Interactive 4 (for comparison) -->
-<div class="interactive-container" style="border:2px dashed rgba(255,100,100,0.3);padding:10px;margin-top:10px;">
-  <div class="figure-label" style="color:#ef5350;">OLD Interactive 4: Poisson Distribution Explorer</div>
-  <p class="vis-caption">Adjust $\lambda t$ to see how the Poisson distribution evolves from asymmetric at small values to Gaussian at large values.</p>
+<!-- Interactive: Poisson vs Gaussian Explorer -->
+<div class="visualization">
+  <div class="figure-label">Interactive 5: Poisson vs Gaussian</div>
+  <p class="vis-caption">The Poisson distribution has one parameter ($\lambda t$) that controls both its mean and width. The Gaussian has two independent parameters. Try to fit the Gaussian to the Poisson by hand, then hit Fit to see the best match.</p>
   <div class="vis-controls">
-    <label><i>&lambda;t</i>: <input type="range" id="poisson-lambda" min="0.5" max="20" step="0.5" value="5"> <span class="slider-value" id="poisson-lambda-val">5</span></label>
+    <label style="color:#4fc3f7">&lambda;t: <input type="range" id="pvg-lt" min="0.5" max="25" step="0.5" value="5"><span class="slider-value" id="pvg-lt-val">5.0</span></label>
+    <span style="color:rgba(255,255,255,0.2);margin:0 4px">|</span>
+    <label style="color:#ffa726">&mu;: <input type="range" id="pvg-mu" min="0" max="30" step="0.1" value="8"><span class="slider-value" id="pvg-mu-val">8.0</span></label>
+    <label style="color:#ffa726">&sigma;: <input type="range" id="pvg-sig" min="0.3" max="8" step="0.1" value="2"><span class="slider-value" id="pvg-sig-val">2.0</span></label>
+    <button id="pvg-fit" class="control-btn">Fit</button>
   </div>
-  <canvas id="vis-poisson" width="600" height="300"></canvas>
+  <div class="vis-canvas-wrap"><canvas id="vis-pvg" width="700" height="320"></canvas></div>
 </div>
 
 <p>We clearly see the Gaussian shape emerging at large $t$ (left) and at large $m$ (right).</p>
