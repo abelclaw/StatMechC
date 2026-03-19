@@ -23662,31 +23662,8 @@ function initCh14Vis() {
     // ---- VOLTAGE DIVIDER: two resistors split VCC, LED shows midpoint ----
 
     // ---- EMITTER FOLLOWER: NPN voltage follower, output tracks input minus VBE ----
-    function bbPresetFollower() {
-      bbClear(); bbShowCurrent = true;
-      bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
-      bbAddPart('WIRE',[{row:'r-t',col:25},{row:'r-b',col:25}],{color:'#1e88e5'});
-      // Input voltage divider: VCC -> R1(10k) -> base -> R2(10k) -> GND
-      // This sets base at ~4.5V
-      bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
-      bbAddPart('RESISTOR',[{row:'a',col:4},{row:'a',col:9}],{value:10000});
-      bbAddPart('RESISTOR',[{row:'b',col:9},{row:'b',col:14}],{value:10000});
-      bbAddPart('WIRE',[{row:'c',col:14},{row:'r-t',col:14}],{color:'#1e88e5'});
-      // NPN: base at col 9, collector to VCC, emitter is output
-      bbAddPart('NPN',[{row:'f',col:18},{row:'f',col:19},{row:'f',col:20}]);
-      bbAddPart('WIRE',[{row:'c',col:9},{row:'h',col:19}],{color:'#43a047'}); // divider to base
-      bbAddPart('WIRE',[{row:'r+b',col:20},{row:'g',col:20}],{color:'#e53935'}); // collector to VCC
-      // Emitter load: R(1k) to GND
-      bbAddPart('RESISTOR',[{row:'h',col:18},{row:'h',col:14}],{value:1000});
-      bbAddPart('WIRE',[{row:'i',col:14},{row:'r-b',col:14}],{color:'#1e88e5'});
-      // Output LED from emitter to GND (shows Vout = Vbase - 0.7V)
-      bbAddPart('LED',[{row:'i',col:18},{row:'i',col:22}]);
-      bbAddPart('RESISTOR',[{row:'j',col:22},{row:'j',col:26}],{value:470});
-      bbAddPart('WIRE',[{row:'i',col:26},{row:'r-b',col:26}],{color:'#1e88e5'});
-      bbRunSim(); bbDesc('<b>Emitter Follower (Voltage Buffer)</b><br><br>The input voltage is set to about 4.5V by two equal resistors splitting the 9V supply. The transistor\u2019s output (at the emitter) copies the input but shifted down by 0.7V \u2014 the unavoidable voltage drop across the base-emitter junction.<br><br><b>Hover over the base (row f, col 23) and emitter (row f, col 22) to compare voltages.</b> You should see the emitter is about 0.7V lower than the base.<br><br>Why bother? The input side can only provide a trickle of current (through 10k\u03A9 resistors). But the emitter side can supply much more current (through only 1k\u03A9) to drive things like LEDs or motors. The transistor acts like a power booster that copies the voltage while multiplying the available current.');
-    }
 
-    // ---- AMPLIFIER: shows current gain of a single transistor ----
+// ---- AMPLIFIER: shows current gain of a single transistor ----
     function bbPresetAmplifier() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
@@ -23729,7 +23706,6 @@ function initCh14Vis() {
     document.getElementById('bb-preset-amp')?.addEventListener('click', bbPresetAmplifier);
     document.getElementById('bb-preset-darlington')?.addEventListener('click', bbPresetDarlington);
     document.getElementById('bb-preset-astable')?.addEventListener('click', bbPresetAstable);
-    document.getElementById('bb-preset-follower')?.addEventListener('click', bbPresetFollower);
 
     var bbAnimRunning = false;
     function bbAnimate() {
