@@ -97,6 +97,21 @@ $$\sigma = \sqrt{N}$$
 <p>If you play 100 games for \$1 each and are evenly matched, then $\langle\text{winnings}\rangle = 0$ and $\sigma_{\text{winnings}} = \sqrt{100} \times \$1 = \$10$. This means that after 100 games, we don't know who's winning but there is a 32% chance someone is up by at least \$10.</p>
 </div>
 
+<!-- Interactive Blackjack Random Walk -->
+<div class="visualization">
+  <div class="figure-label">Interactive 1: Blackjack Random Walk</div>
+  <p class="vis-caption">A gambler plays repeated \$1 games. Each trial traces a random walk of cumulative winnings. After many trials, the histogram of final winnings converges to a Gaussian with $\sigma = 2\sqrt{Nab}$.</p>
+  <div class="vis-controls">
+    <label>Win prob <i>a</i>: <input type="range" id="bj-a" min="0.1" max="0.9" step="0.01" value="0.50"><span class="slider-value" id="bj-a-val">0.50</span></label>
+    <label>Games <i>N</i>: <input type="range" id="bj-N" min="10" max="500" step="10" value="100"><span class="slider-value" id="bj-N-val">100</span></label>
+    <label>Speed: <input type="range" id="bj-speed" min="1" max="5" step="1" value="3"><span class="slider-value" id="bj-speed-val">3</span></label>
+    <button id="bj-go" class="control-btn">&#9654; Go</button>
+    <button id="bj-clear" class="control-btn">Clear</button>
+    <span class="value-display" id="bj-stats">0 trials</span>
+  </div>
+  <div class="vis-canvas-wrap"><canvas id="vis-blackjack" width="700" height="380"></canvas></div>
+</div>
+
 <p>For an unbiased 1D random walk, the mean displacement is 0. In this case, the typical scale for displacement is better described by the <span class="tooltip-trigger">root-mean-square (RMS) fluctuation<span class="tooltip-content">The square root of the average of the squared displacement. When the mean displacement is zero, it equals the standard deviation and gives the characteristic scale of fluctuations.</span></span>, which reduces to the standard deviation when the mean is zero. That is, the RMS fluctuation is $x_{\text{rms}} = \sigma = \sqrt{N}$.</p>
 
 <h3 id="s2-2-binom-poisson">Binomial vs. Poisson</h3>
@@ -159,16 +174,18 @@ $$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \
 
 <p>and the RMS distance moved is $\sqrt{N}\,\ell$, just like in the 1D case.</p>
 
-<!-- Interactive Random Walk -->
+<!-- Interactive 2D Random Walk -->
 <div class="visualization">
-  <div class="figure-label">Interactive 1: 2D Random Walk</div>
-  <p class="vis-caption">50 walkers start at the center and take random steps, illustrating the $\ell\sqrt{N}$ scaling of RMS distance.</p>
-  <div class="vis-canvas-wrap"><canvas id="vis-randomwalk" width="600" height="400"></canvas></div>
+  <div class="figure-label">Interactive 2: 2D Random Walk</div>
+  <p class="vis-caption">Walkers start at the center and take random steps. The dashed red circle shows the measured RMS distance; the green circle shows $\ell\sqrt{N}$. Watch them track each other as the walk proceeds.</p>
   <div class="vis-controls">
-    <button id="rw-start">▶ Start</button>
-    <button id="rw-reset">Reset</button>
+    <label>Walkers: <input type="range" id="rw-walkers" min="1" max="200" step="1" value="50"><span class="slider-value" id="rw-walkers-val">50</span></label>
+    <label>Step size &ell;: <input type="range" id="rw-step" min="1" max="10" step="1" value="4"><span class="slider-value" id="rw-step-val">4</span></label>
     <label>Speed: <input type="range" id="rw-speed" min="1" max="6" step="1" value="3"><span class="slider-value" id="rw-speed-val">3</span></label>
+    <button id="rw-start" class="control-btn">&#9654; Start</button>
+    <button id="rw-reset" class="control-btn">Reset</button>
   </div>
+  <div class="vis-canvas-wrap"><canvas id="vis-randomwalk" width="700" height="400"></canvas></div>
 </div>
 
 <!-- ============================================================ -->
@@ -177,16 +194,17 @@ $$\langle\vec{s}_N^{\,2}\rangle = \langle\vec{s}_{N-1}^{\,2}\rangle + \ell^2 = \
 <p><span class="tooltip-trigger">Diffusion<span class="tooltip-content">The net spreading of the distribution of molecules due to random molecular motion. It is the macroscopic consequence of many microscopic random walks.</span></span> refers to the net spreading of the distribution of molecules due to random molecular motion. Think about an individual molecule in a gas, say some CO molecule coming out of a car's exhaust. It leaves the exhaust and moves in a straight line until it hits another molecule, in which case it is buffeted essentially randomly in a different direction. As all the CO molecules are doing the same thing, on average, the net effect is a diffusion of the CO gas. We want to compute the probability distribution $P_t(x)$ for where a CO molecule is after a time $t$ and then use this to determine the equation of motion of the density of the gas.</p>
 
 <!-- Interactive Brownian Motion -->
-<div class="interactive-container">
-  <div class="figure-label">Interactive 2: Brownian Motion</div>
-  <p class="vis-caption">A large pollen grain is buffeted by small gas molecules, producing the jittery random walk first observed by Robert Brown in 1827.</p>
+<div class="visualization">
+  <div class="figure-label">Interactive 3: Brownian Motion</div>
+  <p class="vis-caption">A large pollen grain (yellow) is buffeted by small gas molecules (blue), producing the jittery random walk first observed by Robert Brown in 1827. The right panel shows $\langle r^2 \rangle$ vs time &mdash; diffusion means this grows linearly.</p>
   <div class="vis-controls">
-    <label>Temperature: <input type="range" id="bm-temp" min="0.5" max="5" step="0.1" value="2"><span class="slider-value" id="bm-temp-val">2</span></label>
+    <label>Temperature: <input type="range" id="bm-temp" min="0.5" max="5" step="0.1" value="2"><span class="slider-value" id="bm-temp-val">2.0</span></label>
     <label>Pollen size: <input type="range" id="bm-size" min="8" max="25" step="1" value="14"><span class="slider-value" id="bm-size-val">14</span></label>
-    <button id="bm-start">Start</button>
-    <button id="bm-reset">Reset</button>
+    <button id="bm-start" class="control-btn">&#9654; Start</button>
+    <button id="bm-reset" class="control-btn">Reset</button>
+    <span class="value-display" id="bm-rms">RMS: 0</span>
   </div>
-  <canvas id="vis-brownian" width="600" height="400"></canvas>
+  <div class="vis-canvas-wrap"><canvas id="vis-brownian" width="700" height="400"></canvas></div>
 </div>
 
 <h3 id="s2-3-1">3.1 &mdash; Collisions in a gas</h3>
@@ -306,14 +324,19 @@ $$n(\vec{x}, t) = \int d^3y\left(\frac{1}{2\pi\ell\bar{v}t}\right)^{3/2}\exp\!\l
 
 <p>Eq.&nbsp;(31) has a simple physical interpretation: the number of molecules at a point $\vec{x}$ are those that have walked there randomly from any other point $\vec{y}$ over the time $t$.</p>
 
-<!-- Interactive Diffusion Simulation -->
-<div class="interactive-container">
-  <div class="figure-label">Interactive 3: Diffusion Simulation</div>
-  <p class="vis-caption">Adjust the diffusion constant $D$ to see how a point-source density spreads over time according to the diffusion equation.</p>
+<!-- Interactive Diffusion Lab -->
+<div class="visualization">
+  <div class="figure-label">Interactive 4: Diffusion Lab</div>
+  <p class="vis-caption">Particles start at the center and random-walk outward. The histogram of their positions (blue bars) converges to the theoretical Gaussian $P_t(x)$ (orange curve). The measured $x_\text{rms}$ (red) tracks the predicted $\sqrt{2Dt}$ (green).</p>
   <div class="vis-controls">
-    <label>Diffusion constant (<i>D</i>): <input type="range" id="diff-D" min="0.1" max="5" step="0.1" value="1"><span class="slider-value" id="diff-D-val">1</span></label>
+    <label>Diffusion <i>D</i>: <input type="range" id="diff-D" min="0.2" max="5" step="0.1" value="1.5"><span class="slider-value" id="diff-D-val">1.5</span></label>
+    <label>Particles: <input type="range" id="diff-N" min="50" max="1000" step="50" value="300"><span class="slider-value" id="diff-N-val">300</span></label>
+    <label>Speed: <input type="range" id="diff-speed" min="1" max="5" step="1" value="3"><span class="slider-value" id="diff-speed-val">3</span></label>
+    <button id="diff-go" class="control-btn">&#9654; Go</button>
+    <button id="diff-clear" class="control-btn">Clear</button>
+    <span class="value-display" id="diff-stats">t = 0</span>
   </div>
-  <canvas id="vis-diffusion" width="600" height="300"></canvas>
+  <div class="vis-canvas-wrap"><canvas id="vis-diffusion" width="700" height="380"></canvas></div>
 </div>
 
 <!-- ============================================================ -->
@@ -468,16 +491,17 @@ $$N_A = \frac{3RT}{\mu D}$$
 
 <p>Consider a ball falling through a fluid. It is accelerated from a downward force due to gravity and encounters resistance, or drag, from the fluid. There are two sources of drag. The first, called <em>inertial drag</em>, is due to the ball bonking molecules in front of it and speeding them up. The inertial force goes like the square of the velocity: $\vec{F}_{\text{inertial}} = \pi R^2 \rho |\vec{v}|\vec{v}$. For slow objects, the dominant drag force is due to <span class="tooltip-trigger">viscosity<span class="tooltip-content">A measure of a fluid's resistance to shear deformation. More viscous fluids (like honey) resist flow more than less viscous ones (like water).</span></span>, called viscous drag.</p>
 
-<div class="interactive-wrapper">
-<div class="figure-label">Interactive 4: Stokes Drag &amp; Terminal Velocity</div>
-<p class="vis-caption">A ball falling through a viscous fluid reaches terminal velocity when gravity balances Stokes drag.</p>
-<canvas id="vis-stokes" width="600" height="350"></canvas>
-<div class="controls">
-<label>Viscosity η: <input type="range" id="stokes-eta" min="0.5" max="5" step="0.1" value="1.5"><span id="stokes-eta-val">1.5</span></label>
-<label>Radius R: <input type="range" id="stokes-radius" min="0.5" max="3" step="0.1" value="1.0"><span id="stokes-radius-val">1.0</span></label>
-<button id="stokes-start">Drop</button>
-<button id="stokes-reset">Reset</button>
+<div class="visualization">
+<div class="figure-label">Interactive 5: Stokes Drag &amp; Terminal Velocity</div>
+<p class="vis-caption">Drop a ball through a viscous fluid. Gravity pulls it down; Stokes drag ($F = 6\pi\eta R v$) resists. The ball reaches terminal velocity $v_t$ when the two balance. The right panel shows $v(t)$ approaching $v_t$ exponentially.</p>
+<div class="vis-controls">
+<label>Viscosity &eta;: <input type="range" id="stokes-eta" min="0.5" max="5" step="0.1" value="1.5"><span class="slider-value" id="stokes-eta-val">1.5</span></label>
+<label>Radius <i>R</i>: <input type="range" id="stokes-radius" min="0.5" max="3" step="0.1" value="1.0"><span class="slider-value" id="stokes-radius-val">1.0</span></label>
+<button id="stokes-start" class="control-btn">&#9654; Drop</button>
+<button id="stokes-reset" class="control-btn">Reset</button>
+<span class="value-display" id="stokes-info">v = 0</span>
 </div>
+<div class="vis-canvas-wrap"><canvas id="vis-stokes" width="700" height="380"></canvas></div>
 </div>
 
 <p>Viscosity is another physical effect whose microscopic origin is in the stochastic collision of molecules. The more precise name for viscosity is <em>dynamic shear viscosity</em>. It measures how a fluid responds to shear forces: you push the top layer and ask how much the bottom layer moves. Intuitively, viscosity is a measure of how well a fluid flows.</p>

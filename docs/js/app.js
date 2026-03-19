@@ -1552,320 +1552,447 @@ function initCh1Vis() {
 // CH2: Random Walk & Diffusion
 // =============================================================================
 function initCh2Vis() {
-  const c = document.getElementById('vis-randomwalk');
-  if (!c) return;
-  const { ctx, W, H } = setupCanvas(c);
 
-  let walkers = [];
-  let running = false;
-  let steps = 0;
-  const nWalkers = 50;
-  const stepSize = 4;
+  // Shared: Box-Muller Gaussian random numbers
+  function gaussRand() {
+    let u, v, s;
+    do { u = 2 * Math.random() - 1; v = 2 * Math.random() - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
+    return u * Math.sqrt(-2 * Math.log(s) / s);
+  }
 
-  function reset() {
-    walkers = [];
-    for (let i = 0; i < nWalkers; i++) {
-      walkers.push({ x: W / 2, y: H / 2, trail: [] });
+  // =========================================================================
+  // INTERACTIVE 1: BLACKJACK RANDOM WALK
+  // =========================================================================
+  const cBJ = document.getElementById('vis-blackjack');
+  if (cBJ) {
+    const { ctx, W, H } = setupCanvas(cBJ);
+    const bjGoBtn = document.getElementById('bj-go');
+    const bjClearBtn = document.getElementById('bj-clear');
+    const bjASlider = document.getElementById('bj-a');
+    const bjNSlider = document.getElementById('bj-N');
+    const bjSpeedSlider = document.getElementById('bj-speed');
+
+    let bjRunning = false;
+    let trials = [];
+    let currentPath = [];
+    let currentStep = 0;
+    let trialCount = 0;
+    let finalWinnings = [];
+
+    // Layout: left panel = walk path, right panel = histogram
+    const pathL = 30, pathR = W * 0.55, pathT = 30, pathB = H - 30;
+    const pathW = pathR - pathL, pathH = pathB - pathT;
+    const histL = W * 0.60, histR = W - 30, histT = 30, histB = H - 30;
+    const histW = histR - histL, histH = histB - histT;
+    const statsX = histL + 5;
+
+    function getA() { return parseFloat(bjASlider?.value || 0.5); }
+    function getN() { return parseInt(bjNSlider?.value || 100); }
+    function getSpeed() { return parseInt(bjSpeedSlider?.value || 3); }
+
+    function bjClear() {
+      bjRunning = false;
+      if (activeAnimations['ch2-bj']) { cancelAnimationFrame(activeAnimations['ch2-bj']); delete activeAnimations['ch2-bj']; }
+      if (bjGoBtn) bjGoBtn.textContent = '\u25B6 Go';
+      trials = [];
+      currentPath = [];
+      currentStep = 0;
+      trialCount = 0;
+      finalWinnings = [];
+      drawBJ();
     }
-    steps = 0;
-  }
 
-  function step() {
-    walkers.forEach(w => {
-      const angle = Math.random() * 2 * Math.PI;
-      w.x += stepSize * Math.cos(angle);
-      w.y += stepSize * Math.sin(angle);
-      w.trail.push({ x: w.x, y: w.y });
-      if (w.trail.length > 200) w.trail.shift();
-    });
-    steps++;
-  }
+    function runOneTrial() {
+      const a = getA(), N = getN();
+      currentPath = [0];
+      currentStep = 0;
+      let cumulative = 0;
+      for (let i = 0; i < N; i++) {
+        cumulative += Math.random() < a ? 1 : -1;
+        currentPath.push(cumulative);
+      }
+    }
 
-  function draw() {
-    clearCanvas(ctx, W, H);
+    function drawBJ() {
+      clearCanvas(ctx, W, H);
+      const a = getA(), b = 1 - a, N = getN();
+      const expectedMean = N * (a - b);
+      const expectedSigma = 2 * Math.sqrt(N * a * b);
 
-    walkers.forEach((w, i) => {
-      const hue = (i * 360 / nWalkers) % 360;
-      ctx.strokeStyle = 'hsla(' + hue + ', 70%, 60%, 0.3)';
+      // Determine y-range for path based on expected spread
+      const yRange = Math.max(expectedSigma * 4, Math.abs(expectedMean) + expectedSigma * 3, 30);
+
+      // ----- LEFT PANEL: Random walk path -----
+      // Axes
+      ctx.strokeStyle = COLORS.axis;
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      w.trail.forEach((p, j) => {
-        j === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-      });
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pathL, pathT); ctx.lineTo(pathL, pathB); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pathL, pathT + pathH / 2); ctx.lineTo(pathR, pathT + pathH / 2); ctx.stroke();
 
-      ctx.fillStyle = 'hsl(' + hue + ', 70%, 60%)';
-      ctx.beginPath();
-      ctx.arc(w.x, w.y, 3, 0, 2 * Math.PI);
-      ctx.fill();
-    });
+      // Zero line
+      const y0 = pathT + pathH / 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.beginPath(); ctx.moveTo(pathL, y0); ctx.lineTo(pathR, y0); ctx.stroke();
 
-    // Origin
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(W / 2, H / 2, 3, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    // RMS distance
-    let sumR2 = 0;
-    walkers.forEach(w => {
-      sumR2 += (w.x - W / 2) ** 2 + (w.y - H / 2) ** 2;
-    });
-    const rms = Math.sqrt(sumR2 / nWalkers);
-    const expected = stepSize * Math.sqrt(steps);
-
-    ctx.strokeStyle = 'rgba(239,83,80,0.5)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.arc(W / 2, H / 2, rms, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    ctx.strokeStyle = 'rgba(102,187,106,0.5)';
-    ctx.beginPath();
-    ctx.arc(W / 2, H / 2, expected, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.fillStyle = COLORS.text;
-    ctx.font = FONT;
-    ctx.textAlign = 'left';
-    ctx.fillText('Steps: ' + steps, 10, 20);
-    ctx.fillText('RMS distance: ' + rms.toFixed(1), 10, 38);
-    ctx.fillText('Expected (\u2113\u221AN): ' + expected.toFixed(1), 10, 56);
-    ctx.fillStyle = COLORS.red; ctx.fillText('\u2014 Measured RMS', 10, 74);
-    ctx.fillStyle = COLORS.green; ctx.fillText('\u2014 Expected \u221AN', 10, 92);
-  }
-
-  const rwSpeedSlider = document.getElementById('rw-speed');
-
-  function animateRW() {
-    if (!running) return;
-    const speed = parseInt(rwSpeedSlider?.value || 3);
-    // speed 1 = 1 step every 4 frames, speed 6 = 10 steps per frame
-    const stepsPerFrame = [0, 1, 1, 1, 2, 5, 10][speed];
-    const frameSkip = [0, 4, 2, 1, 1, 1, 1][speed];
-    rwFrameCount++;
-    if (rwFrameCount % frameSkip === 0) {
-      for (let i = 0; i < stepsPerFrame; i++) step();
-      draw();
-    }
-    if (document.getElementById('rw-speed-val'))
-      document.getElementById('rw-speed-val').textContent = speed;
-    activeAnimations['randomwalk'] = requestAnimationFrame(animateRW);
-  }
-  let rwFrameCount = 0;
-
-  // Wire up buttons using onclick to avoid any listener issues
-  const rwStartBtn = document.getElementById('rw-start');
-  const rwResetBtn = document.getElementById('rw-reset');
-
-  if (rwStartBtn) {
-    rwStartBtn.onclick = function() {
-      running = !running;
-      rwStartBtn.textContent = running ? '⏸ Pause' : '▶ Start';
-      if (running) animateRW();
-    };
-  }
-
-  if (rwResetBtn) {
-    rwResetBtn.onclick = function() {
-      running = false;
-      if (rwStartBtn) rwStartBtn.textContent = '▶ Start';
-      if (activeAnimations['randomwalk']) cancelAnimationFrame(activeAnimations['randomwalk']);
-      reset();
-      draw();
-    };
-  }
-
-  reset();
-  draw();
-
-  // ----- Diffusion Equation -----
-  const c2 = document.getElementById('vis-diffusion');
-  if (c2) {
-  const diff = setupCanvas(c2);
-  const ctx2 = diff.ctx, W2 = diff.W, H2 = diff.H;
-  const diffSlider = document.getElementById('diff-D');
-
-  function drawDiffusion() {
-    const D = parseFloat(diffSlider?.value || 1);
-    clearCanvas(ctx2, W2, H2);
-
-    const xAxis = H2 - 40;
-    const times = [0.1, 0.5, 1, 2, 5];
-    const colors = [COLORS.red, COLORS.orange, COLORS.yellow, COLORS.green, COLORS.blue];
-
-    times.forEach((t, idx) => {
-      const sigma = Math.sqrt(2 * D * t);
-      ctx2.strokeStyle = colors[idx];
-      ctx2.lineWidth = 2;
-      ctx2.beginPath();
-      for (let px = 0; px < W2 - 40; px++) {
-        const x = (px - (W2 - 60) / 2) / 50;
-        const n = (1 / (Math.sqrt(4 * Math.PI * D * t))) * Math.exp(-x * x / (4 * D * t));
-        const py = xAxis - n * (xAxis - 20) * 1.5;
-        px === 0 ? ctx2.moveTo(px + 30, py) : ctx2.lineTo(px + 30, py);
-      }
-      ctx2.stroke();
-
-      ctx2.fillStyle = colors[idx];
-      ctx2.font = FONT_SM;
-      ctx2.fillText('t=' + t, W2 - 60, 20 + idx * 16);
-    });
-
-    ctx2.fillStyle = COLORS.text;
-    ctx2.font = FONT;
-    ctx2.textAlign = 'center';
-    ctx2.fillText('Diffusion: n(x,t) = (1/\u221A4\u03C0Dt) exp(-x\u00B2/4Dt), D = ' + D.toFixed(1), W2 / 2, 20);
-
-    document.getElementById('diff-D-val')?.replaceChildren(document.createTextNode(D.toFixed(1)));
-  }
-
-  diffSlider?.addEventListener('input', drawDiffusion);
-  drawDiffusion();
-  }
-
-  // ----- Stokes Drag & Terminal Velocity -----
-  const cStokes = document.getElementById('vis-stokes');
-  if (cStokes) {
-    const {ctx: ctxS, W: WS, H: HS} = setupCanvas(cStokes);
-    const etaSlider = document.getElementById('stokes-eta');
-    const radiusSlider = document.getElementById('stokes-radius');
-    const stokesStartBtn = document.getElementById('stokes-start');
-    const stokesResetBtn = document.getElementById('stokes-reset');
-
-    let ballY = 30, ballV = 0, running = false;
-    const g = 200; // px/s^2 effective gravity
-    const rho_ball = 3.0; // density ratio ball/fluid
-
-    function getEta() { return parseFloat(etaSlider?.value || 1.5); }
-    function getR() { return parseFloat(radiusSlider?.value || 1.0); }
-
-    function terminalVel() {
-      const eta = getEta(), R = getR();
-      // v_t = 2R^2(rho_ball - rho_fluid)g / (9 eta) — simplified units
-      return 2 * R * R * (rho_ball - 1) * g / (9 * eta);
-    }
-
-    function drawStokes() {
-      clearCanvas(ctxS, WS, HS);
-      const eta = getEta(), R = getR();
-      const vt = terminalVel();
-      const ballR = 8 + R * 6;
-
-      // Draw fluid background
-      ctxS.fillStyle = 'rgba(30,80,140,0.25)';
-      ctxS.fillRect(40, 20, 200, HS - 40);
-
-      // Draw ball
-      const drawY = Math.min(ballY, HS - 30);
-      ctxS.beginPath();
-      ctxS.arc(140, drawY, ballR, 0, 2 * Math.PI);
-      ctxS.fillStyle = COLORS.orange;
-      ctxS.fill();
-      ctxS.strokeStyle = 'rgba(255,255,255,0.4)';
-      ctxS.lineWidth = 1;
-      ctxS.stroke();
-
-      // Force arrows on ball
-      const arrowScale = 0.3;
-      // Gravity (down)
-      const Fg = rho_ball * R * R * R * g * arrowScale;
-      ctxS.strokeStyle = COLORS.red; ctxS.lineWidth = 2;
-      drawArrow(ctxS, 140, drawY, 140, drawY + Math.min(Fg, 80), 6);
-      ctxS.fillStyle = COLORS.red; ctxS.font = FONT_SM;
-      ctxS.textAlign = 'left';
-      ctxS.fillText('Fg', 148, drawY + Math.min(Fg, 80) - 5);
-
-      // Drag (up) — proportional to current velocity
-      if (ballV > 0.5) {
-        const Fd = 6 * Math.PI * eta * R * ballV * arrowScale * 0.15;
-        ctxS.strokeStyle = COLORS.blue; ctxS.lineWidth = 2;
-        drawArrow(ctxS, 140, drawY, 140, drawY - Math.min(Fd, 80), 6);
-        ctxS.fillStyle = COLORS.blue;
-        ctxS.fillText('Fdrag', 148, drawY - Math.min(Fd, 80) + 10);
+      // Previous trials (faded)
+      for (let t = Math.max(0, trials.length - 20); t < trials.length; t++) {
+        const path = trials[t];
+        const alpha = 0.08 + 0.12 * ((t - Math.max(0, trials.length - 20)) / 20);
+        ctx.strokeStyle = 'rgba(79,195,247,' + alpha + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < path.length; i++) {
+          const px = pathL + (i / N) * pathW;
+          const py = y0 - (path[i] / yRange) * (pathH / 2);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.stroke();
       }
 
-      // Right panel: velocity vs time plot
-      const ox = 280, oy = 30, pw = WS - ox - 40, ph = HS - 80;
-      drawAxes(ctxS, ox, oy, pw, ph, {xLabel: 'Time', yLabel: 'Velocity'});
+      // Current trial (bright)
+      if (currentPath.length > 1) {
+        const drawUpTo = Math.min(currentStep + 1, currentPath.length);
+        ctx.strokeStyle = COLORS.orange;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < drawUpTo; i++) {
+          const px = pathL + (i / N) * pathW;
+          const py = y0 - (currentPath[i] / yRange) * (pathH / 2);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.stroke();
 
-      // Terminal velocity line
-      const vtNorm = Math.min(vt / 300, 1);
-      const vtY = oy + ph * (1 - vtNorm);
-      ctxS.strokeStyle = COLORS.red; ctxS.lineWidth = 1;
-      ctxS.setLineDash([5, 5]);
-      ctxS.beginPath(); ctxS.moveTo(ox, vtY); ctxS.lineTo(ox + pw, vtY); ctxS.stroke();
-      ctxS.setLineDash([]);
-      ctxS.fillStyle = COLORS.red; ctxS.font = FONT_SM; ctxS.textAlign = 'left';
-      ctxS.fillText('v_terminal = ' + vt.toFixed(1), ox + pw - 100, vtY - 5);
-
-      // Velocity curve: v(t) = vt(1 - e^(-t/tau))
-      const tau = (rho_ball * R * R) / (9 * eta) * 4; // relaxation time (scaled)
-      ctxS.strokeStyle = COLORS.blue; ctxS.lineWidth = 2;
-      ctxS.beginPath();
-      const tMax = 5 * tau;
-      for (let i = 0; i <= 200; i++) {
-        const t = (i / 200) * tMax;
-        const v = vt * (1 - Math.exp(-t / tau));
-        const px = ox + (t / tMax) * pw;
-        const py = oy + ph * (1 - Math.min(v / 300, 1));
-        if (i === 0) ctxS.moveTo(px, py); else ctxS.lineTo(px, py);
+        // Current position dot
+        if (drawUpTo > 0) {
+          const last = drawUpTo - 1;
+          const px = pathL + (last / N) * pathW;
+          const py = y0 - (currentPath[last] / yRange) * (pathH / 2);
+          ctx.beginPath(); ctx.arc(px, py, 4, 0, 2 * Math.PI);
+          ctx.fillStyle = COLORS.orange; ctx.fill();
+        }
       }
-      ctxS.stroke();
 
-      // Current velocity marker
-      if (running && ballV > 0) {
-        const elapsed = ballV / vt; // rough fraction
-        const frac = Math.min(elapsed, 0.99);
-        const tCur = -tau * Math.log(1 - frac);
-        const px = ox + (tCur / tMax) * pw;
-        const py = oy + ph * (1 - Math.min(ballV / 300, 1));
-        ctxS.beginPath(); ctxS.arc(px, py, 4, 0, 2 * Math.PI);
-        ctxS.fillStyle = COLORS.green; ctxS.fill();
+      // Mean line on path
+      if (expectedMean !== 0) {
+        ctx.strokeStyle = 'rgba(102,187,106,0.4)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        const meanY = y0 - (expectedMean / yRange) * (pathH / 2);
+        ctx.beginPath(); ctx.moveTo(pathL, meanY); ctx.lineTo(pathR, meanY); ctx.stroke();
+        ctx.setLineDash([]);
       }
 
       // Labels
-      ctxS.fillStyle = COLORS.text; ctxS.font = FONT_LG; ctxS.textAlign = 'left';
-      ctxS.fillText('Stokes Drag & Terminal Velocity', ox + 5, oy - 10);
+      ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'center';
+      ctx.fillText('Game number', pathL + pathW / 2, pathB + 18);
+      ctx.save();
+      ctx.translate(12, pathT + pathH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Winnings ($)', 0, 0);
+      ctx.restore();
 
-      document.getElementById('stokes-eta-val')?.replaceChildren(document.createTextNode(eta.toFixed(1)));
-      document.getElementById('stokes-radius-val')?.replaceChildren(document.createTextNode(R.toFixed(1)));
+      // Y-axis tick labels
+      ctx.textAlign = 'right';
+      const yTicks = [-yRange, -yRange / 2, 0, yRange / 2, yRange];
+      yTicks.forEach(val => {
+        const py = y0 - (val / yRange) * (pathH / 2);
+        ctx.fillStyle = COLORS.textDim; ctx.font = FONT_SM;
+        ctx.fillText(Math.round(val).toString(), pathL - 4, py + 4);
+      });
+
+      // ----- RIGHT PANEL: Histogram of final winnings -----
+      if (finalWinnings.length > 0) {
+        // Compute histogram
+        const nBins = 40;
+        const wMin = expectedMean - yRange;
+        const wMax = expectedMean + yRange;
+        const binW = (wMax - wMin) / nBins;
+        const bins = new Float64Array(nBins);
+        let maxBin = 0;
+        finalWinnings.forEach(w => {
+          const idx = Math.floor((w - wMin) / binW);
+          if (idx >= 0 && idx < nBins) {
+            bins[idx]++;
+            if (bins[idx] > maxBin) maxBin = bins[idx];
+          }
+        });
+        if (maxBin < 1) maxBin = 1;
+
+        // Draw histogram bars (horizontal - values on x, winnings bins on y)
+        const barH = histH / nBins;
+        for (let i = 0; i < nBins; i++) {
+          if (bins[i] === 0) continue;
+          const barW_px = (bins[i] / maxBin) * histW * 0.85;
+          const by = histT + i * barH;
+          ctx.fillStyle = 'rgba(79,195,247,0.5)';
+          ctx.fillRect(histL, by, barW_px, barH - 1);
+        }
+
+        // Gaussian overlay
+        const measMean = finalWinnings.reduce((s, v) => s + v, 0) / finalWinnings.length;
+        const measVar = finalWinnings.reduce((s, v) => s + (v - measMean) ** 2, 0) / finalWinnings.length;
+        const measSigma = Math.sqrt(measVar);
+
+        if (measSigma > 0) {
+          ctx.strokeStyle = COLORS.orange;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          for (let i = 0; i <= nBins; i++) {
+            const w = wMin + (i + 0.5) * binW;
+            const gaussVal = Math.exp(-((w - measMean) ** 2) / (2 * measSigma * measSigma));
+            const px = histL + gaussVal * histW * 0.85 * (maxBin / (finalWinnings.length * binW / (measSigma * Math.sqrt(2 * Math.PI))));
+            const py = histT + i * barH + barH / 2;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+
+        // Axes for histogram
+        ctx.strokeStyle = COLORS.axis; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(histL, histT); ctx.lineTo(histL, histB); ctx.stroke();
+
+        // Stats panel
+        ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'left';
+        const sx = statsX, sy0 = histT - 14;
+        ctx.fillText(trialCount + ' trials', sx, sy0);
+      } else {
+        // Empty state
+        ctx.fillStyle = COLORS.textDim; ctx.font = FONT; ctx.textAlign = 'center';
+        ctx.fillText('Histogram of final', histL + histW / 2, histT + histH / 2 - 10);
+        ctx.fillText('winnings appears here', histL + histW / 2, histT + histH / 2 + 10);
+      }
+
+      // Stats box (bottom right)
+      if (finalWinnings.length > 1) {
+        const measMean = finalWinnings.reduce((s, v) => s + v, 0) / finalWinnings.length;
+        const measVar = finalWinnings.reduce((s, v) => s + (v - measMean) ** 2, 0) / finalWinnings.length;
+        const measSigma = Math.sqrt(measVar);
+        const sy = histB - 70;
+        ctx.fillStyle = COLORS.text; ctx.font = FONT_SM; ctx.textAlign = 'left';
+        ctx.fillText('Measured \u03C3: ' + measSigma.toFixed(1), histL + 5, sy);
+        ctx.fillStyle = COLORS.green;
+        ctx.fillText('Predicted \u03C3: ' + expectedSigma.toFixed(1), histL + 5, sy + 16);
+        ctx.fillStyle = COLORS.text;
+        ctx.fillText('Mean: $' + measMean.toFixed(1), histL + 5, sy + 32);
+        ctx.fillStyle = COLORS.green;
+        ctx.fillText('Expected: $' + expectedMean.toFixed(1), histL + 5, sy + 48);
+      }
+
+      // Update slider labels
+      document.getElementById('bj-a-val')?.replaceChildren(document.createTextNode(a.toFixed(2)));
+      document.getElementById('bj-N-val')?.replaceChildren(document.createTextNode(N.toString()));
+      document.getElementById('bj-speed-val')?.replaceChildren(document.createTextNode(getSpeed().toString()));
+      document.getElementById('bj-stats')?.replaceChildren(document.createTextNode(trialCount + ' trials'));
     }
 
-    function animateStokes() {
-      if (!running) return;
-      const eta = getEta(), R = getR();
-      const vt = terminalVel();
-      const dt = 0.016;
-      const tau = (rho_ball * R * R) / (9 * eta) * 4;
-      // dv/dt = g_eff - v/tau
-      const g_eff = (rho_ball - 1) / rho_ball * g;
-      ballV += (g_eff - ballV / tau) * dt * 3;
-      if (ballV < 0) ballV = 0;
-      ballY += ballV * dt;
-      if (ballY > HS - 30) { ballY = HS - 30; ballV = vt; running = false; }
-      drawStokes();
-      if (running) activeAnimations['stokes'] = requestAnimationFrame(animateStokes);
+    function animateBJ() {
+      if (!bjRunning) return;
+      const speed = getSpeed();
+      const stepsPerFrame = [0, 2, 5, 10, 25, 50][speed];
+      const N = getN();
+
+      if (currentPath.length <= 1) {
+        runOneTrial();
+        currentStep = 0;
+      }
+
+      currentStep += stepsPerFrame;
+      if (currentStep >= N) {
+        // Trial complete
+        const finalW = currentPath[currentPath.length - 1];
+        finalWinnings.push(finalW);
+        trials.push(currentPath.slice());
+        if (trials.length > 50) trials.shift();
+        trialCount++;
+        currentPath = [];
+        currentStep = 0;
+        // Auto-start next trial
+        runOneTrial();
+      }
+
+      drawBJ();
+      activeAnimations['ch2-bj'] = requestAnimationFrame(animateBJ);
     }
 
-    stokesStartBtn?.addEventListener('click', () => {
-      if (!running) { running = true; animateStokes(); }
+    if (bjGoBtn) {
+      bjGoBtn.onclick = function() {
+        bjRunning = !bjRunning;
+        bjGoBtn.textContent = bjRunning ? '\u23F8 Pause' : '\u25B6 Go';
+        if (bjRunning) animateBJ();
+      };
+    }
+    if (bjClearBtn) bjClearBtn.onclick = bjClear;
+
+    [bjASlider, bjNSlider, bjSpeedSlider].forEach(sl => {
+      sl?.addEventListener('input', () => { if (!bjRunning) drawBJ(); });
     });
-    stokesResetBtn?.addEventListener('click', () => {
-      running = false;
-      if (activeAnimations['stokes']) cancelAnimationFrame(activeAnimations['stokes']);
-      ballY = 30; ballV = 0;
-      drawStokes();
-    });
-    etaSlider?.addEventListener('input', drawStokes);
-    radiusSlider?.addEventListener('input', drawStokes);
-    drawStokes();
+
+    drawBJ();
   }
 
-  // ----- Brownian Motion Simulation -----
+  // =========================================================================
+  // INTERACTIVE 2: 2D RANDOM WALK
+  // =========================================================================
+  const cRW = document.getElementById('vis-randomwalk');
+  if (cRW) {
+    const { ctx: ctxRW, W: WRW, H: HRW } = setupCanvas(cRW);
+    let rwWalkers = [];
+    let rwRunning = false;
+    let rwSteps = 0;
+    let rwFrameCount = 0;
+
+    const rwWalkersSlider = document.getElementById('rw-walkers');
+    const rwStepSlider = document.getElementById('rw-step');
+    const rwSpeedSlider = document.getElementById('rw-speed');
+    const rwStartBtn = document.getElementById('rw-start');
+    const rwResetBtn = document.getElementById('rw-reset');
+
+    function getRWN() { return parseInt(rwWalkersSlider?.value || 50); }
+    function getRWStep() { return parseInt(rwStepSlider?.value || 4); }
+
+    function rwReset() {
+      const n = getRWN();
+      rwWalkers = [];
+      for (let i = 0; i < n; i++) {
+        rwWalkers.push({ x: WRW / 2, y: HRW / 2, trail: [] });
+      }
+      rwSteps = 0;
+    }
+
+    function rwStep() {
+      const stepSize = getRWStep();
+      rwWalkers.forEach(w => {
+        const angle = Math.random() * 2 * Math.PI;
+        w.x += stepSize * Math.cos(angle);
+        w.y += stepSize * Math.sin(angle);
+        w.trail.push({ x: w.x, y: w.y });
+        if (w.trail.length > 200) w.trail.shift();
+      });
+      rwSteps++;
+    }
+
+    function drawRW() {
+      clearCanvas(ctxRW, WRW, HRW);
+      const nW = rwWalkers.length;
+      const stepSize = getRWStep();
+
+      // Trails and dots
+      rwWalkers.forEach((w, i) => {
+        const hue = (i * 360 / nW) % 360;
+        if (w.trail.length > 1) {
+          ctxRW.strokeStyle = 'hsla(' + hue + ', 70%, 60%, 0.25)';
+          ctxRW.lineWidth = 1;
+          ctxRW.beginPath();
+          w.trail.forEach((p, j) => {
+            j === 0 ? ctxRW.moveTo(p.x, p.y) : ctxRW.lineTo(p.x, p.y);
+          });
+          ctxRW.stroke();
+        }
+
+        ctxRW.fillStyle = 'hsl(' + hue + ', 70%, 60%)';
+        ctxRW.beginPath();
+        ctxRW.arc(w.x, w.y, Math.max(2, 4 - nW / 80), 0, 2 * Math.PI);
+        ctxRW.fill();
+      });
+
+      // Origin
+      ctxRW.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctxRW.lineWidth = 1;
+      ctxRW.beginPath();
+      ctxRW.arc(WRW / 2, HRW / 2, 3, 0, 2 * Math.PI);
+      ctxRW.stroke();
+
+      // RMS circles
+      let sumR2 = 0;
+      rwWalkers.forEach(w => {
+        sumR2 += (w.x - WRW / 2) ** 2 + (w.y - HRW / 2) ** 2;
+      });
+      const rms = Math.sqrt(sumR2 / nW);
+      const expected = stepSize * Math.sqrt(rwSteps);
+
+      ctxRW.setLineDash([5, 5]);
+      ctxRW.lineWidth = 1.5;
+
+      ctxRW.strokeStyle = 'rgba(239,83,80,0.6)';
+      ctxRW.beginPath();
+      ctxRW.arc(WRW / 2, HRW / 2, rms, 0, 2 * Math.PI);
+      ctxRW.stroke();
+
+      ctxRW.strokeStyle = 'rgba(102,187,106,0.6)';
+      ctxRW.beginPath();
+      ctxRW.arc(WRW / 2, HRW / 2, expected, 0, 2 * Math.PI);
+      ctxRW.stroke();
+      ctxRW.setLineDash([]);
+
+      // Stats
+      ctxRW.fillStyle = COLORS.text; ctxRW.font = FONT; ctxRW.textAlign = 'left';
+      ctxRW.fillText('Steps: ' + rwSteps, 10, 20);
+      ctxRW.fillText('Walkers: ' + nW + '   \u2113 = ' + stepSize, 10, 38);
+      ctxRW.fillStyle = COLORS.red;
+      ctxRW.fillText('\u2014 Measured RMS: ' + rms.toFixed(1), 10, 60);
+      ctxRW.fillStyle = COLORS.green;
+      ctxRW.fillText('\u2014 Expected \u2113\u221AN: ' + expected.toFixed(1), 10, 78);
+
+      // Ratio
+      if (rwSteps > 0) {
+        const ratio = rms / expected;
+        ctxRW.fillStyle = COLORS.text;
+        ctxRW.fillText('Ratio: ' + ratio.toFixed(3), 10, 96);
+      }
+
+      // Update slider displays
+      document.getElementById('rw-walkers-val')?.replaceChildren(document.createTextNode(getRWN().toString()));
+      document.getElementById('rw-step-val')?.replaceChildren(document.createTextNode(getRWStep().toString()));
+      document.getElementById('rw-speed-val')?.replaceChildren(document.createTextNode((rwSpeedSlider?.value || 3).toString()));
+    }
+
+    function animateRW() {
+      if (!rwRunning) return;
+      const speed = parseInt(rwSpeedSlider?.value || 3);
+      const stepsPerFrame = [0, 1, 1, 1, 2, 5, 10][speed];
+      const frameSkip = [0, 4, 2, 1, 1, 1, 1][speed];
+      rwFrameCount++;
+      if (rwFrameCount % frameSkip === 0) {
+        for (let i = 0; i < stepsPerFrame; i++) rwStep();
+        drawRW();
+      }
+      activeAnimations['randomwalk'] = requestAnimationFrame(animateRW);
+    }
+
+    if (rwStartBtn) {
+      rwStartBtn.onclick = function() {
+        rwRunning = !rwRunning;
+        rwStartBtn.textContent = rwRunning ? '\u23F8 Pause' : '\u25B6 Start';
+        if (rwRunning) animateRW();
+      };
+    }
+    if (rwResetBtn) {
+      rwResetBtn.onclick = function() {
+        rwRunning = false;
+        if (rwStartBtn) rwStartBtn.textContent = '\u25B6 Start';
+        if (activeAnimations['randomwalk']) cancelAnimationFrame(activeAnimations['randomwalk']);
+        rwReset();
+        drawRW();
+      };
+    }
+
+    // Re-init on walker count or step size change
+    [rwWalkersSlider, rwStepSlider].forEach(sl => {
+      sl?.addEventListener('input', () => {
+        if (!rwRunning) {
+          rwReset();
+          drawRW();
+        }
+      });
+    });
+
+    rwReset();
+    drawRW();
+  }
+
+  // =========================================================================
+  // INTERACTIVE 3: BROWNIAN MOTION
+  // =========================================================================
   const cBM = document.getElementById('vis-brownian');
   if (cBM) {
     const { ctx: ctxBM, W: WBM, H: HBM } = setupCanvas(cBM);
@@ -1874,6 +2001,11 @@ function initCh2Vis() {
     let pollen = null;
     let bmTime = 0;
     let msdData = [];
+
+    // Layout: left = simulation box, right = MSD plot
+    const simW = WBM * 0.58;
+    const plotL = simW + 20, plotR = WBM - 20, plotT = 40, plotB = HBM - 30;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
 
     function getTemp() { return parseFloat(document.getElementById('bm-temp')?.value || 2); }
     function getPollenR() { return parseFloat(document.getElementById('bm-size')?.value || 14); }
@@ -1889,7 +2021,7 @@ function initCh2Vis() {
         const speed = T * (0.3 + Math.random() * 1.4);
         const angle = Math.random() * 2 * Math.PI;
         gasParticles.push({
-          x: 20 + Math.random() * (WBM - 40),
+          x: 20 + Math.random() * (simW - 40),
           y: 20 + Math.random() * (HBM - 40),
           vx: speed * Math.cos(angle),
           vy: speed * Math.sin(angle),
@@ -1897,40 +2029,35 @@ function initCh2Vis() {
         });
       }
       pollen = {
-        x: WBM / 2, y: HBM / 2,
+        x: simW / 2, y: HBM / 2,
         vx: 0, vy: 0,
         r: pollenR, mass: pollenR * pollenR,
-        trail: [{ x: WBM / 2, y: HBM / 2 }],
-        x0: WBM / 2, y0: HBM / 2
+        trail: [{ x: simW / 2, y: HBM / 2 }],
+        x0: simW / 2, y0: HBM / 2
       };
     }
 
     function stepBrownian() {
-      const T = getTemp();
       const gasMass = 1;
 
-      // Move gas particles
       gasParticles.forEach(g => {
         g.x += g.vx;
         g.y += g.vy;
         if (g.x < g.r) { g.vx = Math.abs(g.vx); g.x = g.r; }
-        if (g.x > WBM - g.r) { g.vx = -Math.abs(g.vx); g.x = WBM - g.r; }
+        if (g.x > simW - g.r) { g.vx = -Math.abs(g.vx); g.x = simW - g.r; }
         if (g.y < g.r) { g.vy = Math.abs(g.vy); g.y = g.r; }
         if (g.y > HBM - g.r) { g.vy = -Math.abs(g.vy); g.y = HBM - g.r; }
       });
 
-      // Move pollen
       pollen.x += pollen.vx;
       pollen.y += pollen.vy;
-      // Damping on pollen (viscous drag)
       pollen.vx *= 0.998;
       pollen.vy *= 0.998;
       if (pollen.x < pollen.r) { pollen.vx = Math.abs(pollen.vx); pollen.x = pollen.r; }
-      if (pollen.x > WBM - pollen.r) { pollen.vx = -Math.abs(pollen.vx); pollen.x = WBM - pollen.r; }
+      if (pollen.x > simW - pollen.r) { pollen.vx = -Math.abs(pollen.vx); pollen.x = simW - pollen.r; }
       if (pollen.y < pollen.r) { pollen.vy = Math.abs(pollen.vy); pollen.y = pollen.r; }
       if (pollen.y > HBM - pollen.r) { pollen.vy = -Math.abs(pollen.vy); pollen.y = HBM - pollen.r; }
 
-      // Gas-pollen collisions (elastic)
       gasParticles.forEach(g => {
         const dx = g.x - pollen.x;
         const dy = g.y - pollen.y;
@@ -1938,11 +2065,10 @@ function initCh2Vis() {
         const minDist = g.r + pollen.r;
         if (dist < minDist && dist > 0) {
           const nx = dx / dist, ny = dy / dist;
-          // Relative velocity along collision normal
           const dvx = g.vx - pollen.vx;
           const dvy = g.vy - pollen.vy;
           const dvn = dvx * nx + dvy * ny;
-          if (dvn < 0) { // approaching
+          if (dvn < 0) {
             const mRatio = gasMass / pollen.mass;
             const impulse = 2 * dvn / (1 + mRatio);
             g.vx -= impulse * nx;
@@ -1950,7 +2076,6 @@ function initCh2Vis() {
             pollen.vx += impulse * mRatio * nx;
             pollen.vy += impulse * mRatio * ny;
           }
-          // Separate
           const overlap = minDist - dist;
           g.x += nx * overlap * 0.8;
           g.y += ny * overlap * 0.8;
@@ -1964,23 +2089,23 @@ function initCh2Vis() {
         pollen.trail.push({ x: pollen.x, y: pollen.y });
         if (pollen.trail.length > 800) pollen.trail.shift();
       }
-      if (bmTime % 10 === 0) {
+      if (bmTime % 5 === 0) {
         const dr2 = (pollen.x - pollen.x0) ** 2 + (pollen.y - pollen.y0) ** 2;
         msdData.push({ t: bmTime, r2: dr2 });
-        if (msdData.length > 200) msdData.shift();
+        if (msdData.length > 400) msdData.shift();
       }
     }
 
     function drawBrownian() {
       clearCanvas(ctxBM, WBM, HBM);
 
-      // Box
+      // Simulation box
       ctxBM.strokeStyle = COLORS.axis;
       ctxBM.lineWidth = 2;
-      ctxBM.strokeRect(1, 1, WBM - 2, HBM - 2);
+      ctxBM.strokeRect(1, 1, simW - 2, HBM - 2);
 
       // Gas particles
-      ctxBM.fillStyle = 'rgba(79,195,247,0.5)';
+      ctxBM.fillStyle = 'rgba(79,195,247,0.4)';
       gasParticles.forEach(g => {
         ctxBM.beginPath();
         ctxBM.arc(g.x, g.y, g.r, 0, 2 * Math.PI);
@@ -1991,7 +2116,7 @@ function initCh2Vis() {
       if (pollen.trail.length > 1) {
         ctxBM.lineWidth = 1.5;
         for (let i = 1; i < pollen.trail.length; i++) {
-          const alpha = 0.1 + 0.6 * (i / pollen.trail.length);
+          const alpha = 0.08 + 0.7 * (i / pollen.trail.length);
           ctxBM.strokeStyle = 'rgba(255,167,38,' + alpha + ')';
           ctxBM.beginPath();
           ctxBM.moveTo(pollen.trail[i - 1].x, pollen.trail[i - 1].y);
@@ -2018,18 +2143,58 @@ function initCh2Vis() {
       ctxBM.arc(pollen.x0, pollen.y0, 4, 0, 2 * Math.PI);
       ctxBM.stroke();
 
-      // MSD info
-      if (msdData.length > 0) {
-        const latest = msdData[msdData.length - 1];
-        const rms = Math.sqrt(latest.r2);
-        ctxBM.fillStyle = COLORS.text;
-        ctxBM.font = FONT;
-        ctxBM.textAlign = 'left';
-        ctxBM.fillText('Time: ' + bmTime, 10, 20);
-        ctxBM.fillText('RMS displacement: ' + rms.toFixed(1) + ' px', 10, 38);
+      // ----- Right panel: MSD vs time plot -----
+      ctxBM.fillStyle = COLORS.text; ctxBM.font = FONT; ctxBM.textAlign = 'center';
+      ctxBM.fillText('\u27E8r\u00B2\u27E9 vs time', plotL + plotW / 2, plotT - 12);
+
+      drawAxes(ctxBM, plotL, plotT, plotW, plotH, { xLabel: 'Time', yLabel: '\u27E8r\u00B2\u27E9' });
+
+      if (msdData.length > 1) {
+        // Find max r2 for scaling
+        let maxR2 = 1;
+        msdData.forEach(d => { if (d.r2 > maxR2) maxR2 = d.r2; });
+        const tMax = msdData[msdData.length - 1].t;
+
+        // Data points
         ctxBM.fillStyle = COLORS.orange;
-        ctxBM.fillText('\u2014 Pollen trail', 10, 56);
+        msdData.forEach(d => {
+          const px = plotL + (d.t / tMax) * plotW;
+          const py = plotB - (d.r2 / maxR2) * plotH * 0.9;
+          ctxBM.beginPath();
+          ctxBM.arc(px, py, 1.5, 0, 2 * Math.PI);
+          ctxBM.fill();
+        });
+
+        // Linear fit line (r^2 ~ 4Dt)
+        if (msdData.length > 10) {
+          // Simple slope from data
+          let sumT = 0, sumR2 = 0, sumTR2 = 0, sumT2 = 0;
+          msdData.forEach(d => {
+            sumT += d.t; sumR2 += d.r2; sumTR2 += d.t * d.r2; sumT2 += d.t * d.t;
+          });
+          const n = msdData.length;
+          const slope = (n * sumTR2 - sumT * sumR2) / (n * sumT2 - sumT * sumT);
+          if (slope > 0) {
+            ctxBM.strokeStyle = COLORS.green;
+            ctxBM.lineWidth = 1.5;
+            ctxBM.setLineDash([4, 3]);
+            ctxBM.beginPath();
+            ctxBM.moveTo(plotL, plotB);
+            const endR2 = slope * tMax;
+            const endY = plotB - (endR2 / maxR2) * plotH * 0.9;
+            ctxBM.lineTo(plotL + plotW, endY);
+            ctxBM.stroke();
+            ctxBM.setLineDash([]);
+
+            ctxBM.fillStyle = COLORS.green; ctxBM.font = FONT_SM; ctxBM.textAlign = 'left';
+            ctxBM.fillText('Linear fit (diffusion)', plotL + 5, plotT + 16);
+          }
+        }
       }
+
+      // RMS info
+      const rms = pollen ? Math.sqrt((pollen.x - pollen.x0) ** 2 + (pollen.y - pollen.y0) ** 2) : 0;
+      document.getElementById('bm-rms')?.replaceChildren(document.createTextNode('RMS: ' + rms.toFixed(1) + ' px'));
     }
 
     function animateBrownian() {
@@ -2041,14 +2206,14 @@ function initCh2Vis() {
 
     document.getElementById('bm-start')?.addEventListener('click', function () {
       bmRunning = !bmRunning;
-      this.textContent = bmRunning ? 'Pause' : 'Start';
+      this.textContent = bmRunning ? '\u23F8 Pause' : '\u25B6 Start';
       if (bmRunning) animateBrownian();
     });
 
     document.getElementById('bm-reset')?.addEventListener('click', () => {
       bmRunning = false;
       const btn = document.getElementById('bm-start');
-      if (btn) btn.textContent = 'Start';
+      if (btn) btn.textContent = '\u25B6 Start';
       if (activeAnimations['brownian']) cancelAnimationFrame(activeAnimations['brownian']);
       initBrownian();
       drawBrownian();
@@ -2069,6 +2234,471 @@ function initCh2Vis() {
 
     initBrownian();
     drawBrownian();
+  }
+
+  // =========================================================================
+  // INTERACTIVE 4: DIFFUSION LAB (animated particles + histogram)
+  // =========================================================================
+  const cDiff = document.getElementById('vis-diffusion');
+  if (cDiff) {
+    const { ctx: ctxD, W: WD, H: HD } = setupCanvas(cDiff);
+
+    let diffRunning = false;
+    let diffParticles = [];
+    let diffTime = 0;
+    let rmsHistory = [];
+
+    const diffDSlider = document.getElementById('diff-D');
+    const diffNSlider = document.getElementById('diff-N');
+    const diffSpeedSlider = document.getElementById('diff-speed');
+    const diffGoBtn = document.getElementById('diff-go');
+    const diffClearBtn = document.getElementById('diff-clear');
+
+    // Layout: top strip = particle positions, main area = histogram + Gaussian
+    const particleStripH = 50;
+    const histT = particleStripH + 15, histB = HD - 60, histL = 50, histR = WD - 160;
+    const histW = histR - histL, histH = histB - histT;
+    const statsX = WD - 150;
+
+    function getDiffD() { return parseFloat(diffDSlider?.value || 1.5); }
+    function getDiffN() { return parseInt(diffNSlider?.value || 300); }
+    function getDiffSpeed() { return parseInt(diffSpeedSlider?.value || 3); }
+
+    function diffClear() {
+      diffRunning = false;
+      if (activeAnimations['ch2-diff']) { cancelAnimationFrame(activeAnimations['ch2-diff']); delete activeAnimations['ch2-diff']; }
+      if (diffGoBtn) diffGoBtn.textContent = '\u25B6 Go';
+      const N = getDiffN();
+      diffParticles = [];
+      for (let i = 0; i < N; i++) {
+        diffParticles.push({ x: 0 });
+      }
+      diffTime = 0;
+      rmsHistory = [];
+      drawDiff();
+    }
+
+    function diffStep() {
+      const D = getDiffD();
+      // Each timestep: Gaussian step with sigma = sqrt(2D * dt)
+      // We use dt = 0.1 in "simulation units"
+      const dt = 0.1;
+      const stepSigma = Math.sqrt(2 * D * dt);
+      diffParticles.forEach(p => {
+        p.x += stepSigma * gaussRand();
+      });
+      diffTime += dt;
+
+      // Record RMS every few steps
+      let sumX2 = 0;
+      diffParticles.forEach(p => { sumX2 += p.x * p.x; });
+      const rms = Math.sqrt(sumX2 / diffParticles.length);
+      rmsHistory.push({ t: diffTime, rms: rms });
+      if (rmsHistory.length > 300) rmsHistory.shift();
+    }
+
+    function drawDiff() {
+      clearCanvas(ctxD, WD, HD);
+      const D = getDiffD();
+      const N = diffParticles.length;
+
+      // Determine x-range for display
+      const theorySigma = diffTime > 0 ? Math.sqrt(2 * D * diffTime) : 3;
+      const xRange = Math.max(theorySigma * 4, 5);
+
+      function xToPx(x) { return histL + ((x + xRange) / (2 * xRange)) * histW; }
+
+      // ----- Particle strip -----
+      ctxD.fillStyle = 'rgba(30,50,80,0.5)';
+      ctxD.fillRect(histL, 5, histW, particleStripH);
+
+      // Draw particles as small dots
+      diffParticles.forEach(p => {
+        const px = xToPx(p.x);
+        if (px >= histL && px <= histR) {
+          ctxD.fillStyle = 'rgba(79,195,247,0.4)';
+          ctxD.beginPath();
+          ctxD.arc(px, 5 + Math.random() * particleStripH, 1.5, 0, 2 * Math.PI);
+          ctxD.fill();
+        }
+      });
+
+      // ----- Histogram -----
+      const nBins = 50;
+      const binW = (2 * xRange) / nBins;
+      const bins = new Float64Array(nBins);
+      let maxBin = 0;
+      diffParticles.forEach(p => {
+        const idx = Math.floor((p.x + xRange) / binW);
+        if (idx >= 0 && idx < nBins) {
+          bins[idx]++;
+          if (bins[idx] > maxBin) maxBin = bins[idx];
+        }
+      });
+      if (maxBin < 1) maxBin = 1;
+
+      // Normalize histogram to probability density for comparison with Gaussian
+      const totalCount = diffParticles.length;
+      const barWidth = histW / nBins;
+
+      // Find Gaussian peak for scaling
+      let gaussPeak = 0;
+      if (diffTime > 0) {
+        gaussPeak = 1 / Math.sqrt(4 * Math.PI * D * diffTime);
+      }
+      const histPeak = maxBin / (totalCount * binW);
+      const scaleMax = Math.max(gaussPeak, histPeak, 0.1);
+      const pdfScale = histH * 0.85 / scaleMax;
+
+      // Draw bars
+      for (let i = 0; i < nBins; i++) {
+        if (bins[i] === 0) continue;
+        const density = bins[i] / (totalCount * binW);
+        const barH = density * pdfScale;
+        const bx = histL + i * barWidth;
+        ctxD.fillStyle = 'rgba(79,195,247,0.45)';
+        ctxD.fillRect(bx, histB - barH, barWidth - 1, barH);
+      }
+
+      // Theoretical Gaussian overlay
+      if (diffTime > 0) {
+        ctxD.strokeStyle = COLORS.orange;
+        ctxD.lineWidth = 2.5;
+        ctxD.beginPath();
+        for (let i = 0; i <= 200; i++) {
+          const x = -xRange + (2 * xRange) * i / 200;
+          const pdf = (1 / Math.sqrt(4 * Math.PI * D * diffTime)) * Math.exp(-x * x / (4 * D * diffTime));
+          const px = xToPx(x);
+          const py = histB - pdf * pdfScale;
+          i === 0 ? ctxD.moveTo(px, py) : ctxD.lineTo(px, py);
+        }
+        ctxD.stroke();
+      }
+
+      // x-axis
+      ctxD.strokeStyle = COLORS.axis; ctxD.lineWidth = 1;
+      ctxD.beginPath(); ctxD.moveTo(histL, histB); ctxD.lineTo(histR, histB); ctxD.stroke();
+      ctxD.beginPath(); ctxD.moveTo(histL, histB); ctxD.lineTo(histL, histT); ctxD.stroke();
+
+      // x-axis labels
+      ctxD.fillStyle = COLORS.textDim; ctxD.font = FONT_SM; ctxD.textAlign = 'center';
+      const tickVals = [-xRange, -xRange / 2, 0, xRange / 2, xRange];
+      tickVals.forEach(v => {
+        const px = xToPx(v);
+        ctxD.fillText(v.toFixed(1), px, histB + 15);
+      });
+      ctxD.fillText('Position x', histL + histW / 2, histB + 30);
+
+      // Sigma markers
+      if (diffTime > 0) {
+        const sig = Math.sqrt(2 * D * diffTime);
+        [-sig, sig].forEach(v => {
+          const px = xToPx(v);
+          if (px > histL && px < histR) {
+            ctxD.strokeStyle = 'rgba(239,83,80,0.5)';
+            ctxD.lineWidth = 1;
+            ctxD.setLineDash([3, 3]);
+            ctxD.beginPath(); ctxD.moveTo(px, histT); ctxD.lineTo(px, histB); ctxD.stroke();
+            ctxD.setLineDash([]);
+          }
+        });
+        ctxD.fillStyle = COLORS.red; ctxD.font = FONT_SM; ctxD.textAlign = 'center';
+        const sigPx = xToPx(sig);
+        if (sigPx < histR) ctxD.fillText('\u00B1\u03C3', sigPx, histT - 4);
+      }
+
+      // ----- Stats panel (right side) -----
+      const sy = histT + 10;
+      ctxD.fillStyle = COLORS.text; ctxD.font = FONT; ctxD.textAlign = 'left';
+      ctxD.fillText('t = ' + diffTime.toFixed(1), statsX, sy);
+      ctxD.fillText('D = ' + D.toFixed(1), statsX, sy + 20);
+      ctxD.fillText('N = ' + N, statsX, sy + 40);
+
+      if (diffTime > 0) {
+        let sumX2 = 0;
+        diffParticles.forEach(p => { sumX2 += p.x * p.x; });
+        const measRms = Math.sqrt(sumX2 / N);
+        const predRms = Math.sqrt(2 * D * diffTime);
+
+        ctxD.fillStyle = COLORS.red;
+        ctxD.fillText('x_rms meas: ' + measRms.toFixed(2), statsX, sy + 70);
+        ctxD.fillStyle = COLORS.green;
+        ctxD.fillText('x_rms pred: ' + predRms.toFixed(2), statsX, sy + 88);
+        ctxD.fillStyle = COLORS.text;
+        const ratio = measRms / predRms;
+        ctxD.fillText('Ratio: ' + ratio.toFixed(3), statsX, sy + 106);
+      }
+
+      // RMS vs time mini-plot
+      if (rmsHistory.length > 2) {
+        const mpL = statsX, mpT = sy + 130, mpW = 130, mpH = 80;
+        ctxD.strokeStyle = COLORS.axis; ctxD.lineWidth = 1;
+        ctxD.beginPath(); ctxD.moveTo(mpL, mpT); ctxD.lineTo(mpL, mpT + mpH); ctxD.stroke();
+        ctxD.beginPath(); ctxD.moveTo(mpL, mpT + mpH); ctxD.lineTo(mpL + mpW, mpT + mpH); ctxD.stroke();
+
+        const tMax = rmsHistory[rmsHistory.length - 1].t;
+        let rmsMax = 0;
+        rmsHistory.forEach(d => { if (d.rms > rmsMax) rmsMax = d.rms; });
+        if (rmsMax < 1) rmsMax = 1;
+
+        // Measured RMS
+        ctxD.strokeStyle = COLORS.red; ctxD.lineWidth = 1.5;
+        ctxD.beginPath();
+        rmsHistory.forEach((d, i) => {
+          const px = mpL + (d.t / tMax) * mpW;
+          const py = mpT + mpH - (d.rms / rmsMax) * mpH * 0.9;
+          i === 0 ? ctxD.moveTo(px, py) : ctxD.lineTo(px, py);
+        });
+        ctxD.stroke();
+
+        // Predicted sqrt(2Dt)
+        ctxD.strokeStyle = COLORS.green; ctxD.lineWidth = 1.5;
+        ctxD.setLineDash([3, 3]);
+        ctxD.beginPath();
+        for (let i = 0; i <= 50; i++) {
+          const t = tMax * i / 50;
+          const pred = Math.sqrt(2 * D * t);
+          const px = mpL + (t / tMax) * mpW;
+          const py = mpT + mpH - (pred / rmsMax) * mpH * 0.9;
+          i === 0 ? ctxD.moveTo(px, py) : ctxD.lineTo(px, py);
+        }
+        ctxD.stroke();
+        ctxD.setLineDash([]);
+
+        ctxD.fillStyle = COLORS.textDim; ctxD.font = FONT_SM; ctxD.textAlign = 'center';
+        ctxD.fillText('x_rms vs t', mpL + mpW / 2, mpT - 4);
+        ctxD.fillStyle = COLORS.red; ctxD.textAlign = 'left';
+        ctxD.fillText('\u2014 meas', mpL, mpT + mpH + 14);
+        ctxD.fillStyle = COLORS.green;
+        ctxD.fillText('--- \u221A(2Dt)', mpL + 55, mpT + mpH + 14);
+      }
+
+      // Legend
+      ctxD.fillStyle = COLORS.blue; ctxD.font = FONT_SM; ctxD.textAlign = 'left';
+      ctxD.fillText('\u25A0 Histogram', statsX, sy + 52);
+      ctxD.fillStyle = COLORS.orange;
+      ctxD.fillText('\u2014 Theory Gaussian', statsX + 75, sy + 52);
+
+      // Update slider labels
+      document.getElementById('diff-D-val')?.replaceChildren(document.createTextNode(D.toFixed(1)));
+      document.getElementById('diff-N-val')?.replaceChildren(document.createTextNode(N.toString()));
+      document.getElementById('diff-speed-val')?.replaceChildren(document.createTextNode(getDiffSpeed().toString()));
+      document.getElementById('diff-stats')?.replaceChildren(document.createTextNode('t = ' + diffTime.toFixed(1)));
+    }
+
+    function animateDiff() {
+      if (!diffRunning) return;
+      const speed = getDiffSpeed();
+      const stepsPerFrame = [0, 1, 2, 4, 8, 16][speed];
+      for (let i = 0; i < stepsPerFrame; i++) diffStep();
+      drawDiff();
+      activeAnimations['ch2-diff'] = requestAnimationFrame(animateDiff);
+    }
+
+    if (diffGoBtn) {
+      diffGoBtn.onclick = function() {
+        if (diffParticles.length === 0) diffClear(); // init if needed
+        diffRunning = !diffRunning;
+        diffGoBtn.textContent = diffRunning ? '\u23F8 Pause' : '\u25B6 Go';
+        if (diffRunning) animateDiff();
+      };
+    }
+    if (diffClearBtn) diffClearBtn.onclick = diffClear;
+
+    [diffDSlider, diffNSlider, diffSpeedSlider].forEach(sl => {
+      sl?.addEventListener('input', () => { if (!diffRunning) drawDiff(); });
+    });
+
+    diffClear();
+  }
+
+  // =========================================================================
+  // INTERACTIVE 5: STOKES DRAG & TERMINAL VELOCITY
+  // =========================================================================
+  const cStokes = document.getElementById('vis-stokes');
+  if (cStokes) {
+    const { ctx: ctxS, W: WS, H: HS } = setupCanvas(cStokes);
+    const etaSlider = document.getElementById('stokes-eta');
+    const radiusSlider = document.getElementById('stokes-radius');
+    const stokesStartBtn = document.getElementById('stokes-start');
+    const stokesResetBtn = document.getElementById('stokes-reset');
+
+    let ballY = 40, ballV = 0, stokesRunning = false;
+    let velHistory = [];
+    const g = 200;
+    const rho_ball = 3.0;
+
+    function getEta() { return parseFloat(etaSlider?.value || 1.5); }
+    function getR() { return parseFloat(radiusSlider?.value || 1.0); }
+
+    function terminalVel() {
+      const eta = getEta(), R = getR();
+      return 2 * R * R * (rho_ball - 1) * g / (9 * eta);
+    }
+
+    function drawStokes() {
+      clearCanvas(ctxS, WS, HS);
+      const eta = getEta(), R = getR();
+      const vt = terminalVel();
+      const ballR = 8 + R * 6;
+      const tau = (rho_ball * R * R) / (9 * eta) * 4;
+
+      // ----- Left panel: Fluid chamber with ball and force arrows -----
+      const chamberL = 40, chamberW = 180, chamberT = 20, chamberB = HS - 20;
+
+      // Fluid background with gradient
+      const grad = ctxS.createLinearGradient(chamberL, chamberT, chamberL, chamberB);
+      grad.addColorStop(0, 'rgba(20,60,120,0.15)');
+      grad.addColorStop(1, 'rgba(20,60,120,0.35)');
+      ctxS.fillStyle = grad;
+      ctxS.fillRect(chamberL, chamberT, chamberW, chamberB - chamberT);
+      ctxS.strokeStyle = COLORS.axis;
+      ctxS.lineWidth = 1;
+      ctxS.strokeRect(chamberL, chamberT, chamberW, chamberB - chamberT);
+
+      // Ball
+      const centerX = chamberL + chamberW / 2;
+      const drawY = Math.min(ballY, chamberB - ballR - 5);
+      ctxS.beginPath();
+      ctxS.arc(centerX, drawY, ballR, 0, 2 * Math.PI);
+      const ballGrad = ctxS.createRadialGradient(centerX - ballR * 0.3, drawY - ballR * 0.3, 0, centerX, drawY, ballR);
+      ballGrad.addColorStop(0, '#ffcc80');
+      ballGrad.addColorStop(1, COLORS.orange);
+      ctxS.fillStyle = ballGrad;
+      ctxS.fill();
+      ctxS.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctxS.lineWidth = 1;
+      ctxS.stroke();
+
+      // Force arrows
+      const arrowScale = 0.25;
+      const Fg = rho_ball * R * R * R * g * arrowScale;
+      const FgLen = Math.min(Fg, 70);
+      ctxS.strokeStyle = COLORS.red; ctxS.lineWidth = 2.5;
+      drawArrow(ctxS, centerX, drawY + ballR + 3, centerX, drawY + ballR + 3 + FgLen, 7);
+      ctxS.fillStyle = COLORS.red; ctxS.font = FONT; ctxS.textAlign = 'left';
+      ctxS.fillText('F_g', centerX + 8, drawY + ballR + FgLen);
+
+      if (ballV > 0.5) {
+        const Fd = 6 * Math.PI * eta * R * ballV * arrowScale * 0.12;
+        const FdLen = Math.min(Fd, 70);
+        ctxS.strokeStyle = COLORS.blue; ctxS.lineWidth = 2.5;
+        drawArrow(ctxS, centerX, drawY - ballR - 3, centerX, drawY - ballR - 3 - FdLen, 7);
+        ctxS.fillStyle = COLORS.blue;
+        ctxS.fillText('F_drag', centerX + 8, drawY - ballR - FdLen);
+      }
+
+      // ----- Right panel: v(t) plot -----
+      const ox = 260, oy = 40, pw = WS - ox - 30, ph = HS - 90;
+      drawAxes(ctxS, ox, oy, pw, ph, { xLabel: 'Time', yLabel: 'Velocity v(t)' });
+
+      // Scale for velocity axis
+      const vMax = Math.max(vt * 1.2, 20);
+
+      // Terminal velocity line
+      const vtY = oy + ph * (1 - vt / vMax);
+      ctxS.strokeStyle = COLORS.red; ctxS.lineWidth = 1;
+      ctxS.setLineDash([5, 5]);
+      ctxS.beginPath(); ctxS.moveTo(ox, vtY); ctxS.lineTo(ox + pw, vtY); ctxS.stroke();
+      ctxS.setLineDash([]);
+      ctxS.fillStyle = COLORS.red; ctxS.font = FONT_SM; ctxS.textAlign = 'right';
+      ctxS.fillText('v_t = ' + vt.toFixed(1), ox + pw, vtY - 5);
+
+      // Theoretical curve: v(t) = vt(1 - e^(-t/tau))
+      ctxS.strokeStyle = 'rgba(255,255,255,0.2)'; ctxS.lineWidth = 1.5;
+      ctxS.beginPath();
+      const tMax = Math.max(6 * tau, 2);
+      for (let i = 0; i <= 200; i++) {
+        const t = (i / 200) * tMax;
+        const v = vt * (1 - Math.exp(-t / tau));
+        const px = ox + (t / tMax) * pw;
+        const py = oy + ph * (1 - Math.min(v / vMax, 1));
+        if (i === 0) ctxS.moveTo(px, py); else ctxS.lineTo(px, py);
+      }
+      ctxS.stroke();
+
+      // Velocity history (actual simulation data)
+      if (velHistory.length > 1) {
+        ctxS.strokeStyle = COLORS.blue; ctxS.lineWidth = 2.5;
+        ctxS.beginPath();
+        velHistory.forEach((d, i) => {
+          const px = ox + (d.t / tMax) * pw;
+          const py = oy + ph * (1 - Math.min(d.v / vMax, 1));
+          i === 0 ? ctxS.moveTo(px, py) : ctxS.lineTo(px, py);
+        });
+        ctxS.stroke();
+      }
+
+      // Current velocity dot
+      if (velHistory.length > 0) {
+        const last = velHistory[velHistory.length - 1];
+        const px = ox + (last.t / tMax) * pw;
+        const py = oy + ph * (1 - Math.min(last.v / vMax, 1));
+        ctxS.beginPath(); ctxS.arc(px, py, 5, 0, 2 * Math.PI);
+        ctxS.fillStyle = COLORS.green; ctxS.fill();
+      }
+
+      // Labels
+      ctxS.fillStyle = COLORS.text; ctxS.font = FONT; ctxS.textAlign = 'left';
+      ctxS.fillText('v(t) = v_t(1 - e^{-t/\u03C4})', ox + 5, oy - 10);
+      ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
+      ctxS.fillText('\u03B7 = ' + eta.toFixed(1) + '  R = ' + R.toFixed(1) + '  \u03C4 = ' + tau.toFixed(2), ox + 5, oy + ph + 40);
+
+      // Legend
+      ctxS.fillStyle = COLORS.blue; ctxS.font = FONT_SM;
+      ctxS.fillText('\u2014 Simulated', ox + pw - 120, oy + 15);
+      ctxS.fillStyle = COLORS.textDim;
+      ctxS.fillText('\u2014 Theory', ox + pw - 120, oy + 30);
+
+      // Update slider labels and info
+      document.getElementById('stokes-eta-val')?.replaceChildren(document.createTextNode(eta.toFixed(1)));
+      document.getElementById('stokes-radius-val')?.replaceChildren(document.createTextNode(R.toFixed(1)));
+      document.getElementById('stokes-info')?.replaceChildren(document.createTextNode('v = ' + ballV.toFixed(1) + '  v_t = ' + vt.toFixed(1)));
+    }
+
+    let stokesTime = 0;
+    function animateStokes() {
+      if (!stokesRunning) return;
+      const eta = getEta(), R = getR();
+      const vt = terminalVel();
+      const dt = 0.016;
+      const tau = (rho_ball * R * R) / (9 * eta) * 4;
+      const g_eff = (rho_ball - 1) / rho_ball * g;
+      ballV += (g_eff - ballV / tau) * dt * 3;
+      if (ballV < 0) ballV = 0;
+      ballY += ballV * dt;
+      stokesTime += dt * 3;
+
+      velHistory.push({ t: stokesTime, v: ballV });
+      if (velHistory.length > 500) velHistory.shift();
+
+      if (ballY > HS - 30) {
+        ballY = HS - 30;
+        ballV = vt;
+        stokesRunning = false;
+        if (stokesStartBtn) stokesStartBtn.textContent = '\u25B6 Drop';
+      }
+      drawStokes();
+      if (stokesRunning) activeAnimations['stokes'] = requestAnimationFrame(animateStokes);
+    }
+
+    stokesStartBtn?.addEventListener('click', () => {
+      if (!stokesRunning) {
+        stokesRunning = true;
+        stokesStartBtn.textContent = '\u23F8 Falling...';
+        animateStokes();
+      }
+    });
+    stokesResetBtn?.addEventListener('click', () => {
+      stokesRunning = false;
+      if (activeAnimations['stokes']) cancelAnimationFrame(activeAnimations['stokes']);
+      ballY = 40; ballV = 0; stokesTime = 0; velHistory = [];
+      if (stokesStartBtn) stokesStartBtn.textContent = '\u25B6 Drop';
+      drawStokes();
+    });
+    etaSlider?.addEventListener('input', () => { if (!stokesRunning) drawStokes(); });
+    radiusSlider?.addEventListener('input', () => { if (!stokesRunning) drawStokes(); });
+    drawStokes();
   }
 }
 
