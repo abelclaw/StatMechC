@@ -23334,12 +23334,25 @@ function initCh14Vis() {
         bbCtx.fillStyle = '#2a2a2a'; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y+0.5, BB_HOLE_R-0.5, 0, Math.PI*2); bbCtx.fill();
       }
 
-      function curDots(x0, y0, x1, y1, current) {
+      function curDots(x0, y0, x1, y1, current, cx, cy) {
         if (!bbShowCurrent || current === 0) return;
         var len = Math.hypot(x1-x0, y1-y0); if (len < 8) return;
         var dir = current > 0 ? 1 : -1, nD = Math.max(2, Math.floor(len/25));
         bbCtx.fillStyle = 'rgba(255,235,59,0.9)';
-        for (var d = 0; d < nD; d++) { var fr = ((bbAnimT*dir*2+d/nD)%1+1)%1; bbCtx.beginPath(); bbCtx.arc(x0+(x1-x0)*fr, y0+(y1-y0)*fr, 2.5, 0, Math.PI*2); bbCtx.fill(); }
+        for (var d = 0; d < nD; d++) {
+          var fr = ((bbAnimT*dir*2+d/nD)%1+1)%1;
+          var px, py;
+          if (cx !== undefined) {
+            // Quadratic Bezier: B(t) = (1-t)^2*P0 + 2(1-t)t*C + t^2*P1
+            var t1 = 1 - fr;
+            px = t1*t1*x0 + 2*t1*fr*cx + fr*fr*x1;
+            py = t1*t1*y0 + 2*t1*fr*cy + fr*fr*y1;
+          } else {
+            px = x0+(x1-x0)*fr;
+            py = y0+(y1-y0)*fr;
+          }
+          bbCtx.beginPath(); bbCtx.arc(px, py, 2.5, 0, Math.PI*2); bbCtx.fill();
+        }
       }
 
       for (var i = 0; i < bbParts.length; i++) {
@@ -23347,8 +23360,9 @@ function initCh14Vis() {
         if (p.type === 'WIRE') {
           var h1 = holeXY(p.holes[1].row, p.holes[1].col);
           bbCtx.strokeStyle = p.color||'#666'; bbCtx.lineWidth = 2.5; bbCtx.lineCap = 'round';
-          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.quadraticCurveTo((h0.x+h1.x)/2, (h0.y+h1.y)/2-Math.abs(h1.x-h0.x)*0.12-5, h1.x, h1.y); bbCtx.stroke(); bbCtx.lineCap = 'butt';
-          curDots(h0.x, h0.y, h1.x, h1.y, bbWireCurrent(p) || 0);
+          var wcx = (h0.x+h1.x)/2, wcy = (h0.y+h1.y)/2-Math.abs(h1.x-h0.x)*0.12-5;
+          bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.quadraticCurveTo(wcx, wcy, h1.x, h1.y); bbCtx.stroke(); bbCtx.lineCap = 'butt';
+          curDots(h0.x, h0.y, h1.x, h1.y, bbWireCurrent(p) || 0, wcx, wcy);
         } else if (p.type === 'RESISTOR') {
           var h1 = holeXY(p.holes[1].row, p.holes[1].col), dx = h1.x-h0.x, dy = h1.y-h0.y, len = Math.hypot(dx,dy), ux = dx/len, uy = dy/len, bl = Math.min(len*0.5, 28);
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
