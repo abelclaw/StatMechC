@@ -23691,20 +23691,24 @@ function initCh14Vis() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
       bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'});
-      // Collector circuit: VCC → R_collector(470Ω, cols 14-18) → LED → transistor collector
-      bbAddPart('WIRE',[{row:'r+t',col:14},{row:'a',col:14}],{color:'#e53935'});
-      bbAddPart('RESISTOR',[{row:'a',col:14},{row:'a',col:18}],{value:470});
-      bbAddPart('LED',[{row:'b',col:18},{row:'b',col:22}]);
-      // Transistor: E=col22, B=col23, C=col24
-      bbAddPart('NPN',[{row:'f',col:22},{row:'f',col:23},{row:'f',col:24}]);
-      bbAddPart('WIRE',[{row:'d',col:22},{row:'g',col:24}],{color:'#ff9800'}); // LED cathode → collector
-      bbAddPart('WIRE',[{row:'g',col:22},{row:'r-b',col:22}],{color:'#1e88e5'}); // emitter → GND
-      // Base circuit: VCC → switch → R_base(47kΩ, cols 4-10) → transistor base
-      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});
-      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:6}],{on:true});
-      bbAddPart('RESISTOR',[{row:'b',col:6},{row:'b',col:12}],{value:47000});
-      bbAddPart('WIRE',[{row:'c',col:12},{row:'h',col:23}],{color:'#43a047'}); // → base
-      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>A tiny input current controls a much larger output current. That\u2019s amplification.<br><br>\u2022 <b>Input path:</b> switch (row a, cols 3\u20137) \u2192 47k\u03A9 resistor (row b, cols 6\u201312, long green wire to base). <b>Hover over the 47k\u03A9 resistor</b> to see the current: only about 0.18mA.<br>\u2022 <b>Output path:</b> 470\u03A9 resistor (row a, cols 14\u201318) \u2192 LED \u2192 transistor collector (orange wire). <b>Hover over the 470\u03A9 resistor</b> to see the current: about 15mA.<br><br>The output is <b>~100\u00D7</b> the input. The LED is there to prove it \u2014 0.18mA is far too little to light an LED, but the transistor multiplies it to 15mA, enough to produce visible light. That\u2019s why this was revolutionary: a weak radio signal (\u00B5A) could be amplified to drive a speaker (mA).<br><br>Click the switch to cut the input and watch everything go dark.');
+
+      // === INPUT PATH (top-left, flows left to right) ===
+      bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
+      bbAddPart('SWITCH',[{row:'a',col:4},{row:'a',col:8}],{on:true});
+      bbAddPart('RESISTOR',[{row:'b',col:8},{row:'b',col:14}],{value:47000});
+      bbAddPart('WIRE',[{row:'d',col:14},{row:'g',col:17}],{color:'#43a047'}); // green wire to base
+
+      // === TRANSISTOR (bottom-center) ===
+      bbAddPart('NPN',[{row:'f',col:16},{row:'f',col:17},{row:'f',col:18}]);
+      bbAddPart('WIRE',[{row:'g',col:16},{row:'r-b',col:16}],{color:'#1e88e5'}); // emitter to GND
+
+      // === OUTPUT PATH (top-right, flows right to left into collector) ===
+      bbAddPart('WIRE',[{row:'r+t',col:24},{row:'a',col:24}],{color:'#e53935'});
+      bbAddPart('RESISTOR',[{row:'a',col:24},{row:'a',col:20}],{value:470});
+      bbAddPart('LED',[{row:'b',col:20},{row:'b',col:16}]);
+      bbAddPart('WIRE',[{row:'d',col:16},{row:'g',col:18}],{color:'#ff9800'}); // orange wire to collector
+
+      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>Two paths from the + rail both flow into the transistor (bottom center) and out to ground:<br><br>\u2022 <b>Input (top-left):</b> switch (row a, cols 4\u20138) \u2192 47k\u03A9 resistor (row b, cols 8\u201314) \u2192 green wire drops to the base. <b>Hover over the 47k\u03A9 resistor</b> \u2014 only ~0.18mA trickles through.<br><br>\u2022 <b>Output (top-right):</b> 470\u03A9 resistor (row a, cols 20\u201324) \u2192 LED (row b, cols 16\u201320) \u2192 orange wire drops to the collector. <b>Hover over the 470\u03A9 resistor</b> \u2014 ~15mA flows through.<br><br>Both paths meet at the transistor and exit through the blue wire to ground. The tiny 0.18mA input controls the 15mA output \u2014 <b>~100\u00D7 amplification</b>. The LED proves it: 0.18mA alone can\u2019t light an LED, but the transistor multiplies it enough to glow. <b>Click the switch</b> to cut the input.');
     }
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
