@@ -1344,6 +1344,175 @@ function initCh1Vis() {
     decayLambdaSlider?.addEventListener('input', decayReset);
     drawDecay();
   }
+
+  // =========================================================================
+  // OLD INTERACTIVES (for comparison — remove when done reviewing)
+  // =========================================================================
+
+  // ----- OLD Gaussian Explorer -----
+  const cGauss = document.getElementById('vis-gaussian');
+  if (cGauss) {
+    const gSetup = setupCanvas(cGauss);
+    const ctxG = gSetup.ctx, WG = gSetup.W, HG = gSetup.H;
+    const sigmaSlider = document.getElementById('gauss-sigma');
+    const meanSlider = document.getElementById('gauss-mean');
+
+    function drawGaussian() {
+      const sigma = parseFloat(sigmaSlider?.value || 1);
+      const mean = parseFloat(meanSlider?.value || 0);
+      clearCanvas(ctxG, WG, HG);
+      drawGrid(ctxG, WG, HG);
+      const xAxis = HG - 40;
+      const xScale = (WG - 60) / 8;
+      ctxG.strokeStyle = COLORS.axis; ctxG.lineWidth = 1;
+      ctxG.beginPath(); ctxG.moveTo(30, xAxis); ctxG.lineTo(WG - 10, xAxis); ctxG.stroke();
+      ctxG.beginPath(); ctxG.moveTo(WG / 2, 10); ctxG.lineTo(WG / 2, xAxis); ctxG.stroke();
+      const maxY = 1 / (sigma * Math.sqrt(2 * Math.PI));
+      const yScale = (xAxis - 30) / Math.max(maxY, 0.5);
+      ctxG.fillStyle = 'rgba(79,195,247,0.15)';
+      ctxG.beginPath();
+      let started = false;
+      for (let px = 0; px < WG - 40; px++) {
+        const x = (px - (WG - 60) / 2) / xScale;
+        if (Math.abs(x - mean) <= sigma) {
+          const y = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
+          const py = xAxis - y * yScale;
+          if (!started) { ctxG.moveTo(px + 30, xAxis); started = true; }
+          ctxG.lineTo(px + 30, py);
+        }
+      }
+      ctxG.lineTo(WG / 2 + (mean + sigma) * xScale + 30, xAxis);
+      ctxG.closePath(); ctxG.fill();
+      ctxG.strokeStyle = COLORS.blue; ctxG.lineWidth = 2.5;
+      ctxG.beginPath();
+      for (let px = 0; px < WG - 40; px++) {
+        const x = (px - (WG - 60) / 2) / xScale;
+        const y = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
+        const py = xAxis - y * yScale;
+        px === 0 ? ctxG.moveTo(px + 30, py) : ctxG.lineTo(px + 30, py);
+      }
+      ctxG.stroke();
+      ctxG.strokeStyle = COLORS.red; ctxG.lineWidth = 1.5; ctxG.setLineDash([5, 5]);
+      const meanPx = WG / 2 + mean * xScale;
+      ctxG.beginPath(); ctxG.moveTo(meanPx, 10); ctxG.lineTo(meanPx, xAxis); ctxG.stroke();
+      ctxG.setLineDash([]);
+      ctxG.fillStyle = COLORS.text; ctxG.font = FONT; ctxG.textAlign = 'center';
+      ctxG.fillText('\u03BC = ' + mean.toFixed(1), meanPx, xAxis + 18);
+      ctxG.fillText('\u03C3 = ' + sigma.toFixed(2), meanPx + sigma * xScale / 2, xAxis - maxY * yScale / 2);
+      ctxG.fillStyle = 'rgba(79,195,247,0.6)';
+      ctxG.fillText('68%', meanPx, xAxis - maxY * yScale * 0.3);
+      document.getElementById('gauss-sigma-val')?.replaceChildren(document.createTextNode(sigma.toFixed(2)));
+      document.getElementById('gauss-mean-val')?.replaceChildren(document.createTextNode(mean.toFixed(1)));
+    }
+    sigmaSlider?.addEventListener('input', drawGaussian);
+    meanSlider?.addEventListener('input', drawGaussian);
+    drawGaussian();
+  }
+
+  // ----- OLD Poisson Distribution Explorer -----
+  const cPoisson = document.getElementById('vis-poisson');
+  if (cPoisson) {
+    const poi = setupCanvas(cPoisson);
+    const ctxP = poi.ctx, WP = poi.W, HP = poi.H;
+    const lambdaSlider = document.getElementById('poisson-lambda');
+    function drawPoisson() {
+      const lambda = parseFloat(lambdaSlider?.value || 5);
+      clearCanvas(ctxP, WP, HP);
+      const ox = 50, xAxis = HP - 45, plotW = WP - ox - 20, mMax = 30;
+      const barW = plotW / (mMax + 1);
+      const pmf = []; let maxP = 0;
+      for (let m = 0; m <= mMax; m++) {
+        let logP = m * Math.log(lambda) - lambda;
+        for (let k = 2; k <= m; k++) logP -= Math.log(k);
+        const p = Math.exp(logP); pmf.push(p);
+        if (p > maxP) maxP = p;
+      }
+      const yScale = (xAxis - 30) / (maxP * 1.1);
+      drawAxes(ctxP, ox, 15, plotW, xAxis - 15, { xLabel: 'm', yLabel: 'P(m)' });
+      ctxP.fillStyle = 'rgba(79,195,247,0.5)'; ctxP.strokeStyle = COLORS.blue; ctxP.lineWidth = 1;
+      for (let m = 0; m <= mMax; m++) {
+        const bh = pmf[m] * yScale, bx = ox + m * barW + 2, bw = barW - 4;
+        ctxP.fillRect(bx, xAxis - bh, bw, bh); ctxP.strokeRect(bx, xAxis - bh, bw, bh);
+      }
+      const sig = Math.sqrt(lambda);
+      ctxP.strokeStyle = COLORS.orange; ctxP.lineWidth = 2; ctxP.beginPath();
+      for (let px = 0; px < plotW; px++) {
+        const m = px / plotW * (mMax + 1);
+        const g = (1 / (sig * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((m - lambda) / sig) ** 2);
+        const py = xAxis - g * yScale;
+        px === 0 ? ctxP.moveTo(ox + px, py) : ctxP.lineTo(ox + px, py);
+      }
+      ctxP.stroke();
+      const meanPx = ox + lambda / (mMax + 1) * plotW + barW / 2;
+      ctxP.strokeStyle = COLORS.red; ctxP.lineWidth = 1.5; ctxP.setLineDash([5, 5]);
+      ctxP.beginPath(); ctxP.moveTo(meanPx, 15); ctxP.lineTo(meanPx, xAxis); ctxP.stroke(); ctxP.setLineDash([]);
+      const sigLeftPx = ox + (lambda - sig) / (mMax + 1) * plotW + barW / 2;
+      const sigRightPx = ox + (lambda + sig) / (mMax + 1) * plotW + barW / 2;
+      ctxP.strokeStyle = 'rgba(255,255,255,0.2)'; ctxP.setLineDash([3, 3]);
+      ctxP.beginPath(); ctxP.moveTo(sigLeftPx, 15); ctxP.lineTo(sigLeftPx, xAxis); ctxP.stroke();
+      ctxP.beginPath(); ctxP.moveTo(sigRightPx, 15); ctxP.lineTo(sigRightPx, xAxis); ctxP.stroke(); ctxP.setLineDash([]);
+      ctxP.fillStyle = COLORS.text; ctxP.font = FONT; ctxP.textAlign = 'left';
+      ctxP.fillText('\u03BB = ' + lambda.toFixed(1) + ',  \u03C3 = \u221A\u03BB = ' + sig.toFixed(2), ox + 5, 28);
+      ctxP.fillStyle = COLORS.blue; ctxP.fillText('Poisson PMF', WP - 160, 28);
+      ctxP.fillStyle = COLORS.orange; ctxP.fillText('Gaussian approx.', WP - 160, 44);
+      ctxP.fillStyle = COLORS.red; ctxP.fillText('\u03BC = \u03BB', WP - 160, 60);
+      ctxP.fillStyle = COLORS.textDim; ctxP.font = '10px Inter, system-ui, sans-serif'; ctxP.textAlign = 'center';
+      for (let m = 0; m <= mMax; m += 5) ctxP.fillText(m.toString(), ox + m * barW + barW / 2, xAxis + 12);
+      document.getElementById('poisson-lambda-val')?.replaceChildren(document.createTextNode(lambda.toFixed(1)));
+    }
+    lambdaSlider?.addEventListener('input', drawPoisson);
+    drawPoisson();
+  }
+
+  // ----- OLD Convolution / Averaging Visualizer -----
+  const cConv = document.getElementById('vis-convolution');
+  if (cConv) {
+    const conv = setupCanvas(cConv);
+    const ctxC = conv.ctx, WC = conv.W, HC = conv.H;
+    const convSlider = document.getElementById('conv-n');
+    function irwinHallPDF(s, n) {
+      if (s <= 0 || s >= n) return 0;
+      let result = 0, floorS = Math.floor(s), sign = 1, binom = 1;
+      for (let k = 0; k <= floorS; k++) {
+        if (k > 0) binom = binom * (n - k + 1) / k;
+        result += sign * binom * Math.pow(s - k, n - 1); sign *= -1;
+      }
+      let factorial = 1;
+      for (let i = 2; i < n; i++) factorial *= i;
+      return result / factorial;
+    }
+    function drawConvolution() {
+      const N = parseInt(convSlider?.value || 1);
+      clearCanvas(ctxC, WC, HC);
+      const ox = 50, xAxis = HC - 45, plotW = WC - ox - 20, nPts = 400;
+      const xMin = -1.0, xMax = 1.0;
+      const vals = []; let maxVal = 0;
+      for (let i = 0; i < nPts; i++) {
+        const xbar = xMin + (xMax - xMin) * i / nPts;
+        const s = N * (xbar + 0.5);
+        const p = N * irwinHallPDF(s, N); vals.push(p);
+        if (p > maxVal) maxVal = p;
+      }
+      if (maxVal < 1e-10) maxVal = 1;
+      const yScale = (xAxis - 30) / (maxVal * 1.05);
+      drawAxes(ctxC, ox, 15, plotW, xAxis - 15, { xLabel: 'x\u0304 (sample mean)', yLabel: 'P\u2099(x\u0304)' });
+      ctxC.fillStyle = 'rgba(102,187,106,0.3)'; ctxC.beginPath(); ctxC.moveTo(ox, xAxis);
+      for (let i = 0; i < nPts; i++) ctxC.lineTo(ox + i / nPts * plotW, xAxis - vals[i] * yScale);
+      ctxC.lineTo(ox + plotW, xAxis); ctxC.closePath(); ctxC.fill();
+      ctxC.strokeStyle = COLORS.green; ctxC.lineWidth = 2.5; ctxC.beginPath();
+      for (let i = 0; i < nPts; i++) {
+        const px = ox + i / nPts * plotW, py = xAxis - vals[i] * yScale;
+        i === 0 ? ctxC.moveTo(px, py) : ctxC.lineTo(px, py);
+      }
+      ctxC.stroke();
+      ctxC.fillStyle = COLORS.text; ctxC.font = FONT; ctxC.textAlign = 'left';
+      ctxC.fillText('N = ' + N + (N === 1 ? ' (uniform)' : N === 2 ? ' (triangle)' : ' (converging to Gaussian)'), ox + 5, 28);
+      ctxC.fillStyle = COLORS.green; ctxC.fillText('P\u2099(x\u0304)', WC - 150, 28);
+      document.getElementById('conv-n-val')?.replaceChildren(document.createTextNode(N.toString()));
+    }
+    convSlider?.addEventListener('input', drawConvolution);
+    drawConvolution();
+  }
 }
 
 

@@ -180,6 +180,17 @@ $$\langle x \rangle = 0.59L; \qquad \langle x^2 \rangle = 0.42L^2; \qquad \sigma
   <div class="vis-canvas-wrap"><canvas id="vis-sampling" width="700" height="380"></canvas></div>
 </div>
 
+<!-- OLD Interactive 1 (for comparison) -->
+<div class="interactive-container" style="border:2px dashed rgba(255,100,100,0.3);padding:10px;margin-top:10px;">
+  <div class="figure-label" style="color:#ef5350;">OLD Interactive 1: Gaussian Explorer</div>
+  <p class="vis-caption">Adjust the mean and standard deviation to see how the Gaussian distribution changes shape.</p>
+  <div class="vis-controls">
+    <label>Mean (<i>&mu;</i>): <input type="range" id="gauss-mean" min="-3" max="3" step="0.1" value="0"><span class="slider-value" id="gauss-mean-val">0</span></label>
+    <label>Std Dev (<i>&sigma;</i>): <input type="range" id="gauss-sigma" min="0.2" max="3" step="0.1" value="1"><span class="slider-value" id="gauss-sigma-val">1</span></label>
+  </div>
+  <canvas id="vis-gaussian" width="600" height="300"></canvas>
+</div>
+
 <!-- ============================================================ -->
 <h2 id="s1-2">2 &mdash; Law of large numbers</h2>
 
@@ -344,6 +355,16 @@ $$(M_r)_N \to \begin{cases} 0, & r\text{ odd} \\ \dfrac{2^{-r/2}\, r!}{\left(\fr
     <span class="value-display" id="lln-trial-count">0 snapshots</span>
   </div>
   <div class="vis-canvas-wrap"><canvas id="vis-lln" width="700" height="380"></canvas></div>
+</div>
+
+<!-- OLD Interactive 2 (for comparison) -->
+<div class="interactive-container" style="border:2px dashed rgba(255,100,100,0.3);padding:10px;margin-top:10px;">
+  <div class="figure-label" style="color:#ef5350;">OLD Interactive 2: Averaging and Convolution</div>
+  <p class="vis-caption">Slide $N$ to see how the distribution of averages of $N$ uniform draws evolves from flat to triangular to Gaussian.</p>
+  <div class="vis-controls">
+    <label>Number of particles <i>N</i>: <input type="range" id="conv-n" min="1" max="10" step="1" value="1"> <span class="slider-value" id="conv-n-val">1</span></label>
+  </div>
+  <canvas id="vis-convolution" width="600" height="300"></canvas>
 </div>
 
 <p>To be quantitative, the easiest way to calculate the probability is with the <span class="tooltip-trigger">Dirac $\delta$ function<span class="tooltip-content">A mathematical distribution that is zero everywhere except at the origin, with total integral equal to 1. It "picks out" the value of a function at a specific point when used inside an integral.</span></span> (see Appendix A for a refresher). Using the $\delta$-function, we can write the probability for getting a mean value $\bar{x} = \frac{x_1 + x_2}{2}$ as</p>
@@ -546,6 +567,16 @@ $$\frac{\sigma}{\langle m \rangle} = \frac{1}{\sqrt{\lambda t}}$$
     <span class="value-display" id="decay-stats">0 windows</span>
   </div>
   <div class="vis-canvas-wrap"><canvas id="vis-decay" width="700" height="380"></canvas></div>
+</div>
+
+<!-- OLD Interactive 4 (for comparison) -->
+<div class="interactive-container" style="border:2px dashed rgba(255,100,100,0.3);padding:10px;margin-top:10px;">
+  <div class="figure-label" style="color:#ef5350;">OLD Interactive 4: Poisson Distribution Explorer</div>
+  <p class="vis-caption">Adjust $\lambda t$ to see how the Poisson distribution evolves from asymmetric at small values to Gaussian at large values.</p>
+  <div class="vis-controls">
+    <label><i>&lambda;t</i>: <input type="range" id="poisson-lambda" min="0.5" max="20" step="0.5" value="5"> <span class="slider-value" id="poisson-lambda-val">5</span></label>
+  </div>
+  <canvas id="vis-poisson" width="600" height="300"></canvas>
 </div>
 
 <p>We clearly see the Gaussian shape emerging at large $t$ (left) and at large $m$ (right).</p>
