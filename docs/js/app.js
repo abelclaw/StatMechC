@@ -23417,8 +23417,26 @@ function initCh14Vis() {
             tipLines.push('I = ' + (mA < 1 ? (mA*1000).toFixed(0) + '\u00B5A' : mA.toFixed(1) + 'mA'));
           }
           else if (hovPart.type === 'WIRE') {
-            var wV = bbNodeVolts[holeNode(hovPart.holes[0].row, hovPart.holes[0].col)];
-            tipLines.push('Wire: ' + (wV !== undefined ? wV.toFixed(2) + 'V' : ''));
+            // Estimate wire current: sum currents through all resistors/LEDs sharing a node with this wire
+            var wireNode = holeNode(hovPart.holes[0].row, hovPart.holes[0].col);
+            var wireI = 0;
+            for (var wi = 0; wi < bbParts.length; wi++) {
+              var wp = bbParts[wi];
+              if (wp === hovPart || wp.holes.length < 2) continue;
+              if (wp.type === 'RESISTOR') {
+                var wn0 = holeNode(wp.holes[0].row, wp.holes[0].col), wn1 = holeNode(wp.holes[1].row, wp.holes[1].col);
+                if (wn0 === wireNode || wn1 === wireNode) {
+                  var wv0 = bbNodeVolts[wn0] || 0, wv1 = bbNodeVolts[wn1] || 0;
+                  wireI += Math.abs(wv0 - wv1) / (wp.value || 1000);
+                }
+              }
+              if (wp.type === 'LED' && wp._ledOn && wp._ledCurrent) {
+                var wn0 = holeNode(wp.holes[0].row, wp.holes[0].col), wn1 = holeNode(wp.holes[1].row, wp.holes[1].col);
+                if (wn0 === wireNode || wn1 === wireNode) wireI += Math.abs(wp._ledCurrent);
+              }
+            }
+            var wmA = wireI * 1000;
+            tipLines.push('Wire' + (wmA > 0.01 ? ': I = ' + (wmA < 1 ? (wmA*1000).toFixed(0) + '\u00B5A' : wmA.toFixed(1) + 'mA') : ': I = 0'));
           }
           else if (hovPart.type === 'CAPACITOR') tipLines.push(fmtC(hovPart.value||100e-6) + ' (click to change)');
           else if (hovPart.type === 'LED') {
