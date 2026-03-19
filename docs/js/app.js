@@ -23243,6 +23243,11 @@ function initCh14Vis() {
         return;
       }
       // Standard MNA for non-astable circuits
+      // Reset all nonlinear states so solver starts fresh (prevents latching)
+      for (var i=0;i<bbParts.length;i++) {
+        if (bbParts[i].type==='NPN'||bbParts[i].type==='PNP') bbParts[i]._state='off';
+        if (bbParts[i].type==='LED') { bbParts[i]._ledOn=false; bbParts[i]._ledCurrent=0; }
+      }
       var capSnap={}; for(var id in bbCapVolts) capSnap[id]=bbCapVolts[id];
       for(var id in capSnap) bbCapVolts[id]=capSnap[id]; bbSolve();
       for (var iter=0;iter<7;iter++) {
