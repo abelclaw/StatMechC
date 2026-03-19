@@ -26369,7 +26369,11 @@ function initCh15Vis() {
       let cx = 0;
       for (let i = 0; i < stars.length; i++) {
         if (i === 0) { cx = 0; }
-        else { cx += (displayR(stars[i-1]) + displayR(stars[i])) * 1.4; }
+        else {
+          // Extra gap around the black hole so the glow doesn't overlap neighbors
+          const gap = (stars[i].cat === 'Black Hole' || stars[i-1].cat === 'Black Hole') ? 2.5 : 1.4;
+          cx += (displayR(stars[i-1]) + displayR(stars[i])) * gap;
+        }
         worldX.push(cx);
       }
     }
@@ -26584,8 +26588,8 @@ function initCh15Vis() {
         else if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
         else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
         else if (v.s.cat === 'Black Hole') {
-          // M87 EHT image: cropped square, ring outer radius ≈ 40% of half-size
-          const ringFrac = 0.40;
+          // M87 EHT image: cropped square, ring outer radius ≈ 55% of image radius
+          const ringFrac = 0.55;
           const imgR = v.rPx / ringFrac;
           drawPlanetImg(sgrAImg, v.sx, v.sy, imgR);
           // Indicator rings: event horizon and photon ring
