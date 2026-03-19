@@ -26482,7 +26482,7 @@ function initCh15Vis() {
     // --- Planet, black hole & solar system images ---
     const earthImg = new Image(); earthImg.src = 'images/earth_transparent.png';
     const jupiterImg = new Image(); jupiterImg.src = 'images/jupiter_transparent.png';
-    const sgrAImg = new Image(); sgrAImg.src = 'images/sgr_a_star_eht.jpg';
+    const sgrAImg = new Image(); sgrAImg.src = 'images/m87_eht.jpg';
     const solarSysImg = new Image(); solarSysImg.src = 'images/solar_system_orbits.jpg';
     let imgLoaded = 0;
     const totalImgs = 4;
@@ -26555,7 +26555,13 @@ function initCh15Vis() {
         else if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
         else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
         else if (v.s.cat === 'Black Hole') {
-          drawPlanetImg(sgrAImg, v.sx, v.sy, v.rPx);
+          // M87 EHT image: 733x300, ring outer radius ≈ 40% of half-height
+          if (sgrAImg.complete && sgrAImg.naturalWidth > 0) {
+            const ringFrac = 0.40; // ring radius as fraction of image half-height
+            const imgDrawH = v.rPx / ringFrac * 2; // full drawn height
+            const imgDrawW = imgDrawH * (sgrAImg.naturalWidth / sgrAImg.naturalHeight);
+            ctxS.drawImage(sgrAImg, v.sx - imgDrawW / 2, v.sy - imgDrawH / 2, imgDrawW, imgDrawH);
+          }
           // Indicator rings: event horizon and photon ring
           const ehPx = v.s.R * scale; // event horizon in pixels
           const shadowPx = v.rPx;     // shadow/ring radius in pixels
