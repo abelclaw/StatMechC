@@ -23088,13 +23088,13 @@ function initCh14Vis() {
         var p = bbParts[i];
         if (p.holes.length >= 2) {
           var a = holeXY(p.holes[0].row, p.holes[0].col), b = holeXY(p.holes[1].row, p.holes[1].col);
-          // Sample 6 points along the component (catches wires even on curves)
-          for (var s = 0; s <= 5; s++) {
-            var t = s / 5;
+          // Sample 8 points along the component
+          for (var s = 0; s <= 7; s++) {
+            var t = s / 7;
             var sx = a.x + (b.x - a.x) * t, sy = a.y + (b.y - a.y) * t;
-            // Wires arc upward so adjust y for the curve
-            if (p.type === 'WIRE') sy -= (Math.abs(b.x - a.x) * 0.12 + 5) * Math.sin(t * Math.PI);
-            if (Math.hypot(mx - sx, my - sy) < 12) return p;
+            // Wires arc upward (quadratic bezier) — approximate with sin
+            if (p.type === 'WIRE') sy -= (Math.abs(b.x - a.x) * 0.06 + 2.5) * Math.sin(t * Math.PI);
+            if (Math.hypot(mx - sx, my - sy) < 14) return p;
           }
         }
         for (var h = 0; h < p.holes.length; h++) {
