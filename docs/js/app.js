@@ -23459,7 +23459,7 @@ function initCh14Vis() {
           else if (hovPart.type === 'WIRE') {
             var wireI = bbWireCurrent(hovPart);
             var wmA = wireI * 1000;
-            tipLines.push('Wire' + (wmA > 0.01 ? ': I = ' + (wmA < 1 ? (wmA*1000).toFixed(0) + '\u00B5A' : wmA.toFixed(1) + 'mA') : ': I = 0'));
+            tipLines.push('Wire' + (wireI > 0 ? ': I = ' + (wmA < 1 ? (wmA*1000).toFixed(0) + '\u00B5A' : wmA.toFixed(1) + 'mA') : ': I = 0'));
           }
           else if (hovPart.type === 'CAPACITOR') tipLines.push(fmtC(hovPart.value||100e-6) + ' (click to change)');
           else if (hovPart.type === 'LED') {
