@@ -23710,7 +23710,8 @@ function initCh14Vis() {
       // === TRANSISTOR (center, row d) ===
       // E=12, B=13 (=47k output), C=14 (=LED cathode)
       bbAddPart('NPN',[{row:'d',col:12},{row:'d',col:13},{row:'d',col:14}]);
-      bbAddPart('WIRE',[{row:'e',col:12},{row:'r-t',col:12}],{color:'#1e88e5'});
+      bbAddPart('WIRE',[{row:'e',col:12},{row:'r-b',col:12}],{color:'#1e88e5'}); // emitter DOWN to bottom GND
+      bbAddPart('WIRE',[{row:'r-t',col:28},{row:'r-b',col:28}],{color:'#1e88e5'}); // connect top and bottom GND rails
 
       // === OUTPUT (right side, row a + row c) ===
       bbAddPart('WIRE',[{row:'r+t',col:24},{row:'a',col:24}],{color:'#e53935'});
