@@ -23266,6 +23266,11 @@ function initCh14Vis() {
         }
         bbSolve();
       }
+      // Final check: turn off LEDs that are "on" but have no real current path
+      for (var i=0;i<bbParts.length;i++) {
+        if (bbParts[i].type==='LED' && bbParts[i]._ledOn && Math.abs(bbParts[i]._ledCurrent||0) < 0.001)
+          bbParts[i]._ledOn = false;
+      }
     }
 
 
