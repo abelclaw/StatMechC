@@ -409,462 +409,88 @@ function initChapterVisualizations(chapterId) {
 // CH1: Probability Distributions
 // =============================================================================
 function initCh1Vis() {
-  // Shared: Box-Muller Gaussian random numbers
-  function gaussRand() {
-    let u, v, s;
-    do { u = 2 * Math.random() - 1; v = 2 * Math.random() - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
-    return u * Math.sqrt(-2 * Math.log(s) / s);
+  // ----- Gaussian Explorer -----
+  const cGauss = document.getElementById('vis-gaussian');
+  if (!cGauss) return;
+  const { ctx, W, H } = setupCanvas(cGauss);
+
+  const sigmaSlider = document.getElementById('gauss-sigma');
+  const meanSlider = document.getElementById('gauss-mean');
+
+  function drawGaussian() {
+    const sigma = parseFloat(sigmaSlider?.value || 1);
+    const mean = parseFloat(meanSlider?.value || 0);
+    clearCanvas(ctx, W, H);
+    drawGrid(ctx, W, H);
+
+    const xAxis = H - 40;
+    const xScale = (W - 60) / 8; // range -4 to 4
+
+    // Axes
+    ctx.strokeStyle = COLORS.axis;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(30, xAxis); ctx.lineTo(W - 10, xAxis); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W / 2, 10); ctx.lineTo(W / 2, xAxis); ctx.stroke();
+
+    const maxY = 1 / (sigma * Math.sqrt(2 * Math.PI));
+    const yScale = (xAxis - 30) / Math.max(maxY, 0.5);
+
+    // Fill 1-sigma region
+    ctx.fillStyle = 'rgba(79,195,247,0.15)';
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px < W - 40; px++) {
+      const x = (px - (W - 60) / 2) / xScale;
+      if (Math.abs(x - mean) <= sigma) {
+        const y = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
+        const py = xAxis - y * yScale;
+        if (!started) { ctx.moveTo(px + 30, xAxis); started = true; }
+        ctx.lineTo(px + 30, py);
+      }
+    }
+    ctx.lineTo(W / 2 + (mean + sigma) * xScale + 30, xAxis);
+    ctx.closePath();
+    ctx.fill();
+
+    // Curve
+    ctx.strokeStyle = COLORS.blue;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px < W - 40; px++) {
+      const x = (px - (W - 60) / 2) / xScale;
+      const y = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
+      const py = xAxis - y * yScale;
+      px === 0 ? ctx.moveTo(px + 30, py) : ctx.lineTo(px + 30, py);
+    }
+    ctx.stroke();
+
+    // Mean line
+    ctx.strokeStyle = COLORS.red;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    const meanPx = W / 2 + mean * xScale;
+    ctx.beginPath(); ctx.moveTo(meanPx, 10); ctx.lineTo(meanPx, xAxis); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle = COLORS.text;
+    ctx.font = FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText('\u03BC = ' + mean.toFixed(1), meanPx, xAxis + 18);
+    ctx.fillText('\u03C3 = ' + sigma.toFixed(2), meanPx + sigma * xScale / 2, xAxis - maxY * yScale / 2);
+    ctx.fillStyle = 'rgba(79,195,247,0.6)';
+    ctx.fillText('68%', meanPx, xAxis - maxY * yScale * 0.3);
+
+    document.getElementById('gauss-sigma-val')?.replaceChildren(document.createTextNode(sigma.toFixed(2)));
+    document.getElementById('gauss-mean-val')?.replaceChildren(document.createTextNode(mean.toFixed(1)));
   }
 
-  // =========================================================================
-  // INTERACTIVE 1: THE SAMPLING MACHINE
-  // =========================================================================
-  const cSamp = document.getElementById('vis-sampling');
-  if (cSamp) {
-    const samp = setupCanvas(cSamp);
-    const ctxS = samp.ctx, WS = samp.W, HS = samp.H;
-    const sampDistBtns = document.getElementById('samp-dist');
-    const sampSpeedSlider = document.getElementById('samp-speed');
-    const sampGoBtn = document.getElementById('samp-go');
-    const sampClearBtn = document.getElementById('samp-clear');
+  sigmaSlider?.addEventListener('input', drawGaussian);
+  meanSlider?.addEventListener('input', drawGaussian);
+  drawGaussian();
 
-    let sampRunning = false;
-    const sampNBins = 60;
-    let sampBins = new Float64Array(sampNBins);
-    let sampCount = 0, sampSumX = 0, sampSumX2 = 0, sampWithinSigma = 0;
-    let sampBalls = []; // {px, y, vy, value}
-
-    // Layout
-    const sML = 50, sMR = 170, sMT = 25, sMB = 35;
-    const sPlotW = WS - sML - sMR;
-    const sPdfH = (HS - sMT - sMB) * 0.30;
-    const sHistH = (HS - sMT - sMB) * 0.42;
-    const sPdfBot = sMT + sPdfH;
-    const sHistBot = HS - sMB;
-    const sHistTop = sHistBot - sHistH;
-    const sStatsX = WS - sMR + 15;
-
-    function getSampDist() {
-      const name = sampDistBtns?.querySelector('.active')?.dataset.value || 'gaussian';
-      if (name === 'gaussian') return {
-        sample: () => gaussRand(),
-        pdf: x => Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI),
-        mean: 0, sigma: 1, domain: [-4, 4], label: 'Gaussian (\u03C3=1)', thPct: '68%'
-      };
-      if (name === 'flat') return {
-        sample: () => (Math.random() - 0.5) * 4,
-        pdf: x => (x >= -2 && x <= 2) ? 0.25 : 0,
-        mean: 0, sigma: 2 / Math.sqrt(3), domain: [-3, 3], label: 'Flat [\u22122, 2]', thPct: '58%'
-      };
-      if (name === 'exponential') return {
-        sample: () => -Math.log(1 - Math.random()),
-        pdf: x => x >= 0 ? Math.exp(-x) : 0,
-        mean: 1, sigma: 1, domain: [-1, 6], label: 'Exponential (\u03BB=1)', thPct: '~86%'
-      };
-      if (name === 'bimodal') return {
-        sample: () => (Math.random() < 0.5 ? -1.5 : 1.5) + gaussRand() * 0.5,
-        pdf: x => 0.5 * (Math.exp(-((x + 1.5) ** 2) / 0.5) + Math.exp(-((x - 1.5) ** 2) / 0.5)) / Math.sqrt(0.5 * Math.PI),
-        mean: 0, sigma: Math.sqrt(2.5), domain: [-4, 4], label: 'Bimodal', thPct: '~56%'
-      };
-      return { sample: () => gaussRand(), pdf: x => Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI), mean: 0, sigma: 1, domain: [-4, 4], label: 'Gaussian', thPct: '68%' };
-    }
-
-    function sXtoPx(x) {
-      const d = getSampDist().domain;
-      return sML + (x - d[0]) / (d[1] - d[0]) * sPlotW;
-    }
-
-    function sampReset() {
-      sampRunning = false;
-      if (activeAnimations['ch1-samp']) { cancelAnimationFrame(activeAnimations['ch1-samp']); delete activeAnimations['ch1-samp']; }
-      if (sampGoBtn) sampGoBtn.textContent = '\u25B6 Go';
-      sampBins = new Float64Array(sampNBins);
-      sampCount = 0; sampSumX = 0; sampSumX2 = 0; sampWithinSigma = 0;
-      sampBalls = [];
-      drawSamp();
-    }
-
-    function drawSamp() {
-      clearCanvas(ctxS, WS, HS);
-      const dist = getSampDist();
-      const [xMin, xMax] = dist.domain;
-
-      // PDF curve values
-      const nPts = 200;
-      let pdfMax = 0;
-      const pdfVals = [];
-      for (let i = 0; i <= nPts; i++) {
-        const x = xMin + (xMax - xMin) * i / nPts;
-        const v = dist.pdf(x);
-        pdfVals.push(v);
-        if (v > pdfMax) pdfMax = v;
-      }
-      if (pdfMax < 1e-10) pdfMax = 1;
-      const pdfScale = sPdfH * 0.85 / pdfMax;
-
-      // +/-sigma shading on PDF
-      ctxS.fillStyle = 'rgba(79,195,247,0.12)';
-      ctxS.beginPath();
-      let sigStarted = false;
-      for (let i = 0; i <= nPts; i++) {
-        const x = xMin + (xMax - xMin) * i / nPts;
-        if (x >= dist.mean - dist.sigma && x <= dist.mean + dist.sigma) {
-          const px = sML + (i / nPts) * sPlotW;
-          const py = sPdfBot - pdfVals[i] * pdfScale;
-          if (!sigStarted) { ctxS.moveTo(px, sPdfBot); sigStarted = true; }
-          ctxS.lineTo(px, py);
-        }
-      }
-      if (sigStarted) {
-        ctxS.lineTo(sXtoPx(Math.min(dist.mean + dist.sigma, xMax)), sPdfBot);
-        ctxS.closePath(); ctxS.fill();
-      }
-
-      // PDF curve
-      ctxS.strokeStyle = COLORS.blue; ctxS.lineWidth = 2;
-      ctxS.beginPath();
-      for (let i = 0; i <= nPts; i++) {
-        const px = sML + (i / nPts) * sPlotW;
-        const py = sPdfBot - pdfVals[i] * pdfScale;
-        i === 0 ? ctxS.moveTo(px, py) : ctxS.lineTo(px, py);
-      }
-      ctxS.stroke();
-
-      // Mean line (dashed)
-      const meanPx = sXtoPx(dist.mean);
-      ctxS.strokeStyle = COLORS.red; ctxS.lineWidth = 1.5; ctxS.setLineDash([5, 5]);
-      ctxS.beginPath(); ctxS.moveTo(meanPx, sMT); ctxS.lineTo(meanPx, sHistBot); ctxS.stroke();
-      ctxS.setLineDash([]);
-
-      // +/-sigma guides
-      ctxS.strokeStyle = 'rgba(255,255,255,0.15)'; ctxS.setLineDash([3, 3]);
-      [dist.mean - dist.sigma, dist.mean + dist.sigma].forEach(x => {
-        if (x >= xMin && x <= xMax) {
-          const px = sXtoPx(x);
-          ctxS.beginPath(); ctxS.moveTo(px, sMT); ctxS.lineTo(px, sHistBot); ctxS.stroke();
-        }
-      });
-      ctxS.setLineDash([]);
-
-      // Labels
-      ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM; ctxS.textAlign = 'center';
-      if (dist.mean - dist.sigma >= xMin) ctxS.fillText('\u03BC\u2212\u03C3', sXtoPx(dist.mean - dist.sigma), sPdfBot + 12);
-      if (dist.mean + dist.sigma <= xMax) ctxS.fillText('\u03BC+\u03C3', sXtoPx(dist.mean + dist.sigma), sPdfBot + 12);
-      ctxS.fillStyle = COLORS.red;
-      ctxS.fillText('\u03BC', meanPx, sPdfBot + 12);
-
-      // Histogram
-      let maxBin = 0;
-      for (let i = 0; i < sampNBins; i++) if (sampBins[i] > maxBin) maxBin = sampBins[i];
-      if (maxBin < 1) maxBin = 1;
-      const barW = sPlotW / sampNBins;
-      for (let i = 0; i < sampNBins; i++) {
-        if (sampBins[i] === 0) continue;
-        const bh = (sampBins[i] / maxBin) * sHistH * 0.9;
-        const bx = sML + i * barW;
-        const binCx = xMin + (i + 0.5) / sampNBins * (xMax - xMin);
-        const inSig = Math.abs(binCx - dist.mean) <= dist.sigma;
-        ctxS.fillStyle = inSig ? 'rgba(79,195,247,0.5)' : 'rgba(79,195,247,0.2)';
-        ctxS.fillRect(bx, sHistBot - bh, barW - 1, bh);
-      }
-
-      // x-axis
-      ctxS.strokeStyle = COLORS.axis; ctxS.lineWidth = 1;
-      ctxS.beginPath(); ctxS.moveTo(sML, sHistBot); ctxS.lineTo(sML + sPlotW, sHistBot); ctxS.stroke();
-      ctxS.fillStyle = COLORS.textDim; ctxS.font = '10px Inter, system-ui, sans-serif'; ctxS.textAlign = 'center';
-      for (let v = Math.ceil(xMin); v <= Math.floor(xMax); v++) ctxS.fillText(v, sXtoPx(v), sHistBot + 14);
-
-      // Falling balls
-      ctxS.fillStyle = COLORS.orange;
-      for (const b of sampBalls) {
-        ctxS.beginPath(); ctxS.arc(b.px, b.y, 3, 0, Math.PI * 2); ctxS.fill();
-      }
-
-      // Stats panel
-      const mMean = sampCount > 0 ? sampSumX / sampCount : 0;
-      const mVar = sampCount > 1 ? sampSumX2 / sampCount - mMean * mMean : 0;
-      const mSigma = Math.sqrt(Math.max(0, mVar));
-      const pct = sampCount > 0 ? (sampWithinSigma / sampCount * 100) : 0;
-
-      ctxS.fillStyle = 'rgba(15,25,35,0.85)';
-      ctxS.fillRect(sStatsX - 12, sMT, sMR - 12, 230);
-
-      let sy = sMT + 20;
-      const lh = 19;
-      ctxS.textAlign = 'left';
-
-      ctxS.fillStyle = COLORS.text; ctxS.font = '12px Inter, system-ui, sans-serif';
-      ctxS.fillText('n = ' + sampCount, sStatsX, sy); sy += lh + 4;
-
-      ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
-      ctxS.fillText('Theory:', sStatsX, sy); sy += lh;
-      ctxS.fillStyle = COLORS.blue;
-      ctxS.fillText('  \u03BC = ' + dist.mean.toFixed(2), sStatsX, sy); sy += lh * 0.85;
-      ctxS.fillText('  \u03C3 = ' + dist.sigma.toFixed(2), sStatsX, sy); sy += lh * 0.85;
-      ctxS.fillText('  \u00B1\u03C3 \u2192 ' + dist.thPct, sStatsX, sy); sy += lh + 4;
-
-      ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
-      ctxS.fillText('Measured:', sStatsX, sy); sy += lh;
-      ctxS.fillStyle = COLORS.orange;
-      ctxS.fillText('  \u03BC = ' + mMean.toFixed(2), sStatsX, sy); sy += lh * 0.85;
-      ctxS.fillText('  \u03C3 = ' + mSigma.toFixed(2), sStatsX, sy); sy += lh * 0.85;
-
-      const pctStr = pct.toFixed(1) + '%';
-      ctxS.fillStyle = (sampCount > 20 && Math.abs(pct - 68) < 4) ? COLORS.green : COLORS.orange;
-      ctxS.font = '13px Inter, system-ui, sans-serif';
-      ctxS.fillText('  \u00B1\u03C3 \u2192 ' + pctStr, sStatsX, sy); sy += lh;
-
-      if (sampCount > 50 && Math.abs(pct - 68) > 5) {
-        ctxS.fillStyle = COLORS.orange; ctxS.font = '10px Inter, system-ui, sans-serif';
-        ctxS.fillText('  \u2260 68% !', sStatsX, sy);
-      }
-
-      // Distribution label
-      ctxS.fillStyle = COLORS.blue; ctxS.font = FONT_SM; ctxS.textAlign = 'center';
-      ctxS.fillText(dist.label, sML + sPlotW / 2, sMT + 12);
-    }
-
-    function sampTick() {
-      if (!sampRunning) return;
-      const speed = parseInt(sampSpeedSlider?.value || 3);
-      const batches = [1, 2, 5, 10, 20];
-      const batch = batches[speed - 1] || 5;
-      const dist = getSampDist();
-      const [xMin, xMax] = dist.domain;
-
-      for (let i = 0; i < batch; i++) {
-        const x = dist.sample();
-        if (x < xMin || x > xMax) continue;
-        sampBalls.push({ px: sXtoPx(x), y: sPdfBot + 2, vy: 1 + Math.random() * 2, value: x });
-      }
-
-      const still = [];
-      for (const b of sampBalls) {
-        b.vy += 0.6;
-        b.y += b.vy;
-        if (b.y >= sHistTop - 3) {
-          const bi = Math.floor((b.value - xMin) / (xMax - xMin) * sampNBins);
-          if (bi >= 0 && bi < sampNBins) sampBins[bi]++;
-          sampCount++;
-          sampSumX += b.value;
-          sampSumX2 += b.value * b.value;
-          if (Math.abs(b.value - dist.mean) <= dist.sigma) sampWithinSigma++;
-        } else {
-          still.push(b);
-        }
-      }
-      sampBalls = still.length > 60 ? still.slice(-60) : still;
-
-      document.getElementById('samp-speed-val')?.replaceChildren(document.createTextNode(speed));
-      drawSamp();
-      activeAnimations['ch1-samp'] = requestAnimationFrame(sampTick);
-    }
-
-    sampGoBtn?.addEventListener('click', () => {
-      sampRunning = !sampRunning;
-      if (sampRunning) {
-        sampGoBtn.textContent = '\u23F8 Stop';
-        activeAnimations['ch1-samp'] = requestAnimationFrame(sampTick);
-      } else {
-        sampGoBtn.textContent = '\u25B6 Go';
-        if (activeAnimations['ch1-samp']) { cancelAnimationFrame(activeAnimations['ch1-samp']); delete activeAnimations['ch1-samp']; }
-      }
-    });
-    sampClearBtn?.addEventListener('click', sampReset);
-    sampDistBtns?.addEventListener('click', e => {
-      const btn = e.target.closest('.control-btn');
-      if (!btn || btn === sampGoBtn || btn === sampClearBtn) return;
-      sampDistBtns.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      sampReset();
-    });
-    drawSamp();
-  }
-
-  // =========================================================================
-  // INTERACTIVE 2: MOLECULES IN A BOX (LAW OF LARGE NUMBERS)
-  // =========================================================================
-  const cLln = document.getElementById('vis-lln');
-  if (cLln) {
-    const lln = setupCanvas(cLln);
-    const ctxL = lln.ctx, WL = lln.W, HL = lln.H;
-    const llnNSlider = document.getElementById('lln-n');
-
-    // Layout
-    const boxY = 50, boxH = 70;
-    const boxLeft = 50, boxRight = WL - 50, boxW = boxRight - boxLeft;
-    const histY = 170, histBot = HL - 55, histH = histBot - histY;
-    const llnNBins = 80;
-
-    // State
-    let llnParticles = [];
-    let llnComHist = new Float64Array(llnNBins);
-    let llnComCount = 0, llnComSumSq = 0;
-    let llnFrame = 0;
-    const sigma1 = 1 / Math.sqrt(12); // sigma for uniform[-0.5, 0.5]
-
-    function llnInitParticles() {
-      const N = parseInt(llnNSlider?.value || 1);
-      llnParticles = [];
-      for (let i = 0; i < N; i++) {
-        llnParticles.push({
-          x: Math.random() - 0.5,
-          vx: (Math.random() - 0.5) * 0.04,
-          ySlot: i  // for vertical spreading in display
-        });
-      }
-    }
-
-    function llnReset() {
-      if (activeAnimations['ch1-lln']) { cancelAnimationFrame(activeAnimations['ch1-lln']); delete activeAnimations['ch1-lln']; }
-      llnComHist = new Float64Array(llnNBins);
-      llnComCount = 0; llnComSumSq = 0; llnFrame = 0;
-      llnInitParticles();
-      activeAnimations['ch1-lln'] = requestAnimationFrame(llnTick);
-    }
-
-    function llnTick() {
-      const N = llnParticles.length;
-      let com = 0;
-      for (const p of llnParticles) {
-        p.x += p.vx;
-        if (p.x > 0.5) { p.x = 1 - p.x; p.vx = -p.vx; }
-        if (p.x < -0.5) { p.x = -1 - p.x; p.vx = -p.vx; }
-        com += p.x;
-      }
-      com /= N;
-
-      // Record COM every 4 frames
-      llnFrame++;
-      if (llnFrame % 4 === 0) {
-        const bi = Math.floor((com + 0.5) * llnNBins);
-        if (bi >= 0 && bi < llnNBins) llnComHist[bi]++;
-        llnComCount++;
-        llnComSumSq += com * com;
-      }
-
-      drawLln(com);
-      activeAnimations['ch1-lln'] = requestAnimationFrame(llnTick);
-    }
-
-    function drawLln(com) {
-      clearCanvas(ctxL, WL, HL);
-      const N = llnParticles.length;
-      const sigN = sigma1 / Math.sqrt(N);
-
-      // --- 1D Box ---
-      ctxL.strokeStyle = COLORS.axis; ctxL.lineWidth = 2;
-      ctxL.strokeRect(boxLeft, boxY, boxW, boxH);
-
-      // Label
-      ctxL.fillStyle = COLORS.text; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
-      ctxL.fillText(N + ' particle' + (N > 1 ? 's' : '') + ' in a 1D box', boxLeft + boxW / 2, boxY - 10);
-
-      // Particles
-      const dotR = N > 80 ? 1.5 : N > 30 ? 2.5 : N > 10 ? 3.5 : 5;
-      ctxL.fillStyle = 'rgba(79,195,247,0.45)';
-      for (let i = 0; i < llnParticles.length; i++) {
-        const p = llnParticles[i];
-        const px = boxLeft + (p.x + 0.5) * boxW;
-        // Spread vertically based on slot
-        const rows = Math.ceil(N / Math.max(1, Math.floor(boxW / (dotR * 3))));
-        const row = i % Math.max(1, rows);
-        const py = boxY + 8 + (boxH - 16) * (row + 0.5) / Math.max(1, rows);
-        ctxL.beginPath(); ctxL.arc(px, py, dotR, 0, Math.PI * 2); ctxL.fill();
-      }
-
-      // Center of mass marker
-      const comPx = boxLeft + (com + 0.5) * boxW;
-      ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2.5;
-      ctxL.beginPath(); ctxL.moveTo(comPx, boxY - 2); ctxL.lineTo(comPx, boxY + boxH + 2); ctxL.stroke();
-      // Triangle pointer
-      ctxL.fillStyle = COLORS.orange;
-      ctxL.beginPath(); ctxL.moveTo(comPx - 7, boxY - 4); ctxL.lineTo(comPx + 7, boxY - 4); ctxL.lineTo(comPx, boxY + 5); ctxL.closePath(); ctxL.fill();
-      // COM value
-      ctxL.fillStyle = COLORS.orange; ctxL.font = FONT_SM; ctxL.textAlign = 'left';
-      ctxL.fillText('x\u0304 = ' + com.toFixed(4), comPx + 12, boxY + boxH / 2 + 4);
-
-      // --- Histogram ---
-      ctxL.fillStyle = COLORS.text; ctxL.font = FONT_SM; ctxL.textAlign = 'center';
-      ctxL.fillText('Distribution of center-of-mass positions (' + llnComCount + ' snapshots)', boxLeft + boxW / 2, histY - 10);
-
-      let maxBin = 0;
-      for (let i = 0; i < llnNBins; i++) if (llnComHist[i] > maxBin) maxBin = llnComHist[i];
-      if (maxBin < 1) maxBin = 1;
-
-      const barW = boxW / llnNBins;
-      for (let i = 0; i < llnNBins; i++) {
-        if (llnComHist[i] === 0) continue;
-        const bh = (llnComHist[i] / maxBin) * histH * 0.88;
-        ctxL.fillStyle = 'rgba(102,187,106,0.5)';
-        ctxL.fillRect(boxLeft + i * barW, histBot - bh, barW - 1, bh);
-      }
-
-      // Axes
-      ctxL.strokeStyle = COLORS.axis; ctxL.lineWidth = 1;
-      ctxL.beginPath(); ctxL.moveTo(boxLeft, histBot); ctxL.lineTo(boxRight, histBot); ctxL.stroke();
-      ctxL.beginPath(); ctxL.moveTo(boxLeft, histY); ctxL.lineTo(boxLeft, histBot); ctxL.stroke();
-
-      // Tick labels
-      ctxL.fillStyle = COLORS.textDim; ctxL.font = '10px Inter, system-ui, sans-serif'; ctxL.textAlign = 'center';
-      for (let v = -0.4; v <= 0.41; v += 0.2) {
-        ctxL.fillText(v.toFixed(1), boxLeft + (v + 0.5) * boxW, histBot + 13);
-      }
-
-      // Theoretical Gaussian overlay
-      if (llnComCount > 20) {
-        const binW = 1.0 / llnNBins;
-        ctxL.strokeStyle = COLORS.orange; ctxL.lineWidth = 2;
-        ctxL.beginPath();
-        for (let px = 0; px < boxW; px += 2) {
-          const xVal = (px / boxW) - 0.5;
-          const g = (llnComCount * binW) * (1 / (sigN * Math.sqrt(2 * Math.PI))) * Math.exp(-xVal * xVal / (2 * sigN * sigN));
-          const py = histBot - (g / maxBin) * histH * 0.88;
-          px === 0 ? ctxL.moveTo(boxLeft + px, py) : ctxL.lineTo(boxLeft + px, py);
-        }
-        ctxL.stroke();
-      }
-
-      // +/-sigma_N guides on histogram
-      if (N > 1) {
-        ctxL.strokeStyle = 'rgba(255,167,38,0.3)'; ctxL.setLineDash([4, 4]); ctxL.lineWidth = 1;
-        [-sigN, sigN].forEach(v => {
-          const px = boxLeft + (v + 0.5) * boxW;
-          ctxL.beginPath(); ctxL.moveTo(px, histY); ctxL.lineTo(px, histBot); ctxL.stroke();
-        });
-        ctxL.setLineDash([]);
-        ctxL.fillStyle = COLORS.orange; ctxL.font = '10px Inter, system-ui, sans-serif'; ctxL.textAlign = 'center';
-        ctxL.fillText('\u00B1\u03C3_N', boxLeft + (sigN + 0.5) * boxW + 15, histY + 12);
-      }
-
-      // Stats at bottom
-      const measSig = llnComCount > 1 ? Math.sqrt(llnComSumSq / llnComCount) : 0;
-      ctxL.textAlign = 'left'; ctxL.font = '12px Inter, system-ui, sans-serif';
-      ctxL.fillStyle = COLORS.text;
-      ctxL.fillText('Theory:  \u03C3_N = \u03C3/\u221AN = ' + sigma1.toFixed(3) + '/\u221A' + N + ' = ' + sigN.toFixed(4), boxLeft, histBot + 30);
-      ctxL.fillStyle = COLORS.orange;
-      ctxL.fillText('Measured:  \u03C3_N = ' + measSig.toFixed(4), boxLeft + 360, histBot + 30);
-
-      // 1/sqrt(N) scaling note
-      if (N >= 10) {
-        ctxL.fillStyle = COLORS.green; ctxL.font = FONT_SM;
-        ctxL.fillText('Fluctuations reduced by ' + Math.sqrt(N).toFixed(1) + '\u00D7 compared to single particle', boxLeft, histBot + 48);
-      }
-
-      // Update displays
-      const ratio = sigma1 > 0 ? sigN / sigma1 : 1;
-      document.getElementById('lln-sigma-ratio')?.replaceChildren(document.createTextNode('\u03C3_N/\u03C3 = ' + ratio.toFixed(3)));
-      document.getElementById('lln-n-val')?.replaceChildren(document.createTextNode(N));
-      document.getElementById('lln-trial-count')?.replaceChildren(document.createTextNode(llnComCount + ' snapshots'));
-    }
-
-    llnNSlider?.addEventListener('input', llnReset);
-    llnReset();
-  }
-
-  // =========================================================================
-  // INTERACTIVE 3: CENTRAL LIMIT THEOREM (existing, mostly preserved)
-  // =========================================================================
+  // ----- CLT Visualization -----
+  // Animated: pick a distribution, draw N samples, average, build histogram.
   const cClt = document.getElementById('vis-clt');
   if (cClt) {
     const clt = setupCanvas(cClt);
@@ -875,15 +501,18 @@ function initCh1Vis() {
     const cltGoBtn = document.getElementById('clt-go');
     const cltClearBtn = document.getElementById('clt-clear');
     const cltCountDisp = document.getElementById('clt-count');
+
     const cltSpeedSlider = document.getElementById('clt-speed');
 
     let cltRunning = false;
+    let cltAnimId = null;
     let histBins = new Float64Array(80);
     let histCount = 0;
-    let curSamples = [];
-    let curAvg = null;
-    let lastBinIdx = -1;
+    let curSamples = []; // current N draw values to highlight on left
+    let curAvg = null;   // current average value
+    let lastBinIdx = -1; // last bin that changed on right
 
+    // Show/hide custom function input
     distSelect?.addEventListener('click', (e) => {
       const btn = e.target.closest('.control-btn');
       if (!btn) return;
@@ -893,20 +522,48 @@ function initCh1Vis() {
       resetCLT();
     });
 
+    // Box-Muller for Gaussian random numbers
+    function gaussRand() {
+      let u, v, s;
+      do { u = 2 * Math.random() - 1; v = 2 * Math.random() - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
+      return u * Math.sqrt(-2 * Math.log(s) / s);
+    }
+
+    // Distribution samplers — each returns a sample value + PDF for display
     function getDistribution() {
       const name = distSelect?.querySelector('.active')?.dataset.value || 'uniform';
-      if (name === 'uniform') return { sample: () => Math.random(), pdf: (x) => (x >= 0 && x <= 1) ? 1 : 0, label: 'Uniform [0,1]', domain: [0, 1] };
-      if (name === 'exponential') return { sample: () => -Math.log(1 - Math.random()) / 3, pdf: (x) => x >= 0 ? 3 * Math.exp(-3 * x) : 0, label: 'Exponential (\u03BB=3)', domain: [0, 2.5] };
-      if (name === 'bimodal') return {
-        sample: () => Math.random() < 0.5 ? 0.2 + 0.08 * gaussRand() : 0.8 + 0.08 * gaussRand(),
-        pdf: (x) => Math.exp(-0.5 * ((x - 0.2) / 0.08) ** 2) + Math.exp(-0.5 * ((x - 0.8) / 0.08) ** 2),
-        label: 'Bimodal', domain: [0, 1]
-      };
-      if (name === 'skewed') return {
-        sample: () => { let s = 0; for (let i = 0; i < 3; i++) { const u = gaussRand(); s += u * u; } return s; },
-        pdf: (x) => x > 0 ? Math.sqrt(x) * Math.exp(-x / 2) : 0,
-        label: 'Chi-squared (k=3)', domain: [0, 12]
-      };
+      if (name === 'uniform') {
+        return {
+          sample: () => Math.random(),
+          pdf: (x) => (x >= 0 && x <= 1) ? 1 : 0,
+          label: 'Uniform [0,1]',
+          domain: [0, 1]
+        };
+      }
+      if (name === 'exponential') {
+        return {
+          sample: () => -Math.log(1 - Math.random()) / 3,
+          pdf: (x) => x >= 0 ? 3 * Math.exp(-3 * x) : 0,
+          label: 'Exponential (λ=3)',
+          domain: [0, 2.5]
+        };
+      }
+      if (name === 'bimodal') {
+        return {
+          sample: () => Math.random() < 0.5 ? 0.2 + 0.08 * gaussRand() : 0.8 + 0.08 * gaussRand(),
+          pdf: (x) => Math.exp(-0.5 * ((x - 0.2) / 0.08) ** 2) + Math.exp(-0.5 * ((x - 0.8) / 0.08) ** 2),
+          label: 'Bimodal',
+          domain: [0, 1]
+        };
+      }
+      if (name === 'skewed') {
+        return {
+          sample: () => { let s = 0; for (let i = 0; i < 3; i++) { const u = gaussRand(); s += u * u; } return s; },
+          pdf: (x) => x > 0 ? Math.sqrt(x) * Math.exp(-x / 2) : 0,
+          label: 'Chi-squared (k=3)',
+          domain: [0, 12]
+        };
+      }
       if (name === 'custom') {
         const expr = (customInput?.value || 'x').trim();
         let fn;
@@ -924,12 +581,14 @@ function initCh1Vis() {
             return Math.random();
           },
           pdf: (x) => Math.abs(fn(x)),
-          label: 'Custom: ' + expr, domain: [0, 1]
+          label: 'Custom: ' + expr,
+          domain: [0, 1]
         };
       }
       return { sample: () => Math.random(), pdf: () => 1, label: 'Uniform', domain: [0, 1] };
     }
 
+    // Histogram range — adaptive from distribution and N
     let histMin = 0, histMax = 1;
     function setupHistRange() {
       const dist = getDistribution();
@@ -965,11 +624,13 @@ function initCh1Vis() {
       clearCanvas(ctx2, W2, H2);
       const N = parseInt(nSlider?.value || 1);
       const dist = getDistribution();
+
+      // Layout: left = source PDF, right = histogram of averages
       const divX = W2 * 0.3;
       const rightX = divX + 30;
       const rightW = W2 - rightX - 20;
 
-      // Left: source distribution
+      // --- LEFT: source distribution ---
       const lx = 25, ly = 35, lw = divX - 40, lh = H2 - 80;
       const d = dist.domain;
       const nPdf = 200;
@@ -988,7 +649,9 @@ function initCh1Vis() {
 
       ctx2.fillStyle = COLORS.blue + '30';
       ctx2.beginPath(); ctx2.moveTo(lx, ly + lh);
-      for (let i = 0; i <= nPdf; i++) ctx2.lineTo(lx + (i / nPdf) * lw, ly + lh - (pdfVals[i] / pdfMax) * lh * 0.9);
+      for (let i = 0; i <= nPdf; i++) {
+        ctx2.lineTo(lx + (i / nPdf) * lw, ly + lh - (pdfVals[i] / pdfMax) * lh * 0.9);
+      }
       ctx2.lineTo(lx + lw, ly + lh); ctx2.closePath(); ctx2.fill();
 
       ctx2.strokeStyle = COLORS.blue; ctx2.lineWidth = 2;
@@ -1000,19 +663,22 @@ function initCh1Vis() {
       }
       ctx2.stroke();
 
-      // Highlight current samples on source PDF
+      // Highlight current N sample draws as vertical lines on the PDF
       if (curSamples.length > 0) {
         for (let si = 0; si < curSamples.length; si++) {
           const sv = curSamples[si];
           const frac = (sv - d[0]) / (d[1] - d[0]);
           if (frac < 0 || frac > 1) continue;
           const sx = lx + frac * lw;
+          // Vertical line from axis to PDF curve
           const pdfIdx = Math.round(frac * nPdf);
           const pdfY = ly + lh - (pdfVals[Math.min(pdfIdx, nPdf)] / pdfMax) * lh * 0.9;
           ctx2.strokeStyle = COLORS.orange; ctx2.lineWidth = 1.5;
           ctx2.beginPath(); ctx2.moveTo(sx, ly + lh); ctx2.lineTo(sx, pdfY); ctx2.stroke();
+          // Dot at top
           ctx2.fillStyle = COLORS.orange;
           ctx2.beginPath(); ctx2.arc(sx, pdfY, 3, 0, 2 * Math.PI); ctx2.fill();
+          // Small number label
           ctx2.fillStyle = COLORS.orange; ctx2.font = '9px Inter, system-ui, sans-serif'; ctx2.textAlign = 'center';
           ctx2.fillText(si + 1, sx, ly + lh + 12);
         }
@@ -1027,7 +693,7 @@ function initCh1Vis() {
       ctx2.strokeStyle = COLORS.grid; ctx2.lineWidth = 1;
       ctx2.beginPath(); ctx2.moveTo(divX, 10); ctx2.lineTo(divX, H2 - 10); ctx2.stroke();
 
-      // Right: histogram of averages
+      // --- RIGHT: histogram of averages ---
       const hy = 35, hh = H2 - 80;
       const nBins = histBins.length;
       const barW = rightW / nBins;
@@ -1067,18 +733,22 @@ function initCh1Vis() {
       const speed = parseInt(cltSpeedSlider?.value || 2);
       const dist = getDistribution();
       const nBins = histBins.length;
-      const batchSizes = [0, 1, 1, 1, 2, 5, 10, 20];
+
+      // Speed controls: at speed 1, do 1 average every ~60 frames (~1/sec at 60fps).
+      // At speed 6, do 20 averages per frame.
+      const batchSizes = [0, 1, 1, 1, 2, 5, 10, 20]; // index by speed
       const frameSkips = [0, 60, 30, 8, 3, 1, 1, 1];
       const batch = batchSizes[speed] || 1;
       const skip = frameSkips[speed] || 1;
 
       cltFrameCount++;
       if (cltFrameCount % skip !== 0) {
-        activeAnimations['ch1-clt'] = requestAnimationFrame(cltTick);
+        cltAnimId = requestAnimationFrame(cltTick);
         return;
       }
 
       for (let b = 0; b < batch; b++) {
+        // Draw N samples and record them
         curSamples = [];
         let sum = 0;
         for (let i = 0; i < N; i++) {
@@ -1100,7 +770,7 @@ function initCh1Vis() {
       if (document.getElementById('clt-speed-val'))
         document.getElementById('clt-speed-val').textContent = speed;
       drawCLTFig();
-      activeAnimations['ch1-clt'] = requestAnimationFrame(cltTick);
+      cltAnimId = requestAnimationFrame(cltTick);
     }
 
     cltGoBtn?.addEventListener('click', () => {
@@ -1108,17 +778,17 @@ function initCh1Vis() {
       if (cltRunning) {
         cltGoBtn.textContent = '\u23F8 Stop';
         if (histCount === 0) setupHistRange();
-        activeAnimations['ch1-clt'] = requestAnimationFrame(cltTick);
+        cltAnimId = requestAnimationFrame(cltTick);
       } else {
         cltGoBtn.textContent = '\u25B6 Go';
-        if (activeAnimations['ch1-clt']) { cancelAnimationFrame(activeAnimations['ch1-clt']); delete activeAnimations['ch1-clt']; }
+        if (cltAnimId) { cancelAnimationFrame(cltAnimId); cltAnimId = null; }
       }
     });
 
     cltClearBtn?.addEventListener('click', () => {
       cltRunning = false;
       if (cltGoBtn) cltGoBtn.textContent = '\u25B6 Go';
-      if (activeAnimations['ch1-clt']) { cancelAnimationFrame(activeAnimations['ch1-clt']); delete activeAnimations['ch1-clt']; }
+      if (cltAnimId) { cancelAnimationFrame(cltAnimId); cltAnimId = null; }
       resetCLT();
     });
 
@@ -1128,221 +798,213 @@ function initCh1Vis() {
     });
 
     customInput?.addEventListener('change', resetCLT);
+
     setupHistRange();
     drawCLTFig();
   }
 
-  // =========================================================================
-  // INTERACTIVE 4: RADIOACTIVE DECAY LAB
-  // =========================================================================
-  const cDecay = document.getElementById('vis-decay');
-  if (cDecay) {
-    const dec = setupCanvas(cDecay);
-    const ctxD = dec.ctx, WD = dec.W, HD = dec.H;
-    const decayLambdaSlider = document.getElementById('decay-lambda');
-    const decayGoBtn = document.getElementById('decay-go');
-    const decayClearBtn = document.getElementById('decay-clear');
+  // ----- Poisson Distribution Explorer -----
+  const cPoisson = document.getElementById('vis-poisson');
+  if (cPoisson) {
+    const poi = setupCanvas(cPoisson);
+    const ctxP = poi.ctx, WP = poi.W, HP = poi.H;
+    const lambdaSlider = document.getElementById('poisson-lambda');
 
-    // Layout: left = atom grid, right = histogram
-    const gridLeft = 30, gridTop = 45;
-    const nCols = 12, nRows = 8, nAtoms = nCols * nRows;
-    const atomSpacing = 28;
-    const gridW = nCols * atomSpacing, gridH = nRows * atomSpacing;
+    function drawPoisson() {
+      const lambda = parseFloat(lambdaSlider?.value || 5);
+      clearCanvas(ctxP, WP, HP);
 
-    const histLeft = gridLeft + gridW + 50;
-    const histRight = WD - 25;
-    const histW = histRight - histLeft;
-    const histTop = 45, histBot = HD - 55, histH = histBot - histTop;
+      const ox = 50, xAxis = HP - 45;
+      const plotW = WP - ox - 20;
+      const mMax = 30;
+      const barW = plotW / (mMax + 1);
 
-    // State
-    let decayRunning = false;
-    let atomFlash = new Float64Array(nAtoms);
-    let windowCount = 0, windowTime = 0;
-    const windowDuration = 1; // seconds
-    const decayHistLen = 35;
-    let decayHist = new Float64Array(decayHistLen);
-    let decayWindows = 0;
-    let geigerFlash = 0;
+      // Compute PMF values
+      const pmf = [];
+      let maxP = 0;
+      for (let m = 0; m <= mMax; m++) {
+        // log P(m) = m*ln(lambda) - lambda - ln(m!)
+        let logP = m * Math.log(lambda) - lambda;
+        for (let k = 2; k <= m; k++) logP -= Math.log(k);
+        const p = Math.exp(logP);
+        pmf.push(p);
+        if (p > maxP) maxP = p;
+      }
+      const yScale = (xAxis - 30) / (maxP * 1.1);
 
-    function decayReset() {
-      decayRunning = false;
-      if (activeAnimations['ch1-decay']) { cancelAnimationFrame(activeAnimations['ch1-decay']); delete activeAnimations['ch1-decay']; }
-      if (decayGoBtn) decayGoBtn.textContent = '\u25B6 Go';
-      atomFlash = new Float64Array(nAtoms);
-      windowCount = 0; windowTime = 0;
-      decayHist = new Float64Array(decayHistLen);
-      decayWindows = 0; geigerFlash = 0;
-      drawDecay();
+      // Draw axes
+      drawAxes(ctxP, ox, 15, plotW, xAxis - 15, { xLabel: 'm', yLabel: 'P(m)' });
+
+      // Draw PMF bars
+      ctxP.fillStyle = 'rgba(79,195,247,0.5)';
+      ctxP.strokeStyle = COLORS.blue;
+      ctxP.lineWidth = 1;
+      for (let m = 0; m <= mMax; m++) {
+        const bh = pmf[m] * yScale;
+        const bx = ox + m * barW + 2;
+        const bw = barW - 4;
+        ctxP.fillRect(bx, xAxis - bh, bw, bh);
+        ctxP.strokeRect(bx, xAxis - bh, bw, bh);
+      }
+
+      // Gaussian approximation overlay: N(lambda, sqrt(lambda))
+      const sig = Math.sqrt(lambda);
+      ctxP.strokeStyle = COLORS.orange;
+      ctxP.lineWidth = 2;
+      ctxP.beginPath();
+      for (let px = 0; px < plotW; px++) {
+        const m = px / plotW * (mMax + 1);
+        const g = (1 / (sig * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((m - lambda) / sig) ** 2);
+        const py = xAxis - g * yScale;
+        px === 0 ? ctxP.moveTo(ox + px, py) : ctxP.lineTo(ox + px, py);
+      }
+      ctxP.stroke();
+
+      // Mean marker
+      const meanPx = ox + lambda / (mMax + 1) * plotW + barW / 2;
+      ctxP.strokeStyle = COLORS.red;
+      ctxP.lineWidth = 1.5;
+      ctxP.setLineDash([5, 5]);
+      ctxP.beginPath(); ctxP.moveTo(meanPx, 15); ctxP.lineTo(meanPx, xAxis); ctxP.stroke();
+      ctxP.setLineDash([]);
+
+      // sigma markers
+      const sigLeftPx = ox + (lambda - sig) / (mMax + 1) * plotW + barW / 2;
+      const sigRightPx = ox + (lambda + sig) / (mMax + 1) * plotW + barW / 2;
+      ctxP.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctxP.setLineDash([3, 3]);
+      ctxP.beginPath(); ctxP.moveTo(sigLeftPx, 15); ctxP.lineTo(sigLeftPx, xAxis); ctxP.stroke();
+      ctxP.beginPath(); ctxP.moveTo(sigRightPx, 15); ctxP.lineTo(sigRightPx, xAxis); ctxP.stroke();
+      ctxP.setLineDash([]);
+
+      // Labels
+      ctxP.fillStyle = COLORS.text;
+      ctxP.font = FONT;
+      ctxP.textAlign = 'left';
+      ctxP.fillText('\u03BB = ' + lambda.toFixed(1) + ',  \u03C3 = \u221A\u03BB = ' + sig.toFixed(2), ox + 5, 28);
+      ctxP.fillStyle = COLORS.blue;
+      ctxP.fillText('Poisson PMF', WP - 160, 28);
+      ctxP.fillStyle = COLORS.orange;
+      ctxP.fillText('Gaussian approx.', WP - 160, 44);
+      ctxP.fillStyle = COLORS.red;
+      ctxP.fillText('\u03BC = \u03BB', WP - 160, 60);
+
+      // Tick labels on x-axis
+      ctxP.fillStyle = COLORS.textDim;
+      ctxP.font = '10px Inter, system-ui, sans-serif';
+      ctxP.textAlign = 'center';
+      for (let m = 0; m <= mMax; m += 5) {
+        const tx = ox + m * barW + barW / 2;
+        ctxP.fillText(m.toString(), tx, xAxis + 12);
+      }
+
+      document.getElementById('poisson-lambda-val')?.replaceChildren(document.createTextNode(lambda.toFixed(1)));
     }
 
-    function decayTick() {
-      if (!decayRunning) return;
-      const lambda = parseFloat(decayLambdaSlider?.value || 3);
-      const dt = 1 / 60;
+    lambdaSlider?.addEventListener('input', drawPoisson);
+    drawPoisson();
+  }
 
-      // Poisson sampling for events this frame
-      const mu = lambda * dt;
-      let events = 0;
-      if (mu < 30) {
-        let L = Math.exp(-mu), p = 1;
-        do { events++; p *= Math.random(); } while (p > L);
-        events--;
-      } else {
-        events = Math.max(0, Math.round(mu + Math.sqrt(mu) * gaussRand()));
-      }
+  // ----- Convolution / Averaging Visualizer -----
+  const cConv = document.getElementById('vis-convolution');
+  if (cConv) {
+    const conv = setupCanvas(cConv);
+    const ctxC = conv.ctx, WC = conv.W, HC = conv.H;
+    const convSlider = document.getElementById('conv-n');
 
-      for (let e = 0; e < events; e++) {
-        const idx = Math.floor(Math.random() * nAtoms);
-        atomFlash[idx] = 1.0;
-        windowCount++;
-        geigerFlash = 1.0;
-      }
+    function drawConvolution() {
+      const N = parseInt(convSlider?.value || 1);
+      clearCanvas(ctxC, WC, HC);
 
-      // Decay flash intensities
-      for (let i = 0; i < nAtoms; i++) {
-        atomFlash[i] *= 0.82;
-        if (atomFlash[i] < 0.01) atomFlash[i] = 0;
-      }
-      geigerFlash *= 0.88;
+      const ox = 50, xAxis = HC - 45;
+      const plotW = WC - ox - 20;
+      const nPts = 400;
 
-      // Advance window
-      windowTime += dt;
-      if (windowTime >= windowDuration) {
-        const m = Math.min(windowCount, decayHistLen - 1);
-        decayHist[m]++;
-        decayWindows++;
-        windowCount = 0;
-        windowTime -= windowDuration;
-      }
+      // Range for x-bar: for N uniform on [-0.5, 0.5], the range of the average is [-0.5, 0.5]
+      // but we display a bit wider for context
+      const xMin = -1.0, xMax = 1.0;
 
-      document.getElementById('decay-lambda-val')?.replaceChildren(document.createTextNode(lambda.toFixed(1)));
-      document.getElementById('decay-stats')?.replaceChildren(document.createTextNode(decayWindows + ' windows'));
-      drawDecay();
-      activeAnimations['ch1-decay'] = requestAnimationFrame(decayTick);
-    }
+      // Compute P_N(x) via convolution of uniform distributions,
+      // then evaluate the density of the average (x-bar = sum/N)
+      // The sum of N uniform[-0.5,0.5] has support [-N/2, N/2]
+      // and the average has support [-0.5, 0.5].
+      // We use the Irwin-Hall approach: P_N(x_bar) = N * P_sum(N*x_bar)
+      // For the sum of N uniform[0,1]: P_sum(s) = 1/(N-1)! * sum_{k=0}^{floor(s)} (-1)^k C(N,k) (s-k)^(N-1)
+      // Shift: our uniform is on [-0.5, 0.5] = [0,1] - 0.5, so sum is Irwin-Hall shifted by -N/2
 
-    function drawDecay() {
-      clearCanvas(ctxD, WD, HD);
-      const lambda = parseFloat(decayLambdaSlider?.value || 3);
-      const lt = lambda * windowDuration;
-
-      // --- Atom Grid ---
-      ctxD.fillStyle = COLORS.text; ctxD.font = FONT_SM; ctxD.textAlign = 'center';
-      ctxD.fillText(nAtoms + ' atoms  (\u03BB = ' + lambda.toFixed(1) + '/s)', gridLeft + gridW / 2, gridTop - 12);
-
-      for (let row = 0; row < nRows; row++) {
-        for (let col = 0; col < nCols; col++) {
-          const idx = row * nCols + col;
-          const cx = gridLeft + col * atomSpacing + atomSpacing / 2;
-          const cy = gridTop + row * atomSpacing + atomSpacing / 2;
-          const fl = atomFlash[idx];
-
-          // Base atom
-          const r = 9 + fl * 4;
-          const br = Math.round(35 + 30 * fl);
-          const bg = Math.round(50 + 200 * fl);
-          const bb = Math.round(75 - 25 * fl);
-          ctxD.fillStyle = 'rgba(' + br + ',' + bg + ',' + bb + ',' + (0.55 + fl * 0.45) + ')';
-          ctxD.beginPath(); ctxD.arc(cx, cy, r * 0.45, 0, Math.PI * 2); ctxD.fill();
-
-          // Glow
-          if (fl > 0.1) {
-            const grad = ctxD.createRadialGradient(cx, cy, 0, cx, cy, r);
-            grad.addColorStop(0, 'rgba(255,238,88,' + (fl * 0.7) + ')');
-            grad.addColorStop(1, 'rgba(255,238,88,0)');
-            ctxD.fillStyle = grad;
-            ctxD.beginPath(); ctxD.arc(cx, cy, r, 0, Math.PI * 2); ctxD.fill();
-          }
+      function irwinHallPDF(s, n) {
+        // PDF of sum of n uniform[0,1] random variables at point s
+        if (s <= 0 || s >= n) return 0;
+        let result = 0;
+        const floorS = Math.floor(s);
+        let sign = 1;
+        let binom = 1;
+        for (let k = 0; k <= floorS; k++) {
+          if (k > 0) binom = binom * (n - k + 1) / k;
+          result += sign * binom * Math.pow(s - k, n - 1);
+          sign *= -1;
         }
+        // Divide by (n-1)!
+        let factorial = 1;
+        for (let i = 2; i < n; i++) factorial *= i;
+        return result / factorial;
       }
 
-      // Geiger counter
-      const gcY = gridTop + gridH + 15;
-      const gcW = gridW, gcH = 32;
-      const gcFlash = geigerFlash > 0.1 ? geigerFlash : 0;
-      ctxD.fillStyle = 'rgba(' + Math.round(50 + 150 * gcFlash) + ',' + Math.round(40 + 20 * gcFlash) + ',' + Math.round(40 + 20 * gcFlash) + ',0.7)';
-      ctxD.fillRect(gridLeft, gcY, gcW, gcH);
-      ctxD.strokeStyle = COLORS.axis; ctxD.lineWidth = 1; ctxD.strokeRect(gridLeft, gcY, gcW, gcH);
-      ctxD.fillStyle = COLORS.text; ctxD.font = '12px monospace'; ctxD.textAlign = 'center';
-      ctxD.fillText('WINDOW: ' + windowCount + ' decays | ' + Math.max(0, windowDuration - windowTime).toFixed(1) + 's left', gridLeft + gcW / 2, gcY + 21);
-
-      // --- Histogram ---
-      ctxD.fillStyle = COLORS.text; ctxD.font = FONT_SM; ctxD.textAlign = 'center';
-      ctxD.fillText('Decays per window (' + decayWindows + ' windows,  \u03BBt = ' + lt.toFixed(1) + ')', histLeft + histW / 2, histTop - 12);
-
-      let hMax = 0, mRange = 0;
-      for (let i = 0; i < decayHistLen; i++) {
-        if (decayHist[i] > hMax) hMax = decayHist[i];
-        if (decayHist[i] > 0) mRange = i;
-      }
-      mRange = Math.max(mRange + 3, Math.min(Math.ceil(lt + 3 * Math.sqrt(Math.max(lt, 1))), decayHistLen - 1), 8);
-      if (hMax < 1) hMax = 1;
-
-      const barW = histW / mRange;
-      for (let m = 0; m < mRange; m++) {
-        if (m >= decayHistLen || decayHist[m] === 0) continue;
-        const bh = (decayHist[m] / hMax) * histH * 0.85;
-        ctxD.fillStyle = 'rgba(79,195,247,0.5)';
-        ctxD.fillRect(histLeft + m * barW, histBot - bh, barW - 1, bh);
+      // Evaluate P_N(x_bar) for our shifted uniform
+      const vals = [];
+      let maxVal = 0;
+      for (let i = 0; i < nPts; i++) {
+        const xbar = xMin + (xMax - xMin) * i / nPts;
+        // Transform: xbar of uniform[-0.5,0.5] -> sum of uniform[0,1] at s = N*(xbar + 0.5)
+        const s = N * (xbar + 0.5);
+        // P_N(xbar) = N * irwinHallPDF(s, N)
+        const p = N * irwinHallPDF(s, N);
+        vals.push(p);
+        if (p > maxVal) maxVal = p;
       }
 
-      // Poisson PMF overlay
-      if (decayWindows > 5 && lt > 0) {
-        ctxD.strokeStyle = COLORS.orange; ctxD.lineWidth = 2;
-        ctxD.beginPath();
-        for (let m = 0; m < mRange; m++) {
-          let logP = m * Math.log(lt) - lt;
-          for (let k = 2; k <= m; k++) logP -= Math.log(k);
-          const expected = Math.exp(logP) * decayWindows;
-          const bh = (expected / hMax) * histH * 0.85;
-          const cx = histLeft + (m + 0.5) * barW;
-          m === 0 ? ctxD.moveTo(cx, histBot - bh) : ctxD.lineTo(cx, histBot - bh);
-        }
-        ctxD.stroke();
+      if (maxVal < 1e-10) maxVal = 1;
+      const yScale = (xAxis - 30) / (maxVal * 1.05);
+
+      drawAxes(ctxC, ox, 15, plotW, xAxis - 15, { xLabel: 'x\u0304 (sample mean)', yLabel: 'P\u2099(x\u0304)' });
+
+      // Filled distribution
+      ctxC.fillStyle = 'rgba(102,187,106,0.3)';
+      ctxC.beginPath();
+      ctxC.moveTo(ox, xAxis);
+      for (let i = 0; i < nPts; i++) {
+        const px = ox + i / nPts * plotW;
+        const py = xAxis - vals[i] * yScale;
+        ctxC.lineTo(px, py);
       }
+      ctxC.lineTo(ox + plotW, xAxis);
+      ctxC.closePath();
+      ctxC.fill();
 
-      // Axes
-      ctxD.strokeStyle = COLORS.axis; ctxD.lineWidth = 1;
-      ctxD.beginPath(); ctxD.moveTo(histLeft, histBot); ctxD.lineTo(histRight, histBot); ctxD.stroke();
-      ctxD.beginPath(); ctxD.moveTo(histLeft, histTop); ctxD.lineTo(histLeft, histBot); ctxD.stroke();
-
-      // Tick labels
-      ctxD.fillStyle = COLORS.textDim; ctxD.font = '10px Inter, system-ui, sans-serif'; ctxD.textAlign = 'center';
-      const step = mRange > 20 ? Math.ceil(mRange / 10) : 1;
-      for (let m = 0; m < mRange; m += step) {
-        ctxD.fillText(m, histLeft + (m + 0.5) * barW, histBot + 12);
+      // Distribution curve
+      ctxC.strokeStyle = COLORS.green;
+      ctxC.lineWidth = 2.5;
+      ctxC.beginPath();
+      for (let i = 0; i < nPts; i++) {
+        const px = ox + i / nPts * plotW;
+        const py = xAxis - vals[i] * yScale;
+        i === 0 ? ctxC.moveTo(px, py) : ctxC.lineTo(px, py);
       }
-      ctxD.fillText('m', histLeft + histW / 2, histBot + 28);
+      ctxC.stroke();
 
-      // Legend
-      ctxD.textAlign = 'right';
-      ctxD.fillStyle = COLORS.blue; ctxD.font = FONT_SM; ctxD.fillText('Observed', histRight, histTop + 14);
-      if (decayWindows > 5) { ctxD.fillStyle = COLORS.orange; ctxD.fillText('Poisson P(m)', histRight, histTop + 28); }
+      // Labels
+      ctxC.fillStyle = COLORS.text;
+      ctxC.font = FONT;
+      ctxC.textAlign = 'left';
+      ctxC.fillText('N = ' + N + (N === 1 ? ' (uniform)' : N === 2 ? ' (triangle)' : ' (converging to Gaussian)'), ox + 5, 28);
+      ctxC.fillStyle = COLORS.green;
+      ctxC.fillText('P\u2099(x\u0304)', WC - 150, 28);
 
-      // Mean/sigma stats
-      if (decayWindows > 0) {
-        let totalDecays = 0;
-        for (let m = 0; m < decayHistLen; m++) totalDecays += m * decayHist[m];
-        const measMean = totalDecays / decayWindows;
-        ctxD.fillStyle = COLORS.text; ctxD.font = FONT_SM; ctxD.textAlign = 'left';
-        ctxD.fillText('\u27E8m\u27E9 = ' + measMean.toFixed(1) + '  (theory: \u03BBt = ' + lt.toFixed(1) + ')', histLeft, histBot + 42);
-        ctxD.fillText('\u03C3 = \u221A(\u03BBt) = ' + Math.sqrt(lt).toFixed(2), histLeft + 230, histBot + 42);
-      }
+      document.getElementById('conv-n-val')?.replaceChildren(document.createTextNode(N.toString()));
     }
 
-    decayGoBtn?.addEventListener('click', () => {
-      decayRunning = !decayRunning;
-      if (decayRunning) {
-        decayGoBtn.textContent = '\u23F8 Stop';
-        activeAnimations['ch1-decay'] = requestAnimationFrame(decayTick);
-      } else {
-        decayGoBtn.textContent = '\u25B6 Go';
-        if (activeAnimations['ch1-decay']) { cancelAnimationFrame(activeAnimations['ch1-decay']); delete activeAnimations['ch1-decay']; }
-      }
-    });
-    decayClearBtn?.addEventListener('click', decayReset);
-    decayLambdaSlider?.addEventListener('input', decayReset);
-    drawDecay();
+    convSlider?.addEventListener('input', drawConvolution);
+    drawConvolution();
   }
 }
 
