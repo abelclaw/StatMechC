@@ -23294,39 +23294,21 @@ function initCh14Vis() {
       return [d1, d2, mult, 1]; // tolerance band = brown (1%) for aesthetics
     }
 
-    // Find current through a wire by following wires/switches to the nearest series component
+    // Find current through a wire by finding a resistor or LED that shares a node
     function bbWireCurrent(wirePart) {
       var wn0 = holeNode(wirePart.holes[0].row, wirePart.holes[0].col);
       var wn1 = holeNode(wirePart.holes[1].row, wirePart.holes[1].col);
-      // Try from each endpoint, preferring the non-rail side
-      var starts = (wn0 === 'VPOS' || wn0 === 'VNEG') ? [wn1, wn0] : [wn0, wn1];
-      for (var s = 0; s < 2; s++) {
-        var visited = {}, queue = [starts[s]];
-        visited[starts[s]] = true;
-        while (queue.length > 0) {
-          var node = queue.shift();
-          // Check for current-carrying components at this node
-          for (var j = 0; j < bbParts.length; j++) {
-            var q = bbParts[j];
-            if (q.type === 'RESISTOR') {
-              var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
-              if (a === node || b === node) return Math.abs((bbNodeVolts[a]||0)-(bbNodeVolts[b]||0)) / (q.value||1000);
-            }
-            if (q.type === 'LED' && q._ledOn && q._ledCurrent) {
-              var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
-              if (a === node || b === node) return Math.abs(q._ledCurrent);
-            }
-          }
-          // Follow wires and switches to next node
-          for (var j = 0; j < bbParts.length; j++) {
-            var q = bbParts[j];
-            if (q === wirePart) continue;
-            if (q.type === 'WIRE' || (q.type === 'SWITCH' && q.on)) {
-              var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
-              if (a === node && !visited[b]) { visited[b] = true; queue.push(b); }
-              if (b === node && !visited[a]) { visited[a] = true; queue.push(a); }
-            }
-          }
+      for (var j = 0; j < bbParts.length; j++) {
+        var q = bbParts[j];
+        if (q.type === 'RESISTOR') {
+          var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
+          if (a === wn0 || a === wn1 || b === wn0 || b === wn1)
+            return Math.abs((bbNodeVolts[a]||0)-(bbNodeVolts[b]||0)) / (q.value||1000);
+        }
+        if (q.type === 'LED' && q._ledOn && q._ledCurrent) {
+          var a = holeNode(q.holes[0].row, q.holes[0].col), b = holeNode(q.holes[1].row, q.holes[1].col);
+          if (a === wn0 || a === wn1 || b === wn0 || b === wn1)
+            return Math.abs(q._ledCurrent);
         }
       }
       return 0;
