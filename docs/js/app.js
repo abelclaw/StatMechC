@@ -26372,11 +26372,7 @@ function initCh15Vis() {
       let cx = 0;
       for (let i = 0; i < stars.length; i++) {
         if (i === 0) { cx = 0; }
-        else {
-          // Extra gap around the black hole so the glow doesn't overlap neighbors
-          const gap = (stars[i].cat === 'Black Hole' || stars[i-1].cat === 'Black Hole') ? 2.5 : 1.4;
-          cx += (displayR(stars[i-1]) + displayR(stars[i])) * gap;
-        }
+        else { cx += (displayR(stars[i-1]) + displayR(stars[i])) * 1.4; }
         worldX.push(cx);
       }
     }
