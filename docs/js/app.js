@@ -23309,7 +23309,7 @@ function initCh14Vis() {
       }
 
       function curDots(x0, y0, x1, y1, current) {
-        if (!bbShowCurrent || Math.abs(current) < 0.00005) return;
+        if (!bbShowCurrent || current === 0) return;
         var len = Math.hypot(x1-x0, y1-y0); if (len < 8) return;
         var dir = current > 0 ? 1 : -1, nD = Math.max(2, Math.floor(len/25));
         bbCtx.fillStyle = 'rgba(255,235,59,0.9)';
