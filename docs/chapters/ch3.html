@@ -92,16 +92,18 @@ $$\Delta\theta_N = 10^{-31}\left(\frac{\ell}{R}\right)^N = 10^{-31}(10^3)^N$$
 <p>In addition, even if we pretend a system is completely isolated &mdash; turn off gravity and fleas, etc &mdash; the system is still chaotic due to (classical) uncertainty. With an even exponentially small uncertainty on the initial condition, the final state after long enough time will be completely unknown. In quantum mechanics, the relevant uncertainty on the initial state is not the Heisenberg uncertainty (on knowing position given momentum), but on how well we can actually know the initial state wavefunction. Again, there is no hope of solving the time-evolution exactly.</p>
 
 <!-- Interactive Chaos Double Pendulum -->
-<div class="interactive-container">
+<div class="visualization">
   <div class="figure-label">Interactive 3: Chaos &mdash; Double Pendulum</div>
-  <p class="vis-caption">A double pendulum exhibits chaotic motion; enable the second pendulum to see how a small initial offset leads to completely different trajectories.</p>
+  <p class="vis-caption">A double pendulum exhibits chaotic motion. Enable the second pendulum (red) with a tiny initial offset and watch the trajectories diverge completely &mdash; this is chaos in action.</p>
   <div class="vis-controls">
-    <label><input type="checkbox" id="chaos-show-second"> Show second pendulum</label>
-    <label>Initial offset: <input type="range" id="chaos-offset" min="0.001" max="1.57" step="0.01" value="1.0"><span class="slider-value" id="chaos-offset-val">1.00</span></label>
-    <button id="chaos-start">Start</button>
-    <button id="chaos-reset">Reset</button>
+    <label><input type="checkbox" id="chaos-show-second"> Show 2nd pendulum</label>
+    <label>Initial offset: <input type="range" id="chaos-offset" min="0.001" max="1.57" step="0.01" value="0.01"><span class="slider-value" id="chaos-offset-val">0.01</span></label>
+    <label>Speed: <input type="range" id="chaos-speed" min="1" max="5" step="1" value="3"><span class="slider-value" id="chaos-speed-val">3</span></label>
+    <button id="chaos-start" class="control-btn">&#9654; Start</button>
+    <button id="chaos-reset" class="control-btn">Reset</button>
+    <span class="value-display" id="chaos-divergence"></span>
   </div>
-  <canvas id="vis-chaos" width="600" height="400"></canvas>
+  <div class="vis-canvas-wrap"><canvas id="vis-chaos" width="700" height="420"></canvas></div>
 </div>
 
 <!-- ============================================================ -->
@@ -343,12 +345,15 @@ $$\frac{d}{dt}H(t) \geq 0$$
 <!-- INTERACTIVE: Ergodic vs Non-Ergodic Billiards -->
 <div class="visualization">
   <div class="figure-label">Interactive 7: Ergodic vs Non-Ergodic Billiards</div>
-  <p class="vis-caption">Compare a circular table (non-ergodic) with a Bunimovich stadium (ergodic) to see how table shape affects trajectory coverage.</p>
-  <div class="vis-canvas-wrap"><canvas id="vis-billiards" width="600" height="300"></canvas></div>
+  <p class="vis-caption">Compare a circular table (non-ergodic &mdash; the ball traces a regular pattern forever) with a Bunimovich stadium (ergodic &mdash; the ball eventually fills the entire table). Coverage % shows what fraction of the table has been visited.</p>
   <div class="vis-controls">
-    <button id="billiards-start">Start</button>
-    <button id="billiards-reset">Reset</button>
+    <label>Launch angle: <input type="range" id="billiards-angle" min="0" max="360" step="5" value="25"><span class="slider-value" id="billiards-angle-val">25</span>&deg;</label>
+    <label>Speed: <input type="range" id="billiards-speed" min="1" max="5" step="1" value="3"><span class="slider-value" id="billiards-speed-val">3</span></label>
+    <button id="billiards-start" class="control-btn">&#9654; Start</button>
+    <button id="billiards-reset" class="control-btn">Reset</button>
+    <span class="value-display" id="billiards-coverage"></span>
   </div>
+  <div class="vis-canvas-wrap"><canvas id="vis-billiards" width="700" height="340"></canvas></div>
 </div>
 
 <p>Most systems are believed to have regions of phase space which do not mix, so generally ergodicity is not exact. Moreover, even in systems where it does hold, the time for all the points in phase space to be passed through is astronomical. This is simply because the volume of phase space is astronomical: $6N \sim 10^{24}$ dimensional.</p>
@@ -398,14 +403,14 @@ $$E = \sum_j \frac{\vec{p}_j^{\,2}}{2m}$$
 $$\Omega_p = \frac{2\pi\sqrt{2mE}}{\Delta p}$$
 </div>
 
-<div class="interactive-wrapper">
+<div class="visualization">
 <div class="figure-label">Interactive 8: State Counting on a Sphere</div>
-<p class="vis-caption">Count the number of momentum-space boxes intersected by a circle of radius $\sqrt{2mE}$ to visualize the density of states $\Omega$.</p>
-<canvas id="vis-state-counting" width="500" height="400"></canvas>
-<div class="controls">
-<label>Energy (radius): <input type="range" id="state-radius" min="30" max="180" step="5" value="100"><span id="state-radius-val">100</span></label>
-<label>Δp (box size): <input type="range" id="state-dp" min="8" max="40" step="1" value="20"><span id="state-dp-val">20</span></label>
+<p class="vis-caption">Count the number of momentum-space boxes intersected by the energy circle of radius $\sqrt{2mE}$. This is $\Omega$, the density of states. Try making the boxes smaller &mdash; $\Omega$ grows as $R/\Delta p$.</p>
+<div class="vis-controls">
+<label>Energy (radius): <input type="range" id="state-radius" min="30" max="180" step="5" value="100"><span class="slider-value" id="state-radius-val">100</span></label>
+<label>&Delta;p (box size): <input type="range" id="state-dp" min="8" max="40" step="1" value="20"><span class="slider-value" id="state-dp-val">20</span></label>
 </div>
+<div class="vis-canvas-wrap"><canvas id="vis-state-counting" width="500" height="400"></canvas></div>
 </div>
 
 <div class="step"><div class="step-label">Step 2: General case</div>
@@ -511,13 +516,22 @@ $$\frac{dP(v)}{dv} = 4\pi v^2 \left(\frac{m}{2\pi k_B T}\right)^{3/2}e^{-mv^2/(2
 <span class="eq-number">(52)</span>
 </div>
 
-<div class="interactive-container">
+<div class="visualization">
   <div class="figure-label">Interactive 9: Maxwell-Boltzmann Speed Distribution</div>
-  <p class="vis-caption">Adjust the temperature to see how the Maxwell-Boltzmann speed distribution shifts and broadens.</p>
+  <p class="vis-caption">The Maxwell-Boltzmann distribution for molecular speeds. Heavier molecules move slower; higher temperatures broaden and shift the peak. Dashed lines mark $v_\text{mp}$, $\langle v \rangle$, and $v_\text{rms}$.</p>
   <div class="vis-controls">
-    <label>Temperature: <input type="range" id="mb-temp" min="100" max="2000" step="50" value="300"> <span class="slider-value" id="mb-temp-val">300</span> K</label>
+    <span>Molecule:</span>
+    <div class="button-group" id="mb-molecule">
+      <button class="control-btn" data-value="2" data-label="H₂">H&#x2082;</button>
+      <button class="control-btn" data-value="4" data-label="He">He</button>
+      <button class="control-btn active" data-value="28" data-label="N₂">N&#x2082;</button>
+      <button class="control-btn" data-value="32" data-label="O₂">O&#x2082;</button>
+      <button class="control-btn" data-value="131" data-label="Xe">Xe</button>
+    </div>
+    <label>Temperature: <input type="range" id="mb-temp" min="100" max="3000" step="50" value="300"><span class="slider-value" id="mb-temp-val">300</span> K</label>
+    <span class="value-display" id="mb-speeds"></span>
   </div>
-  <canvas id="vis-maxwell" width="600" height="300"></canvas>
+  <div class="vis-canvas-wrap"><canvas id="vis-maxwell" width="700" height="340"></canvas></div>
 </div>
 
 <!-- ============================================================ -->

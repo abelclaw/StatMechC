@@ -2711,9 +2711,10 @@ function initCh3Vis() {
   if (!c) return;
   const { ctx, W, H } = setupCanvas(c);
 
-  const L1 = 80, L2 = 80, m1 = 1, m2 = 1, g = 9.81;
+  const L1 = 90, L2 = 90, m1 = 1, m2 = 1, g = 9.81;
   let pends = [];
   let showSecond = false;
+  let pendTime = 0;
 
   function initPendulums() {
     const offset = parseFloat(document.getElementById('chaos-offset')?.value || 0.01);
@@ -2721,21 +2722,28 @@ function initCh3Vis() {
       { th1: Math.PI - 0.01, th2: Math.PI - 0.02, w1: 0, w2: 0, trail: [], color: COLORS.blue },
       { th1: Math.PI - 0.01 + offset, th2: Math.PI - 0.02, w1: 0, w2: 0, trail: [], color: COLORS.red }
     ];
+    pendTime = 0;
   }
 
   function stepPend(p, dt) {
-    const { th1, th2, w1, w2 } = p;
-    const dth = th1 - th2;
-    const den = 2 * m1 + m2 - m2 * Math.cos(2 * dth);
-    const a1 = (-g * (2 * m1 + m2) * Math.sin(th1) - m2 * g * Math.sin(th1 - 2 * th2)
-      - 2 * Math.sin(dth) * m2 * (w2 * w2 * L2 + w1 * w1 * L1 * Math.cos(dth))) / (L1 * den);
-    const a2 = (2 * Math.sin(dth) * (w1 * w1 * L1 * (m1 + m2) + g * (m1 + m2) * Math.cos(th1)
-      + w2 * w2 * L2 * m2 * Math.cos(dth))) / (L2 * den);
-
-    p.w1 += a1 * dt;
-    p.w2 += a2 * dt;
-    p.th1 += p.w1 * dt;
-    p.th2 += p.w2 * dt;
+    // RK4 integrator for better accuracy
+    function derivs(th1, th2, w1, w2) {
+      const dth = th1 - th2;
+      const den = 2 * m1 + m2 - m2 * Math.cos(2 * dth);
+      const a1 = (-g * (2 * m1 + m2) * Math.sin(th1) - m2 * g * Math.sin(th1 - 2 * th2)
+        - 2 * Math.sin(dth) * m2 * (w2 * w2 * L2 + w1 * w1 * L1 * Math.cos(dth))) / (L1 * den);
+      const a2 = (2 * Math.sin(dth) * (w1 * w1 * L1 * (m1 + m2) + g * (m1 + m2) * Math.cos(th1)
+        + w2 * w2 * L2 * m2 * Math.cos(dth))) / (L2 * den);
+      return { dth1: w1, dth2: w2, dw1: a1, dw2: a2 };
+    }
+    const k1 = derivs(p.th1, p.th2, p.w1, p.w2);
+    const k2 = derivs(p.th1 + k1.dth1 * dt / 2, p.th2 + k1.dth2 * dt / 2, p.w1 + k1.dw1 * dt / 2, p.w2 + k1.dw2 * dt / 2);
+    const k3 = derivs(p.th1 + k2.dth1 * dt / 2, p.th2 + k2.dth2 * dt / 2, p.w1 + k2.dw1 * dt / 2, p.w2 + k2.dw2 * dt / 2);
+    const k4 = derivs(p.th1 + k3.dth1 * dt, p.th2 + k3.dth2 * dt, p.w1 + k3.dw1 * dt, p.w2 + k3.dw2 * dt);
+    p.th1 += (k1.dth1 + 2 * k2.dth1 + 2 * k3.dth1 + k4.dth1) * dt / 6;
+    p.th2 += (k1.dth2 + 2 * k2.dth2 + 2 * k3.dth2 + k4.dth2) * dt / 6;
+    p.w1 += (k1.dw1 + 2 * k2.dw1 + 2 * k3.dw1 + k4.dw1) * dt / 6;
+    p.w2 += (k1.dw2 + 2 * k2.dw2 + 2 * k3.dw2 + k4.dw2) * dt / 6;
   }
 
   let running = false;
@@ -2743,7 +2751,7 @@ function initCh3Vis() {
   function draw() {
     clearCanvas(ctx, W, H);
 
-    const ox = W / 2, oy = H * 0.5;
+    const ox = W / 2, oy = H * 0.45;
     const visible = showSecond ? pends : [pends[0]];
 
     visible.forEach(p => {
@@ -2753,45 +2761,73 @@ function initCh3Vis() {
       const y2 = y1 + L2 * Math.cos(p.th2);
 
       p.trail.push({ x: x2, y: y2 });
-      if (p.trail.length > 500) p.trail.shift();
+      if (p.trail.length > 800) p.trail.shift();
 
-      ctx.strokeStyle = p.color + '40';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      p.trail.forEach((pt, i) => {
-        i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y);
-      });
-      ctx.stroke();
+      // Trail with fading
+      if (p.trail.length > 1) {
+        ctx.lineWidth = 1;
+        for (let i = 1; i < p.trail.length; i++) {
+          const alpha = 0.05 + 0.4 * (i / p.trail.length);
+          ctx.strokeStyle = p.color.slice(0, -1) + ',' + alpha + ')';
+          if (p.color.startsWith('#')) {
+            const r = parseInt(p.color.slice(1, 3), 16);
+            const g = parseInt(p.color.slice(3, 5), 16);
+            const b = parseInt(p.color.slice(5, 7), 16);
+            ctx.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+          }
+          ctx.beginPath();
+          ctx.moveTo(p.trail[i - 1].x, p.trail[i - 1].y);
+          ctx.lineTo(p.trail[i].x, p.trail[i].y);
+          ctx.stroke();
+        }
+      }
 
       ctx.strokeStyle = p.color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
 
       ctx.fillStyle = p.color;
-      ctx.beginPath(); ctx.arc(x1, y1, 6, 0, 2 * Math.PI); ctx.fill();
-      ctx.beginPath(); ctx.arc(x2, y2, 6, 0, 2 * Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(x1, y1, 7, 0, 2 * Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(x2, y2, 7, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x1, y1, 7, 0, 2 * Math.PI); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x2, y2, 7, 0, 2 * Math.PI); ctx.stroke();
     });
 
     // Pivot
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(ox, oy, 4, 0, 2 * Math.PI); ctx.fill();
 
-    ctx.fillStyle = COLORS.text;
-    ctx.font = FONT;
-    ctx.textAlign = 'left';
+    ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'left';
+    ctx.fillText('t = ' + pendTime.toFixed(1) + 's', 10, 20);
+
     if (showSecond) {
-      ctx.fillText('Two double pendulums with tiny initial difference', 10, 20);
-      ctx.fillStyle = COLORS.blue; ctx.fillText('Pendulum 1', 10, 38);
-      ctx.fillStyle = COLORS.red; ctx.fillText('Pendulum 2', 10, 54);
-    } else {
-      ctx.fillText('Double pendulum \u2014 chaotic motion', 10, 20);
+      ctx.fillStyle = COLORS.blue; ctx.fillText('\u2014 Pendulum 1', 10, 40);
+      ctx.fillStyle = COLORS.red; ctx.fillText('\u2014 Pendulum 2', 10, 58);
+
+      // Compute tip divergence
+      const p0 = pends[0], p1 = pends[1];
+      const x0 = ox + L1 * Math.sin(p0.th1) + L2 * Math.sin(p0.th2);
+      const y0 = oy + L1 * Math.cos(p0.th1) + L2 * Math.cos(p0.th2);
+      const x1t = ox + L1 * Math.sin(p1.th1) + L2 * Math.sin(p1.th2);
+      const y1t = oy + L1 * Math.cos(p1.th1) + L2 * Math.cos(p1.th2);
+      const sep = Math.sqrt((x0 - x1t) ** 2 + (y0 - y1t) ** 2);
+      ctx.fillStyle = COLORS.orange; ctx.textAlign = 'right';
+      ctx.fillText('Tip separation: ' + sep.toFixed(1) + ' px', W - 10, 20);
+
+      const divDisp = document.getElementById('chaos-divergence');
+      if (divDisp) divDisp.textContent = 'sep = ' + sep.toFixed(0) + ' px';
     }
   }
 
   function animate() {
     if (!running) return;
-    for (let i = 0; i < 5; i++) {
-      pends.forEach(p => stepPend(p, 0.01));
+    const speed = parseInt(document.getElementById('chaos-speed')?.value || 3);
+    const stepsPerFrame = [0, 2, 4, 6, 10, 16][speed];
+    const dt = 0.008;
+    for (let i = 0; i < stepsPerFrame; i++) {
+      pends.forEach(p => stepPend(p, dt));
+      pendTime += dt;
     }
     draw();
     activeAnimations['chaos'] = requestAnimationFrame(animate);
@@ -2799,14 +2835,15 @@ function initCh3Vis() {
 
   document.getElementById('chaos-start')?.addEventListener('click', function () {
     running = !running;
-    this.textContent = running ? 'Pause' : 'Start';
+    this.textContent = running ? '\u23F8 Pause' : '\u25B6 Start';
     if (running) animate();
   });
 
   document.getElementById('chaos-reset')?.addEventListener('click', () => {
     running = false;
     const btn = document.getElementById('chaos-start');
-    if (btn) btn.textContent = 'Start';
+    if (btn) btn.textContent = '\u25B6 Start';
+    if (activeAnimations['chaos']) { cancelAnimationFrame(activeAnimations['chaos']); delete activeAnimations['chaos']; }
     initPendulums();
     draw();
   });
@@ -2814,6 +2851,10 @@ function initCh3Vis() {
   document.getElementById('chaos-offset')?.addEventListener('input', function () {
     const d = document.getElementById('chaos-offset-val');
     if (d) d.textContent = parseFloat(this.value).toFixed(2);
+  });
+
+  document.getElementById('chaos-speed')?.addEventListener('input', function () {
+    document.getElementById('chaos-speed-val')?.replaceChildren(document.createTextNode(this.value));
   });
 
   document.getElementById('chaos-show-second')?.addEventListener('change', function () {
@@ -2831,28 +2872,45 @@ function initCh3Vis() {
   const mb = setupCanvas(cMB);
   const ctxMB = mb.ctx, WMB = mb.W, HMB = mb.H;
   const mbTempSlider = document.getElementById('mb-temp');
+  const mbMoleculeGroup = document.getElementById('mb-molecule');
+
+  let mbMass = 28; // amu, default N2
+  let mbLabel = 'N\u2082';
+
+  // Wire up molecule buttons
+  if (mbMoleculeGroup) {
+    mbMoleculeGroup.querySelectorAll('.control-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        mbMoleculeGroup.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        mbMass = parseFloat(btn.dataset.value);
+        mbLabel = btn.dataset.label;
+        drawMaxwell();
+      });
+    });
+  }
 
   function drawMaxwell() {
     const T = parseFloat(mbTempSlider?.value || 300);
     clearCanvas(ctxMB, WMB, HMB);
 
-    const ox = 60, xAxis = HMB - 50;
+    const ox = 60, xAxis = HMB - 55;
     const plotW = WMB - ox - 30;
 
-    // Constants for N2 (m = 28 amu)
     const kB = 1.380649e-23;
-    const m = 28 * 1.66054e-27; // 28 amu in kg
+    const m = mbMass * 1.66054e-27;
 
-    const vMax = 1500; // m/s range
+    // Adapt speed range to molecule
+    const vPeak = Math.sqrt(2 * kB * T / m);
+    const vMax = Math.max(vPeak * 4, 200);
     const vScale = plotW / vMax;
 
-    // Compute f(v) = 4*pi*(m/(2*pi*kT))^(3/2) * v^2 * exp(-mv^2/(2kT))
-    function fMB(v, Tk) {
-      const a = m / (2 * kB * Tk);
+    function fMB(v, Tk, mass) {
+      const a = mass / (2 * kB * Tk);
       return 4 * Math.PI * Math.pow(a / Math.PI, 1.5) * v * v * Math.exp(-a * v * v);
     }
 
-    // Draw for several temperatures
+    // Draw for T/2, T, 2T
     const temps = [T * 0.5, T, T * 2];
     const tempColors = [COLORS.blue, COLORS.green, COLORS.red];
     const tempLineWidths = [1.5, 2.5, 1.5];
@@ -2861,10 +2919,11 @@ function initCh3Vis() {
     temps.forEach(Tk => {
       for (let px = 1; px < plotW; px++) {
         const v = px / vScale;
-        const f = fMB(v, Tk);
+        const f = fMB(v, Tk, m);
         if (f > globalMax) globalMax = f;
       }
     });
+    if (globalMax < 1e-15) globalMax = 1e-15;
 
     drawAxes(ctxMB, ox, 15, plotW, xAxis - 15, { xLabel: 'Speed v (m/s)', yLabel: 'f(v)' });
 
@@ -2876,7 +2935,7 @@ function initCh3Vis() {
       ctxMB.beginPath();
       for (let px = 1; px < plotW; px++) {
         const v = px / vScale;
-        const f = fMB(v, Tk);
+        const f = fMB(v, Tk, m);
         const py = xAxis - f * yScale;
         px === 1 ? ctxMB.moveTo(ox + px, py) : ctxMB.lineTo(ox + px, py);
       }
@@ -2885,23 +2944,23 @@ function initCh3Vis() {
       ctxMB.fillStyle = tempColors[idx];
       ctxMB.font = FONT_SM;
       ctxMB.textAlign = 'left';
-      ctxMB.fillText('T = ' + Tk.toFixed(0) + ' K', WMB - 150, 30 + idx * 16);
+      ctxMB.fillText('T = ' + Tk.toFixed(0) + ' K', WMB - 140, 30 + idx * 16);
     });
 
-    // Mark v_peak, v_avg, v_rms for current temperature T
-    const vPeak = Math.sqrt(2 * kB * T / m);
+    // Mark v_peak, v_avg, v_rms for current T
+    const vPeakVal = Math.sqrt(2 * kB * T / m);
     const vAvg = Math.sqrt(8 * kB * T / (Math.PI * m));
     const vRms = Math.sqrt(3 * kB * T / m);
 
     const markers = [
-      { v: vPeak, label: 'v_peak', color: COLORS.yellow },
-      { v: vAvg, label: 'v_avg', color: COLORS.orange },
+      { v: vPeakVal, label: 'v_mp', color: COLORS.yellow },
+      { v: vAvg, label: '\u27E8v\u27E9', color: COLORS.orange },
       { v: vRms, label: 'v_rms', color: COLORS.purple },
     ];
 
     markers.forEach(mk => {
       const px = ox + mk.v * vScale;
-      if (px < ox + plotW) {
+      if (px < ox + plotW && px > ox) {
         ctxMB.strokeStyle = mk.color;
         ctxMB.lineWidth = 1;
         ctxMB.setLineDash([4, 4]);
@@ -2910,7 +2969,7 @@ function initCh3Vis() {
         ctxMB.fillStyle = mk.color;
         ctxMB.font = '10px Inter, system-ui, sans-serif';
         ctxMB.textAlign = 'center';
-        ctxMB.fillText(mk.label, px, xAxis + 12);
+        ctxMB.fillText(mk.label, px, xAxis + 14);
       }
     });
 
@@ -2918,18 +2977,24 @@ function initCh3Vis() {
     ctxMB.fillStyle = COLORS.text;
     ctxMB.font = FONT;
     ctxMB.textAlign = 'left';
-    ctxMB.fillText('Maxwell-Boltzmann speed distribution (N\u2082, m = 28 amu)', ox + 5, 28);
+    ctxMB.fillText('Maxwell-Boltzmann: ' + mbLabel + ' (m = ' + mbMass + ' amu)', ox + 5, 28);
 
     // Speed axis ticks
     ctxMB.fillStyle = COLORS.textDim;
     ctxMB.font = '10px Inter, system-ui, sans-serif';
     ctxMB.textAlign = 'center';
-    for (let v = 0; v <= vMax; v += 250) {
+    const tickStep = vMax < 500 ? 100 : vMax < 2000 ? 250 : 500;
+    for (let v = 0; v <= vMax; v += tickStep) {
       const tx = ox + v * vScale;
-      ctxMB.fillText(v.toString(), tx, xAxis + 24);
+      ctxMB.fillText(v.toString(), tx, xAxis + 28);
     }
 
+    // Numerical speed readouts
     document.getElementById('mb-temp-val')?.replaceChildren(document.createTextNode(T.toFixed(0)));
+    const speedsDisp = document.getElementById('mb-speeds');
+    if (speedsDisp) {
+      speedsDisp.textContent = 'v_mp=' + vPeakVal.toFixed(0) + '  \u27E8v\u27E9=' + vAvg.toFixed(0) + '  v_rms=' + vRms.toFixed(0) + ' m/s';
+    }
   }
 
   mbTempSlider?.addEventListener('input', drawMaxwell);
@@ -3102,14 +3167,44 @@ function initCh3Vis() {
     let billRunning = false;
 
     // Circle table (left half)
-    const cxL = WBL / 4, cyL = HBL / 2, rL = HBL / 2 - 20;
+    const cxL = WBL / 4, cyL = HBL / 2, rL = HBL / 2 - 25;
     // Stadium table (right half) - rectangle with semicircles
     const cxR = 3 * WBL / 4, cyR = HBL / 2;
-    const stadW = 100, stadH = HBL / 2 - 20;
+    const stadW = 110, stadH = HBL / 2 - 25;
+
+    const billAngleSlider = document.getElementById('billiards-angle');
+    const billSpeedSlider = document.getElementById('billiards-speed');
+
+    function getBillAngle() { return parseFloat(billAngleSlider?.value || 25) * Math.PI / 180; }
+    function getBillSpeed() { return parseInt(billSpeedSlider?.value || 3); }
 
     // Ball states
-    let ballL = { x: cxL + 10, y: cyL - 20, vx: 2.5, vy: 1.8, trail: [] };
-    let ballR = { x: cxR + 10, y: cyR - 20, vx: 2.5, vy: 1.8, trail: [] };
+    let ballL, ballR;
+    // Coverage tracking grids
+    const gridSize = 6;
+    let coverageL, coverageR, coverageLCount, coverageRCount;
+    const coverageLTotal = Math.ceil(2 * rL / gridSize) * Math.ceil(2 * rL / gridSize);
+    const coverageRTotal = Math.ceil((2 * stadW + 2 * stadH) / gridSize) * Math.ceil(2 * stadH / gridSize);
+
+    function initBilliards() {
+      const angle = getBillAngle();
+      const speed = 2.5;
+      ballL = { x: cxL + 10, y: cyL - 10, vx: speed * Math.cos(angle), vy: speed * Math.sin(angle), trail: [] };
+      ballR = { x: cxR + 10, y: cyR - 10, vx: speed * Math.cos(angle), vy: speed * Math.sin(angle), trail: [] };
+      coverageL = new Set();
+      coverageR = new Set();
+      coverageLCount = 0;
+      coverageRCount = 0;
+    }
+
+    function trackCoverage(ball, cx, cy, coverageSet, isCircle) {
+      const gx = Math.floor((ball.x - cx + 200) / gridSize);
+      const gy = Math.floor((ball.y - cy + 200) / gridSize);
+      const key = gx + ',' + gy;
+      if (!coverageSet.has(key)) {
+        coverageSet.add(key);
+      }
+    }
 
     function reflectCircle(ball, cx, cy, r) {
       const dx = ball.x - cx, dy = ball.y - cy;
@@ -3128,7 +3223,6 @@ function initCh3Vis() {
       const left = cxR - stadW, right = cxR + stadW;
       const top = cyR - stadH, bottom = cyR + stadH;
 
-      // Check semicircle ends
       const dxL = ball.x - left, dyL = ball.y - cyR;
       const distL = Math.sqrt(dxL * dxL + dyL * dyL);
       if (ball.x < left && distL >= stadH) {
@@ -3151,7 +3245,6 @@ function initCh3Vis() {
         ball.y = cyR + ny * (stadH - 1);
         return;
       }
-      // Flat walls
       if (ball.y < top) { ball.vy = Math.abs(ball.vy); ball.y = top + 1; }
       if (ball.y > bottom) { ball.vy = -Math.abs(ball.vy); ball.y = bottom - 1; }
     }
@@ -3159,16 +3252,12 @@ function initCh3Vis() {
     function drawBilliards() {
       clearCanvas(ctxBL, WBL, HBL);
 
-      // Draw circle table
-      ctxBL.strokeStyle = COLORS.blue;
-      ctxBL.lineWidth = 2;
-      ctxBL.beginPath();
-      ctxBL.arc(cxL, cyL, rL, 0, 2 * Math.PI);
-      ctxBL.stroke();
+      // Circle table
+      ctxBL.strokeStyle = COLORS.blue; ctxBL.lineWidth = 2;
+      ctxBL.beginPath(); ctxBL.arc(cxL, cyL, rL, 0, 2 * Math.PI); ctxBL.stroke();
 
-      // Draw stadium table
-      ctxBL.strokeStyle = COLORS.green;
-      ctxBL.lineWidth = 2;
+      // Stadium table
+      ctxBL.strokeStyle = COLORS.green; ctxBL.lineWidth = 2;
       ctxBL.beginPath();
       ctxBL.moveTo(cxR - stadW, cyR - stadH);
       ctxBL.lineTo(cxR + stadW, cyR - stadH);
@@ -3177,40 +3266,58 @@ function initCh3Vis() {
       ctxBL.arc(cxR - stadW, cyR, stadH, Math.PI / 2, -Math.PI / 2);
       ctxBL.stroke();
 
-      // Draw trails
-      ctxBL.lineWidth = 0.5;
-      ctxBL.strokeStyle = 'rgba(79,195,247,0.3)';
-      ctxBL.beginPath();
-      ballL.trail.forEach((p, i) => i === 0 ? ctxBL.moveTo(p.x, p.y) : ctxBL.lineTo(p.x, p.y));
-      ctxBL.stroke();
+      // Trails
+      if (ballL.trail.length > 1) {
+        ctxBL.lineWidth = 0.6;
+        ctxBL.strokeStyle = 'rgba(79,195,247,0.25)';
+        ctxBL.beginPath();
+        ballL.trail.forEach((p, i) => i === 0 ? ctxBL.moveTo(p.x, p.y) : ctxBL.lineTo(p.x, p.y));
+        ctxBL.stroke();
+      }
+      if (ballR.trail.length > 1) {
+        ctxBL.strokeStyle = 'rgba(102,187,106,0.25)';
+        ctxBL.beginPath();
+        ballR.trail.forEach((p, i) => i === 0 ? ctxBL.moveTo(p.x, p.y) : ctxBL.lineTo(p.x, p.y));
+        ctxBL.stroke();
+      }
 
-      ctxBL.strokeStyle = 'rgba(102,187,106,0.3)';
-      ctxBL.beginPath();
-      ballR.trail.forEach((p, i) => i === 0 ? ctxBL.moveTo(p.x, p.y) : ctxBL.lineTo(p.x, p.y));
-      ctxBL.stroke();
-
-      // Draw balls
+      // Balls
       ctxBL.fillStyle = COLORS.blue;
-      ctxBL.beginPath();
-      ctxBL.arc(ballL.x, ballL.y, 3, 0, 2 * Math.PI);
-      ctxBL.fill();
+      ctxBL.beginPath(); ctxBL.arc(ballL.x, ballL.y, 4, 0, 2 * Math.PI); ctxBL.fill();
+      ctxBL.strokeStyle = '#fff'; ctxBL.lineWidth = 1;
+      ctxBL.beginPath(); ctxBL.arc(ballL.x, ballL.y, 4, 0, 2 * Math.PI); ctxBL.stroke();
 
       ctxBL.fillStyle = COLORS.green;
-      ctxBL.beginPath();
-      ctxBL.arc(ballR.x, ballR.y, 3, 0, 2 * Math.PI);
-      ctxBL.fill();
+      ctxBL.beginPath(); ctxBL.arc(ballR.x, ballR.y, 4, 0, 2 * Math.PI); ctxBL.fill();
+      ctxBL.strokeStyle = '#fff'; ctxBL.lineWidth = 1;
+      ctxBL.beginPath(); ctxBL.arc(ballR.x, ballR.y, 4, 0, 2 * Math.PI); ctxBL.stroke();
 
       // Labels
-      ctxBL.fillStyle = COLORS.text;
-      ctxBL.font = FONT;
-      ctxBL.textAlign = 'center';
-      ctxBL.fillText('Circle (non-ergodic)', cxL, 16);
-      ctxBL.fillText('Stadium (ergodic)', cxR, 16);
+      ctxBL.fillStyle = COLORS.blue; ctxBL.font = FONT; ctxBL.textAlign = 'center';
+      ctxBL.fillText('Circle (non-ergodic)', cxL, 18);
+      ctxBL.fillStyle = COLORS.green;
+      ctxBL.fillText('Stadium (ergodic)', cxR, 18);
+
+      // Coverage stats
+      const covL = coverageL.size;
+      const covR = coverageR.size;
+      ctxBL.fillStyle = COLORS.textDim; ctxBL.font = FONT_SM; ctxBL.textAlign = 'center';
+      ctxBL.fillText('Coverage: ' + covL + ' cells', cxL, HBL - 8);
+      ctxBL.fillText('Coverage: ' + covR + ' cells', cxR, HBL - 8);
+
+      // Update external display
+      const covDisp = document.getElementById('billiards-coverage');
+      if (covDisp) covDisp.textContent = 'Circle: ' + covL + '  Stadium: ' + covR;
+
+      // Update slider displays
+      document.getElementById('billiards-angle-val')?.replaceChildren(document.createTextNode(Math.round(getBillAngle() * 180 / Math.PI).toString()));
+      document.getElementById('billiards-speed-val')?.replaceChildren(document.createTextNode(getBillSpeed().toString()));
     }
 
     function stepBilliards() {
-      const speed = 3;
-      for (let i = 0; i < 3; i++) {
+      const speed = getBillSpeed();
+      const stepsPerFrame = [0, 2, 3, 4, 6, 10][speed];
+      for (let i = 0; i < stepsPerFrame; i++) {
         ballL.x += ballL.vx; ballL.y += ballL.vy;
         ballR.x += ballR.vx; ballR.y += ballR.vy;
         reflectCircle(ballL, cxL, cyL, rL);
@@ -3218,8 +3325,10 @@ function initCh3Vis() {
       }
       ballL.trail.push({ x: ballL.x, y: ballL.y });
       ballR.trail.push({ x: ballR.x, y: ballR.y });
-      if (ballL.trail.length > 2000) ballL.trail.shift();
-      if (ballR.trail.length > 2000) ballR.trail.shift();
+      if (ballL.trail.length > 5000) ballL.trail.shift();
+      if (ballR.trail.length > 5000) ballR.trail.shift();
+      trackCoverage(ballL, cxL, cyL, coverageL, true);
+      trackCoverage(ballR, cxR, cyR, coverageR, false);
     }
 
     function animateBilliards() {
@@ -3232,19 +3341,24 @@ function initCh3Vis() {
     document.getElementById('billiards-start')?.addEventListener('click', () => {
       billRunning = !billRunning;
       const btn = document.getElementById('billiards-start');
-      if (btn) btn.textContent = billRunning ? 'Pause' : 'Start';
+      if (btn) btn.textContent = billRunning ? '\u23F8 Pause' : '\u25B6 Start';
       if (billRunning) animateBilliards();
     });
 
     document.getElementById('billiards-reset')?.addEventListener('click', () => {
       billRunning = false;
+      if (activeAnimations['billiards']) { cancelAnimationFrame(activeAnimations['billiards']); delete activeAnimations['billiards']; }
       const btn = document.getElementById('billiards-start');
-      if (btn) btn.textContent = 'Start';
-      ballL = { x: cxL + 10, y: cyL - 20, vx: 2.5, vy: 1.8, trail: [] };
-      ballR = { x: cxR + 10, y: cyR - 20, vx: 2.5, vy: 1.8, trail: [] };
+      if (btn) btn.textContent = '\u25B6 Start';
+      initBilliards();
       drawBilliards();
     });
 
+    billAngleSlider?.addEventListener('input', () => {
+      if (!billRunning) { initBilliards(); drawBilliards(); }
+    });
+
+    initBilliards();
     drawBilliards();
   }
 
