@@ -26587,8 +26587,8 @@ function initCh15Vis() {
         else if (v.s.name === 'Earth') drawPlanetImg(earthImg, v.sx, v.sy, v.rPx);
         else if (v.s.name === 'Jupiter') drawPlanetImg(jupiterImg, v.sx, v.sy, v.rPx);
         else if (v.s.cat === 'Black Hole') {
-          // M87 EHT image: cropped square, ring outer radius ≈ 55% of image radius
-          const ringFrac = 0.55;
+          // M87 EHT image: cropped circle, ring outer radius ≈ 60% of image radius
+          const ringFrac = 0.60;
           const imgR = v.rPx / ringFrac;
           drawPlanetImg(sgrAImg, v.sx, v.sy, imgR);
           // Indicator rings: event horizon and photon ring
