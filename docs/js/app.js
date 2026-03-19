@@ -23185,10 +23185,11 @@ function initCh14Vis() {
       bbNodeVolts = {}; bbNodeVolts[groundNode] = 0;
       for (var i = 0; i < N; i++) bbNodeVolts[nodeNames[i]] = x[i];
       for (var n in nodeSet) bbNodeVolts[n] = bbNodeVolts[root(n)] || 0;
-      // Extract voltage source currents and store on LED parts
+      // Extract voltage source currents and store on parts
       for (var k = 0; k < M; k++) {
         var vs = vSources[k], p = bbParts[vs.pi];
         if (p.type === 'LED') p._ledCurrent = x[N + k];
+        if (p.type === 'BATTERY') p._batCurrent = x[N + k];
       }
       for (var i = 0; i < bbParts.length; i++) {
         var p = bbParts[i];
@@ -23313,6 +23314,52 @@ function initCh14Vis() {
         bbCtx.fillStyle = '#2a2a2a'; bbCtx.beginPath(); bbCtx.arc(hp.x, hp.y+0.5, BB_HOLE_R-0.5, 0, Math.PI*2); bbCtx.fill();
       }
 
+      // Compute current through a wire by graph-cut: BFS from one endpoint via
+      // wires/switches (excluding this wire), then sum component currents crossing the boundary.
+      function bbWireCurrent(wirePart) {
+        var n0 = holeNode(wirePart.holes[0].row, wirePart.holes[0].col);
+        var n1 = holeNode(wirePart.holes[1].row, wirePart.holes[1].col);
+        // BFS from n1 (typically the "component side"), excluding this wire
+        var visited = {}, queue = [n1];
+        visited[n1] = true;
+        while (queue.length > 0) {
+          var cur = queue.shift();
+          for (var i = 0; i < bbParts.length; i++) {
+            var p = bbParts[i];
+            if (p === wirePart) continue;
+            if (p.type === 'WIRE' || (p.type === 'SWITCH' && p.on)) {
+              var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
+              if (a === cur && !visited[b]) { visited[b] = true; queue.push(b); }
+              if (b === cur && !visited[a]) { visited[a] = true; queue.push(a); }
+            }
+          }
+        }
+        // If both endpoints ended up in the same set, we can't measure (parallel wires)
+        if (visited[n0]) return 0;
+        // Sum currents from components crossing the boundary
+        var totalI = 0;
+        for (var i = 0; i < bbParts.length; i++) {
+          var p = bbParts[i];
+          if (p.type === 'RESISTOR') {
+            var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
+            if (!!visited[a] !== !!visited[b]) totalI += Math.abs((bbNodeVolts[a]||0)-(bbNodeVolts[b]||0)) / (p.value||1000);
+          }
+          if (p.type === 'LED' && p._ledOn && p._ledCurrent) {
+            var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
+            if (!!visited[a] !== !!visited[b]) totalI += Math.abs(p._ledCurrent);
+          }
+          if ((p.type === 'NPN' || p.type === 'PNP') && p._state === 'on') {
+            var e = holeNode(p.holes[0].row, p.holes[0].col), c = holeNode(p.holes[2].row, p.holes[2].col);
+            if (!!visited[e] !== !!visited[c]) totalI += Math.abs((bbNodeVolts[c]||0)-(bbNodeVolts[e]||0)) * 0.5;
+          }
+          if (p.type === 'BATTERY' && p._batCurrent !== undefined) {
+            var a = holeNode(p.holes[0].row, p.holes[0].col), b = holeNode(p.holes[1].row, p.holes[1].col);
+            if (!!visited[a] !== !!visited[b]) totalI += Math.abs(p._batCurrent);
+          }
+        }
+        return totalI;
+      }
+
       function curDots(x0, y0, x1, y1, current) {
         if (!bbShowCurrent || current === 0) return;
         var len = Math.hypot(x1-x0, y1-y0); if (len < 8) return;
@@ -23327,7 +23374,7 @@ function initCh14Vis() {
           var h1 = holeXY(p.holes[1].row, p.holes[1].col);
           bbCtx.strokeStyle = p.color||'#666'; bbCtx.lineWidth = 2.5; bbCtx.lineCap = 'round';
           bbCtx.beginPath(); bbCtx.moveTo(h0.x, h0.y); bbCtx.quadraticCurveTo((h0.x+h1.x)/2, (h0.y+h1.y)/2-Math.abs(h1.x-h0.x)*0.12-5, h1.x, h1.y); bbCtx.stroke(); bbCtx.lineCap = 'butt';
-          curDots(h0.x, h0.y, h1.x, h1.y, (bbNodeVolts[holeNode(p.holes[0].row, p.holes[0].col)]||0)-(bbNodeVolts[holeNode(p.holes[1].row, p.holes[1].col)]||0));
+          curDots(h0.x, h0.y, h1.x, h1.y, bbWireCurrent(p) || 0);
         } else if (p.type === 'RESISTOR') {
           var h1 = holeXY(p.holes[1].row, p.holes[1].col), dx = h1.x-h0.x, dy = h1.y-h0.y, len = Math.hypot(dx,dy), ux = dx/len, uy = dy/len, bl = Math.min(len*0.5, 28);
           bbCtx.strokeStyle = '#888'; bbCtx.lineWidth = 1.5;
@@ -23422,32 +23469,7 @@ function initCh14Vis() {
             tipLines.push('I = ' + (mA < 1 ? (mA*1000).toFixed(0) + '\u00B5A' : mA.toFixed(1) + 'mA'));
           }
           else if (hovPart.type === 'WIRE') {
-            // Estimate wire current: sum currents through all resistors/LEDs sharing a node with either end of this wire
-            var wireNode0 = holeNode(hovPart.holes[0].row, hovPart.holes[0].col);
-            var wireNode1 = holeNode(hovPart.holes[1].row, hovPart.holes[1].col);
-            var wireI = 0;
-            for (var wi = 0; wi < bbParts.length; wi++) {
-              var wp = bbParts[wi];
-              if (wp === hovPart || wp.holes.length < 2) continue;
-              if (wp.type === 'RESISTOR') {
-                var wn0 = holeNode(wp.holes[0].row, wp.holes[0].col), wn1 = holeNode(wp.holes[1].row, wp.holes[1].col);
-                if (wn0 === wireNode0 || wn1 === wireNode0 || wn0 === wireNode1 || wn1 === wireNode1) {
-                  var wv0 = bbNodeVolts[wn0] || 0, wv1 = bbNodeVolts[wn1] || 0;
-                  wireI += Math.abs(wv0 - wv1) / (wp.value || 1000);
-                }
-              }
-              if (wp.type === 'LED' && wp._ledOn && wp._ledCurrent) {
-                var wn0 = holeNode(wp.holes[0].row, wp.holes[0].col), wn1 = holeNode(wp.holes[1].row, wp.holes[1].col);
-                if (wn0 === wireNode0 || wn1 === wireNode0 || wn0 === wireNode1 || wn1 === wireNode1) wireI += Math.abs(wp._ledCurrent);
-              }
-              if ((wp.type === 'NPN' || wp.type === 'PNP') && wp._state === 'on') {
-                var wnE = holeNode(wp.holes[0].row, wp.holes[0].col), wnC = holeNode(wp.holes[2].row, wp.holes[2].col);
-                if (wnE === wireNode0 || wnE === wireNode1 || wnC === wireNode0 || wnC === wireNode1) {
-                  var vC = bbNodeVolts[wnC] || 0, vE = bbNodeVolts[wnE] || 0;
-                  wireI += Math.abs(vC - vE) * 0.5;
-                }
-              }
-            }
+            var wireI = bbWireCurrent(hovPart);
             var wmA = wireI * 1000;
             tipLines.push('Wire' + (wmA > 0.01 ? ': I = ' + (wmA < 1 ? (wmA*1000).toFixed(0) + '\u00B5A' : wmA.toFixed(1) + 'mA') : ': I = 0'));
           }
