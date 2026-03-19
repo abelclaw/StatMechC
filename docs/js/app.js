@@ -444,29 +444,71 @@ function initCh1Vis() {
     const sHistTop = sHistBot - sHistH;
     const sStatsX = WS - sMR + 15;
 
+    // Parameter sliders
+    const sampParamDivs = {
+      gaussian: document.getElementById('samp-params-gaussian'),
+      flat: document.getElementById('samp-params-flat'),
+      exponential: document.getElementById('samp-params-exponential'),
+      bimodal: document.getElementById('samp-params-bimodal')
+    };
+
+    function showSampParams(name) {
+      Object.entries(sampParamDivs).forEach(([k, div]) => {
+        if (div) div.style.display = k === name ? '' : 'none';
+      });
+    }
+
     function getSampDist() {
       const name = sampDistBtns?.querySelector('.active')?.dataset.value || 'gaussian';
-      if (name === 'gaussian') return {
-        sample: () => gaussRand(),
-        pdf: x => Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI),
-        mean: 0, sigma: 1, domain: [-4, 4], label: 'Gaussian (\u03C3=1)', thPct: '68%'
-      };
-      if (name === 'flat') return {
-        sample: () => (Math.random() - 0.5) * 4,
-        pdf: x => (x >= -2 && x <= 2) ? 0.25 : 0,
-        mean: 0, sigma: 2 / Math.sqrt(3), domain: [-3, 3], label: 'Flat [\u22122, 2]', thPct: '58%'
-      };
-      if (name === 'exponential') return {
-        sample: () => -Math.log(1 - Math.random()),
-        pdf: x => x >= 0 ? Math.exp(-x) : 0,
-        mean: 1, sigma: 1, domain: [-1, 6], label: 'Exponential (\u03BB=1)', thPct: '~86%'
-      };
-      if (name === 'bimodal') return {
-        sample: () => (Math.random() < 0.5 ? -1.5 : 1.5) + gaussRand() * 0.5,
-        pdf: x => 0.5 * (Math.exp(-((x + 1.5) ** 2) / 0.5) + Math.exp(-((x - 1.5) ** 2) / 0.5)) / Math.sqrt(0.5 * Math.PI),
-        mean: 0, sigma: Math.sqrt(2.5), domain: [-4, 4], label: 'Bimodal', thPct: '~56%'
-      };
-      return { sample: () => gaussRand(), pdf: x => Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI), mean: 0, sigma: 1, domain: [-4, 4], label: 'Gaussian', thPct: '68%' };
+      if (name === 'gaussian') {
+        const mu = parseFloat(document.getElementById('samp-mu')?.value || 0);
+        const sig = parseFloat(document.getElementById('samp-sig')?.value || 1);
+        document.getElementById('samp-mu-val')?.replaceChildren(document.createTextNode(mu.toFixed(1)));
+        document.getElementById('samp-sig-val')?.replaceChildren(document.createTextNode(sig.toFixed(1)));
+        return {
+          sample: () => mu + sig * gaussRand(),
+          pdf: x => Math.exp(-((x - mu) ** 2) / (2 * sig * sig)) / (sig * Math.sqrt(2 * Math.PI)),
+          mean: mu, sigma: sig, domain: [mu - 4 * sig, mu + 4 * sig],
+          label: 'Gaussian (\u03BC=' + mu.toFixed(1) + ', \u03C3=' + sig.toFixed(1) + ')', thPct: '68%'
+        };
+      }
+      if (name === 'flat') {
+        const L = parseFloat(document.getElementById('samp-L')?.value || 2);
+        document.getElementById('samp-L-val')?.replaceChildren(document.createTextNode(L.toFixed(1)));
+        const sig = L / Math.sqrt(3);
+        return {
+          sample: () => (Math.random() - 0.5) * 2 * L,
+          pdf: x => (x >= -L && x <= L) ? 0.5 / L : 0,
+          mean: 0, sigma: sig, domain: [-L - 1, L + 1],
+          label: 'Flat [\u2212' + L.toFixed(1) + ', ' + L.toFixed(1) + ']', thPct: '58%'
+        };
+      }
+      if (name === 'exponential') {
+        const lam = parseFloat(document.getElementById('samp-lam')?.value || 1);
+        document.getElementById('samp-lam-val')?.replaceChildren(document.createTextNode(lam.toFixed(1)));
+        const mu = 1 / lam, sig = 1 / lam;
+        return {
+          sample: () => -Math.log(1 - Math.random()) / lam,
+          pdf: x => x >= 0 ? lam * Math.exp(-lam * x) : 0,
+          mean: mu, sigma: sig, domain: [-0.5, 5 / lam + 0.5],
+          label: 'Exponential (\u03BB=' + lam.toFixed(1) + ')', thPct: '~86%'
+        };
+      }
+      if (name === 'bimodal') {
+        const sep = parseFloat(document.getElementById('samp-sep')?.value || 1.5);
+        const pw = parseFloat(document.getElementById('samp-pw')?.value || 0.5);
+        document.getElementById('samp-sep-val')?.replaceChildren(document.createTextNode(sep.toFixed(1)));
+        document.getElementById('samp-pw-val')?.replaceChildren(document.createTextNode(pw.toFixed(2)));
+        const sig = Math.sqrt(pw * pw + sep * sep);
+        const pw2 = pw * pw;
+        return {
+          sample: () => (Math.random() < 0.5 ? -sep : sep) + gaussRand() * pw,
+          pdf: x => 0.5 * (Math.exp(-((x + sep) ** 2) / (2 * pw2)) + Math.exp(-((x - sep) ** 2) / (2 * pw2))) / (pw * Math.sqrt(2 * Math.PI)),
+          mean: 0, sigma: sig, domain: [-(sep + 4 * pw), sep + 4 * pw],
+          label: 'Bimodal (d=' + sep.toFixed(1) + ', \u03C3=' + pw.toFixed(2) + ')', thPct: null
+        };
+      }
+      return getSampDist(); // fallback
     }
 
     function sXtoPx(x) {
@@ -601,7 +643,8 @@ function initCh1Vis() {
       ctxS.fillStyle = COLORS.blue;
       ctxS.fillText('  \u03BC = ' + dist.mean.toFixed(2), sStatsX, sy); sy += lh * 0.85;
       ctxS.fillText('  \u03C3 = ' + dist.sigma.toFixed(2), sStatsX, sy); sy += lh * 0.85;
-      ctxS.fillText('  \u00B1\u03C3 \u2192 ' + dist.thPct, sStatsX, sy); sy += lh + 4;
+      if (dist.thPct) { ctxS.fillText('  \u00B1\u03C3 \u2192 ' + dist.thPct, sStatsX, sy); }
+      sy += lh + 4;
 
       ctxS.fillStyle = COLORS.textDim; ctxS.font = FONT_SM;
       ctxS.fillText('Measured:', sStatsX, sy); sy += lh;
@@ -676,8 +719,16 @@ function initCh1Vis() {
       if (!btn || btn === sampGoBtn || btn === sampClearBtn) return;
       sampDistBtns.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      showSampParams(btn.dataset.value);
       sampReset();
     });
+
+    // Reset on any parameter slider change
+    document.querySelectorAll('#samp-params input[type="range"]').forEach(sl => {
+      sl.addEventListener('input', sampReset);
+    });
+
+    showSampParams('gaussian');
     drawSamp();
   }
 
@@ -1348,66 +1399,6 @@ function initCh1Vis() {
   // =========================================================================
   // OLD INTERACTIVES (for comparison — remove when done reviewing)
   // =========================================================================
-
-  // ----- OLD Gaussian Explorer -----
-  const cGauss = document.getElementById('vis-gaussian');
-  if (cGauss) {
-    const gSetup = setupCanvas(cGauss);
-    const ctxG = gSetup.ctx, WG = gSetup.W, HG = gSetup.H;
-    const sigmaSlider = document.getElementById('gauss-sigma');
-    const meanSlider = document.getElementById('gauss-mean');
-
-    function drawGaussian() {
-      const sigma = parseFloat(sigmaSlider?.value || 1);
-      const mean = parseFloat(meanSlider?.value || 0);
-      clearCanvas(ctxG, WG, HG);
-      drawGrid(ctxG, WG, HG);
-      const xAxis = HG - 40;
-      const xScale = (WG - 60) / 8;
-      ctxG.strokeStyle = COLORS.axis; ctxG.lineWidth = 1;
-      ctxG.beginPath(); ctxG.moveTo(30, xAxis); ctxG.lineTo(WG - 10, xAxis); ctxG.stroke();
-      ctxG.beginPath(); ctxG.moveTo(WG / 2, 10); ctxG.lineTo(WG / 2, xAxis); ctxG.stroke();
-      const maxY = 1 / (sigma * Math.sqrt(2 * Math.PI));
-      const yScale = (xAxis - 30) / Math.max(maxY, 0.5);
-      ctxG.fillStyle = 'rgba(79,195,247,0.15)';
-      ctxG.beginPath();
-      let started = false;
-      for (let px = 0; px < WG - 40; px++) {
-        const x = (px - (WG - 60) / 2) / xScale;
-        if (Math.abs(x - mean) <= sigma) {
-          const y = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
-          const py = xAxis - y * yScale;
-          if (!started) { ctxG.moveTo(px + 30, xAxis); started = true; }
-          ctxG.lineTo(px + 30, py);
-        }
-      }
-      ctxG.lineTo(WG / 2 + (mean + sigma) * xScale + 30, xAxis);
-      ctxG.closePath(); ctxG.fill();
-      ctxG.strokeStyle = COLORS.blue; ctxG.lineWidth = 2.5;
-      ctxG.beginPath();
-      for (let px = 0; px < WG - 40; px++) {
-        const x = (px - (WG - 60) / 2) / xScale;
-        const y = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((x - mean) / sigma) ** 2);
-        const py = xAxis - y * yScale;
-        px === 0 ? ctxG.moveTo(px + 30, py) : ctxG.lineTo(px + 30, py);
-      }
-      ctxG.stroke();
-      ctxG.strokeStyle = COLORS.red; ctxG.lineWidth = 1.5; ctxG.setLineDash([5, 5]);
-      const meanPx = WG / 2 + mean * xScale;
-      ctxG.beginPath(); ctxG.moveTo(meanPx, 10); ctxG.lineTo(meanPx, xAxis); ctxG.stroke();
-      ctxG.setLineDash([]);
-      ctxG.fillStyle = COLORS.text; ctxG.font = FONT; ctxG.textAlign = 'center';
-      ctxG.fillText('\u03BC = ' + mean.toFixed(1), meanPx, xAxis + 18);
-      ctxG.fillText('\u03C3 = ' + sigma.toFixed(2), meanPx + sigma * xScale / 2, xAxis - maxY * yScale / 2);
-      ctxG.fillStyle = 'rgba(79,195,247,0.6)';
-      ctxG.fillText('68%', meanPx, xAxis - maxY * yScale * 0.3);
-      document.getElementById('gauss-sigma-val')?.replaceChildren(document.createTextNode(sigma.toFixed(2)));
-      document.getElementById('gauss-mean-val')?.replaceChildren(document.createTextNode(mean.toFixed(1)));
-    }
-    sigmaSlider?.addEventListener('input', drawGaussian);
-    meanSlider?.addEventListener('input', drawGaussian);
-    drawGaussian();
-  }
 
   // ----- OLD Poisson Distribution Explorer -----
   const cPoisson = document.getElementById('vis-poisson');

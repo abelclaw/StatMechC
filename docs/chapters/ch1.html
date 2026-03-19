@@ -164,7 +164,7 @@ $$\langle x \rangle = 0.59L; \qquad \langle x^2 \rangle = 0.42L^2; \qquad \sigma
 <!-- Interactive Sampling Machine -->
 <div class="visualization">
   <div class="figure-label">Interactive 1: The Sampling Machine</div>
-  <p class="vis-caption">Random samples fall from the distribution and pile up. Does 68% always land within ±σ of the mean? Switch distributions to find out.</p>
+  <p class="vis-caption">Adjust parameters, then hit Go. Random samples fall from the distribution and pile up. Does 68% always land within ±σ of the mean?</p>
   <div class="vis-controls">
     <span>Distribution:</span>
     <div class="button-group" id="samp-dist">
@@ -173,22 +173,27 @@ $$\langle x \rangle = 0.59L; \qquad \langle x^2 \rangle = 0.42L^2; \qquad \sigma
       <button class="control-btn" data-value="exponential">Exponential</button>
       <button class="control-btn" data-value="bimodal">Bimodal</button>
     </div>
+  </div>
+  <div class="vis-controls" id="samp-params">
+    <div id="samp-params-gaussian">
+      <label>&mu;: <input type="range" id="samp-mu" min="-3" max="3" step="0.1" value="0"><span class="slider-value" id="samp-mu-val">0.0</span></label>
+      <label>&sigma;: <input type="range" id="samp-sig" min="0.2" max="3" step="0.1" value="1"><span class="slider-value" id="samp-sig-val">1.0</span></label>
+    </div>
+    <div id="samp-params-flat" style="display:none">
+      <label>Half-width <i>L</i>: <input type="range" id="samp-L" min="0.5" max="4" step="0.1" value="2"><span class="slider-value" id="samp-L-val">2.0</span></label>
+    </div>
+    <div id="samp-params-exponential" style="display:none">
+      <label>&lambda;: <input type="range" id="samp-lam" min="0.2" max="5" step="0.1" value="1"><span class="slider-value" id="samp-lam-val">1.0</span></label>
+    </div>
+    <div id="samp-params-bimodal" style="display:none">
+      <label>Separation: <input type="range" id="samp-sep" min="0.5" max="3" step="0.1" value="1.5"><span class="slider-value" id="samp-sep-val">1.5</span></label>
+      <label>Peak &sigma;: <input type="range" id="samp-pw" min="0.1" max="1.5" step="0.05" value="0.5"><span class="slider-value" id="samp-pw-val">0.50</span></label>
+    </div>
     <label>Speed: <input type="range" id="samp-speed" min="1" max="5" step="1" value="3"><span class="slider-value" id="samp-speed-val">3</span></label>
     <button id="samp-go" class="control-btn">&#9654; Go</button>
     <button id="samp-clear" class="control-btn">Clear</button>
   </div>
   <div class="vis-canvas-wrap"><canvas id="vis-sampling" width="700" height="380"></canvas></div>
-</div>
-
-<!-- OLD Interactive 1 (for comparison) -->
-<div class="interactive-container" style="border:2px dashed rgba(255,100,100,0.3);padding:10px;margin-top:10px;">
-  <div class="figure-label" style="color:#ef5350;">OLD Interactive 1: Gaussian Explorer</div>
-  <p class="vis-caption">Adjust the mean and standard deviation to see how the Gaussian distribution changes shape.</p>
-  <div class="vis-controls">
-    <label>Mean (<i>&mu;</i>): <input type="range" id="gauss-mean" min="-3" max="3" step="0.1" value="0"><span class="slider-value" id="gauss-mean-val">0</span></label>
-    <label>Std Dev (<i>&sigma;</i>): <input type="range" id="gauss-sigma" min="0.2" max="3" step="0.1" value="1"><span class="slider-value" id="gauss-sigma-val">1</span></label>
-  </div>
-  <canvas id="vis-gaussian" width="600" height="300"></canvas>
 </div>
 
 <!-- ============================================================ -->
