@@ -23422,22 +23422,30 @@ function initCh14Vis() {
             tipLines.push('I = ' + (mA < 1 ? (mA*1000).toFixed(0) + '\u00B5A' : mA.toFixed(1) + 'mA'));
           }
           else if (hovPart.type === 'WIRE') {
-            // Estimate wire current: sum currents through all resistors/LEDs sharing a node with this wire
-            var wireNode = holeNode(hovPart.holes[0].row, hovPart.holes[0].col);
+            // Estimate wire current: sum currents through all resistors/LEDs sharing a node with either end of this wire
+            var wireNode0 = holeNode(hovPart.holes[0].row, hovPart.holes[0].col);
+            var wireNode1 = holeNode(hovPart.holes[1].row, hovPart.holes[1].col);
             var wireI = 0;
             for (var wi = 0; wi < bbParts.length; wi++) {
               var wp = bbParts[wi];
               if (wp === hovPart || wp.holes.length < 2) continue;
               if (wp.type === 'RESISTOR') {
                 var wn0 = holeNode(wp.holes[0].row, wp.holes[0].col), wn1 = holeNode(wp.holes[1].row, wp.holes[1].col);
-                if (wn0 === wireNode || wn1 === wireNode) {
+                if (wn0 === wireNode0 || wn1 === wireNode0 || wn0 === wireNode1 || wn1 === wireNode1) {
                   var wv0 = bbNodeVolts[wn0] || 0, wv1 = bbNodeVolts[wn1] || 0;
                   wireI += Math.abs(wv0 - wv1) / (wp.value || 1000);
                 }
               }
               if (wp.type === 'LED' && wp._ledOn && wp._ledCurrent) {
                 var wn0 = holeNode(wp.holes[0].row, wp.holes[0].col), wn1 = holeNode(wp.holes[1].row, wp.holes[1].col);
-                if (wn0 === wireNode || wn1 === wireNode) wireI += Math.abs(wp._ledCurrent);
+                if (wn0 === wireNode0 || wn1 === wireNode0 || wn0 === wireNode1 || wn1 === wireNode1) wireI += Math.abs(wp._ledCurrent);
+              }
+              if ((wp.type === 'NPN' || wp.type === 'PNP') && wp._state === 'on') {
+                var wnE = holeNode(wp.holes[0].row, wp.holes[0].col), wnC = holeNode(wp.holes[2].row, wp.holes[2].col);
+                if (wnE === wireNode0 || wnE === wireNode1 || wnC === wireNode0 || wnC === wireNode1) {
+                  var vC = bbNodeVolts[wnC] || 0, vE = bbNodeVolts[wnE] || 0;
+                  wireI += Math.abs(vC - vE) * 0.5;
+                }
               }
             }
             var wmA = wireI * 1000;
