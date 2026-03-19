@@ -23262,7 +23262,7 @@ function initCh14Vis() {
           if (p.type==='NPN') { var vB=bbNodeVolts[holeNode(p.holes[1].row,p.holes[1].col)]||0,vE=bbNodeVolts[holeNode(p.holes[0].row,p.holes[0].col)]||0; p._state=(vB-vE)>0.55?'on':'off'; }
           if (p.type==='PNP') { var vB=bbNodeVolts[holeNode(p.holes[1].row,p.holes[1].col)]||0,vE=bbNodeVolts[holeNode(p.holes[0].row,p.holes[0].col)]||0; p._state=(vE-vB)>0.55?'on':'off'; }
           if (p.type==='LED') { var v0=bbNodeVolts[holeNode(p.holes[0].row,p.holes[0].col)]||0,v1=bbNodeVolts[holeNode(p.holes[1].row,p.holes[1].col)]||0;
-            if (p._ledOn) { p._ledOn=(p._ledCurrent||0)>0.001; } else { p._ledOn=(v0-v1)>1.8; } }
+            if (p._ledOn) { p._ledOn=(p._ledCurrent||0)>0.001; } else { p._ledOn=(v0-v1)>2.0; } }
         }
         bbSolve();
       }
@@ -23691,26 +23691,31 @@ function initCh14Vis() {
       bbClear(); bbShowCurrent = true;
       bbAddPart('BATTERY',[{row:'r+t',col:1},{row:'r-t',col:1}],{value:9});
 
-      // === INPUT (top-left, left to right) ===
-      // VCC → switch → 47kΩ → transistor base
-      bbAddPart('WIRE',[{row:'r+t',col:4},{row:'a',col:4}],{color:'#e53935'});
-      bbAddPart('SWITCH',[{row:'a',col:4},{row:'a',col:8}],{on:true});
-      bbAddPart('RESISTOR',[{row:'b',col:8},{row:'b',col:15}],{value:47000});
+      // Each component on its own row, no crossings:
+      // Row a: switch (left),  470 ohm resistor (right)
+      // Row b: 47k resistor (input path)
+      // Row c: LED (output path)
+      // Row d: transistor
+      // Row e: emitter ground wire
 
-      // === TRANSISTOR (middle of top half) ===
-      // E=col14, B=col15, C=col16 — all in top half, no DIP crossing needed
+      // === INPUT PATH (row a + row b, left side) ===
+      bbAddPart('WIRE',[{row:'r+t',col:3},{row:'a',col:3}],{color:'#e53935'});   // VCC down
+      bbAddPart('SWITCH',[{row:'a',col:3},{row:'a',col:7}],{on:true});            // switch
+      bbAddPart('RESISTOR',[{row:'b',col:7},{row:'b',col:15}],{value:47000});     // 47k to base
+
+      // === TRANSISTOR (row d, center) ===
+      // E=col14, B=col15, C=col16
       bbAddPart('NPN',[{row:'d',col:14},{row:'d',col:15},{row:'d',col:16}]);
-      // Emitter to GND
-      bbAddPart('WIRE',[{row:'c',col:14},{row:'r-t',col:14}],{color:'#1e88e5'});
+      bbAddPart('WIRE',[{row:'e',col:14},{row:'r-t',col:14}],{color:'#1e88e5'}); // emitter to GND
 
-      // === OUTPUT (top-right, right to left into collector) ===
-      // VCC → 470Ω → LED → transistor collector
-      bbAddPart('WIRE',[{row:'r+t',col:24},{row:'a',col:24}],{color:'#e53935'});
-      bbAddPart('RESISTOR',[{row:'a',col:24},{row:'a',col:20}],{value:470});
-      bbAddPart('LED',[{row:'b',col:20},{row:'b',col:16}]);
+      // === OUTPUT PATH (row a + row c, right side) ===
+      bbAddPart('WIRE',[{row:'r+t',col:24},{row:'a',col:24}],{color:'#e53935'}); // VCC down
+      bbAddPart('RESISTOR',[{row:'a',col:24},{row:'a',col:20}],{value:470});      // 470 ohm
+      bbAddPart('LED',[{row:'c',col:20},{row:'c',col:16}]);                        // LED to collector
 
-      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>Everything is in the top half of the breadboard. Two paths from the + rail meet at the transistor (row d, cols 14\u201316) and exit to ground (blue wire, col 14):<br><br>\u2022 <b>Input (left):</b> switch (row a, cols 4\u20138) \u2192 47k\u03A9 resistor (row b, cols 8\u201315) \u2192 base (col 15). <b>Hover over the 47k\u03A9</b> \u2014 only ~0.18mA.<br><br>\u2022 <b>Output (right):</b> 470\u03A9 resistor (row a, cols 20\u201324) \u2192 LED (row b, cols 16\u201320) \u2192 collector (col 16). <b>Hover over the 470\u03A9</b> \u2014 ~15mA.<br><br>The output is <b>~100\u00D7</b> the input. The switch lets you prove the connection: <b>click the switch</b> to cut the tiny input current and watch the large output (and the LED) die instantly. A 0.18mA trickle was controlling a 15mA flood.');
+      bbRunSim(); bbDesc('<b>Transistor Amplifier \u2014 compare the two currents!</b><br><br>Each path has its own row on the breadboard, so you can trace them clearly:<br><br>\u2022 <b>Input (row b):</b> switch (row a, cols 3\u20137) \u2192 47k\u03A9 resistor (row b, cols 7\u201315) \u2192 straight into the transistor\u2019s base (col 15). <b>Hover over the 47k\u03A9</b> \u2014 only ~0.18mA.<br><br>\u2022 <b>Output (row a + row c):</b> 470\u03A9 resistor (row a, cols 20\u201324) \u2192 LED (row c, cols 16\u201320) \u2192 straight into the collector (col 16). <b>Hover over the 470\u03A9</b> \u2014 ~15mA.<br><br>Both paths meet at the transistor (row d) and exit to ground (blue wire, col 14). The output is <b>~100\u00D7</b> the input. <b>Click the switch</b> to cut the tiny input and watch the LED die \u2014 a 0.18mA trickle was controlling a 15mA flood.');
     }
+
 
     document.getElementById('bb-preset-led')?.addEventListener('click', bbPresetLED);
     document.getElementById('bb-preset-switch')?.addEventListener('click', bbPresetSwitch);
