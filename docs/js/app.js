@@ -4524,228 +4524,367 @@ function initCh3Vis() {
 // CH4: Temperature & Equipartition
 // =============================================================================
 function initCh4Vis() {
+  // =========================================================================
+  // INTERACTIVE 2: EQUIPARTITION IN ACTION
+  // =========================================================================
   const c = document.getElementById('vis-equipartition');
   if (!c) return;
   const { ctx, W, H } = setupCanvas(c);
 
   const tempSlider = document.getElementById('ep-temp');
-  let particles = [];
-  let running = false;
+  const ratioSlider = document.getElementById('ep-ratio');
+  let epParticles = [];
+  let epRunning = false;
+  let keHistory1 = [], keHistory2 = []; // running avg KE per type
 
-  function initParticles() {
+  // Layout: left = box, right = KE time series
+  const boxW = W * 0.52;
+  const plotL = boxW + 30, plotR = W - 15, plotT = 30, plotB = H - 30;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  function getRatio() { return parseInt(ratioSlider?.value || 4); }
+
+  function initEP() {
     const T = parseFloat(tempSlider?.value || 300);
-    const v0 = Math.sqrt(T / 100);
-    particles = [];
-    for (let i = 0; i < 100; i++) {
+    const ratio = getRatio();
+    const v0 = Math.sqrt(T / 80);
+    epParticles = [];
+    keHistory1 = [];
+    keHistory2 = [];
+
+    // Type 1: light (50 particles, mass 1)
+    for (let i = 0; i < 50; i++) {
       const angle = Math.random() * 2 * Math.PI;
-      const speed = v0 * (0.5 + Math.random());
-      particles.push({
-        x: 50 + Math.random() * (W - 100),
-        y: 50 + Math.random() * (H - 100),
-        vx: speed * Math.cos(angle),
-        vy: speed * Math.sin(angle),
-        r: 3
+      const speed = v0 * (0.3 + Math.random() * 1.4);
+      epParticles.push({
+        x: 5 + Math.random() * (boxW - 10),
+        y: 5 + Math.random() * (H - 10),
+        vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
+        r: 3, mass: 1, type: 0
+      });
+    }
+    // Type 2: heavy (30 particles, mass = ratio)
+    const v0h = v0 / Math.sqrt(ratio);
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const speed = v0h * (0.3 + Math.random() * 1.4);
+      epParticles.push({
+        x: 5 + Math.random() * (boxW - 10),
+        y: 5 + Math.random() * (H - 10),
+        vx: speed * Math.cos(angle), vy: speed * Math.sin(angle),
+        r: 3 + ratio * 0.5, mass: ratio, type: 1
       });
     }
   }
 
-  function stepParticles() {
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.x < p.r || p.x > W - p.r) { p.vx *= -1; p.x = Math.max(p.r, Math.min(W - p.r, p.x)); }
-      if (p.y < p.r || p.y > H - p.r) { p.vy *= -1; p.y = Math.max(p.r, Math.min(H - p.r, p.y)); }
+  function stepEP() {
+    const n = epParticles.length;
+    epParticles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < p.r) { p.vx = Math.abs(p.vx); p.x = p.r; }
+      if (p.x > boxW - p.r) { p.vx = -Math.abs(p.vx); p.x = boxW - p.r; }
+      if (p.y < p.r) { p.vy = Math.abs(p.vy); p.y = p.r; }
+      if (p.y > H - p.r) { p.vy = -Math.abs(p.vy); p.y = H - p.r; }
     });
+    // Elastic collisions
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const a = epParticles[i], b = epParticles[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist2 = dx * dx + dy * dy;
+        const minD = a.r + b.r;
+        if (dist2 < minD * minD && dist2 > 0) {
+          const dist = Math.sqrt(dist2);
+          const nx = dx / dist, ny = dy / dist;
+          const dvn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+          if (dvn > 0) {
+            const mSum = a.mass + b.mass;
+            const impulse = 2 * dvn / mSum;
+            a.vx -= impulse * b.mass * nx; a.vy -= impulse * b.mass * ny;
+            b.vx += impulse * a.mass * nx; b.vy += impulse * a.mass * ny;
+            const overlap = minD - dist;
+            a.x -= nx * overlap * b.mass / mSum; a.y -= ny * overlap * b.mass / mSum;
+            b.x += nx * overlap * a.mass / mSum; b.y += ny * overlap * a.mass / mSum;
+          }
+        }
+      }
+    }
+    // Track KE per type
+    let ke1 = 0, n1 = 0, ke2 = 0, n2 = 0;
+    epParticles.forEach(p => {
+      const ke = 0.5 * p.mass * (p.vx * p.vx + p.vy * p.vy);
+      if (p.type === 0) { ke1 += ke; n1++; } else { ke2 += ke; n2++; }
+    });
+    if (n1 > 0) keHistory1.push(ke1 / n1);
+    if (n2 > 0) keHistory2.push(ke2 / n2);
+    if (keHistory1.length > 400) keHistory1.shift();
+    if (keHistory2.length > 400) keHistory2.shift();
   }
 
-  function draw() {
+  function drawEP() {
     clearCanvas(ctx, W, H);
+    const ratio = getRatio();
 
-    ctx.strokeStyle = COLORS.axis;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, W - 2, H - 2);
+    // Box
+    ctx.strokeStyle = COLORS.axis; ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, boxW - 2, H - 2);
 
-    const speeds = particles.map(p => Math.sqrt(p.vx ** 2 + p.vy ** 2));
-    const maxSpeed = Math.max(...speeds) * 1.2;
-
-    particles.forEach((p, i) => {
-      const frac = speeds[i] / maxSpeed;
-      const r = Math.round(239 * frac + 79 * (1 - frac));
-      const g = Math.round(83 * frac + 195 * (1 - frac));
-      const b = Math.round(80 * frac + 247 * (1 - frac));
-      ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
-      ctx.fill();
+    // Particles
+    epParticles.forEach(p => {
+      ctx.fillStyle = p.type === 0 ? COLORS.blue : COLORS.red;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI); ctx.fill();
+      ctx.globalAlpha = 1;
     });
 
-    let totalKE = 0;
-    particles.forEach(p => { totalKE += 0.5 * (p.vx ** 2 + p.vy ** 2); });
-    const avgKE = totalKE / particles.length;
+    // Legend in box
+    ctx.fillStyle = COLORS.blue; ctx.font = FONT_SM; ctx.textAlign = 'left';
+    ctx.fillText('\u25CF Light (m)', 8, 16);
+    ctx.fillStyle = COLORS.red;
+    ctx.fillText('\u25CF Heavy (' + ratio + 'm)', 8, 32);
 
-    ctx.fillStyle = COLORS.text;
-    ctx.font = FONT;
-    ctx.textAlign = 'left';
-    const T = parseFloat(tempSlider?.value || 300);
-    ctx.fillText('T = ' + T + ' K', 10, 20);
-    ctx.fillText('\u27E8KE\u27E9 = ' + avgKE.toFixed(2) + ' (\u221D kT)', 10, 38);
-    ctx.fillText('Color: blue = slow, red = fast', 10, 56);
+    // ----- Right panel: KE time series -----
+    ctx.fillStyle = COLORS.text; ctx.font = FONT; ctx.textAlign = 'center';
+    ctx.fillText('\u27E8\u00BDmv\u00B2\u27E9 per particle vs time', plotL + plotW / 2, plotT - 10);
 
-    document.getElementById('ep-temp-val')?.replaceChildren(document.createTextNode(T.toString()));
+    drawAxes(ctx, plotL, plotT, plotW, plotH, { xLabel: 'Time', yLabel: '\u27E8KE\u27E9' });
+
+    if (keHistory1.length > 2) {
+      let maxKE = 1;
+      keHistory1.forEach(v => { if (v > maxKE) maxKE = v; });
+      keHistory2.forEach(v => { if (v > maxKE) maxKE = v; });
+      maxKE *= 1.2;
+
+      const nPts = keHistory1.length;
+
+      // Light type
+      ctx.strokeStyle = COLORS.blue; ctx.lineWidth = 2;
+      ctx.beginPath();
+      keHistory1.forEach((v, i) => {
+        const px = plotL + (i / nPts) * plotW;
+        const py = plotB - (v / maxKE) * plotH;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+
+      // Heavy type
+      ctx.strokeStyle = COLORS.red; ctx.lineWidth = 2;
+      ctx.beginPath();
+      keHistory2.forEach((v, i) => {
+        const px = plotL + (i / nPts) * plotW;
+        const py = plotB - (v / maxKE) * plotH;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+
+      // Current values
+      const cur1 = keHistory1[keHistory1.length - 1];
+      const cur2 = keHistory2[keHistory2.length - 1];
+      ctx.fillStyle = COLORS.blue; ctx.font = FONT_SM; ctx.textAlign = 'left';
+      ctx.fillText('Light \u27E8KE\u27E9 = ' + cur1.toFixed(2), plotL + 5, plotB + 18);
+      ctx.fillStyle = COLORS.red;
+      ctx.fillText('Heavy \u27E8KE\u27E9 = ' + cur2.toFixed(2), plotL + plotW / 2, plotB + 18);
+
+      // Equipartition prediction line (average of recent values)
+      if (keHistory1.length > 50) {
+        const avgAll = (cur1 + cur2) / 2;
+        const predY = plotB - (avgAll / maxKE) * plotH;
+        ctx.strokeStyle = COLORS.green; ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(plotL, predY); ctx.lineTo(plotR, predY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = COLORS.green; ctx.font = FONT_SM; ctx.textAlign = 'right';
+        ctx.fillText('Equal \u27E8KE\u27E9 (equipartition)', plotR, predY - 5);
+      }
+
+      document.getElementById('ep-ke-info')?.replaceChildren(
+        document.createTextNode('\u27E8KE\u27E9: light=' + cur1.toFixed(1) + ' heavy=' + cur2.toFixed(1))
+      );
+    }
+
+    document.getElementById('ep-temp-val')?.replaceChildren(document.createTextNode(tempSlider?.value || '300'));
+    document.getElementById('ep-ratio-val')?.replaceChildren(document.createTextNode(ratio.toString()));
   }
 
-  function animate() {
-    if (!running) return;
-    stepParticles();
-    draw();
-    activeAnimations['equipartition'] = requestAnimationFrame(animate);
+  function animateEP() {
+    if (!epRunning) return;
+    for (let i = 0; i < 2; i++) stepEP();
+    drawEP();
+    activeAnimations['equipartition'] = requestAnimationFrame(animateEP);
   }
-
-  tempSlider?.addEventListener('input', () => {
-    initParticles();
-    if (!running) draw();
-  });
 
   document.getElementById('ep-start')?.addEventListener('click', function () {
-    running = !running;
-    this.textContent = running ? 'Pause' : 'Start';
-    if (running) animate();
+    epRunning = !epRunning;
+    this.textContent = epRunning ? '\u23F8 Pause' : '\u25B6 Start';
+    if (epRunning) animateEP();
   });
 
-  initParticles();
-  draw();
+  document.getElementById('ep-reset')?.addEventListener('click', () => {
+    epRunning = false;
+    const btn = document.getElementById('ep-start');
+    if (btn) btn.textContent = '\u25B6 Start';
+    if (activeAnimations['equipartition']) cancelAnimationFrame(activeAnimations['equipartition']);
+    initEP();
+    drawEP();
+  });
 
-  // ----- Heat Capacity of H2 vs Temperature -----
+  [tempSlider, ratioSlider].forEach(sl => {
+    sl?.addEventListener('input', () => {
+      if (!epRunning) { initEP(); drawEP(); }
+    });
+  });
+
+  initEP();
+  drawEP();
+
+  // ----- Heat Capacity vs Temperature (multi-molecule) -----
   const cHC = document.getElementById('vis-heatcap');
   if (cHC) {
   const hc = setupCanvas(cHC);
   const ctxHC = hc.ctx, WHC = hc.W, HHC = hc.H;
+  const hcMolGroup = document.getElementById('hc-molecule');
+  const hcShowAll = document.getElementById('hc-show-all');
+
+  // Molecule data: {name, thetaRot, thetaVib, color}
+  const molData = {
+    H2:  { name: 'H\u2082',  tRot: 85,   tVib: 6300, color: COLORS.blue },
+    HCl: { name: 'HCl',      tRot: 15,   tVib: 4300, color: COLORS.green },
+    N2:  { name: 'N\u2082',  tRot: 2.9,  tVib: 3390, color: COLORS.orange },
+    O2:  { name: 'O\u2082',  tRot: 2.1,  tVib: 2270, color: COLORS.red },
+    Cl2: { name: 'Cl\u2082', tRot: 0.35, tVib: 810,  color: COLORS.purple },
+  };
+
+  let hcSelected = 'H2';
+
+  if (hcMolGroup) {
+    hcMolGroup.querySelectorAll('.control-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        hcMolGroup.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        hcSelected = btn.dataset.value;
+        drawHeatCap();
+      });
+    });
+  }
+  hcShowAll?.addEventListener('change', drawHeatCap);
+
+  function einsteinCV(theta, T) {
+    const u = theta / T;
+    if (u > 50) return 0;
+    if (u < 0.001) return 1;
+    const eu = Math.exp(u);
+    return (u * u * eu) / ((eu - 1) * (eu - 1));
+  }
+
+  function computeCV(tRot, tVib, T) {
+    return 1.5 + 2 * einsteinCV(tRot, T) + 2 * einsteinCV(tVib, T);
+  }
 
   function drawHeatCap() {
     clearCanvas(ctxHC, WHC, HHC);
 
-    const ox = 65, xAxis = HHC - 50;
+    const ox = 60, xAxis = HHC - 55;
     const plotW = WHC - ox - 30;
     const plotH = xAxis - 25;
-
-    // Temperature range: 10 K to 10000 K (log scale)
-    const logTmin = 1, logTmax = 4; // log10(T)
-    const cvMax = 4.5; // Cv/NkB max displayed
-
-    drawAxes(ctxHC, ox, 15, plotW, xAxis - 15, { xLabel: 'Temperature T (K)', yLabel: 'C_V / Nk_B' });
-
-    // Characteristic temperatures for H2
-    const thetaRot = 85;    // K
-    const thetaVib = 6300;  // K
-
-    // Einstein model for rotation (approximate; 2 rotational DoF for diatomic)
-    // C_rot/NkB = 2 * (theta/2T)^2 * exp(theta/2T) / (exp(theta/2T) - 1)^2
-    // Actually for rotation of H2, use the single-mode form per DoF
-    // Each quadratic DoF contributes: (u^2 e^u)/(e^u - 1)^2 where u = theta/T
-    function einsteinCV(theta, T) {
-      const u = theta / T;
-      if (u > 50) return 0;
-      if (u < 0.001) return 1;
-      const eu = Math.exp(u);
-      return (u * u * eu) / ((eu - 1) * (eu - 1));
-    }
-
-    // Draw the quantum curve
-    // Translation: always 3/2 (3 translational DoF)
-    // Rotation: 2 rotational DoF, each contributing einsteinCV(thetaRot, T)
-    // Vibration: 2 vibrational DoF (1 KE + 1 PE), each contributing einsteinCV(thetaVib, T)
-    const nPts = 500;
-    const cvVals = [];
-    for (let i = 0; i < nPts; i++) {
-      const logT = logTmin + (logTmax - logTmin) * i / nPts;
-      const T = Math.pow(10, logT);
-      const cvTrans = 1.5;
-      const cvRot = einsteinCV(thetaRot, T); // each rotational DoF
-      const cvVibKE = einsteinCV(thetaVib, T);
-      // Total: 3/2 + 2*(rot contribution per DoF) + 2*(vib contribution per DoF)
-      // For diatomic: 2 rotational DoF, 1 vibrational mode (2 DoF: KE + PE)
-      const cv = cvTrans + 2 * cvRot + 2 * cvVibKE;
-      cvVals.push(cv);
-    }
-
+    const logTmin = 0, logTmax = 4.2;
+    const cvMax = 4.2;
     const yScale = plotH / cvMax;
     const xScale = plotW / (logTmax - logTmin);
 
-    // Plateau guidelines
-    const plateaus = [
-      { val: 1.5, label: '3/2 (translation)', color: COLORS.textDim },
-      { val: 2.5, label: '5/2 (+ rotation)', color: COLORS.textDim },
-      { val: 3.5, label: '7/2 (+ vibration)', color: COLORS.textDim },
-    ];
+    drawAxes(ctxHC, ox, 15, plotW, xAxis - 15, { xLabel: 'Temperature T (K)', yLabel: 'C_V / Nk_B' });
 
-    plateaus.forEach(pl => {
-      const py = xAxis - pl.val * yScale;
-      ctxHC.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctxHC.lineWidth = 1;
+    // Plateau guidelines
+    [{ v: 1.5, l: '3/2 (trans)' }, { v: 2.5, l: '5/2 (+rot)' }, { v: 3.5, l: '7/2 (+vib)' }].forEach(pl => {
+      const py = xAxis - pl.v * yScale;
+      ctxHC.strokeStyle = 'rgba(255,255,255,0.1)'; ctxHC.lineWidth = 1;
       ctxHC.setLineDash([4, 4]);
       ctxHC.beginPath(); ctxHC.moveTo(ox, py); ctxHC.lineTo(ox + plotW, py); ctxHC.stroke();
       ctxHC.setLineDash([]);
-      ctxHC.fillStyle = pl.color;
-      ctxHC.font = '10px Inter, system-ui, sans-serif';
-      ctxHC.textAlign = 'left';
-      ctxHC.fillText(pl.label, ox + plotW + 2, py + 4);
+      ctxHC.fillStyle = COLORS.textDim; ctxHC.font = FONT_SM; ctxHC.textAlign = 'right';
+      ctxHC.fillText(pl.l, ox - 5 + plotW + 28, py + 4);
     });
 
-    // Mark transition temperatures
-    const transitions = [
-      { T: thetaRot, label: '\u03B8_rot \u2248 85 K', color: COLORS.orange },
-      { T: thetaVib, label: '\u03B8_vib \u2248 6300 K', color: COLORS.purple },
-    ];
-    transitions.forEach(tr => {
+    const showAll = hcShowAll?.checked;
+    const molsToShow = showAll ? Object.keys(molData) : [hcSelected];
+
+    const nPts = 500;
+    molsToShow.forEach(key => {
+      const mol = molData[key];
+      const isActive = (key === hcSelected);
+      ctxHC.strokeStyle = mol.color;
+      ctxHC.lineWidth = isActive ? 3 : 1.5;
+      ctxHC.globalAlpha = isActive ? 1 : 0.5;
+      ctxHC.beginPath();
+      for (let i = 0; i < nPts; i++) {
+        const logT = logTmin + (logTmax - logTmin) * i / nPts;
+        const T = Math.pow(10, logT);
+        const cv = computeCV(mol.tRot, mol.tVib, T);
+        const px = ox + (logT - logTmin) * xScale;
+        const py = xAxis - cv * yScale;
+        i === 0 ? ctxHC.moveTo(px, py) : ctxHC.lineTo(px, py);
+      }
+      ctxHC.stroke();
+      ctxHC.globalAlpha = 1;
+
+      // Label at right edge
+      const endCV = computeCV(mol.tRot, mol.tVib, Math.pow(10, logTmax));
+      const ly = xAxis - endCV * yScale;
+      ctxHC.fillStyle = mol.color; ctxHC.font = FONT_SM; ctxHC.textAlign = 'left';
+      if (showAll) ctxHC.fillText(mol.name, ox + plotW + 3, ly + 4);
+    });
+
+    // Mark θ_rot and θ_vib for selected molecule
+    const sel = molData[hcSelected];
+    [{ T: sel.tRot, label: '\u03B8_rot=' + sel.tRot + 'K', color: COLORS.orange },
+     { T: sel.tVib, label: '\u03B8_vib=' + sel.tVib + 'K', color: COLORS.purple }].forEach(tr => {
+      if (tr.T <= 0) return;
       const logT = Math.log10(tr.T);
       const px = ox + (logT - logTmin) * xScale;
       if (px > ox && px < ox + plotW) {
-        ctxHC.strokeStyle = tr.color;
-        ctxHC.lineWidth = 1;
+        ctxHC.strokeStyle = tr.color; ctxHC.lineWidth = 1;
         ctxHC.setLineDash([3, 3]);
         ctxHC.beginPath(); ctxHC.moveTo(px, 15); ctxHC.lineTo(px, xAxis); ctxHC.stroke();
         ctxHC.setLineDash([]);
-        ctxHC.fillStyle = tr.color;
-        ctxHC.font = '10px Inter, system-ui, sans-serif';
-        ctxHC.textAlign = 'center';
-        ctxHC.fillText(tr.label, px, xAxis + 12);
+        ctxHC.fillStyle = tr.color; ctxHC.font = FONT_SM; ctxHC.textAlign = 'center';
+        ctxHC.fillText(tr.label, px, xAxis + 14);
       }
     });
 
-    // Draw the curve
-    ctxHC.strokeStyle = COLORS.blue;
-    ctxHC.lineWidth = 2.5;
-    ctxHC.beginPath();
-    for (let i = 0; i < nPts; i++) {
-      const logT = logTmin + (logTmax - logTmin) * i / nPts;
-      const px = ox + (logT - logTmin) * xScale;
-      const py = xAxis - cvVals[i] * yScale;
-      i === 0 ? ctxHC.moveTo(px, py) : ctxHC.lineTo(px, py);
-    }
-    ctxHC.stroke();
-
-    // X-axis tick labels (log scale)
-    ctxHC.fillStyle = COLORS.textDim;
-    ctxHC.font = '10px Inter, system-ui, sans-serif';
-    ctxHC.textAlign = 'center';
-    [10, 100, 1000, 10000].forEach(T => {
+    // X-axis ticks (log)
+    ctxHC.fillStyle = COLORS.textDim; ctxHC.font = FONT_SM; ctxHC.textAlign = 'center';
+    [1, 10, 100, 1000, 10000].forEach(T => {
       const logT = Math.log10(T);
       const px = ox + (logT - logTmin) * xScale;
-      ctxHC.fillText(T.toString(), px, xAxis + 24);
+      if (px >= ox) ctxHC.fillText(T.toString(), px, xAxis + 28);
     });
 
-    // Y-axis tick labels
+    // Y-axis ticks
     ctxHC.textAlign = 'right';
-    for (let cv = 0; cv <= 4; cv += 0.5) {
+    for (let cv = 0; cv <= 4; cv += 1) {
       const py = xAxis - cv * yScale;
-      ctxHC.fillText(cv.toFixed(1), ox - 5, py + 4);
+      ctxHC.fillText(cv.toFixed(0), ox - 5, py + 4);
     }
 
     // Title
-    ctxHC.fillStyle = COLORS.text;
-    ctxHC.font = FONT;
-    ctxHC.textAlign = 'left';
-    ctxHC.fillText('Heat capacity of H\u2082: quantum freezeout of degrees of freedom', ox + 5, 28);
+    ctxHC.fillStyle = COLORS.text; ctxHC.font = FONT; ctxHC.textAlign = 'left';
+    ctxHC.fillText('Heat capacity: ' + sel.name + ' (\u03B8_rot=' + sel.tRot + 'K, \u03B8_vib=' + sel.tVib + 'K)', ox + 5, 28);
+
+    // Room temperature marker
+    const rtLogT = Math.log10(300);
+    const rtPx = ox + (rtLogT - logTmin) * xScale;
+    const rtCV = computeCV(sel.tRot, sel.tVib, 300);
+    ctxHC.strokeStyle = COLORS.yellow; ctxHC.lineWidth = 1;
+    ctxHC.setLineDash([2, 2]);
+    ctxHC.beginPath(); ctxHC.moveTo(rtPx, 15); ctxHC.lineTo(rtPx, xAxis); ctxHC.stroke();
+    ctxHC.setLineDash([]);
+    ctxHC.fillStyle = COLORS.yellow; ctxHC.font = FONT_SM; ctxHC.textAlign = 'center';
+    ctxHC.fillText('300K', rtPx, 14);
+    ctxHC.beginPath(); ctxHC.arc(rtPx, xAxis - rtCV * yScale, 4, 0, 2 * Math.PI);
+    ctxHC.fillStyle = COLORS.yellow; ctxHC.fill();
+
+    document.getElementById('hc-info')?.replaceChildren(
+      document.createTextNode('C_V(300K)/' + 'Nk_B = ' + rtCV.toFixed(2))
+    );
   }
 
   drawHeatCap();

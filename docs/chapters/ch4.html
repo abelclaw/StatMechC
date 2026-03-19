@@ -194,15 +194,18 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <p>The point of the <span class="tooltip-trigger">equipartition theorem<span class="tooltip-content">Each independent quadratic degree of freedom contributes $\frac{1}{2}k_BT$ to the average energy; each linear degree of freedom contributes $k_BT$.</span></span> is that $k_BT$ characterizes the energy in each mode independent of the other modes. So $\frac{3}{2}k_BT$ is always the average kinetic energy of a non-relativistic molecule in 3D, and $3k_BT$ is always the average kinetic energy of a relativistic (massless) particle in 3D. Equipartition holds if the degrees of freedom are independent, meaning there are no terms in the energy of the form $p_1 p_2$ that couple different degrees of freedom, and the energy is either all quadratic or all linear.</p>
 
-<!-- INTERACTIVE: Gas particles -->
+<!-- INTERACTIVE: Equipartition Demo -->
 <div class="visualization">
-  <div class="figure-label">Interactive 2: Ideal Gas — Temperature and Speed</div>
-  <p class="vis-caption">Gas particles move with speeds determined by temperature. Higher temperature means faster average motion.</p>
-  <div class="vis-canvas-wrap"><canvas id="vis-equipartition" width="600" height="300"></canvas></div>
+  <div class="figure-label">Interactive 2: Equipartition in Action</div>
+  <p class="vis-caption">Two types of particles (light blue, heavy red) collide elastically. Despite their different masses, the average kinetic energy $\langle\frac{1}{2}mv^2\rangle$ converges to the same value for both types &mdash; this is the equipartition theorem.</p>
   <div class="vis-controls">
-    <label>Temperature: <input type="range" id="ep-temp" min="50" max="1000" step="10" value="300"> <span class="value-display" id="ep-temp-val">300</span> K</label>
-    <button id="ep-start">Start</button>
+    <label>Mass ratio <i>m</i><sub>2</sub>/<i>m</i><sub>1</sub>: <input type="range" id="ep-ratio" min="1" max="10" step="1" value="4"><span class="slider-value" id="ep-ratio-val">4</span></label>
+    <label>Temperature: <input type="range" id="ep-temp" min="50" max="1000" step="10" value="300"><span class="slider-value" id="ep-temp-val">300</span> K</label>
+    <button id="ep-start" class="control-btn">&#9654; Start</button>
+    <button id="ep-reset" class="control-btn">Reset</button>
+    <span class="value-display" id="ep-ke-info"></span>
   </div>
+  <div class="vis-canvas-wrap"><canvas id="vis-equipartition" width="700" height="350"></canvas></div>
 </div>
 
 <!-- Interactive: Ideal Gas Kinetic Theory Simulator -->
@@ -301,10 +304,22 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <div class="equation">$$\epsilon_{\text{rot}} = hc\,\tilde{\nu}_{\text{rot}} = 7.4\;\text{meV}, \quad \frac{\epsilon_{\text{rot}}}{k_B} = 85\;\text{K}$$<span class="eq-number">(47)</span></div>
 
-<div class="interactive-container">
-  <div class="figure-label">Interactive 5: Heat Capacity of H<sub>2</sub> vs Temperature</div>
-  <p class="vis-caption">Heat capacity of a diatomic gas showing quantum freeze-out of rotational and vibrational modes.</p>
-  <canvas id="vis-heatcap" width="600" height="300"></canvas>
+<div class="visualization">
+  <div class="figure-label">Interactive 5: Heat Capacity vs Temperature</div>
+  <p class="vis-caption">Heat capacity of a diatomic gas showing quantum freeze-out. At low $T$, only translation contributes ($C_V = \frac{3}{2}Nk_B$). Rotation unfreezes near $\theta_\text{rot}$, vibration near $\theta_\text{vib}$. Heavier molecules have lower energy scales.</p>
+  <div class="vis-controls">
+    <span>Molecule:</span>
+    <div class="button-group" id="hc-molecule">
+      <button class="control-btn active" data-value="H2" data-trot="85" data-tvib="6300">H&#x2082;</button>
+      <button class="control-btn" data-value="HCl" data-trot="15" data-tvib="4300">HCl</button>
+      <button class="control-btn" data-value="N2" data-trot="2.9" data-tvib="3390">N&#x2082;</button>
+      <button class="control-btn" data-value="O2" data-trot="2.1" data-tvib="2270">O&#x2082;</button>
+      <button class="control-btn" data-value="Cl2" data-trot="0.35" data-tvib="810">Cl&#x2082;</button>
+    </div>
+    <label><input type="checkbox" id="hc-show-all"> Show all</label>
+    <span class="value-display" id="hc-info"></span>
+  </div>
+  <div class="vis-canvas-wrap"><canvas id="vis-heatcap" width="700" height="320"></canvas></div>
 </div>
 
 <figure>
