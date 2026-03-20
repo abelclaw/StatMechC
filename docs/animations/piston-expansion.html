@@ -38,7 +38,7 @@
   <button id="btnExpand" onclick="startExpansion()">Expand</button>
   <button id="btnReset" onclick="resetSim()">Reset</button>
   <span style="color:#555">|</span>
-  <label>Speed: <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1"></label>
+  <label>Speed: <input type="range" id="spd" min="0.2" max="3" step="0.1" value="0.5"></label>
 </div>
 <div class="info">
   Isothermal: heat flows in from the bath, keeping T constant; maximum work extracted.
@@ -52,86 +52,73 @@ const W = 900, H = 550;
 /* ---- PHYSICS CONSTANTS ---- */
 const GAMMA = 5/3;
 const V1 = 1, V2 = 3;
-const T0 = 1, P0 = T0 / V1; // P = NkT/V with N=1,k=1
-const NUM_PARTICLES = 40;
+const T0 = 1, P0 = T0 / V1;
+const NUM_PARTICLES = 160;
+const PARTICLE_R = 2.5;
+const BASE_SPEED = 5.5;
+const PISTON_MASS = 500;
+const PISTON_DAMPING = 0.96;
 
 /* ---- STATE ---- */
-let mode = 'isothermal'; // 'isothermal','adiabatic','free'
+let mode = 'isothermal';
 let expanding = false;
 let done = false;
-let progress = 0; // 0..1
+let progress = 0;
 let started = false;
 let speed = 1;
-let pvPath = []; // [{v,p}]
+let pvPath = [];
 let particles = [];
+
+/* Piston physics state */
+let pistonY, pistonVy;
+let extForce;
+let extForceInitial, extForceFinal;
+let expansionFrac = 0;
+let targetSpeedSq;
 
 /* Derived state at current progress */
 let curV, curP, curT, curW, curDS;
 
 /* ---- GEOMETRY ---- */
-// Right side: apparatus
 const CYL = {
-  cx: 670, // center x of cylinder
-  w: 160,  // inner width
-  wallThick: 14,
-  topY: 60,
-  baseY: 460,
-  baseH: 20
+  cx: 670, w: 160, wallThick: 14,
+  topY: 60, baseY: 460, baseH: 20
 };
-// Piston moves between pistonMinY (V=V2, expanded) and pistonMaxY (V=V1, compressed)
-// Total interior height = baseY - topY = 400. V1:V2 = 1:3, so gas at V1 = 1/3 of full.
-const cylInterior = CYL.baseY - CYL.topY; // 400px
-const gasHeightV1 = cylInterior / 3;       // ~133px for V1
-const gasHeightV2 = cylInterior;           // 400px for V2
-const pistonMaxY = CYL.baseY - gasHeightV1; // V1: piston low, small gas volume below
-const pistonMinY = CYL.topY;                // V2: piston at top, full gas volume
+const cylInterior = CYL.baseY - CYL.topY;
+const gasHeightV1 = cylInterior / 3;
+const gasHeightV2 = cylInterior;
+const pistonMaxY = CYL.baseY - gasHeightV1; // V1: piston low, small gas volume
+const pistonMinY = CYL.topY;                // V2: piston at top, full volume
 const pistonH = 16;
 const rodW = 10;
-
-// Weight block
 const weightW = 60, weightH = 40;
 
-// PV diagram area
-const PV = {
-  x: 30, y: 40, w: 360, h: 280
-};
+const PV = { x: 30, y: 40, w: 360, h: 280 };
+const ST = { x: 30, y: 350 };
 
-// State readout area
-const ST = {
-  x: 30, y: 350
-};
+/* ---- UTILITY ---- */
+function currentGasHeight() {
+  return CYL.baseY - (pistonY + pistonH);
+}
 
-/* ---- PARTICLE SYSTEM ---- */
-function createParticles() {
-  particles = [];
-  const pistonY = getPistonY(0);
-  const left = CYL.cx - CYL.w/2 + 6;
-  const right = CYL.cx + CYL.w/2 - 6;
-  const top = pistonY + pistonH + 6;
-  const bot = CYL.baseY - 6;
-  for (let i = 0; i < NUM_PARTICLES; i++) {
-    particles.push({
-      x: left + Math.random() * (right - left),
-      y: top + Math.random() * (bot - top),
-      vx: (Math.random() - 0.5) * 3,
-      vy: (Math.random() - 0.5) * 3,
-      r: 4 + Math.random() * 2
-    });
-  }
+function calcEqForce(gasH, spdSq) {
+  // 2D kinetic theory: force on piston = N * m * <vy^2> / h
+  // With equipartition <vy^2> = spdSq / 2
+  if (gasH < 5) gasH = 5;
+  return NUM_PARTICLES * spdSq / (2 * gasH);
+}
+
+function measureSpeedSq() {
+  let sum = 0;
+  for (let p of particles) sum += p.vx * p.vx + p.vy * p.vy;
+  return particles.length > 0 ? sum / particles.length : BASE_SPEED * BASE_SPEED;
 }
 
 function getPistonY(prog) {
-  // prog=0 -> pistonMaxY (V1), prog=1 -> pistonMinY (V2)
   return pistonMaxY + (pistonMinY - pistonMaxY) * prog;
 }
 
-function getParticleSpeed(temp) {
-  // Speed proportional to sqrt(T)
-  return 2.5 * Math.sqrt(temp / T0);
-}
-
 function tempColor(t) {
-  // t=1 -> warm red/orange, t<1 -> shift toward blue
   const ratio = Math.max(0, Math.min(1, t / T0));
   const r = Math.round(60 + 195 * ratio);
   const g = Math.round(60 + 80 * ratio);
@@ -139,111 +126,194 @@ function tempColor(t) {
   return `rgb(${r},${g},${b})`;
 }
 
-function updateParticles(dt) {
-  const pistonY = (mode === 'free' && expanding) ? pistonMaxY : getPistonY(progress);
-  const left = CYL.cx - CYL.w/2 + 4;
-  const right = CYL.cx + CYL.w/2 - 4;
-  let top, bot;
-
-  if (mode === 'free') {
-    if (expanding || done) {
-      // Gas fills entire cylinder after partition removed
-      top = CYL.topY + 4;
-      bot = CYL.baseY - 4;
-    } else {
-      top = pistonY + pistonH + 4;
-      bot = CYL.baseY - 4;
-    }
-  } else {
-    top = pistonY + pistonH + 4;
-    bot = CYL.baseY - 4;
+/* ---- PARTICLE SYSTEM ---- */
+function createParticles() {
+  particles = [];
+  const left = CYL.cx - CYL.w / 2 + PARTICLE_R + 3;
+  const right = CYL.cx + CYL.w / 2 - PARTICLE_R - 3;
+  const top = pistonY + pistonH + PARTICLE_R + 3;
+  const bot = CYL.baseY - PARTICLE_R - 3;
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = BASE_SPEED * (0.5 + Math.random());
+    particles.push({
+      x: left + Math.random() * (right - left),
+      y: top + Math.random() * (bot - top),
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      r: PARTICLE_R + (Math.random() - 0.5) * 0.8
+    });
   }
-
-  const spd = getParticleSpeed(curT);
-
-  for (let p of particles) {
-    // Scale velocities to match temperature
-    const mag = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
-    if (mag > 0.01) {
-      const desired = spd * (0.7 + 0.6 * Math.random());
-      const blend = 0.05;
-      const newMag = mag * (1 - blend) + desired * blend;
-      p.vx *= newMag / mag;
-      p.vy *= newMag / mag;
-    } else {
-      p.vx = (Math.random() - 0.5) * spd * 2;
-      p.vy = (Math.random() - 0.5) * spd * 2;
-    }
-
-    p.x += p.vx * dt * 60;
-    p.y += p.vy * dt * 60;
-
-    // Bounce off walls
-    if (p.x - p.r < left) { p.x = left + p.r; p.vx = Math.abs(p.vx); }
-    if (p.x + p.r > right) { p.x = right - p.r; p.vx = -Math.abs(p.vx); }
-    if (p.y - p.r < top) { p.y = top + p.r; p.vy = Math.abs(p.vy); }
-    if (p.y + p.r > bot) { p.y = bot - p.r; p.vy = -Math.abs(p.vy); }
-  }
+  targetSpeedSq = BASE_SPEED * BASE_SPEED;
 }
 
-/* ---- THERMODYNAMICS ---- */
+/* ---- THERMODYNAMICS (analytical, for readout & PV curve) ---- */
 function computeState(prog) {
   const v = V1 + (V2 - V1) * prog;
   let T, P, Wk, dS;
-
   if (mode === 'isothermal') {
-    T = T0;
-    P = T0 / v;
+    T = T0; P = T0 / v;
     Wk = T0 * Math.log(v / V1);
     dS = Math.log(v / V1);
   } else if (mode === 'adiabatic') {
-    // TV^(gamma-1) = const => T = T0 * (V1/v)^(gamma-1)
     const gm1 = GAMMA - 1;
     T = T0 * Math.pow(V1 / v, gm1);
     P = P0 * Math.pow(V1 / v, GAMMA);
-    // W = (P1V1 - P2V2) / (gamma-1)
     Wk = (P0 * V1 - P * v) / gm1;
     dS = 0;
-  } else { // free
-    T = T0;
-    P = T0 / v; // final equilibrium P, but no intermediate states on PV curve
-    Wk = 0;
+  } else {
+    T = T0; P = T0 / v; Wk = 0;
     dS = Math.log(v / V1);
   }
-
   return { v, P, T, Wk, dS };
 }
 
 function buildPVPath() {
   pvPath = [];
   if (mode === 'free') {
-    // Just initial and final points, connected by a dashed horizontal?
-    // Actually: initial point (V1,P0), then instant jump to (V2, P0*V1/V2)
-    // It's typically shown as a dotted line since the intermediate states are undefined
     pvPath.push({ v: V1, p: P0 });
     pvPath.push({ v: V2, p: T0 / V2 });
+  }
+}
+
+/* ---- PHYSICS ENGINE ---- */
+function updatePhysics(dt) {
+  if (mode === 'free') { updatePhysicsFree(dt); return; }
+
+  const timeStep = Math.min(dt * 60, 2.5);
+
+  // Advance expansion: smoothly reduce external force
+  if (expanding) {
+    expansionFrac += dt * speed * 0.35;
+    if (expansionFrac >= 1) { expansionFrac = 1; expanding = false; done = true; }
+    const t = expansionFrac;
+    const eased = t * t * (3 - 2 * t); // smoothstep
+    extForce = extForceInitial + (extForceFinal - extForceInitial) * eased;
+  }
+
+  // Thermostat target
+  if (mode === 'isothermal') {
+    targetSpeedSq = BASE_SPEED * BASE_SPEED;
+  } else if (mode === 'adiabatic') {
+    // Target T from 3D adiabatic relation at current volume
+    const h = currentGasHeight();
+    const frac = (h - gasHeightV1) / (gasHeightV2 - gasHeightV1);
+    const currentV = V1 + (V2 - V1) * Math.max(0, Math.min(1, frac));
+    const Tcur = T0 * Math.pow(V1 / Math.max(V1, currentV), GAMMA - 1);
+    targetSpeedSq = BASE_SPEED * BASE_SPEED * Tcur / T0;
+  }
+
+  const left = CYL.cx - CYL.w / 2 + 2;
+  const right = CYL.cx + CYL.w / 2 - 2;
+  const bot = CYL.baseY - 2;
+
+  let totalImpulse = 0;
+
+  for (let p of particles) {
+    p.x += p.vx * timeStep;
+    p.y += p.vy * timeStep;
+
+    // Wall bounces
+    if (p.x - p.r < left)  { p.x = left + p.r;  p.vx = Math.abs(p.vx); }
+    if (p.x + p.r > right) { p.x = right - p.r;  p.vx = -Math.abs(p.vx); }
+    if (p.y + p.r > bot)   { p.y = bot - p.r;    p.vy = -Math.abs(p.vy); }
+
+    // Piston collision: piston bottom face
+    const pistonBot = pistonY + pistonH;
+    if (p.y - p.r < pistonBot) {
+      if (p.vy < pistonVy) {
+        // Elastic collision with heavy piston
+        const relVy = p.vy - pistonVy;
+        p.vy = -relVy + pistonVy;
+        totalImpulse += 2 * Math.abs(relVy);
+      }
+      p.y = pistonBot + p.r + 0.5;
+    }
+  }
+
+  // Gentle thermostat: rescale velocities toward target
+  const currentSpdSq = measureSpeedSq();
+  if (currentSpdSq > 0.1) {
+    const ratio = Math.sqrt(targetSpeedSq / currentSpdSq);
+    const blend = 0.04;
+    const scale = 1 + (ratio - 1) * blend;
+    for (let p of particles) { p.vx *= scale; p.vy *= scale; }
+  }
+
+  // Piston dynamics: gas impulse pushes up, external force (weight) pushes down
+  const gasForce = totalImpulse / Math.max(timeStep, 0.3);
+  const netDownForce = extForce - gasForce;
+  const dampForce = -pistonVy * 4;
+
+  pistonVy += (netDownForce + dampForce) / PISTON_MASS * timeStep;
+  pistonVy *= PISTON_DAMPING;
+  pistonY += pistonVy * timeStep;
+
+  // Clamp piston within cylinder
+  if (pistonY < pistonMinY) { pistonY = pistonMinY; pistonVy = Math.max(0, pistonVy); }
+  if (pistonY > pistonMaxY) { pistonY = pistonMaxY; pistonVy = Math.min(0, pistonVy); }
+
+  // Derive progress from actual piston position
+  progress = (pistonY - pistonMaxY) / (pistonMinY - pistonMaxY);
+  progress = Math.max(0, Math.min(1, progress));
+
+  // Build PV path from analytical curve at current progress
+  if (expanding || done) {
+    const st = computeState(progress);
+    if (pvPath.length === 0 || Math.abs(st.v - pvPath[pvPath.length - 1].v) > 0.008) {
+      pvPath.push({ v: st.v, p: st.P });
+    }
+  }
+}
+
+function updatePhysicsFree(dt) {
+  const timeStep = Math.min(dt * 60, 2.5);
+  const left = CYL.cx - CYL.w / 2 + 2;
+  const right = CYL.cx + CYL.w / 2 - 2;
+  const bot = CYL.baseY - 2;
+  const top = (expanding || done) ? CYL.topY + 2 : (pistonY + pistonH + 2);
+
+  for (let p of particles) {
+    p.x += p.vx * timeStep;
+    p.y += p.vy * timeStep;
+    if (p.x - p.r < left)  { p.x = left + p.r;  p.vx = Math.abs(p.vx); }
+    if (p.x + p.r > right) { p.x = right - p.r;  p.vx = -Math.abs(p.vx); }
+    if (p.y - p.r < top)   { p.y = top + p.r;    p.vy = Math.abs(p.vy); }
+    if (p.y + p.r > bot)   { p.y = bot - p.r;    p.vy = -Math.abs(p.vy); }
+  }
+
+  // T stays constant in free expansion
+  const currentSpdSq = measureSpeedSq();
+  if (currentSpdSq > 0.1) {
+    const ratio = Math.sqrt(BASE_SPEED * BASE_SPEED / currentSpdSq);
+    const blend = 0.03;
+    const scale = 1 + (ratio - 1) * blend;
+    for (let p of particles) { p.vx *= scale; p.vy *= scale; }
+  }
+
+  if (expanding) {
+    progress = 1;
+    expanding = false;
+    done = true;
+    buildPVPath();
   }
 }
 
 /* ---- DRAWING ---- */
 function drawPVDiagram() {
   const { x, y, w, h } = PV;
-
-  // Background
   X.fillStyle = '#222226';
   X.fillRect(x - 5, y - 15, w + 30, h + 45);
   X.strokeStyle = '#555';
   X.lineWidth = 1;
   X.strokeRect(x - 5, y - 15, w + 30, h + 45);
 
-  // Axes
   X.strokeStyle = '#888';
   X.lineWidth = 1.5;
   X.beginPath();
   X.moveTo(x, y); X.lineTo(x, y + h); X.lineTo(x + w, y + h);
   X.stroke();
 
-  // Labels
   X.fillStyle = '#aaa';
   X.font = '13px Georgia';
   X.textAlign = 'center';
@@ -254,7 +324,6 @@ function drawPVDiagram() {
   X.fillText('P', 0, 0);
   X.restore();
 
-  // Tick marks
   X.font = '10px Georgia';
   X.fillStyle = '#777';
   const vScale = w / (V2 * 1.15);
@@ -276,7 +345,6 @@ function drawPVDiagram() {
   // Reference curves (faint)
   X.setLineDash([4, 4]);
   X.lineWidth = 1;
-  // Isothermal reference
   X.strokeStyle = 'rgba(255,140,60,0.25)';
   X.beginPath();
   for (let i = 0; i <= 100; i++) {
@@ -287,7 +355,6 @@ function drawPVDiagram() {
     i === 0 ? X.moveTo(px, py) : X.lineTo(px, py);
   }
   X.stroke();
-  // Adiabatic reference
   X.strokeStyle = 'rgba(100,160,255,0.25)';
   X.beginPath();
   for (let i = 0; i <= 100; i++) {
@@ -311,7 +378,6 @@ function drawPVDiagram() {
     X.lineWidth = 2.5;
 
     if (mode === 'free') {
-      // Dashed line for undefined intermediate states
       X.setLineDash([6, 6]);
       X.beginPath();
       X.moveTo(x + pvPath[0].v * vScale, y + h - pvPath[0].p * pScale);
@@ -320,7 +386,6 @@ function drawPVDiagram() {
       }
       X.stroke();
       X.setLineDash([]);
-      // Dots at endpoints
       for (let pt of pvPath) {
         X.beginPath();
         X.arc(x + pt.v * vScale, y + h - pt.p * pScale, 5, 0, Math.PI * 2);
@@ -360,7 +425,7 @@ function drawPVDiagram() {
     X.stroke();
   }
 
-  // Shade work area (under curve, above V axis) for non-free modes
+  // Shade work area
   if ((mode === 'isothermal' || mode === 'adiabatic') && pvPath.length > 2) {
     X.globalAlpha = 0.12;
     X.fillStyle = mode === 'isothermal' ? '#ff8c3c' : '#6ca0ff';
@@ -374,7 +439,6 @@ function drawPVDiagram() {
     X.fill();
     X.globalAlpha = 1;
 
-    // Label "W = integral PdV"
     if (done) {
       X.font = '11px Georgia';
       X.fillStyle = '#aaa';
@@ -413,7 +477,6 @@ function drawStateReadout() {
     ly += 26;
   }
 
-  // Mode label
   ly += 6;
   X.font = 'italic 12px Georgia';
   if (mode === 'isothermal') {
@@ -430,17 +493,13 @@ function drawStateReadout() {
 
 function drawApparatus() {
   const { cx, w: cw, wallThick: wt, topY, baseY, baseH } = CYL;
-  const left = cx - cw/2 - wt;
-  const right = cx + cw/2 + wt;
-  const innerL = cx - cw/2;
-  const innerR = cx + cw/2;
+  const left = cx - cw / 2 - wt;
+  const right = cx + cw / 2 + wt;
+  const innerL = cx - cw / 2;
+  const innerR = cx + cw / 2;
 
-  // Mode-specific surroundings
-  if (mode === 'isothermal') {
-    drawHeatBath(left, right, topY, baseY);
-  } else if (mode === 'adiabatic') {
-    drawInsulation(left, right, topY, baseY);
-  }
+  if (mode === 'isothermal') drawHeatBath(left, right, topY, baseY);
+  else if (mode === 'adiabatic') drawInsulation(left, right, topY, baseY);
 
   // Cylinder walls
   const wallGrad = X.createLinearGradient(left, 0, left + wt, 0);
@@ -448,8 +507,8 @@ function drawApparatus() {
   wallGrad.addColorStop(0.5, '#888');
   wallGrad.addColorStop(1, '#666');
   X.fillStyle = wallGrad;
-  X.fillRect(left, topY, wt, baseY - topY); // left wall
-  X.fillRect(right - wt, topY, wt, baseY - topY); // right wall
+  X.fillRect(left, topY, wt, baseY - topY);
+  X.fillRect(right - wt, topY, wt, baseY - topY);
 
   // Base
   X.fillStyle = '#777';
@@ -457,56 +516,46 @@ function drawApparatus() {
   X.fillStyle = '#888';
   X.fillRect(left - 15, baseY, (right - left) + 30, 4);
 
-  // Interior background (dark)
+  // Interior background
   X.fillStyle = '#1a1a1e';
   X.fillRect(innerL, topY, cw, baseY - topY);
 
-  const pistonY = (mode === 'free' && !expanding && !done)
-    ? getPistonY(0)
-    : (mode === 'free' ? getPistonY(0) : getPistonY(progress));
+  // Use actual pistonY for piston modes, fixed position for free mode
+  const drawPY = (mode === 'free') ? getPistonY(0) : pistonY;
 
   if (mode === 'free') {
-    // Draw partition and vacuum
-    drawFreeExpansionSetup(innerL, innerR, pistonY, topY, baseY);
+    drawFreeExpansionSetup(innerL, innerR, drawPY, topY, baseY);
   } else {
-    // Draw piston, rod, weight
-    drawPistonAndWeight(cx, innerL, innerR, pistonY, topY);
+    drawPistonAndWeight(cx, innerL, innerR, drawPY, topY);
   }
 
-  // Gas particles
   drawParticles();
 
-  // Cylinder rim highlight
   X.strokeStyle = '#999';
   X.lineWidth = 1;
   X.strokeRect(left, topY, right - left, baseY - topY);
 }
 
 function drawHeatBath(left, right, topY, baseY) {
-  // Water surrounding cylinder
   const pad = 30;
   const bathL = left - pad, bathR = right + pad;
   const bathT = topY + 30, bathB = baseY + 10;
 
-  // Water fill
   const wGrad = X.createLinearGradient(0, bathT, 0, bathB);
   wGrad.addColorStop(0, 'rgba(255,100,40,0.15)');
   wGrad.addColorStop(1, 'rgba(255,60,20,0.25)');
   X.fillStyle = wGrad;
   X.fillRect(bathL, bathT, bathR - bathL, bathB - bathT);
 
-  // Bath outline
   X.strokeStyle = 'rgba(255,120,50,0.5)';
   X.lineWidth = 2;
   X.strokeRect(bathL, bathT, bathR - bathL, bathB - bathT);
 
-  // Label
   X.font = '11px Georgia';
   X.fillStyle = '#d87040';
   X.textAlign = 'center';
   X.fillText('Heat Bath (T = const)', (bathL + bathR) / 2, bathB + 16);
 
-  // Wavy heat lines
   const time = Date.now() / 600;
   X.strokeStyle = 'rgba(255,130,50,0.35)';
   X.lineWidth = 1.5;
@@ -527,11 +576,9 @@ function drawInsulation(left, right, topY, baseY) {
   const insL = left - pad, insR = right + pad;
   const insT = topY - 10, insB = baseY + 10;
 
-  // Insulation fill
   X.fillStyle = 'rgba(80,80,60,0.3)';
   X.fillRect(insL, insT, insR - insL, insB - insT);
 
-  // Hatching
   X.strokeStyle = 'rgba(160,140,80,0.35)';
   X.lineWidth = 1;
   for (let i = insL; i < insR + (insB - insT); i += 12) {
@@ -551,19 +598,15 @@ function drawInsulation(left, right, topY, baseY) {
   X.fillText('Insulation (Q = 0)', (insL + insR) / 2, insB + 16);
 }
 
-function drawFreeExpansionSetup(innerL, innerR, pistonY, topY, baseY) {
-  // The "piston" position for free expansion is fixed
-  // Partition at the V1 gas boundary
-  const partitionY = pistonY + pistonH;
+function drawFreeExpansionSetup(innerL, innerR, drawPY, topY, baseY) {
+  const partitionY = drawPY + pistonH;
 
   if (!expanding && !done) {
-    // Draw partition (wall)
     X.fillStyle = '#998';
     X.fillRect(innerL, partitionY - 3, innerR - innerL, 6);
     X.fillStyle = '#bba';
     X.fillRect(innerL, partitionY - 3, innerR - innerL, 2);
 
-    // Vacuum label above partition
     X.fillStyle = 'rgba(0,0,0,0.6)';
     X.fillRect(innerL, topY, innerR - innerL, partitionY - 3 - topY);
     X.font = '14px Georgia';
@@ -571,8 +614,6 @@ function drawFreeExpansionSetup(innerL, innerR, pistonY, topY, baseY) {
     X.textAlign = 'center';
     X.fillText('VACUUM', CYL.cx, (topY + partitionY) / 2 + 5);
   } else {
-    // Partition gone - gas fills whole space
-    // Show a faded ghost of where partition was
     if (progress < 0.8) {
       X.strokeStyle = `rgba(153,153,136,${0.3 * (1 - progress)})`;
       X.lineWidth = 2;
@@ -585,82 +626,84 @@ function drawFreeExpansionSetup(innerL, innerR, pistonY, topY, baseY) {
     }
   }
 
-  // Label
   X.font = '11px Georgia';
   X.fillStyle = '#8a8';
   X.textAlign = 'center';
   X.fillText('Free Expansion', CYL.cx, baseY + 36);
 }
 
-function drawPistonAndWeight(cx, innerL, innerR, pistonY, topY) {
+function drawPistonAndWeight(cx, innerL, innerR, drawPY, topY) {
   const cw = innerR - innerL;
 
-  // Piston
-  const pisGrad = X.createLinearGradient(0, pistonY, 0, pistonY + pistonH);
+  // Piston body
+  const pisGrad = X.createLinearGradient(0, drawPY, 0, drawPY + pistonH);
   pisGrad.addColorStop(0, '#aaa');
   pisGrad.addColorStop(0.3, '#ccc');
   pisGrad.addColorStop(0.7, '#bbb');
   pisGrad.addColorStop(1, '#888');
   X.fillStyle = pisGrad;
-  X.fillRect(innerL + 2, pistonY, cw - 4, pistonH);
+  X.fillRect(innerL + 2, drawPY, cw - 4, pistonH);
 
-  // Piston edge highlights
   X.strokeStyle = '#ddd';
   X.lineWidth = 1;
   X.beginPath();
-  X.moveTo(innerL + 2, pistonY);
-  X.lineTo(innerR - 2, pistonY);
+  X.moveTo(innerL + 2, drawPY);
+  X.lineTo(innerR - 2, drawPY);
   X.stroke();
 
-  // Rod going up from piston through cylinder top
-  const rodX = cx - rodW / 2;
-  // Weight position: moves up as piston rises. Map pistonY range to weight visible range.
-  // At pistonMaxY (V1, start): weight near top of cylinder
-  // At pistonMinY (V2, expanded): weight high up
+  // Rod and weight
   const weightTravel = 80;
   const pistonRange = pistonMaxY - pistonMinY;
-  const weightBaseY = topY - weightH - 15; // weight Y at V1
-  const weightFrac = (pistonMaxY - pistonY) / pistonRange;
+  const weightBaseY = topY - weightH - 15;
+  const weightFrac = (pistonMaxY - drawPY) / pistonRange;
   const weightYPos = weightBaseY - weightFrac * weightTravel;
   const rodTop = weightYPos + weightH;
-  X.fillStyle = '#999';
-  X.fillRect(rodX, rodTop, rodW, pistonY - rodTop);
-  // Rod highlight
-  X.fillStyle = '#bbb';
-  X.fillRect(rodX + 2, rodTop, 3, pistonY - rodTop);
+  const rodX = cx - rodW / 2;
 
-  // Weight block on rod above cylinder
+  X.fillStyle = '#999';
+  X.fillRect(rodX, rodTop, rodW, drawPY - rodTop);
+  X.fillStyle = '#bbb';
+  X.fillRect(rodX + 2, rodTop, 3, drawPY - rodTop);
+
   const weightY = weightYPos;
   const weightX = cx - weightW / 2;
 
-  const wGrad = X.createLinearGradient(weightX, weightY, weightX + weightW, weightY + weightH);
+  // Weight size changes with external force (visual cue for weight removal)
+  const forceRatio = (extForce && extForceInitial > 0)
+    ? Math.max(0.35, extForce / extForceInitial) : 1;
+  const drawWeightH = weightH * forceRatio;
+  const drawWeightW = weightW * forceRatio;
+  const dwX = cx - drawWeightW / 2;
+  const dwY = weightY + weightH - drawWeightH;
+
+  const wGrad = X.createLinearGradient(dwX, dwY, dwX + drawWeightW, dwY + drawWeightH);
   wGrad.addColorStop(0, '#665');
   wGrad.addColorStop(0.5, '#887');
   wGrad.addColorStop(1, '#554');
   X.fillStyle = wGrad;
-  X.fillRect(weightX, weightY, weightW, weightH);
+  X.fillRect(dwX, dwY, drawWeightW, drawWeightH);
   X.strokeStyle = '#aa9';
   X.lineWidth = 1;
-  X.strokeRect(weightX, weightY, weightW, weightH);
+  X.strokeRect(dwX, dwY, drawWeightW, drawWeightH);
 
-  // Weight label
   X.font = '11px Georgia';
   X.fillStyle = '#ccc';
   X.textAlign = 'center';
-  X.fillText('Weight', cx, weightY + weightH / 2 + 4);
+  if (drawWeightH > 20) {
+    X.fillText('Weight', cx, dwY + drawWeightH / 2 + 4);
+  }
 
-  // Arrow showing weight moving up if expanding
+  // Arrow showing weight moving up during expansion
   if (expanding && progress > 0.05 && progress < 0.95) {
     X.strokeStyle = '#fd6';
     X.lineWidth = 2;
-    const arrowX = weightX + weightW + 12;
-    const arrowBot = weightY + weightH;
-    const arrowTop = weightY - 15;
+    const arrowX = dwX + drawWeightW + 12;
+    const arrowBot = dwY + drawWeightH;
+    const arrowTop = dwY - 15;
     X.beginPath();
     X.moveTo(arrowX, arrowBot);
     X.lineTo(arrowX, arrowTop);
     X.stroke();
-    // Arrowhead
     X.beginPath();
     X.moveTo(arrowX, arrowTop);
     X.lineTo(arrowX - 5, arrowTop + 8);
@@ -680,9 +723,9 @@ function drawParticles() {
     X.globalAlpha = 0.85;
     X.fill();
     X.globalAlpha = 1;
-    // Tiny highlight
+    // Highlight
     X.beginPath();
-    X.arc(p.x - p.r * 0.25, p.y - p.r * 0.25, p.r * 0.35, 0, Math.PI * 2);
+    X.arc(p.x - p.r * 0.25, p.y - p.r * 0.25, p.r * 0.3, 0, Math.PI * 2);
     X.fillStyle = 'rgba(255,255,255,0.3)';
     X.fill();
   }
@@ -694,7 +737,6 @@ function drawTitle() {
   X.textAlign = 'center';
   X.fillText('Gas Expansion Processes', W / 2, 24);
 
-  // Mode indicator
   X.font = '13px Georgia';
   let modeLabel, modeCol;
   if (mode === 'isothermal') { modeLabel = 'Isothermal (T = const)'; modeCol = '#ff8c3c'; }
@@ -723,37 +765,14 @@ function frame(ts) {
   lastTime = ts;
   speed = parseFloat(document.getElementById('spd').value);
 
-  // Update expansion progress
-  if (expanding) {
-    if (mode === 'free') {
-      // Free expansion is instant
-      progress = 1;
-      expanding = false;
-      done = true;
-      buildPVPath();
-    } else {
-      progress += dt * speed * 0.4;
-      if (progress >= 1) {
-        progress = 1;
-        expanding = false;
-        done = true;
-      }
-      // Build PV path incrementally
-      const st = computeState(progress);
-      pvPath.push({ v: st.v, p: st.P });
-    }
-  }
+  // Physics update (particles + piston dynamics)
+  updatePhysics(dt);
 
-  // Compute current state
+  // Compute analytical state for readout
   const st = computeState(progress);
   curV = st.v; curP = st.P; curT = st.T; curW = st.Wk; curDS = st.dS;
 
-  // Update particles
-  updateParticles(dt);
-
-  // Draw
   drawAll();
-
   requestAnimationFrame(frame);
 }
 
@@ -769,14 +788,40 @@ function selectMode(m) {
 function startExpansion() {
   if (expanding || done) return;
   expanding = true;
+  expansionFrac = 0;
   pvPath = [{ v: V1, p: P0 }];
+
+  if (mode === 'free') return;
+
+  // Calculate initial and final external forces
+  const h1 = currentGasHeight();
+  const spdSq = measureSpeedSq();
+  extForceInitial = calcEqForce(h1, spdSq);
+  extForce = extForceInitial;
+
+  if (mode === 'isothermal') {
+    // Same T, larger volume -> lower pressure
+    extForceFinal = calcEqForce(gasHeightV2, spdSq);
+  } else {
+    // Adiabatic: T drops, volume increases
+    const Tf = T0 * Math.pow(V1 / V2, GAMMA - 1);
+    const finalSpdSq = BASE_SPEED * BASE_SPEED * Tf / T0;
+    extForceFinal = calcEqForce(gasHeightV2, finalSpdSq);
+  }
 }
 
 function resetSim() {
   expanding = false;
   done = false;
   progress = 0;
+  expansionFrac = 0;
   pvPath = [];
+  pistonY = pistonMaxY;
+  pistonVy = 0;
+  extForce = calcEqForce(gasHeightV1, BASE_SPEED * BASE_SPEED);
+  extForceInitial = extForce;
+  extForceFinal = extForce;
+  targetSpeedSq = BASE_SPEED * BASE_SPEED;
   const st = computeState(0);
   curV = st.v; curP = st.P; curT = st.T; curW = st.Wk; curDS = st.dS;
   createParticles();
@@ -790,6 +835,12 @@ function init() {
 }
 
 // Initial state
+pistonY = pistonMaxY;
+pistonVy = 0;
+extForce = calcEqForce(gasHeightV1, BASE_SPEED * BASE_SPEED);
+extForceInitial = extForce;
+extForceFinal = extForce;
+targetSpeedSq = BASE_SPEED * BASE_SPEED;
 const initSt = computeState(0);
 curV = initSt.v; curP = initSt.P; curT = initSt.T; curW = initSt.Wk; curDS = initSt.dS;
 createParticles();
