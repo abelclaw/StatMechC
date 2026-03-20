@@ -186,10 +186,19 @@ function updatePhysics(dt) {
   // Advance expansion: smoothly reduce external force
   if (expanding) {
     expansionFrac += simDt * 0.35;
-    if (expansionFrac >= 1) { expansionFrac = 1; expanding = false; done = true; }
+    if (expansionFrac > 1) expansionFrac = 1;
     const t = expansionFrac;
     const eased = t * t * (3 - 2 * t); // smoothstep
     extForce = extForceInitial + (extForceFinal - extForceInitial) * eased;
+
+    // Only mark done when piston actually reaches the top
+    if (pistonY <= pistonMinY + 5) {
+      expanding = false;
+      done = true;
+      pistonY = pistonMinY;
+      pistonVy = 0;
+      progress = 1;
+    }
   }
 
   // Thermostat target
@@ -930,15 +939,9 @@ function startExpansion() {
   extForceInitial = calcEqForce(h1, spdSq);
   extForce = extForceInitial;
 
-  if (mode === 'isothermal') {
-    // Same T, larger volume -> lower pressure
-    extForceFinal = calcEqForce(gasHeightV2, spdSq);
-  } else {
-    // Adiabatic: T drops, volume increases
-    const Tf = T0 * Math.pow(V1 / V2, GAMMA - 1);
-    const finalSpdSq = BASE_SPEED * BASE_SPEED * Tf / T0;
-    extForceFinal = calcEqForce(gasHeightV2, finalSpdSq);
-  }
+  // Ramp external force to zero (fully remove the weight) so
+  // gas pressure drives piston all the way to V2
+  extForceFinal = 0;
 }
 
 function resetSim() {
