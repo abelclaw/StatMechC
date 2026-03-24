@@ -135,7 +135,11 @@ $$\left(\frac{\partial F}{\partial V}\right)_{N,T} = -P;\qquad \left(\frac{\part
 
 <p>The Helmholtz free energy is one of the most useful quantities in thermodynamics. Its usefulness stems from the fact that $dV$, $dN$ and $dT$ are readily measurable. Free energy is particularly powerful for systems at constant temperature where $dF = dE - TdS$. In previous courses you have studied mechanical systems using energy. Mechanical systems all have fixed degrees of freedom, so $S = 0$ and $F = E$. Free energy is a generalization of energy whose importance is revealed by working at finite $T$.</p>
 
-<p>Consider an isolated system in volume $V$ kept at constant $T$ by being in contact with a heat bath. The change in free energy satisfies:</p>
+<p>Consider an isolated system in volume $V$ kept at constant $T$ by being in contact with a heat bath. What is the maximum amount of work the system can do? Energy conservation gives $W + \Delta E_{\text{system}} - Q = 0$, where $Q$ is the heat drawn from the bath. The entropy change of the bath is $\Delta S_{\text{bath}} = -Q/T$. The work causes no entropy change, so by the second law, $\Delta S_{\text{system}} \geq Q/T$ (equality only for reversible processes). Then:</p>
+
+$$\Delta F_{\text{system}} = \Delta E_{\text{system}} - T\Delta S_{\text{system}} \leq (-W + Q) - T\cdot\frac{Q}{T} = -W$$
+
+<p>That is,</p>
 
 <div class="equation key-result">
 $$W \leq -\Delta F_{\text{system}}$$
@@ -428,6 +432,15 @@ $$\mu_1 = -k_BT\ln\frac{\zeta_1}{N_1}$$
 <span class="eq-number">(29)</span>
 </div>
 
+<details class="derivation">
+<summary>Deriving the law of mass action</summary>
+<p>We can rewrite the chemical potential by splitting the logarithm:</p>
+$$\mu_i = -k_BT\ln\frac{\zeta_i}{N} + k_BT\ln\frac{N_i}{N} = G_i^0 + k_BT\ln x_i$$
+<p>where $x_i = N_i/N$ is the molar fraction and $G_i^0 = -k_BT\ln(\zeta_i/N)$ is the Gibbs free energy per molecule of species $i$ at the total pressure $P$ (not the partial pressure). For a reaction like $2A + 3B \rightleftharpoons 7C$, equilibrium requires $2\mu_A + 3\mu_B = 7\mu_C$. Substituting and rearranging:</p>
+$$7\ln x_C - 2\ln x_A - 3\ln x_B = -\frac{7G_C^0 - 2G_A^0 - 3G_B^0}{k_BT} = -\frac{\Delta_r G^0}{k_BT}$$
+<p>The total Gibbs free energy change has two parts: $\Delta_r G^0$ (the reaction energy per molecule, from bonds and internal structure) and the concentration-dependent part (from $k_BT\ln x_i$, which is entirely entropic &mdash; the entropy of mixing). In equilibrium, these two contributions to $\Delta G$ exactly cancel.</p>
+</details>
+
 <p>Using the notation $x_j \equiv N_j/N$ for the molar fraction of a reactant, for a reaction like $2A + 3B \rightleftharpoons 7C$:</p>
 
 <div class="equation key-result">
@@ -435,7 +448,7 @@ $$K \equiv \frac{x_C^7}{x_A^2 x_B^3} = \exp\left(-\frac{\Delta_r G^0}{k_BT}\righ
 <span class="eq-number">(30)</span>
 </div>
 
-<p>This is the <span class="tooltip-trigger">law of mass action<span class="tooltip-content">The equilibrium constant $K$ relates molar fractions (or partial pressures) of reactants and products to the Gibbs reaction energy</span></span>. The powers on the left hand side are determined by the stoichiometric coefficients and $\Delta_r G^0$ is the change in Gibbs free energy per particle.</p>
+<p>This is the <span class="tooltip-trigger">law of mass action<span class="tooltip-content">The equilibrium constant $K$ relates molar fractions (or partial pressures) of reactants and products to the Gibbs reaction energy</span></span>. The powers on the left hand side are determined by the stoichiometric coefficients and $\Delta_r G^0$ is the change in Gibbs free energy per particle. By Dalton's law, $x_i = P_i/P$, so $K$ can also be expressed in terms of partial pressures.</p>
 
 <div class="info-box example">
 <div class="box-title">Example: Decomposition of Water at 5000 K</div>
@@ -543,7 +556,7 @@ $$\mu_w^{\text{mixed}}(T, P) = \mu_w(T, P) - k_BT\frac{N_s}{N_w}$$
 <span class="eq-number">(33)</span>
 </div>
 
-<p>Setting the chemical potentials equal on both sides of the barrier and expanding leads to:</p>
+<p>The chemical potential of the mixed side is $\mu_w^{\text{mixed}} = \mu_w - k_BT\frac{N_s}{N_w}$ (from differentiating $G_{\text{mixed}} = G_w - T\Delta S_{\text{mix}}$). On the pure side, the water is at a higher pressure $P + \Pi$ due to the osmotic pressure. Setting the chemical potentials equal: $\mu_w(T, P + \Pi) = \mu_w^{\text{mixed}}(T, P)$. Taylor expanding the left side: $\mu_w(T, P) + \Pi\frac{\partial \mu_w}{\partial P} = \mu_w - k_BT\frac{N_s}{N_w}$. Using $\frac{\partial \mu_w}{\partial P} = \frac{V}{N_w}$ (from $\mu = G/N$), this gives:</p>
 
 <div class="equation key-result">
 $$\Pi = k_BT\frac{N_s}{V}$$
