@@ -190,7 +190,19 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <p>so $E = 3Nk_BT$, or $k_BT$ per degree of freedom. Each <em>linear</em> degree of freedom contributes $k_BT$ rather than $\frac{1}{2}k_BT$.</p>
 
-<h3>4.3 Summary</h3>
+<h3>4.3 Universality of the Boltzmann factor</h3>
+
+<p>We can use this to derive a very general result. For a system where $\Omega \sim E^{fN/2}$ (with $f = 1$ for quadratic modes and $f = 2$ for linear modes, so that $E = \frac{f}{2}Nk_BT$), what is the probability of finding energy $\epsilon$ in a single mode? The probability is proportional to the number of states available to the remaining $N-1$ modes:</p>
+
+<div class="equation">$$P(\epsilon) = \frac{\Omega_{N-1}(E - \epsilon)}{\Omega_N(E)} = \frac{(E - \epsilon)^{fN/2}}{E^{fN/2}} = \left(1 - \frac{\epsilon}{E}\right)^{fN/2} = \left(1 - \frac{\epsilon}{\frac{f}{2}Nk_BT}\right)^{fN/2}$$<span class="eq-number">(35)</span></div>
+
+<p>Now take $N \to \infty$, recovering an exponential:</p>
+
+<div class="equation key-result">$$P(\epsilon) \propto \exp\!\left(-\frac{\epsilon}{k_BT}\right)$$<span class="eq-number">(36)</span></div>
+
+<p>Note that the dependence on $f$ has dropped out: the probability of finding energy $\epsilon$ in a mode is independent of what type of mode it is &mdash; whether quadratic or linear, vibrational or rotational. No matter how the energy is stored, the probability of finding energy $\epsilon$ in any mode is $e^{-\epsilon/k_BT}$. This is a very powerful and very general result.</p>
+
+<h3>4.4 Summary</h3>
 
 <p>The point of the <span class="tooltip-trigger">equipartition theorem<span class="tooltip-content">Each independent quadratic degree of freedom contributes $\frac{1}{2}k_BT$ to the average energy; each linear degree of freedom contributes $k_BT$.</span></span> is that $k_BT$ characterizes the energy in each mode independent of the other modes. So $\frac{3}{2}k_BT$ is always the average kinetic energy of a non-relativistic molecule in 3D, and $3k_BT$ is always the average kinetic energy of a relativistic (massless) particle in 3D. Equipartition holds if the degrees of freedom are independent, meaning there are no terms in the energy of the form $p_1 p_2$ that couple different degrees of freedom, and the energy is either all quadratic or all linear.</p>
 
@@ -349,7 +361,57 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 
 <p>To understand this data, we can think about the scaling of the rotational and vibrational energies with mass. From Eqs. (40) and (41) we see that a larger reduced mass decreases both the vibrational and rotational energies. A larger bond length decreases the rotational energy but does not affect vibration directly. For heavier molecules like $\text{I}_2$, both the rotational and vibrational temperatures are much lower, so more modes are active at room temperature.</p>
 
-<h3>5.3 Specific heat</h3>
+<h3>5.2 Rule of thumb for gases</h3>
+
+<p>At room temperature, a good approximation for most molecules is that vibrational modes are frozen out but rotational ones are active. Monatomic molecules (like He) have no rotational modes, linear molecules (like H$_2$) have two, and non-linear molecules (like H$_2$O) have 3. Including the three translational kinetic degrees of freedom, the rule of thumb is</p>
+
+<div class="equation">$$\frac{C_V}{Nk_B} = \frac{3}{2} \;\text{(monatomic)}, \qquad \frac{5}{2}\;\text{(diatomic/linear)}, \qquad 3\;\text{(nonlinear)}$$<span class="eq-number">(49)</span></div>
+
+<p>For air, which is mostly N$_2$ and O$_2$, the experimental value is $C_V/(Nk_B) = 2.63$, in good agreement with the prediction of $5/2$.</p>
+
+<h3>5.3 Solids and the Dulong-Petit law</h3>
+
+<p>What is the heat capacity of a solid? A simple model of a solid is a lattice of atoms connected by little springs (covalent bonds). If there are $N$ atoms, the contribution to the energy from the momentum of each atom is the usual $\frac{3}{2}k_BT$. The contribution from the position of each atom (vibrational potential energy from stretching the springs) is also $\frac{3}{2}k_BT$. Equivalently, there are vibrational modes in each of three directions, and each vibrational mode gives $k_BT$ (half potential and half kinetic). Either way, the total is</p>
+
+<div class="equation key-result">$$C_V = 3Nk_B$$<span class="eq-number">(50a)</span></div>
+
+<p>The <span class="tooltip-trigger">molar heat capacity<span class="tooltip-content">Heat capacity per mole of substance, $c = C_V/n$. A mole is $N_A = 6.02 \times 10^{23}$ particles. The ideal gas constant is $R = N_A k_B = 8.314\;\text{J/(mol·K)}$.</span></span> (heat capacity per mole) is therefore $c = 3N_Ak_B = 3R$, where $R = N_Ak_B = 8.314\;\text{J/(mol·K)}$ is the ideal gas constant. This is the <strong>law of Dulong and Petit</strong> (1819): the molar heat capacity of many metals is roughly constant.</p>
+
+<figure>
+<table style="border-collapse:collapse; margin:1em auto; font-size:0.95em;">
+<thead>
+<tr>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">Element</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">Al</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">Bi</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">Cu</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">Au</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">Ag</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">Pb</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">H&#8322;O</th>
+<th style="border:1px solid #ddd; padding:6px 10px; background:#e8ecf1;">C&#8322;H&#8325;OH</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="border:1px solid #ddd; padding:6px 10px;">$c$ (J/mol·K)</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">24.3</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">25.7</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">24.5</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">25.6</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">24.9</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">26.4</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">75.2</td>
+<td style="border:1px solid #ddd; padding:6px 10px; text-align:center;">111</td>
+</tr>
+</tbody>
+</table>
+<figcaption>Molar specific heats for various metals ($3R = 24.9$ J/mol·K), contrasted with water and ethanol which do not satisfy the law of Dulong and Petit.</figcaption>
+</figure>
+
+<p>The metals all cluster around $3R = 24.9\;\text{J/(mol·K)}$, confirming Dulong-Petit. Water and ethanol have much higher molar heat capacities because each molecule has many internal degrees of freedom (rotations, vibrations) beyond simple lattice vibrations.</p>
+
+<h3>5.4 Specific heat</h3>
 
 <p>Heat capacity is an extensive quantity (proportional to the amount of material). An intensive quantity is the <span class="tooltip-trigger">specific heat<span class="tooltip-content">Heat capacity per unit mass. An intensive property that characterizes the material itself, independent of how much you have.</span></span>, which is the heat capacity per unit mass:</p>
 
@@ -407,7 +469,8 @@ $$\langle \alpha q^2 \rangle = \frac{1}{2}k_BT$$
 <li><strong>Temperature from entropy:</strong> Two systems exchanging energy reach equilibrium when $\frac{\partial \ln \Omega_1}{\partial E_1} = \frac{\partial \ln \Omega_2}{\partial E_2}$. We define entropy $S = k_B \ln \Omega$ and temperature $\frac{1}{T} = \frac{\partial S}{\partial E}\big|_{V,N}$.</li>
 <li><strong>Ideal gas:</strong> For a monatomic ideal gas, $E = \frac{3}{2}Nk_BT$ and $PV = Nk_BT$.</li>
 <li><strong>Equipartition theorem:</strong> Each quadratic degree of freedom contributes $\frac{1}{2}k_BT$ to the average energy. Linear degrees of freedom contribute $k_BT$.</li>
-<li><strong>Heat capacity:</strong> For monatomic gas $C_V = \frac{3}{2}Nk_B$. For diatomic gas, $C_V$ ranges from $\frac{3}{2}Nk_B$ to $\frac{7}{2}Nk_B$ depending on which modes are thermally active.</li>
+<li><strong>Universality of the Boltzmann factor:</strong> The probability of finding energy $\epsilon$ in any mode is $P(\epsilon) \propto e^{-\epsilon/k_BT}$, independent of the type of mode.</li>
+<li><strong>Heat capacity:</strong> For monatomic gas $C_V = \frac{3}{2}Nk_B$. For diatomic gas, $C_V$ ranges from $\frac{3}{2}Nk_B$ to $\frac{7}{2}Nk_B$ depending on which modes are thermally active. For solids, $C_V = 3Nk_B$ (Dulong-Petit law).</li>
 <li><strong>Quantum freeze-out:</strong> Modes are frozen out when $k_BT \ll \epsilon_{\text{spacing}}$. This explains why $C_V$ increases with temperature for diatomic molecules.</li>
 <li><strong>Maximum entropy principle:</strong> The equilibrium distribution maximizes entropy subject to constraints. With a fixed average energy, this gives the Boltzmann distribution $f_i \propto e^{-\beta \epsilon_i}$.</li>
 </ul>
