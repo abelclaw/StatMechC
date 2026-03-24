@@ -382,7 +382,11 @@ $$\frac{\partial n(\vec{x}, t)}{\partial t} = D\nabla^2 n(\vec{x}, t)$$
 
 <div class="info-box example">
 <div class="box-title">Example: Lemmings Walking off a Cliff</div>
-<p>Say we have some lemmings that come out of a hole, walk left or right randomly, and maybe fall off a cliff a distance $a$ away. Let their density be $n(z)$, with $z = 0$ the hole and $z = a$ the cliff. In a steady state, $\frac{\partial n}{\partial t} = 0$, the solution to the diffusion equation is $n(z) = n_0 + \frac{z}{a}(n_1 - n_0)$. Then $J_z = -\frac{D}{a}(n_1 - n_0)$. This is a constant flux of lemmings coming out of the hole and falling off the cliff.</p>
+<p>Say we have some lemmings that come out of a hole, walk left or right randomly, and maybe fall off a cliff a distance $a$ away. Let their density be $n(z)$, with $z = 0$ the hole and $z = a$ the cliff.</p>
+<p>At a given $z$, over a short time $\delta t$, the number of lemmings that leave to the right is proportional to $n(z)$ and those that come in from the right is proportional to $n(z + \delta z)$. Similarly, the number that leave to the left is $n(z)$ and those coming in from the left proportional to $n(z - \delta z)$. So the net change in the number at $z$ is proportional to</p>
+$$n(t+\delta t) - n(t) \propto [n(z+\delta z) - n(z)] + [-n(z) + n(z - \delta z)]$$
+<p>That is, $\frac{\partial n}{\partial t} \propto \frac{\partial^2 n}{\partial z^2}$. This is a physical way to see why diffusion only occurs if the <em>second</em> derivative is nonzero.</p>
+<p>In a steady state, $\frac{\partial n}{\partial t} = 0$, the solution to the diffusion equation is $n(z) = n_0 + \frac{z}{a}(n_1 - n_0)$. Then $J_z = -\frac{D}{a}(n_1 - n_0)$. This is a constant flux of lemmings coming out of the hole and falling off the cliff. Since $J_z$ is constant, $\partial_z J_z = 0$ and the continuity equation is satisfied.</p>
 </div>
 
 <p>To get a feel for how fast diffusion is, the diffusion constant in water for nitrogen molecules is $D = 2 \times 10^{-9}\,\text{m}^2/\text{s}$. Bigger molecules should have smaller diffusion rates. Indeed, benzene molecules C$_6$H$_6$ in water have $D = 1 \times 10^{-9}\,\text{m}^2/\text{s}$. For large molecules like proteins in water the diffusion constant is even smaller $D \approx 10^{-11}\,\text{m}^2/\text{s}$. In gases, densities $n$ are smaller so $\ell$ is larger and the diffusion constants are generally larger. For example, CO molecules in air at room temperature and pressure have $D = 2 \times 10^{-5}\,\text{m}^2/\text{s}$.</p>
@@ -489,7 +493,11 @@ $$N_A = \frac{3RT}{\mu D}$$
 
 <h3 id="s2-5-1">5.1 &mdash; Viscosity</h3>
 
-<p>Consider a ball falling through a fluid. It is accelerated from a downward force due to gravity and encounters resistance, or drag, from the fluid. There are two sources of drag. The first, called <em>inertial drag</em>, is due to the ball bonking molecules in front of it and speeding them up. The inertial force goes like the square of the velocity: $\vec{F}_{\text{inertial}} = \pi R^2 \rho |\vec{v}|\vec{v}$. For slow objects, the dominant drag force is due to <span class="tooltip-trigger">viscosity<span class="tooltip-content">A measure of a fluid's resistance to shear deformation. More viscous fluids (like honey) resist flow more than less viscous ones (like water).</span></span>, called viscous drag.</p>
+<p>Consider a ball falling through a fluid. It is accelerated from a downward force due to gravity and encounters resistance, or drag, from the fluid. There are two sources of drag. The first, called <em>inertial drag</em>, is due to the ball bonking molecules in front of it and speeding them up. In a time $\Delta t$ the ball sweeps out a volume $\Delta V = \pi R^2 |\vec{v}|\Delta t$, thereby accelerating a mass $\Delta m = \rho\,\Delta V$ of fluid to velocity roughly $\vec{v}$. The average acceleration is $\vec{a} = \vec{v}/\Delta t$, so the force is</p>
+
+<div class="equation">$$\vec{F}_{\text{inertial}} = \Delta m\,\vec{a} = \pi R^2 \rho\,|\vec{v}|\vec{v}$$</div>
+
+<p>This goes like the square of the velocity. At large velocities it dominates, but for slow objects (slow compared to typical molecular speeds) it is subdominant to a drag force linear in $v$. For slow objects, the dominant drag force is due to <span class="tooltip-trigger">viscosity<span class="tooltip-content">A measure of a fluid's resistance to shear deformation. More viscous fluids (like honey) resist flow more than less viscous ones (like water).</span></span>, called viscous drag. It is viscous drag that is important for Brownian motion.</p>
 
 <div class="visualization">
 <div class="figure-label">Interactive 5: Stokes Drag &amp; Terminal Velocity</div>
@@ -513,6 +521,15 @@ $$\eta\frac{\partial\vec{v}}{\partial z} = \frac{\vec{F}_{\text{ext}}}{A}$$
 </div>
 
 <p>The parameter $\eta$ in this equation is called the <strong>dynamic shear viscosity</strong>.</p>
+
+<details class="derivation">
+<summary>Deriving Stokes drag from viscosity</summary>
+<p>Now return to the sphere falling through the fluid. As it moves down, it displaces molecules and imparts velocity to the fluid transverse to its motion. The definition of viscosity tells us that the sphere induces a fluid velocity</p>
+
+<div class="equation">$$\eta\frac{\partial\vec{v}}{\partial z} = \frac{\vec{F}_g}{4\pi R^2}$$<span class="eq-number">(55)</span></div>
+
+<p>where $4\pi R^2$ is the surface area of the sphere. At the surface of the sphere, the fluid velocity equals the sphere's velocity. The faster the sphere falls, the faster the surrounding fluid moves. Eventually, all the energy from gravity accelerating the sphere is taken up by the work done to move the fluid, and the sphere stops accelerating. There is thus some effective drag force. Working out all the factors (an annoyingly tedious calculation), the result is Eq. (56).</p>
+</details>
 
 <p>For a sphere falling through a fluid, working out all the factors, the result is</p>
 <div class="equation key-result">
@@ -561,6 +578,7 @@ $$D = \frac{1}{6\pi\eta R}\langle m\vec{v}^2\rangle$$
 <li>The diffusion equation comes from modeling the microscopic system as undergoing random walks. An alternative classical-field approach uses <strong>Fick's laws</strong>: the continuity equation $\frac{\partial n}{\partial t} + \nabla\cdot\vec{J} = 0$ combined with $\vec{J} = -D\nabla n$ leads to the same diffusion equation.</li>
 <li>The conduction of heat is described by the <strong>heat equation:</strong> $\frac{\partial T(\vec{x},t)}{\partial t} = \kappa\,\nabla^2 T(\vec{x},t)$. This has identical form to the diffusion equation.</li>
 <li>In liquids and gases, diffusion is rarely dominant unless the system is very calm. <strong>Convection</strong>, coming from non-equilibrium initial conditions, is usually more important. In solids, diffusion and the heat equation work well.</li>
+<li>A tricky point: <strong>diffusion is an equilibrium phenomenon</strong>. You should think of the diffusion equation as describing the number density of a small subset of molecules in a bath (e.g. dye in water, or a macromolecule undergoing Brownian motion). The bath itself doesn't change macroscopically. When the whole system is out of equilibrium &mdash; for example, gas released into a vacuum or dye violently dropped in &mdash; the diffusion equation doesn't apply.</li>
 <li>A large molecule in a calm liquid or gas can be modeled by a random walk / diffusion. This is called <strong>Brownian motion</strong>. The diffusion constant is given by the <strong>Einstein relation:</strong> $D = \frac{1}{\mu}\langle m\vec{v}^2\rangle$ with $\mu$ the drag coefficient. Measuring $D$ and $\mu$ gives Avogadro's number: $N_A = \frac{3RT}{\mu D}$.</li>
 <li>The drag coefficient is also related to viscosity $\eta$ by $\mu = 6\pi\eta R$. Then $D = \frac{1}{6\pi\eta R}\langle m\vec{v}^2\rangle$. This is the <strong>Einstein-Stokes relation</strong>.</li>
 </ul>
