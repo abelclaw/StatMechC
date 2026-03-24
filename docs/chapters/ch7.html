@@ -247,9 +247,11 @@ $$C_V = \frac{1}{k_B T^2} \frac{\partial^2}{\partial \beta^2} \ln\left(\beta^{-\
 
 <div class="info-box concept">
 <div class="box-title">Fluctuation-Dissipation Theorem</div>
-<p>It's interesting to write the heat capacity calculation another way. One can show that:</p>
-$$C_V = \frac{\langle E^2 \rangle - \langle E \rangle^2}{k_B T^2}$$
-<p>In other words, the heat capacity is given by the RMS energy fluctuations. This tells us that how a system changes when heated can be determined from properties of the system in equilibrium (the RMS energy fluctuations). In other words, to measure the heat capacity, we do not ever have to actually heat up the system. Instead, we can let the system heat up itself through thermal fluctuations away from the mean. This is a special case of a very general and powerful result in statistical physics known as the <strong>fluctuation-dissipation theorem</strong>.</p>
+<p>It's interesting to write the heat capacity calculation another way. Note that</p>
+$$\frac{\partial}{\partial\beta}\left(-\frac{\partial \ln Z}{\partial \beta}\right) = \frac{\partial}{\partial\beta}\left(\frac{1}{Z}\sum_k E_k\,e^{-\beta E_k}\right) = -\frac{1}{Z^2}\frac{\partial Z}{\partial \beta}\sum_k E_k\,e^{-\beta E_k} - \frac{1}{Z}\sum_k E_k^2\,e^{-\beta E_k}$$
+<p>Using $-\frac{1}{Z}\frac{\partial Z}{\partial\beta} = \langle E \rangle$, we see the first term is $+\langle E \rangle^2$ and the second is $-\langle E^2 \rangle$. Since $C_V = \frac{1}{k_BT^2}\frac{\partial^2 \ln Z}{\partial\beta^2}$ from Eq. (24), we get</p>
+<div class="equation">$$C_V = \frac{\langle E^2 \rangle - \langle E \rangle^2}{k_B T^2}$$<span class="eq-number">(27)</span></div>
+<p>In other words, the heat capacity is given by the RMS energy fluctuations. To measure the heat capacity, we do not ever have to actually heat up the system &mdash; we can let the system heat up itself through thermal fluctuations away from the mean. This is a special case of a very general and powerful result in statistical physics known as the <strong>fluctuation-dissipation theorem</strong>.</p>
 </div>
 
 <p>Plugging the partition function for the monatomic ideal gas, Eq. (22) into Eq. (16) for the entropy, we get</p>
@@ -513,7 +515,14 @@ $$\langle E \rangle = -\frac{\partial \ln \mathcal{Z}}{\partial \beta} + \frac{\
 <span class="eq-number">(63)</span>
 </div>
 
-<p>The entropy in the grand canonical ensemble is</p>
+<p>The entropy in the grand canonical ensemble is computed just as in the canonical case. Starting from $S = -k_B\sum_k P_k \ln P_k$ and substituting $P_k = \frac{1}{\mathcal{Z}}e^{-\beta E_k + \beta\mu N_k}$:</p>
+
+<div class="equation">
+$$S = k_B \sum_k P_k\left[\beta(E_k - \mu N_k) + \ln \mathcal{Z}\right] = \frac{\langle E \rangle}{T} - \frac{\mu\langle N \rangle}{T} + k_B \ln \mathcal{Z}$$
+<span class="eq-number">(65)</span>
+</div>
+
+<p>Rearranging:</p>
 
 <div class="equation key-result">
 $$-k_BT \ln \mathcal{Z} = \langle E \rangle - TS - \mu\langle N \rangle$$
@@ -530,6 +539,15 @@ $$-k_BT \ln \mathcal{Z} = \langle E \rangle - TS - \mu\langle N \rangle$$
 <h3>7.7.1 Ideal Gas</h3>
 
 <p>For a monatomic gas, using the Sackur-Tetrode equation, we find</p>
+
+<details class="derivation">
+<summary>Differentiating the Sackur-Tetrode equation</summary>
+<p>We need $\mu = -T\left(\frac{\partial S}{\partial N}\right)_{E,V}$ with $S = Nk_B\left(\ln\frac{V}{N} + \frac{3}{2}\ln\frac{4\pi mE}{3Nh^2} + \frac{5}{2}\right)$. Using the product rule on $N \times f(N)$:</p>
+$$\frac{\partial S}{\partial N} = k_B\left(\ln\frac{V}{N} + \frac{3}{2}\ln\frac{4\pi mE}{3Nh^2} + \frac{5}{2}\right) + Nk_B\left(-\frac{1}{N} - \frac{3}{2}\frac{1}{N}\right)$$
+<p>The second term gives $-k_B - \frac{3}{2}k_B = -\frac{5}{2}k_B$, which exactly cancels the $\frac{5}{2}$ in the first term. So</p>
+$$\frac{\partial S}{\partial N} = k_B\left(\ln\frac{V}{N} + \frac{3}{2}\ln\frac{4\pi mE}{3Nh^2}\right)$$
+<p>Note that the $\frac{5}{2}$ has dropped out.</p>
+</details>
 
 <div class="equation">
 $$\mu = -T\left(\frac{\partial S}{\partial N}\right)_{E,V} = -k_BT\left(\ln \frac{V}{N} + \frac{3}{2}\ln\left(\frac{4\pi mE}{3Nh^2}\right)\right)$$
@@ -642,7 +660,7 @@ $$\frac{[\text{NH}_3]^2}{[\text{H}_2]^3[\text{N}_2]} \approx \frac{\lambda_{\tex
 
 $$p^+ + p^- \rightleftharpoons \gamma + \gamma$$
 
-<p>Since photon number is not conserved, $\mu_\gamma = 0$, and therefore $\mu_{p^+} + \mu_{p^-} = 0$. Assuming equal concentrations of protons and antiprotons (and hence $\mu_{p^+} = \mu_{p^-} = 0$), using $T = 3\;\text{K}$ (the temperature of outer space), we find</p>
+<p>Photon number is not conserved. For example, in Compton scattering a photon can split: $\gamma + e^- \rightleftharpoons e^- + \gamma + \gamma$. In equilibrium this gives $\mu_\gamma + \mu_{e^-} = \mu_{e^-} + 2\mu_\gamma$, hence $\mu_\gamma = 0$. This is a general property: any particle whose number is not associated with a conserved quantity has $\mu = 0$. Applying this to the proton-antiproton reaction: $\mu_{p^+} + \mu_{p^-} = 2\mu_\gamma = 0$. Assuming equal concentrations of protons and antiprotons (and hence $\mu_{p^+} = \mu_{p^-} = 0$), using $T = 3\;\text{K}$ (the temperature of outer space), we find</p>
 
 <div class="equation">
 $$[p^-] = [p^+] = \left(\frac{2\pi m_p k_BT}{h^2}\right)^{3/2} e^{-m_pc^2/k_BT} = 4\times 10^{-843112945335}\;\frac{1}{\text{m}^3} \approx 0$$
