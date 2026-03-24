@@ -281,6 +281,17 @@ $$\mu = \epsilon_F\left[1 - \frac{\pi^2}{12}\frac{k_B^2}{\epsilon_F^2}T^2 + \cdo
 <div class="step">
 <div class="step-label">Step 5: Expand the energy</div>
 <p>We can do a similar expansion for the energy. After integrating by parts, expanding, and substituting the form of $\mu$, we find to second order in $T$:</p>
+
+<details class="derivation"><summary>Show intermediate steps</summary>
+<p>The energy integral is the same as for $N$, but with $\epsilon\, g(\epsilon)$ instead of $g(\epsilon)$. After integrating by parts and dropping the boundary term we get a Taylor expansion around $\mu$:</p>
+$$E = \frac{N}{\epsilon_F^{3/2}} \int_0^\infty [-f'(\epsilon)] \left[\frac{3}{5}\mu^{5/2} + \frac{3}{2}\mu^{3/2}(\epsilon - \mu) + \frac{9}{8}\sqrt{\mu}\,(\epsilon - \mu)^2 + \cdots\right] d\epsilon$$
+<p>Now change variables to $x = \beta(\epsilon - \mu)$ and extend the lower limit to $-\infty$ (valid since $\beta\mu \gg 1$). The derivative of the Fermi function becomes</p>
+$$-f'(\epsilon)\,d\epsilon = \frac{dx}{2 + 2\cosh x}$$
+<p>The term linear in $(\epsilon - \mu) \propto x$ is odd and integrates to zero. The constant term integrates to $1$, and the quadratic term gives $\int_{-\infty}^{\infty} \frac{x^2\,dx}{2 + 2\cosh x} = \frac{\pi^2}{3}$. This yields the intermediate result:</p>
+$$\frac{E}{N} = \frac{3}{5}\mu^{5/2}\!\left(\frac{\mu}{\epsilon_F}\right)^{\!-3/2} + \frac{3\pi^2}{8\beta^2\mu^2}\!\left(\frac{\mu}{\epsilon_F}\right)^{\!-3/2} + \cdots$$
+<p>which simplifies, using the earlier result for $\mu$, to:</p>
+</details>
+
 $$E = \frac{3}{5}N\epsilon_F + \frac{N\pi^2 k_B^2 T^2}{4\epsilon_F} + \cdots$$
 <p>Thus the unknown coefficient $a$ in Eq. (23) is now known: $a = \pi^2/4$.</p>
 </div>

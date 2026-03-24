@@ -225,6 +225,17 @@ $$\Delta T = \frac{N_s}{N_w}\frac{RT_0^2}{L}$$
 
 <p>Since $\Delta P < 0$ at fixed $T$, we have $\Delta T > 0$ at fixed $P$: the boiling point goes up.</p>
 
+<details class="derivation">
+<summary>Derivation: Boiling Point Elevation from Clausius-Clapeyron</summary>
+<p>Start from the Clausius-Clapeyron equation for the liquid-gas phase boundary:</p>
+$$\frac{dP}{dT} = \frac{PL}{RT^2}$$
+<p>From Raoult's law, adding solute shifts the vapor pressure by $\Delta P = -\frac{N_s}{N_w}P_0$ at the original boiling point $T_0$. For small changes along the phase boundary, $\frac{dP}{dT} \approx \frac{\Delta P}{\Delta T}$, so:</p>
+$$\Delta T = \frac{\Delta P}{\;dP/dT\;} = \Delta P \cdot \frac{RT_0^2}{P_0 L}$$
+<p>Substituting $\Delta P = -\frac{N_s}{N_w}P_0$:</p>
+$$\Delta T = -\frac{N_s}{N_w}P_0 \cdot \frac{RT_0^2}{P_0 L} = \frac{N_s}{N_w}\frac{RT_0^2}{L}$$
+<p><strong>Sign analysis:</strong> At fixed temperature $T_0$, adding solute lowers the vapor pressure ($\Delta P < 0$), so the liquid-gas phase boundary shifts downward. To restore the original pressure $P_0$, we must move along the boundary to higher temperature. Thus $\Delta T > 0$: the boiling point increases.</p>
+</details>
+
 <!-- INTERACTIVE: Colligative Properties -->
 <div class="visualization">
   <div class="figure-label">Interactive 6: Colligative Properties</div>
@@ -378,6 +389,13 @@ $$k_BT_c \approx \frac{2\epsilon}{\ln 2}$$
     <label style="margin-left:16px"><input type="checkbox" id="cpc-meanfield"> Compare mean-field</label>
   </div>
 </div>
+
+<details class="derivation">
+<summary>Physical Picture: Critical Opalescence</summary>
+<p>Why does the distinction between liquid and gas disappear at the critical point? The key is <strong>surface tension</strong>. The difference between liquid water and water vapor is that liquid water has hydrogen bonds holding it together, while in the gas phase molecules are too far apart for those bonds to matter. The surface tension $\gamma$ -- the free energy cost per unit area of a liquid-gas interface -- is set by this difference in bonding.</p>
+<p>As the gas is compressed (or heated along the coexistence curve toward $T_c$), its density rises and hydrogen bonds in the vapor become increasingly important. The mismatch between liquid and gas shrinks, so the surface tension decreases. With lower surface tension, the energy cost of forming an interface drops and typical droplet sizes grow.</p>
+<p>At the critical point, the surface tension vanishes entirely: $\gamma \to 0$. Droplets of <em>any</em> size can form with no energy penalty. The single length scale that characterized the liquid -- set by $\gamma$ -- has disappeared, and the system becomes scale-invariant. This is visible as <strong>critical opalescence</strong>: near $T_c$ the fluid scatters light of all wavelengths because density fluctuations exist on all length scales, including optical wavelengths, making the fluid appear milky and iridescent.</p>
+</details>
 
 <p>We say that the theory near the critical point is <span class="tooltip-trigger">scale-invariant<span class="tooltip-content">Having no characteristic scale. At a critical point, all dimensionful quantities vanish or diverge, and the system looks the same at all length scales.</span></span> or conformal. Choosing reduced units:</p>
 

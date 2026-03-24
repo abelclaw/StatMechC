@@ -128,6 +128,26 @@ $$|\psi\rangle \to e^{is\theta}|\psi\rangle$$
 
 <p>where $n_i$ is the number of particles in state $i$. To see that this agrees with Eq. (14) consider that each term in the product over $i$ picks one factor from each term in the sum over $n_i$. Since all possible values of $\epsilon_i$ and $n_i$ are included once, we reproduce the sum over all possible $N$ and $E$ with $\sum n_i = N$ and $\sum n_i \epsilon_i = E$.</p>
 
+<details class="derivation"><summary>Explicit expansion showing the factorization (Bosons with states $\epsilon_1, \epsilon_2, \epsilon_3$)</summary>
+<p>For a Bose system where $n_i = 0, 1, 2, \ldots$, each single-state factor in Eq.&nbsp;(15) expands as a geometric series:</p>
+
+<div class="equation">$$\mathcal{Z}_i = 1 + e^{\beta(\mu - \epsilon_i)} + e^{2\beta(\mu - \epsilon_i)} + \cdots$$</div>
+
+<p>The full grand partition function is the product of these factors. With three states $\epsilon_1, \epsilon_2, \epsilon_3$:</p>
+
+<div class="equation">$$\mathcal{Z} = \bigl(1 + e^{\beta(\mu-\epsilon_1)} + e^{2\beta(\mu-\epsilon_1)} + \cdots\bigr) \bigl(1 + e^{\beta(\mu-\epsilon_2)} + e^{2\beta(\mu-\epsilon_2)} + \cdots\bigr) \bigl(1 + e^{\beta(\mu-\epsilon_3)} + e^{2\beta(\mu-\epsilon_3)} + \cdots\bigr) \cdots$$</div>
+
+<p>Multiplying out, each term picks one power from each factor. Collecting by total particle number $N = \sum n_i$:</p>
+
+<ul>
+  <li>$N=0$: the constant term $1$</li>
+  <li>$N=1$: $e^{\beta(\mu-\epsilon_1)} + e^{\beta(\mu-\epsilon_2)} + e^{\beta(\mu-\epsilon_3)} + \cdots$</li>
+  <li>$N=2$: $e^{2\beta(\mu-\epsilon_1)} + e^{\beta(2\mu-\epsilon_1-\epsilon_2)} + e^{\beta(2\mu-\epsilon_1-\epsilon_3)} + e^{2\beta(\mu-\epsilon_2)} + e^{\beta(2\mu-\epsilon_2-\epsilon_3)} + e^{2\beta(\mu-\epsilon_3)} + \cdots$</li>
+</ul>
+
+<p>Each $N=2$ term has the form $e^{-\beta(E - 2\mu)}$ with $E = n_1\epsilon_1 + n_2\epsilon_2 + n_3\epsilon_3$ and $n_1+n_2+n_3 = 2$. These are exactly the Bose two-particle states (e.g. Eq.&nbsp;7 of the notes), confirming that the product-over-states form reproduces every term in the sum-over-$N$-and-$E$ form of $\mathcal{Z}$.</p>
+</details>
+
 <p>Eq. (15) can be written more suggestively as</p>
 
 <div class="equation key-result">$$\mathcal{Z} = \prod_{\text{single particle states } i} \mathcal{Z}_i$$<span class="eq-number">(18)</span></div>

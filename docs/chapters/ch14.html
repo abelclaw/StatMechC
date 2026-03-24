@@ -397,6 +397,12 @@ $$\epsilon_n = -\text{Ry}\frac{1}{n^2}$$
 
 <p>You might think you can keep going this way. Silicon is Si = [Ne]$3s^2 3p^2$, so it could in principle fill the $3s/3p$ band up halfway. Halfway up isn't great though, because above halfway the antibonding orbitals would have to start being filled, and those have more energy than the free atoms, so it's not energetically favorable to fill them. Silicon has another option though. It has 4 electrons to share and needs 4 electrons to form a closed shell. So it can form covalent bonds with its 4 nearest neighbors. Thus instead of forming a metallic solid, Silicon forms a covalent network solid, like its upstairs neighbor carbon. Compared to carbon, silicon's electrons are farther out ($3s^2 3p^2$ rather than $2s^2 2p^2$), so they are relatively more weakly bound than in carbon. Silicon is conflicted: it is on the boundary between having metallic bonds and having covalent bonds. It is a metalloid.</p>
 
+<details class="derivation">
+<summary>Why elements to the right of silicon are non-metals</summary>
+<p>To the right of silicon, the $3s/3p$ band would be more than half-filled, forcing electrons into antibonding orbitals. Consider chlorine, [Ne]$3s^2 3p^5$, at the end of the row. If chlorine tried to share all 7 of its $s/p$ electrons metallically, the band would be half-filled after 4 electrons, so the remaining 3 would occupy antibonding orbitals&mdash;energetically unfavorable compared to isolated atoms.</p>
+<p>Chlorine has a better option. Its singly-occupied $3p$ orbital (say $3p_z$ with one spin-up electron) looks just like hydrogen's single $1s$ electron. Two Cl atoms can each contribute this one orbital, forming a bonding molecular orbital that lowers the energy. The other electrons stay in filled, unshared orbitals. The result is a diatomic Cl$_2$ molecule, and solid chlorine is a molecular solid&mdash;not a metal. The same logic applies to P, S, and the other non-metals between Si and the noble gases.</p>
+</details>
+
 <h3 id="ch14-sec2-6">14.2.6 Summary</h3>
 
 <div class="info-box concept">
@@ -435,6 +441,17 @@ $$f(\epsilon) = \frac{1}{e^{\beta(\epsilon - \epsilon_F)} + 1}$$
 </div>
 
 <p>is symmetric around $\epsilon_F$ (that is, $f(\epsilon_F + \Delta) = 1 - f(\epsilon_F - \Delta)$). Since the relevant energies have $\Delta \sim k_B T \ll \epsilon_F$ and the density of states is approximately symmetric around $\epsilon_F$, charge neutrality requires the Fermi level to be in the center of the bandgap: $\epsilon_F = \epsilon_V + \frac{\epsilon_{\text{bg}}}{2}$.</p>
+
+<details class="derivation">
+<summary>Derivation: Fermi level sits at the center of the bandgap</summary>
+<p>The number of thermally excited electrons in the conduction band is</p>
+$$N_e = \int_{\epsilon_F}^{\infty} f(\epsilon)\,g(\epsilon)\,d\epsilon$$
+<p>and the number of holes in the valence band is</p>
+$$N_h = \int_{0}^{\epsilon_F} \bigl[1 - f(\epsilon)\bigr]\,g(\epsilon)\,d\epsilon$$
+<p>Approximate the density of states as a step function: $g(\epsilon) = 0$ inside the gap ($\epsilon_V < \epsilon < \epsilon_C$) and roughly constant outside. The Fermi symmetry $f(\epsilon_F + \Delta) = 1 - f(\epsilon_F - \Delta)$ means the electron occupation above $\epsilon_F$ is the mirror image of the hole occupation below $\epsilon_F$. With this symmetric density of states, $N_e = N_h$ is only possible if the gap removes the same number of states on each side of $\epsilon_F$, i.e.</p>
+$$\epsilon_C - \epsilon_F = \epsilon_F - \epsilon_V$$
+<p>Since $\epsilon_C - \epsilon_V = \epsilon_{\text{bg}}$, this gives $\epsilon_F = \epsilon_V + \dfrac{\epsilon_{\text{bg}}}{2}$, right in the center of the bandgap.</p>
+</details>
 
 <p>Now, where does the bandgap size $\sim 1\;\text{eV}$ typical for a semiconductor come from? At room temperature $k_B T = 0.025\;\text{eV}$. We can then compute the probability of finding an electron at the base of the conduction band, at energy $\epsilon_C = \epsilon_F + \frac{1}{2}\epsilon_{\text{bg}}$ as</p>
 

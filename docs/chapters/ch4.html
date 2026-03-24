@@ -54,6 +54,34 @@
 
 <div class="equation">$$\sigma = \frac{\sqrt{N_1 N_2}}{(N_1 + N_2)^{3/2}} \sqrt{\frac{2}{3}}\; E$$<span class="eq-number">(7)</span></div>
 
+<details class="derivation">
+<summary>Derivation: most probable $E_1$ and Gaussian width</summary>
+
+<p><strong>Finding the most probable $E_1$.</strong> We have $P(E_1) = C' \, E_1^{3N_1/2}\,(E - E_1)^{3N_2/2}$. Taking the logarithm:</p>
+
+$$\ln P(E_1) = \text{const} + \tfrac{3N_1}{2}\ln E_1 + \tfrac{3N_2}{2}\ln(E - E_1)$$
+
+<p>Differentiating and setting equal to zero:</p>
+
+$$\frac{\partial \ln P}{\partial E_1} = \frac{3N_1}{2E_1} - \frac{3N_2}{2(E - E_1)} = 0$$
+
+<p>Solving gives $N_1(E - E_1) = N_2 E_1$, hence</p>
+
+$$\langle E_1 \rangle = \frac{N_1}{N_1 + N_2}\,E$$
+
+<p><strong>Extracting the Gaussian width.</strong> Taylor-expand $\ln P(E_1)$ around the maximum $\langle E_1\rangle$. The first derivative vanishes there, so the leading term is the second derivative:</p>
+
+$$\frac{\partial^2 \ln P}{\partial E_1^2} = -\frac{3N_1}{2E_1^2} - \frac{3N_2}{2(E - E_1)^2}$$
+
+<p>Evaluating at $E_1 = \langle E_1\rangle = \frac{N_1}{N_1+N_2}E$ and $E - \langle E_1\rangle = \frac{N_2}{N_1+N_2}E$:</p>
+
+$$\frac{\partial^2 \ln P}{\partial E_1^2}\bigg|_{\langle E_1\rangle} = -\frac{3(N_1+N_2)^2}{2\,N_1\,E^2} - \frac{3(N_1+N_2)^2}{2\,N_2\,E^2} = -\frac{3(N_1+N_2)^3}{2\,N_1 N_2\,E^2}$$
+
+<p>So $\ln P \approx \ln P_{\max} - \frac{1}{2}\frac{(E_1 - \langle E_1\rangle)^2}{\sigma^2}$ with</p>
+
+$$\frac{1}{\sigma^2} = \frac{3(N_1+N_2)^3}{2\,N_1 N_2\,E^2} \quad\Longrightarrow\quad \sigma = \frac{\sqrt{N_1 N_2}}{(N_1+N_2)^{3/2}}\sqrt{\frac{2}{3}}\;E$$
+</details>
+
 <p>So that the <span class="tooltip-trigger">relative fluctuations<span class="tooltip-content">The ratio $\sigma/\langle E_1\rangle$ tells us how much the energy of subsystem 1 fluctuates compared to its mean. For large $N$, this is negligibly small.</span></span> are</p>
 
 <div class="equation">$$\frac{\sigma}{\langle E_1\rangle} = \frac{1}{\sqrt{N_1}}\sqrt{\frac{2N_2}{3(N_1+N_2)}} \sim \frac{1}{\sqrt{N_1}}$$<span class="eq-number">(8)</span></div>
@@ -111,6 +139,32 @@
 <div class="equation key-result">$$E = \frac{3}{2}Nk_BT$$<span class="eq-number">(19)</span></div>
 
 <p>This says the average energy of an ideal gas is $\frac{3}{2}k_BT$ per molecule. Since the energy is entirely kinetic, $E = \sum_{i}\frac{1}{2}m v_i^2$ with 3 velocity components per molecule, we also have $\frac{1}{2}m\langle v_x^2\rangle = \frac{1}{2}k_BT$, i.e. the energy per quadratic degree of freedom is $\frac{1}{2}k_BT$.</p>
+
+<details class="derivation">
+<summary>Derivation: $\langle p_x^2/(2m)\rangle = \tfrac{1}{2}k_BT$ from the Maxwell-Boltzmann distribution</summary>
+
+<p>The Maxwell-Boltzmann momentum distribution in 3D is</p>
+
+$$\frac{d^3P}{dp_x\,dp_y\,dp_z} = \left(\frac{1}{2\pi m k_BT}\right)^{3/2} \exp\!\left(-\frac{p_x^2+p_y^2+p_z^2}{2mk_BT}\right)$$
+
+<p>The average kinetic energy in the $x$-direction is</p>
+
+$$\left\langle\frac{p_x^2}{2m}\right\rangle = \int_{-\infty}^{\infty}\!\!dp_x\!\int_{-\infty}^{\infty}\!\!dp_y\!\int_{-\infty}^{\infty}\!\!dp_z\;\frac{p_x^2}{2m}\left(\frac{1}{2\pi mk_BT}\right)^{3/2}e^{-\frac{p_x^2+p_y^2+p_z^2}{2mk_BT}}$$
+
+<p>Because the exponential factorizes, $e^{-(p_x^2+p_y^2+p_z^2)/2mk_BT} = e^{-p_x^2/2mk_BT}\,e^{-p_y^2/2mk_BT}\,e^{-p_z^2/2mk_BT}$, the $p_y$ and $p_z$ integrals are each just normalized Gaussians:</p>
+
+$$\int_{-\infty}^{\infty}\frac{1}{\sqrt{2\pi mk_BT}}\,e^{-p_y^2/2mk_BT}\,dp_y = 1 \qquad\text{(same for } p_z\text{)}$$
+
+<p>So these integrals factor out and cancel, leaving only the $p_x$ integral:</p>
+
+$$\left\langle\frac{p_x^2}{2m}\right\rangle = \frac{1}{\sqrt{2\pi mk_BT}}\int_{-\infty}^{\infty}\frac{p_x^2}{2m}\,e^{-p_x^2/2mk_BT}\,dp_x$$
+
+<p>Using the standard Gaussian moment $\int_{-\infty}^{\infty}x^2\,e^{-x^2/2\sigma^2}dx = \sigma^3\sqrt{2\pi}$ with $\sigma^2 = mk_BT$:</p>
+
+$$\left\langle\frac{p_x^2}{2m}\right\rangle = \frac{1}{\sqrt{2\pi mk_BT}}\cdot\frac{1}{2m}\cdot(mk_BT)^{3/2}\sqrt{2\pi} = \frac{1}{2}k_BT$$
+
+<p>By the same argument, $\langle p_y^2/2m\rangle = \langle p_z^2/2m\rangle = \frac{1}{2}k_BT$. Adding all three gives $\langle \mathbf{p}^2/2m\rangle = \frac{3}{2}k_BT$, consistent with Eq. (19).</p>
+</details>
 
 <h3>2.2 Temperature intuition</h3>
 

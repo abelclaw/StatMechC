@@ -322,6 +322,20 @@ $$\frac{d}{dt}H(t) \geq 0$$
 
 <p>To understand Loschmidt's paradox, we have to decode the implicit assumptions in Boltzmann's H theorem. If we knew exactly what the state was and evolved it with time perfectly, we would always know the state, so $P_a(t)$ would either be zero or 1 for all time. Then $H = 0$ for all time and $dH/dt = 0$, which is consistent with the H theorem but does not lead to equal a priori probabilities.</p>
 
+<details class="derivation">
+<summary>Coin example: why do probabilities change?</summary>
+<p>Return to the 5-coin example. If the coins start as HHHHH and after one golf-ball hit go to HHTTH, then to HTHTT, and so on, there is only ever <em>one</em> configuration at each instant. So $P_a(t) = 1$ for that configuration and $P_a(t) = 0$ for all others, giving $H = 0$ for all time.</p>
+
+<p>So why did we say that after a long time every configuration has probability $\frac{1}{32}$? There are two distinct interpretations:</p>
+
+<ol>
+<li><strong>Time averaging.</strong> Over a long interval $T$, we ask: what fraction of the time is a given configuration present? For large enough $T$ these time-averaged probabilities even out across all $2^5$ states.</li>
+<li><strong>Averaging over unknown initial conditions (chaos).</strong> If we repeat the experiment, the ball never hits the coins in exactly the same way &mdash; there is inherent chaos in the system. So the &ldquo;probability&rdquo; is really an average over the unknown, uncontrollable parts of the initial conditions: not just HHHHH, but HHHHH with a flea in Australia flapping its wings, etc.</li>
+</ol>
+
+<p>Either way, the probabilities change <em>because we do not have perfect information</em>, either by choice (the time averaging) or by necessity (chaos).</p>
+</details>
+
 <p>The key assumption in Boltzmann's H theorem is that a state $a$ can transition to <em>multiple</em> states $b$. This is generally not possible in a unitary causal theory, since the time evolution should uniquely determine $a(t)$. So even though the theory is causal at the microscopic level, the apparent violation of causality, allowing $H(t)$ to grow, comes about because we discard information that is in principle available but practically inaccessible. We do this by time-averaging, by averaging over unknown parts of the initial conditions, and by coarse graining. These, often implicit, operations are the key to the Boltzmann H theorem, the postulate of equal a priori probabilities, and the increase of entropy.</p>
 
 <!-- ============================================================ -->

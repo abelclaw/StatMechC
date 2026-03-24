@@ -510,7 +510,16 @@ $$P_{1\text{ decay}}(t) = \lim_{N\to\infty} N\left(1 - \frac{\lambda t}{N}\right
 <span class="eq-number">(66)</span>
 </div>
 
-<div class="step"><div class="step-label">Step 4: General $m$</div>
+<details class="derivation"><summary>Step 4: Two decays ($m = 2$) &mdash; explicit example</summary>
+<p>For two decays we must choose 2 of the $N$ intervals in which a decay occurs. There are $\binom{N}{2} = \frac{N(N-1)}{2}$ ways to do this, so</p>
+$$P_{2\text{ decays}}(t) = \lim_{N\to\infty} \frac{N(N-1)}{2}\left(1 - \frac{\lambda t}{N}\right)^{N-2}\left(\frac{\lambda t}{N}\right)^2$$
+<p>We can rewrite this using the derivative trick again. Taking two derivatives of $P_{\text{no decay}}$:</p>
+$$P_{2\text{ decays}}(t) = \frac{1}{2}\,t^2\,\partial_t^2\, P_{\text{no decay}}(t) = \frac{1}{2}\,t^2\,\partial_t^2\, e^{-\lambda t} = \frac{(\lambda t)^2}{2}\,e^{-\lambda t}$$
+<span class="eq-number">(67)</span>
+<p>This confirms the pattern: each derivative pulls down a factor of $\lambda$, and the $\frac{1}{m!}$ comes from the combinatorial prefactor $\binom{N}{m} \to \frac{N^m}{m!}$ in the large-$N$ limit.</p>
+</details>
+
+<div class="step"><div class="step-label">Step 5: General $m$</div>
 <p>For $m$ decays there are $\binom{N}{m}$ ways to choose which intervals have decays. The result is</p>
 $$P_m(t) = \frac{(\lambda t)^m}{m!} e^{-\lambda t}$$
 <span class="eq-number">(68)</span>
@@ -529,6 +538,8 @@ $$\sum_m P_m(t) = \sum \frac{(\lambda t)^m}{m!} e^{-\lambda t} = 1$$
 </div>
 
 <p>So that's consistent (as is the $t$-independence of this sum).</p>
+
+<p>Note that $P_m(t)$ can be viewed in two ways. At fixed $t$, it is a <strong>discrete probability distribution</strong> over the integer $m$ &mdash; this is the usual interpretation, and the normalization $\sum_m P_m(t) = 1$ confirms it. However, at fixed $m$, $P_m(t)$ is simply a continuous function of $t$; it is <em>not</em> a probability distribution in $t$. The integral $\int dt\, P_m(t)$ does not equal 1 (it doesn't even have the right units). Both viewpoints are useful, but keep in mind which variable plays the role of the random variable.</p>
 
 <p>For a given fixed $t$, how many particles do we expect to have decayed? The mean value for $m$ is</p>
 <div class="equation key-result">

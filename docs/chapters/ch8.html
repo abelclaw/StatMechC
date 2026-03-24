@@ -122,7 +122,14 @@ $$dF = dE - TdS - SdT = -PdV + \mu dN - SdT$$
 <span class="eq-number">(9)</span>
 </div>
 
-<p>Note that the $dS$ has dropped out. The right-hand side suggests that we should think of $F$ as a function of $V$, $N$ and $T$: $F = F(V, N, T)$. We say that $V$, $N$, $T$ are the natural arguments of the Helmholtz free energy. We can then generate Maxwell relations:</p>
+<p>Note that the $dS$ has dropped out. The right-hand side suggests that we should think of $F$ as a function of $V$, $N$ and $T$: $F = F(V, N, T)$. We say that $V$, $N$, $T$ are the natural arguments of the Helmholtz free energy.</p>
+
+<div class="info-box physical">
+<div class="box-title">Why is there no $dE$ in $dF$?</div>
+<p>A common question is: why does $dE$ not appear in $dF = -PdV + \mu\,dN - S\,dT$? Similarly, why does $dT$ not appear in $dE = T\,dS - P\,dV + \mu\,dN$? The answer is that the non-trivial content of these equations is precisely the <em>absence</em> of those terms. In $dE = T\,dS - P\,dV + \mu\,dN$, the temperature $T$ is not an independent variable -- it is determined by $S$, $V$, and $N$, so $dT$ is fixed once $dS$, $dV$, and $dN$ are specified. Likewise, in $dF = -P\,dV + \mu\,dN - S\,dT$, the energy $E$ is a dependent variable determined by $T$, $V$, and $N$. We do not need to know $dE$ to compute $dF$; we just need $dV$, $dN$, and $dT$.</p>
+</div>
+
+<p>We can then generate Maxwell relations:</p>
 
 <div class="equation">
 $$\left(\frac{\partial F}{\partial V}\right)_{N,T} = -P;\qquad \left(\frac{\partial F}{\partial N}\right)_{V,T} = \mu;\qquad \left(\frac{\partial F}{\partial T}\right)_{V,N} = -S$$
@@ -214,6 +221,17 @@ $$\frac{\partial F}{\partial x} = \mathcal{F}_{\text{piston}} - \mathcal{F}_{\te
 </div>
 
 <p>Setting the variation to zero implies $\mathcal{F}_{\text{piston}} = \mathcal{F}_{\text{gas}}$: forces are equal at equilibrium. We can find the equilibrium by minimizing the free energy -- the result is the same as demanding that forces balance.</p>
+
+<details class="derivation">
+<summary>Detailed derivation: free energy minimization for the spring-gas system</summary>
+<p>Define the system as the piston + gas in a heat bath at temperature $T$. Let $x$ be the piston displacement and $A$ the piston area, so the gas volume is $V = V_1 + Ax$. The equilibrium condition is:</p>
+$$\frac{\partial F}{\partial x} = \frac{\partial E}{\partial x} - T\frac{\partial S}{\partial x} = 0$$
+<p><strong>Energy term:</strong> Since $T$ is held constant by the heat bath, the gas energy depends only on $T$ (for an ideal gas) and not on $V$. So the only $x$-dependent energy is from the spring: $\frac{\partial E}{\partial x} = \mathcal{F}_{\text{piston}} = -kx$.</p>
+<p><strong>Entropy term:</strong> The spring has no entropy, so $\frac{\partial S}{\partial x}$ comes entirely from the gas. Using the chain rule:</p>
+$$\frac{\partial S}{\partial x} = \frac{\partial S}{\partial V}\frac{\partial V}{\partial x} = \frac{P}{T}\cdot A = \frac{\mathcal{F}_{\text{gas}}}{T}$$
+<p>where we used the Maxwell relation $\left(\frac{\partial S}{\partial V}\right)_{E,N} = P/T$ and the fact that pressure times area is force. Substituting back:</p>
+$$\frac{\partial F}{\partial x} = \mathcal{F}_{\text{piston}} - \mathcal{F}_{\text{gas}} = 0 \quad\Longrightarrow\quad \mathcal{F}_{\text{piston}} = \mathcal{F}_{\text{gas}}$$
+</details>
 
 <h3>8.3.4 Energy (Non)-Minimization</h3>
 
@@ -475,6 +493,12 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 
 <p>Both $\Delta_r H$ and $\Delta_r S$ are generally weakly dependent on temperature, while $\Delta_r G$ depends strongly on $T$ because of the explicit factor of $T$.</p>
 
+<details class="derivation">
+<summary>Why $\Delta_r H$ and $\Delta_r S$ are approximately temperature-independent</summary>
+<p><strong>$\Delta_r H$:</strong> We can write $\Delta_r H = \Delta_r E + \Delta_r(PV)$. The $\Delta_r E$ contribution comes from breaking and forming bonds, which is independent of temperature. For the $\Delta_r(PV)$ term, solids and liquids have negligible volume changes, so $\Delta_r(PV) \approx (\Delta n_{\text{gas}})RT \approx 8\;\text{J/(mol·K)}\times\Delta n_{\text{gas}}\times T$. Although this depends linearly on $T$, it is numerically much smaller than $T\Delta_r S$ (e.g., $\Delta_r S \approx 161\;\text{J/(mol·K)}$ for the limestone reaction). So the temperature dependence of $\Delta_r H$ is a subleading correction.</p>
+<p><strong>$\Delta_r S$:</strong> Entropy has only logarithmic temperature dependence, since $S \sim Nk_B\ln T$. Thus $\Delta_r S$ changes very slowly with temperature and can be treated as approximately constant over a wide range.</p>
+</details>
+
 <figure>
 <div class="figure-label">Figure 2: Standard Molar Entropies</div>
 <p class="vis-caption">Standard molar entropies for some compounds at 298 K, organized by phase.</p>
@@ -523,6 +547,18 @@ $$\Delta_r G = \Delta_r H - T\Delta_r S$$
 <p>At $T = 1500\;\text{K}$: $\Delta_r G = 178 - 1500 \times 0.161 = -64\;\text{kJ/mol} < 0$. The kiln allows the reaction to occur.</p>
 <p>Heating does not just make the reaction go faster -- it changes the direction of the reaction.</p>
 </div>
+
+<details class="derivation">
+<summary>Equilibrium constant for CaCO$_3$ decomposition</summary>
+<p>The law of mass action gives $K = \exp(-\Delta_r G / RT)$. Using the values computed above:</p>
+<p><strong>At $T = 298\;\text{K}$:</strong> $\Delta_r G = 130\;\text{kJ/mol}$, so</p>
+$$K = \exp\!\left(-\frac{130}{0.0083 \times 298}\right) \approx 10^{-23}$$
+<p>The equilibrium overwhelmingly favors limestone -- virtually no decomposition occurs.</p>
+<p><strong>At $T = 1500\;\text{K}$:</strong> $\Delta_r G = -64\;\text{kJ/mol}$, so</p>
+$$K = \exp\!\left(\frac{64}{0.0083 \times 1500}\right) \approx 185$$
+<p>The equilibrium strongly favors products -- decomposition proceeds readily.</p>
+<p>The change from $K \sim 10^{-23}$ to $K \sim 10^2$ dramatically illustrates how sensitive equilibrium concentrations are to temperature, even though $\Delta_r H$ and $\Delta_r S$ are nearly constant.</p>
+</details>
 
 <p>When a system is in equilibrium at some temperature and we add more of one product, the system will adjust to restore equilibrium. This is an example of <span class="tooltip-trigger">Le Chatelier's principle<span class="tooltip-content">A system will work to restore equilibrium by counteracting any change</span></span>.</p>
 

@@ -190,6 +190,14 @@ $$\Delta S = \int_V^{2V}\frac{Nk_BT}{TV}dV = Nk_B\ln 2$$
 
 <p>The speed of sound in a gas is $c_{\text{sound}} = \sqrt{\frac{\gamma k_BT}{m}}$. A sound wave is adiabatic compression and rarefaction.</p>
 
+<details class="derivation"><summary>Entropy cross-check of $PV^\gamma = \text{const}$</summary>
+<p>We can verify Eq.&nbsp;(39) independently using entropy. From Eq.&nbsp;(29) and $E \propto PV$, the entropy change between two states is:</p>
+<div class="equation">$$\Delta S = C_V \ln\frac{P_2}{P_1} + C_P \ln\frac{V_2}{V_1}$$<span class="eq-number">(41)</span></div>
+<p>Setting $\Delta S = 0$ for an adiabatic process:</p>
+$$C_V \ln\frac{P_2}{P_1} = -C_P \ln\frac{V_2}{V_1} \quad\Longrightarrow\quad \ln\!\left(P_2 V_2^{C_P/C_V}\right) = \ln\!\left(P_1 V_1^{C_P/C_V}\right)$$
+<p>which gives $PV^{\gamma} = \text{const}$, confirming Eq.&nbsp;(39).</p>
+</details>
+
 <p><strong>Isobaric expansion.</strong> Isobaric means constant pressure. The <span class="tooltip-trigger">coefficient of thermal expansion<span class="tooltip-content">$\alpha_V = \frac{1}{V}\left(\frac{\partial V}{\partial T}\right)_P$ measures fractional volume change per degree.</span></span> is:</p>
 
 <div class="equation">$$\alpha_V = \frac{1}{V}\left(\frac{\partial V}{\partial T}\right)_P$$<span class="eq-number">(42)</span></div>
@@ -232,6 +240,8 @@ $$\Delta S = \int_V^{2V}\frac{Nk_BT}{TV}dV = Nk_B\ln 2$$
 </div>
 
 <div class="equation key-result">$$\eta_{\text{Carnot}} = \frac{W}{Q_{\text{in}}} = \frac{T_H - T_C}{T_H}$$<span class="eq-number">(55)</span></div>
+
+<p><strong>Note on degrees of freedom:</strong> The volumes $V_1, V_2, V_3, V_4$ are not all independent. Once the starting state $(V_1, T_H)$ is fixed, $V_2$ is the single free parameter — it determines how large a cycle we run. The volumes $V_3$ and $V_4$ are then fixed by the adiabatic constraint $TV^{\gamma-1} = \text{const}$ applied to stages 2 and 4 respectively.</p>
 
 <p>This is the <span class="tooltip-trigger">Carnot efficiency<span class="tooltip-content">The maximum possible efficiency for any heat engine operating between $T_H$ and $T_C$. No real engine can exceed this.</span></span>.</p>
 

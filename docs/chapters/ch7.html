@@ -467,6 +467,18 @@ $$\mu \equiv -T\left(\frac{\partial S}{\partial N}\right)_{E,V}$$
 
 <p>A useful way to think about chemical potential is as a pressure for number density. While there is only one kind of temperature there are lots of chemical potentials: one for every thing we count in our ensemble.</p>
 
+<details class="derivation"><summary>Chemical potential as a Lagrange multiplier</summary>
+<p>The chemical potential emerges naturally from the microcanonical maximum-entropy derivation. Recall that we maximized entropy subject to the constraints $\sum n_i = N$ and $\sum n_i \epsilon_i = E$ by introducing Lagrange multipliers $\alpha$ and $\beta$:</p>
+
+$$\frac{S}{k_B} = \ln\Omega = -N\sum_i f_i \ln f_i - \alpha\!\left(\sum n_i - N\right) - \beta\!\left(\sum n_i\epsilon_i - E\right)$$
+
+<p>We already identified $\beta = \frac{\partial \ln\Omega}{\partial E} = \frac{1}{k_BT}$, making temperature the Lagrange multiplier conjugate to energy. In exactly the same way, $\alpha = \frac{\partial \ln\Omega}{\partial N}$, so the chemical potential is</p>
+
+$$\mu = -\alpha\, k_BT = -k_BT\frac{\partial \ln\Omega(E,V,N)}{\partial N} = -T\left(\frac{\partial S}{\partial N}\right)_{E,V}$$
+
+<p>Thus $\mu$ is the Lagrange multiplier conjugate to particle number, just as $T$ is conjugate to energy.</p>
+</details>
+
 <p>As in Eq. (47) we can now consider the total derivative of energy, letting $E$, $V$ and $N$ all vary:</p>
 
 <div class="equation key-result">
@@ -617,6 +629,18 @@ $$n = \frac{1}{\lambda^3}\exp\left(\frac{\mu - \epsilon}{k_BT}\right)$$
 
 <p>Thus if we were to change the zero-point energy offset $\epsilon \to \epsilon + \Delta\epsilon$, we could compensate for this by shifting $\mu \to \mu + \Delta\epsilon$. In other words, the chemical potential is measured relative to the ground state: only the difference $\mu - \epsilon$ appears. This is just like how only potential energy differences are physical, and why we call the chemical potential a potential.</p>
 
+<details class="derivation"><summary>Canonical-ensemble cross-check of ground-state energy offset</summary>
+<p>We can verify Eq. (72) independently using the canonical ensemble. Let $Z_0$ be the partition function with $\epsilon = 0$, so that $\langle E_0\rangle = -\frac{\partial \ln Z_0}{\partial \beta}$ and $S_0 = \frac{\langle E_0\rangle}{T} + k_B\ln Z_0$. With the energy offset, each microstate gains $N\epsilon$, so the partition function becomes</p>
+
+$$Z = Z_0\, e^{-\beta N\epsilon}$$
+
+<p>The average energy is then $\langle E\rangle = -\frac{\partial \ln Z}{\partial \beta} = \langle E_0\rangle + N\epsilon$, as expected. The entropy is</p>
+
+$$S = \frac{\langle E\rangle}{T} + k_B\ln Z = \frac{\langle E_0\rangle}{T} + \frac{N\epsilon}{T} + k_B\ln Z_0 - k_B\beta N\epsilon = \frac{\langle E_0\rangle}{T} + k_B\ln Z_0 = S_0(E_0) = S_0(E - N\epsilon)$$
+
+<p>The entropy with the offset has the same functional form as without it; only the energy argument shifts by $N\epsilon$, confirming Eq. (72).</p>
+</details>
+
 <h3>7.7.3 Chemical Reactions</h3>
 
 <p>Chemical potentials are useful in situations where particles turn into other types of particles. As a concrete example, consider the Haber process for the production of ammonia</p>
@@ -629,6 +653,26 @@ $$3\;\text{H}_2 + \text{N}_2 \rightleftharpoons 2\;\text{NH}_3$$
 $$3\mu_{\text{H}_2} + \mu_{\text{N}_2} = 2\mu_{\text{NH}_3}$$
 <span class="eq-number">(84)</span>
 </div>
+
+<details class="derivation"><summary>Derivation of the stoichiometric equilibrium condition</summary>
+<p>The stoichiometry of the reaction $3\,\text{H}_2 + \text{N}_2 \rightleftharpoons 2\,\text{NH}_3$ constrains the concentration changes. If $[\text{N}_2]$ changes by $d[\text{N}_2]$, then</p>
+
+$$d[\text{H}_2] = 3\,d[\text{N}_2], \qquad d[\text{NH}_3] = -2\,d[\text{N}_2]$$
+
+<p>At fixed volume and total energy, the entropy changes as</p>
+
+$$dS = \frac{\partial S}{\partial [\text{H}_2]}\,d[\text{H}_2] + \frac{\partial S}{\partial [\text{N}_2]}\,d[\text{N}_2] + \frac{\partial S}{\partial [\text{NH}_3]}\,d[\text{NH}_3]$$
+
+<p>Using $\mu_j = -T\frac{\partial S}{\partial N_j}$ and substituting the stoichiometric constraints:</p>
+
+$$dS = -\frac{1}{T}\!\Big(3\mu_{\text{H}_2} + \mu_{\text{N}_2} - 2\mu_{\text{NH}_3}\Big)\,d[\text{N}_2]$$
+
+<p>In equilibrium $dS = 0$ for arbitrary $d[\text{N}_2]$, so</p>
+
+$$3\mu_{\text{H}_2} + \mu_{\text{N}_2} = 2\mu_{\text{NH}_3}$$
+
+<p>This generalises $\mu_1 = \mu_2$ for particle exchange: the stoichiometric coefficients appear as weights.</p>
+</details>
 
 <p>From Eq. (75), taking the ratio of concentrations to appropriate powers, the $\mu$'s drop out, giving</p>
 
