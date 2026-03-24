@@ -199,7 +199,15 @@ $$\mu_w^{\text{mix}}(P, T) = \mu_w(P, T) - k_BT\frac{N_s}{N_w}$$
 <span class="eq-number">(17)</span>
 </div>
 
-<p>Setting the mixed chemical potential equal to the gas chemical potential leads to</p>
+<details class="derivation">
+<summary>Deriving Raoult's law</summary>
+<p>At fixed $T = T_0$, write $P = P_0 + \Delta P$ and expand both chemical potentials around $P_0$:</p>
+$$\mu_w^{\text{mix}}(P, T_0) = \mu_w(P_0, T_0) + \Delta P\left(\frac{\partial \mu_w}{\partial P}\right)_T - k_BT_0\frac{N_s}{N_w}$$
+$$\mu_{\text{gas}}(P, T_0) = \mu_{\text{gas}}(P_0, T_0) + \Delta P\left(\frac{\partial \mu_{\text{gas}}}{\partial P}\right)_T$$
+<p>Using $\frac{\partial \mu}{\partial P}\big|_T = \frac{V}{N}$, setting $\mu_w^{\text{mix}} = \mu_{\text{gas}}$, and using the pure equilibrium condition $\mu_w(P_0, T_0) = \mu_{\text{gas}}(P_0, T_0)$:</p>
+$$\Delta P\left(\frac{V_w}{N_w} - \frac{V_{\text{gas}}}{N_{\text{gas}}}\right) = k_BT_0\frac{N_s}{N_w}$$
+<p>The liquid molar volume $V_w/N_w$ is much smaller than the gas molar volume $V_{\text{gas}}/N_{\text{gas}}$, so we drop it. Using the ideal gas law $V_{\text{gas}}/N_{\text{gas}} = k_BT_0/P_0$:</p>
+</details>
 
 <div class="equation key-result">
 $$\Delta P = -\frac{N_s}{N_w}P_0$$
