@@ -86,7 +86,15 @@
 
 <p>Clausius showed that $\Delta S_{\text{tot}} = 0$ for any reversible process. To see that, note that if states $A$ and $B$ can be connected reversibly, then $S_B^{\text{tot}} - S_A^{\text{tot}} \geq 0$. For the reverse process $S_A^{\text{tot}} - S_B^{\text{tot}} \geq 0$. Thus $S_A^{\text{tot}} = S_B^{\text{tot}}$.</p>
 
-<p>Clausius argued that only heat flow matters for entropy change, not work. Along a reversible path, work does not cause an entropy increase. This confirms Eq. (9) &mdash; entropy change is due to heat flow.</p>
+<p>Clausius argued that only heat flow matters for entropy change, not work. To see why: consider doing work via a weight (non-thermal). The surroundings' entropy doesn't change ($\Delta S_{\text{surr}} = 0$). If the process is reversible, $\Delta S_{\text{total}} = 0$, so $\Delta S_{\text{system}} = 0$ as well. Work alone does not change entropy. This confirms Eq. (9).</p>
+
+<div class="info-box example">
+<div class="box-title">Example: Clausius entropy of a free expansion</div>
+<p>A gas initially in volume $V$ expands freely (irreversibly) into a vacuum to volume $2V$. How do we compute $\Delta S$ using Eq. (9)?</p>
+<p>Since the process is irreversible, we cannot apply Eq. (9) directly along the actual path. Instead, we find a <em>reversible</em> path between the same initial and final states: an isothermal expansion against a piston connected to a heat bath. Along this path, $dQ_{\text{in}} = P\,dV = \frac{Nk_BT}{V}dV$, so</p>
+$$\Delta S = \int_V^{2V}\frac{Nk_BT}{TV}dV = Nk_B\ln 2$$
+<p>The entropy change is the same regardless of the actual process (free expansion or slow isothermal expansion), because entropy is a function of state.</p>
+</div>
 
 <h2>3. Ideal Gases</h2>
 
@@ -218,7 +226,7 @@
 <div class="step"><div class="step-label">Stage 1</div><strong>Isothermal expansion at $T_H$:</strong> Expand from $V_1$ to $V_2$. $Q_{\text{in}} = W_1^{\text{out}} = Nk_BT_H\ln\frac{V_2}{V_1}$.</div>
 <div class="step"><div class="step-label">Stage 2</div><strong>Adiabatic expansion to $T_C$:</strong> $W_2^{\text{out}} = C_V(T_H - T_C)$. $V_3 = V_2\left(\frac{T_H}{T_C}\right)^{\frac{1}{\gamma-1}}$.</div>
 <div class="step"><div class="step-label">Stage 3</div><strong>Isothermal compression at $T_C$:</strong> $Q_{\text{out}} = W_3^{\text{in}} = Nk_BT_C\ln\frac{V_3}{V_4}$.</div>
-<div class="step"><div class="step-label">Stage 4</div><strong>Adiabatic compression to $T_H$:</strong> $W_4^{\text{in}} = C_V(T_H - T_C)$. Key relation: $\frac{V_3}{V_4} = \frac{V_2}{V_1}$.</div>
+<div class="step"><div class="step-label">Stage 4</div><strong>Adiabatic compression to $T_H$:</strong> $W_4^{\text{in}} = C_V(T_H - T_C)$. Since $TV^{\gamma-1} = \text{const}$ along adiabats: $V_3 = V_2(T_H/T_C)^{1/(\gamma-1)}$ and $V_4 = V_1(T_H/T_C)^{1/(\gamma-1)}$, so $\frac{V_3}{V_4} = \frac{V_2}{V_1}$.</div>
 <div class="step"><div class="step-label">Result</div>Net work: $W = Nk_B(T_H - T_C)\ln\frac{V_2}{V_1}$.</div>
 </div></div>
 </div>
@@ -254,7 +262,7 @@
 
 <div class="equation">$$\frac{Q_{\text{in}}}{T_H} = \frac{Q_{\text{out}}}{T_C}$$<span class="eq-number">(57)</span></div>
 
-<p>Can we make an engine more efficient than the Carnot engine? If we could, we could run the Carnot engine in reverse. The net effect would be converting heat directly into work &mdash; a perpetual motion machine. The net effect would also decrease the overall total entropy.</p>
+<p>Can we make an engine more efficient than the Carnot engine? Suppose we have a "super-engine" with $\eta > \eta_{\text{Carnot}}$. Run it forward and run a Carnot engine in reverse (as a refrigerator). The super-engine takes heat $Q_{\text{in}}$ from the hot bath and does work $W = \eta\,Q_{\text{in}}$. The reversed Carnot engine uses $W$ to pump heat back. Since $\eta > \eta_{\text{Carnot}}$, the super-engine exhausts less heat than the Carnot refrigerator deposits. The net effect: heat flows from cold to hot with no other change &mdash; violating the second law. In terms of entropy: the hot bath loses entropy $Q_{\text{in}}/T_H$ but gains back less than $Q_{\text{in}}/T_H$, while the cold bath gains more entropy than it loses, giving $\Delta S_{\text{total}} < 0$. This is impossible, so no engine can exceed Carnot efficiency.</p>
 
 <div class="info-box warning">
 <div class="box-title">Second Law &mdash; Equivalent Formulations</div>
