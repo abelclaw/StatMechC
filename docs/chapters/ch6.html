@@ -183,15 +183,52 @@ $$\frac{dS}{dt} = cD\int dx\,\frac{1}{n}\left(\frac{\partial n}{\partial x}\righ
 
 <p>Since distinguishability is an important and confusing topic, let's do an example of mixing and unmixing in full detail, with three different assumptions:</p>
 
+<ol>
+<li>$N$ colored balls + $N$ more colored balls, all distinguishable</li>
+<li>$N$ molecules helium + $N$ more molecules helium, all indistinguishable</li>
+<li>$N$ molecules helium + $N$ molecules xenon, each species separately indistinguishable</li>
+</ol>
+
+<p>In all cases, we start with a volume $V$ of each, then let them mix, then put a partition in to separate them. Note that we use "distinguishable" here to mean classical distinguishability &mdash; it's about whether we use identifying information about individual molecules in the definition of the microstates. We talk about colored balls instead of molecules to avoid any possible conflicts with quantum mechanics, but quantum mechanics is not required to resolve the Gibbs paradox.</p>
+
+<h4>Case 1: Colored balls (all distinguishable)</h4>
+
+<p>The entropy goes up by $\Delta S = 2N\ln 2$ when the two sets are mixed, since each of the $2N$ balls now has twice as much volume available. When we split them back, it looks like entropy goes down by $\Delta S = -2N\ln 2$. However, there are</p>
+
+<div class="equation">$$\Omega_{\text{split}} = \binom{2N}{N} \approx 2^{2N}$$</div>
+
+<p>ways to split the $2N$ balls into two groups of $N$. In enumerating the final states, we should include this factor, giving</p>
+
+<div class="equation">$$\Omega'' = \Omega_1\Omega_2 \cdot \Omega_{\text{split}} = V^N \cdot V^N \cdot 2^{2N}$$</div>
+
+<p>so that $\Delta S = 0$ upon the split. If we actually look in the box and enumerate which balls are where, we lose $\Omega_{\text{split}}$, but the entropy of the surroundings must go up to compensate (as we explain in Section 5 on information entropy).</p>
+
+<h4>Case 2: Helium + helium (indistinguishable)</h4>
+
+<p>Here, we add the $\frac{1}{N!}$ factors for identical particles. When the two sets are merged, the number of states is</p>
+
+<div class="equation">$$\Omega' = \frac{1}{(2N)!}(2V)^{2N} = \Omega_1\Omega_2 \cdot \frac{N!\,N!}{(2N)!} \cdot 2^{2N} \approx \Omega_1\Omega_2$$</div>
+
+<p>where the last step uses Stirling's approximation in the thermodynamic limit ($N\to\infty$):</p>
+
+<div class="equation">$$\frac{N!\,N!}{(2N)!}\cdot 2^{2N} \approx \frac{N^N \, N^N}{(2N)^{2N}}\cdot 2^{2N} = 1$$</div>
+
+<p>So $\Omega$ factorizes: $\Omega' = \Omega_1\Omega_2$, giving $\Delta S = 0$ upon merging. Similarly, $\Omega'' = \Omega_1\Omega_2 = \Omega'$, so $\Delta S = 0$ upon splitting as well.</p>
+
+<p class="note">You might be bothered by the fact that we used the thermodynamic limit $N\to\infty$. At finite $N$, indeed $\Omega' > \Omega_1\Omega_2$, so entropy goes up slightly on merging. After splitting, we must allow for $m$ particles on one side and $2N - m$ on the other. Then $\Omega'' = \sum_{m=0}^{2N} \frac{1}{(2N-m)!}V^{2N-m}\cdot\frac{1}{m!}V^m = \frac{(2V)^{2N}}{(2N)!} = \Omega'$ exactly, so entropy still does not go down upon splitting.</p>
+
+<h4>Case 3: Helium + xenon (each separately indistinguishable)</h4>
+
+<p>After mixing, each set of $N$ molecules occupies the volume $2V$, so the entropy of mixing is $\Delta S = 2N\ln 2$, just as in the colored balls case. When we split them, since the particles within each species are identical, there is no way to tell apart one splitting from another. Each half has $N/2$ of each species in a volume $V$. The total number of states is</p>
+
+<div class="equation">$$\Omega'' = \left[\frac{1}{\left(\frac{N}{2}\right)!} V^{N/2}\right]^4 = \Omega_1\Omega_2\cdot\frac{N!\,N!}{\left(\frac{N}{2}\right)!^4} \approx \Omega_1\Omega_2\cdot\frac{N^N\,N^N}{\left(\frac{N}{2}\right)^{2N}} = \Omega_1\Omega_2\cdot 2^{2N} = \Omega'$$</div>
+
+<p>And therefore $\Delta S = 0$ for the splitting case.</p>
+
 <div class="info-box example">
-<div class="box-title">Three Cases of Mixing</div>
-<p><strong>1. Colored balls (all distinguishable):</strong> Entropy goes up by $\Delta S = 2N\ln 2$ when mixed. When split, there are $\binom{2N}{N} \approx 2^{2N}$ ways to split them, so including this factor gives $\Delta S = 0$ for the split.</p>
-<p><strong>2. Helium + helium (indistinguishable):</strong> Adding $\frac{1}{N!}$ factors, $\Omega' = \Omega_1\Omega_2$ in the thermodynamic limit. $\Delta S = 0$ for both merging and splitting.</p>
-<p><strong>3. Helium + xenon (each separately indistinguishable):</strong> Entropy of mixing is $\Delta S = 2N\ln 2$. After splitting, each half has $N/2$ of each species, and $\Delta S = 0$ for the split.</p>
+<div class="box-title">Summary</div>
+<p>In the distinguishable case (colored balls) and the helium/xenon mixture case, there is a $2N\ln 2$ entropy of mixing &mdash; each of the $2N$ molecules now has an extra binary choice of where to be. In no situation does entropy go down when we split the volume back into two halves.</p>
 </div>
-
-
-<p>In no situation does entropy go down when we split the volume back into two halves.</p>
 
 <h3>3.4 Entropy is extensive</h3>
 
