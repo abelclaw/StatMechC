@@ -150,7 +150,7 @@ function initPermalinks(container) {
   const chapterId = container.id;
   const seen = {};
 
-  // Collect all collapsible elements: div-based derivations + native <details>
+  // Collect all linkable elements: derivations, details, and visualizations
   const items = [];
   container.querySelectorAll('.derivation-header').forEach(header => {
     items.push({ el: header.parentElement, header, text: header.textContent.replace(/^[▶▼]\s*/, '').trim() });
@@ -158,6 +158,10 @@ function initPermalinks(container) {
   container.querySelectorAll('details').forEach(det => {
     const summary = det.querySelector('summary');
     if (summary) items.push({ el: det, header: summary, text: summary.textContent.trim() });
+  });
+  container.querySelectorAll('.figure-label').forEach(label => {
+    const vis = label.closest('.visualization') || label.closest('figure') || label.parentElement;
+    items.push({ el: vis, header: label, text: label.textContent.trim() });
   });
 
   items.forEach(({ el, header, text }) => {

@@ -847,6 +847,7 @@ th {
   color: var(--text);
   border-bottom: 1px solid var(--border);
   display: flex;
+  cursor: pointer;
   align-items: center;
   gap: 8px;
 }
