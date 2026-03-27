@@ -13,9 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initProgressBar();
   initMobileMenu();
 
-  // Load chapter from hash or show landing
+  // Load chapter from hash or show landing (support deep links like #ch5/slug)
   const hash = location.hash.replace('#', '');
-  if (hash && hash !== 'home') navigateTo(hash);
+  if (hash && hash !== 'home') navigateTo(hash.split('/')[0]);
   else navigateTo('home');
 });
 
@@ -52,6 +52,7 @@ async function navigateTo(id) {
           });
         });
         initCheckAnswers(target);
+        initPermalinks(target);
       }
     } catch (e) {
       // File not found, use inline content
@@ -64,7 +65,8 @@ async function navigateTo(id) {
     if (navLink) navLink.classList.add('active');
   }
 
-  location.hash = id;
+  // Preserve deep link hash if present, otherwise set chapter hash
+  if (!location.hash.startsWith('#' + id + '/')) location.hash = id;
   window.scrollTo(0, 0);
 
   initChapterVisualizations(id);
@@ -76,6 +78,9 @@ async function navigateTo(id) {
       console.error('KaTeX error in', id, e);
     }
   }
+
+  // Handle deep link: open and scroll to a specific collapsible
+  openDeepLink(id);
 }
 
 // ===== CHAPTER TABLE OF CONTENTS =====
@@ -134,6 +139,52 @@ function initDerivations() {
       }
     });
   });
+}
+
+// ===== PERMALINKS FOR COLLAPSIBLE ELEMENTS =====
+function slugify(text) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+}
+
+function initPermalinks(container) {
+  const chapterId = container.id;
+  const seen = {};
+
+  // Collect all collapsible elements: div-based derivations + native <details>
+  const items = [];
+  container.querySelectorAll('.derivation-header').forEach(header => {
+    items.push({ el: header.parentElement, header, text: header.textContent.replace(/^[▶▼]\s*/, '').trim() });
+  });
+  container.querySelectorAll('details').forEach(det => {
+    const summary = det.querySelector('summary');
+    if (summary) items.push({ el: det, header: summary, text: summary.textContent.trim() });
+  });
+
+  items.forEach(({ el, header, text }) => {
+    let slug = slugify(text);
+    if (seen[slug]) { seen[slug]++; slug += '-' + seen[slug]; } else { seen[slug] = 1; }
+    el.id = chapterId + '-' + slug;
+
+    header.addEventListener('click', () => {
+      history.replaceState(null, '', '#' + chapterId + '/' + slug);
+    });
+  });
+}
+
+function openDeepLink(chapterId) {
+  const hash = location.hash.replace('#', '');
+  if (!hash.includes('/')) return;
+  const slug = hash.split('/').slice(1).join('/');
+  const el = document.getElementById(chapterId + '-' + slug);
+  if (!el) return;
+
+  if (el.tagName === 'DETAILS') {
+    el.open = true;
+  } else if (el.classList.contains('derivation')) {
+    el.classList.add('open');
+  }
+  if (window.renderMathInElement) renderMathInElement(el, katexOptions);
+  setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
 }
 
 // ===== MATH RENDERING =====
